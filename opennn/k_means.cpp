@@ -13,55 +13,55 @@ namespace OpenNN
 
 /// @todo
 
-KMeans::Results KMeans::calculate_k_means(const Matrix<double>& matrix, const size_t& k) const
+KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const int& k) const
 {
     Results k_means_results;
+/*
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    vector<vector<int>> clusters(k);
 
-    Vector<Vector<size_t>> clusters(k);
+    Tensor<type, 2> previous_means(k, columns_number);
+    Tensor<type, 2> means(k, columns_number);
 
-    Matrix<double> previous_means(k, columns_number);
-    Matrix<double> means(k, columns_number);
+    const Tensor<type, 1> minimums = OpenNN::columns_minimums(matrix);
+    const Tensor<type, 1> maximums = OpenNN::columns_maximums(matrix);
 
-    const Vector<double> minimums = OpenNN::columns_minimums(matrix);
-    const Vector<double> maximums = OpenNN::columns_maximums(matrix);
-
-    size_t iterations = 0;
+    int iterations = 0;
 
     bool end = false;
 
     // Calculate initial means
 
-    Vector<size_t> selected_rows(k);
+    vector<int> selected_rows(k);
 
-    const size_t initial_center = calculate_random_uniform<size_t>(0, rows_number);
+    const int initial_center = calculate_random_uniform<int>(0, rows_number);
 
     previous_means.set_row(0, matrix.get_row(initial_center));
     selected_rows[0] = initial_center;
 
-    for(size_t i = 1; i < k; i++)
+    for(int i = 1; i < k; i++)
     {
-        Vector<double> minimum_distances(rows_number, 0.0);
+        Tensor<type, 1> minimum_distances(rows_number, 0.0);
 
-        for(size_t j = 0; j < rows_number; j++)
+        for(int j = 0; j < rows_number; j++)
         {
-            Vector<double> distances(i, 0.0);
+            Tensor<type, 1> distances(i, 0.0);
 
-            const Vector<double> row_data = matrix.get_row(j);
+            const Tensor<type, 1> row_data = matrix.get_row(j);
 
-            for(size_t l = 0; l < i; l++)
+            for(int l = 0; l < i; l++)
             {
                 distances[l] = euclidean_distance(row_data, previous_means.get_row(l));
             }
 
             const double minimum_distance = minimum(distances);
 
-            minimum_distances[static_cast<size_t>(j)] = minimum_distance;
+            minimum_distances[static_cast<int>(j)] = minimum_distance;
         }
 
-        size_t sample_index = calculate_sample_index_proportional_probability(minimum_distances);
+        int sample_index = calculate_sample_index_proportional_probability(minimum_distances);
 
         int random_failures = 0;
 
@@ -73,9 +73,9 @@ KMeans::Results KMeans::calculate_k_means(const Matrix<double>& matrix, const si
 
             if(random_failures > 5)
             {
-                Vector<double> new_row(columns_number);
+                Tensor<type, 1> new_row(columns_number);
 
-                new_row.randomize_uniform(minimums, maximums);
+                new_row.setRandom(minimums, maximums);
 
                 previous_means.set_row(i, new_row);
 
@@ -98,24 +98,24 @@ KMeans::Results KMeans::calculate_k_means(const Matrix<double>& matrix, const si
 
  #pragma omp parallel for
 
-        for(size_t i = 0; i < rows_number; i++)
+        for(int i = 0; i < rows_number; i++)
         {
-            Vector<double> distances(k, 0.0);
+            Tensor<type, 1> distances(k, 0.0);
 
-            const Vector<double> current_row = matrix.get_row(i);
+            const Tensor<type, 1> current_row = matrix.get_row(i);
 
-            for(size_t j = 0; j < k; j++)
+            for(int j = 0; j < k; j++)
             {
                 distances[j] = euclidean_distance(current_row, previous_means.get_row(j));
             }
 
-            const size_t minimum_distance_index = minimal_index(distances);
+            const int minimum_distance_index = minimal_index(distances);
 
   #pragma omp critical
-            clusters[minimum_distance_index].push_back(static_cast<size_t>(i));
+            clusters[minimum_distance_index].push_back(static_cast<int>(i));
         }
 
-        for(size_t i = 0; i < k; i++)
+        for(int i = 0; i < k; i++)
         {
             means.set_row(i, rows_means(matrix, clusters[i]));
         }
@@ -135,24 +135,25 @@ KMeans::Results KMeans::calculate_k_means(const Matrix<double>& matrix, const si
 
 //    k_means_results.means = means;
     k_means_results.clusters = clusters;
-
+*/
     return k_means_results;
 }
 
 
-size_t KMeans::calculate_sample_index_proportional_probability(const Vector<double>& vector) const
+int KMeans::calculate_sample_index_proportional_probability(const Tensor<type, 1>& vector) const
 {
-    const size_t this_size = vector.size();
+/*
+    const int this_size = vector.size();
 
-    Vector<double> cumulative = OpenNN::cumulative(vector);
+    Tensor<type, 1> cumulative = OpenNN::cumulative(vector);
 
     const double sum = vector.calculate_sum();
 
     const double random = calculate_random_uniform(0.,sum);
 
-    size_t selected_index = 0;
+    int selected_index = 0;
 
-    for(size_t i = 0; i < this_size; i++)
+    for(int i = 0; i < this_size; i++)
     {
         if(i == 0 && random < cumulative[0])
         {
@@ -167,6 +168,8 @@ size_t KMeans::calculate_sample_index_proportional_probability(const Vector<doub
     }
 
     return selected_index;
+*/
+    return 0;
 }
 
 }

@@ -196,10 +196,10 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    const Vector<size_t> target_distribution = data_set_pointer->calculate_target_distribution();
+    const vector<int> target_distribution = data_set_pointer->calculate_target_distribution();
 
-    const size_t negatives = target_distribution[0];
-    const size_t positives = target_distribution[1];
+    const int negatives = target_distribution[0];
+    const int positives = target_distribution[1];
 
     if(positives == 0 || negatives == 0)
     {
@@ -228,9 +228,9 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
     
 
-    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
+    const int negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
 
     training_normalization_coefficient = negatives*negatives_weight*0.5;
 }
@@ -248,9 +248,9 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 
 #endif
 
-    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
+    const int negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
 
     selection_normalization_coefficient = negatives*negatives_weight*0.5;
 }
@@ -261,7 +261,7 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 /// Returns the value of the error term gradient.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices) const
+double WeightedSquaredError::calculate_batch_error(const vector<int>& batch_indices) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -271,20 +271,23 @@ double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_i
 
     // Data set
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
 
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+/*
     const double batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
 
     return batch_error / training_normalization_coefficient;
+*/
+
+    return 0.0;
 }
 
 
-double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices,
-                                                   const Vector<double>& parameters) const
+double WeightedSquaredError::calculate_batch_error(const vector<int>& batch_indices,
+                                                   const Tensor<type, 1>& parameters) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -294,15 +297,18 @@ double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_i
 
     // Data set
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
 
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+/*
     const double batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
 
     return batch_error / training_normalization_coefficient;
+*/
+    return 0.0;
+
 }
 
 
@@ -310,7 +316,7 @@ double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_i
 /// It is used for optimization of parameters during training.
 /// Returns the value of the error term gradient.
 
-Vector<double> WeightedSquaredError::calculate_training_error_gradient() const
+Tensor<type, 1> WeightedSquaredError::calculate_training_error_gradient() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -320,9 +326,9 @@ check();
 
     // Neural network
 
-    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
      bool is_forecasting = false;
 
@@ -330,37 +336,38 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     // Loss index
 
-    Vector<double> training_error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> training_error_gradient(parameters_number);
+    training_error_gradient.setZero();
 
      #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
-        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
 
-        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+        const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-        const Tensor<double> output_gradient
+        const Tensor<type, 2> output_gradient
                 = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
 
-        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-        const Vector<double> batch_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
+        const Tensor<type, 1> batch_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
 
         #pragma omp critical
 
         training_error_gradient += batch_gradient;
     }
 
-    return training_error_gradient * 2.0 / training_normalization_coefficient;
+    return training_error_gradient * static_cast<type>(2.0) / training_normalization_coefficient;
 }
 
 
@@ -378,9 +385,9 @@ check();
 
     // Neural network
 
-    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
      bool is_forecasting = false;
 
@@ -388,35 +395,35 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     FirstOrderLoss first_order_loss(this);
-
+/*
      #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
-        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+        const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-        const Vector<double> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
+        const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-        const Tensor<double> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+        const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-        const Matrix<double> error_terms_Jacobian
+        const Tensor<type, 2> error_terms_Jacobian
                 = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
         const double loss = dot(error_terms, error_terms);
 
-        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
           #pragma omp critical
         {
@@ -433,7 +440,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-
+*/
     return first_order_loss;
 }
 
@@ -452,18 +459,18 @@ check();
 
     // Neural network
 
-    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
     FirstOrderLoss first_order_loss(this);
+/*
+    const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
 
-    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
-
-    const Tensor<double> output_gradient
+    const Tensor<type, 2> output_gradient
             = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets)/training_normalization_coefficient;
 
-    const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+    const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Vector<double> batch_gradient
+    const Tensor<type, 1> batch_gradient
             = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
     const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
@@ -478,7 +485,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-
+*/
     return first_order_loss;
 }
 
@@ -488,7 +495,7 @@ check();
 /// @param outputs Tensor    of the outputs of the model.
 /// @param targets Tensor of targets of the data set.
 
-Tensor<double> WeightedSquaredError::calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets) const
+Tensor<type, 2> WeightedSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -496,7 +503,7 @@ check();
 
 #endif
 
-    return (outputs-targets)*((targets-1.0)*(-1.0)*negatives_weight + targets*positives_weight);
+    return (outputs-targets)*((targets-static_cast<type>(1.0))*static_cast<type>(-1.0)*negatives_weight + targets*positives_weight);
 }
 
 
@@ -505,7 +512,7 @@ check();
 /// @param outputs Output data.
 /// @param targets Target data.
 
-Vector<double> WeightedSquaredError::calculate_training_error_terms(const Tensor<double>& outputs, const Tensor<double>& targets) const
+Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
     // Control sentence
 
@@ -514,8 +521,11 @@ Vector<double> WeightedSquaredError::calculate_training_error_terms(const Tensor
     check();
 
     #endif
-
+/*
     return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
+*/
+    return Tensor<type, 1>();
+
 }
 
 
@@ -523,7 +533,7 @@ Vector<double> WeightedSquaredError::calculate_training_error_terms(const Tensor
 /// It uses the error back-propagation method.
 /// @param parameters Parameters of the neural network
 
-Vector<double> WeightedSquaredError::calculate_training_error_terms(const Vector<double>& parameters) const
+Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 1>& parameters) const
 {
     // Control sentence
 
@@ -533,13 +543,16 @@ Vector<double> WeightedSquaredError::calculate_training_error_terms(const Vector
 
     #endif
 
-    const Tensor<double> inputs = data_set_pointer->get_training_input_data();
+    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<double> targets = data_set_pointer->get_training_target_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+/*
     return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
+*/
+    return Tensor<type, 1>();
+
 }
 
 
@@ -557,9 +570,9 @@ check();
 
     // Neural network
 
-    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
      bool is_forecasting = false;
 
@@ -567,37 +580,37 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     SecondOrderLoss terms_second_order_loss(parameters_number);
-
+/*
      #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
-        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+        const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-        const Vector<double> error_terms
+        const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-        const Tensor<double> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+        const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-        const Matrix<double> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+        const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
         const double loss = dot(error_terms, error_terms);
 
-        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
-        Matrix<double> hessian_approximation;
+        Tensor<type, 2> hessian_approximation;
         //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
 
           #pragma omp critical
@@ -618,7 +631,7 @@ check();
         terms_second_order_loss.gradient += calculate_regularization_gradient();
         terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-
+*/
     return terms_second_order_loss;
 }
 

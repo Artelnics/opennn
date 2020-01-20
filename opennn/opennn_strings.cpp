@@ -15,7 +15,7 @@ namespace OpenNN
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-size_t count_tokens(string& str, const char& separator)
+int count_tokens(string& str, const char& separator)
 {
 //    if(!(this->find(separator) != string::npos))
 //    {
@@ -23,7 +23,7 @@ size_t count_tokens(string& str, const char& separator)
 //
 //        buffer << "OpenNN Exception:\n"
 //               << "string class.\n"
-//               << "inline size_t count_tokens(const string&) const method.\n"
+//               << "inline int count_tokens(const string&) const method.\n"
 //               << "Separator not found in string: \"" << separator << "\".\n";
 //
 //        throw logic_error(buffer.str());
@@ -31,7 +31,7 @@ size_t count_tokens(string& str, const char& separator)
 
     trim(str);
 
-    size_t tokens_count = 0;
+    int tokens_count = 0;
 
     // Skip delimiters at beginning.
 
@@ -60,9 +60,9 @@ size_t count_tokens(string& str, const char& separator)
 }
 
 
-size_t count_tokens(const string& s, const char& c)
+int count_tokens(const string& s, const char& c)
 {
-    return static_cast<size_t>(count(s.begin(), s.end(), c) + 1);
+    return static_cast<int>(count(s.begin(), s.end(), c) + 1);
 }
 
 
@@ -70,11 +70,11 @@ size_t count_tokens(const string& s, const char& c)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-Vector<string> get_tokens(const string& str, const char& separator)
+vector<string> get_tokens(const string& str, const char& separator)
 {
     const string new_string = get_trimmed(str);
 
-    Vector<string> tokens;
+    vector<string> tokens;
 
     // Skip delimiters at beginning.
 
@@ -99,7 +99,7 @@ Vector<string> get_tokens(const string& str, const char& separator)
         pos = new_string.find_first_of(separator, lastPos);
     }
 
-    for(size_t i = 0; i < tokens.size(); i++)
+    for(int i = 0; i < tokens.size(); i++)
     {
         trim(tokens[i]);
     }
@@ -110,15 +110,15 @@ Vector<string> get_tokens(const string& str, const char& separator)
 
 /// Returns a new vector with the elements of this string vector casted to double.
 
-Vector<double> to_double_vector(const string& str, const char& separator)
+Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 {
-    const Vector<string> tokens = get_tokens(str, separator);
+    const vector<string> tokens = get_tokens(str, separator);
 
-  const size_t tokens_size = tokens.size();
+  const int tokens_size = tokens.size();
 
-  Vector<double> double_vector(tokens_size);
+  Tensor<type, 1> double_vector(tokens_size);
 
-  for(size_t i = 0; i < tokens_size; i++)
+  for(int i = 0; i < tokens_size; i++)
   {
       try
       {
@@ -400,7 +400,7 @@ time_t date_to_timestamp(const string& date, const int& gmt)
 
             if(!month.empty())
             {
-                for(size_t i = 1; i < 13; i++)
+                for(int i = 1; i < 13; i++)
                 {
                     if(month[i] != "") month_number = static_cast<int>(i);
                 }
@@ -433,7 +433,7 @@ time_t date_to_timestamp(const string& date, const int& gmt)
             int month_number = 0;
             if(!month.empty())
             {
-                for(size_t i =1 ; i<13  ; i++)
+                for(int i =1 ; i<13  ; i++)
                 {
                     if(month[i] != "") month_number = static_cast<int>(i);
                 }
@@ -466,7 +466,7 @@ time_t date_to_timestamp(const string& date, const int& gmt)
             int month_number = 0;
             if(!month.empty())
             {
-                for(size_t i =1 ; i<13  ; i++)
+                for(int i =1 ; i<13  ; i++)
                 {
                     if(month[i] != "") month_number = static_cast<int>(i);
                 }
@@ -499,7 +499,7 @@ time_t date_to_timestamp(const string& date, const int& gmt)
             int month_number = 0;
             if(!month.empty())
             {
-                for(size_t i =1 ; i<13  ; i++)
+                for(int i =1 ; i<13  ; i++)
                 {
                     if(month[i] != "") month_number = static_cast<int>(i);
                 }
@@ -623,9 +623,9 @@ string prepend(const string& pre, const string& str)
 /// Returns true if all the elements in a string list are numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_numeric_string_vector(const Vector<string>& v)
+bool is_numeric_string_vector(const vector<string>& v)
 {
-    for(size_t i = 0; i < v.size(); i++)
+    for(int i = 0; i < v.size(); i++)
     {
         if(!is_numeric_string(v[i])) return false;
     }
@@ -634,9 +634,9 @@ bool is_numeric_string_vector(const Vector<string>& v)
 }
 
 
-bool has_numbers(const Vector<string>& v)
+bool has_numbers(const vector<string>& v)
 {
-    for(size_t i = 0; i < v.size(); i++)
+    for(int i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i])) return true;
     }
@@ -645,9 +645,9 @@ bool has_numbers(const Vector<string>& v)
 }
 
 
-bool has_strings(const Vector<string>& v)
+bool has_strings(const vector<string>& v)
 {
-    for(size_t i = 0; i < v.size(); i++)
+    for(int i = 0; i < v.size(); i++)
     {
         if(!is_numeric_string(v[i])) return true;
     }
@@ -658,9 +658,9 @@ bool has_strings(const Vector<string>& v)
 /// Returns true if none element in a string list is numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_not_numeric(const Vector<string>& v)
+bool is_not_numeric(const vector<string>& v)
 {
-    for(size_t i = 0; i < v.size(); i++)
+    for(int i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i])) return false;
     }
@@ -672,12 +672,12 @@ bool is_not_numeric(const Vector<string>& v)
 /// Returns true if some the elements in a string list are numeric and some others are not numeric.
 /// @param v String list to be checked.
 
-bool is_mixed(const Vector<string>& v)
+bool is_mixed(const vector<string>& v)
 {
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
 
-    for(size_t i = 0; i < v.size(); i++)
+    for(int i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i]))
         {
@@ -704,14 +704,14 @@ bool is_mixed(const Vector<string>& v)
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
 
-void replace_substring(Vector<string>& vector, const string& find_what, const string& replace_with)
+void replace_substring(vector<string>& vector, const string& find_what, const string& replace_with)
 {
 
-    const size_t size = vector.size();
+    const int size = vector.size();
 
-    for(size_t i = 0; i < size; i++)
+    for(int i = 0; i < size; i++)
     {
-        size_t position = 0;
+        int position = 0;
 
         while((position = vector[i].find(find_what, position)) != string::npos)
         {
@@ -725,7 +725,7 @@ void replace_substring(Vector<string>& vector, const string& find_what, const st
 
 void replace(string& source, const string& find_what, const string& replace_with)
 {
-    size_t position = 0;
+    int position = 0;
 
     while((position = source.find(find_what, position)) != string::npos)
     {

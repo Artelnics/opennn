@@ -16,22 +16,23 @@ namespace OpenNN
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double linear_correlation(const Vector<double>& x, const Vector<double>& y)
+double linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-  const size_t n = x.size();
+/*
+  const int n = x.size();
 
   if(x.is_constant() || y.is_constant()) return 1.0;
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t y_size = y.size();
+    const int y_size = y.size();
 
     ostringstream buffer;
 
     if(y_size != n)
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double linear_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size must be equal to X size.\n";
 
       throw logic_error(buffer.str());
@@ -47,7 +48,7 @@ double linear_correlation(const Vector<double>& x, const Vector<double>& y)
 
   double s_xy = 0.0;
 
-  for(size_t i = 0; i < n; i++)
+  for(int i = 0; i < n; i++)
   {
     s_x += x[i];
     s_y += y[i];
@@ -89,6 +90,8 @@ double linear_correlation(const Vector<double>& x, const Vector<double>& y)
   }
 
   return linear_correlation;
+*/
+    return 0.0;
 }
 
 
@@ -97,12 +100,12 @@ double linear_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with this vector.
 
-double linear_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
+double linear_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_x = filter_vectors.first;
-    const Vector<double> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
     return linear_correlation(new_x, new_y);
 }
@@ -112,7 +115,7 @@ double linear_correlation_missing_values(const Vector<double>& x, const Vector<d
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double rank_linear_correlation(const Vector<double>& x, const Vector<double>& y)
+double rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -120,20 +123,22 @@ double rank_linear_correlation(const Vector<double>& x, const Vector<double>& y)
 
     if(y.size() != x.size()) {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double rank_linear_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size must be equal to X size.\n";
 
       throw logic_error(buffer.str());
     }
 
     #endif
-
+/*
     if(x.is_constant() || y.is_constant()) return 1;
 
-    const Vector<double> ranks_x = less_rank_with_ties(x);
-    const Vector<double> ranks_y = less_rank_with_ties(y);
+    const Tensor<type, 1> ranks_x = less_rank_with_ties(x);
+    const Tensor<type, 1> ranks_y = less_rank_with_ties(y);
 
     return linear_correlation(ranks_x, ranks_y);
+*/
+    return 0.0;
 }
 
 
@@ -143,12 +148,12 @@ double rank_linear_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param y Vector for computing the linear correlation with the x vector.
 /// @param missing Vector with the missing instances idices.
 
-double rank_linear_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
+double rank_linear_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_x = filter_vectors.first;
-    const Vector<double> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
     return rank_linear_correlation(new_x, new_y);
 }
@@ -158,7 +163,7 @@ double rank_linear_correlation_missing_values(const Vector<double>& x, const Vec
 /// @param x Vector containing the input values.
 /// @param y Vector containing the target values.
 
-double exponential_correlation(const Vector<double>& x, const Vector<double>& y)
+double exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
   #ifdef __OPENNN_DEBUG__
 
@@ -166,25 +171,27 @@ double exponential_correlation(const Vector<double>& x, const Vector<double>& y)
 
       if(y.size() != x.size()) {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static double exponential_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+               << "static double exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
       }
 
 #endif
+/*
+    const vector<int> negative_indices = y.get_indices_less_equal_to(0.0);
+    const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
-    const Vector<size_t> negative_indices = y.get_indices_less_equal_to(0.0);
-    const Vector<double> y_valid = y.delete_indices(negative_indices);
-
-    Vector<double> log_y(y_valid.size());
+    Tensor<type, 1> log_y(y_valid.size());
 
     for(int i = 0; i < static_cast<int>(log_y.size()); i++)
     {
-        log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
+        log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
     }
 
     return linear_correlation(x.delete_indices(negative_indices), log_y);
+*/
+      return 0.0;
 }
 
 
@@ -193,7 +200,7 @@ double exponential_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param y Vector containing the target values.
 /// @param missing Vector with the missing instances indices.
 
-double exponential_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
+double exponential_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -202,7 +209,7 @@ double exponential_correlation_missing_values(const Vector<double>& x, const Vec
         if(y.size() != x.size())
         {
           buffer << "OpenNN Exception: Correlations.\n"
-                 << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+                 << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                  << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
           throw logic_error(buffer.str());
@@ -210,10 +217,10 @@ double exponential_correlation_missing_values(const Vector<double>& x, const Vec
 
     #endif
 
-    pair <Vector<double>, Vector<double>> filter_vector = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vector = filter_missing_values(x,y);
 
-    const Vector<double> new_x = filter_vector.first;
-    const Vector<double> new_y = filter_vector.second;
+    const Tensor<type, 1> new_x = filter_vector.first;
+    const Tensor<type, 1> new_y = filter_vector.second;
 
     return exponential_correlation(new_x, new_y);
 }
@@ -223,7 +230,7 @@ double exponential_correlation_missing_values(const Vector<double>& x, const Vec
 /// @param x Vector containing the input values.
 /// @param y Vector containing the target values.
 
-double logarithmic_correlation(const Vector<double>& x, const Vector<double>& y)
+double logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -231,7 +238,7 @@ double logarithmic_correlation(const Vector<double>& x, const Vector<double>& y)
 
      if(y.size() != x.size()) {
        buffer << "OpenNN Exception: Correlations.\n"
-              << "static double logarithmic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+              << "static double logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
               << "Y size must be equal to X size.\n";
 
        throw logic_error(buffer.str());
@@ -249,7 +256,7 @@ double logarithmic_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param y Vector containing the target values.
 /// @param missing Vector with the missing instances indices.
 
-double logarithmic_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
+double logarithmic_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     {
     #ifdef __OPENNN_DEBUG__
 
@@ -258,7 +265,7 @@ double logarithmic_correlation_missing_values(const Vector<double>& x, const Vec
         if(y.size() != x.size())
         {
           buffer << "OpenNN Exception: Correlations.\n"
-                 << "static double logarithmic_correlation_missing_values(const Vector<double>&, const Vector<double>&) method.\n"
+                 << "static double logarithmic_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                  << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
           throw logic_error(buffer.str());
@@ -266,10 +273,10 @@ double logarithmic_correlation_missing_values(const Vector<double>& x, const Vec
 
     #endif
 
-        pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+        pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-        const Vector<double> new_x = filter_vectors.first;
-        const Vector<double> new_y = filter_vectors.second;
+        const Tensor<type, 1> new_x = filter_vectors.first;
+        const Tensor<type, 1> new_y = filter_vectors.second;
 
     return logarithmic_correlation(new_x, new_y);
 }
@@ -280,7 +287,7 @@ double logarithmic_correlation_missing_values(const Vector<double>& x, const Vec
 /// @param x Matrix containing inputs data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
+double logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -289,7 +296,7 @@ double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
       throw logic_error(buffer.str());
@@ -297,11 +304,11 @@ double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
 
 #endif
 
-    Vector<double> scaled_x(x);
+    Tensor<type, 1> scaled_x(x);
     scale_minimum_maximum(scaled_x);
 
-
-    const size_t epochs_number = 50000;
+/*
+    const int epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -310,13 +317,13 @@ double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
 
     double error;
 
-    Vector<double> coefficients({0.0, 0.0});
-    Vector<double> gradient(2, 0.0);
-    Vector<double> increment(2, 0.0);
+    Tensor<type, 1> coefficients({0.0, 0.0});
+    Tensor<type, 1> gradient(2, 0.0);
+    Tensor<type, 1> increment(2, 0.0);
 
-    Vector<double> last_increment(2, 0.0);
+    Tensor<type, 1> last_increment(2, 0.0);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -343,6 +350,8 @@ double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
     regression_results.correlation = linear_correlation(logistic_function(x,regression_results.a,regression_results.b), y);
 
     return regression_results.correlation;
+*/
+    return 0.0;
 }
 
 
@@ -351,7 +360,7 @@ double logistic_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param x Matrix containing inputs data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double logistic_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
+double logistic_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -360,24 +369,24 @@ double logistic_correlation_missing_values(const Vector<double>& x, const Vector
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
+/*
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const Vector<double> new_x = filter_vectors.first;
-    const Vector<double> new_y = filter_vectors.second;
-
-    Vector<double> scaled_x(new_x);
+    Tensor<type, 1> scaled_x(new_x);
     scale_minimum_maximum(scaled_x);
 
 
-    const size_t epochs_number = 50000;
+    const int epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -386,13 +395,13 @@ double logistic_correlation_missing_values(const Vector<double>& x, const Vector
 
     double error;
 
-    Vector<double> coefficients({0.0, 0.0});
-    Vector<double> gradient(2, 0.0);
-    Vector<double> increment(2, 0.0);
+    Tensor<type, 1> coefficients({0.0, 0.0});
+    Tensor<type, 1> gradient(2, 0.0);
+    Tensor<type, 1> increment(2, 0.0);
 
-    Vector<double> last_increment(2, 0.0);
+    Tensor<type, 1> last_increment(2, 0.0);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_x, new_y);
 
@@ -419,6 +428,8 @@ double logistic_correlation_missing_values(const Vector<double>& x, const Vector
     regression_results.correlation = linear_correlation(logistic_function(new_x,regression_results.a,regression_results.b), new_y);
 
     return regression_results.correlation;
+*/
+    return 0.0;
 }
 
 
@@ -428,9 +439,9 @@ double logistic_correlation_missing_values(const Vector<double>& x, const Vector
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double rank_logistic_correlation(const Vector<double>& x, const Vector<double>& y)
+double rank_logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Vector<double> x_new = less_rank_with_ties(x);
+    const Tensor<type, 1> x_new = less_rank_with_ties(x);
 
     return logistic_correlation_missing_values(x_new, y);
 }
@@ -440,7 +451,7 @@ double rank_logistic_correlation(const Vector<double>& x, const Vector<double>& 
 /// @param x Vector of the independent variable
 /// @param y Vector of the dependent variable
 
-double power_correlation(const Vector<double>& x, const Vector<double>& y)
+double power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -449,7 +460,7 @@ double power_correlation(const Vector<double>& x, const Vector<double>& y)
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
       throw logic_error(buffer.str());
@@ -464,7 +475,7 @@ double power_correlation(const Vector<double>& x, const Vector<double>& y)
 /// @param x Vector of the independent variable
 /// @param y Vector of the dependent variable
 
-double power_correlation_missing_values(const Vector<double>&x, const Vector<double>&y)
+double power_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -473,17 +484,17 @@ double power_correlation_missing_values(const Vector<double>&x, const Vector<dou
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_x = filter_vectors.first;
-    const Vector<double> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
     return linear_correlation(logarithm(new_x), logarithm(new_y));
 }
@@ -493,24 +504,24 @@ double power_correlation_missing_values(const Vector<double>&x, const Vector<dou
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
-Vector<double> autocorrelations(const Vector<double>& x, const size_t &lags_number)
+Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const int &lags_number)
 {
-  Vector<double> autocorrelation(lags_number);
+  Tensor<type, 1> autocorrelation(lags_number);
 
   const double mean = OpenNN::mean(x);
 
-  const size_t this_size = x.size();
+  const int this_size = x.size();
 
   double numerator = 0;
   double denominator = 0;
 
-  for(size_t i = 0; i < lags_number; i++)
+  for(int i = 0; i < lags_number; i++)
   {
-    for(size_t j = 0; j < this_size - i; j++)
+    for(int j = 0; j < this_size - i; j++)
     {
       numerator += ((x[j] - mean) *(x[j + i] - mean)) /static_cast<double>(this_size - i);
     }
-    for(size_t j = 0; j < this_size; j++)
+    for(int j = 0; j < this_size; j++)
     {
       denominator += ((x[j] - mean) *(x[j] - mean)) /static_cast<double>(this_size);
     }
@@ -537,7 +548,7 @@ Vector<double> autocorrelations(const Vector<double>& x, const size_t &lags_numb
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
 
-Vector<double> cross_correlations(const Vector<double>& x, const Vector<double>& y, const size_t &maximum_lags_number)
+Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const int &maximum_lags_number)
 {
   if(y.size() != x.size())
   {
@@ -545,18 +556,18 @@ Vector<double> cross_correlations(const Vector<double>& x, const Vector<double>&
 
     buffer << "OpenNN Exception: Correlations.\n"
            << "Vector<double calculate_cross_correlation(const "
-           << "Vector<double>&) method.\n"
+           << "Tensor<type, 1>&) method.\n"
            << "Both vectors must have the same size.\n";
 
     throw logic_error(buffer.str());
   }
 
-  Vector<double> cross_correlation(maximum_lags_number);
+  Tensor<type, 1> cross_correlation(maximum_lags_number);
 
   const double this_mean = mean(x);
   const double y_mean = mean(y);
 
-  const size_t this_size = x.size();
+  const int this_size = x.size();
 
   double numerator = 0;
 
@@ -564,18 +575,18 @@ Vector<double> cross_correlations(const Vector<double>& x, const Vector<double>&
   double y_denominator = 0;
   double denominator = 0;
 
-  for(size_t i = 0; i < maximum_lags_number; i++)
+  for(int i = 0; i < maximum_lags_number; i++)
   {
     numerator = 0;
     this_denominator = 0;
     y_denominator = 0;
 
-    for(size_t j = 0; j < this_size - i; j++)
+    for(int j = 0; j < this_size - i; j++)
     {
       numerator += (x[j] - this_mean) *(y[j + i] - y_mean);
     }
 
-    for(size_t j = 0; j < this_size; j++)
+    for(int j = 0; j < this_size; j++)
     {
       this_denominator += (x[j] - this_mean) *(x[j] - this_mean);
       y_denominator += (y[j] - y_mean) *(y[j] - y_mean);
@@ -599,19 +610,19 @@ Vector<double> cross_correlations(const Vector<double>& x, const Vector<double>&
 /// @param x Independent data.
 /// @param y Dependent data.
 
-Vector<double> logistic_error_gradient(const double& a, const double& b, const Vector<double>& x, const Vector<double>& y)
+Tensor<type, 1> logistic_error_gradient(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   const size_t n = y.size();
+   const int n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
   ostringstream buffer;
 
   if(x_size != n) {
     buffer << "OpenNN Exception: double.\n"
-           << "logistic error(const double&, const double&, const Vector<double>&, const Vector<double>& "
+           << "logistic error(const double&, const double&, const Tensor<type, 1>&, const Tensor<type, 1>& "
               "method.\n"
            << "Y size must be equal to X size.\n";
 
@@ -620,7 +631,7 @@ Vector<double> logistic_error_gradient(const double& a, const double& b, const V
 
 #endif
 
-    Vector<double> error_gradient(2);
+    Tensor<type, 1> error_gradient(2);
 
     double sum_a = 0.0;
     double sum_b = 0.0;
@@ -629,7 +640,7 @@ Vector<double> logistic_error_gradient(const double& a, const double& b, const V
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
         exponential = exp(-a - b * x[i]);
 
@@ -651,19 +662,19 @@ Vector<double> logistic_error_gradient(const double& a, const double& b, const V
 /// @param x Input vector.
 /// @param y Target vector.
 
-Vector<double> logistic_error_gradient_missing_values(const double& a, const double& b, const Vector<double>& x, const Vector<double>& y)
+Tensor<type, 1> logistic_error_gradient_missing_values(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   const size_t n = y.size();
+   const int n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
   ostringstream buffer;
 
   if(x_size != n) {
     buffer << "OpenNN Exception: double.\n"
-           << "logistic error(const double&, const double&, const Vector<double>&, const Vector<double>& "
+           << "logistic error(const double&, const double&, const Tensor<type, 1>&, const Tensor<type, 1>& "
               "method.\n"
            << "Y size must be equal to X size.\n";
 
@@ -672,23 +683,23 @@ Vector<double> logistic_error_gradient_missing_values(const double& a, const dou
 
 #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
-    Vector<double> f_x(new_vector_y.size());
+    Tensor<type, 1> f_x(new_vector_y.size());
 
     const double new_n = static_cast<double>(new_vector_x.size());
 
-    Vector<double> error_gradient(2);
+    Tensor<type, 1> error_gradient(2);
 
     double sum_a = 0.0;
     double sum_b = 0.0;
 
     double exponential;
 
-    for(size_t i = 0; i < new_n; i ++)
+    for(int i = 0; i < new_n; i ++)
     {
         exponential = exp(-a - b * new_vector_x[i]);
 
@@ -716,19 +727,19 @@ double logistic(const double& a, const double& b, const double& x)
 
 ///Calculate the mean square error of the logistic function.
 
-double logistic_error(const double& a, const double& b, const Vector<double>& x, const Vector<double>& y)
+double logistic_error(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
   ostringstream buffer;
 
   if(x_size != n) {
     buffer << "OpenNN Exception: double.\n"
-           << "logistic error(const double&, const double&, const Vector<double>&, const Vector<double>& "
+           << "logistic error(const double&, const double&, const Tensor<type, 1>&, const Tensor<type, 1>& "
               "method.\n"
            << "Y size must be equal to X size.\n";
 
@@ -741,7 +752,7 @@ double logistic_error(const double& a, const double& b, const Vector<double>& x,
 
     double sum_squared_error = 0.0;
 
-    for(size_t i = 0; i < x.size(); i ++)
+    for(int i = 0; i < x.size(); i ++)
     {
         error = logistic(a, b, x[i]) - y[i];
 
@@ -755,19 +766,19 @@ double logistic_error(const double& a, const double& b, const Vector<double>& x,
 ///Calculate the error of the logistic function when there are missing values.
 
 double  logistic_error_missing_values
-(const double& a, const double& b, const Vector<double>& x, const Vector<double>& y)
+(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
   ostringstream buffer;
 
   if(x_size != n) {
     buffer << "OpenNN Exception: double.\n"
-           << "logistic error(const double&, const double&, const Vector<double>&, const Vector<double>& "
+           << "logistic error(const double&, const double&, const Tensor<type, 1>&, const Tensor<type, 1>& "
               "method.\n"
            << "Y size must be equal to X size.\n";
 
@@ -776,12 +787,12 @@ double  logistic_error_missing_values
 
 #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
-    Vector<double> f_x(new_vector_y.size());
+    Tensor<type, 1> f_x(new_vector_y.size());
 
     const double new_n = static_cast<double>(new_vector_x.size());
 
@@ -789,7 +800,7 @@ double  logistic_error_missing_values
 
     double error = 0.0;
 
-    for(size_t i = 0; i < new_n; i ++)
+    for(int i = 0; i < new_n; i ++)
     {
         f_x[i] = logistic(a, b, new_vector_x[i]);
 
@@ -804,13 +815,13 @@ double  logistic_error_missing_values
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression(const Vector<double>& x, const Vector<double>& y)
+RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -834,7 +845,7 @@ RegressionResults linear_regression(const Vector<double>& x, const Vector<double
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += x[i];
       s_y += y[i];
 
@@ -881,13 +892,13 @@ RegressionResults linear_regression(const Vector<double>& x, const Vector<double
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
+RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   size_t n = y.size();
+   int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -901,10 +912,10 @@ RegressionResults linear_regression_missing_values(const Vector<double>& x, cons
 
   #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     n = new_vector_x.size();
 
@@ -916,7 +927,7 @@ RegressionResults linear_regression_missing_values(const Vector<double>& x, cons
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < new_vector_x.size(); i++) {
+    for(int i = 0; i < new_vector_x.size(); i++) {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
 
@@ -966,13 +977,14 @@ RegressionResults linear_regression_missing_values(const Vector<double>& x, cons
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logarithmic_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
+RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   size_t n = y.size();
+/*
+   int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -987,10 +999,10 @@ RegressionResults logarithmic_regression_missing_values(const Vector<double>& x,
     }
 
   #endif
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     n = new_vector_x.size();
 
@@ -1002,11 +1014,11 @@ RegressionResults logarithmic_regression_missing_values(const Vector<double>& x,
 
     double s_xy = 0;
 
-    Vector<double> x1(new_vector_x.size());
+    Tensor<type, 1> x1(new_vector_x.size());
 
     double y1 = 0;
 
-    for(size_t i = 0; i < new_vector_x.size(); i++)
+    for(int i = 0; i < new_vector_x.size(); i++)
     {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
@@ -1015,7 +1027,7 @@ RegressionResults logarithmic_regression_missing_values(const Vector<double>& x,
       y1 += new_vector_y[i];
     }
 
-     for(size_t i = 0; i < new_vector_x.size(); i++)
+     for(int i = 0; i < new_vector_x.size(); i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
 
@@ -1045,6 +1057,8 @@ RegressionResults logarithmic_regression_missing_values(const Vector<double>& x,
     }
 
      return logarithmic_regression;
+*/
+    return RegressionResults();
 }
 
 
@@ -1052,13 +1066,14 @@ RegressionResults logarithmic_regression_missing_values(const Vector<double>& x,
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logarithmic_regression(const Vector<double>& x, const Vector<double>& y)
+RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+/*
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1082,11 +1097,11 @@ RegressionResults logarithmic_regression(const Vector<double>& x, const Vector<d
 
     double s_xy = 0;
 
-    Vector<double> x1(x.size());
+    Tensor<type, 1> x1(x.size());
 
     double y1 = 0;
 
-    for(size_t i = 0; i < n; i++)
+    for(int i = 0; i < n; i++)
     {
       s_x += x[i];
       s_y += y[i];
@@ -1095,7 +1110,7 @@ RegressionResults logarithmic_regression(const Vector<double>& x, const Vector<d
       y1 += y[i];
     }
 
-     for(size_t i = 0; i < n; i++)
+     for(int i = 0; i < n; i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
 
@@ -1124,6 +1139,8 @@ RegressionResults logarithmic_regression(const Vector<double>& x, const Vector<d
     }
 
      return logarithmic_regression;
+*/
+    return RegressionResults();
 }
 
 
@@ -1131,13 +1148,13 @@ RegressionResults logarithmic_regression(const Vector<double>& x, const Vector<d
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults exponential_regression(const Vector<double>& x, const Vector<double>& y)
+RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1160,7 +1177,7 @@ RegressionResults exponential_regression(const Vector<double>& x, const Vector<d
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += x[i];
 
       s_y += log(y[i]);
@@ -1171,7 +1188,7 @@ RegressionResults exponential_regression(const Vector<double>& x, const Vector<d
     }
 
     RegressionResults exponential_regression;
-
+/*
     exponential_regression.regression_type = Exponential;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
@@ -1189,20 +1206,20 @@ RegressionResults exponential_regression(const Vector<double>& x, const Vector<d
 
 
 
-     const Vector<size_t> negative_indices = y.get_indices_less_equal_to(0.0);
-     const Vector<double> y_valid = y.delete_indices(negative_indices);
+     const vector<int> negative_indices = y.get_indices_less_equal_to(0.0);
+     const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
-     Vector<double> log_y(y_valid.size());
+     Tensor<type, 1> log_y(y_valid.size());
 
      for(int i = 0; i < static_cast<int>(log_y.size()); i++)
      {
-         log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
+         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
      }
 
      exponential_regression.correlation = exponential_correlation(x.delete_indices(negative_indices), log_y);
 
     }
-
+*/
     return exponential_regression;
 }
 
@@ -1211,12 +1228,12 @@ RegressionResults exponential_regression(const Vector<double>& x, const Vector<d
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults exponential_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
+RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
-    size_t n = y.size();
+    const int x_size = x.size();
+    int n = y.size();
 
     ostringstream buffer;
 
@@ -1232,10 +1249,10 @@ RegressionResults exponential_regression_missing_values(const Vector<double>& x,
 
   #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     const  double new_size = static_cast<double>(new_vector_x.size());
 
@@ -1246,7 +1263,7 @@ RegressionResults exponential_regression_missing_values(const Vector<double>& x,
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < new_size; i++)
+    for(int i = 0; i < new_size; i++)
     {
       s_x += new_vector_x[i];
 
@@ -1258,7 +1275,7 @@ RegressionResults exponential_regression_missing_values(const Vector<double>& x,
     }
 
     RegressionResults exponential_regression;
-
+/*
     exponential_regression.regression_type = Exponential;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
@@ -1274,20 +1291,20 @@ RegressionResults exponential_regression_missing_values(const Vector<double>& x,
        exponential_regression.a =
           exp(s_y/new_size - exponential_regression.b * s_x/new_size);
 
-     const Vector<size_t> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
-     const Vector<double> y_valid = new_vector_y.delete_indices(negative_indices);
+     const vector<int> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
-     Vector<double> log_y(y_valid.size());
+     Tensor<type, 1> log_y(y_valid.size());
 
      for(int i = 0; i < static_cast<int>(log_y.size()); i++)
      {
-         log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
+         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
      }
 
      exponential_regression.correlation = exponential_correlation(new_vector_x.delete_indices(negative_indices), log_y);
 
     }
-
+*/
     return exponential_regression;
 }
 
@@ -1296,13 +1313,13 @@ RegressionResults exponential_regression_missing_values(const Vector<double>& x,
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults power_regression(const Vector<double>& x, const Vector<double>& y)
+RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1325,7 +1342,7 @@ RegressionResults power_regression(const Vector<double>& x, const Vector<double>
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += log(x[i]);
       s_y += log(y[i]);
 
@@ -1365,13 +1382,13 @@ RegressionResults power_regression(const Vector<double>& x, const Vector<double>
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults power_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
+RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    size_t n = y.size();
+    int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1387,10 +1404,10 @@ RegressionResults power_regression_missing_values(const Vector<double>& x, const
 
   #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     n = new_vector_x.size();
 
@@ -1401,7 +1418,7 @@ RegressionResults power_regression_missing_values(const Vector<double>& x, const
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += log(new_vector_x[i]);
       s_y += log(new_vector_y[i]);
 
@@ -1442,7 +1459,7 @@ RegressionResults power_regression_missing_values(const Vector<double>& x, const
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logistic_regression(const Vector<double>& x, const Vector<double>& y)
+RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1451,20 +1468,20 @@ RegressionResults logistic_regression(const Vector<double>& x, const Vector<doub
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-
-    Vector<double> scaled_x(x);
+/*
+    Tensor<type, 1> scaled_x(x);
     scale_minimum_maximum(scaled_x);
 
-    Vector<double> coefficients({0.0, 0.0});
+    Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const size_t epochs_number = 100000;
+    const int epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -1472,9 +1489,9 @@ RegressionResults logistic_regression(const Vector<double>& x, const Vector<doub
 
     double error;
 
-    Vector<double> gradient(2);
+    Tensor<type, 1> gradient(2);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -1495,6 +1512,8 @@ RegressionResults logistic_regression(const Vector<double>& x, const Vector<doub
     regression_results.correlation = linear_correlation(logistic_function(x,regression_results.a,regression_results.b), y);
 
     return regression_results;
+*/
+    return RegressionResults();
 }
 
 
@@ -1502,7 +1521,7 @@ RegressionResults logistic_regression(const Vector<double>& x, const Vector<doub
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logistic_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
+RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1511,25 +1530,25 @@ RegressionResults logistic_regression_missing_values(const Vector<double>& x, co
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
+/*
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
-
-    Vector<double> scaled_x(new_vector_x);
+    Tensor<type, 1> scaled_x(new_vector_x);
     scale_minimum_maximum(scaled_x);
 
-    Vector<double> coefficients({0.0, 0.0});
+    Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const size_t epochs_number = 100000;
+    const int epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -1537,9 +1556,9 @@ RegressionResults logistic_regression_missing_values(const Vector<double>& x, co
 
     double error;
 
-    Vector<double> gradient(2);
+    Tensor<type, 1> gradient(2);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_vector_x, new_vector_y);
 
@@ -1560,6 +1579,8 @@ RegressionResults logistic_regression_missing_values(const Vector<double>& x, co
     regression_results.correlation = linear_correlation(logistic_function(new_vector_x,regression_results.a,regression_results.b), new_vector_y);
 
     return regression_results;
+*/
+    return RegressionResults();
 }
 
 
@@ -1567,13 +1588,13 @@ RegressionResults logistic_regression_missing_values(const Vector<double>& x, co
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults linear_correlations(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1597,7 +1618,7 @@ CorrelationResults linear_correlations(const Vector<double>& x, const Vector<dou
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += x[i];
       s_y += y[i];
 
@@ -1637,13 +1658,13 @@ CorrelationResults linear_correlations(const Vector<double>& x, const Vector<dou
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults linear_correlations_missing_values(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    size_t n = y.size();
+    int n = y.size();
 
    #ifdef __OPENNN_DEBUG__
 
-     const size_t x_size = x.size();
+     const int x_size = x.size();
 
      ostringstream buffer;
 
@@ -1657,10 +1678,10 @@ CorrelationResults linear_correlations_missing_values(const Vector<double>& x, c
 
    #endif
 
-     pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-     const Vector<double> new_vector_x = filter_vectors.first;
-     const Vector<double> new_vector_y = filter_vectors.second;
+     const Tensor<type, 1> new_vector_x = filter_vectors.first;
+     const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
      n = new_vector_x.size();
 
@@ -1672,7 +1693,7 @@ CorrelationResults linear_correlations_missing_values(const Vector<double>& x, c
 
      double s_xy = 0;
 
-     for(size_t i = 0; i < new_vector_x.size(); i++) {
+     for(int i = 0; i < new_vector_x.size(); i++) {
        s_x += new_vector_x[i];
        s_y += new_vector_y[i];
 
@@ -1712,13 +1733,13 @@ CorrelationResults linear_correlations_missing_values(const Vector<double>& x, c
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1733,7 +1754,7 @@ CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vecto
     }
 
   #endif
-
+/*
     double s_x = 0;
     double s_y = 0;
 
@@ -1742,11 +1763,11 @@ CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vecto
 
     double s_xy = 0;
 
-    Vector<double> x1(x.size());
+    Tensor<type, 1> x1(x.size());
 
     double y1 = 0;
 
-    for(size_t i = 0; i < n; i++)
+    for(int i = 0; i < n; i++)
     {
       s_x += x[i];
       s_y += y[i];
@@ -1755,7 +1776,7 @@ CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vecto
       y1 += y[i];
     }
 
-     for(size_t i = 0; i < n; i++)
+     for(int i = 0; i < n; i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
 
@@ -1778,6 +1799,8 @@ CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vecto
     }
 
      return logarithmic_correlation;
+*/
+    return CorrelationResults();
 }
 
 
@@ -1785,13 +1808,13 @@ CorrelationResults logarithmic_correlations(const Vector<double>& x, const Vecto
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logarithmic_correlations_missing_values(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   size_t n = y.size();
+   int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1806,10 +1829,11 @@ CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&
     }
 
   #endif
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+/*
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     n = new_vector_x.size();
 
@@ -1821,11 +1845,11 @@ CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&
 
     double s_xy = 0;
 
-    Vector<double> x1(new_vector_x.size());
+    Tensor<type, 1> x1(new_vector_x.size());
 
     double y1 = 0;
 
-    for(size_t i = 0; i < new_vector_x.size(); i++)
+    for(int i = 0; i < new_vector_x.size(); i++)
     {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
@@ -1834,7 +1858,7 @@ CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&
       y1 += new_vector_y[i];
     }
 
-     for(size_t i = 0; i < new_vector_x.size(); i++)
+     for(int i = 0; i < new_vector_x.size(); i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
 
@@ -1860,6 +1884,8 @@ CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&
      }
 
      return logarithmic_correlation;
+*/
+    return CorrelationResults();
 }
 
 
@@ -1867,13 +1893,13 @@ CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults exponential_correlations(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1888,7 +1914,7 @@ CorrelationResults exponential_correlations(const Vector<double>& x, const Vecto
     }
 
   #endif
-
+/*
     double s_x = 0;
     double s_y = 0;
 
@@ -1896,7 +1922,7 @@ CorrelationResults exponential_correlations(const Vector<double>& x, const Vecto
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += x[i];
 
       s_y += log(y[i]);
@@ -1916,21 +1942,23 @@ CorrelationResults exponential_correlations(const Vector<double>& x, const Vecto
 
      } else {
 
-        const Vector<size_t> negative_indices = y.get_indices_less_equal_to(0.0);
+        const vector<int> negative_indices = y.get_indices_less_equal_to(0.0);
 
-        const Vector<double> y_valid = y.delete_indices(negative_indices);
+        const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
-        Vector<double> log_y(y_valid.size());
+        Tensor<type, 1> log_y(y_valid.size());
 
         for(int i = 0; i < static_cast<int>(log_y.size()); i++)
         {
-             log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
+             log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
         }
 
         exponential_correlation.correlation = OpenNN::linear_correlation(x.delete_indices(negative_indices), log_y);
     }
 
     return exponential_correlation;
+*/
+    return CorrelationResults();
 }
 
 
@@ -1938,13 +1966,14 @@ CorrelationResults exponential_correlations(const Vector<double>& x, const Vecto
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults exponential_correlations_missing_values(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    size_t n = y.size();
+    /*
+    int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -1960,10 +1989,10 @@ CorrelationResults exponential_correlations_missing_values(const Vector<double>&
 
   #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     const  double new_size = static_cast<double>(new_vector_x.size());
 
@@ -1974,7 +2003,7 @@ CorrelationResults exponential_correlations_missing_values(const Vector<double>&
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < new_size; i++)
+    for(int i = 0; i < new_size; i++)
     {
       s_x += new_vector_x[i];
 
@@ -1996,14 +2025,14 @@ CorrelationResults exponential_correlations_missing_values(const Vector<double>&
 
     } else {
 
-     const Vector<size_t> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
-     const Vector<double> y_valid = new_vector_y.delete_indices(negative_indices);
+     const vector<int> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
-     Vector<double> log_y(y_valid.size());
+     Tensor<type, 1> log_y(y_valid.size());
 
      for(int i = 0; i < static_cast<int>(log_y.size()); i++)
      {
-         log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
+         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
      }
 
      exponential_correlation.correlation = exponential_correlation_missing_values(new_vector_x.delete_indices(negative_indices), log_y);
@@ -2011,6 +2040,9 @@ CorrelationResults exponential_correlations_missing_values(const Vector<double>&
     }
 
     return exponential_correlation;
+    */
+    return CorrelationResults();
+
 }
 
 
@@ -2018,13 +2050,14 @@ CorrelationResults exponential_correlations_missing_values(const Vector<double>&
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults power_correlations(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t n = y.size();
+    /*
+    const int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -2047,7 +2080,7 @@ CorrelationResults power_correlations(const Vector<double>& x, const Vector<doub
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += log(x[i]);
       s_y += log(y[i]);
 
@@ -2070,6 +2103,9 @@ CorrelationResults power_correlations(const Vector<double>& x, const Vector<doub
     }
 
     return power_correlation;
+*/
+    return CorrelationResults();
+
 }
 
 
@@ -2077,13 +2113,14 @@ CorrelationResults power_correlations(const Vector<double>& x, const Vector<doub
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults power_correlations_missing_values(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    size_t n = y.size();
+    /*
+    int n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
+    const int x_size = x.size();
 
     ostringstream buffer;
 
@@ -2099,10 +2136,10 @@ CorrelationResults power_correlations_missing_values(const Vector<double>& x, co
 
   #endif
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
     n = new_vector_x.size();
 
@@ -2113,7 +2150,7 @@ CorrelationResults power_correlations_missing_values(const Vector<double>& x, co
 
     double s_xy = 0;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       s_x += log(new_vector_x[i]);
       s_y += log(new_vector_y[i]);
 
@@ -2136,6 +2173,10 @@ CorrelationResults power_correlations_missing_values(const Vector<double>& x, co
     }
 
     return power_correlation;
+    */
+
+    return CorrelationResults();
+
 }
 
 
@@ -2143,7 +2184,7 @@ CorrelationResults power_correlations_missing_values(const Vector<double>& x, co
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logistic_correlations(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -2152,19 +2193,19 @@ CorrelationResults logistic_correlations(const Vector<double>& x, const Vector<d
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-
-    Vector<double> scaled_x(x);
+/*
+    Tensor<type, 1> scaled_x(x);
     scale_minimum_maximum(scaled_x);
 
 
-    const size_t epochs_number = 50000;
+    const int epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -2173,13 +2214,13 @@ CorrelationResults logistic_correlations(const Vector<double>& x, const Vector<d
 
     double error;
 
-    Vector<double> coefficients({0.0, 0.0});
-    Vector<double> gradient(2, 0.0);
-    Vector<double> increment(2, 0.0);
+    Tensor<type, 1> coefficients({0.0, 0.0});
+    Tensor<type, 1> gradient(2, 0.0);
+    Tensor<type, 1> increment(2, 0.0);
 
-    Vector<double> last_increment(2, 0.0);
+    Tensor<type, 1> last_increment(2, 0.0);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {               
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -2211,6 +2252,8 @@ CorrelationResults logistic_correlations(const Vector<double>& x, const Vector<d
     correlation_results.correlation = regression_results.correlation;
 
     return correlation_results;
+*/
+    return CorrelationResults();
 }
 
 
@@ -2218,7 +2261,7 @@ CorrelationResults logistic_correlations(const Vector<double>& x, const Vector<d
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logistic_correlations_missing_values(const Vector<double>& x, const Vector<double>& y)
+CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -2227,25 +2270,25 @@ CorrelationResults logistic_correlations_missing_values(const Vector<double>& x,
     if(y.size() != x.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "static double logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "static double logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
+/*
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
-    const Vector<double> new_vector_x = filter_vectors.first;
-    const Vector<double> new_vector_y = filter_vectors.second;
-
-    Vector<double> scaled_x(new_vector_x);
+    Tensor<type, 1> scaled_x(new_vector_x);
     scale_minimum_maximum(scaled_x);
 
-    Vector<double> coefficients({0.0, 0.0});
+    Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const size_t epochs_number = 100000;
+    const int epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -2253,9 +2296,9 @@ CorrelationResults logistic_correlations_missing_values(const Vector<double>& x,
 
     double error;
 
-    Vector<double> gradient(2);
+    Tensor<type, 1> gradient(2);
 
-    for(size_t i = 0; i < epochs_number; i++)
+    for(int i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_vector_x, new_vector_y);
 
@@ -2281,6 +2324,8 @@ CorrelationResults logistic_correlations_missing_values(const Vector<double>& x,
     correlation_results.correlation = regression_results.correlation;
 
     return correlation_results;
+*/
+    return CorrelationResults();
 }
 
 
@@ -2288,56 +2333,56 @@ CorrelationResults logistic_correlations_missing_values(const Vector<double>& x,
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-CorrelationResults karl_pearson_correlations(const Matrix<double>& x, const Matrix<double>& y)
+CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const size_t n = x.get_rows_number();
-
+    const int n = x.dimension(0);
+/*
     #ifdef  __OPENNN_DEBUG__
 
-    if(x.get_columns_number() == 0)
+    if(x.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation_missing_values const method.\n"
-              << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
+              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(y.get_columns_number() == 0)
+    if(y.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation_missing_values const method.\n"
-              << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
+              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(n != y.get_rows_number())
+    if(n != y.dimension(0))
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation const method.\n"
-              << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
+              << "int karl_pearson_correlation const method.\n"
+              << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
 
-    Matrix<size_t> contingency_table(x.get_columns_number(),y.get_columns_number());
+    Matrix<int, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
 
-    for(size_t i = 0; i < x.get_columns_number(); i ++)
+    for(int i = 0; i < x.dimension(1); i ++)
     {
-        for(size_t j = 0; j < y.get_columns_number(); j ++)
+        for(int j = 0; j < y.dimension(1); j ++)
         {
-            size_t count = 0;
+            int count = 0;
 
-            for(size_t k = 0; k < n; k ++)
+            for(int k = 0; k < n; k ++)
             {
                 if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
                 {
@@ -2349,10 +2394,10 @@ CorrelationResults karl_pearson_correlations(const Matrix<double>& x, const Matr
         }
     }
 
-    size_t k;
+    int k;
 
-    if(x.get_columns_number() <= y.get_columns_number()) k = x.get_columns_number();
-     else k = y.get_columns_number();
+    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
+     else k = y.dimension(1);
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
@@ -2363,6 +2408,8 @@ CorrelationResults karl_pearson_correlations(const Matrix<double>& x, const Matr
     karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
 
     return karl_pearson;
+*/
+    return CorrelationResults();
 }
 
 
@@ -2370,52 +2417,53 @@ CorrelationResults karl_pearson_correlations(const Matrix<double>& x, const Matr
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>& x, const Matrix<double>& y)
+CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    size_t n = x.get_rows_number();
+/*
+    int n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
-    if(x.get_columns_number() == 0)
+    if(x.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(y.get_columns_number() == 0)
+    if(y.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(n != y.get_rows_number())
+    if(n != y.dimension(0))
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
 
-    const size_t NAN_x = x.count_rows_with_nan();
+    const int NAN_x = x.count_rows_with_nan();
 
-    const size_t NAN_y = y.count_rows_with_nan();
+    const int NAN_y = y.count_rows_with_nan();
 
-    size_t new_size;
+    int new_size;
 
     if(NAN_x <= NAN_y )
     {
@@ -2426,38 +2474,38 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
         new_size = n - NAN_x;
     }
 
-    Matrix<double> new_x(new_size,x.get_columns_number());
+    Tensor<type, 2> new_x(new_size,x.dimension(1));
 
-    Matrix<double> new_y(new_size,y.get_columns_number());
+    Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const Vector<size_t> nan_indices_x = x.get_nan_indices();
+    const vector<int> nan_indices_x = x.get_nan_indices();
 
-    const Vector<size_t> nan_indices_y = y.get_nan_indices();
+    const vector<int> nan_indices_y = y.get_nan_indices();
 
-    for(size_t i = 0; i < nan_indices_x.size(); i++)
+    for(int i = 0; i < nan_indices_x.size(); i++)
     {
 
         new_x = x.delete_rows(nan_indices_x);
         new_y = y.delete_rows(nan_indices_x);
     }
 
-    for(size_t j = 0; j < nan_indices_y.size(); j++)
+    for(int j = 0; j < nan_indices_y.size(); j++)
     {
         new_x = x.delete_rows(nan_indices_y);
         new_y = y.delete_rows(nan_indices_y);
     }
 
-    n = new_x.get_rows_number();
+    n = new_x.dimension(0);
 
-    Matrix<size_t> contingency_table(new_x.get_columns_number(),new_y.get_columns_number());
+    Matrix<int, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
 
-    for(size_t i = 0; i < new_x.get_columns_number(); i ++)
+    for(int i = 0; i < new_x.dimension(1); i ++)
     {
-        for(size_t j = 0; j < new_y.get_columns_number(); j ++)
+        for(int j = 0; j < new_y.dimension(1); j ++)
         {
-            size_t count = 0;
+            int count = 0;
 
-            for(size_t k = 0; k < n; k ++)
+            for(int k = 0; k < n; k ++)
             {
                 if(abs(new_x(k,i) + new_y(k,j) - 2) <= 0.0001)
                 {
@@ -2469,10 +2517,10 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
         }
     }
 
-    size_t k;
+    int k;
 
-    if(x.get_columns_number() <= y.get_columns_number()) k = x.get_columns_number();
-    else k = y.get_columns_number();
+    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
+    else k = y.dimension(1);
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
@@ -2483,6 +2531,9 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
     karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
 
     return karl_pearson;
+*/
+    return CorrelationResults();
+
 }
 
 
@@ -2490,38 +2541,39 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
 /// @param x Matrix of the categorical variable.
 /// @param y Vector of the variable numeric variable.
 
-CorrelationResults one_way_anova_correlations(const Matrix<double>& matrix, const Vector<double>& vector)
+CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
-    if(matrix.get_rows_number() != vector.size())
+    if(matrix.dimension(0) != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>&) method.\n"
-             << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
+             << "one_way_anova_correlation(const Tensor<type, 2>&, const Tensor<type, 1>&) method.\n"
+             << "Rows of the matrix (" << matrix.dimension(0) << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-    const double n = static_cast<double>(matrix.get_rows_number());
+    const double n = static_cast<double>(matrix.dimension(0));
 
-    Matrix<double> new_matrix(matrix.get_rows_number(),matrix.get_columns_number());
+    Tensor<type, 2> new_matrix(matrix.dimension(0),matrix.dimension(1));
 
-    Vector<double> number_elements(matrix.get_columns_number());
+    Tensor<type, 1> number_elements(matrix.dimension(1));
 
-    Vector<double> groups_average(matrix.get_columns_number());
+    Tensor<type, 1> groups_average(matrix.dimension(1));
 
     const double total_average = vector.calculate_sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
-        for(size_t j = 0; j < matrix.get_columns_number(); j++)
+        for(int j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -2534,7 +2586,7 @@ CorrelationResults one_way_anova_correlations(const Matrix<double>& matrix, cons
 
     }
 
-    for(size_t i = 0; i < matrix.get_columns_number(); i ++)
+    for(int i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -2546,35 +2598,39 @@ CorrelationResults one_way_anova_correlations(const Matrix<double>& matrix, cons
     one_way_anova.correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
 
     return one_way_anova;
+*/
+    return CorrelationResults();
+
 }
 
 ///Calculate the one way anova correlation between two variables when there are missing values.
 /// @param x Matrix of the categorical variable.
 /// @param y Vector of the variable numeric variable.
 
-CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double>& matrix, const Vector<double>& vector)
+CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
-    if(matrix.get_rows_number() != vector.size())
+    if(matrix.dimension(0) != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>& matrix, const Vector<double>& vector) method.\n"
-             << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
+             << "one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) method.\n"
+             << "Rows of the matrix (" << matrix.dimension(0) << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-    const size_t this_size = matrix.get_rows_number();
+    const int this_size = matrix.dimension(0);
 
-    const size_t not_NAN_x = this_size - matrix.count_rows_with_nan();
+    const int not_NAN_x = this_size - matrix.count_rows_with_nan();
 
-    const size_t not_NAN_y = vector.count_not_NAN();
+    const int not_NAN_y = vector.count_not_NAN();
 
-    size_t new_size;
+    int new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -2585,19 +2641,19 @@ CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double
         new_size = not_NAN_y;
     }
 
-    Matrix<double> matrix1(new_size,matrix.get_columns_number());
+    Tensor<type, 2> matrix1(new_size,matrix.dimension(1));
 
-    Vector<double> new_y(new_size);
+    Tensor<type, 1> new_y(new_size);
 
-    size_t index = 0;
+    int index = 0;
 
-    for(size_t i = 0; i < this_size ; i++)
+    for(int i = 0; i < this_size ; i++)
     {
         if(!::isnan(vector[i]))
         {
             new_y[index] = vector[i];
 
-            for(size_t j = 0; j < matrix1.get_columns_number(); j++)
+            for(int j = 0; j < matrix1.dimension(1); j++)
             {
                 if(!::isnan(matrix[i]))
                 {
@@ -2609,22 +2665,22 @@ CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double
          }
     }
 
-    const double n = static_cast<double>(matrix1.get_rows_number());
+    const double n = static_cast<double>(matrix1.dimension(0));
 
-    Matrix<double> new_matrix(matrix1.get_rows_number(),matrix1.get_columns_number());
+    Tensor<type, 2> new_matrix(matrix1.dimension(0),matrix1.dimension(1));
 
-    Vector<double> number_elements(matrix1.get_columns_number());
+    Tensor<type, 1> number_elements(matrix1.dimension(1));
 
-    Vector<double> groups_average(matrix1.get_columns_number());
+    Tensor<type, 1> groups_average(matrix1.dimension(1));
 
     const double total_average = new_y.calculate_sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
-        for(size_t j = 0; j < matrix1.get_columns_number(); j++)
+        for(int j = 0; j < matrix1.dimension(1); j++)
         {
            new_matrix(i,j) = matrix1(i,j) * new_y[i];
 
@@ -2636,7 +2692,7 @@ CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double
         total_sum_of_squares += pow(new_y[i] - total_average,2);
     }
 
-    for(size_t i = 0; i < matrix1.get_columns_number(); i ++)
+    for(int i = 0; i < matrix1.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -2648,6 +2704,9 @@ CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double
     one_way_anova.correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
 
     return one_way_anova;
+*/
+    return CorrelationResults();
+
 }
 
 
@@ -2655,10 +2714,10 @@ CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double
 /// @param vector_1 data
 /// @param vector_2 data
 
-double covariance(const Vector<double>& vector_1, const Vector<double>& vector_2)
+double covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2)
 {
-    const size_t size_1 = vector_1.size();
-    const size_t size_2 = vector_2.size();
+    const int size_1 = vector_1.size();
+    const int size_2 = vector_2.size();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2666,7 +2725,7 @@ double covariance(const Vector<double>& vector_1, const Vector<double>& vector_2
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Vector Template.\n"
-              << "double covariance(const Vector<double>&) const method.\n"
+              << "double covariance(const Tensor<type, 1>&) const method.\n"
               << "Size must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2676,7 +2735,7 @@ double covariance(const Vector<double>& vector_1, const Vector<double>& vector_2
              ostringstream buffer;
 
              buffer << "OpenNN Exception: Vector Template.\n"
-                    << "double covariance(const Vector<double>&) const method.\n"
+                    << "double covariance(const Tensor<type, 1>&) const method.\n"
                     << "Size of this vectro must be equal to size of other vector.\n";
 
              throw logic_error(buffer.str());
@@ -2695,7 +2754,7 @@ double covariance(const Vector<double>& vector_1, const Vector<double>& vector_2
      double numerator = 0.0;
      double denominator = static_cast<double>(size_2-1);
 
-     for(size_t i = 0; i < size_1; i++)
+     for(int i = 0; i < size_1; i++)
      {
          numerator += (vector_1[i] - mean_1)*(vector_2[i]-mean_2);
      }
@@ -2708,15 +2767,15 @@ double covariance(const Vector<double>& vector_1, const Vector<double>& vector_2
 /// @param vector_1 data
 /// @param vector_2 data
 
-double covariance_missing_values(const Vector<double>& x, const Vector<double>& y)
+double covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair <Vector<double>, Vector<double>> filter_vectors = filter_missing_values(x,y);
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Vector<double> new_x = filter_vectors.first;
-    const Vector<double> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const size_t size_1 = new_x.size();
-    const size_t size_2 = new_y.size();
+    const int size_1 = new_x.size();
+    const int size_2 = new_y.size();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2724,7 +2783,7 @@ double covariance_missing_values(const Vector<double>& x, const Vector<double>& 
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Vector Template.\n"
-              << "double covariance(const Vector<double>&) const method.\n"
+              << "double covariance(const Tensor<type, 1>&) const method.\n"
               << "Size must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2734,7 +2793,7 @@ double covariance_missing_values(const Vector<double>& x, const Vector<double>& 
              ostringstream buffer;
 
              buffer << "OpenNN Exception: Vector Template.\n"
-                    << "double covariance(const Vector<double>&) const method.\n"
+                    << "double covariance(const Tensor<type, 1>&) const method.\n"
                     << "Size of this vectro must be equal to size of other vector.\n";
 
              throw logic_error(buffer.str());
@@ -2753,7 +2812,7 @@ double covariance_missing_values(const Vector<double>& x, const Vector<double>& 
      double numerator = 0.0;
      double denominator = static_cast<double>(size_2-1);
 
-     for(size_t i = 0; i < size_1; i++)
+     for(int i = 0; i < size_1; i++)
      {
          numerator += (new_x[i] - mean_1)*(new_y[i]-mean_2);
      }
@@ -2766,11 +2825,11 @@ double covariance_missing_values(const Vector<double>& x, const Vector<double>& 
 /// The number of columns and rows of the matrix is equal to the number of columns of this matrix.
 /// Covariance matrix is symmetric
 
-Matrix<double> covariance_matrix(const Matrix<double>& matrix)
+Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
 {
-    const size_t columns_number = matrix.get_columns_number();
+    const Index columns_number = matrix.dimension(1);
 
-    const size_t size = columns_number;
+    const int size = columns_number;
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2787,16 +2846,16 @@ Matrix<double> covariance_matrix(const Matrix<double>& matrix)
 
     #endif
 
-    Matrix<double> covariance_matrix(size, size, 0.0);
+    Tensor<type, 2> covariance_matrix(size, size);
 
-    Vector<double> first_column;
-    Vector<double> second_column;
-
-    for(size_t i = 0; i < size; i++)
+    Tensor<type, 1> first_column;
+    Tensor<type, 1> second_column;
+/*
+    for(int i = 0; i < size; i++)
     {
         first_column = matrix.get_column(i);
 
-        for(size_t j = i; j < size; j++)
+        for(int j = i; j < size; j++)
         {
             second_column = matrix.get_column(j);
 
@@ -2804,7 +2863,7 @@ Matrix<double> covariance_matrix(const Matrix<double>& matrix)
             covariance_matrix(j,i) = covariance_matrix(i,j);
         }
     }
-
+*/
     return covariance_matrix;
 }
 
@@ -2815,27 +2874,27 @@ Matrix<double> covariance_matrix(const Matrix<double>& matrix)
 /// That is, small values correspond with small ranks.
 /// Ties are assigned the mean of the ranks.
 
-Vector<double> less_rank_with_ties(const Vector<double>& vector)
+Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 {
+/*
+    Tensor<type, 1> indices_this = vector.calculate_less_rank().to_double_vector();
 
-    Vector<double> indices_this = vector.calculate_less_rank().to_double_vector();
+    const Tensor<type, 1> this_unique = vector.get_unique_elements();
+    const vector<int> this_unique_frecuency = vector.count_unique();
 
-    const Vector<double> this_unique = vector.get_unique_elements();
-    const Vector<size_t> this_unique_frecuency = vector.count_unique();
-
-    const size_t n = vector.size();
+    const int n = vector.size();
 
     for(int  i = 0; i < static_cast<int>(this_unique.size()); i++)
     {
-        if(this_unique_frecuency[static_cast<size_t>(i)] > 1)
+        if(this_unique_frecuency[static_cast<int>(i)] > 1)
         {
-             const double unique = this_unique[static_cast<size_t>(i)];
+             const double unique = this_unique[static_cast<int>(i)];
 
-             Vector<double> indices(this_unique_frecuency[static_cast<size_t>(i)]);
+             Tensor<type, 1> indices(this_unique_frecuency[static_cast<int>(i)]);
 
-             for(size_t j = 0; j < n; j++)
+             for(int j = 0; j < n; j++)
              {
-                 if(abs(vector[j] - unique) < numeric_limits<double>::min())
+                 if(abs(vector[j] - unique) < 1.0e-99)
                  {
                      indices.push_back(indices_this[j]);
                  }
@@ -2843,9 +2902,9 @@ Vector<double> less_rank_with_ties(const Vector<double>& vector)
 
              const double mean_index = mean(indices);
 
-             for(size_t j = 0; j < n; j++)
+             for(int j = 0; j < n; j++)
              {
-                 if(abs(vector[j] - unique) < numeric_limits<double>::min())
+                 if(abs(vector[j] - unique) < 1.0e-99)
                  {
                      indices_this[j] = mean_index;
                  }
@@ -2853,6 +2912,8 @@ Vector<double> less_rank_with_ties(const Vector<double>& vector)
         }
     }
     return indices_this + 1;
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -2860,57 +2921,62 @@ Vector<double> less_rank_with_ties(const Vector<double>& vector)
 /// @param vector1 First variable.
 /// @param vector2 Second variable.
 
-Matrix<size_t> contingency_table(const Vector<string>& vector1, const Vector<string>& vector2)
+Matrix<int, Dynamic, Dynamic> contingency_table(const vector<string>& vector1, const vector<string>& vector2)
 {
-    Matrix<string> data_set = {vector1, vector2};
+    /*
+    Matrix<string, Dynamic, Dynamic> data_set = {vector1, vector2};
 
-    data_set.set_header(Vector<string>({"variable1","variable2"}));
+    data_set.set_header(vector<string>({"variable1","variable2"}));
 
-    const Vector<string> categories_vector1 = vector1.get_unique_elements();
-    const Vector<string> categories_vector2 = vector2.get_unique_elements();
+    const vector<string> categories_vector1 = vector1.get_unique_elements();
+    const vector<string> categories_vector2 = vector2.get_unique_elements();
 
-    const size_t rows_number = categories_vector1.size();
-    const size_t columns_number = categories_vector2.size();
+    const int rows_number = categories_vector1.size();
+    const int columns_number = categories_vector2.size();
 
-    Matrix<size_t> contingency_table(rows_number,columns_number);
+    Matrix<int, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
 
-    for(size_t i = 0 ; i < rows_number; i ++)
+    for(int i = 0 ; i < rows_number; i ++)
     {
-        for(size_t j = 0 ; j < columns_number; j ++)
+        for(int j = 0 ; j < columns_number; j ++)
         {
             contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
         }
     }
 
     return contingency_table;
+*/
+
+    return Matrix<int, Dynamic, Dynamic>();
 }
 
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 /// @param contingency_table Data set to perform the test.
 
-Matrix<size_t> contingency_table(Matrix<string>& matrix)
+Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>& matrix)
 {
+/*
     #ifdef __OPENNN_DEBUG__
 
-    if(matrix.get_columns_number() == 0)
+    if(matrix.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t contingency_table const method.\n"
-              << "Number of columns("<< matrix.get_columns_number() <<") must be greater than zero.\n";
+              << "int contingency_table const method.\n"
+              << "Number of columns("<< matrix.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(matrix.get_columns_number() > 2)
+    if(matrix.dimension(1) > 2)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t contingency_table const method.\n"
-              << "Number of columns("<< matrix.get_columns_number() <<") must be lower than two.\n";
+              << "int contingency_table const method.\n"
+              << "Number of columns("<< matrix.dimension(1) <<") must be lower than two.\n";
 
        throw logic_error(buffer.str());
     }
@@ -2920,51 +2986,53 @@ Matrix<size_t> contingency_table(Matrix<string>& matrix)
 
     matrix.set_header({"variable1", "variable2"});
 
-    const Vector<string> vector1 = matrix.get_column(0);
-    const Vector<string> vector2 = matrix.get_column(1);
+    const vector<string> vector1 = matrix.get_column(0);
+    const vector<string> vector2 = matrix.get_column(1);
 
-    const Vector<string> categories_vector1 = vector1.get_unique_elements();
-    const Vector<string> categories_vector2 = vector2.get_unique_elements();
+    const vector<string> categories_vector1 = vector1.get_unique_elements();
+    const vector<string> categories_vector2 = vector2.get_unique_elements();
 
-    const size_t rows_number = categories_vector1.size();
-    const size_t columns_number = categories_vector2.size();
+    const int rows_number = categories_vector1.size();
+    const int columns_number = categories_vector2.size();
 
-    Matrix<size_t> contingency_table(rows_number,columns_number);
+    Matrix<int, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
 
-    for(size_t i = 0 ; i < rows_number; i ++)
+    for(int i = 0 ; i < rows_number; i ++)
     {
-        for(size_t j = 0 ; j < columns_number; j ++)
+        for(int j = 0 ; j < columns_number; j ++)
         {
             contingency_table(i,j) = matrix.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
         }
     }
 
     return contingency_table;
+*/
+    return Matrix<int, Dynamic, Dynamic>();
 }
 
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 
-Matrix<size_t> contingency_table(const Matrix<double>& matrix, const Vector<size_t>& indices1, const Vector<size_t>& indices2)
+Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>& matrix, const vector<int>& indices1, const vector<int>& indices2)
 {
-    Matrix<size_t> contingency_table(indices1.size(), indices2.size());
+    Matrix<int, Dynamic, Dynamic> contingency_table(indices1.size(), indices2.size());
 
-    for(size_t i = 0; i < indices1.size(); i ++)
+    for(int i = 0; i < indices1.size(); i ++)
     {
 
-        size_t count = 0;
+        int count = 0;
 
-        size_t i_2;
+        int i_2;
 
         i_2 = indices1[i];
 
-        for(size_t j = 0; j < indices2.size(); j ++)
+        for(int j = 0; j < indices2.size(); j ++)
         {
-            size_t j_2;
+            int j_2;
 
             j_2 = indices2[j];
 
-            for(size_t k = 0; k < matrix.get_rows_number(); k ++)
+            for(int k = 0; k < matrix.dimension(0); k ++)
             {
                 if(matrix(k,i_2) + matrix(k,j_2) - 2 <= 0.0001)
                 {
@@ -2982,38 +3050,41 @@ Matrix<size_t> contingency_table(const Matrix<double>& matrix, const Vector<size
 /// Calculate the chi squared test statistic of a contingency table
 /// @param matrix Matrix that represent the contingency table
 
-double chi_square_test(const Matrix<double>& matrix)
+double chi_square_test(const Tensor<type, 2>& matrix)
 {
-    const Vector<double> sum_columns = matrix.calculate_columns_sum();
-    const Vector<double> sum_rows = matrix.calculate_rows_sum();
+/*
+    const Tensor<type, 1> sum_columns = matrix.calculate_columns_sum();
+    const Tensor<type, 1> sum_rows = matrix.calculate_rows_sum();
 
     const double total = sum_columns.calculate_sum();
 
-    Matrix<double> row_colum(sum_rows.size(),sum_columns.size());
+    Tensor<type, 2> row_colum(sum_rows.size(),sum_columns.size());
 
-    for(size_t i = 0; i < sum_columns.size(); i++)
+    for(int i = 0; i < sum_columns.size(); i++)
     {
-      for(size_t j = 0; j < sum_rows.size(); j++)
+      for(int j = 0; j < sum_rows.size(); j++)
       {
             row_colum(j,i) = sum_columns[i]*sum_rows[j];
       }
     }
 
-    const Matrix<double> ei = row_colum/total;
+    const Tensor<type, 2> ei = row_colum/total;
 
-    const Matrix<double> squared = ((matrix.to_double_matrix()-ei)*(matrix.to_double_matrix()-ei));
+    const Tensor<type, 2> squared = ((matrix.to_double_matrix()-ei)*(matrix.to_double_matrix()-ei));
 
-    Matrix<double> chi (sum_rows.size(),sum_columns.size());
+    Tensor<type, 2> chi (sum_rows.size(),sum_columns.size());
 
-    for(size_t i = 0; i < sum_rows.size(); i++)
+    for(int i = 0; i < sum_rows.size(); i++)
     {
-          for(size_t j = 0; j < sum_columns.size(); j ++)
+          for(int j = 0; j < sum_columns.size(); j ++)
           {
                 chi(i,j) = squared(i,j)/ei(i,j);
           }
     }
 
     return chi.calculate_sum();
+*/
+    return 0.0;
 }
 
 
@@ -3053,19 +3124,22 @@ double chi_square_critical_point(const double& alpha, const double& degrees_of_f
 /// @param x First variable
 /// @param y Second variable
 
-double karl_pearson_correlation(const Vector<string>& x, const Vector<string>& y)
+double karl_pearson_correlation(const vector<string>& x, const vector<string>& y)
 {
-    const Matrix<size_t> contingency_table = OpenNN::contingency_table(x,y);
+/*
+    const Matrix<int, Dynamic, Dynamic> contingency_table = OpenNN::contingency_table(x,y);
 
     const double chi_squared_exp = chi_square_test(contingency_table.to_double_matrix());
 
-    Vector<size_t> categories(2);
+    vector<int> categories(2);
     categories[0] = x.get_unique_elements().size();
     categories[1] = y.get_unique_elements().size();
 
-    const size_t k = minimum(categories);
+    const int k = minimum(categories);
 
     return sqrt(k/(k-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
+*/
+    return 0.0;
 }
 
 
@@ -3074,56 +3148,56 @@ double karl_pearson_correlation(const Vector<string>& x, const Vector<string>& y
 /// @param x First variable
 /// @param y Second variable
 
-double karl_pearson_correlation(const Matrix<double>& x, const Matrix<double>& y)
+double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const size_t n = x.get_rows_number();
+    const int n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
-    if(x.get_columns_number() == 0)
+    if(x.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation_missing_values const method.\n"
-              << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
+              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(y.get_columns_number() == 0)
+    if(y.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation_missing_values const method.\n"
-              << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
+              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(n != y.get_rows_number())
+    if(n != y.dimension(0))
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "size_t karl_pearson_correlation const method.\n"
-              << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
+              << "int karl_pearson_correlation const method.\n"
+              << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
 
-    Matrix<size_t> contingency_table(x.get_columns_number(),y.get_columns_number());
+    Matrix<int, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
 
-    for(size_t i = 0; i < x.get_columns_number(); i ++)
+    for(int i = 0; i < x.dimension(1); i ++)
     {
-        for(size_t j = 0; j < y.get_columns_number(); j ++)
+        for(int j = 0; j < y.dimension(1); j ++)
         {
-            size_t count = 0;
+            int count = 0;
 
-            for(size_t k = 0; k < n; k ++)
+            for(int k = 0; k < n; k ++)
             {
                 if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
                 {
@@ -3135,16 +3209,18 @@ double karl_pearson_correlation(const Matrix<double>& x, const Matrix<double>& y
         }
     }
 
-    size_t k;
-
-    if(x.get_columns_number() <= y.get_columns_number()) k = x.get_columns_number();
-     else k = y.get_columns_number();
+    int k;
+/*
+    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
+     else k = y.dimension(1);
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
     const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
 
     return karl_pearson_correlation;
+*/
+    return 0.0;
 }
 
 
@@ -3152,52 +3228,52 @@ double karl_pearson_correlation(const Matrix<double>& x, const Matrix<double>& y
 /// @param x First variable
 /// @param y Second variable
 
-double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Matrix<double>& y)
+double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    size_t n = x.get_rows_number();
+    int n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
-    if(x.get_columns_number() == 0)
+    if(x.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(y.get_columns_number() == 0)
+    if(y.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(n != y.get_rows_number())
+    if(n != y.dimension(0))
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
-              << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
+              << "double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+              << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
+/*
+    const int NAN_x = x.count_rows_with_nan();
 
-    const size_t NAN_x = x.count_rows_with_nan();
+    const int NAN_y = y.count_rows_with_nan();
 
-    const size_t NAN_y = y.count_rows_with_nan();
-
-    size_t new_size;
+    int new_size;
 
     if(NAN_x <= NAN_y )
     {
@@ -3208,38 +3284,38 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
         new_size = n - NAN_x;
     }
 
-    Matrix<double> new_x(new_size,x.get_columns_number());
+    Tensor<type, 2> new_x(new_size,x.dimension(1));
 
-    Matrix<double> new_y(new_size,y.get_columns_number());
+    Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const Vector<size_t> nan_indices_x = x.get_nan_indices();
+    const vector<int> nan_indices_x = x.get_nan_indices();
 
-    const Vector<size_t> nan_indices_y = y.get_nan_indices();
+    const vector<int> nan_indices_y = y.get_nan_indices();
 
-    for(size_t i = 0; i < nan_indices_x.size(); i++)
+    for(int i = 0; i < nan_indices_x.size(); i++)
     {
 
         new_x = x.delete_rows(nan_indices_x);
         new_y = y.delete_rows(nan_indices_x);
     }
 
-    for(size_t j = 0; j < nan_indices_y.size(); j++)
+    for(int j = 0; j < nan_indices_y.size(); j++)
     {
         new_x = x.delete_rows(nan_indices_y);
         new_y = y.delete_rows(nan_indices_y);
     }
 
-    n = new_x.get_rows_number();
+    n = new_x.dimension(0);
 
-    Matrix<size_t> contingency_table(new_x.get_columns_number(),new_y.get_columns_number());
+    Matrix<int, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
 
-    for(size_t i = 0; i < new_x.get_columns_number(); i ++)
+    for(int i = 0; i < new_x.dimension(1); i ++)
     {
-        for(size_t j = 0; j < new_y.get_columns_number(); j ++)
+        for(int j = 0; j < new_y.dimension(1); j ++)
         {
-            size_t count = 0;
+            int count = 0;
 
-            for(size_t k = 0; k < n; k ++)
+            for(int k = 0; k < n; k ++)
             {
                 if(abs(new_x(k,i) + new_y(k,j) - 2) <= 0.0001)
                 {
@@ -3251,16 +3327,18 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
         }
     }
 
-    size_t k;
+    int k;
 
-    if(x.get_columns_number() <= y.get_columns_number()) k = x.get_columns_number();
-    else k = y.get_columns_number();
+    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
+    else k = y.dimension(1);
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
     const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
 
     return karl_pearson_correlation;
+*/
+    return 0.0;
 }
 
 
@@ -3268,24 +3346,25 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
 /// @param x Matrix of the categorical variable.
 /// @param y Vector of the variable numeric variable.
 
-double one_way_anova(const Matrix<double>& matrix, const Vector<double>& vector)
+double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const size_t n = matrix.get_rows_number();
+/*
+    const int n = matrix.dimension(0);
 
-    Matrix<double> new_matrix(matrix.get_rows_number(),matrix.get_columns_number());
+    Tensor<type, 2> new_matrix(matrix.dimension(0),matrix.dimension(1));
 
-    Vector<double> number_elements(matrix.get_columns_number());
+    Tensor<type, 1> number_elements(matrix.dimension(1));
 
-    Vector<double> groups_average(matrix.get_columns_number());
+    Tensor<type, 1> groups_average(matrix.dimension(1));
 
     const double total_average = vector.calculate_sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
-        for(size_t j = 0; j < matrix.get_columns_number(); j++)
+        for(int j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -3299,20 +3378,22 @@ double one_way_anova(const Matrix<double>& matrix, const Vector<double>& vector)
 
     }
 
-    for(size_t i = 0; i < matrix.get_columns_number(); i ++)
+    for(int i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
 
     const double error_sum_of_squares = total_sum_of_squares - treatment_sum_of_squares;
 
-    const double treatment_mean_of_squares = treatment_sum_of_squares / (new_matrix.get_columns_number() - 1);
+    const double treatment_mean_of_squares = treatment_sum_of_squares / (new_matrix.dimension(1) - 1);
 
-    const double error_mean_of_squares = error_sum_of_squares / (new_matrix.get_rows_number() - new_matrix.get_columns_number());
+    const double error_mean_of_squares = error_sum_of_squares / (new_matrix.dimension(0) - new_matrix.dimension(1));
 
     const double f_statistic_test = treatment_mean_of_squares / error_mean_of_squares;
 
     return f_statistic_test;
+*/
+    return 0.0;
 }
 
 
@@ -3321,32 +3402,33 @@ double one_way_anova(const Matrix<double>& matrix, const Vector<double>& vector)
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova(const Matrix<double>& matrix,const size_t& index, const Vector<size_t>& indices)
+double one_way_anova(const Tensor<type, 2>& matrix,const int& index, const vector<int>& indices)
 {
-    const double total_average = matrix.calculate_sum() / matrix.get_rows_number();
+    /*
+    const double total_average = matrix.calculate_sum() / matrix.dimension(0);
 
-    const Matrix<double> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
+    const Tensor<type, 2> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
 
-    Vector<double> treatments_element(new_matrix.get_columns_number()-1);
-    Vector<double> average_of_targets(new_matrix.get_columns_number()-1);
-    Vector<double> average(new_matrix.get_columns_number()-1);
-    Vector<double> total_sum_of_squares(new_matrix.get_columns_number() - 1,0.0);
-    Vector<double> treatment_sum_of_squares(new_matrix.get_columns_number() - 1);
-    Vector<double> error_sum_of_squares(new_matrix.get_columns_number() - 1);
+    Tensor<type, 1> treatments_element(new_matrix.dimension(1)-1);
+    Tensor<type, 1> average_of_targets(new_matrix.dimension(1)-1);
+    Tensor<type, 1> average(new_matrix.dimension(1)-1);
+    Tensor<type, 1> total_sum_of_squares(new_matrix.dimension(1) - 1,0.0);
+    Tensor<type, 1> treatment_sum_of_squares(new_matrix.dimension(1) - 1);
+    Tensor<type, 1> error_sum_of_squares(new_matrix.dimension(1) - 1);
 
-    for(size_t i = 0; i < new_matrix.get_columns_number() - 1; i++)
+    for(int i = 0; i < new_matrix.dimension(1) - 1; i++)
     {
-        for(size_t j  = 0; j < new_matrix.get_rows_number(); j++)
+        for(int j  = 0; j < new_matrix.dimension(0); j++)
         {
             treatments_element[i] = new_matrix.calculate_column_sum(i);
 
-            average_of_targets[i] = (average_of_targets[i] + new_matrix(j,i) * new_matrix(j,new_matrix.get_columns_number()-1));
+            average_of_targets[i] = (average_of_targets[i] + new_matrix(j,i) * new_matrix(j,new_matrix.dimension(1)-1));
 
             average[i] = average_of_targets[i]/ new_matrix.calculate_column_sum(i);
 
             if (new_matrix(j,i) > 0 )
             {
-                total_sum_of_squares[i] = total_sum_of_squares[i] + pow(new_matrix(j,i) * new_matrix(j,new_matrix.get_columns_number()-1) - total_average,2);
+                total_sum_of_squares[i] = total_sum_of_squares[i] + pow(new_matrix(j,i) * new_matrix(j,new_matrix.dimension(1)-1) - total_average,2);
             }
 
             treatment_sum_of_squares[i] = new_matrix.calculate_column_sum(i) * pow(average[i] - total_average,2);
@@ -3357,11 +3439,13 @@ double one_way_anova(const Matrix<double>& matrix,const size_t& index, const Vec
 
     const double mean_square_treatment = treatment_sum_of_squares.calculate_sum() / (indices.size() - 1);
 
-    const double mean_square_error = error_sum_of_squares.calculate_sum() / (new_matrix.get_rows_number() - indices.size());
+    const double mean_square_error = error_sum_of_squares.calculate_sum() / (new_matrix.dimension(0) - indices.size());
 
     const double f_statistic_test = mean_square_treatment / mean_square_error;
 
     return f_statistic_test;
+*/
+    return 0.0;
 }
 
 
@@ -3369,38 +3453,38 @@ double one_way_anova(const Matrix<double>& matrix,const size_t& index, const Vec
 ///@param matrix Binary matrix of the categorical variable.
 ///@param vector Contains the numerical variable.
 
-double one_way_anova_correlation(const Matrix<double>& matrix, const Vector<double>& vector)
+double one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
-    if(matrix.get_rows_number() != vector.size())
+    if(matrix.dimension(0) != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>&) method.\n"
-             << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
+             << "one_way_anova_correlation(const Tensor<type, 2>&, const Tensor<type, 1>&) method.\n"
+             << "Rows of the matrix (" << matrix.dimension(0) << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-    const double n = static_cast<double>(matrix.get_rows_number());
+    const double n = static_cast<double>(matrix.dimension(0));
 
-    Matrix<double> new_matrix(matrix.get_rows_number(),matrix.get_columns_number());
+    Tensor<type, 2> new_matrix(matrix.dimension(0),matrix.dimension(1));
 
-    Vector<double> number_elements(matrix.get_columns_number());
+    Tensor<type, 1> number_elements(matrix.dimension(1));
 
-    Vector<double> groups_average(matrix.get_columns_number());
-
+    Tensor<type, 1> groups_average(matrix.dimension(1));
+/*
     const double total_average = vector.calculate_sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
-        for(size_t j = 0; j < matrix.get_columns_number(); j++)
+        for(int j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -3413,7 +3497,7 @@ double one_way_anova_correlation(const Matrix<double>& matrix, const Vector<doub
 
     }
 
-    for(size_t i = 0; i < matrix.get_columns_number(); i ++)
+    for(int i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -3421,6 +3505,8 @@ double one_way_anova_correlation(const Matrix<double>& matrix, const Vector<doub
     const double correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
 
     return correlation;
+*/
+    return 0.0;
 }
 
 
@@ -3428,29 +3514,30 @@ double one_way_anova_correlation(const Matrix<double>& matrix, const Vector<doub
 ///@param matrix Binary matrix of the categorical variable.
 ///@param vector Contains the numerical variable.
 
-double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, const Vector<double>& vector)
+double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
+/*
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
-    if(matrix.get_rows_number() != vector.size())
+    if(matrix.dimension(0) != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>& matrix, const Vector<double>& vector) method.\n"
-             << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
+             << "one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) method.\n"
+             << "Rows of the matrix (" << matrix.dimension(0) << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());
     }
 
 #endif
-    const size_t this_size = matrix.get_rows_number();
+    const int this_size = matrix.dimension(0);
 
-    const size_t not_NAN_x = this_size - matrix.count_rows_with_nan();
+    const int not_NAN_x = this_size - matrix.count_rows_with_nan();
 
-    const size_t not_NAN_y = vector.count_not_NAN();
+    const int not_NAN_y = vector.count_not_NAN();
 
-    size_t new_size;
+    int new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -3461,19 +3548,19 @@ double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, co
         new_size = not_NAN_y;
     }
 
-    Matrix<double> matrix1(new_size,matrix.get_columns_number());
+    Tensor<type, 2> matrix1(new_size,matrix.dimension(1));
 
-    Vector<double> new_y(new_size);
+    Tensor<type, 1> new_y(new_size);
 
-    size_t index = 0;
+    int index = 0;
 
-    for(size_t i = 0; i < this_size ; i++)
+    for(int i = 0; i < this_size ; i++)
     {
         if(!::isnan(vector[i]))
         {
             new_y[index] = vector[i];
 
-            for(size_t j = 0; j < matrix1.get_columns_number(); j++)
+            for(int j = 0; j < matrix1.dimension(1); j++)
             {
                 if(!::isnan(matrix[i]))
                 {
@@ -3485,22 +3572,22 @@ double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, co
          }
     }
 
-    const double n = static_cast<double>(matrix1.get_rows_number());
+    const double n = static_cast<double>(matrix1.dimension(0));
 
-    Matrix<double> new_matrix(matrix1.get_rows_number(),matrix1.get_columns_number());
+    Tensor<type, 2> new_matrix(matrix1.dimension(0),matrix1.dimension(1));
 
-    Vector<double> number_elements(matrix1.get_columns_number());
+    Tensor<type, 1> number_elements(matrix1.dimension(1));
 
-    Vector<double> groups_average(matrix1.get_columns_number());
+    Tensor<type, 1> groups_average(matrix1.dimension(1));
 
     const double total_average = new_y.calculate_sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(size_t i = 0; i < n; i ++)
+    for(int i = 0; i < n; i ++)
     {
-        for(size_t j = 0; j < matrix1.get_columns_number(); j++)
+        for(int j = 0; j < matrix1.dimension(1); j++)
         {
            new_matrix(i,j) = matrix1(i,j) * new_y[i];
 
@@ -3512,7 +3599,7 @@ double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, co
         total_sum_of_squares += pow(new_y[i] - total_average,2);
     }
 
-    for(size_t i = 0; i < matrix1.get_columns_number(); i ++)
+    for(int i = 0; i < matrix1.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -3520,6 +3607,8 @@ double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, co
     const double correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
 
     return correlation;
+*/
+    return 0.0;
 }
 
 
@@ -3527,10 +3616,11 @@ double one_way_anova_correlation_missing_values(const Matrix<double>& matrix, co
 /// @param matrix Data set to perform the test
 /// @param alpha Significance of the test
 
-double f_snedecor_critical_point(const Matrix<double>& matrix, const double& alpha)
+double f_snedecor_critical_point(const Tensor<type, 2>& matrix, const double& alpha)
 {
-    const size_t degrees_of_freedom1 = matrix.get_columns_number() - 1;
-    const size_t degrees_of_freedom2 = matrix.get_columns_number() * matrix.get_rows_number() - matrix.count_equal_to(0) - matrix.get_columns_number();
+/*
+    const int degrees_of_freedom1 = matrix.dimension(1) - 1;
+    const int degrees_of_freedom2 = matrix.dimension(1) * matrix.dimension(0) - matrix.count_equal_to(0) - matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3561,6 +3651,8 @@ double f_snedecor_critical_point(const Matrix<double>& matrix, const double& alp
     }
 
     return x;
+*/
+    return 0.0;
 }
 
 
@@ -3568,10 +3660,11 @@ double f_snedecor_critical_point(const Matrix<double>& matrix, const double& alp
 /// @param matrix Data set to perform the test
 /// @param alpha Significance of the test
 
-double f_snedecor_critical_point(const Matrix<string>& matrix, const double& alpha)
+double f_snedecor_critical_point(const Matrix<string, Dynamic, Dynamic>& matrix, const double& alpha)
 {
-    const size_t degrees_of_freedom1 = matrix.get_columns_number() - 2;
-    const size_t degrees_of_freedom2 = matrix.get_rows_number() - matrix.get_columns_number() + 1;
+    /*
+    const int degrees_of_freedom1 = matrix.dimension(1) - 2;
+    const int degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1) + 1;
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3602,6 +3695,8 @@ double f_snedecor_critical_point(const Matrix<string>& matrix, const double& alp
     }
 
     return x;
+*/
+    return 0.0;
 }
 
 
@@ -3609,10 +3704,10 @@ double f_snedecor_critical_point(const Matrix<string>& matrix, const double& alp
 /// @param matrix Data set to perform the test
 /// @param alpha Significance of the test
 
-double f_snedecor_critical_point(const Matrix<double>& matrix)
+double f_snedecor_critical_point(const Tensor<type, 2>& matrix)
 {
-    const size_t degrees_of_freedom1 = matrix.get_columns_number() - 1;
-    const size_t degrees_of_freedom2 = matrix.get_rows_number() - matrix.get_columns_number();
+    const int degrees_of_freedom1 = matrix.dimension(1) - 1;
+    const int degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3650,17 +3745,18 @@ double f_snedecor_critical_point(const Matrix<double>& matrix)
 /// @param matrix Data set to perform the test
 /// @param alpha Significance of the test
 
-double f_snedecor_critical_point_missing_values(const Matrix<double>& matrix)
+double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 {
-    Vector<size_t> nan_indices = matrix.get_nan_indices();
-    const size_t new_size = matrix.get_rows_number() - nan_indices.size();
+/*
+    vector<int> nan_indices = matrix.get_nan_indices();
+    const int new_size = matrix.dimension(0) - nan_indices.size();
 
-    Matrix<double> new_matrix(new_size,matrix.get_columns_number());
+    Tensor<type, 2> new_matrix(new_size,matrix.dimension(1));
 
     new_matrix = matrix.delete_rows(nan_indices);
 
-    const size_t degrees_of_freedom1 = new_matrix.get_columns_number() - 1;
-    const size_t degrees_of_freedom2 = new_matrix.get_rows_number() - new_matrix.get_columns_number();
+    const int degrees_of_freedom1 = new_matrix.dimension(1) - 1;
+    const int degrees_of_freedom2 = new_matrix.dimension(0) - new_matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3691,6 +3787,8 @@ double f_snedecor_critical_point_missing_values(const Matrix<double>& matrix)
     }
 
     return x;
+*/
+    return 0.0;
 }
 
 
@@ -3699,33 +3797,34 @@ double f_snedecor_critical_point_missing_values(const Matrix<double>& matrix)
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova_correlation(const Matrix<double>& matrix,const size_t& index, const Vector<size_t>& indices)
+double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index, const vector<int>& indices)
 {
-    const double total_average = matrix.calculate_sum() / matrix.get_rows_number();
+/*
+    const double total_average = matrix.calculate_sum() / matrix.dimension(0);
 
-    const Matrix<double> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
+    const Tensor<type, 2> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
 
-    Vector<double> treatments_element(new_matrix.get_columns_number()-1);
-    Vector<double> average_of_targets(new_matrix.get_columns_number()-1);
-    Vector<double> average(new_matrix.get_columns_number()-1);
-    Vector<double> total_sum_of_squares(new_matrix.get_columns_number() - 1,0.0);
-    Vector<double> treatment_sum_of_squares(new_matrix.get_columns_number() - 1);
-    Vector<double> error_sum_of_squares(new_matrix.get_columns_number() - 1);
+    Tensor<type, 1> treatments_element(new_matrix.dimension(1)-1);
+    Tensor<type, 1> average_of_targets(new_matrix.dimension(1)-1);
+    Tensor<type, 1> average(new_matrix.dimension(1)-1);
+    Tensor<type, 1> total_sum_of_squares(new_matrix.dimension(1) - 1,0.0);
+    Tensor<type, 1> treatment_sum_of_squares(new_matrix.dimension(1) - 1);
+    Tensor<type, 1> error_sum_of_squares(new_matrix.dimension(1) - 1);
 
-    for(size_t i = 0; i < new_matrix.get_columns_number() - 1; i++)
+    for(int i = 0; i < new_matrix.dimension(1) - 1; i++)
     {
-        for(size_t j  = 0; j < new_matrix.get_rows_number(); j++)
+        for(int j  = 0; j < new_matrix.dimension(0); j++)
         {
 
             treatments_element[i] = new_matrix.calculate_column_sum(i);
 
-            average_of_targets[i] = (average_of_targets[i] + new_matrix(j,i) * new_matrix(j,new_matrix.get_columns_number()-1));
+            average_of_targets[i] = (average_of_targets[i] + new_matrix(j,i) * new_matrix(j,new_matrix.dimension(1)-1));
 
             average[i] = average_of_targets[i]/ new_matrix.calculate_column_sum(i);
 
             if (new_matrix(j,i) > 0 )
             {
-                total_sum_of_squares[i] = total_sum_of_squares[i] + pow(new_matrix(j,i) * new_matrix(j,new_matrix.get_columns_number()-1) - total_average,2);
+                total_sum_of_squares[i] = total_sum_of_squares[i] + pow(new_matrix(j,i) * new_matrix(j,new_matrix.dimension(1)-1) - total_average,2);
             }
 
             treatment_sum_of_squares[i] = new_matrix.calculate_column_sum(i) * pow(average[i] - total_average,2);
@@ -3737,18 +3836,21 @@ double one_way_anova_correlation(const Matrix<double>& matrix,const size_t& inde
     const double one_way_anova_correlation = sqrt(treatment_sum_of_squares.calculate_sum()/ total_sum_of_squares.calculate_sum());
 
     return one_way_anova_correlation;
+*/
+    return 0.0;
 }
 
 
 ///Filter the missing values of two vectors
 
-pair <Vector<double>, Vector<double>> filter_missing_values (const Vector<double>& x, const Vector<double>& y)
+pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const size_t not_NAN_x = x.count_not_NAN();
+    /*
+    const int not_NAN_x = x.count_not_NAN();
 
-    const size_t not_NAN_y = y.count_not_NAN();
+    const int not_NAN_y = y.count_not_NAN();
 
-    size_t new_size;
+    int new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -3759,13 +3861,13 @@ pair <Vector<double>, Vector<double>> filter_missing_values (const Vector<double
         new_size = not_NAN_y;
     }
 
-    Vector<double> new_vector_x(new_size);
+    Tensor<type, 1> new_vector_x(new_size);
 
-    Vector<double> new_vector_y(new_size);
+    Tensor<type, 1> new_vector_y(new_size);
 
-    size_t index = 0;
+    int index = 0;
 
-    for(size_t i = 0; i < new_vector_x.size() ; i++)
+    for(int i = 0; i < new_vector_x.size() ; i++)
     {
         if(!::isnan(x[i]) && !::isnan(y[i]))
         {
@@ -3777,6 +3879,8 @@ pair <Vector<double>, Vector<double>> filter_missing_values (const Vector<double
     }
 
     return make_pair(new_vector_x, new_vector_y);
+*/
+    return pair <Tensor<type, 1>, Tensor<type, 1>>();
 }
 
 }

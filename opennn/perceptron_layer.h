@@ -20,14 +20,11 @@
 
 // OpenNN includes
 
-#include "vector.h"
+#include "config.h"
 #include "layer.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "functions.h"
 #include "metrics.h"
 #include "probabilistic_layer.h"
-
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
@@ -59,7 +56,7 @@ public:
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const size_t&, const size_t&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const int&, const int&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    PerceptronLayer(const PerceptronLayer&);
 
@@ -71,23 +68,25 @@ public:
 
    bool is_empty() const;
 
-   Vector<size_t> get_input_variables_dimensions() const;
+   vector<int> get_input_variables_dimensions() const;
 
-   size_t get_inputs_number() const;
-   size_t get_neurons_number() const;
+   int get_inputs_number() const;
+   int get_neurons_number() const;
 
    // Parameters
 
-   const Vector<double>& get_biases() const;
-   const Matrix<double>& get_synaptic_weights() const;
+   const Tensor<type, 2>& get_biases() const;
+   const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Vector<double> get_biases(const Vector<double>&) const;
-   Matrix<double> get_synaptic_weights(const Vector<double>&) const;
+   Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
-   Matrix<double> get_synaptic_weights_transpose() const;
+   Tensor<type, 2> get_synaptic_weights_transpose() const;
 
-   size_t get_parameters_number() const;
-   Vector<double> get_parameters() const;
+   int get_biases_number() const;
+   int get_synaptic_weights_number() const;
+   int get_parameters_number() const;
+   Tensor<type, 1> get_parameters() const;
 
    // Activation functions
 
@@ -102,22 +101,22 @@ public:
    // Set methods
 
    void set();
-   void set(const size_t&, const size_t&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   void set(const int&, const int&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
    void set(const PerceptronLayer&);
 
    void set_default();
 
    // Architecture
 
-   void set_inputs_number(const size_t&);
-   void set_neurons_number(const size_t&);
+   void set_inputs_number(const int&);
+   void set_neurons_number(const int&);
 
    // Parameters
 
-   void set_biases(const Vector<double>&);
-   void set_synaptic_weights(const Matrix<double>&);
+   void set_biases(const Tensor<type, 2>&);
+   void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Vector<double>&);
+   void set_parameters(const Tensor<type, 1>&);
 
    // Activation functions
 
@@ -132,13 +131,12 @@ public:
 
    void grow_input();
    void grow_perceptron();
-   void grow_perceptrons(const size_t&);
+   void grow_perceptrons(const int&);
 
-   void prune_input(const size_t&);
-   void prune_neuron(const size_t&);
+   void prune_input(const int&);
+   void prune_neuron(const int&);
 
    // Parameters initialization methods
-
    void initialize_biases(const double&); 
    void initialize_synaptic_weights(const double&);
    void initialize_synaptic_weights_glorot_uniform();
@@ -157,39 +155,45 @@ public:
 
    // Perceptron layer combinations
 
-   Tensor<double> calculate_combinations(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
 
-   void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations) const
+   void calculate_combinations(const ThreadPoolDevice& thread_pool_device,
+                               const Tensor<type, 2>& inputs,
+                               Tensor<type, 2>& combinations) const
    {
-       dot(inputs, synaptic_weights, combinations);
+        const Eigen::array<IndexPair<int>, 1> product_dimensions = {IndexPair<int>(1, 0)};
 
-       combinations += biases;
+        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+
+        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+
+        combinations.device(thread_pool_device) += biases.broadcast(broadcast);
    }
 
-   Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
+   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
+   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
    // Perceptron layer activations
 
-   Tensor<double> calculate_activations(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-   void calculate_activations(const Tensor<double>& combinations, Tensor<double>& activations) const
+   void calculate_activations(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
         #ifdef __OPENNN_DEBUG__
 
-        const size_t neurons_number = get_neurons_number();
+        const int neurons_number = get_neurons_number();
 
-        const size_t combinations_columns_number = combinations.get_dimension(1);
+        const int combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
            ostringstream buffer;
 
            buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                  << "void calculate_activations(const Tensor<double>&, Tensor<double>&) const method.\n"
+                  << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                   << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -203,7 +207,7 @@ public:
 
             case Logistic: logistic(combinations, activations); return;
 
-            case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+            case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
 
             case Threshold: threshold(combinations, activations); return;
 
@@ -224,20 +228,20 @@ public:
    }
 
 
-   void calculate_activations_derivatives(const Tensor<double>& combinations, Tensor<double>& activations_derivatives) const
+   void calculate_activations_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
-        const size_t neurons_number = get_neurons_number();
+        const int neurons_number = get_neurons_number();
 
-        const size_t combinations_columns_number = combinations.get_dimension(1);
+        const int combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
            ostringstream buffer;
 
            buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                  << "void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const method.\n"
+                  << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                   << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -251,7 +255,7 @@ public:
 
             case Logistic: logistic_derivatives(combinations, activations_derivatives); return;
 
-            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations_derivatives); return;
+            case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
 
             case Threshold: threshold_derivatives(combinations, activations_derivatives); return;
 
@@ -273,56 +277,60 @@ public:
 
    // Perceptron layer outputs
 
-   Tensor<double> calculate_outputs(const Tensor<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
-   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-   void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
+   void calculate_forward_propagation(const ThreadPoolDevice& thread_pool_device,
+                                      const Tensor<type, 2>& inputs,
+                                      ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(thread_pool_device, inputs, forward_propagation.combinations);
 
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(thread_pool_device, forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(thread_pool_device, forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
 
-   Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_output_delta(const Tensor<double>& activations_derivatives, const Tensor<double>& output_gradient, Tensor<double>& output_delta) const
+   void calculate_output_delta(const ThreadPoolDevice& thread_pool_device,
+                               const Tensor<type, 2>& activations_derivatives,
+                               const Tensor<type, 2>& output_gradient,
+                               Tensor<type, 2>& output_delta) const
    {
-       output_delta = activations_derivatives;
-
-       output_delta *= output_gradient;
+       output_delta = activations_derivatives*output_gradient;
    }
 
 
-   Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               const Tensor<double>&,
-                               const Tensor<double>& activations_derivatives,
-                               const Tensor<double>& next_layer_delta,
-                               Tensor<double>& hidden_delta) const
+   void calculate_hidden_delta(const ThreadPoolDevice& thread_pool_device,
+                               Layer* next_layer_pointer,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>& activations_derivatives,
+                               const Tensor<type, 2>& next_layer_delta,
+                               Tensor<type, 2>& hidden_delta) const
    {
-       const Type layer_type = next_layer_pointer->get_type();
+       const Type next_layer_type = next_layer_pointer->get_type();
 
-       if(layer_type == Perceptron)
+       if(next_layer_type == Perceptron)
        {
-           const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+           const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-           const Matrix<double> synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+           const Eigen::array<Eigen::IndexPair<int>, 1> transposed_product_dimensions = { Eigen::IndexPair<int>(1, 1) };
 
-           //const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
+           const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-           dot(next_layer_delta, synaptic_weights_transpose, hidden_delta);
-
-           hidden_delta *= activations_derivatives;
+//           hidden_delta.device(thread_pool_device) = activations_derivatives*next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
+           hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
+           hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
        }
-       else if(layer_type == Probabilistic)
+       else if(next_layer_type == Probabilistic)
        {
            const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
        }
@@ -330,47 +338,56 @@ public:
        {
            /// @todo Throw exception.
        }
-
-
    }
 
 
    // Gradient methods
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
-   void calculate_error_gradient(const Tensor<double>& inputs,
+   void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
+                                 const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 const Tensor<double>& deltas,
-                                 Vector<double>& error_gradient)
+                                 const Tensor<type, 2>& deltas,
+                                 Tensor<type, 1>& error_gradient)
    {
-       //Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
-
-       //Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
-
-       const size_t inputs_number = get_inputs_number();
-       const size_t neurons_number = get_neurons_number();
-
-       const size_t parameters_number = get_parameters_number();
-
-       const size_t synaptic_weights_number = neurons_number*inputs_number;
-
-       Vector<double> layer_error_gradient(parameters_number, 0.0);
+       const int inputs_number = get_inputs_number();
+       const int neurons_number = get_neurons_number();
 
        // Synaptic weights
 
+       const size_t synaptic_weights_number = get_synaptic_weights_number();
+       const size_t biases_number = get_biases_number();
 
-       error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), deltas).to_vector());
+       Eigen::array<int, 1> one_dim{{inputs_number*neurons_number}};
+
+       const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(0, 0)};
+
+       Tensor<type, 1> synaptic_weights_derivatives(inputs_number*neurons_number);
+
+       synaptic_weights_derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions).reshape(one_dim);
+
+       for(int i = 0; i < synaptic_weights_number; i++)
+       {
+           error_gradient(i) = synaptic_weights_derivatives(i);
+       }
 
        // Biases
 
-       error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
+       Eigen::Tensor<type, 1> biases_derivatives(neurons_number);
+
+       biases_derivatives.device(thread_pool_device) = deltas.sum(Eigen::array<int, 1>({0}));
+
+       for(int i = 0; i < biases_number; i++)
+       {
+           error_gradient(synaptic_weights_number + i) = biases_derivatives(i);
+       }
    }
 
 
    // Expression methods
 
-   string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression(const vector<string>&, const vector<string>&) const;
    string write_activation_function_expression() const;
 
    string object_to_string() const;
@@ -387,11 +404,11 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Vector<double> biases;
+   Tensor<type, 2> biases;
 
    /// This matrix containing conection strengths from a layer's inputs to its neurons.
 
-   Matrix<double> synaptic_weights;
+   Tensor<type, 2> synaptic_weights;
 
    /// Activation function variable.
 
@@ -400,6 +417,8 @@ protected:
    /// Display messages to screen. 
 
    bool display;
+
+
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"

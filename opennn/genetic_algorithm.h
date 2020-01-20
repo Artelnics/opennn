@@ -21,11 +21,10 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
@@ -93,28 +92,28 @@ public:
 
         /// Values of the minimum loss in each generation.
 
-        Vector<double> generation_optimum_loss_history;
+        Tensor<type, 1> generation_optimum_loss_history;
 
         /// Values of the minimum selection error in each generation.
 
-        Vector<double> generation_minimum_selection_history;
+        Tensor<type, 1> generation_minimum_selection_history;
 
         /// Mean of the selection error in each generation.
 
-        Vector<double> generation_mean_history;
+        Tensor<type, 1> generation_mean_history;
 
         /// Standard deviation of the selection error in each generation.
 
-        Vector<double> generation_standard_deviation_history;
+        Tensor<type, 1> generation_standard_deviation_history;
     };
 
     // Get methods
 
-    const Vector<Vector<bool>>& get_population() const;
+    const vector<vector<bool>>& get_population() const;
 
-    const Matrix<double>& get_loss() const;
+    const Tensor<type, 2>& get_loss() const;
 
-    const Vector<double>& get_fitness() const;
+    const Tensor<type, 1>& get_fitness() const;
 
     const InitializationMethod& get_initialization_method() const;
 
@@ -122,15 +121,15 @@ public:
 
     const FitnessAssignment& get_fitness_assignment_method() const;
 
-    const size_t& get_population_size() const;
+    const int& get_population_size() const;
 
     const double& get_mutation_rate() const;
 
-    const size_t& get_elitism_size() const;
+    const int& get_elitism_size() const;
 
-    const size_t& get_crossover_first_point() const;
+    const int& get_crossover_first_point() const;
 
-    const size_t& get_crossover_second_point() const;
+    const int& get_crossover_second_point() const;
 
     const double& get_selective_pressure() const;
 
@@ -154,11 +153,11 @@ public:
 
     void set_default();
 
-    void set_population(const Vector<Vector<bool>>&);
+    void set_population(const vector<vector<bool>>&);
 
-    void set_loss(const Matrix<double>&);
+    void set_loss(const Tensor<type, 2>&);
 
-    void set_fitness(const Vector<double>&);
+    void set_fitness(const Tensor<type, 1>&);
 
     void set_inicialization_method(const InitializationMethod&);
     void set_fitness_assignment_method(const FitnessAssignment&);
@@ -168,15 +167,15 @@ public:
     void set_fitness_assignment_method(const string&);
     void set_crossover_method(const string&);
 
-    void set_population_size(const size_t&);
+    void set_population_size(const int&);
 
     void set_mutation_rate(const double&);
 
-    void set_elitism_size(const size_t&);
+    void set_elitism_size(const int&);
 
-    void set_crossover_first_point(const size_t&);
+    void set_crossover_first_point(const int&);
 
-    void set_crossover_second_point(const size_t&);
+    void set_crossover_second_point(const int&);
 
     void set_selective_pressure(const double&);
 
@@ -230,13 +229,13 @@ public:
 
     // Order selection methods
 
-    size_t get_optimal_individual_index() const;
+    int get_optimal_individual_index() const;
 
     GeneticAlgorithmResults* perform_inputs_selection();
 
     // Serialization methods
 
-    Matrix<string> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -253,15 +252,15 @@ private:
 
     /// Population matrix.
 
-    Vector<Vector<bool>> population;
+    vector<vector<bool>> population;
 
     /// Performance of population.
 
-    Matrix<double> loss;
+    Tensor<type, 2> loss;
 
     /// Fitness of population.
 
-    Vector<double> fitness;
+    Tensor<type, 1> fitness;
 
     // Training operators
 
@@ -279,11 +278,11 @@ private:
 
     /// Initial uses of the variables in the data set.
 
-    Vector<DataSet::VariableUse> original_uses;
+    vector<DataSet::VariableUse> original_uses;
 
     /// Size of the population.
 
-    size_t population_size;
+    int population_size;
 
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
@@ -300,17 +299,17 @@ private:
     /// It represents the number of individuals which will always be selected for recombination.
     /// This is a parameter of the selection operator.
 
-    size_t elitism_size;
+    int elitism_size;
 
     /// First point used in the OnePoint and TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    size_t crossover_first_point;
+    int crossover_first_point;
 
     /// Second point used in the TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    size_t crossover_second_point;
+    int crossover_second_point;
 
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.

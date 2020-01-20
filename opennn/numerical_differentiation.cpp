@@ -67,7 +67,7 @@ string NumericalDifferentiation::write_numerical_differentiation_method() const
 
 /// Returns the number of precision digits required for the derivatives. 
 
-const size_t& NumericalDifferentiation::get_precision_digits() const
+const int& NumericalDifferentiation::get_precision_digits() const
 {
    return(precision_digits);
 }
@@ -144,7 +144,7 @@ void NumericalDifferentiation::set_display(const bool& new_display)
 /// Sets a new number of precision digits required for the derivatives. 
 /// @param new_precision_digits Number of precision digits. 
 
-void NumericalDifferentiation::set_precision_digits(const size_t& new_precision_digits)
+void NumericalDifferentiation::set_precision_digits(const int& new_precision_digits)
 {
    precision_digits = new_precision_digits;
 }
@@ -181,15 +181,15 @@ double NumericalDifferentiation::calculate_h(const double& x) const
 /// Calculates a vector of step sizes for computing the derivatives, as a function of a vector of inputs. 
 /// @param x Input vector. 
 
-Vector<double> NumericalDifferentiation::calculate_h(const Vector<double>& x) const
+Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) const
 {
    const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
 
-   const size_t n = x.size();
+   const int n = x.size();
 
-   Vector<double> h(n);
+   Tensor<type, 1> h(n);
 
-   for(size_t i = 0; i < n; i++)
+   for(int i = 0; i < n; i++)
    {
       h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
@@ -201,41 +201,44 @@ Vector<double> NumericalDifferentiation::calculate_h(const Vector<double>& x) co
 /// Calculates a tensor of step sizes for computing the derivatives, as a function of a vector of inputs.
 /// @param x Input tensor.
 
-Tensor<double> NumericalDifferentiation::calculate_h(const Tensor<double>& x) const
+Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
+/*
    const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
 
-   const size_t n = x.size();
+   const int n = x.size();
 
-   const Vector<size_t> dimensions = x.get_dimensions();
+   const auto& dimensions = x.dimensions();
 
-   Tensor<double> h(dimensions);
+   Tensor<type, 2> h(dimensions);
 
-   for(size_t i = 0; i < n; i++)
+   for(int i = 0; i < n; i++)
    {
       h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
 
    return(h);
+*/
+   return Tensor<type, 2>();
 }
 
 
-Vector<double> NumericalDifferentiation::calculate_backward_differences_derivatives(const Vector<double>& x,
-                                                                                    const Vector<double>& y) const
+Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
+                                                                                    const Tensor<type, 1>& y) const
 {
     
 
     #ifdef __OPENNN_DEBUG__
 
-    const size_t x_size = x.size();
-    const size_t y_size = y.size();
+    const int x_size = x.size();
+    const int y_size = y.size();
 
     if(x_size != y_size)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-              << "Vector<double> calculate_backward_differences_derivatives(const Vector<double>&, const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of independent variable must be equal to size of dependent variable.\n";
 
        throw logic_error(buffer.str());
@@ -243,12 +246,12 @@ Vector<double> NumericalDifferentiation::calculate_backward_differences_derivati
 
     #endif
 
-    const size_t size = x.size();
+    const int size = x.size();
 
-    Vector<double> derivatives(size);
+    Tensor<type, 1> derivatives(size);
     derivatives[0] = 0.0;
 
-    for(size_t i = 1; i < size; i++)
+    for(int i = 1; i < size; i++)
     {
         const double numerator = y[i] - y[i-1];
         const double denominator = x[i] - x[i-1];
@@ -262,7 +265,7 @@ Vector<double> NumericalDifferentiation::calculate_backward_differences_derivati
             ostringstream buffer;
 
             buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_backward_differences_derivatives(const Vector<double>&, const Vector<double>&) const method.\n"
+                   << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                    << "Denominator is equal to 0.\n";
 
             throw logic_error(buffer.str());
@@ -376,7 +379,7 @@ void NumericalDifferentiation::from_XML(const tinyxml2::XMLDocument& document)
 
      if(element)
      {
-        const size_t new_precision_digits = static_cast<size_t>(atoi(element->GetText()));
+        const int new_precision_digits = static_cast<int>(atoi(element->GetText()));
 
         try
         {

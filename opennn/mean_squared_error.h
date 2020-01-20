@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -68,12 +69,12 @@ public:
    // Error methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Vector<double>&) const;
+   double calculate_training_error(const Tensor<type, 1>&) const;
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+   double calculate_batch_error(const vector<int>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -81,27 +82,28 @@ public:
 
    FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch& batch,
+   void calculate_first_order_loss(const ThreadPoolDevice& thread_pool_device,
+                                   const DataSet::Batch& batch,
                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    FirstOrderLoss& first_order_loss) const
    {
        // Data set
 
-       const size_t batch_instances_number = batch.inputs.get_dimension(0);
+       const int batch_instances_number = batch.inputs_2d.dimension(0);
 
        // Neural network
 
-       const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+       const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
        // Loss index
 
-       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets)/ static_cast<double>(batch_instances_number);
+       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<double>(batch_instances_number);
 
        calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
-       calculate_layers_delta(forward_propagation, first_order_loss);
+       calculate_layers_delta(thread_pool_device, forward_propagation, first_order_loss);
 
-       calculate_error_gradient(batch, forward_propagation, first_order_loss);
+       calculate_error_gradient(thread_pool_device, batch, forward_propagation, first_order_loss);
 
        first_order_loss.gradient = first_order_loss.error_gradient;
 
@@ -109,23 +111,26 @@ public:
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
+/*
            first_order_loss.loss += regularization_weight*calculate_regularization();
 
            first_order_loss.regularization_gradient = calculate_regularization_gradient();
 
            first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
+*/
        }
+
    }
 
    // Error terms methods
 
-   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
-   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -137,16 +142,13 @@ public:
 
         #endif
 
-        const size_t instances_number = data_set_pointer->get_training_instances_number();
+        const int instances_number = data_set_pointer->get_training_instances_number();
 
-        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
-
-        first_order_loss.output_gradient -= batch.targets;
-
-        first_order_loss.output_gradient *= 2.0/static_cast<double>(instances_number);
+        first_order_loss.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d)*(static_cast<type>(2.0)/static_cast<type>(instances_number));
    }
+
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 

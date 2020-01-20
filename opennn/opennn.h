@@ -17,6 +17,7 @@
 
 // Neural network
 
+#include "config.h"
 #include "layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
@@ -64,10 +65,7 @@
 // Utilities
 
 #include "math.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "numerical_differentiation.h"
-#include "vector.h"
 #include "tinyxml2.h"
 #include "correlations.h"
 #include "functions.h"

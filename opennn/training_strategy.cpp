@@ -728,11 +728,13 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
    {
       case SUM_SQUARED_ERROR:
       {
+/*
          sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
 
          sum_squared_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(sum_squared_error_pointer);
+*/
       }
       break;
 
@@ -748,41 +750,49 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 
       case NORMALIZED_SQUARED_ERROR:
       {
+/*
          normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
 
          normalized_squared_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(normalized_squared_error_pointer);
+*/
       }
       break;
 
       case MINKOWSKI_ERROR:
       {
+/*
          Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
 
          Minkowski_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(Minkowski_error_pointer);
+*/
       }
       break;
 
       case WEIGHTED_SQUARED_ERROR:
       {
+/*
         weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
 
         weighted_squared_error_pointer->set_regularization_method(regularization_method);
 
         set_loss_index_pointer(weighted_squared_error_pointer);
+*/
       }
       break;
 
       case CROSS_ENTROPY_ERROR:
       {
+/*
         cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
 
         cross_entropy_error_pointer->set_regularization_method(regularization_method);
 
         set_loss_index_pointer(cross_entropy_error_pointer);
+*/
       }
       break;
    }
@@ -1119,10 +1129,6 @@ switch(optimization_method)
       gradient_descent_pointer->set_display(display);
 
       gradient_descent_pointer->perform_training_void();
-
-//      training_strategy_results.gradient_descent_results_pointer
-//      = gradient_descent_pointer->perform_training();
-
    }
    break;
 
@@ -1174,8 +1180,8 @@ switch(optimization_method)
 
 bool TrainingStrategy::check_forecasting() const
 {
-    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
-    size_t timesteps = 0;
+    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    int timesteps = 0;
 
     if(neural_network_pointer->has_recurrent_layer())
     {

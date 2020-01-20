@@ -20,11 +20,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
+#include "config.h"
 #include "training_strategy.h"
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -77,19 +74,19 @@ public:
 
        /// Order of the diferent neural networks.
 
-       Vector<size_t> neurons_data;
+       vector<int> neurons_data;
 
        /// Performance of the different neural networks.
 
-       Vector<double> training_loss_data;
+       Tensor<type, 1> training_loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Vector<double> selection_error_data;
+       Tensor<type, 1> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Vector<double> minimal_parameters;
+       Tensor<type, 1> minimal_parameters;
 
        /// Value of minimum selection error.
 
@@ -101,11 +98,11 @@ public:
 
        /// Order of the neural network with minimum selection error.
 
-       size_t optimal_neurons_number;
+       int optimal_neurons_number;
 
        /// Number of iterations to perform the order selection.
 
-       size_t iterations_number;
+       int iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -122,9 +119,9 @@ public:
 
     bool has_training_strategy() const;
 
-    const size_t& get_maximum_order() const;
-    const size_t& get_minimum_order() const;
-    const size_t& get_trials_number() const;
+    const int& get_maximum_order() const;
+    const int& get_minimum_order() const;
+    const int& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -133,7 +130,7 @@ public:
     const bool& get_display() const;
 
     const double& get_selection_error_goal() const;
-    const size_t& get_maximum_iterations_number() const;
+    const int& get_maximum_iterations_number() const;
     const double& get_maximum_time() const;
     const double& get_tolerance() const;
 
@@ -143,9 +140,9 @@ public:
 
     void set_default();
 
-    void set_maximum_order(const size_t&);
-    void set_minimum_order(const size_t&);
-    void set_trials_number(const size_t&);
+    void set_maximum_order(const int&);
+    void set_minimum_order(const int&);
+    void set_trials_number(const int&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -154,13 +151,13 @@ public:
     void set_display(const bool&);
 
     void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const size_t&);
+    void set_maximum_iterations_number(const int&);
     void set_maximum_time(const double&);
     void set_tolerance(const double&);
 
     // Loss calculation methods
 
-    Vector<double> calculate_losses(const size_t&, NeuralNetwork&);
+    Tensor<type, 1> calculate_losses(const int&, NeuralNetwork&);
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -182,29 +179,29 @@ protected:
 
     /// Order of all the neural networks trained.
 
-    Vector<size_t> order_history;
+    vector<int> order_history;
 
     /// Selection loss of all the neural networks trained.
 
-    Vector<double> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector<double> training_loss_history;
+    Tensor<type, 1> training_loss_history;
 
-    Vector<Vector<double>> parameters_history;
+    vector<Tensor<type, 1>> parameters_history;
 
     /// Minimum number of hidden neurons.
 
-    size_t minimum_order;
+    int minimum_order;
 
     /// Maximum number of hidden neurons.
 
-    size_t maximum_order;
+    int maximum_order;
 
     /// Number of trials for each neural network.
 
-    size_t trials_number;
+    int trials_number;
 
     // Order selection results
 
@@ -230,7 +227,7 @@ protected:
 
     /// Maximum number of iterations to perform_neurons_selection. It is used as a stopping criterion.
 
-    size_t maximum_iterations_number;
+    int maximum_iterations_number;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 

@@ -21,11 +21,14 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 
-
-
 #include "tinyxml2.h"
+
+using namespace std;
+using namespace Eigen;
+
 
 namespace OpenNN
 {
@@ -79,31 +82,31 @@ public:
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       Matrix<string> write_final_results(const size_t&) const;
+       Tensor<string, 2> write_final_results(const int&) const;
 
        /// Resizes training history variables.
 
-       void resize_training_history(const size_t&);
+       void resize_training_history(const int&);
 
        /// Writes final results of the training.
-
-       Matrix<string> write_final_results(const int& precision = 3) const;
-
+/*
+       Tensor<string, 2> write_final_results(const int& precision = 3) const;
+*/
        // Training history
 
        /// History of the loss function loss over the training iterations.
 
-       Vector<double> training_error_history;
+       Tensor<type, 1> training_error_history;
 
        /// History of the selection error over the training iterations.
 
-       Vector<double> selection_error_history;
+       Tensor<type, 1> selection_error_history;
 
        // Final values
 
        /// Final neural network parameters vector.
 
-       Vector<double> final_parameters;
+       Tensor<type, 1> final_parameters;
 
        /// Final neural network parameters norm.
 
@@ -127,14 +130,12 @@ public:
 
        /// Maximum number of training iterations.
 
-       size_t epochs_number;
+       int epochs_number;
 
        /// Stopping criterion.
 
        string stopping_criterion;
    };
-
-
 
 
    // Get methods
@@ -147,9 +148,9 @@ public:
 
    const bool& get_display() const;
 
-   const size_t& get_display_period() const;
+   const int& get_display_period() const;
 
-   const size_t& get_save_period() const;
+   const int& get_save_period() const;
 
    const string& get_neural_network_file_name() const;
 
@@ -164,9 +165,9 @@ public:
 
    virtual void set_display(const bool&);
 
-   void set_display_period(const size_t&);
+   void set_display_period(const int&);
 
-   void set_save_period(const size_t&);
+   void set_save_period(const int&);
    void set_neural_network_file_name(const string&);
 
    // Training methods
@@ -184,7 +185,7 @@ public:
    virtual string object_to_string() const;
    void print() const;
 
-   virtual Matrix<string> to_string_matrix() const;
+   virtual Tensor<string, 2> to_string_matrix() const;
 
    virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
@@ -202,17 +203,17 @@ protected:
 
    /// Number of training epochs in the neural network.
 
-   size_t epochs_number = 10000;
+   int epochs_number = 10000;
 
    // UTILITIES
 
    /// Number of iterations between the training showing progress.
 
-   size_t display_period;
+   int display_period;
 
    /// Number of iterations between the training saving progress.
 
-   size_t save_period;
+   int save_period;
 
    /// Path where the neural network is saved.
 

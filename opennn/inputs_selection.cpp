@@ -101,7 +101,7 @@ bool InputsSelection::has_training_strategy() const
 
 /// Returns the number of trials for each network architecture.
 
-const size_t& InputsSelection::get_trials_number() const
+const int& InputsSelection::get_trials_number() const
 {
     return trials_number;
 }
@@ -150,7 +150,7 @@ const double& InputsSelection::get_selection_error_goal() const
 
 /// Returns the maximum number of iterations in the inputs selection algorithm.
 
-const size_t& InputsSelection::get_maximum_iterations_number() const
+const int& InputsSelection::get_maximum_iterations_number() const
 {
     return maximum_epochs_number;
 }
@@ -240,7 +240,7 @@ void InputsSelection::set_default()
 /// Sets the number of times that each different neural network is to be trained.
 /// @param new_trials_number Number of trials for each set of parameters.
 
-void InputsSelection::set_trials_number(const size_t& new_trials_number)
+void InputsSelection::set_trials_number(const int& new_trials_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -248,7 +248,7 @@ void InputsSelection::set_trials_number(const size_t& new_trials_number)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_trials_number(const size_t&) method.\n"
+               << "void set_trials_number(const int&) method.\n"
                << "Number of assays must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -325,7 +325,7 @@ void InputsSelection::set_selection_error_goal(const double& new_selection_error
 /// Sets the maximum iterations number for the inputs selection algorithm.
 /// @param new_maximum_iterations_number Maximum number of iterations.
 
-void InputsSelection::set_maximum_iterations_number(const size_t& new_maximum_iterations_number)
+void InputsSelection::set_maximum_iterations_number(const int& new_maximum_iterations_number)
 {
     maximum_epochs_number = new_maximum_iterations_number;
 }
@@ -430,8 +430,9 @@ void InputsSelection::set_tolerance(const double& new_tolerance)
 /// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
+Tensor<type, 1> InputsSelection::calculate_losses(const vector<bool> & inputs)
 {
+/*
 #ifdef __OPENNN_DEBUG__
 
     if(inputs.count_equal_to(true) <= 0)
@@ -439,7 +440,7 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
+               << "Tensor<type, 1> perform_minimum_model_evaluation(int) method.\n"
                << "Number of inputs must be greater or equal than 1.\n";
 
         throw logic_error(buffer.str());
@@ -450,7 +451,7 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
+               << "Tensor<type, 1> perform_minimum_model_evaluation(int) method.\n"
                << "Number of parameters assay must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -466,19 +467,19 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
 
     OptimizationAlgorithm::Results results;
 
-    double optimum_selection_error = numeric_limits<double>::max();
-    double optimum_training_error = numeric_limits<double>::max();
+    double optimum_selection_error = 999999;
+    double optimum_training_error = 999999;
 
-    Vector<double> optimum_parameters;
+    Tensor<type, 1> optimum_parameters;
 
-    Vector<double> optimum_losses(2);
+    Tensor<type, 1> optimum_losses(2);
 
     bool flag_loss = false;
     bool flag_selection = false;
 
     // Check population
 
-    for(size_t i = 0; i < inputs_history.size(); i++)
+    for(int i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
@@ -487,7 +488,7 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
         }
     }
 
-    for(size_t i = 0; i < inputs_history.size(); i++)
+    for(int i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
@@ -511,7 +512,7 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
 
     neural_network->set_inputs_number(inputs);
 
-    for(size_t i = 0; i < trials_number; i++)
+    for(int i = 0; i < trials_number; i++)
     {
         neural_network->randomize_parameters_normal();
 
@@ -519,7 +520,7 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
 
         const double selection_error = results.final_selection_error;
         const double training_error = results.final_training_error;
-        const Vector<double> parameters = results.final_parameters;
+        const Tensor<type, 1> parameters = results.final_parameters;
 
         if(display && trials_number != 1)
         {
@@ -556,14 +557,17 @@ Vector<double> InputsSelection::calculate_losses(const Vector<bool> & inputs)
     optimum_losses[1] = optimum_selection_error;
 
     return optimum_losses;
+*/
+    return Tensor<type, 1>();
 }
 
 
 /// Returns the mean of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>&inputs)
+Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const vector<bool>&inputs)
 {
+/*
 #ifdef __OPENNN_DEBUG__
 
     if(inputs.count_equal_to(true) <= 0)
@@ -571,7 +575,7 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
+               << "Tensor<type, 1> perform_minimum_model_evaluation(int) method.\n"
                << "Number of inputs must be greater or equal than 1.\n";
 
         throw logic_error(buffer.str());
@@ -582,7 +586,7 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
+               << "Tensor<type, 1> perform_minimum_model_evaluation(int) method.\n"
                << "Number of parameters assay must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -594,18 +598,18 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
 
     OptimizationAlgorithm::Results results;
 
-    Vector<double> mean_final(2);
+    Tensor<type, 1> mean_final(2);
     mean_final[0] = 0;
     mean_final[1] = 0;
 
-    Vector<double> current_loss(2);
+    Tensor<type, 1> current_loss(2);
 
-    Vector<double> final_parameters;
+    Tensor<type, 1> final_parameters;
 
     bool flag_loss = false;
     bool flag_selection = false;
 
-    for(size_t i = 0; i < inputs_history.size(); i++)
+    for(int i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
@@ -614,7 +618,7 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
         }
     }
 
-    for(size_t i = 0; i < inputs_history.size(); i++)
+    for(int i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
@@ -639,7 +643,7 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
 
     final_parameters.set(neural_network->get_parameters());
 
-    for(size_t i = 1; i < trials_number; i++)
+    for(int i = 1; i < trials_number; i++)
     {
         if(display)
         {
@@ -692,14 +696,18 @@ Vector<double> InputsSelection::perform_mean_model_evaluation(const Vector<bool>
     parameters_history.push_back(final_parameters);
 
     return mean_final;
+*/
+    return Tensor<type, 1>();
+
 }
 
 
 /// Returns the parameters of the neural network if the inputs is in the history.
 /// @param inputs Vector of inputs to be trained with.
 
-Vector<double> InputsSelection::get_parameters_inputs(const Vector<bool>& inputs) const
+Tensor<type, 1> InputsSelection::get_parameters_inputs(const vector<bool>& inputs) const
 {
+/*
 #ifdef __OPENNN_DEBUG__
 
     if(inputs.count_equal_to(true) <= 0)
@@ -707,7 +715,7 @@ Vector<double> InputsSelection::get_parameters_inputs(const Vector<bool>& inputs
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Vector<double> get_parameters_inputs(const Vector<bool>&) method.\n"
+               << "Tensor<type, 1> get_parameters_inputs(const vector<bool>&) method.\n"
                << "Inputs must be greater than 1.\n";
 
         throw logic_error(buffer.str());
@@ -715,9 +723,9 @@ Vector<double> InputsSelection::get_parameters_inputs(const Vector<bool>& inputs
 
 #endif
 
-    size_t i;
+    int i;
 
-    Vector<double> parameters;
+    Tensor<type, 1> parameters;
 
     for(i = 0; i < inputs_history.size(); i++)
     {
@@ -730,7 +738,8 @@ Vector<double> InputsSelection::get_parameters_inputs(const Vector<bool>& inputs
     }
 
     return parameters;
-
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -747,7 +756,9 @@ string InputsSelection::write_stopping_condition(const OptimizationAlgorithm::Re
 
 void InputsSelection::delete_selection_history()
 {
+/*
     selection_error_history.set();
+*/
 }
 
 
@@ -755,7 +766,9 @@ void InputsSelection::delete_selection_history()
 
 void InputsSelection::delete_loss_history()
 {
+/*
     training_error_history.set();
+*/
 }
 
 
@@ -763,7 +776,9 @@ void InputsSelection::delete_loss_history()
 
 void InputsSelection::delete_parameters_history()
 {
+/*
     parameters_history.set();
+*/
 }
 
 
@@ -835,7 +850,7 @@ void InputsSelection::check() const
 
     
 
-    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     if(selection_instances_number == 0)
     {
@@ -898,7 +913,7 @@ string InputsSelection::Results::write_stopping_condition() const
 string InputsSelection::Results::object_to_string() const
 {
    ostringstream buffer;
-
+/*
    // Inputs history
 
    if(!inputs_data.empty())
@@ -962,18 +977,14 @@ string InputsSelection::Results::object_to_string() const
 
    // Iterations number
 
-
    buffer << "% Number of iterations:\n"
           << iterations_number << "\n";
-
 
    // Elapsed time
 
    buffer << "% Elapsed time:\n"
           << write_elapsed_time(elapsed_time) << "\n";
-
-
-
+*/
    return buffer.str();
 }
 
@@ -982,7 +993,7 @@ string InputsSelection::Results::object_to_string() const
 /// @param uses Vector of the uses of the variables.
 /// @param input_number Index of the input to find.
 
-size_t InputsSelection::get_input_index(const Vector<DataSet::VariableUse> uses, const size_t input_number)
+int InputsSelection::get_input_index(const vector<DataSet::VariableUse> uses, const int input_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -991,16 +1002,16 @@ size_t InputsSelection::get_input_index(const Vector<DataSet::VariableUse> uses,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "const size_t get_input_index(const Vector<DataSet::VariableUse>, const size_t) method.\n"
+               << "const int get_input_index(const vector<DataSet::VariableUse>, const int) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  input_number << ".\n";
 
         throw logic_error(buffer.str());
     }
 #endif
 
-    size_t i = 0;
+    int i = 0;
 
-    size_t j = 0;
+    int j = 0;
 
     while(i < uses.size())
     {

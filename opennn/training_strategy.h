@@ -21,8 +21,8 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
-
 #include "sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"

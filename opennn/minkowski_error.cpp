@@ -137,29 +137,29 @@ double MinkowskiError::calculate_training_error() const
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
+    const int training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
-    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const size_t inputs_number = data_set_pointer->get_input_variables_number();
-    const size_t targets_number = data_set_pointer->get_target_variables_number();
+    const int inputs_number = data_set_pointer->get_input_variables_number();
+    const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double> inputs(batch_instances_number, inputs_number);
-    Tensor<double> targets(batch_instances_number, targets_number);
-    Tensor<double> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
-
+/*
      #pragma omp parallel for reduction(+ : training_error)
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
@@ -167,12 +167,12 @@ double MinkowskiError::calculate_training_error() const
 
         training_error += batch_error;
     }
-
+*/
     return training_error / static_cast<double>(training_instances_number);
 }
 
 
-double MinkowskiError::calculate_training_error(const Vector<double>& parameters) const
+double MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
     //Neural network
 
@@ -182,29 +182,29 @@ double MinkowskiError::calculate_training_error(const Vector<double>& parameters
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
+    const int training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
-    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const size_t inputs_number = data_set_pointer->get_input_variables_number();
-    const size_t targets_number = data_set_pointer->get_target_variables_number();
+    const int inputs_number = data_set_pointer->get_input_variables_number();
+    const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double> inputs(batch_instances_number, inputs_number);
-    Tensor<double> targets(batch_instances_number, targets_number);
-    Tensor<double> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
-
+/*
      #pragma omp parallel for reduction(+ : training_error)
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
@@ -212,7 +212,7 @@ double MinkowskiError::calculate_training_error(const Vector<double>& parameters
 
         training_error += batch_error;
     }
-
+*/
     return training_error / static_cast<double>(training_instances_number);
 }
 
@@ -221,7 +221,7 @@ double MinkowskiError::calculate_selection_error() const
 {
     // Data set
 
-    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
         //Neural network
 
@@ -231,27 +231,27 @@ double MinkowskiError::calculate_selection_error() const
 
     // Data set
 
-    const Vector<Vector<size_t>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
-    const size_t batches_number = selection_batches.size();
+    const int batches_number = selection_batches.size();
 
-    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const size_t inputs_number = data_set_pointer->get_input_variables_number();
-    const size_t targets_number = data_set_pointer->get_target_variables_number();
+    const int inputs_number = data_set_pointer->get_input_variables_number();
+    const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double> inputs(batch_instances_number, inputs_number);
-    Tensor<double> targets(batch_instances_number, targets_number);
-    Tensor<double> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
-
+/*
      #pragma omp parallel for reduction(+ : training_error)
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<size_t>(i)]);
-        targets = data_set_pointer->get_target_data(selection_batches[static_cast<size_t>(i)]);
+        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<int>(i)]);
+        targets = data_set_pointer->get_target_data(selection_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
@@ -259,7 +259,7 @@ double MinkowskiError::calculate_selection_error() const
 
         training_error += batch_error;
     }
-
+*/
     return training_error / static_cast<double>(selection_instances_number);
 }
 
@@ -268,7 +268,7 @@ double MinkowskiError::calculate_selection_error() const
 /// Returns the Minkowski error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double MinkowskiError::calculate_batch_error(const Vector<size_t>& batch_indices) const
+double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -278,16 +278,18 @@ check();
 
     // Data set
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+/*
     return minkowski_error(outputs, targets, minkowski_parameter);
+*/
+    return 0.0;
 }
 
 
-double MinkowskiError::calculate_batch_error(const Vector<size_t>& batch_indices, const Vector<double>& parameters) const
+double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -297,12 +299,14 @@ check();
 
     // Data set
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+/*
     return minkowski_error(outputs, targets, minkowski_parameter);
+*/
+    return 0.0;
 }
 
 
@@ -312,7 +316,7 @@ check();
 /// @param outputs Tensor with outputs.
 /// @param targets Tensor with targets.
 
-Tensor<double> MinkowskiError::calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets) const
+Tensor<type, 2> MinkowskiError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -320,9 +324,11 @@ check();
 
 #endif
 
-    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
-
+    const int training_instances_number = data_set_pointer->get_training_instances_number();
+/*
     return lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<double>(training_instances_number);
+*/
+    return Tensor<type, 2>();
 }
 
 

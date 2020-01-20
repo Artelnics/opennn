@@ -1680,7 +1680,7 @@ public:
 //     	specified, TinyXML-2 will assume 'xml' points to a
 //     	null terminated string.
 
-    XMLError Parse(const char* xml, size_t nBytes= (size_t)(-1));
+    XMLError Parse(const char* xml, int nBytes= (int)(-1));
 
 
 //     	Load an XML file from disk.
@@ -2242,7 +2242,7 @@ protected:
 
     virtual void PrintSpace(int depth );
     void Print(const char* format, ...);
-    void Write(const char* data, size_t size );
+    void Write(const char* data, int size );
     inline void Write(const char* data )           { Write(data, strlen(data )); }
     void Putc(char ch );
 

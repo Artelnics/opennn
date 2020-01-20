@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -75,21 +76,21 @@ public:
 
    // Normalization coefficients 
 
-   double calculate_normalization_coefficient(const Matrix<double>&, const Vector<double>&) const;
+   double calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
    // Error methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Vector<double>&) const;
+   double calculate_training_error(const Tensor<type, 1>&) const;
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+   double calculate_batch_error(const vector<int>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -101,13 +102,14 @@ public:
 
         #endif
 
-        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
         first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
 
-        first_order_loss.output_gradient -= batch.targets;
-
+        first_order_loss.output_gradient -= batch.targets_2d;
+/*
         first_order_loss.output_gradient *= 2.0 / normalization_coefficient;
+*/
    }
 
 
@@ -115,7 +117,8 @@ public:
 
    LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch& batch,
+   void calculate_first_order_loss(const ThreadPoolDevice& thread_pool_device,
+                                   const DataSet::Batch& batch,
                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    FirstOrderLoss& first_order_loss) const
    {
@@ -127,17 +130,17 @@ public:
 
     // Neural network
 
-    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
     // Loss index
 
-    first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets) / normalization_coefficient;
+    first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d) / normalization_coefficient;
 
     calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
-    calculate_layers_delta(forward_propagation, first_order_loss);
+    calculate_layers_delta(thread_pool_device, forward_propagation, first_order_loss);
 
-    calculate_error_gradient(batch, forward_propagation, first_order_loss);
+    calculate_error_gradient(thread_pool_device, batch, forward_propagation, first_order_loss);
 
     // Regularization
 
@@ -153,14 +156,14 @@ public:
 
    // Error terms methods
 
-   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
-   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    // Squared errors methods
 
-   Vector<double> calculate_squared_errors() const;
+   Tensor<type, 1> calculate_squared_errors() const;
 
-   Vector<size_t> calculate_maximal_errors(const size_t& = 10) const;
+   vector<int> calculate_maximal_errors(const int& = 10) const;
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
@@ -178,9 +181,9 @@ private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   double normalization_coefficient;
+   type normalization_coefficient;
 
-   double selection_normalization_coefficient;
+   type selection_normalization_coefficient;
 };
 
 }

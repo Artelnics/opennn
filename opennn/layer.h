@@ -9,6 +9,10 @@
 #ifndef LAYER_H
 #define LAYER_H
 
+#ifndef EIGEN_USE_THREADS
+#define EIGEN_USE_THREADS
+#endif
+
 // System includes
 
 #include <cmath>
@@ -18,14 +22,20 @@
 #include <string>
 #include <sstream>
 #include <ctype.h>
+#include <iostream>
+#include <vector>
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-#include "tensor.h"
-
+#include "config.h"
 #include "tinyxml2.h"
+
+#include <../eigen/unsupported/Eigen/CXX11/Tensor>
+
+#include <../eigen/unsupported/Eigen/CXX11/ThreadPool>
+
+using namespace std;
+using namespace Eigen;
 
 namespace OpenNN {
 
@@ -71,17 +81,22 @@ public:
             cout << activations_derivatives << endl;
         }
 
-        Tensor<double> combinations;
+        Tensor<type, 2> combinations;
 
-        Tensor<double> activations;
+        Tensor<type, 2> activations;
 
-        Tensor<double> activations_derivatives;
+        Tensor<type, 2> activations_derivatives;
+
+        Tensor<type, 3> activations_derivatives_3d;
+
     };
 
 
     // Constructor
 
-    explicit Layer() {}
+    explicit Layer()
+    {
+    }
 
     // Destructor
 
@@ -96,50 +111,52 @@ public:
 
     // Architecture
 
-    virtual Vector<double> get_parameters() const;
-    virtual size_t get_parameters_number() const;
+    virtual Tensor<type, 1> get_parameters() const;
+    virtual int get_parameters_number() const;
 
-    virtual void set_parameters(const Vector<double>&);
+    virtual void set_parameters(const Tensor<type, 1>&);
 
     // Outputs
 
-    virtual Tensor<double> calculate_outputs(const Tensor<double>&);
-    virtual Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-    virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+    virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
-    virtual void calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, Vector<double>&) {}
+    virtual void calculate_error_gradient(const ThreadPoolDevice&, const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
 
-    virtual ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+    virtual ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-    virtual void calculate_forward_propagation(const Tensor<double>&, ForwardPropagation&) {}
+    virtual void calculate_forward_propagation(const ThreadPoolDevice&, const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
-    virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+    virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    virtual void calculate_output_delta(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const {}
+    virtual void calculate_output_delta(const ThreadPoolDevice& thread_pool_device,
+                                        const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const {}
 
-    virtual Tensor<double> calculate_hidden_delta(Layer*,
-                                                  const Tensor<double>&,
-                                                  const Tensor<double>&,
-                                                  const Tensor<double>&) const;
+    virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
+                                                  const Tensor<type, 2>&,
+                                                  const Tensor<type, 2>&,
+                                                  const Tensor<type, 2>&) const;
 
-    virtual void calculate_hidden_delta(Layer*,
-                                        const Tensor<double>&,
-                                        const Tensor<double>&,
-                                        const Tensor<double>&,
-                                        Tensor<double>&) const {}
+    virtual void calculate_hidden_delta(const ThreadPoolDevice& thread_pool_device,
+                                        Layer*,
+                                        const Tensor<type, 2>&,
+                                        const Tensor<type, 2>&,
+                                        const Tensor<type, 2>&,
+                                        Tensor<type, 2>&) const {}
 
     // Get neurons number
 
-    virtual Vector<size_t> get_input_variables_dimensions() const;
+    virtual vector<int> get_input_variables_dimensions() const;
 
-    virtual size_t get_inputs_number() const;
-    virtual size_t get_neurons_number() const;
+    virtual int get_inputs_number() const;
+    virtual int get_neurons_number() const;
 
-    virtual void set_inputs_number(const size_t&);
-    virtual void set_neurons_number(const size_t&);
+    virtual void set_inputs_number(const int&);
+    virtual void set_neurons_number(const int&);
 
     virtual string object_to_string() const;
 
@@ -161,13 +178,10 @@ protected:
 
         Type layer_type = Perceptron;
 
-
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 };
-
-
 
 }
 

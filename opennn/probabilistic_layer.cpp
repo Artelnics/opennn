@@ -25,7 +25,7 @@ ProbabilisticLayer::ProbabilisticLayer()
 /// It creates a probabilistic layer with a given size.
 /// @param new_neurons_number Number of neurons in the layer.
 
-ProbabilisticLayer::ProbabilisticLayer(const size_t& new_inputs_number, const size_t& new_neurons_number)
+ProbabilisticLayer::ProbabilisticLayer(const int& new_inputs_number, const int& new_neurons_number)
 {
     set(new_inputs_number, new_neurons_number);
 
@@ -54,21 +54,21 @@ ProbabilisticLayer::~ProbabilisticLayer()
 }
 
 
-Vector<size_t> ProbabilisticLayer::get_input_variables_dimensions() const
+vector<int> ProbabilisticLayer::get_input_variables_dimensions() const
 {
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    return Vector<size_t>({inputs_number});
+    return vector<int>({inputs_number});
 }
 
 
-size_t ProbabilisticLayer::get_inputs_number() const
+int ProbabilisticLayer::get_inputs_number() const
 {
-    return synaptic_weights.get_rows_number();
+    return synaptic_weights.dimension(0);
 }
 
 
-size_t ProbabilisticLayer::get_neurons_number() const
+int ProbabilisticLayer::get_neurons_number() const
 {
     return biases.size();
 }
@@ -170,7 +170,7 @@ const bool& ProbabilisticLayer::get_display() const
 
 /// Returns the biases of the layer.
 
-const Vector<double>& ProbabilisticLayer::get_biases() const
+const Tensor<type, 1>& ProbabilisticLayer::get_biases() const
 {
     return biases;
 }
@@ -178,7 +178,7 @@ const Vector<double>& ProbabilisticLayer::get_biases() const
 
 /// Returns the synaptic weights of the layer.
 
-const Matrix<double>& ProbabilisticLayer::get_synaptic_weights() const
+const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
 }
@@ -187,38 +187,44 @@ const Matrix<double>& ProbabilisticLayer::get_synaptic_weights() const
 /// Returns the biases from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
 
-Vector<double> ProbabilisticLayer::get_biases(const Vector<double>& parameters) const
+Tensor<type, 1> ProbabilisticLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
-    const size_t biases_number = biases.size();
-
+    const int biases_number = biases.size();
+/*
     return parameters.get_last(biases_number);
+*/
+    return Tensor<type, 1>();
 }
 
 
 /// Returns the synaptic weights from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
 
-Matrix<double> ProbabilisticLayer::get_synaptic_weights(const Vector<double>& parameters) const
+Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t synaptic_weights_number = synaptic_weights.size();
-
+    const int synaptic_weights_number = synaptic_weights.size();
+/*
     return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
+*/
+    return Tensor<type, 2>();
 
 }
 
 
-Matrix<double> ProbabilisticLayer::get_synaptic_weights_transpose() const
+Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights_transpose() const
 {
-    return synaptic_weights.calculate_transpose();
+    //return synaptic_weights.transpose();
+
+    return Tensor<type, 2>();
 }
 
 
 /// Returns the number of parameters(biases and synaptic weights) of the layer.
 
-size_t ProbabilisticLayer::get_parameters_number() const
+int ProbabilisticLayer::get_parameters_number() const
 {
     return biases.size() + synaptic_weights.size();
 }
@@ -228,9 +234,12 @@ size_t ProbabilisticLayer::get_parameters_number() const
 /// The format is a vector of real values.
 /// The size is the number of parameters in the layer.
 
-Vector<double> ProbabilisticLayer::get_parameters() const
+Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
+/*
     return synaptic_weights.to_vector().assemble(biases);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -239,9 +248,10 @@ Vector<double> ProbabilisticLayer::get_parameters() const
 
 void ProbabilisticLayer::set()
 {
-    biases.set();
-
-    synaptic_weights.set();
+/*
+    biases.resize(0);
+*/
+    synaptic_weights.resize(0,0);
 
     set_default();
 }
@@ -251,15 +261,15 @@ void ProbabilisticLayer::set()
 /// It also sets the rest of class members to their default values.
 /// @param new_neurons_number New size for the probabilistic layer.
 
-void ProbabilisticLayer::set(const size_t& new_inputs_number, const size_t& new_neurons_number)
+void ProbabilisticLayer::set(const int& new_inputs_number, const int& new_neurons_number)
 {
-    biases.set(new_neurons_number);
+    biases.resize(new_neurons_number);
 
-    biases.randomize_normal();
-
-    synaptic_weights.set(new_inputs_number, new_neurons_number);
-
-    synaptic_weights.randomize_normal();
+    biases.setRandom();
+/*
+    synaptic_weights.resize(new_inputs_number, new_neurons_number);
+*/
+    synaptic_weights.setRandom();
 
     set_default();
 }
@@ -280,67 +290,70 @@ void ProbabilisticLayer::set(const ProbabilisticLayer& other_probabilistic_layer
 }
 
 
-void ProbabilisticLayer::set_inputs_number(const size_t& new_inputs_number)
+void ProbabilisticLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    biases.set(neurons_number);
-
-    synaptic_weights.set(new_inputs_number, neurons_number);
+    biases.resize(neurons_number);
+/*
+    synaptic_weights.resize(new_inputs_number, neurons_number);
+*/
 }
 
 
-void ProbabilisticLayer::set_neurons_number(const size_t& new_neurons_number)
+void ProbabilisticLayer::set_neurons_number(const int& new_neurons_number)
 {
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    biases.set(new_neurons_number);
+    biases = Tensor<type, 1>(new_neurons_number);
 
-    synaptic_weights.set(inputs_number, new_neurons_number);
+    synaptic_weights = Tensor<type, 2>(inputs_number, new_neurons_number);
 }
 
 
-void ProbabilisticLayer::set_biases(const Vector<double>& new_biases)
+void ProbabilisticLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
-    biases = new_biases;
+    biases = Tensor<type, 1>(new_biases);
 }
 
 
-void ProbabilisticLayer::set_synaptic_weights(const Matrix<double>& new_synaptic_weights)
+void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
 {
-    synaptic_weights = new_synaptic_weights;
+
+    synaptic_weights = Tensor<type, 2>(new_synaptic_weights);
+
 }
 
 
-void ProbabilisticLayer::set_parameters(const Vector<double>& new_parameters)
+void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const size_t neurons_number = get_neurons_number();
-    const size_t inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t parameters_number = get_parameters_number();
+    const int parameters_number = get_parameters_number();
 
    #ifdef __OPENNN_DEBUG__
 
-    const size_t new_parameters_size = new_parameters.size();
+    const int new_parameters_size = new_parameters.size();
 
    if(new_parameters_size != parameters_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-             << "void set_parameters(const Vector<double>&) method.\n"
+             << "void set_parameters(const Tensor<type, 1>&) method.\n"
              << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
       throw logic_error(buffer.str());
    }
 
    #endif
-
+/*
    synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
 
    biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
+*/
 }
-
 
 
 /// Sets a new threshold value for discriminating between two classes.
@@ -387,7 +400,7 @@ void ProbabilisticLayer::set_default()
 {
     layer_type = Probabilistic;
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
     if(neurons_number == 1)
     {
@@ -412,7 +425,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
     if(neurons_number == 1 && new_activation_function == Competitive)
     {
@@ -512,10 +525,13 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 
 /// Removes a probabilistic neuron from the probabilistic layer.
 
-void ProbabilisticLayer::prune_neuron(const size_t& index)
+void ProbabilisticLayer::prune_neuron(const int& index)
 {
+/*
     biases = biases.delete_index(index);
+
     synaptic_weights = synaptic_weights.delete_column(index);
+*/
 }
 
 
@@ -524,7 +540,7 @@ void ProbabilisticLayer::prune_neuron(const size_t& index)
 
 void ProbabilisticLayer::initialize_biases(const double& value)
 {
-    biases.initialize(value);
+    biases.setConstant(value);
 }
 
 
@@ -533,13 +549,13 @@ void ProbabilisticLayer::initialize_biases(const double& value)
 
 void ProbabilisticLayer::initialize_synaptic_weights(const double& value)
 {
-    synaptic_weights.initialize(value);
+    synaptic_weights.setConstant(value);
 }
 
 
 void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const double& minimum,const double& maximum)
 {
-    synaptic_weights.randomize_uniform(minimum, maximum);
+    synaptic_weights.setRandom();
 }
 
 
@@ -548,9 +564,9 @@ void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const double& minimu
 
 void ProbabilisticLayer::initialize_parameters(const double& value)
 {
-    biases.initialize(value);
+    biases.setConstant(value);
 
-    synaptic_weights.initialize(value);
+    synaptic_weights.setConstant(value);
 }
 
 
@@ -559,9 +575,9 @@ void ProbabilisticLayer::initialize_parameters(const double& value)
 
 void ProbabilisticLayer::randomize_parameters_uniform()
 {
-   biases.randomize_uniform(-1.0, 1.0);
+   biases.setRandom();
 
-   synaptic_weights.randomize_uniform(-1.0, 1.0);
+   synaptic_weights.setRandom();
 }
 
 
@@ -572,9 +588,10 @@ void ProbabilisticLayer::randomize_parameters_uniform()
 
 void ProbabilisticLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
 {
-    biases.randomize_uniform(minimum, maximum);
+    biases.setRandom();
 
-    synaptic_weights.randomize_uniform(minimum, maximum);
+    synaptic_weights.setRandom();
+
 }
 
 
@@ -583,9 +600,9 @@ void ProbabilisticLayer::randomize_parameters_uniform(const double& minimum, con
 
 void ProbabilisticLayer::randomize_parameters_normal()
 {
-    biases.randomize_normal();
+    biases.setRandom();
 
-    synaptic_weights.randomize_normal();
+    synaptic_weights.setRandom();
 }
 
 
@@ -596,21 +613,25 @@ void ProbabilisticLayer::randomize_parameters_normal()
 
 void ProbabilisticLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
 {
-    biases.randomize_normal(mean, standard_deviation);
+    biases.setRandom();
 
-    synaptic_weights.randomize_normal(mean, standard_deviation);
+    synaptic_weights.setRandom();
 }
 
 
-Tensor<double> ProbabilisticLayer::calculate_combinations(const Tensor<double>& inputs) const
+Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
-    const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+/*
+    const int inputs_dimensions_number = inputs.rank();
 
-    Tensor<double> reshaped_inputs = inputs;
+    Tensor<type, 2> reshaped_inputs = inputs;
 
     if(inputs_dimensions_number != 2) reshaped_inputs = inputs.to_2d_tensor();
 
     return linear_combinations(reshaped_inputs, synaptic_weights, biases);
+*/
+
+    return Tensor<type, 2>();
 }
 
 
@@ -619,18 +640,24 @@ Tensor<double> ProbabilisticLayer::calculate_combinations(const Tensor<double>& 
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.
 
-Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& inputs)
+Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-    const size_t output_rows_number = inputs.get_dimension(0);
-    const size_t output_columns_number = get_neurons_number();
+/*
+    const int output_rows_number = inputs.dimension(0);
+    const int output_columns_number = get_neurons_number();
 
-    Tensor<double> combinations(Vector<size_t>({output_rows_number, output_columns_number}));
+    Tensor<type, 2> combinations(vector<int>({output_rows_number, output_columns_number}));
 
-    const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+    const int inputs_dimensions_number = inputs.rank();
 
-    if(inputs_dimensions_number == 2) combinations = linear_combinations(inputs, synaptic_weights, biases);
-    else {
-        const Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+    if(inputs_dimensions_number == 2)
+    {
+        combinations = linear_combinations(inputs, synaptic_weights, biases);
+    }
+    else
+    {
+        const Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
+
         combinations = linear_combinations(reshaped_inputs, synaptic_weights, biases);
     }
 
@@ -660,10 +687,12 @@ Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& input
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
+*/
+    return Tensor<type, 2>();
 }
 
 
@@ -673,12 +702,16 @@ Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& input
 /// @param inputs Set of inputs to the probabilistic layer
 /// @param parameters Set of parameters of the probabilistic layer
 
-Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
+Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-    const Matrix<double> synaptic_weights = get_synaptic_weights(parameters);
-    const Vector<double> biases = get_biases(parameters);
+/*
+    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
+    const Tensor<type, 1> biases = get_biases(parameters);
 
     return calculate_outputs(inputs, biases, synaptic_weights);
+*/
+
+    return Tensor<type, 2>();
 }
 
 
@@ -689,39 +722,39 @@ Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& input
 /// @param biases Set of biases of the probabilistic layer
 /// @param synaptic_weights Set of synaptic weights of the probabilistic layer
 
-Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& biases, const Matrix<double>& synaptic_weights) const
+Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& biases, const Tensor<type, 2>& synaptic_weights) const
 {
 #ifdef __OPENNN_DEBUG__
 
- const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+ const int inputs_dimensions_number = inputs.rank();
 
  if(inputs_dimensions_number > 4)
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const method.\n"
            << "Inputs dimensions number (" << inputs_dimensions_number << ") must not be greater than 4.\n";
 
     throw logic_error(buffer.str());
  }
 
 #endif
-
-Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+/*
+Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
 #ifdef __OPENNN_DEBUG__
 
-const size_t inputs_columns_number = reshaped_inputs.get_dimension(1);
+const int inputs_columns_number = reshaped_inputs.dimension(1);
 
-const size_t inputs_number = get_inputs_number();
+const int inputs_number = get_inputs_number();
 
 if(inputs_columns_number != inputs_number)
 {
    ostringstream buffer;
 
    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-          << "Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const method.\n"
+          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const method.\n"
           << "Size of layer inputs (" << inputs_columns_number << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
    throw logic_error(buffer.str());
@@ -729,7 +762,7 @@ if(inputs_columns_number != inputs_number)
 
 #endif
 
-    Tensor<double> combinations(linear_combinations(reshaped_inputs,synaptic_weights,biases));
+    Tensor<type, 2> combinations(linear_combinations(reshaped_inputs,synaptic_weights,biases));
 
     switch(activation_function)
     {
@@ -758,18 +791,20 @@ if(inputs_columns_number != inputs_number)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
+*/
+    return Tensor<type, 2>();
 }
 
 
-Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<double>& inputs)
+Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation forward_propagation;
 
-    const Tensor<double> combinations = calculate_combinations(inputs);
+    const Tensor<type, 2> combinations = calculate_combinations(inputs);
 
     forward_propagation.activations = calculate_activations(combinations);
     forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
@@ -778,10 +813,10 @@ Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(cons
 }
 
 
-Tensor<double> ProbabilisticLayer::calculate_output_delta(const Tensor<double>& activations_derivatives,
-                                                          const Tensor<double>& output_gradient) const
-{
-    const size_t neurons_number = get_neurons_number();
+Tensor<type, 2> ProbabilisticLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+                                                          const Tensor<type, 2>& output_gradient) const
+{/*
+    const int neurons_number = get_neurons_number();
 
     if(neurons_number == 1)
     {
@@ -791,6 +826,8 @@ Tensor<double> ProbabilisticLayer::calculate_output_delta(const Tensor<double>& 
     {
         return dot_2d_3d(output_gradient, activations_derivatives);
     }
+    */
+    return Tensor<type, 2>();
 }
 
 
@@ -801,22 +838,23 @@ Tensor<double> ProbabilisticLayer::calculate_output_delta(const Tensor<double>& 
 /// @param layer_deltas Tensor with layers delta.
 /// @param layer_inputs Tensor with layers inputs.
 
-Vector<double> ProbabilisticLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
+Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& layer_inputs,
                                                             const Layer::ForwardPropagation&,
-                                                            const Tensor<double>& layer_deltas)
+                                                            const Tensor<type, 2>& layer_deltas)
 {
-    Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();
+/*
+    Tensor<type, 2> reshaped_inputs = layer_inputs.to_2d_tensor();
 
-    Tensor<double> reshaped_deltas = layer_deltas.to_2d_tensor();
+    Tensor<type, 2> reshaped_deltas = layer_deltas.to_2d_tensor();
 
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t synaptic_weights_number = neurons_number*inputs_number;
+    const int synaptic_weights_number = neurons_number*inputs_number;
 
-    const size_t parameters_number = get_parameters_number();
+    const int parameters_number = get_parameters_number();
 
-    Vector<double> error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> error_gradient(parameters_number, 0.0);
 
     // Synaptic weights
 
@@ -827,6 +865,8 @@ Vector<double> ProbabilisticLayer::calculate_error_gradient(const Tensor<double>
     error_gradient.embed(synaptic_weights_number, reshaped_deltas.to_matrix().calculate_columns_sum());
 
     return error_gradient;
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -843,33 +883,33 @@ string ProbabilisticLayer::object_to_string() const
 }
 
 
-Tensor<double> ProbabilisticLayer::calculate_activations(const Tensor<double>& combinations) const
+Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t dimensions_number = combinations.get_dimensions_number();
+    const int dimensions_number = combinations.rank();
 
     if(dimensions_number != 2)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
               << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
        throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_columns_number = combinations.get_dimension(1);
+    const int combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -891,40 +931,40 @@ Tensor<double> ProbabilisticLayer::calculate_activations(const Tensor<double>& c
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Tensor<double> ProbabilisticLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
+Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t dimensions_number = combinations.get_dimensions_number();
+    const int dimensions_number = combinations.rank();
 
     if(dimensions_number != 2)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
               << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
        throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_columns_number = combinations.get_dimension(1);
+    const int combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -968,7 +1008,7 @@ Tensor<double> ProbabilisticLayer::calculate_activations_derivatives(const Tenso
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
@@ -1187,8 +1227,8 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_double_vector(parameters_string, ' '));
+//@todo
+//        set_parameters(to_double_vector(parameters_string, ' '));
     }
 
     // Decision threshold
@@ -1233,14 +1273,14 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_binary_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_binary_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
 
     buffer.str("");
-
+/*
     buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
-
+*/
     return buffer.str();
 }
 
@@ -1249,12 +1289,12 @@ string ProbabilisticLayer::write_binary_expression(const Vector<string>& inputs_
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_probability_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_probability_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
-
+/*
     buffer << outputs_names.vector_to_string(',') << " = probability(" << inputs_names.vector_to_string(',') << ");\n";
-
+*/
     return buffer.str();
 }
 
@@ -1263,12 +1303,12 @@ string ProbabilisticLayer::write_probability_expression(const Vector<string>& in
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_competitive_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_competitive_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
-
+/*
     buffer << outputs_names.vector_to_string(',') << " = competitive(" << inputs_names.vector_to_string(',') << ");\n";
-
+*/
     return buffer.str();
 }
 
@@ -1277,12 +1317,12 @@ string ProbabilisticLayer::write_competitive_expression(const Vector<string>& in
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_softmax_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_softmax_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
-
+/*
     buffer << outputs_names.vector_to_string(',') << " = softmax(" << inputs_names.vector_to_string(',') << ");\n";
-
+*/
     return buffer.str();
 }
 
@@ -1291,12 +1331,12 @@ string ProbabilisticLayer::write_softmax_expression(const Vector<string>& inputs
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_no_probabilistic_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_no_probabilistic_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
-
+/*
     buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
-
+*/
     return buffer.str();
 }
 
@@ -1306,7 +1346,7 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const Vector<string
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string ProbabilisticLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     switch(activation_function)
     {
@@ -1337,7 +1377,7 @@ string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+           << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());

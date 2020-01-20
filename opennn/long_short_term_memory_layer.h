@@ -20,10 +20,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
+#include "config.h"
 #include "layer.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "functions.h"
 #include "metrics.h"
 #include "perceptron_layer.h"
@@ -49,7 +47,7 @@ public:
 
    explicit LongShortTermMemoryLayer();
 
-   explicit LongShortTermMemoryLayer(const size_t&, const size_t&);
+   explicit LongShortTermMemoryLayer(const int&, const int&);
 
    LongShortTermMemoryLayer(const LongShortTermMemoryLayer&);
 
@@ -61,34 +59,34 @@ public:
 
    bool is_empty() const;
 
-   size_t get_inputs_number() const;
-   size_t get_neurons_number() const;
+   int get_inputs_number() const;
+   int get_neurons_number() const;
 
    // Parameters
 
-   Vector<double> get_input_biases() const;
-   Vector<double> get_forget_biases() const;
-   Vector<double> get_state_biases() const;
-   Vector<double> get_output_biases() const;
+   Tensor<type, 1> get_input_biases() const;
+   Tensor<type, 1> get_forget_biases() const;
+   Tensor<type, 1> get_state_biases() const;
+   Tensor<type, 1> get_output_biases() const;
 
-   Matrix<double> get_input_weights() const;
-   Matrix<double> get_forget_weights() const;
-   Matrix<double> get_state_weights() const;
-   Matrix<double> get_output_weights() const;
+   Tensor<type, 2> get_input_weights() const;
+   Tensor<type, 2> get_forget_weights() const;
+   Tensor<type, 2> get_state_weights() const;
+   Tensor<type, 2> get_output_weights() const;
 
-   Matrix<double> get_input_recurrent_weights() const;
-   Matrix<double> get_forget_recurrent_weights() const;
-   Matrix<double> get_state_recurrent_weights() const;
-   Matrix<double> get_output_recurrent_weights() const;
+   Tensor<type, 2> get_input_recurrent_weights() const;
+   Tensor<type, 2> get_forget_recurrent_weights() const;
+   Tensor<type, 2> get_state_recurrent_weights() const;
+   Tensor<type, 2> get_output_recurrent_weights() const;
 
-   Matrix<double> get_biases() const;
-   Tensor<double> get_weights() const;
-   Tensor<double> get_recurrent_weights() const;
+   Tensor<type, 2> get_biases() const;
+   Tensor<type, 2> get_weights() const;
+   Tensor<type, 2> get_recurrent_weights() const;
 
-   size_t get_timesteps() const;
+   int get_timesteps() const;
 
-   size_t get_parameters_number() const;
-   Vector<double> get_parameters() const;
+   int get_parameters_number() const;
+   Tensor<type, 1> get_parameters() const;
 
    // Activation functions
 
@@ -104,35 +102,35 @@ public:
    // Set methods
 
    void set();
-   void set(const size_t&, const size_t&);
+   void set(const int&, const int&);
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
 
    // Architecture
 
-   void set_inputs_number(const size_t&);
-   void set_neurons_number(const size_t&);
-   void set_input_shape(const Vector<size_t>&);
+   void set_inputs_number(const int&);
+   void set_neurons_number(const int&);
+   void set_input_shape(const vector<int>&);
 
    // Parameters
 
-   void set_input_biases(const Vector<double>&);
-   void set_forget_biases(const Vector<double>&);
-   void set_state_biases(const Vector<double>&);
-   void set_output_biases(const Vector<double>&);
+   void set_input_biases(const Tensor<type, 1>&);
+   void set_forget_biases(const Tensor<type, 1>&);
+   void set_state_biases(const Tensor<type, 1>&);
+   void set_output_biases(const Tensor<type, 1>&);
 
-   void set_input_weights(const Matrix<double>&);
-   void set_forget_weights(const Matrix<double>&);
-   void set_state_weights(const Matrix<double>&);
-   void set_output_weights(const Matrix<double>&);
+   void set_input_weights(const Tensor<type, 2>&);
+   void set_forget_weights(const Tensor<type, 2>&);
+   void set_state_weights(const Tensor<type, 2>&);
+   void set_output_weights(const Tensor<type, 2>&);
 
-   void set_input_recurrent_weights(const Matrix<double>&);
-   void set_forget_recurrent_weights(const Matrix<double>&);
-   void set_state_recurrent_weights(const Matrix<double>&);
-   void set_output_recurrent_weights(const Matrix<double>&);
+   void set_input_recurrent_weights(const Tensor<type, 2>&);
+   void set_forget_recurrent_weights(const Tensor<type, 2>&);
+   void set_state_recurrent_weights(const Tensor<type, 2>&);
+   void set_output_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Vector<double>&);
+   void set_parameters(const Tensor<type, 1>&);
 
    // Activation functions
 
@@ -142,7 +140,7 @@ public:
    void set_recurrent_activation_function(const ActivationFunction&);
    void set_recurrent_activation_function(const string&);
 
-   void set_timesteps(const size_t&);
+   void set_timesteps(const int&);
 
    // Display messages
 
@@ -189,95 +187,101 @@ public:
 
    // Long short term memory layer combinations
 
-   Vector<double> calculate_forget_combinations(const Vector<double>&) const;
-   Vector<double> calculate_input_combinations(const Vector<double>&) const;
-   Vector<double> calculate_state_combinations(const Vector<double>&) const;
-   Vector<double> calculate_output_combinations(const Vector<double>&) const;
+   Tensor<type, 1> calculate_forget_combinations(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_input_combinations(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_state_combinations(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_output_combinations(const Tensor<type, 1>&) const;
 
-   Tensor<double> calculate_activations_states(const Tensor<double>&);
+   Tensor<type, 2> calculate_activations_states(const Tensor<type, 2>&);
 
    // Long short term memory layer activations
 
-   Tensor<double> calculate_activations(const Tensor<double>&) const;
-   Vector<double> calculate_activations(const Vector<double>&) const;
-   Tensor<double> calculate_recurrent_activations(const Tensor<double>&) const;
-   Vector<double> calculate_recurrent_activations(const Vector<double>&) const;
+   Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
+   Tensor<type, 2> calculate_recurrent_activations(const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_recurrent_activations(const Tensor<type, 1>&) const;
 
    // Long short term memory layer derivatives
 
-   Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
-   Vector<double> calculate_activations_derivatives(const Vector<double>&) const;
-   Vector<double> calculate_recurrent_activations_derivatives(const Vector<double>&) const;
+   Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_activations_derivatives(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_recurrent_activations_derivatives(const Tensor<type, 1>&) const;
 
    // Long short term memory layer outputs
 
-   void update_cell_states(const Vector<double>&);
-   void update_hidden_states(const Vector<double>&);
+   void update_cell_states(const Tensor<type, 1>&);
+   void update_hidden_states(const Tensor<type, 1>&);
 
-   Tensor<double> calculate_outputs(const Tensor<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&, const Matrix<double>&, const Tensor<double>&, const Tensor<double>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&,const Tensor<type, 1>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-   Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
-   Vector<double> calculate_forget_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Tensor<type, 1> calculate_forget_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_state_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_output_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-   Vector<double> calculate_forget_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Tensor<type, 1> calculate_forget_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_input_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_state_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_output_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-   Vector<double> calculate_forget_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Tensor<type, 1> calculate_forget_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_input_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_state_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_output_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
    // Expression methods
 
-   string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression(const vector<string>&, const vector<string>&) const;
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
 
    string object_to_string() const;
 
+   // Serialization methods
+
+   void from_XML(const tinyxml2::XMLDocument&) {};
+
+   void write_XML(tinyxml2::XMLPrinter&) const {};
+
 protected:
 
-   size_t timesteps = 10;
+   int timesteps = 10;
 
-   Vector<double> input_biases;
-   Vector<double> forget_biases;
-   Vector<double> state_biases;
-   Vector<double> output_biases;
+   Tensor<type, 1> input_biases;
+   Tensor<type, 1> forget_biases;
+   Tensor<type, 1> state_biases;
+   Tensor<type, 1> output_biases;
 
-   Matrix<double> input_weights;
-   Matrix<double> forget_weights;
-   Matrix<double> state_weights;
-   Matrix<double> output_weights;
+   Tensor<type, 2> input_weights;
+   Tensor<type, 2> forget_weights;
+   Tensor<type, 2> state_weights;
+   Tensor<type, 2> output_weights;
 
-   Matrix<double> forget_recurrent_weights;
-   Matrix<double> input_recurrent_weights;
-   Matrix<double> state_recurrent_weights;
-   Matrix<double> output_recurrent_weights;
+   Tensor<type, 2> forget_recurrent_weights;
+   Tensor<type, 2> input_recurrent_weights;
+   Tensor<type, 2> state_recurrent_weights;
+   Tensor<type, 2> output_recurrent_weights;
 
    /// Activation function variable.
 
    ActivationFunction activation_function = HyperbolicTangent;
    ActivationFunction recurrent_activation_function = HardSigmoid;
 
-   size_t batch;
-   size_t variables;
+   int batch;
+   int variables;
 
-   Vector<double> hidden_states;
-   Vector<double> cell_states;
+   Tensor<type, 1> hidden_states;
+   Tensor<type, 1> cell_states;
 
    /// Display messages to screen. 
 

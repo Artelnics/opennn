@@ -9,43 +9,56 @@
 #ifndef METRICS_H
 #define METRICS_H
 
-#include "vector.h"
-#include "matrix.h"
-#include "tensor.h"
-#include "functions.h"
+#ifndef EIGEN_USE_THREADS
+#define EIGEN_USE_THREADS
+#endif
+
 #include <math.h>
 
+<<<<<<< HEAD
 #include "../eigen/Eigen/Eigen"
+=======
+#include "config.h"
+#include <../eigen/unsupported/Eigen/CXX11/Tensor>
+#include <../eigen/unsupported/Eigen/CXX11/ThreadPool>
+>>>>>>> bfd0e279faa56a4dc7ad4070d2b342eb100928ae
 
 using namespace std;
+using namespace Eigen;
 
 namespace OpenNN
 {
+    double sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    double l1_norm(const Tensor<type, 1>&);
+    double l2_norm(const ThreadPoolDevice&, const Tensor<type, 1>&);
+
+
     // Dot products
+/*
+     double dot(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double dot(const Vector<double>&, const Vector<double>&);
+     Tensor<type, 1> dot(const Tensor<type, 1>&, const Tensor<type, 2>&);
 
-     Vector<double> dot(const Vector<double>&, const Matrix<double>&);
+     Tensor<type, 1> dot(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-     Vector<double> dot(const Matrix<double>&, const Vector<double>&);
+     Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&);
+     void dot(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&);
 
-     Matrix<double> dot(const Matrix<double>&, const Matrix<double>&);
-     void dot(const Matrix<double>&, const Matrix<double>&, Matrix<double>&);
+     Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Matrix<double> dot(const Matrix<double>&, const Tensor<double>&);
+     Tensor<type, 2> dot(const Tensor<type, 2>&, const MatrixXd&);
 
-     Tensor<double> dot(const Tensor<double>&, const Matrix<double>&);
+     void dot(const Tensor<type, 2>&, const MatrixXd&, Tensor<type, 2>&);
+     void dot(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&);
 
-     void dot(const Tensor<double>&, const Matrix<double>&, Tensor<double>&);
-     void dot(const Tensor<double>&, const Tensor<double>&, Tensor<double>&);
+     Tensor<type, 2> dot_2d_2d(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Tensor<double> dot_2d_2d(const Tensor<double>&, const Tensor<double>&);
-
-     Tensor<double> dot_2d_3d(const Tensor<double>&, const Tensor<double>&);
+     Tensor<type, 2> dot_2d_3d(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
      // Direct products
 
-     Matrix<double> direct(const Vector<double>&, const Vector<double>&);
+     Tensor<type, 2> direct(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // DECOMPOSITIONS
 
@@ -53,102 +66,100 @@ namespace OpenNN
 
      // NORMS
 
-     double l1_norm(const Vector<double>&);
 
-     Vector<double> l1_norm_gradient(const Vector<double>&);
+     Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>&);
 
-     Matrix<double> l1_norm_hessian(const Vector<double>&);
+     Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>&);
 
-     double l2_norm(const Vector<double>&);
 
-     Vector<double> l2_norm_gradient(const Vector<double>&);
+     Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>&);
 
-     Matrix<double> l2_norm_hessian(const Vector<double>&);
+     Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>&);
 
-     double lp_norm(const Vector<double>&, const double &);
+     double lp_norm(const Tensor<type, 1>&, const double &);
 
-//     Vector<double> lp_norm_gradient(const Vector<double>&, const double &);
+//     Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const double &);
 
-     Vector<double> lp_norm(const Matrix<double>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
 
-     Vector<double> lp_norm(const Tensor<double>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
 
-     Tensor<double> lp_norm_gradient(const Tensor<double>&, const double& p);
+     Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>&, const double& p);
 
     // INVERTING MATICES
 
-     double determinant(const Matrix<double>&);
+     double determinant(const Tensor<type, 2>&);
 
-     Matrix<double> cofactor(const Matrix<double>&);
+     Tensor<type, 2> cofactor(const Tensor<type, 2>&);
 
-     Matrix<double> inverse(const Matrix<double>&);
+     Tensor<type, 2> inverse(const Tensor<type, 2>&);
 
      // LINEAR EQUATIONS
 
-     Matrix<double> eigenvalues(const Matrix<double>&);
-     Matrix<double> eigenvectors(const Matrix<double>&);
+     Tensor<type, 2> eigenvalues(const Tensor<type, 2>&);
+     Tensor<type, 2> eigenvectors(const Tensor<type, 2>&);
 
-     Matrix<double> direct(const Matrix<double>&, const Matrix<double>&);
+     Tensor<type, 2> direct(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Tensor<double> linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&);
+     Tensor<type, 2> linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&);
 
-     void linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&, Tensor<double>&);
+     void linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&, Tensor<type, 2>&);
 
      // Vector distances
 
-     double euclidean_distance(const Vector<double>&, const Vector<double>&);
+     double euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double euclidean_weighted_distance(const Vector<double>&, const Vector<double>&, const Vector<double>&);
-     Vector<double> euclidean_weighted_distance_vector(const Vector<double>&, const Vector<double>&, const Vector<double>&);
+     double euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double manhattan_distance(const Vector<double>&, const Vector<double>&);
-     double manhattan_weighted_distance(const Vector<double>&, const Vector<double>&, const Vector<double>&);
+     double manhattan_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     double manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     Vector<double> manhattan_weighted_distance_vector(const Vector<double>&, const Vector<double>&, const Vector<double>&);
+     Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Matrix distances
 
-     Vector<double> euclidean_distance(const Matrix<double>&, const Vector<double>&);
-     Vector<double> euclidean_distance(const Matrix<double>&, const Matrix<double>&);
+     Tensor<type, 1> euclidean_distance(const Tensor<type, 2>&, const Tensor<type, 1>&);
+     Tensor<type, 1> euclidean_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Vector<double> euclidean_weighted_distance(const Matrix<double>&, const Vector<double>&, const Vector<double>&);
-     Matrix<double> euclidean_weighted_distance_matrix(const Matrix<double>&, const Vector<double>&, const Vector<double>&);
+     Tensor<type, 1> euclidean_weighted_distance(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     Vector<double> manhattan_distance(const Matrix<double>&, const Vector<double>&);
-     double manhattan_distance(const Matrix<double>&, const size_t&, const size_t&);
+     Tensor<type, 1> manhattan_distance(const Tensor<type, 2>&, const Tensor<type, 1>&);
+     double manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
 
-     Vector<double> manhattan_weighted_distance(const Matrix<double>&, const Vector<double>&, const Vector<double>&);
-     Matrix<double> manhattan_weighted_distance_matrix(const Matrix<double>&, const Vector<double>&, const Vector<double>&);
+     Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Vector errors
 
-     double sum_squared_error(const Vector<double>&, const Vector<double>&);
+     double sum_squared_error(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double minkowski_error(const Vector<double>&, const Vector<double>&, const double &);
+     double minkowski_error(const Tensor<type, 1>&, const Tensor<type, 1>&, const double &);
 
      // Tensor errors
 
-     double sum_squared_error(const Tensor<double>&, const Tensor<double>&);
+     double sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     double cross_entropy_error(const Tensor<double>&, const Tensor<double>&);
+     double cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     double minkowski_error(const Tensor<double>&, const Tensor<double>&, const double&);
+     double minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&);
 
-     double weighted_sum_squared_error(const Tensor<double>&, const Tensor<double>&, const double&, const double&);
+     double weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
 
      // Error rows
 
-     Vector<double> error_rows(const Tensor<double>&, const Tensor<double>&);
+     Tensor<type, 1> error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Vector<double> weighted_error_rows(const Tensor<double>&, const Tensor<double>&, const double&, const double&);
+     Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
 
-     Eigen::MatrixXd matrix_to_eigen(const Matrix<double>&);
-     Eigen::MatrixXd tensor_to_eigen(const Tensor<double>&);
+     MatrixXd matrix_to_eigen(const Tensor<type, 2>&);
+     MatrixXd tensor_to_eigen(const Tensor<type, 2>&);
 
 
-     Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen);
-     Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen);
-
+     Tensor<type, 2> eigen_to_matrix(const MatrixXd& eigen);
+     Tensor<type, 2> eigen_to_tensor(const MatrixXd& eigen);
+*/
 
 }
 

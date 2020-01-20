@@ -11,20 +11,58 @@
 namespace OpenNN
 {
 
-double dot(const Vector<double>& a, const Vector<double>& b)
+double sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const size_t a_size = a.size();
+    const auto error = y - x;
+
+    const Eigen::array<Eigen::IndexPair<int>, 2> product_dimensions = { Eigen::IndexPair<int>(0, 0), Eigen::IndexPair<int>(1, 1) };
+
+    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+
+    return sse(0);
+}
+
+
+double l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
+{
+   Tensor<type, 0> y;
+
+   y.device(threadPoolDevice) = x.square().sum(Eigen::array<int, 1>({0}));
+
+   return y(0);
+
+ /*
+  const int x_size = vector.size();
+
+  //vector.sum()
+
+  double norm = 0.0;
+
+  for(int i = 0; i < x_size; i++) {
+    norm += vector[i] *vector[i];
+  }
+
+    return sqrt(norm);
+*/
+}
+
+
+
+/*
+double dot(const Tensor<type, 1>& a, const Tensor<type, 1>& b)
+{
+    const int a_size = a.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const size_t b_size = b.size();
+    const int b_size = b.size();
 
     if(a_size != b_size)
     {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Metrics functions.\n"
-             << "double dot(const Vector<double>&, const Vector<double>&) method.\n"
+             << "double dot(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
              << "Both vector sizes must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -34,7 +72,7 @@ double dot(const Vector<double>& a, const Vector<double>& b)
 
     double dot_product = 0.0;
 
-    for(size_t i = 0; i < a_size; i++)
+    for(int i = 0; i < a_size; i++)
     {
       dot_product += a[i] * b[i];
     }
@@ -43,20 +81,20 @@ double dot(const Vector<double>& a, const Vector<double>& b)
 }
 
 
-Vector<double> dot(const Vector<double>& vector, const Matrix<double>& matrix)
+Tensor<type, 1> dot(const Tensor<type, 1>& vector, const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
   #ifdef __OPENNN_DEBUG__
-    const size_t vector_size = vector.size();
+    const int vector_size = vector.size();
 
     if(rows_number != vector_size)
     {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Metrics functions.\n"
-             << "Vector<double> dot(const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 1> dot(const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Matrix number of rows (" << rows_number << ") must be equal to vector size (" << vector_size << ").\n";
 
       throw logic_error(buffer.str());
@@ -64,11 +102,11 @@ Vector<double> dot(const Vector<double>& vector, const Matrix<double>& matrix)
 
   #endif
 
-    Vector<double> product(columns_number, 0.0);
+    Tensor<type, 1> product(columns_number, 0.0);
 
-     for(size_t j = 0; j < columns_number; j++)
+     for(int j = 0; j < columns_number; j++)
      {
-        for(size_t i = 0; i < rows_number; i++)
+        for(int i = 0; i < rows_number; i++)
         {
            product[j] += vector[i]*matrix(i,j);
        }
@@ -78,16 +116,16 @@ Vector<double> dot(const Vector<double>& vector, const Matrix<double>& matrix)
 }
 
 
-Vector<double> dot(const Matrix<double>& matrix, const Vector<double>& vector)
+Tensor<type, 1> dot(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Vector<double> product(rows_number);
+    Tensor<type, 1> product(rows_number);
 
-    const Eigen::Map<Eigen::MatrixXd> matrix_eigen((double*)matrix.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::VectorXd> vector_eigen((double*)vector.data(), static_cast<int>(columns_number));
-    Eigen::Map<Eigen::VectorXd> product_eigen(product.data(), static_cast<int>(rows_number));
+    const Map<MatrixXd> matrix_eigen((double*)matrix.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
+    const Map<VectorXd> vector_eigen((double*)vector.data(), static_cast<int>(columns_number));
+    Map<VectorXd> product_eigen(product.data(), static_cast<int>(rows_number));
 
     product_eigen = matrix_eigen*vector_eigen;
 
@@ -95,19 +133,19 @@ Vector<double> dot(const Matrix<double>& matrix, const Vector<double>& vector)
 }
 
 
-Matrix<double> dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_2)
+Tensor<type, 2> dot(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2)
 {
-    const size_t rows_number_1 = matrix_1.get_rows_number();
-    const size_t columns_number_1 = matrix_1.get_columns_number();
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
-    const size_t columns_number_2 = matrix_2.get_columns_number();
+    const int rows_number_2 = matrix_2.dimension(0);
+    const int columns_number_2 = matrix_2.dimension(1);
 
-    Matrix<double> product(rows_number_1, columns_number_2);
+    Tensor<type, 2> product(rows_number_1, columns_number_2);
 
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
     product_eigen = eigen_1*eigen_2;
 
@@ -115,96 +153,94 @@ Matrix<double> dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_
 }
 
 
-void dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_2, Matrix<double>& result)
+void dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, Tensor<type, 2>& result)
 {
-    const size_t rows_number_1 = matrix_1.get_rows_number();
-    const size_t columns_number_1 = matrix_1.get_columns_number();
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
-    const size_t columns_number_2 = matrix_2.get_columns_number();
+    const int rows_number_2 = matrix_2.rows();
+    const int columns_number_2 = matrix_2.cols();
 
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(result.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Map<MatrixXd> product_eigen(result.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = eigen_1*eigen_2;
+    product_eigen = eigen_1*matrix_2;
 }
 
 
-Tensor<double> dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2)
+Tensor<type, 2> dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2)
 {
 
-    const size_t rows_number_1 = matrix_1.get_dimension(0);
-    const size_t columns_number_1 = matrix_1.get_dimension(1);
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
-    const size_t columns_number_2 = matrix_2.get_columns_number();
+    const int rows_number_2 = matrix_2.rows();
+    const int columns_number_2 = matrix_2.cols();
 
-    Tensor<double> product(rows_number_1, columns_number_2);
+    Tensor<type, 2> product(rows_number_1, columns_number_2);
 
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = eigen_1*eigen_2;
+    product_eigen = eigen_1*matrix_2;
 
     return product;
 
-/*
-    Eigen::MatrixXd eigen_1 = tensor_to_eigen(matrix_1);
-    Eigen::MatrixXd eigen_2 = matrix_to_eigen(matrix_2);
+//    MatrixXd eigen_1 = tensor_to_eigen(matrix_1);
+//    MatrixXd eigen_2 = matrix_to_eigen(matrix_2);
 
-    return eigen_to_tensor(eigen_1*eigen_2);
-*/
+//    return eigen_to_tensor(eigen_1*eigen_2);
 
 }
 
 
-void dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, Tensor<double>& product)
+void dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, Tensor<type, 2>& product)
 {
-    const size_t rows_number_1 = matrix_1.get_dimension(0);
-    const size_t columns_number_1 = matrix_1.get_dimension(1);
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
-    const size_t columns_number_2 = matrix_2.get_columns_number();
+    const int rows_number_2 = matrix_2.rows();
+    const int columns_number_2 = matrix_2.cols();
 
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+
+    product_eigen = eigen_1*matrix_2;
+}
+
+
+void dot(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2, Tensor<type, 2>& product)
+{
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
+
+    const int rows_number_2 = matrix_2.dimension(0);
+    const int columns_number_2 = matrix_2.dimension(1);
+
+    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Map<MatrixXd> eigen_2((double*)matrix_1.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
     product_eigen = eigen_1*eigen_2;
 }
 
 
-void dot(const Tensor<double>& matrix_1, const Tensor<double>& matrix_2, Tensor<double>& product)
-{
-    const size_t rows_number_1 = matrix_1.get_dimension(0);
-    const size_t columns_number_1 = matrix_1.get_dimension(1);
-
-    const size_t rows_number_2 = matrix_2.get_dimension(0);
-    const size_t columns_number_2 = matrix_2.get_dimension(1);
-
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_1.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*eigen_2;
-}
-
-
-Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& tensor_2)
+Tensor<type, 2> dot_2d_2d(const Tensor<type, 2>& tensor_1, const Tensor<type, 2>& tensor_2)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t dimensions_number_1 = tensor_1.get_dimensions_number();
-    const size_t dimensions_number_2 = tensor_2.get_dimensions_number();
+    const int dimensions_number_1 = tensor_1.rank();
+    const int dimensions_number_2 = tensor_2.rank();
 
   if(dimensions_number_1 != 2)
   {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<double> dot(const Tensor<double>&, const Tensor<double>&) method.\n"
+           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
            << "Dimensions number of tensor 1 (" << dimensions_number_1 << ") must be 2.\n";
 
     throw logic_error(buffer.str());
@@ -215,7 +251,7 @@ Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& t
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<double> dot(const Tensor<double>&, const Tensor<double>&) method.\n"
+           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
            << "Dimensions number of tensor 2 (" << dimensions_number_2 << ") must be 2.\n";
 
     throw logic_error(buffer.str());
@@ -223,17 +259,17 @@ Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& t
 
 #endif
 
-    const size_t rows_number = tensor_1.get_dimension(0);
-    const size_t columns_number = tensor_1.get_dimension(1);
+    const int rows_number = tensor_1.dimension(0);
+    const int columns_number = tensor_1.dimension(1);
 
-    const size_t other_rows_number = tensor_2.get_dimension(0);
-    const size_t other_columns_number = tensor_2.get_dimension(1);
+    const int other_rows_number = tensor_2.dimension(0);
+    const int other_columns_number = tensor_2.dimension(1);
 
-    Tensor<double> product(rows_number, other_columns_number);
+    Tensor<type, 2> product(rows_number, other_columns_number);
 
-    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)tensor_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)tensor_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+    const Map<MatrixXd> eigen_1((double*)tensor_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
+    const Map<MatrixXd> eigen_2((double*)tensor_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
+    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
 
     product_eigen = eigen_1*eigen_2;
 
@@ -241,19 +277,19 @@ Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& t
 }
 
 
-Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& tensor_2)
+Tensor<type, 2> dot_2d_3d(const Tensor<type, 2>& tensor_1, const Tensor<type, 2>& tensor_2)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t dimensions_number_1 = tensor_1.get_dimensions_number();
-    const size_t dimensions_number_2 = tensor_2.get_dimensions_number();
+    const int dimensions_number_1 = tensor_1.rank();
+    const int dimensions_number_2 = tensor_2.rank();
 
   if(dimensions_number_1 != 2)
   {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<double> dot(const Tensor<double>&, const Tensor<double>&) method.\n"
+           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
            << "Dimensions number of tensor 1 (" << dimensions_number_1 << ") must be 2.\n";
 
     throw logic_error(buffer.str());
@@ -264,7 +300,7 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<double> dot(const Tensor<double>&, const Tensor<double>&) method.\n"
+           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
            << "Dimensions number of tensor 2 (" << dimensions_number_2 << ") must be 3.\n";
 
     throw logic_error(buffer.str());
@@ -272,24 +308,24 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
 
 #endif
 
-  const size_t n = tensor_2.get_dimensions()[2];
+  const int n = tensor_2.dimensions()[2];
 
-  const Vector<size_t> dimensions_1 = tensor_1.get_dimensions();
-  const Vector<size_t> dimensions_2 = tensor_2.get_dimensions();
+  const auto& dimensions_1 = tensor_1.dimensions();
+  const auto& dimensions_2 = tensor_2.dimensions();
 
-  const Matrix<double> tensor_1_matrix = tensor_1.get_matrix(0);
+  const Tensor<type, 2> tensor_1_matrix = tensor_1.get_matrix(0);
 
-  Tensor<double> product(dimensions_1[0], dimensions_2[1]);
+  Tensor<type, 2> product(dimensions_1[0], dimensions_2[1]);
 
-  for(size_t i = 0; i < n; i ++)
+  for(int i = 0; i < n; i ++)
   {
-      const Matrix<double> i_matrix = tensor_2.get_matrix(i);
+      const Tensor<type, 2> i_matrix = tensor_2.get_matrix(i);
 
-      const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i});
+      const Tensor<type, 2> i_row = tensor_1_matrix.get_submatrix_rows({i});
 
-      const Matrix<double> dot_product = dot(i_row, i_matrix);
+      const Tensor<type, 2> dot_product = dot(i_row, i_matrix);
 
-      for(size_t k = 0; k < dimensions_2[1]; k++)
+      for(int k = 0; k < dimensions_2[1]; k++)
       {
           product(i,k) = dot_product(0,k);
       }
@@ -299,10 +335,10 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
 }
 
 
-Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
+Tensor<type, 2> dot(const Tensor<type, 2>& matrix, const Tensor<type, 2>& tensor)
 {
-/*
-    const size_t order = tensor.get_dimensions_number();
+
+    const int order = tensor.rank();
 
     if(order == 2)
     {
@@ -311,32 +347,32 @@ Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
     else if(order > 2)
     {
 
-        const size_t n = tensor.get_dimensions()[2];
+        const int n = tensor.dimensions()[2];
 
-        Matrix<double> outputs(n, matrix.get_columns_number());
+        Tensor<type, 2> outputs(n, matrix.dimension(1));
 
-        for(size_t i = 0; i < n; i ++)
+        for(int i = 0; i < n; i ++)
         {
-            const Matrix<double> i_matrix = tensor.get_matrix(i);
+            const Tensor<type, 2> i_matrix = tensor.get_matrix(i);
 
-            const Matrix<double> i_row = matrix.get_submatrix_rows({i});
+            const Tensor<type, 2> i_row = matrix.get_submatrix_rows({i});
 
-            Matrix<double> dot_product = dot(i_row, i_matrix);
+            Tensor<type, 2> dot_product = dot(i_row, i_matrix);
 
             outputs.set_row(i, dot_product.to_vector());
         }
 
         return outputs;
     }
-*/
-    return Matrix<double>();
+
+    return Tensor<type, 2>();
 
 }
 
 
 /// Returns the vector norm.
 
-double l1_norm(const Vector<double>& vector)
+double l1_norm(const Tensor<type, 1>& vector)
 {
   return absolute_value(vector).calculate_sum();
 }
@@ -344,15 +380,13 @@ double l1_norm(const Vector<double>& vector)
 
 /// Returns the vector norm.
 
-double l2_norm(const Vector<double>& vector)
+double l2_norm(const Tensor<type, 1>& vector)
 {
-  const size_t x_size = vector.size();
-
-
+  const int x_size = vector.size();
 
   double norm = 0.0;
 
-  for(size_t i = 0; i < x_size; i++) {
+  for(int i = 0; i < x_size; i++) {
     norm += vector[i] *vector[i];
   }
 
@@ -362,16 +396,16 @@ double l2_norm(const Vector<double>& vector)
 
 /// Returns the gradient of the vector norm.
 
-Vector<double> l2_norm_gradient(const Vector<double>& vector)
+Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& vector)
 {
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
-  Vector<double> gradient(x_size);
+  Tensor<type, 1> gradient(x_size);
 
   const double norm = l2_norm(vector);
 
   if(norm == 0.0) {
-    gradient.initialize(0.0);
+    gradient.setZero();
   } else {
     gradient = vector/ norm;
   }
@@ -382,16 +416,16 @@ Vector<double> l2_norm_gradient(const Vector<double>& vector)
 
 /// Returns the hessian of the vector norm.
 
-Matrix<double> l2_norm_hessian(const Vector<double>& vector)
+Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& vector)
 {
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
-  Matrix<double> hessian(x_size, x_size);
+  Tensor<type, 2> hessian(x_size, x_size);
 
   const double norm = l2_norm(vector);
 
   if(norm == 0.0) {
-    hessian.initialize(0.0);
+    hessian.setZero();
   } else {
     hessian = direct(vector, vector)/(norm * norm * norm);
   }
@@ -402,7 +436,7 @@ Matrix<double> l2_norm_hessian(const Vector<double>& vector)
 
 /// Returns the vector p-norm.
 
-double lp_norm(const Vector<double>& vector, const double &p)
+double lp_norm(const Tensor<type, 1>& vector, const double &p)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -418,11 +452,11 @@ double lp_norm(const Vector<double>& vector, const double &p)
 
 #endif
 
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
   double norm = 0.0;
 
-  for(size_t i = 0; i < x_size; i++) {
+  for(int i = 0; i < x_size; i++) {
     norm += pow(abs(vector[i]), p);
   }
 
@@ -434,7 +468,7 @@ double lp_norm(const Vector<double>& vector, const double &p)
 
 /// Returns the gradient of the vector norm.
 
-Vector<double> lp_norm_gradient(const Vector<double>& vector, const double &p)
+Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>& vector, const double &p)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -442,7 +476,7 @@ Vector<double> lp_norm_gradient(const Vector<double>& vector, const double &p)
 
   if(p <= 0) {
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Vector<double> calculate_p_norm_gradient(const double&) const "
+           << "Tensor<type, 1> calculate_p_norm_gradient(const double&) const "
               "method.\n"
            << "p value must be greater than zero.\n";
 
@@ -451,19 +485,19 @@ Vector<double> lp_norm_gradient(const Vector<double>& vector, const double &p)
 
 #endif
 
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
-  Vector<double> gradient(x_size);
+  Tensor<type, 1> gradient(x_size);
 
   const double p_norm = lp_norm(vector, p);
 
   if(p_norm == 0.0)
   {
-    gradient.initialize(0.0);
+    gradient.setZero();
   }
   else
   {
-    for(size_t i = 0; i < x_size; i++)
+    for(int i = 0; i < x_size; i++)
     {
       gradient[i] =
          vector[i] * pow(abs(vector[i]), p - 2.0) / pow(p_norm, p - 1.0);
@@ -477,19 +511,19 @@ Vector<double> lp_norm_gradient(const Vector<double>& vector, const double &p)
 /// Outer product vector*vector arithmetic operator.
 /// @param other_vector vector to be multiplied to this vector.
 
-Matrix<double> direct(const Vector<double>& x, const Vector<double>& y)
+Tensor<type, 2> direct(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = y.size();
+  const int y_size = y.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Matrix<double> direct(const Vector<double>&) method.\n"
+           << "Tensor<type, 2> direct(const Tensor<type, 1>&) method.\n"
            << "Both vector sizes must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -497,15 +531,15 @@ Matrix<double> direct(const Vector<double>& x, const Vector<double>& y)
 
 #endif
 
-  Matrix<double> direct(x_size, x_size);
+  Tensor<type, 2> direct(x_size, x_size);
 
    #pragma omp parallel for if(x_size > 1000)
 
   for(int i = 0; i < static_cast<int>(x_size); i++)
   {
-    for(size_t j = 0; j < x_size; j++)
+    for(int j = 0; j < x_size; j++)
     {
-      direct(static_cast<size_t>(i), j) = x[static_cast<size_t>(i)] * y[j];
+      direct(static_cast<int>(i), j) = x[static_cast<int>(i)] * y[j];
     }
   }
 
@@ -515,10 +549,10 @@ Matrix<double> direct(const Vector<double>& x, const Vector<double>& y)
 
 /// Returns the determinant of a square matrix.
 
-double determinant(const Matrix<double>& matrix)
+double determinant(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
    #ifdef __OPENNN_DEBUG__
 
@@ -560,17 +594,17 @@ double determinant(const Matrix<double>& matrix)
    {
       int sign;
 
-      for(size_t row_index = 0; row_index < rows_number; row_index++)
+      for(int row_index = 0; row_index < rows_number; row_index++)
       {
          // Calculate sub data
 
-         Matrix<double> sub_matrix(rows_number-1, columns_number-1);
+         Tensor<type, 2> sub_matrix(rows_number-1, columns_number-1);
 
-         for(size_t i = 1; i < rows_number; i++)
+         for(int i = 1; i < rows_number; i++)
          {
-            size_t j2 = 0;
+            int j2 = 0;
 
-            for(size_t j = 0; j < columns_number; j++)
+            for(int j = 0; j < columns_number; j++)
             {
                if(j == row_index) continue;
 
@@ -592,30 +626,30 @@ double determinant(const Matrix<double>& matrix)
 
 /// Returns the cofactor matrix.
 
-Matrix<double> cofactor(const Matrix<double>& matrix)
+Tensor<type, 2> cofactor(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-   Matrix<double> cofactor(rows_number, columns_number);
+   Tensor<type, 2> cofactor(rows_number, columns_number);
 
-   Matrix<double> c(rows_number-1, columns_number-1);
+   Tensor<type, 2> c(rows_number-1, columns_number-1);
 
-   for(size_t j = 0; j < rows_number; j++)
+   for(int j = 0; j < rows_number; j++)
    {
-      for(size_t i = 0; i < rows_number; i++)
+      for(int i = 0; i < rows_number; i++)
       {
          // Form the adjoint a(i,j)
 
-         size_t i1 = 0;
+         int i1 = 0;
 
-         for(size_t ii = 0; ii < rows_number; ii++)
+         for(int ii = 0; ii < rows_number; ii++)
          {
             if(ii == i) continue;
 
-            size_t j1 = 0;
+            int j1 = 0;
 
-            for(size_t jj = 0; jj < rows_number; jj++)
+            for(int jj = 0; jj < rows_number; jj++)
             {
                if(jj == j) continue;
 
@@ -638,10 +672,10 @@ Matrix<double> cofactor(const Matrix<double>& matrix)
 /// Returns the inverse of a square matrix.
 /// An error message is printed if the matrix is singular.
 
-Matrix<double> inverse(const Matrix<double>& matrix)
+Tensor<type, 2> inverse(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
    #ifdef __OPENNN_DEBUG__
 
@@ -684,22 +718,22 @@ Matrix<double> inverse(const Matrix<double>& matrix)
 
    if(rows_number == 1)
    {
-        Matrix<double> inverse(1, 1, 1.0/determinant);
+        Tensor<type, 2> inverse(1, 1, 1.0/determinant);
 
         return inverse;
    }
 
    // Calculate cofactor matrix
 
-   const Matrix<double> cofactor = OpenNN::cofactor(matrix);
+   const Tensor<type, 2> cofactor = OpenNN::cofactor(matrix);
 
    // Adjoint matrix is the transpose of cofactor matrix
 
-   const Matrix<double> adjoint = cofactor.calculate_transpose();
+   const Tensor<type, 2> adjoint = cofactor.calculate_transpose();
 
    // Inverse matrix is adjoint matrix divided by matrix determinant
 
-   const Matrix<double> inverse = adjoint/determinant;
+   const Tensor<type, 2> inverse = adjoint/determinant;
 
    return inverse;
 }
@@ -708,18 +742,18 @@ Matrix<double> inverse(const Matrix<double>& matrix)
 /// Calculates the eigen values of this matrix, which must be squared.
 /// Returns a matrix with only one column and rows the same as this matrix with the eigenvalues.
 
-Matrix<double> eigenvalues(const Matrix<double>& matrix)
+Tensor<type, 2> eigenvalues(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
+    const Index rows_number = matrix.dimension(0);
 
     #ifdef __OPENNN_DEBUG__
 
-    if(matrix.get_columns_number() == 0)
+    if(matrix.dimension(1) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> calculate_eigen_values() method.\n"
+              << "Tensor<type, 2> calculate_eigen_values() method.\n"
               << "Number of columns must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -729,12 +763,12 @@ Matrix<double> eigenvalues(const Matrix<double>& matrix)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(matrix.get_rows_number() == 0)
+    if(matrix.dimension(0) == 0)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> calculate_eigen_values() method.\n"
+              << "Tensor<type, 2> calculate_eigen_values() method.\n"
               << "Number of rows must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -744,12 +778,12 @@ Matrix<double> eigenvalues(const Matrix<double>& matrix)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(matrix.get_columns_number() != matrix.get_rows_number())
+    if(matrix.dimension(1) != matrix.dimension(0))
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> calculate_eigen_values() method.\n"
+              << "Tensor<type, 2> calculate_eigen_values() method.\n"
               << "The matrix must be squared.\n";
 
        throw logic_error(buffer.str());
@@ -757,11 +791,11 @@ Matrix<double> eigenvalues(const Matrix<double>& matrix)
 
     #endif
 
-    Matrix<double> eigenvalues(rows_number, 1);
+    Tensor<type, 2> eigenvalues(rows_number, 1);
 
-//    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
-//    const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> matrix_eigen(this_eigen, Eigen::EigenvaluesOnly);
-//    Eigen::Map<Eigen::MatrixXd> eigenvalues_eigen(eigenvalues.data(), rows_number, 1);
+//    const Map<MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+//    const SelfAdjointEigenSolver<MatrixXd> matrix_eigen(this_eigen, EigenvaluesOnly);
+//    Map<MatrixXd> eigenvalues_eigen(eigenvalues.data(), rows_number, 1);
 
 //    eigenvalues_eigen = matrix_eigen.eigenvalues();
 
@@ -772,10 +806,10 @@ Matrix<double> eigenvalues(const Matrix<double>& matrix)
 /// Calculates the eigenvectors of this matrix, which must be squared.
 /// Returns a matrix whose columns are the eigenvectors.
 
-Matrix<double> eigenvectors(const Matrix<double>& matrix)
+Tensor<type, 2> eigenvectors(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -784,7 +818,7 @@ Matrix<double> eigenvectors(const Matrix<double>& matrix)
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> eigenvectors(const Matrix<double>&) method.\n"
+              << "Tensor<type, 2> eigenvectors(const Tensor<type, 2>&) method.\n"
               << "Number of columns must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -795,7 +829,7 @@ Matrix<double> eigenvectors(const Matrix<double>& matrix)
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> eigenvectors(const Matrix<double>&) method.\n"
+              << "Tensor<type, 2> eigenvectors(const Tensor<type, 2>&) method.\n"
               << "Number of rows must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -806,7 +840,7 @@ Matrix<double> eigenvectors(const Matrix<double>& matrix)
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "Matrix<double> eigenvectors(const Matrix<double>&) method.\n"
+              << "Tensor<type, 2> eigenvectors(const Tensor<type, 2>&) method.\n"
               << "The matrix must be squared.\n";
 
        throw logic_error(buffer.str());
@@ -814,11 +848,11 @@ Matrix<double> eigenvectors(const Matrix<double>& matrix)
 
     #endif
 
-    Matrix<double> eigenvectors(rows_number, rows_number);
+    Tensor<type, 2> eigenvectors(rows_number, rows_number);
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)matrix.data(), rows_number, columns_number);
-    const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> matrix_eigen(this_eigen, Eigen::ComputeEigenvectors);
-    Eigen::Map<Eigen::MatrixXd> eigenvectors_eigen(eigenvectors.data(), rows_number, rows_number);
+    const Map<MatrixXd> this_eigen((double*)matrix.data(), rows_number, columns_number);
+    const SelfAdjointEigenSolver<MatrixXd> matrix_eigen(this_eigen, ComputeEigenvectors);
+    Map<MatrixXd> eigenvectors_eigen(eigenvectors.data(), rows_number, rows_number);
 
     eigenvectors_eigen = matrix_eigen.eigenvectors();
 
@@ -830,26 +864,26 @@ Matrix<double> eigenvectors(const Matrix<double>& matrix)
 /// This product is also known as the Kronecker product.
 /// @param other_matrix Second product term.
 
-Matrix<double> direct(const Matrix<double>& matrix, const Matrix<double>& other_matrix)
+Tensor<type, 2> direct(const Tensor<type, 2>& matrix, const Tensor<type, 2>& other_matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-   const size_t other_rows_number = other_matrix.get_rows_number();
-   const size_t other_columns_number = other_matrix.get_columns_number();
+   const int other_rows_number = other_matrix.dimension(0);
+   const int other_columns_number = other_matrix.dimension(1);
 
-   Matrix<double> direct(rows_number*other_rows_number, columns_number*other_columns_number);
+   Tensor<type, 2> direct(rows_number*other_rows_number, columns_number*other_columns_number);
 
-   size_t alpha;
-   size_t beta;
+   int alpha;
+   int beta;
 
-   for(size_t i = 0; i < rows_number; i++)
+   for(int i = 0; i < rows_number; i++)
    {
-       for(size_t j = 0; j < columns_number; j++)
+       for(int j = 0; j < columns_number; j++)
        {
-           for(size_t k = 0; k < other_rows_number; k++)
+           for(int k = 0; k < other_rows_number; k++)
            {
-               for(size_t l = 0; l < other_columns_number; l++)
+               for(int l = 0; l < other_columns_number; l++)
                {
                    alpha = other_rows_number*i+k;
                    beta = other_columns_number*j+l;
@@ -866,10 +900,10 @@ Matrix<double> direct(const Matrix<double>& matrix, const Matrix<double>& other_
 
 /// Returns the matrix p-norm by rows.
 
-Vector<double> lp_norm(const Matrix<double>& matrix, const double& p)
+Tensor<type, 1> lp_norm(const Tensor<type, 2>& matrix, const double& p)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -877,7 +911,7 @@ Vector<double> lp_norm(const Matrix<double>& matrix, const double& p)
 
       if(p <= 0) {
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "Vector<double> calculate_lp_norm(const double&) const "
+               << "Tensor<type, 1> calculate_lp_norm(const double&) const "
                   "method.\n"
                << "p value must be greater than zero.\n";
 
@@ -886,11 +920,11 @@ Vector<double> lp_norm(const Matrix<double>& matrix, const double& p)
 
     #endif
 
-    Vector<double> norm(rows_number, 0.0);
+    Tensor<type, 1> norm(rows_number, 0.0);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < columns_number; j++)
+        for(int j = 0; j < columns_number; j++)
         {
             norm[i] += pow(abs(matrix(i,j)), p);
         }
@@ -905,21 +939,21 @@ Vector<double> lp_norm(const Matrix<double>& matrix, const double& p)
 /// Returns the matrix p-norm by rows.
 /// The tensor must be a matrix
 
-Vector<double> lp_norm(const Tensor<double>& matrix, const double& p)
+Tensor<type, 1> lp_norm(const Tensor<type, 2>& matrix, const double& p)
 {
-    if(matrix.get_dimensions_number() > 2)
+    if(matrix.rank() > 2)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double lp_norm(const Tensor<double>&, const double&) method.\n"
+               << "double lp_norm(const Tensor<type, 2>&, const double&) method.\n"
                << "The number os dimensions of the tensor should be 2.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t rows_number = matrix.get_dimension(0);
-    const size_t columns_number = matrix.get_dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -928,7 +962,7 @@ Vector<double> lp_norm(const Tensor<double>& matrix, const double& p)
       if(p <= 0)
       {
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "Vector<double> calculate_lp_norm(const double&) const "
+               << "Tensor<type, 1> calculate_lp_norm(const double&) const "
                   "method.\n"
                << "p value must be greater than zero.\n";
 
@@ -937,11 +971,11 @@ Vector<double> lp_norm(const Tensor<double>& matrix, const double& p)
 
     #endif
 
-    Vector<double> norm(rows_number, 0.0);
+    Tensor<type, 1> norm(rows_number, 0.0);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < columns_number; j++)
+        for(int j = 0; j < columns_number; j++)
         {
             norm[i] += pow(abs(matrix(i,j)), p);
         }
@@ -956,21 +990,21 @@ Vector<double> lp_norm(const Tensor<double>& matrix, const double& p)
 /// Returns the gradient of the matrix norm.
 /// The tensor must be a matrix.
 
-Tensor<double> lp_norm_gradient(const Tensor<double>& matrix, const double& p)
+Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>& matrix, const double& p)
 {
-    if(matrix.get_dimensions_number() > 2)
+    if(matrix.rank() > 2)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double lp_norm(const Tensor<double>&, const double&) method.\n"
+               << "double lp_norm(const Tensor<type, 2>&, const double&) method.\n"
                << "The number of dimensions of the tensor should be 2.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t rows_number = matrix.get_dimension(0);
-    const size_t columns_number = matrix.get_dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -978,7 +1012,7 @@ Tensor<double> lp_norm_gradient(const Tensor<double>& matrix, const double& p)
 
       if(p <= 0) {
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "Matrix<double> calculate_p_norm_gradient(const double&) const "
+               << "Tensor<type, 2> calculate_p_norm_gradient(const double&) const "
                   "method.\n"
                << "p value must be greater than zero.\n";
 
@@ -987,19 +1021,19 @@ Tensor<double> lp_norm_gradient(const Tensor<double>& matrix, const double& p)
 
     #endif
 
-      Tensor<double> gradient(rows_number, columns_number);
+      Tensor<type, 2> gradient(rows_number, columns_number);
 
-      const Vector<double> p_norm = lp_norm(matrix, p);
+      const Tensor<type, 1> p_norm = lp_norm(matrix, p);
 
       if(p_norm == 0.0)
       {
-        gradient.initialize(0.0);
+        gradient.setZero();
       }
       else
       {
-        for(size_t i = 0; i < rows_number; i++)
+        for(int i = 0; i < rows_number; i++)
         {
-            for(size_t j = 0; j < columns_number; j++)
+            for(int j = 0; j < columns_number; j++)
             {
                 gradient(i,j) = matrix(i,j) * pow(abs(matrix(i,j)), p - 2.0) / pow(p_norm[i], p - 1.0);
             }
@@ -1013,25 +1047,25 @@ Tensor<double> lp_norm_gradient(const Tensor<double>& matrix, const double& p)
 /// Calculates matrix_1·matrix_2 + vector
 /// The size of the output is rows_1*columns_2.
 
-Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, const Vector<double>& vector)
+Tensor<type, 2> linear_combinations(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, const Tensor<type, 1>& vector)
 {
-    const size_t rows_number_1 = matrix_1.get_dimension(0);
-    const size_t columns_number_1 = matrix_1.get_dimension(1);
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t columns_number_2 =matrix_2.get_columns_number();
+    const int columns_number_2 =matrix_2.cols();
 
    #ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
-   const size_t rows_number_2 = matrix_2.get_rows_number();
+   const int rows_number_2 = matrix_2.rows();
 
    if(rows_number_2 != columns_number_1)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Metrics functions.\n"
-             << "Tensor<double> linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&) method.\n"
+             << "Tensor<type, 2> linear_combinations(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&) method.\n"
              << "The number of rows of matrix 2 (" << rows_number_2 << ") must be equal to the number of columns of matrix 1 (" << columns_number_1 << ").\n";
 
       throw logic_error(buffer.str());
@@ -1039,33 +1073,35 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
 
    #endif
 
-   Tensor<double> new_matrix = dot(matrix_1, matrix_2);
+   Tensor<type, 2> new_matrix = dot(matrix_1, matrix_2);
 
    new_matrix += vector;
 
    return new_matrix;
+
+
 }
 
 
-void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, const Vector<double>& vector, Tensor<double>& new_matrix)
+void linear_combinations(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, const Tensor<type, 1>& vector, Tensor<type, 2>& new_matrix)
 {
-    const size_t rows_number_1 = matrix_1.get_dimension(0);
-    const size_t columns_number_1 = matrix_1.get_dimension(1);
+    const int rows_number_1 = matrix_1.dimension(0);
+    const int columns_number_1 = matrix_1.dimension(1);
 
-    const size_t columns_number_2 =matrix_2.get_columns_number();
+    const int columns_number_2 =matrix_2.cols();
 
    #ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
-   const size_t rows_number_2 = matrix_2.get_rows_number();
+   const int rows_number_2 = matrix_2.rows();
 
    if(rows_number_2 != columns_number_1)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Metrics functions.\n"
-             << "void linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&, Tensor<double>&) method.\n"
+             << "void linear_combinations(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&, Tensor<type, 2>&) method.\n"
              << "The number of rows of matrix 2 (" << rows_number_2 << ") must be equal to the number of columns of matrix 1 (" << columns_number_1 << ").\n";
 
       throw logic_error(buffer.str());
@@ -1077,13 +1113,13 @@ void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& m
 
 #pragma omp parallel for
 
-   for(size_t i = 0; i < rows_number_1; i++)
+   for(int i = 0; i < rows_number_1; i++)
    {
-     for(size_t j = 0; j < columns_number_2; j++)
+     for(int j = 0; j < columns_number_2; j++)
      {
         sum = 0.0;
 
-       for(size_t k = 0; k < columns_number_1; k++)
+       for(int k = 0; k < columns_number_1; k++)
        {
             sum += matrix_1(i,k)*matrix_2(k,j);
        }
@@ -1101,19 +1137,19 @@ void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& m
 /// another vector.
 /// @param other_vector Other vector.
 
-double euclidean_distance(const Vector<double>& vector, const Vector<double>& other_vector)
+double euclidean_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector)
 {
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double euclidean_distance(const Vector<double>&) const "
+           << "double euclidean_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1125,7 +1161,7 @@ double euclidean_distance(const Vector<double>& vector, const Vector<double>& ot
     double distance = 0.0;
     double error;
 
-    for(size_t i = 0; i < x_size; i++)
+    for(int i = 0; i < x_size; i++)
     {
         error = vector[i] - other_vector[i];
 
@@ -1136,19 +1172,19 @@ double euclidean_distance(const Vector<double>& vector, const Vector<double>& ot
 }
 
 
-double euclidean_weighted_distance(const Vector<double>& vector, const Vector<double>& other_vector, const Vector<double>& weights)
+double euclidean_weighted_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector, const Tensor<type, 1>& weights)
 {
 
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double euclidean_weighted_distance(const Vector<double>&) const "
+           << "double euclidean_weighted_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1160,7 +1196,7 @@ double euclidean_weighted_distance(const Vector<double>& vector, const Vector<do
     double distance = 0.0;
     double error;
 
-    for(size_t i = 0; i < x_size; i++) {
+    for(int i = 0; i < x_size; i++) {
         error = vector[i] - other_vector[i];
 
         distance += error * error * weights[i];
@@ -1170,19 +1206,19 @@ double euclidean_weighted_distance(const Vector<double>& vector, const Vector<do
 }
 
 
-Vector<double> euclidean_weighted_distance_vector(const Vector<double>& vector, const Vector<double>& other_vector, const Vector<double>& weights)
+Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector, const Tensor<type, 1>& weights)
 {
 
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double euclidean_weighted_distance(const Vector<double>&) const "
+           << "double euclidean_weighted_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1191,10 +1227,10 @@ Vector<double> euclidean_weighted_distance_vector(const Vector<double>& vector, 
 
 #endif
 
-    Vector<double> distance(x_size,0.0);
+    Tensor<type, 1> distance(x_size,0.0);
     double error;
 
-    for(size_t i = 0; i < x_size; i++) {
+    for(int i = 0; i < x_size; i++) {
         error = vector[i] - other_vector[i];
 
         distance[i] = error * error * weights[i];
@@ -1204,19 +1240,19 @@ Vector<double> euclidean_weighted_distance_vector(const Vector<double>& vector, 
 }
 
 
-double manhattan_distance(const Vector<double>& vector, const Vector<double>&other_vector)
+double manhattan_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>&other_vector)
 {
 
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double manhattan_distance(const Vector<double>&) const "
+           << "double manhattan_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1228,7 +1264,7 @@ double manhattan_distance(const Vector<double>& vector, const Vector<double>&oth
     double distance = 0.0;
     double error;
 
-    for(size_t i = 0; i < x_size; i++) {
+    for(int i = 0; i < x_size; i++) {
         error = abs(vector[i] - other_vector[i]);
 
         distance += error;
@@ -1238,19 +1274,19 @@ double manhattan_distance(const Vector<double>& vector, const Vector<double>&oth
 }
 
 
-double manhattan_weighted_distance(const Vector<double>& vector, const Vector<double>& other_vector, const Vector<double>& weights)
+double manhattan_weighted_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector, const Tensor<type, 1>& weights)
 {
 
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double manhattan_weighted_distance(const Vector<double>&) const "
+           << "double manhattan_weighted_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1262,7 +1298,7 @@ double manhattan_weighted_distance(const Vector<double>& vector, const Vector<do
     double distance = 0.0;
     double error;
 
-    for(size_t i = 0; i < x_size; i++)
+    for(int i = 0; i < x_size; i++)
     {
         error = abs(vector[i] - other_vector[i]);
 
@@ -1273,19 +1309,19 @@ double manhattan_weighted_distance(const Vector<double>& vector, const Vector<do
 }
 
 
-Vector<double> manhattan_weighted_distance_vector(const Vector<double>& vector, const Vector<double>& other_vector, const Vector<double>& weights)
+Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector, const Tensor<type, 1>& weights)
 {
 
-    const size_t x_size = vector.size();
+    const int x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double manhattan_weighted_distance(const Vector<double>&) const "
+           << "double manhattan_weighted_distance(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -1294,10 +1330,10 @@ Vector<double> manhattan_weighted_distance_vector(const Vector<double>& vector, 
 
 #endif
 
-    Vector<double> distance(x_size,0.0);
+    Tensor<type, 1> distance(x_size,0.0);
     double error;
 
-    for(size_t i = 0; i < x_size; i++) {
+    for(int i = 0; i < x_size; i++) {
         error = abs(vector[i] - other_vector[i]);
 
 //        if(i==0) cout << error << endl;
@@ -1313,19 +1349,19 @@ Vector<double> manhattan_weighted_distance_vector(const Vector<double>& vector, 
 /// elements of another vector.
 /// @param other_vector Other vector.
 
-double sum_squared_error(const Vector<double>& x, const Vector<double>& y)
+double sum_squared_error(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-  const size_t x_size = x.size();
+  const int x_size = x.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const size_t y_size = y.size();
+  const int y_size = y.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double sum_squared_error(const Vector<double>&) const method.\n"
+           << "double sum_squared_error(const Tensor<type, 1>&) const method.\n"
            << "Size must be equal to this size.\n";
 
     throw logic_error(buffer.str());
@@ -1336,7 +1372,7 @@ double sum_squared_error(const Vector<double>& x, const Vector<double>& y)
   double sum_squared_error = 0.0;
   double error;
 
-  for(size_t i = 0; i < x_size; i++)
+  for(int i = 0; i < x_size; i++)
   {
     error = x[i] - y[i];
 
@@ -1353,11 +1389,11 @@ double sum_squared_error(const Vector<double>& x, const Vector<double>& y)
 /// @param other_vector Other vector.
 /// @param minkowski_parameter Minkowski exponent.
 
-double minkowski_error(const Vector<double>& vector,
-                       const Vector<double>& other_vector,
+double minkowski_error(const Tensor<type, 1>& vector,
+                       const Tensor<type, 1>& other_vector,
                        const double& minkowski_parameter)
 {
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1365,18 +1401,18 @@ double minkowski_error(const Vector<double>& vector,
 
   if(x_size == 0) {
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double minkowski_error(const Vector<double>&) const "
+           << "double minkowski_error(const Tensor<type, 1>&) const "
               "method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
   }
 
-  const size_t y_size = other_vector.size();
+  const int y_size = other_vector.size();
 
   if(y_size != x_size) {
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double minkowski_error(const Vector<double>&) const "
+           << "double minkowski_error(const Tensor<type, 1>&) const "
               "method.\n"
            << "Other size must be equal to this size.\n";
 
@@ -1387,7 +1423,7 @@ double minkowski_error(const Vector<double>& vector,
 
   if(minkowski_parameter < 1.0 || minkowski_parameter > 2.0) {
     buffer << "OpenNN Exception: Metrics functions.\n"
-           << "double minkowski_error(const Vector<double>&) const "
+           << "double minkowski_error(const Tensor<type, 1>&) const "
               "method.\n"
            << "The Minkowski parameter must be comprised between 1 and 2\n";
 
@@ -1398,7 +1434,7 @@ double minkowski_error(const Vector<double>& vector,
 
   double minkowski_error = 0.0;
 
-  for(size_t i = 0; i < x_size; i++)
+  for(int i = 0; i < x_size; i++)
   {
     minkowski_error +=
         pow(abs(vector[i] - other_vector[i]), minkowski_parameter);
@@ -1410,15 +1446,15 @@ double minkowski_error(const Vector<double>& vector,
 }
 
 
-double sum_squared_error(const Tensor<double>& x, const Tensor<double>& y)
+double sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const size_t size = x.size();
+    const int size = x.size();
 
     double sum_squared_error = 0.0;
 
     #pragma omp parallel for reduction(+ : sum_squared_error)
 
-    for(size_t i = 0; i < size; i++)
+    for(int i = 0; i < size; i++)
     {
         const double error = y[i] - x[i];
 
@@ -1429,9 +1465,9 @@ double sum_squared_error(const Tensor<double>& x, const Tensor<double>& y)
 }
 
 
-Vector<double> euclidean_distance(const Matrix<double>& matrix, const Vector<double>& instance)
+Tensor<type, 1> euclidean_distance(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance)
 {
-    const size_t rows_number = matrix.get_rows_number();
+    const Index rows_number = matrix.dimension(0);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1440,7 +1476,7 @@ Vector<double> euclidean_distance(const Matrix<double>& matrix, const Vector<dou
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "euclidean_distance(const Vector<double>&) method.\n"
+               << "euclidean_distance(const Tensor<type, 1>&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1448,9 +1484,9 @@ Vector<double> euclidean_distance(const Matrix<double>& matrix, const Vector<dou
 
      #endif
 
-     Vector<double> distances(rows_number);
+     Tensor<type, 1> distances(rows_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances[i] = euclidean_distance(matrix.get_row(i), instance);
     }
@@ -1459,17 +1495,17 @@ Vector<double> euclidean_distance(const Matrix<double>& matrix, const Vector<dou
 }
 
 
-Vector<double> euclidean_distance(const Matrix<double>& matrix, const Matrix<double>& other_matrix)
+Tensor<type, 1> euclidean_distance(const Tensor<type, 2>& matrix, const Tensor<type, 2>& other_matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Vector<double> distances(rows_number, 0.0);
+    Tensor<type, 1> distances(rows_number, 0.0);
     double error;
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < columns_number; j++)
+        for(int j = 0; j < columns_number; j++)
         {
             error = matrix(i,j) - other_matrix(i,j);
 
@@ -1483,9 +1519,9 @@ Vector<double> euclidean_distance(const Matrix<double>& matrix, const Matrix<dou
 }
 
 
-Vector<double> euclidean_weighted_distance(const Matrix<double>& matrix, const Vector<double>& instance, const Vector<double>& weights)
+Tensor<type, 1> euclidean_weighted_distance(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance, const Tensor<type, 1>& weights)
 {
-    const size_t rows_number = matrix.get_rows_number();
+    const Index rows_number = matrix.dimension(0);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1494,7 +1530,7 @@ Vector<double> euclidean_weighted_distance(const Matrix<double>& matrix, const V
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "euclidean_weighted_distance(const Vector<double>&, const Vector<double>&) method.\n"
+               << "euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1502,9 +1538,9 @@ Vector<double> euclidean_weighted_distance(const Matrix<double>& matrix, const V
 
      #endif
 
-     Vector<double> distances(rows_number);
+     Tensor<type, 1> distances(rows_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances[i] = euclidean_weighted_distance(matrix.get_row(i), instance, weights);
     }
@@ -1513,10 +1549,10 @@ Vector<double> euclidean_weighted_distance(const Matrix<double>& matrix, const V
 }
 
 
-Matrix<double> euclidean_weighted_distance_matrix(const Matrix<double>& matrix, const Vector<double>& instance, const Vector<double>& weights)
+Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance, const Tensor<type, 1>& weights)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1525,7 +1561,7 @@ Matrix<double> euclidean_weighted_distance_matrix(const Matrix<double>& matrix, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "euclidean_weighted_distance(const Vector<double>&, const Vector<double>&) method.\n"
+               << "euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1533,9 +1569,9 @@ Matrix<double> euclidean_weighted_distance_matrix(const Matrix<double>& matrix, 
 
      #endif
 
-     Matrix<double> distances(rows_number,columns_number);
+     Tensor<type, 2> distances(rows_number,columns_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances.set_row(i, euclidean_weighted_distance_vector(matrix.get_row(i), instance,weights));
     }
@@ -1546,7 +1582,7 @@ Matrix<double> euclidean_weighted_distance_matrix(const Matrix<double>& matrix, 
 
 /// Calculates the distance between two rows in the matrix
 
-double manhattan_distance(const Matrix<double>& matrix, const size_t& first_index, const size_t& second_index)
+double manhattan_distance(const Tensor<type, 2>& matrix, const int& first_index, const int& second_index)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1555,7 +1591,7 @@ double manhattan_distance(const Matrix<double>& matrix, const size_t& first_inde
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_distance(const size_t&, const size_t&) method.\n"
+               << "manhattan_distance(const int&, const int&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1563,16 +1599,16 @@ double manhattan_distance(const Matrix<double>& matrix, const size_t& first_inde
 
      #endif
 
-    const Vector<double> first_row = matrix.get_row(first_index);
-    const Vector<double> second_row = matrix.get_row(second_index);
+    const Tensor<type, 1> first_row = matrix.get_row(first_index);
+    const Tensor<type, 1> second_row = matrix.get_row(second_index);
 
     return manhattan_distance(first_row, second_row);
 }
 
 
-Vector<double> manhattan_distance(const Matrix<double>& matrix, const Vector<double>& instance)
+Tensor<type, 1> manhattan_distance(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance)
 {
-    const size_t rows_number = matrix.get_rows_number();
+    const Index rows_number = matrix.dimension(0);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1581,7 +1617,7 @@ Vector<double> manhattan_distance(const Matrix<double>& matrix, const Vector<dou
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_distance(const size_t&, const size_t&) method.\n"
+               << "manhattan_distance(const int&, const int&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1589,9 +1625,9 @@ Vector<double> manhattan_distance(const Matrix<double>& matrix, const Vector<dou
 
      #endif
 
-     Vector<double> distances(rows_number);
+     Tensor<type, 1> distances(rows_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances[i] = manhattan_distance(matrix.get_row(i), instance);
     }
@@ -1600,9 +1636,9 @@ Vector<double> manhattan_distance(const Matrix<double>& matrix, const Vector<dou
 }
 
 
-Vector<double> manhattan_weighted_distance(const Matrix<double>& matrix, const Vector<double>& instance, const Vector<double>& weights)
+Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance, const Tensor<type, 1>& weights)
 {
-    const size_t rows_number = matrix.get_rows_number();
+    const Index rows_number = matrix.dimension(0);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1611,7 +1647,7 @@ Vector<double> manhattan_weighted_distance(const Matrix<double>& matrix, const V
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_weighted_distance(const Vector<double>&, const Vector<double>&) method.\n"
+               << "manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1619,9 +1655,9 @@ Vector<double> manhattan_weighted_distance(const Matrix<double>& matrix, const V
 
      #endif
 
-     Vector<double> distances(rows_number);
+     Tensor<type, 1> distances(rows_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances[i] = manhattan_weighted_distance(matrix.get_row(i), instance, weights);
     }
@@ -1630,10 +1666,10 @@ Vector<double> manhattan_weighted_distance(const Matrix<double>& matrix, const V
 }
 
 
-Matrix<double> manhattan_weighted_distance_matrix(const Matrix<double>& matrix, const Vector<double>& instance, const Vector<double>& weights)
+Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>& matrix, const Tensor<type, 1>& instance, const Tensor<type, 1>& weights)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1642,7 +1678,7 @@ Matrix<double> manhattan_weighted_distance_matrix(const Matrix<double>& matrix, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_weighted_distance(const Vector<double>&, const Vector<double>&) method.\n"
+               << "manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -1650,9 +1686,9 @@ Matrix<double> manhattan_weighted_distance_matrix(const Matrix<double>& matrix, 
 
      #endif
 
-     Matrix<double> distances(rows_number,columns_number);
+     Tensor<type, 2> distances(rows_number,columns_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         distances.set_row(i,manhattan_weighted_distance_vector(matrix.get_row(i),instance,weights));
     }
@@ -1661,16 +1697,16 @@ Matrix<double> manhattan_weighted_distance_matrix(const Matrix<double>& matrix, 
 }
 
 
-Vector<double> error_rows(const Tensor<double>& matrix, const Tensor<double>& other_matrix)
+Tensor<type, 1> error_rows(const Tensor<type, 2>& matrix, const Tensor<type, 2>& other_matrix)
 {
-    const size_t rows_number = matrix.get_dimension(0);
-    const size_t columns_number = matrix.get_dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Vector<double> error_rows(rows_number, 0.0);
+    Tensor<type, 1> error_rows(rows_number, 0.0);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < columns_number; j++)
+        for(int j = 0; j < columns_number; j++)
         {
             error_rows[i] += (matrix(i,j) - other_matrix(i,j))*(matrix(i,j) - other_matrix(i,j));
         }
@@ -1682,16 +1718,16 @@ Vector<double> error_rows(const Tensor<double>& matrix, const Tensor<double>& ot
 }
 
 
-Vector<double> weighted_error_rows(const Tensor<double>& matrix, const Tensor<double>& other_matrix, const double& weight1, const double& weight2)
+Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>& matrix, const Tensor<type, 2>& other_matrix, const double& weight1, const double& weight2)
 {
-    const size_t rows_number = matrix.get_dimension(0);
-    const size_t columns_number = matrix.get_dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Vector<double> weighted_error_rows(rows_number, 0.0);
+    Tensor<type, 1> weighted_error_rows(rows_number, 0.0);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j =0; j < columns_number; j++)
+        for(int j =0; j < columns_number; j++)
         {
             if(other_matrix(i,j) == 1.0)
             {
@@ -1710,34 +1746,34 @@ Vector<double> weighted_error_rows(const Tensor<double>& matrix, const Tensor<do
 }
 
 
-double cross_entropy_error(const Tensor<double>& x, const Tensor<double>& y)
+double cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const size_t x_rows_number = x.get_dimension(0);
-    const size_t x_columns_number = x.get_dimension(1);
+    const int x_rows_number = x.dimension(0);
+    const int x_columns_number = x.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
-    const size_t y_rows_number = y.get_dimension(0);
+    const int y_rows_number = y.dimension(0);
 
     if(y_rows_number != x_rows_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double cross_entropy_error(const Tensor<double>&, const Tensor<double>&) method.\n"
+              << "double cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
               << "Other number of rows must be equal to this number of rows.\n";
 
        throw logic_error(buffer.str());
     }
 
-    const size_t y_columns_number = y.get_dimension(1);
+    const int y_columns_number = y.dimension(1);
 
     if(y_columns_number != x_columns_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double cross_entropy_error(const Tensor<double>&, const Tensor<double>&) method.\n"
+              << "double cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
               << "Other number of columns must be equal to this number of columns.\n";
 
        throw logic_error(buffer.str());
@@ -1747,9 +1783,9 @@ double cross_entropy_error(const Tensor<double>& x, const Tensor<double>& y)
 
     double cross_entropy_error = 0.0;
 
-    for(size_t i = 0; i < x_rows_number; i++)
+    for(int i = 0; i < x_rows_number; i++)
     {
-        for(size_t j = 0; j < x_columns_number; j++)
+        for(int j = 0; j < x_columns_number; j++)
         {
             const double y_value = y(static_cast<unsigned>(i), static_cast<unsigned>(j));
             const double x_value = x(i,j);
@@ -1787,34 +1823,34 @@ double cross_entropy_error(const Tensor<double>& x, const Tensor<double>& y)
 /// @param y Other tensor.
 /// @param minkowski_parameter Minkowski exponent value.
 
-double minkowski_error(const Tensor<double>& x, const Tensor<double>& y, const double& minkowski_parameter)
+double minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const double& minkowski_parameter)
 {
-    const size_t rows_number = x.get_dimension(0);
-    const size_t columns_number = x.get_dimension(1);
+    const int rows_number = x.dimension(0);
+    const int columns_number = x.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
 
-    const size_t other_rows_number = y.get_dimension(0);
+    const int other_rows_number = y.dimension(0);
 
     if(other_rows_number != rows_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double minkowski_error(const Tensor<double>&, const Tensor<double>&, const double&) method.\n"
+              << "double minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) method.\n"
               << "Other number of rows " << other_rows_number << " must be equal to this number of rows " << rows_number << ".\n";
 
        throw logic_error(buffer.str());
     }
 
-    const size_t other_columns_number = y.get_dimension(1);
+    const int other_columns_number = y.dimension(1);
 
     if(other_columns_number != columns_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double minkowski_error(const Tensor<double>&, const Tensor<double>&, const double&) method.\n"
+              << "double minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) method.\n"
               << "Other number of columns (" << other_columns_number << ") must be equal to this number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1825,11 +1861,11 @@ double minkowski_error(const Tensor<double>& x, const Tensor<double>& y, const d
     double minkowski_error = 0.0;
     double row_minkowski_error = 0.0;
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         row_minkowski_error = 0.0;
 
-        for(size_t j = 0; j < columns_number; j++)
+        for(int j = 0; j < columns_number; j++)
         {
             row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
         }
@@ -1841,34 +1877,34 @@ double minkowski_error(const Tensor<double>& x, const Tensor<double>& y, const d
 }
 
 
-double weighted_sum_squared_error(const Tensor<double>& x, const Tensor<double>& y, const double& positives_weight, const double& negatives_weight)
+double weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const double& positives_weight, const double& negatives_weight)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t rows_number = x.get_dimension(0);
-    const size_t columns_number = x.get_dimension(1);
+    const int rows_number = x.dimension(0);
+    const int columns_number = x.dimension(1);
 
-    const size_t other_rows_number = y.get_dimension(0);
+    const int other_rows_number = y.dimension(0);
 
     if(other_rows_number != rows_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+              << "double minkowski_error(const Tensor<type, 2>&, const double&) method.\n"
               << "Other number of rows must be equal to this number of rows.\n";
 
        throw logic_error(buffer.str());
     }
 
-    const size_t other_columns_number = y.get_dimension(1);
+    const int other_columns_number = y.dimension(1);
 
     if(other_columns_number != columns_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Metrics functions.\n"
-              << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+              << "double minkowski_error(const Tensor<type, 2>&, const double&) method.\n"
               << "Other number of columns must be equal to this number of columns.\n";
 
        throw logic_error(buffer.str());
@@ -1880,7 +1916,7 @@ double weighted_sum_squared_error(const Tensor<double>& x, const Tensor<double>&
 
     double error = 0.0;
 
-    for(size_t i = 0; i < x.size(); i++)
+    for(int i = 0; i < x.size(); i++)
     {
         error = x[i] - y[i];
 
@@ -1910,7 +1946,7 @@ double weighted_sum_squared_error(const Tensor<double>& x, const Tensor<double>&
 
 /// Returns the gradient of the vector norm.
 
-Vector<double> l1_norm_gradient(const Vector<double>& vector)
+Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& vector)
 {
   return sign(vector);
 }
@@ -1918,81 +1954,89 @@ Vector<double> l1_norm_gradient(const Vector<double>& vector)
 
 /// Returns the hessian of the vector norm.
 
-Matrix<double> l1_norm_hessian(const Vector<double>& vector)
+Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& vector)
 {
-  const size_t x_size = vector.size();
+  const int x_size = vector.size();
 
-  return Matrix<double>(x_size, x_size, 0);
+  return Tensor<type, 2>(x_size, x_size, 0);
 }
 
 
-Eigen::MatrixXd matrix_to_eigen(const Matrix<double>& matrix)
+MatrixXd matrix_to_eigen(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Eigen::MatrixXd eigen(rows_number, columns_number);
+    MatrixXd eigen(rows_number, columns_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < rows_number; j++)
+        for(int j = 0; j < rows_number; j++)
         {
            eigen(i,j) = matrix(i,j);
         }
     }
+
+    return eigen;
 }
 
 
-Eigen::MatrixXd tensor_to_eigen(const Tensor<double>& matrix)
+MatrixXd tensor_to_eigen(const Tensor<type, 2>& matrix)
 {
-    const size_t rows_number = matrix.get_dimension(0);
-    const size_t columns_number = matrix.get_dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-    Eigen::MatrixXd eigen(rows_number, columns_number);
+    MatrixXd eigen(rows_number, columns_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < rows_number; j++)
+        for(int j = 0; j < rows_number; j++)
         {
            eigen(i,j) = matrix(i,j);
         }
     }
+
+    return eigen;
 }
 
 
-Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen)
+Tensor<type, 2> eigen_to_matrix(const MatrixXd& eigen)
 {
-    const size_t rows_number = eigen.rows();
-    const size_t columns_number = eigen.cols();
+    const int rows_number = eigen.rows();
+    const int columns_number = eigen.cols();
 
-    Matrix<double> matrix(rows_number, columns_number);
+    Tensor<type, 2> matrix(rows_number, columns_number);
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < rows_number; j++)
+        for(int j = 0; j < rows_number; j++)
         {
            matrix(i,j) = eigen(i,j);
         }
     }
+
+    return matrix;
 }
 
 
-Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen)
+Tensor<type, 2> eigen_to_tensor(const MatrixXd& eigen)
 {
-    const size_t rows_number = eigen.rows();
-    const size_t columns_number = eigen.cols();
+    const int rows_number = eigen.rows();
+    const int columns_number = eigen.cols();
 
-    Tensor<double> matrix(Vector<size_t>(rows_number, columns_number));
+    Tensor<type, 2> matrix(vector<int>(rows_number, columns_number));
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < rows_number; j++)
+        for(int j = 0; j < rows_number; j++)
         {
            matrix(i,j) = eigen(i,j);
         }
     }
-}
 
+    return matrix;
+}
+*/
 
 }
 

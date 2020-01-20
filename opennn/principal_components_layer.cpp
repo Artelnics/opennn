@@ -26,7 +26,7 @@ PrincipalComponentsLayer::PrincipalComponentsLayer() : Layer()
 /// @param new_inputs_number Number of original inputs.
 /// @param new_principal_components_number Number of principal components neurons in the layer.
 
-PrincipalComponentsLayer::PrincipalComponentsLayer(const size_t& new_inputs_number, const size_t& new_principal_components_number) : Layer()
+PrincipalComponentsLayer::PrincipalComponentsLayer(const int& new_inputs_number, const int& new_principal_components_number) : Layer()
 {
     set(new_inputs_number, new_principal_components_number);
 }
@@ -106,41 +106,41 @@ string PrincipalComponentsLayer::write_principal_components_method_text() const
 }
 
 
-// Matrix<double> get_principal_components() const method
+// Tensor<type, 2> get_principal_components() const method
 
 /// Returns a matrix containing the principal components.
 
-Matrix<double> PrincipalComponentsLayer::get_principal_components() const
+Tensor<type, 2> PrincipalComponentsLayer::get_principal_components() const
 {
     return principal_components;
 }
 
 
-// Vector<double> get_means() const method
+// Tensor<type, 1> get_means() const method
 
 /// Returns a vector containing the means of every input variable in the data set.
 
-Vector<double> PrincipalComponentsLayer::get_means() const
+Tensor<type, 1> PrincipalComponentsLayer::get_means() const
 {
     return means;
 }
 
 
-// Vector<double> get_explained_variance() const
+// Tensor<type, 1> get_explained_variance() const
 
 /// Returns a vector containing the explained variance of every of the principal components
 
-Vector<double> PrincipalComponentsLayer::get_explained_variance() const
+Tensor<type, 1> PrincipalComponentsLayer::get_explained_variance() const
 {
     return explained_variance;
 }
 
 
-// size_t get_inputs_number() const method
+// int get_inputs_number() const method
 
 /// Returns the number of inputs to the layer.
 
-size_t PrincipalComponentsLayer::get_inputs_number() const
+int PrincipalComponentsLayer::get_inputs_number() const
 {
     return inputs_number;
 }
@@ -148,13 +148,13 @@ size_t PrincipalComponentsLayer::get_inputs_number() const
 
 /// Returns the number of principal components.
 
-size_t PrincipalComponentsLayer::get_principal_components_number() const
+int PrincipalComponentsLayer::get_principal_components_number() const
 {
     return principal_components_number;
 }
 
 
-size_t PrincipalComponentsLayer::get_neurons_number() const
+int PrincipalComponentsLayer::get_neurons_number() const
 {
     return principal_components_number;
 }
@@ -164,19 +164,19 @@ size_t PrincipalComponentsLayer::get_neurons_number() const
 /// @param inputs Set of inputs to the principal components layer.
 /// @todo
 
-Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>& inputs)
+Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 /*
-    const size_t inputs_number = inputs.get_columns_number();    
+    const int inputs_number = inputs.dimension(1);    
 
     #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
-    if(principal_components.get_rows_number() != inputs_number)
+    if(principal_components.dimension(0) != inputs_number)
     {
        buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
-              << "Matrix<double> calculate_outputs(Matrix Vector<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(Matrix Tensor<type, 1>&) const method.\n"
               << "Size of inputs must be equal to the number of rows of the principal components matrix.\n";
 
        throw logic_error(buffer.str());
@@ -189,42 +189,42 @@ Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>&
         return inputs;
     }
 
-        const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+        const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-        const Vector<size_t> input_variables_indices(0, 1.0, inputs_number-1);
+        const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
 
-        const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
+        const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
-        const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
+        const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
 
         return dot(inputs_adjust, used_principal_components.calculate_transpose());
 
-        for(size_t i = 0;  i < points_number; i++)
+        for(int i = 0;  i < points_number; i++)
         {
-            const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+            const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-            const Vector<size_t> input_variables_indices(0, 1.0, inputs_number-1);
+            const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
 
-            const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
+            const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
             // Data adjust
 
-            const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
+            const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
 
-//            Vector<double> inputs_adjust(inputs_number);
+//            Tensor<type, 1> inputs_adjust(inputs_number);
 
-//            for(size_t j = 0; j < inputs_number; j++)
+//            for(int j = 0; j < inputs_number; j++)
 //            {
 //                inputs_adjust[j] = inputs[j] - means[j];
 //            }
 
             // Outputs
 
-            const size_t principal_components_number = used_principal_components.get_rows_number();
+            const int principal_components_number = used_principal_components.dimension(0);
 
-            Matrix<double> outputs(points_number, principal_components_number);
+            Tensor<type, 2> outputs(points_number, principal_components_number);
 
-            for(size_t j = 0; j < principal_components_number; j++)
+            for(int j = 0; j < principal_components_number; j++)
             {
                 outputs(i,j) = inputs_adjust.dot(used_principal_components.get_row(j));
             }
@@ -233,13 +233,13 @@ Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>&
 
         return outputs;
     */
-    return Tensor<double>();
+    return Tensor<type, 2>();
 }
 
 
 /// Returns a string with the expression of the principal components process.
 
-string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string PrincipalComponentsLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     switch(principal_components_method)
     {
@@ -271,7 +271,7 @@ string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_n
 /// @param outputs_names Name of outputs from the principal components.*/
 
 
-string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>&, const Vector<string>&) const
+string PrincipalComponentsLayer::write_no_principal_components_expression(const vector<string>&, const vector<string>&) const
 {
     ostringstream buffer;
 
@@ -286,20 +286,20 @@ string PrincipalComponentsLayer::write_no_principal_components_expression(const 
 /// @param outputs_names Name of outputs from the principal components.
 
 
-string PrincipalComponentsLayer::write_principal_components_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string PrincipalComponentsLayer::write_principal_components_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
     ostringstream buffer;
 
     buffer.precision(10);
 
-    const size_t inputs_number = get_inputs_number();
-    const size_t principal_components_number = get_principal_components_number();
+    const int inputs_number = get_inputs_number();
+    const int principal_components_number = get_principal_components_number();
 
-    for(size_t i = 0; i < principal_components_number;i ++)
+    for(int i = 0; i < principal_components_number;i ++)
     {
         buffer << outputs_names[i] << "= (";
 
-        for(size_t j = 0; j < inputs_number; j++)
+        for(int j = 0; j < inputs_number; j++)
         {
             buffer << principal_components(i,j) << "*" << inputs_names[j];
 
@@ -335,33 +335,31 @@ void PrincipalComponentsLayer::set()
 {
     set_inputs_number(0);
     set_principal_components_number(0);
-
+/*
     means.set();
     explained_variance.set();
     principal_components.set();
-
+*/
     set_default();
 }
 
-
-// void set(const size_t&, const size_t&)
 
 /// Sets a new size to the principal components layer.
 /// It also sets means and eigenvector matrix to zero.
 /// @param new_inputs_number New inputs number.
 /// @param new_principal_components_number New principal components number.
 
-void PrincipalComponentsLayer::set(const size_t& new_inputs_number, const size_t& new_principal_components_number)
+void PrincipalComponentsLayer::set(const int& new_inputs_number, const int& new_principal_components_number)
 {
     set_inputs_number(new_inputs_number);
     set_principal_components_number(new_principal_components_number);
-
+/*
     means.set(new_inputs_number, 0.0);
 
     explained_variance.set(new_inputs_number, 0.0);
 
     principal_components.set(new_principal_components_number, new_inputs_number, 0.0);
-
+*/
     set_default();
 }
 
@@ -383,84 +381,74 @@ void PrincipalComponentsLayer::set(const PrincipalComponentsLayer& new_principal
 }
 
 
-// void set_principal_components(const Matrix<double>&) method
-
 /// Sets a new value of the principal components member.
 /// @param new_principal_components Object to be set.
 
-void PrincipalComponentsLayer::set_principal_components(const Matrix<double>& new_principal_components)
+void PrincipalComponentsLayer::set_principal_components(const Tensor<type, 2>& new_principal_components)
 {
     principal_components = new_principal_components;
-
+/*
     means.set();
-
+*/
     set_default();
 }
 
 
-// void set_inputs_number(const size_t&) method
-
 /// Sets a new value for the inputs number member.
 /// @param new_inputs_number New inputs number.
 
-void PrincipalComponentsLayer::set_inputs_number(const size_t& new_inputs_number)
+void PrincipalComponentsLayer::set_inputs_number(const int& new_inputs_number)
 {
     inputs_number = new_inputs_number;
 }
 
 
-// void set_principal_components_number(const size_t&) method
-
 /// Sets a new value for the principal components number member.
 /// @param new_principal_components_number New principal components number.
 
-void PrincipalComponentsLayer::set_principal_components_number(const size_t& new_principal_components_number)
+void PrincipalComponentsLayer::set_principal_components_number(const int& new_principal_components_number)
 {
     principal_components_number = new_principal_components_number;
 }
 
 
-// void set_principal_component(const Matrix<double>&) method
-
 /// Sets a new value of the principal components member.
 /// @param index Index of the principal component.
 /// @param principal_component Object to be set.
 
-void PrincipalComponentsLayer::set_principal_component(const size_t& index, const Vector<double>& principal_component)
+void PrincipalComponentsLayer::set_principal_component(const int& index, const Tensor<type, 1>& principal_component)
 {
+/*
     principal_components.set_row(index, principal_component);
+*/
 }
 
-
-// void set_means(const Vector<double>&) method
 
 /// Sets a new value of the means member.
 /// @param new_means Object to be set.
 
-void PrincipalComponentsLayer::set_means(const Vector<double>& new_means)
-{
+void PrincipalComponentsLayer::set_means(const Tensor<type, 1>& new_means)
+{    
     means = new_means;
 }
 
-
-// void set_means(const size_t&, const double&) method
 
 /// Sets a new size and a new value to the means.
 /// @param new_size New size of the vector means.
 /// @param new_value New value of the vector means.
 
-void PrincipalComponentsLayer::set_means(const size_t& new_size, const double& new_value)
+void PrincipalComponentsLayer::set_means(const int& new_size, const double& new_value)
 {
+/*
     means.set(new_size, new_value);
+*/
 }
 
-
-// void set_explained_variance(const Vector<double>&) method
 
 /// Sets a new value to the explained variance member.
 /// @param new_explained_variance Object to be set.
 
-void PrincipalComponentsLayer::set_explained_variance(const Vector<double>& new_explained_variance)
+void PrincipalComponentsLayer::set_explained_variance(const Tensor<type, 1>& new_explained_variance)
 {
     explained_variance = new_explained_variance;
 }
@@ -516,8 +504,6 @@ void PrincipalComponentsLayer::set_principal_components_method(const string & ne
 }
 
 
-// void set_display(const bool&) method
-
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -528,8 +514,6 @@ void PrincipalComponentsLayer::set_display(const bool& new_display)
    display = new_display;
 }
 
-
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the principal components layer object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element.
@@ -549,7 +533,7 @@ tinyxml2::XMLDocument* PrincipalComponentsLayer::to_XML() const
     tinyxml2::XMLElement* size_element = document->NewElement("PrincipalComponentsNeuronsNumber");
     principal_components_layer_element->LinkEndChild(size_element);
 
-    const size_t principal_components_neurons_number = get_principal_components_neurons_number();
+    const int principal_components_neurons_number = get_principal_components_neurons_number();
 
     buffer.str("");
     buffer << principal_components_neurons_number;
@@ -559,7 +543,7 @@ tinyxml2::XMLDocument* PrincipalComponentsLayer::to_XML() const
 
     // Principal components matrix
 
-    for(size_t i = 0; i < principal_components_neurons_number; i++)
+    for(int i = 0; i < principal_components_neurons_number; i++)
     {
         tinyxml2::XMLElement* principal_components_element = document->NewElement("PrincipalComponents");
         principal_components_element->SetAttribute("Index",(unsigned)i+1);
@@ -614,7 +598,7 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Inputs number
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
     file_stream.OpenElement("InputsNumber");
 
@@ -627,7 +611,7 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Principal components neurons number
 
-    const size_t principal_components_number = get_principal_components_number();
+    const int principal_components_number = get_principal_components_number();
 
     file_stream.OpenElement("PrincipalComponentsNumber");
 
@@ -664,17 +648,17 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
         // Principal components matrix
 
-        for(size_t i = 0; i < inputs_number/*principal_components_number*/; i++)
+        for(int i = 0; i < inputs_number/*principal_components_number*/; i++)
         {
             file_stream.OpenElement("PrincipalComponent");
 
             file_stream.PushAttribute("Index", static_cast<unsigned>(i)+1);
 
             // Principal component
-
+/*
             buffer.str("");
             buffer << principal_components.get_row(i);
-
+*/
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
@@ -732,7 +716,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t inputs_number = static_cast<size_t>(atoi(inputs_number_element->GetText()));
+    const int inputs_number = static_cast<int>(atoi(inputs_number_element->GetText()));
 
     set_inputs_number(inputs_number);
 
@@ -749,7 +733,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t principal_components_number = static_cast<size_t>(atoi(principal_components_number_element->GetText()));
+    const int principal_components_number = static_cast<int>(atoi(principal_components_number_element->GetText()));
 
     set_principal_components_number(principal_components_number);
 
@@ -782,7 +766,8 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(means_text)
             {
-                Vector<double> new_means;
+/*
+                Tensor<type, 1> new_means;
                 new_means.parse(means_text);
 
                 try
@@ -793,6 +778,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 {
                     cerr << e.what() <<endl;
                 }
+*/
             }
         }
 
@@ -814,7 +800,8 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(explained_variance_text)
             {
-                Vector<double> new_explained_variance;
+/*
+                Tensor<type, 1> new_explained_variance;
                 new_explained_variance.parse(explained_variance_text);
 
                 try
@@ -825,18 +812,19 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 {
                     cerr << e.what() <<endl;
                 }
+*/
             }
         }
 
         // Principal components
-
+/*
         principal_components.set(inputs_number, inputs_number);
-
-        unsigned index = 0; // size_t does not work
+*/
+        unsigned index = 0; // int does not work
 
         const tinyxml2::XMLElement* start_element = means_element;
 
-        for(size_t i = 0; i < inputs_number/*principal_components_number*/; i++)
+        for(int i = 0; i < inputs_number/*principal_components_number*/; i++)
         {
             const tinyxml2::XMLElement* principal_components_element = start_element->NextSiblingElement("PrincipalComponent");
             start_element = principal_components_element;
@@ -867,7 +855,8 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(principal_component_text)
             {
-                Vector<double> principal_component;
+/*
+                Tensor<type, 1> principal_component;
                 principal_component.parse(principal_component_text);
 
                 try
@@ -878,6 +867,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 {
                     cerr << e.what() <<endl;
                 }
+*/
             }
         }
     }

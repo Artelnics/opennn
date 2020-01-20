@@ -36,12 +36,12 @@ distribution.
 	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
 	/*int _snprintf_s(
 	   char *buffer,
-	   size_t sizeOfBuffer,
-	   size_t count,
+	   int sizeOfBuffer,
+	   int count,
 	   const char *format [,
 		  argument] ...
 	);*/
-	static inline int TIXML_SNPRINTF(char* buffer, size_t size, const char* format, ...)
+	static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format );
@@ -50,7 +50,7 @@ distribution.
 		return result;
 	}
 
-	static inline int TIXML_VSNPRINTF(char* buffer, size_t size, const char* format, va_list va )
+	static inline int TIXML_VSNPRINTF(char* buffer, int size, const char* format, va_list va )
 	{
 		int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
 		return result;
@@ -181,7 +181,7 @@ void StrPair::SetStr(const char* str, int flags )
 {
     TIXMLASSERT(str );
     Reset();
-    size_t len = strlen(str );
+    int len = strlen(str );
     TIXMLASSERT(_start == 0 );
     _start = new char[ len+1 ];
     memcpy(_start, str, len+1 );
@@ -198,7 +198,7 @@ char* StrPair::ParseText(char* p, const char* endTag, int strFlags, int* curLine
 
     char* start = p;
     char  endChar = *endTag;
-    size_t length = strlen(endTag );
+    int length = strlen(endTag );
 
     // Inner loop of text parsing.
     while(*p ) {
@@ -2163,17 +2163,17 @@ XMLError XMLDocument::LoadFile(const char* filename )
 }
 
 // This is likely overengineered template art to have a check that unsigned long value incremented
-// by one still fits into size_t. If size_t type is larger than unsigned long type
+// by one still fits into int. If int type is larger than unsigned long type
 //(x86_64-w64-mingw32 target) then the check is redundant and gcc and clang emit
 // -Wtype-limits warning. This piece makes the compiler select code with a check when a check
-// is useful and code with no check when a check is redundant depending on how size_t and unsigned long
+// is useful and code with no check when a check is redundant depending on how int and unsigned long
 // types sizes relate to each other.
 template
-<bool = (sizeof(unsigned long) >= sizeof(size_t))>
+<bool = (sizeof(unsigned long) >= sizeof(int))>
 struct LongFitsIntoSizeTMinusOne {
     static bool Fits(unsigned long value )
     {
-        return value <(size_t)-1;
+        return value <(int)-1;
     }
 };
 
@@ -2215,10 +2215,10 @@ XMLError XMLDocument::LoadFile(FILE* fp )
         return _errorID;
     }
 
-    const size_t size = filelength;
+    const int size = filelength;
     TIXMLASSERT(_charBuffer == 0 );
     _charBuffer = new char[size+1];
-    size_t read = fread(_charBuffer, 1, size, fp );
+    int read = fread(_charBuffer, 1, size, fp );
     if(read != size ) {
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
@@ -2255,7 +2255,7 @@ XMLError XMLDocument::SaveFile(FILE* fp, bool compact )
 }
 
 
-XMLError XMLDocument::Parse(const char* p, size_t len )
+XMLError XMLDocument::Parse(const char* p, int len )
 {
     Clear();
 
@@ -2263,7 +2263,7 @@ XMLError XMLDocument::Parse(const char* p, size_t len )
         SetError(XML_ERROR_EMPTY_DOCUMENT, 0, 0 );
         return _errorID;
     }
-    if(len == (size_t)(-1)) {
+    if(len == (int)(-1)) {
         len = strlen(p );
     }
     TIXMLASSERT(_charBuffer == 0 );
@@ -2305,13 +2305,13 @@ void XMLDocument::SetError(XMLError error, int lineNum, const char* format, ...)
     _errorLineNum = lineNum;
 	_errorStr.Reset();
 
-    size_t BUFFER_SIZE = 1000;
+    int BUFFER_SIZE = 1000;
     char* buffer = new char[BUFFER_SIZE];
 
     TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d(0x%x) Line number=%d", ErrorIDToName(error), int(error), int(error), lineNum);
 
 	if(format) {
-		size_t len = strlen(buffer);
+		int len = strlen(buffer);
 		TIXML_SNPRINTF(buffer + len, BUFFER_SIZE - len, ": ");
 		len = strlen(buffer);
 
@@ -2415,7 +2415,7 @@ void XMLPrinter::Print(const char* format, ...)
 }
 
 
-void XMLPrinter::Write(const char* data, size_t size )
+void XMLPrinter::Write(const char* data, int size )
 {
     if(_fp ) {
         fwrite(data , sizeof(char), size, _fp);
@@ -2465,7 +2465,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                 // entity, and keep looking.
                 if(flag[(unsigned char)(*q)]) {
                     while(p < q ) {
-                        const size_t delta = q - p;
+                        const int delta = q - p;
                         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
                         Write(p, toPrint );
                         p += toPrint;
@@ -2495,7 +2495,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
     // string if an entity wasn't found.
     TIXMLASSERT(p <= q );
     if(!_processEntities ||(p < q )) {
-        const size_t delta = q - p;
+        const int delta = q - p;
         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
         Write(p, toPrint );
     }

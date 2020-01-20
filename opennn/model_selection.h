@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "training_strategy.h"
 #include "incremental_neurons.h"
 #include "growing_inputs.h"
@@ -133,9 +134,9 @@ public:
 
     // Cross validation methods
 
-    Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t& = 4) const;
-    Vector<NeuralNetwork> perform_random_cross_validation(const size_t& = 4, const double& = 0.25) const;
-    Vector<NeuralNetwork> perform_positives_cross_validation() const;
+    vector<NeuralNetwork> perform_k_fold_cross_validation(const int& = 4) const;
+    vector<NeuralNetwork> perform_random_cross_validation(const int& = 4, const double& = 0.25) const;
+    vector<NeuralNetwork> perform_positives_cross_validation() const;
 
     // Model selection methods
 

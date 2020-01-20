@@ -161,7 +161,7 @@ const double& AdaptiveMomentEstimation::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process.
 
-const size_t& AdaptiveMomentEstimation::get_maximum_selection_failures() const
+const int& AdaptiveMomentEstimation::get_maximum_selection_failures() const
 {
    return(maximum_selection_failures);
 }
@@ -239,7 +239,7 @@ void AdaptiveMomentEstimation::set_default()
 
    minimum_parameters_increment_norm = 0.0;
    minimum_loss_decrease = 0.0;
-   loss_goal = -numeric_limits<double>::max();
+   loss_goal = -999999;
    gradient_norm_goal = 0.0;
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
@@ -435,7 +435,7 @@ void AdaptiveMomentEstimation::set_error_gradient_norm(const double& new_error_g
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void AdaptiveMomentEstimation:: set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+void AdaptiveMomentEstimation:: set_maximum_epochs_number(const int& new_maximum_epochs_number)
 {
    
 
@@ -558,7 +558,7 @@ void AdaptiveMomentEstimation::set_gradient_norm_goal(const double& new_gradient
 /// Sets a new maximum number of selection failures.
 /// @param new_maximum_selection_failures Maximum number of iterations in which the selection evalutation decreases.
 
-void AdaptiveMomentEstimation::set_maximum_selection_error_increases(const size_t& new_maximum_selection_failures)
+void AdaptiveMomentEstimation::set_maximum_selection_error_increases(const int& new_maximum_selection_failures)
 {
    maximum_selection_failures = new_maximum_selection_failures;
 }
@@ -633,7 +633,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void AdaptiveMomentEstimation::set_display_period(const size_t& new_display_period)
+void AdaptiveMomentEstimation::set_display_period(const int& new_display_period)
 {
    
 
@@ -675,17 +675,17 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Matrix<double>& data = data_set_pointer->get_data();
+   const Tensor<type, 2>& data = data_set_pointer->get_data();
 
-   const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+   const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+   const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const Vector<size_t>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Vector<size_t>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const vector<int>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const vector<int>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-   const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
-   const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
+   const vector<int> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -693,10 +693,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters = neural_network_pointer->get_parameters();
-   Vector<double> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters_increment(parameters_number);
 
    double parameters_norm = 0.0;
 
@@ -718,10 +718,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    double learning_rate = 0.0;
 
-   size_t selection_failures = 0;
+   int selection_failures = 0;
 
-   Vector<double> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error = numeric_limits<double>::max();
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error = 999999;
 
    bool stop_training = false;
 
@@ -731,25 +731,25 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
-   Vector<double> gradient_exponential_decay(parameters_number,0.0);
-   Vector<double> square_gradient_exponential_decay(parameters_number,0.0);
+   Tensor<type, 1> gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> square_gradient_exponential_decay(parameters_number);
 
-   Vector<double> last_gradient_exponential_decay(parameters_number,0.0);
-   Vector<double> last_square_gradient_exponential_decay(parameters_number,0.0);
+   Tensor<type, 1> last_gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> last_square_gradient_exponential_decay(parameters_number);
 
-   size_t iteration_count = 0;
+   int iteration_count = 0;
 
     bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
    // Main loop
-
-   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
+/*
+   for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
-       const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+       const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-       const size_t batches_number = training_batches.size();
+       const int batches_number = training_batches.size();
 
        parameters_norm = l2_norm(parameters);
 
@@ -757,7 +757,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        loss = 0.0;
 
-       for(size_t iteration = 0; iteration < batches_number; iteration++)
+       for(int iteration = 0; iteration < batches_number; iteration++)
        {
            iteration_count++;
 
@@ -956,7 +956,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    results.final_selection_error = selection_error;
    results.final_gradient_norm = gradient_norm;
    results.elapsed_time = elapsed_time;
-
+*/
    return results;
 }
 
@@ -977,12 +977,12 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> AdaptiveMomentEstimation::to_string_matrix() const
+Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Vector<string> labels;
-    Vector<string> values;
+    vector<string> labels;
+    vector<string> values;
 
    // Minimum parameters increment norm
 
@@ -1081,14 +1081,14 @@ Matrix<string> AdaptiveMomentEstimation::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const size_t rows_number = labels.size();
-   const size_t columns_number = 2;
+   const int rows_number = labels.size();
+   const int columns_number = 2;
 
-   Matrix<string> string_matrix(rows_number, columns_number);
-
+   Tensor<string, 2> string_matrix(rows_number, columns_number);
+/*
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-
+*/
     return string_matrix;
 }
 
@@ -1675,7 +1675,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_selection_failures = static_cast<size_t>(atoi(element->GetText()));
+          const int new_maximum_selection_failures = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -1694,7 +1694,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_epochs_number = static_cast<size_t>(atoi(element->GetText()));
+          const int new_maximum_epochs_number = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -1770,7 +1770,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_display_period = static_cast<size_t>(atoi(element->GetText()));
+          const int new_display_period = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -1789,7 +1789,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
+           const int new_save_period = static_cast<int>(atoi(element->GetText()));
 
            try
            {
