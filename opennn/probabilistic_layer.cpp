@@ -1172,7 +1172,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        set_inputs_number(static_cast<int>(stoi(inputs_number_element->GetText())));
+        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
     }
 
     // Neurons number
@@ -1190,7 +1190,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(neurons_number_element->GetText())
     {
-        set_neurons_number(static_cast<int>(stoi(neurons_number_element->GetText())));
+        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
     }
 
     // Activation function
@@ -1227,9 +1227,8 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-/*
-        set_parameters(to_double_vector(parameters_string, ' '));
-*/
+//@todo
+//        set_parameters(to_double_vector(parameters_string, ' '));
     }
 
     // Decision threshold

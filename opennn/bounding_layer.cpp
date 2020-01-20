@@ -796,7 +796,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    file_stream.OpenElement("BoundingNeuronsNumber");
 
-   const int neurons_number = get_neurons_number();
+   const size_t neurons_number = get_neurons_number();
 
    buffer.str("");
    buffer << neurons_number;
@@ -805,7 +805,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    file_stream.CloseElement();
 
-   for(int i = 0; i < neurons_number; i++)
+   for(size_t i = 0; i < neurons_number; i++)
    {
        file_stream.OpenElement("Item");
 
@@ -914,15 +914,15 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const int neurons_number = static_cast<int>(atoi(neurons_number_element->GetText()));
+    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // int does not work
+    unsigned index = 0; // size_t does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(int i = 0; i < lower_bounds.size(); i++)
+    for(size_t i = 0; i < lower_bounds.size(); i++)
     {
         const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
         start_element = item_element;
@@ -978,7 +978,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(use_bounding_layer_element)
         {
-            int new_method = static_cast<int>(atoi(use_bounding_layer_element->GetText()));
+            size_t new_method = static_cast<size_t>(atoi(use_bounding_layer_element->GetText()));
 
             if(new_method == 1)
             {
@@ -999,9 +999,9 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-      // Control sentence 
+      // Control sentence
 //      {
-//         const char* text = bounding_layer_element->GetText();     
+//         const char* text = bounding_layer_element->GetText();
 
 //         const string string(text);
 
@@ -1009,7 +1009,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 //         {
 //            ostringstream buffer;
 
-//            buffer << "OpenNN Exception: BoundingLayer class.\n" 
+//            buffer << "OpenNN Exception: BoundingLayer class.\n"
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                   << "Unkown root element: " << text << ".\n";
 
@@ -1027,7 +1027,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //        if(lower_bounds_text)
 //        {
-//           Tensor<double, 1> new_lower_bounds;
+//           Vector<double> new_lower_bounds;
 //           new_lower_bounds.parse(lower_bounds_text);
 
 //           try
@@ -1052,7 +1052,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //        if(upper_bounds_text)
 //        {
-//           Tensor<double, 1> new_upper_bounds;
+//           Vector<double> new_upper_bounds;
 //           new_upper_bounds.parse(upper_bounds_text);
 
 //           try
