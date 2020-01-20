@@ -808,7 +808,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     cout << "Threads: " << n << endl;
 
-    SimpleThreadPool simple_thread_pool(n);
+    NonBlockingThreadPool simple_thread_pool(n);
 
     //simple_thread_pool.Schedule()
 
