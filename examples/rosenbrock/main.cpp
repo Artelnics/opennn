@@ -41,7 +41,7 @@
 
 //#include "../eigen/Eigen/Eigen"
 #include "../opennn/config.h"
-#include "../opennn/device.h"
+//#include "../opennn/device.h"
 
 using namespace OpenNN;
 using namespace std;
