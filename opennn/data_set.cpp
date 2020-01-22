@@ -2661,6 +2661,38 @@ void DataSet::set_columns_number(const int& new_variables_number)
 }
 
 
+void DataSet::set_binary_simple_columns()
+{
+    vector<type> values;
+
+    bool is_binary = true;
+
+    for(int column_index = 0; column_index < data.dimension(1); column_index++)
+    {
+        is_binary = true;
+
+        values.clear();
+
+        for(int row_index = 0; row_index < data.dimension(0); row_index++)
+        {
+            if(std::find(values.begin(), values.end(), data(row_index, column_index)) == values.end()
+            && !::isnan(data(row_index, column_index)))
+            {
+                values.push_back(data(row_index, column_index));
+            }
+
+            if(values.size() > 2)
+            {
+                is_binary = false;
+                break;
+            }
+        }
+
+        if(is_binary) columns[column_index].type = Binary;
+    }
+}
+
+
 /// Sets new input dimensions in the data set.
 
 void DataSet::set_input_variables_dimensions(const vector<int>& new_inputs_dimensions)
@@ -5172,9 +5204,12 @@ void DataSet::print_data_file_preview() const
 
     for(int i = 0;  i < size; i++)
     {
-/*
-        cout << data_file_preview[i] << endl;
-*/
+        for(int j = 0; j < data_file_preview[i].size(); j++)
+        {
+            cout << data_file_preview[i][j] << " ";
+        }
+
+        cout << endl;
     }
 }
 
@@ -8603,10 +8638,26 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
+    cout << "read_csv_1()" << endl;
+
+    for(int i = 0; i < columns.size(); i++)
+    {
+        cout << "column " << i << ": " << columns[i].name << endl;
+    }
+
+    print_data_file_preview();
+
+
+
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
+
+        cout << "read_csv_2()" << endl;
+
         read_csv_3_simple();
+
+        cout << "read_csv_3()" << endl;
     }
     else
     {
@@ -8777,7 +8828,6 @@ void DataSet::read_csv_1()
 
 void DataSet::read_csv_2_simple()
 {
-/*
     ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -8851,20 +8901,16 @@ void DataSet::read_csv_2_simple()
 
     data.resize(instances_count, columns_number);
 
-    data.set_header(get_columns_names());
-
     set_default_columns_uses();
 
     instances_uses.resize(instances_count);
 
     split_instances_random();
-*/
 }
 
 
 void DataSet::read_csv_3_simple()
 {
-/*
     ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -8937,23 +8983,16 @@ void DataSet::read_csv_3_simple()
 
     // Check Binary
 
-    for(int k = 0; k < variables_number; k++)
-    {
-        if(data.is_column_binary(k))
-        {
-            columns[k].type = Binary;
-        }
-    }
+    set_binary_simple_columns();
 
     file.close();
-*/
 }
 
 
 void DataSet::read_csv_2_complete()
 {
     ifstream file(data_file_name.c_str());
-/*
+
     if(!file.is_open())
     {
        ostringstream buffer;
@@ -9030,7 +9069,7 @@ void DataSet::read_csv_2_complete()
 
             if(columns[j].type == Categorical)
             {
-                if(!columns[j].categories.contains(tokens[j]))
+                if(find(columns[j].categories.begin(), columns[j].categories.end(), tokens[j]) == columns[j].categories.end())
                 {
                     if(tokens[j] == missing_values_label) continue;
 
@@ -9070,14 +9109,13 @@ void DataSet::read_csv_2_complete()
     instances_uses.resize(static_cast<int>(instances_number));
 
     split_instances_random();
-*/
 }
 
 
 void DataSet::read_csv_3_complete()
 {
     ifstream file(data_file_name.c_str());
-/*
+
     if(!file.is_open())
     {
        ostringstream buffer;
@@ -9205,7 +9243,7 @@ void DataSet::read_csv_3_complete()
     }
 
     // Read header
-
+/*
     for (int j = 0; j < columns_number; j++)
     {
         if(columns[j].type == Categorical)

@@ -478,6 +478,8 @@ public:
 
    void set_columns_number(const int&);
 
+   void set_binary_simple_columns();
+
    // Variables set methods
 
    void set_variables_names(const vector<string>&);
