@@ -59,7 +59,7 @@ public:
 
    bool is_empty() const;
 
-   vector<int> get_input_variables_dimensions() const;
+   VectorXi get_input_variables_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;
@@ -110,7 +110,7 @@ public:
 
    void set_inputs_number(const int&);
    void set_neurons_number(const int&);
-   void set_input_shape(const vector<int>&);
+   void set_input_shape(const VectorXi&);
 
    // Parameters
 

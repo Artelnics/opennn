@@ -584,9 +584,9 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
 
     final_losses[0] = optimum_training_error;
     final_losses[1] = optimum_selection_error;
-
-    order_history.push_back(neurons_number);
 /*
+    order_history.push_back(neurons_number);
+
     training_loss_history.push_back(final_losses[0]);
 
     selection_error_history.push_back(final_losses[1]);

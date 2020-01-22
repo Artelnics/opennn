@@ -1146,7 +1146,7 @@ void GeneticAlgorithm::calculate_objetive_fitness()
 void GeneticAlgorithm::calculate_rank_fitness()
 {
 /*
-    const vector<int> rank = loss.get_column(1).calculate_greater_rank();
+    const VectorXi rank = loss.get_column(1).calculate_greater_rank();
 
     fitness.set(loss.dimension(0),0.);
 

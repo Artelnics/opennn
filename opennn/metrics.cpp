@@ -2024,7 +2024,7 @@ Tensor<type, 2> eigen_to_tensor(const MatrixXd& eigen)
     const int rows_number = eigen.rows();
     const int columns_number = eigen.cols();
 
-    Tensor<type, 2> matrix(vector<int>(rows_number, columns_number));
+    Tensor<type, 2> matrix(VectorXi(rows_number, columns_number));
 
     for(int i = 0; i < rows_number; i++)
     {
