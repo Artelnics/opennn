@@ -109,9 +109,9 @@ string BoundingLayer::write_bounding_method() const
 }
 
 
-vector<int> BoundingLayer::get_input_variables_dimensions() const
+VectorXi BoundingLayer::get_input_variables_dimensions() const
 {
-    return vector<int>(1, lower_bounds.size());
+    return VectorXi(1, lower_bounds.size());
 }
 
 

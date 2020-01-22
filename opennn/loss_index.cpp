@@ -433,7 +433,7 @@ Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& input
 
     const int parameters_number = neural_network_pointer->get_trainable_parameters_number();
 
-    const vector<int> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+    const VectorXi trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
     const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
@@ -500,7 +500,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
    const int parameters_number = neural_network_pointer->get_parameters_number();
    const int instances_number = data_set_pointer->get_instances_number();
 
-   const vector<int> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+   const VectorXi layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
    Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
@@ -1066,7 +1066,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const int output_rows_number = layer_pointer->get_outputs_rows_number();
             const int output_columns_number = layer_pointer->get_outputs_columns_number();
 /*
-            layers_delta[i].resize(vector<int>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+            layers_delta[i].resize(VectorXi({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
 */
         }
         else if(layer_type == Layer::Pooling)
@@ -1077,7 +1077,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const int output_rows_number = layer_pointer->get_outputs_rows_number();
             const int output_columns_number = layer_pointer->get_outputs_columns_number();
 /*
-            layers_delta[i].resize(vector<int>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+            layers_delta[i].resize(VectorXi({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
 */
         }
         else if(layer_type == Layer::Perceptron)
@@ -1207,7 +1207,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -1242,7 +1242,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -1280,7 +1280,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<VectorXi> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
@@ -1303,7 +1303,7 @@ check();
 /// Returns the value of the error term gradient.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const vector<int>& batch_indices) const
+Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const VectorXi& batch_indices) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1347,7 +1347,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 

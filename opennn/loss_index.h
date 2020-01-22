@@ -247,8 +247,8 @@ public:
 
    virtual double calculate_selection_error() const;
 
-   virtual double calculate_batch_error(const vector<int>&) const = 0;
-   virtual double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const = 0;
+   virtual double calculate_batch_error(const VectorXi&) const = 0;
+   virtual double calculate_batch_error(const VectorXi&, const Tensor<type, 1>&) const = 0;
 
    // GRADIENT METHODS
 
@@ -256,7 +256,7 @@ public:
 
    virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
-   virtual Tensor<type, 1> calculate_batch_error_gradient(const vector<int>&) const;
+   virtual Tensor<type, 1> calculate_batch_error_gradient(const VectorXi&) const;
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 
@@ -264,8 +264,8 @@ public:
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 1> calculate_batch_error_terms(const vector<int>&) const {return Tensor<type, 1>();}
-   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const vector<int>&) const {return Tensor<type, 2>();}
+   virtual Tensor<type, 1> calculate_batch_error_terms(const VectorXi&) const {return Tensor<type, 1>();}
+   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const VectorXi&) const {return Tensor<type, 2>();}
 
    virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
@@ -350,7 +350,7 @@ public:
 
        #endif
 
-       const vector<int> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+       const VectorXi trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 

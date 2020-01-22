@@ -51,7 +51,7 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const vector<int>&, const vector<int>&);
+    explicit ConvolutionalLayer(const VectorXi&, const VectorXi&);
 
     // Destructor
 
@@ -67,7 +67,7 @@ public:
 
     ActivationFunction get_activation_function() const;
 
-    vector<int> get_outputs_dimensions() const;
+    VectorXi get_outputs_dimensions() const;
 
     int get_outputs_rows_number() const;
 
@@ -102,7 +102,7 @@ public:
 
     // Set methods
 
-    void set(const vector<int>&, const vector<int>&);
+    void set(const VectorXi&, const VectorXi&);
 
     void set_activation_function(const ActivationFunction&);
 
@@ -260,7 +260,7 @@ protected:
 
    int column_stride = 1;
 
-   vector<int> input_variables_dimensions;
+   VectorXi input_variables_dimensions;
 
    PaddingOption padding_option = NoPadding;
 

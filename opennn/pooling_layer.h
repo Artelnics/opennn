@@ -53,9 +53,9 @@ public:
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const vector<int>&);
+    explicit PoolingLayer(const VectorXi&);
 
-    explicit PoolingLayer(const vector<int>&, const vector<int>&);
+    explicit PoolingLayer(const VectorXi&, const VectorXi&);
 
     // Destructor
 
@@ -63,8 +63,8 @@ public:
 
      // Get methods
 
-     vector<int> get_input_variables_dimensions() const;
-     vector<int> get_outputs_dimensions() const;
+     VectorXi get_input_variables_dimensions() const;
+     VectorXi get_outputs_dimensions() const;
 
      int get_inputs_number() const;
 
@@ -94,7 +94,7 @@ public:
 
      Tensor<type, 1> get_parameters() const;
 
-     vector<int> get_inputs_indices(const int&) const;
+     VectorXi get_inputs_indices(const int&) const;
 
      PoolingMethod get_pooling_method() const;
 
@@ -103,7 +103,7 @@ public:
      void set_inputs_number(const int&) {}
      void set_neurons_number(const int&) {}
 
-     void set_input_variables_dimensions(const vector<int>&);
+     void set_input_variables_dimensions(const VectorXi&);
 
     void set_padding_width(const int&);
 
@@ -174,7 +174,7 @@ public:
 
 protected:
 
-    vector<int> input_variables_dimensions;
+    VectorXi input_variables_dimensions;
 
     int pool_rows_number = 2;
 

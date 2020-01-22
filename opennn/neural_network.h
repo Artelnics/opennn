@@ -60,9 +60,9 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const vector<int>&);
+   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const VectorXi&);
 
-   explicit NeuralNetwork(const vector<int>&, const int&, const vector<int>&, const int&);
+   explicit NeuralNetwork(const VectorXi&, const int&, const VectorXi&, const int&);
 
    explicit NeuralNetwork(const string&);
 
@@ -112,9 +112,9 @@ public:
                    const int outputs_rows_number = convolutional_layer->get_outputs_rows_number();
                    const int outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 /*
-                   layers[i].combinations.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].combinations.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
@@ -125,9 +125,9 @@ public:
                    const int outputs_rows_number = pooling_layer->get_outputs_rows_number();
                    const int outputs_columns_number = pooling_layer->get_outputs_columns_number();
 /*
-                   layers[i].combinations.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(vector<int>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].combinations.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.resize(VectorXi({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Recurrent)
@@ -233,7 +233,7 @@ public:
 
    vector<Layer*> get_layers_pointers() const;
    vector<Layer*> get_trainable_layers_pointers() const;
-   vector<int> get_trainable_layers_indices() const;
+   VectorXi get_trainable_layers_indices() const;
 
    ScalingLayer* get_scaling_layer_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
@@ -253,8 +253,8 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ProjectType&, const vector<int>&);
-   void set(const vector<int>&, const int&, const vector<int>&, const int&);
+   void set(const NeuralNetwork::ProjectType&, const VectorXi&);
+   void set(const VectorXi&, const int&, const VectorXi&, const int&);
 
    void set(const string&);
    void set(const NeuralNetwork&);
@@ -276,7 +276,7 @@ public:
    // Layers 
 
    int get_layers_number() const;
-   vector<int> get_layers_neurons_numbers() const;
+   VectorXi get_layers_neurons_numbers() const;
 
    int get_trainable_layers_number() const;
 
@@ -285,7 +285,7 @@ public:
    int get_inputs_number() const;
    int get_outputs_number() const;
 
-   vector<int> get_architecture() const;
+   VectorXi get_architecture() const;
 
    // Parameters
 
@@ -293,7 +293,7 @@ public:
    int get_trainable_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   vector<int> get_trainable_layers_parameters_numbers() const;
+   VectorXi get_trainable_layers_parameters_numbers() const;
 
    vector<Tensor<type, 1>> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 

@@ -68,7 +68,7 @@ public:
 
    bool is_empty() const;
 
-   vector<int> get_input_variables_dimensions() const;
+   VectorXi get_input_variables_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;

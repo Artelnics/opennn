@@ -189,9 +189,9 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
         return inputs;
     }
 
-        const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+        const VectorXi principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-        const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
+        const VectorXi input_variables_indices(0, 1.0, inputs_number-1);
 
         const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
@@ -201,9 +201,9 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
 
         for(int i = 0;  i < points_number; i++)
         {
-            const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+            const VectorXi principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-            const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
+            const VectorXi input_variables_indices(0, 1.0, inputs_number-1);
 
             const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 

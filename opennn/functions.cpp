@@ -691,7 +691,7 @@ Tensor<type, 2> linear_derivatives(const Tensor<type, 2>& x)
 
      const int columns_number = x.dimension(1);
 
-     Tensor<type, 2> y(vector<int>({columns_number, columns_number, n}));
+     Tensor<type, 2> y(VectorXi({columns_number, columns_number, n}));
 
      for(int i = 0; i < n; i++)
      {
@@ -1072,7 +1072,7 @@ Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>& x)
 
  const int columns_number = x.dimension(1);
 
-// vector<int> dimensions = {columns_number, columns_number, n};
+// VectorXi dimensions = {columns_number, columns_number, n};
 
 // Tensor<type, 2> y(columns_number, columns_number, n);
 
