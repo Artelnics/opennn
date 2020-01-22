@@ -196,7 +196,7 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    const vector<int> target_distribution = data_set_pointer->calculate_target_distribution();
+    const VectorXi target_distribution = data_set_pointer->calculate_target_distribution();
 
     const int negatives = target_distribution[0];
     const int positives = target_distribution[1];
@@ -228,7 +228,7 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
     
 
-    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const VectorXi target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const int negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
 
@@ -248,7 +248,7 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 
 #endif
 
-    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const VectorXi target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const int negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
 
@@ -261,7 +261,7 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 /// Returns the value of the error term gradient.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double WeightedSquaredError::calculate_batch_error(const vector<int>& batch_indices) const
+double WeightedSquaredError::calculate_batch_error(const VectorXi& batch_indices) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -286,7 +286,7 @@ double WeightedSquaredError::calculate_batch_error(const vector<int>& batch_indi
 }
 
 
-double WeightedSquaredError::calculate_batch_error(const vector<int>& batch_indices,
+double WeightedSquaredError::calculate_batch_error(const VectorXi& batch_indices,
                                                    const Tensor<type, 1>& parameters) const
 {
     #ifdef __OPENNN_DEBUG__
@@ -336,7 +336,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
 
     const int batches_number = training_batches.size();
@@ -395,7 +395,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -580,7 +580,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 

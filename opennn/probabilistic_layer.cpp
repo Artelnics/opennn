@@ -54,11 +54,11 @@ ProbabilisticLayer::~ProbabilisticLayer()
 }
 
 
-vector<int> ProbabilisticLayer::get_input_variables_dimensions() const
+VectorXi ProbabilisticLayer::get_input_variables_dimensions() const
 {
     const int inputs_number = get_inputs_number();
 
-    return vector<int>({inputs_number});
+    return VectorXi(inputs_number);
 }
 
 
@@ -646,7 +646,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
     const int output_rows_number = inputs.dimension(0);
     const int output_columns_number = get_neurons_number();
 
-    Tensor<type, 2> combinations(vector<int>({output_rows_number, output_columns_number}));
+    Tensor<type, 2> combinations(VectorXi({output_rows_number, output_columns_number}));
 
     const int inputs_dimensions_number = inputs.rank();
 

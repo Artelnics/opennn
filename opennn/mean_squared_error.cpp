@@ -108,7 +108,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -162,7 +162,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
     const int batches_number = training_batches.size();
@@ -223,7 +223,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<VectorXi> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
@@ -261,7 +261,7 @@ check();
 /// Returns the mean squared error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double MeanSquaredError::calculate_batch_error(const vector<int>& batch_indices) const
+double MeanSquaredError::calculate_batch_error(const VectorXi& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -284,7 +284,7 @@ check();
 }
 
 
-double MeanSquaredError::calculate_batch_error(const vector<int>& batch_indices,
+double MeanSquaredError::calculate_batch_error(const VectorXi& batch_indices,
                                                const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -327,7 +327,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -520,7 +520,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
