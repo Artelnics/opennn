@@ -251,7 +251,7 @@ check();
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -300,7 +300,7 @@ check();
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -356,7 +356,7 @@ check();
 
     double selection_error = 0.0;
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();

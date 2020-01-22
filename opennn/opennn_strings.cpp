@@ -70,11 +70,11 @@ int count_tokens(const string& s, const char& c)
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-vector<string> get_tokens(const string& str, const char& separator)
+Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
     const string new_string = get_trimmed(str);
 
-    vector<string> tokens;
+    Tensor<string, 1> tokens;
 
     // Skip delimiters at beginning.
 
@@ -87,9 +87,9 @@ vector<string> get_tokens(const string& str, const char& separator)
     while(string::npos != pos || string::npos != lastPos)
     {
         // Found a token, add it to the vector
-
+/*
         tokens.push_back(new_string.substr(lastPos, pos - lastPos));
-
+*/
         // Skip delimiters. Note the "not_of"
 
         lastPos = new_string.find_first_not_of(separator, pos);
@@ -112,7 +112,7 @@ vector<string> get_tokens(const string& str, const char& separator)
 
 Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 {
-    const vector<string> tokens = get_tokens(str, separator);
+    const Tensor<string, 1> tokens = get_tokens(str, separator);
 
   const int tokens_size = tokens.size();
 
@@ -623,7 +623,7 @@ string prepend(const string& pre, const string& str)
 /// Returns true if all the elements in a string list are numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_numeric_string_vector(const vector<string>& v)
+bool is_numeric_string_vector(const Tensor<string, 1>& v)
 {
     for(int i = 0; i < v.size(); i++)
     {
@@ -634,7 +634,7 @@ bool is_numeric_string_vector(const vector<string>& v)
 }
 
 
-bool has_numbers(const vector<string>& v)
+bool has_numbers(const Tensor<string, 1>& v)
 {
     for(int i = 0; i < v.size(); i++)
     {
@@ -645,7 +645,7 @@ bool has_numbers(const vector<string>& v)
 }
 
 
-bool has_strings(const vector<string>& v)
+bool has_strings(const Tensor<string, 1>& v)
 {
     for(int i = 0; i < v.size(); i++)
     {
@@ -658,7 +658,7 @@ bool has_strings(const vector<string>& v)
 /// Returns true if none element in a string list is numeric, and false otherwise.
 /// @param v String list to be checked.
 
-bool is_not_numeric(const vector<string>& v)
+bool is_not_numeric(const Tensor<string, 1>& v)
 {
     for(int i = 0; i < v.size(); i++)
     {
@@ -672,7 +672,7 @@ bool is_not_numeric(const vector<string>& v)
 /// Returns true if some the elements in a string list are numeric and some others are not numeric.
 /// @param v String list to be checked.
 
-bool is_mixed(const vector<string>& v)
+bool is_mixed(const Tensor<string, 1>& v)
 {
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
@@ -704,7 +704,7 @@ bool is_mixed(const vector<string>& v)
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
 
-void replace_substring(vector<string>& vector, const string& find_what, const string& replace_with)
+void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
 {
 
     const int size = vector.size();

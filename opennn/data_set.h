@@ -133,7 +133,7 @@ public:
 
        /// Values constructor
 
-       Column(const string&, const VariableUse&, const ColumnType& = Numeric, const vector<string>& = vector<string>(), const vector<VariableUse>& = vector<VariableUse>());
+       Column(const string&, const VariableUse&, const ColumnType& = Numeric, const Tensor<string, 1>& = Tensor<string, 1>(), const vector<VariableUse>& = vector<VariableUse>());
 
        /// Destructor.
 
@@ -153,7 +153,7 @@ public:
 
        /// Categories within the column.
 
-       vector<string> categories;
+       Tensor<string, 1> categories;
 
        /// Categories use.
 
@@ -163,14 +163,14 @@ public:
 
        int get_categories_number() const;
 
-       vector<string> get_used_variables_names() const;
+       Tensor<string, 1> get_used_variables_names() const;
 
        void set_use(const VariableUse&);
        void set_use(const string&);
 
        void set_type(const string&);
 
-       void set_categories_uses(const vector<string>&);
+       void set_categories_uses(const Tensor<string, 1>&);
 
        bool is_used();
        bool is_unused();
@@ -199,7 +199,7 @@ public:
 
        void allocate()
        {
-           const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+           const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
            const int input_variables_number = data_set_pointer->get_input_variables_number();
            const int target_variables_number = data_set_pointer->get_target_variables_number();
 
@@ -300,11 +300,11 @@ public:
    VectorXi get_unused_columns_indices() const;
    VectorXi get_used_columns_indices() const;
 
-   vector<string> get_columns_names() const;
+   Tensor<string, 1> get_columns_names() const;
 
-   vector<string> get_input_columns_names() const;
-   vector<string> get_target_columns_names() const;
-   vector<string> get_used_columns_names() const;
+   Tensor<string, 1> get_input_columns_names() const;
+   Tensor<string, 1> get_target_columns_names() const;
+   Tensor<string, 1> get_used_columns_names() const;
 
    ColumnType get_column_type(const int& index) const {return columns[index].type;}
 
@@ -321,10 +321,10 @@ public:
    int get_used_variables_number() const;
 
    string get_variable_name(const int&) const;
-   vector<string> get_variables_names() const;
+   Tensor<string, 1> get_variables_names() const;
 
-   vector<string> get_input_variables_names() const;
-   vector<string> get_target_variables_names() const;
+   Tensor<string, 1> get_input_variables_names() const;
+   Tensor<string, 1> get_target_variables_names() const;
 
    int get_variable_index(const string&) const;
 
@@ -409,7 +409,7 @@ public:
    const int& get_steps_ahead() const;
    const int& get_time_index() const;
 
-   static vector<string> get_default_columns_names(const int&);
+   static Tensor<string, 1> get_default_columns_names(const int&);
 
    static ScalingUnscalingMethod get_scaling_unscaling_method(const string&);
 
@@ -449,7 +449,7 @@ public:
    void set_instance_use(const int&, const string&);
 
    void set_instances_uses(const vector<InstanceUse>&);
-   void set_instances_uses(const vector<string>&);
+   void set_instances_uses(const Tensor<string, 1>&);
 
    void set_testing_to_selection_instances();
    void set_selection_to_testing_instances();
@@ -466,7 +466,7 @@ public:
 
    void set_column_name(const int&, const string&);
 
-   void set_columns_uses(const vector<string>&);
+   void set_columns_uses(const Tensor<string, 1>&);
    void set_columns_uses(const vector<VariableUse>&);
    void set_columns_unused();
    void set_input_columns_unused();
@@ -474,7 +474,7 @@ public:
    void set_column_use(const int&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
 
-   void set_columns_names(const vector<string>&);
+   void set_columns_names(const Tensor<string, 1>&);
 
    void set_columns_number(const int&);
 
@@ -482,7 +482,7 @@ public:
 
    // Variables set methods
 
-   void set_variables_names(const vector<string>&);
+   void set_variables_names(const Tensor<string, 1>&);
    void set_variable_name(const int&, const string&);
 
    void set_input();
@@ -544,7 +544,7 @@ public:
 
    // Unusing methods
 
-   vector<string> unuse_constant_columns();
+   Tensor<string, 1> unuse_constant_columns();
 
    VectorXi unuse_repeated_instances();
 
@@ -636,7 +636,7 @@ public:
 
    // Data scaling
 
-   vector<string> calculate_default_scaling_methods() const;
+   Tensor<string, 1> calculate_default_scaling_methods() const;
    void scale_data_minimum_maximum(const vector<Descriptives>&);
    void scale_data_mean_standard_deviation(const vector<Descriptives>&);
    vector<Descriptives> scale_data_minimum_maximum();
@@ -661,7 +661,7 @@ public:
 
    vector<Descriptives> scale_inputs(const string&);
    void scale_inputs(const string&, const vector<Descriptives>&);
-   void scale_inputs(const vector<string>&, const vector<Descriptives>&);
+   void scale_inputs(const Tensor<string, 1>&, const vector<Descriptives>&);
 
    // Target variables scaling
 
@@ -787,7 +787,7 @@ public:
 
    void scrub_missing_values();
 
-   vector<string> unuse_columns_missing_values(const double&);
+   Tensor<string, 1> unuse_columns_missing_values(const double&);
 
    void get_tensor_2_d(const VectorXi&, const VectorXi&, Tensor<type, 2>&);
 
@@ -878,11 +878,11 @@ private:
 
    bool has_rows_labels = false;
 
-   vector<string> rows_labels;
+   Tensor<string, 1> rows_labels;
 
    int gmt = 0;
 
-   vector<vector<string>> data_file_preview;
+   vector<Tensor<string, 1>> data_file_preview;
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"

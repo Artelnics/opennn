@@ -617,7 +617,7 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 /// Returns a string with the expression of the lower and upper bounds functions.
 
-string BoundingLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -644,7 +644,7 @@ string BoundingLayer::write_expression(const vector<string>& inputs_names, const
 
 /// Returns a string with the expression of the lower and upper bounds functions.
 
-string BoundingLayer::write_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 

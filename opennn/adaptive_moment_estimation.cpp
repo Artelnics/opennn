@@ -679,7 +679,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+   const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
    const VectorXi& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
    const VectorXi& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
@@ -979,10 +979,11 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
+/*
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
    // Minimum parameters increment norm
 
@@ -1085,11 +1086,13 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
+
     return string_matrix;
+*/
+    return Tensor<string, 2>();
 }
 
 

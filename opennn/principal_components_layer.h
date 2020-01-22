@@ -121,10 +121,10 @@ public:
 
    // Expression methods
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_no_principal_components_expression(const vector<string>&, const vector<string>&) const;
-   string write_principal_components_expression(const vector<string>&, const vector<string>&) const;
+   string write_no_principal_components_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_principal_components_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    // Serialization methods
 

@@ -1174,7 +1174,7 @@ Tensor<type, 1> PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>&
 /// @param inputs_names vector of strings with the name of the layer inputs. 
 /// @param outputs_names vector of strings with the name of the layer outputs. 
 
-string PerceptronLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1188,7 +1188,7 @@ string PerceptronLayer::write_expression(const vector<string>& inputs_names, con
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+             << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
              << "Size of inputs name must be equal to number of layer inputs.\n";
 
 	  throw logic_error(buffer.str());
@@ -1201,7 +1201,7 @@ string PerceptronLayer::write_expression(const vector<string>& inputs_names, con
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+             << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
              << "Size of outputs name must be equal to number of perceptrons.\n";
 
 	  throw logic_error(buffer.str());

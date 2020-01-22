@@ -27,7 +27,7 @@ namespace OpenNN
 {
     int count_tokens(const string&, const char&);
 
-    vector<string> get_tokens(const string&, const char&);
+    Tensor<string, 1> get_tokens(const string&, const char&);
 
     Tensor<type, 1> to_double_vector(const string&, const char&);
 
@@ -46,16 +46,16 @@ namespace OpenNN
 
     string prepend(const string&, const string&);
 
-    bool has_numbers(const vector<string>&);
-    bool has_strings(const vector<string>&);
+    bool has_numbers(const Tensor<string, 1>&);
+    bool has_strings(const Tensor<string, 1>&);
 
-    bool is_numeric_string_vector(const vector<string>&);
+    bool is_numeric_string_vector(const Tensor<string, 1>&);
 
-    bool is_not_numeric(const vector<string>&);
-    bool is_mixed(const vector<string>&);
+    bool is_not_numeric(const Tensor<string, 1>&);
+    bool is_mixed(const Tensor<string, 1>&);
 
     void replace(string& source, const string& find, const string& replace);
-    void replace_substring(vector<string>&, const string& , const string&);
+    void replace_substring(Tensor<string, 1>&, const string& , const string&);
 }
 
 #endif // OPENNNSTRINGS_H

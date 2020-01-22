@@ -82,7 +82,7 @@ public:
 
         // Data set
 
-        const int batch_instances_number = batch.inputs_2d.dimension(0);
+        const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
         // Neural network
 

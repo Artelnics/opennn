@@ -143,7 +143,7 @@ double MinkowskiError::calculate_training_error() const
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -188,7 +188,7 @@ double MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameter
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -235,7 +235,7 @@ double MinkowskiError::calculate_selection_error() const
 
     const int batches_number = selection_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();

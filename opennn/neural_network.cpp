@@ -282,7 +282,7 @@ bool NeuralNetwork::is_empty() const
 
 /// Returns a string vector with the names of the variables used as inputs.
 
-vector<string> NeuralNetwork::get_inputs_names() const
+Tensor<string, 1> NeuralNetwork::get_inputs_names() const
 {
     return inputs_names;
 }
@@ -311,7 +311,7 @@ int NeuralNetwork::get_input_index(const string& name) const
 
 /// Returns a string vector with the names of the variables used as outputs.
 
-vector<string> NeuralNetwork::get_outputs_names() const
+Tensor<string, 1> NeuralNetwork::get_outputs_names() const
 {
     return outputs_names;
 }
@@ -687,13 +687,13 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
 }
 
 
-void NeuralNetwork::set_inputs_names(const vector<string>& new_inputs_names)
+void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 {
     inputs_names = new_inputs_names;
 }
 
 
-void NeuralNetwork::set_outputs_names(const vector<string>& new_outputs_names)
+void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
     outputs_names = new_outputs_names;
 }
@@ -1858,8 +1858,8 @@ string NeuralNetwork::write_expression() const
     const int inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
-    vector<string> inputs_names = get_inputs_names();
-    vector<string> outputs_names = get_outputs_names();
+    Tensor<string, 1> inputs_names = get_inputs_names();
+    Tensor<string, 1> outputs_names = get_outputs_names();
 /*
     cout << "Inputs names: " << inputs_names << endl;
     cout << "Outputs names: " << outputs_names << endl;
@@ -1994,7 +1994,7 @@ string NeuralNetwork::write_expression() const
 
     // Scaled inputs
 
-    vector<string> scaled_inputs_name(inputs_names.size());
+    Tensor<string, 1> scaled_inputs_name(inputs_names.size());
 
     for(int i = 0; i < inputs_names.size(); i++)
     {
@@ -2007,7 +2007,7 @@ string NeuralNetwork::write_expression() const
 
     // Principal components
 
-    vector<string> principal_components_name(inputs_number);
+    Tensor<string, 1> principal_components_name(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
     {
@@ -2020,7 +2020,7 @@ string NeuralNetwork::write_expression() const
 
     // Scaled outputs
 
-    vector<string> scaled_outputs_name(outputs_names.size());
+    Tensor<string, 1> scaled_outputs_name(outputs_names.size());
 
     for(int i = 0; i < outputs_names.size(); i++)
     {
@@ -2033,7 +2033,7 @@ string NeuralNetwork::write_expression() const
 
     // Non probabilistic outputs
 
-    vector<string> non_probabilistic_outputs_name(outputs_number);
+    Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
 
     for(int i = 0; i < outputs_number; i++)
     {
@@ -2179,8 +2179,8 @@ string NeuralNetwork::write_mathematical_expression_php() const
     const int inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
-    vector<string> inputs_names = get_inputs_names();
-    vector<string> outputs_names = get_outputs_names();
+    Tensor<string, 1> inputs_names = get_inputs_names();
+    Tensor<string, 1> outputs_names = get_outputs_names();
 
     int position = 0;
 
@@ -2289,7 +2289,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     // Scaled inputs
 
-    vector<string> scaled_inputs_name(inputs_names.size());
+    Tensor<string, 1> scaled_inputs_name(inputs_names.size());
 
     for(int i = 0; i < inputs_names.size(); i++)
     {
@@ -2302,7 +2302,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     // Principal components
 
-    vector<string> principal_components_name(inputs_number);
+    Tensor<string, 1> principal_components_name(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
     {
@@ -2315,7 +2315,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     // Scaled outputs
 
-    vector<string> scaled_outputs_name(outputs_number);
+    Tensor<string, 1> scaled_outputs_name(outputs_number);
 
     for(int i = 0; i < outputs_number; i++)
     {
@@ -2328,7 +2328,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     // Non probabilistic outputs
 
-    vector<string> non_probabilistic_outputs_name(outputs_number);
+    Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
 
     for(int i = 0; i < outputs_number; i++)
     {
@@ -2421,8 +2421,8 @@ string NeuralNetwork::write_expression_python() const
     const int inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
-    vector<string> inputs_names = get_inputs_names();
-    vector<string> outputs_names = get_outputs_names();
+    Tensor<string, 1> inputs_names = get_inputs_names();
+    Tensor<string, 1> outputs_names = get_outputs_names();
 
     int pos;
 
@@ -2785,8 +2785,8 @@ string NeuralNetwork::write_expression_php() const
     const int inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
-    vector<string> inputs_names = get_inputs_names();
-    vector<string> outputs_names = get_outputs_names();
+    Tensor<string, 1> inputs_names = get_inputs_names();
+    Tensor<string, 1> outputs_names = get_outputs_names();
 
     int pos;
 
@@ -3103,8 +3103,8 @@ string NeuralNetwork::write_expression_R() const
     const int inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
-    vector<string> inputs_names = get_inputs_names();
-    vector<string> outputs_names = get_outputs_names();
+    Tensor<string, 1> inputs_names = get_inputs_names();
+    Tensor<string, 1> outputs_names = get_outputs_names();
 
     int pos = 0;
 

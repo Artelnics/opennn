@@ -2075,11 +2075,11 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
     // Inverse hessian approximation method
-
+/*
     labels.push_back("Inverse hessian approximation method");
 
     const string inverse_hessian_approximation_method_string = write_inverse_hessian_approximation_method();
@@ -2204,11 +2204,13 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
+
     return string_matrix;
+*/
+    return Tensor<string, 2>();
 }
 
 

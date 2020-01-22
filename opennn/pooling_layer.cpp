@@ -726,7 +726,7 @@ VectorXi PoolingLayer::get_inputs_indices(const int& neuron) const
 VectorXi PoolingLayer::get_input_variables_dimensions() const
 {
 /*
-    const int batch_instances_number = 0;
+    const Index batch_instances_number = 0;
     const int filters_number = 0;
     const int outputs_rows_number = get_outputs_rows_number();
     const int outputs_columns_number = get_outputs_columns_number();

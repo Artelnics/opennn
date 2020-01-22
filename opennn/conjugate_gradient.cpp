@@ -1657,10 +1657,11 @@ string ConjugateGradient::write_optimization_algorithm_type() const
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
+/*
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
     // Training direction method
 
@@ -1788,11 +1789,13 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
     return string_matrix;
+
+*/
+        return Tensor<string, 2>();
 }
 
 

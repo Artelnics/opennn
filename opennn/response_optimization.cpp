@@ -299,14 +299,14 @@ void ResponseOptimization::set_output_condition(const int& index, const Response
 }
 
 
-void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& names, const vector<string>& conditions_string, const Tensor<type, 1>& values)
+void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names, const Tensor<string, 1>& conditions_string, const Tensor<type, 1>& values)
 {
     vector<Condition> conditions = get_conditions(conditions_string);
     vector<Tensor<type, 1>> values_conditions = get_values_conditions(conditions, values);
 
     const int variables_number = conditions_string.size();
 
-    const vector<string> inputs_names = neural_network_pointer->get_inputs_names();
+    const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
 
     int index;
 /*
@@ -329,7 +329,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& n
 }
 
 
-vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(const vector<string>& conditions_string) const
+vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(const Tensor<string, 1>& conditions_string) const
 {
     const int conditions_size = conditions_string.size();
 

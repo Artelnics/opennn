@@ -202,11 +202,11 @@ const vector<ScalingLayer::ScalingMethod> ScalingLayer::get_scaling_methods() co
 
 /// Returns a vector of strings with the name of the method used for each scaling neuron.
 
-vector<string> ScalingLayer::write_scaling_methods() const
+Tensor<string, 1> ScalingLayer::write_scaling_methods() const
 {
     const int neurons_number = get_neurons_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    Tensor<string, 1> scaling_methods_strings(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -231,7 +231,7 @@ vector<string> ScalingLayer::write_scaling_methods() const
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "vector<string> write_scaling_methods() const method.\n"
+                   << "Tensor<string, 1> write_scaling_methods() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
             throw logic_error(buffer.str());
@@ -245,7 +245,7 @@ vector<string> ScalingLayer::write_scaling_methods() const
 /// Returns a vector of strings with the name of the methods used for scaling,
 /// as paragaph text.
 
-vector<string> ScalingLayer::write_scaling_methods_text() const
+Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 {
     const int neurons_number = get_neurons_number();
 
@@ -256,7 +256,7 @@ vector<string> ScalingLayer::write_scaling_methods_text() const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "vector<string> write_scaling_methods() const method.\n"
+               << "Tensor<string, 1> write_scaling_methods() const method.\n"
                << "Neurons number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -264,7 +264,7 @@ vector<string> ScalingLayer::write_scaling_methods_text() const
 
 #endif
 
-    vector<string> scaling_methods_strings(neurons_number);
+    Tensor<string, 1> scaling_methods_strings(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -289,7 +289,7 @@ vector<string> ScalingLayer::write_scaling_methods_text() const
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "vector<string> write_scaling_methods_text() const method.\n"
+                   << "Tensor<string, 1> write_scaling_methods_text() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
             throw logic_error(buffer.str());
@@ -563,7 +563,7 @@ void ScalingLayer::set_scaling_methods(const vector<ScalingLayer::ScalingMethod>
 /// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const vector<string>& new_scaling_methods_string)
+void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_methods_string)
 {
     const int neurons_number = get_neurons_number();
 
@@ -574,7 +574,7 @@ void ScalingLayer::set_scaling_methods(const vector<string>& new_scaling_methods
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const vector<string>&) method.\n"
+               << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -607,7 +607,7 @@ void ScalingLayer::set_scaling_methods(const vector<string>& new_scaling_methods
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void set_scaling_methods(const vector<string>&) method.\n"
+                   << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
             throw logic_error(buffer.str());
@@ -633,7 +633,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const vector<string>&) method.\n"
+               << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -666,7 +666,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void set_scaling_methods(const vector<string>&) method.\n"
+                   << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
             throw logic_error(buffer.str());
@@ -1039,7 +1039,7 @@ Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Te
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 /// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 
-string ScalingLayer::write_no_scaling_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ScalingLayer::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int inputs_number = get_neurons_number();
 
@@ -1060,7 +1060,7 @@ string ScalingLayer::write_no_scaling_expression(const vector<string>& inputs_na
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 /// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 
-string ScalingLayer::write_minimum_maximum_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ScalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int inputs_number = get_neurons_number();
 
@@ -1081,7 +1081,7 @@ string ScalingLayer::write_minimum_maximum_expression(const vector<string>& inpu
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 /// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 
-string ScalingLayer::write_mean_standard_deviation_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ScalingLayer::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int inputs_number = get_neurons_number();
 
@@ -1102,7 +1102,7 @@ string ScalingLayer::write_mean_standard_deviation_expression(const vector<strin
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 /// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 
-string ScalingLayer::write_standard_deviation_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int inputs_number = get_neurons_number();
 
@@ -1121,7 +1121,7 @@ string ScalingLayer::write_standard_deviation_expression(const vector<string>& i
 
 /// Returns a string with the expression of the inputs scaling process. 
 
-string ScalingLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1214,7 +1214,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
     tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
     size_element->LinkEndChild(size_text);
 
-    const vector<string> scaling_methods_string = write_scaling_methods();
+    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
 
     for(int i = 0; i < neurons_number; i++)
     {

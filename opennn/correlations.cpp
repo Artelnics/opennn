@@ -2921,15 +2921,15 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 /// @param vector1 First variable.
 /// @param vector2 Second variable.
 
-Matrix<int, Dynamic, Dynamic> contingency_table(const vector<string>& vector1, const vector<string>& vector2)
+Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
 {
     /*
     Matrix<string, Dynamic, Dynamic> data_set = {vector1, vector2};
 
-    data_set.set_header(vector<string>({"variable1","variable2"}));
+    data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
 
-    const vector<string> categories_vector1 = vector1.get_unique_elements();
-    const vector<string> categories_vector2 = vector2.get_unique_elements();
+    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
+    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
     const int rows_number = categories_vector1.size();
     const int columns_number = categories_vector2.size();
@@ -2986,11 +2986,11 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
 
     matrix.set_header({"variable1", "variable2"});
 
-    const vector<string> vector1 = matrix.get_column(0);
-    const vector<string> vector2 = matrix.get_column(1);
+    const Tensor<string, 1> vector1 = matrix.get_column(0);
+    const Tensor<string, 1> vector2 = matrix.get_column(1);
 
-    const vector<string> categories_vector1 = vector1.get_unique_elements();
-    const vector<string> categories_vector2 = vector2.get_unique_elements();
+    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
+    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
     const int rows_number = categories_vector1.size();
     const int columns_number = categories_vector2.size();
@@ -3124,7 +3124,7 @@ double chi_square_critical_point(const double& alpha, const double& degrees_of_f
 /// @param x First variable
 /// @param y Second variable
 
-double karl_pearson_correlation(const vector<string>& x, const vector<string>& y)
+double karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
 {
 /*
     const Matrix<int, Dynamic, Dynamic> contingency_table = OpenNN::contingency_table(x,y);
