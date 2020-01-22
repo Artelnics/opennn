@@ -111,7 +111,7 @@ public:
 
    void set_inputs_number(const int&);
    void set_neurons_number(const int&);
-   void set_input_shape(const vector<int>&);
+   void set_input_shape(const VectorXi&);
 
    // Parameters
 

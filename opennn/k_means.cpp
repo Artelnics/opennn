@@ -20,7 +20,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const i
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    vector<vector<int>> clusters(k);
+    vector<VectorXi> clusters(k);
 
     Tensor<type, 2> previous_means(k, columns_number);
     Tensor<type, 2> means(k, columns_number);
@@ -34,7 +34,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const i
 
     // Calculate initial means
 
-    vector<int> selected_rows(k);
+    VectorXi selected_rows(k);
 
     const int initial_center = calculate_random_uniform<int>(0, rows_number);
 

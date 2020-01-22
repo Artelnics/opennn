@@ -101,7 +101,7 @@ public:
 
        /// Inputs of the neural network with minimum selection error.
 
-       vector<int> optimal_inputs_indices;
+       VectorXi optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 

@@ -22,7 +22,7 @@ PoolingLayer::PoolingLayer() : Layer()
 /// After setting new dimensions for the input, it creates an empty PoolingLayer object.
 /// @param new_input_variables_dimensions A vector containing the new number of channels, rows and columns for the input.
 
-PoolingLayer::PoolingLayer(const vector<int>& new_input_variables_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const VectorXi& new_input_variables_dimensions) : Layer()
 {
     input_variables_dimensions = new_input_variables_dimensions;
 
@@ -35,7 +35,7 @@ PoolingLayer::PoolingLayer(const vector<int>& new_input_variables_dimensions) : 
 /// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
-PoolingLayer::PoolingLayer(const vector<int>& new_input_variables_dimensions, const vector<int>& pool_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const VectorXi& new_input_variables_dimensions, const VectorXi& pool_dimensions) : Layer()
 {
     input_variables_dimensions = new_input_variables_dimensions;
 
@@ -360,7 +360,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 
     // Hidden delta calculation
 /*
-    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(VectorXi({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -438,7 +438,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(VectorXi({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -494,7 +494,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(VectorXi({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -587,7 +587,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(VectorXi({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -642,7 +642,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(VectorXi({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -695,20 +695,20 @@ int PoolingLayer::get_neurons_number() const
 /// Returns a vector containing the positions on the input image covered by a given neuron.
 /// @param neuron The neuron's number.
 
-vector<int> PoolingLayer::get_inputs_indices(const int& neuron) const
+VectorXi PoolingLayer::get_inputs_indices(const int& neuron) const
 {
     if(neuron > get_neurons_number() - 1)
     {
-        return vector<int>();
+        return VectorXi();
     }
 
     const int row_index = neuron / get_outputs_columns_number();
     const int column_index = neuron % get_outputs_columns_number();
 
-    vector<int> indices;
+    VectorXi indices;
 
     // With stride = 1
-
+/*
     for(int i = row_index; i < row_index + pool_rows_number; i++)
     {
         for(int j = column_index; j < column_index + pool_columns_number; j++)
@@ -716,29 +716,33 @@ vector<int> PoolingLayer::get_inputs_indices(const int& neuron) const
             indices.push_back(i*input_variables_dimensions[2] + j );
         }
     }
-
+*/
     return indices;
 }
 
 
 /// Returns the layer's input's dimensions.
 
-vector<int> PoolingLayer::get_input_variables_dimensions() const
+VectorXi PoolingLayer::get_input_variables_dimensions() const
 {
+/*
     const int batch_instances_number = 0;
     const int filters_number = 0;
     const int outputs_rows_number = get_outputs_rows_number();
     const int outputs_columns_number = get_outputs_columns_number();
 
-    return vector<int>({batch_instances_number, filters_number, outputs_rows_number, outputs_columns_number});
+    return VectorXi({batch_instances_number, filters_number, outputs_rows_number, outputs_columns_number});
+*/
+
+    return VectorXi();
 }
 
 
 /// Returns the layer's outputs dimensions.
 
-vector<int> PoolingLayer::get_outputs_dimensions() const
+VectorXi PoolingLayer::get_outputs_dimensions() const
 {
-    vector<int> outputs_dimensions(3);
+    VectorXi outputs_dimensions(3);
 
     outputs_dimensions[0] = input_variables_dimensions[0];
     outputs_dimensions[1] = get_outputs_rows_number();
@@ -865,7 +869,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_input_variables_dimensions(const vector<int>& new_input_variables_dimensions)
+void PoolingLayer::set_input_variables_dimensions(const VectorXi& new_input_variables_dimensions)
 {
     input_variables_dimensions = new_input_variables_dimensions;
 }

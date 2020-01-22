@@ -681,11 +681,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const vector<int>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const vector<int>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const VectorXi& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const VectorXi& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-   const vector<int> input_variables_indices = data_set_pointer->get_input_variables_indices();
-   const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
+   const VectorXi input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const VectorXi target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -747,7 +747,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 /*
    for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
-       const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+       const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
        const int batches_number = training_batches.size();
 
