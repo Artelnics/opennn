@@ -363,7 +363,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descrip
 /// The size of this vector must be equal to the number of columns.
 /// @param row_indices Indices of rows to be unscaled.
 
-void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& row_indices)
+void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& row_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -401,7 +401,7 @@ void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descript
 
 void unscale_columns_minimum_maximum(Tensor<type, 2>& matrix,
                                      const vector<Descriptives>& descriptives,
-                                     const VectorXi& columns_indices)
+                                     const Tensor<int, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
 
@@ -416,7 +416,7 @@ void unscale_columns_minimum_maximum(Tensor<type, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void unscale_columns_minimum_maximum(const Tensor<type, 2>&, const vector<Descriptives>&, const VectorXi&) const method.\n"
+              << "void unscale_columns_minimum_maximum(const Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&) const method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -499,7 +499,7 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& de
 
 void unscale_rows_logarithmic(Tensor<type, 2>& matrix,
                                                const vector<Descriptives>& descriptives,
-                                               const VectorXi& row_indices)
+                                               const Tensor<int, 1>& row_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -535,7 +535,7 @@ void unscale_rows_logarithmic(Tensor<type, 2>& matrix,
 /// @param columns_indices Vector of indices of the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be unscaled.
 
-void unscale_columns_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& columns_indices)
+void unscale_columns_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& columns_indices)
 {
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
@@ -549,7 +549,7 @@ void unscale_columns_logarithmic(Tensor<type, 2>& matrix, const vector<Descripti
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void unscale_columns_logarithmic(const vector<Descriptives>&, const VectorXi&) const method.\n"
+              << "void unscale_columns_logarithmic(const vector<Descriptives>&, const Tensor<int, 1>&) const method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -603,7 +603,7 @@ vector<Descriptives> scale_mean_standard_deviation(Tensor<type, 2>& matrix)
 
 void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
                                                          const vector<Descriptives>& descriptives,
-                                                         const VectorXi& row_indices)
+                                                         const Tensor<int, 1>& row_indices)
 {
     const Index columns_number = matrix.dimension(1);
 
@@ -616,7 +616,7 @@ void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_rows_mean_standard_deviation(const vector<Descriptives>&, const VectorXi&) method.\n"
+              << "void scale_rows_mean_standard_deviation(const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -656,7 +656,7 @@ void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
 
 void scale_columns_mean_standard_deviation(Tensor<type, 2>& matrix,
                                            const vector<Descriptives>& descriptives,
-                                           const VectorXi& columns_indices)
+                                           const Tensor<int, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
 
@@ -671,7 +671,7 @@ void scale_columns_mean_standard_deviation(Tensor<type, 2>& matrix,
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Transformations.\n"
-             << "void scale_columns_mean_standard_deviation(const vector<Descriptives>&, const VectorXi&) method.\n"
+             << "void scale_columns_mean_standard_deviation(const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
              << "Size of descriptives must be equal to size of columns indices.\n";
 
       throw logic_error(buffer.str());
@@ -838,7 +838,7 @@ vector<Descriptives> scale_range(Tensor<type, 2>& matrix, const double& minimum,
 /// @param descriptives Vector of descriptives for all the columns.
 /// @param row_indices Indices of rows to be scaled.
 
-void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& row_indices)
+void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& row_indices)
 {
     const Index columns_number = matrix.dimension(1);
 
@@ -855,7 +855,7 @@ void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptiv
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_rows_minimum_maximum(const vector<Descriptives>&, const VectorXi&) method.\n"
+              << "void scale_rows_minimum_maximum(const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -895,7 +895,7 @@ void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptiv
 
 void scale_columns_minimum_maximum(Tensor<type, 2>& matrix,
                                    const vector<Descriptives>& descriptives,
-                                   const VectorXi& columns_indices)
+                                   const Tensor<int, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
 
@@ -910,7 +910,7 @@ void scale_columns_minimum_maximum(Tensor<type, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const VectorXi&) method.\n"
+              << "void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
               << "Size of descriptives (" << descriptives_size << ") must be equal to size of columns indices (" << columns_indices_size << ").\n";
 
        throw logic_error(buffer.str());
@@ -1006,7 +1006,7 @@ vector<Descriptives> scale_logarithmic(Tensor<type, 2>& matrix)
 /// @param descriptives Vector of descriptives for all the columns.
 /// @param row_indices Indices of rows to be scaled.
 
-void scale_rows_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& row_indices)
+void scale_rows_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& row_indices)
 {
     const Index columns_number = matrix.dimension(1);
 
@@ -1021,7 +1021,7 @@ void scale_rows_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>&
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_rows_logarithmic(const vector<Descriptives>&, const VectorXi&) method.\n"
+              << "void scale_rows_logarithmic(const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1061,7 +1061,7 @@ void scale_rows_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>&
 
 void scale_columns_logarithmic(Tensor<type, 2>& matrix,
                                                 const vector<Descriptives>& descriptives,
-                                                const VectorXi& columns_indices)
+                                                const Tensor<int, 1>& columns_indices)
 {
 
     const Index rows_number = matrix.dimension(0);
@@ -1077,7 +1077,7 @@ void scale_columns_logarithmic(Tensor<type, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_columns_logarithmic(const vector<Descriptives>&, const VectorXi&) method.\n"
+              << "void scale_columns_logarithmic(const vector<Descriptives>&, const Tensor<int, 1>&) method.\n"
               << "Size of descriptives must be equal to size of columns indices.\n";
 
        throw logic_error(buffer.str());
@@ -1161,7 +1161,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descr
 /// The size of this vector must be equal to the number of columns.
 /// @param row_indices Indices of rows to be unscaled.
 
-void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& row_indices)
+void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& row_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1196,7 +1196,7 @@ void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<
 /// @param columns_indices Vector of indices with the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
-void unscale_columns_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const VectorXi& columns_indices)
+void unscale_columns_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const Tensor<int, 1>& columns_indices)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1205,7 +1205,7 @@ void unscale_columns_mean_standard_deviation(Tensor<type, 2>& matrix, const vect
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void unscale_columns_mean_standard_deviation(const vector<Descriptives>&, const VectorXi&) const method.\n"
+              << "void unscale_columns_mean_standard_deviation(const vector<Descriptives>&, const Tensor<int, 1>&) const method.\n"
               << "Size of descriptives vector (" << descriptives.size() << ") must be equal to number of columns (" << columns_indices.size() << ").\n";
 
        throw logic_error(buffer.str());
@@ -1430,7 +1430,7 @@ void transform_time_series(Tensor<type, 2>& matrix,
     const int new_rows_number = rows_number - lags_number - steps_ahead_number + 1;
     const int new_columns_number =(columns_number-1) *(lags_number + steps_ahead_number);
 
-    const VectorXi indices(0, 1, new_rows_number-1);
+    const Tensor<int, 1> indices(0, 1, new_rows_number-1);
 
     const Tensor<type, 1> new_time = time.get_subvector(indices);
 

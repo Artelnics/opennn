@@ -149,7 +149,7 @@ public:
 
     // Get neurons number
 
-    virtual VectorXi get_input_variables_dimensions() const;
+    virtual Tensor<int, 1> get_input_variables_dimensions() const;
 
     virtual int get_inputs_number() const;
     virtual int get_neurons_number() const;

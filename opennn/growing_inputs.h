@@ -68,7 +68,7 @@ public:
         virtual ~GrowingInputsResults() {}
 
 
-        vector<bool> selected_inputs;
+        Tensor<bool, 1> selected_inputs;
     };
 
 

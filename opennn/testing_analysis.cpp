@@ -738,13 +738,13 @@ vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const int& bi
 /// Returns a vector with the indices of the instances which have the greatest error.
 /// @param instances_number Number of maximal indices to be computed.
 
-vector<VectorXi> TestingAnalysis::calculate_maximal_errors(const int& instances_number) const
+vector<Tensor<int, 1>> TestingAnalysis::calculate_maximal_errors(const int& instances_number) const
 {
     const vector<Tensor<type, 2>> error_data = calculate_error_data();
 
     const int outputs_number = error_data.size();
 
-    vector<VectorXi> maximal_errors(outputs_number);
+    vector<Tensor<int, 1>> maximal_errors(outputs_number);
 /*
     for(int i = 0; i < outputs_number; i++)
     {
@@ -1378,7 +1378,7 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<ty
 
     if(weights.size() != 2)
     {
-        const VectorXi target_distribution = data_set_pointer->calculate_target_distribution();
+        const Tensor<int, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
         const int negatives_number = target_distribution[0];
         const int positives_number = target_distribution[1];
@@ -1527,10 +1527,10 @@ Matrix<int, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_multiple_clas
 /// <li> Total negatives.
 /// </ul>
 
-VectorXi TestingAnalysis::calculate_positives_negatives_rate(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
+Tensor<int, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Matrix<int, Dynamic, Dynamic> confusion = calculate_confusion_binary_classification(targets, outputs, 0.5);
-    VectorXi positives_negatives_rate(2);
+    Tensor<int, 1> positives_negatives_rate(2);
 
     positives_negatives_rate[0] = confusion(0,0) + confusion(0,1);
     positives_negatives_rate[1] = confusion(1,0) + confusion(1,1);
@@ -1725,7 +1725,7 @@ double TestingAnalysis::calculate_Wilcoxon_parameter(const double& x, const doub
 
 Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    const VectorXi positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+    const Tensor<int, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
     const int total_positives = positives_negatives_rate[0];
     const int total_negatives = positives_negatives_rate[1];
@@ -1774,8 +1774,8 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
 
-    const VectorXi columns_output_indices(1,0);
-    const VectorXi columns_targets_indices(1,1);
+    const Tensor<int, 1> columns_output_indices(1,0);
+    const Tensor<int, 1> columns_targets_indices(1,1);
 
     const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
     const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
@@ -1828,7 +1828,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
 double TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    const VectorXi positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+    const Tensor<int, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
     const int total_positives = positives_negatives_rate[0];
     const int total_negatives = positives_negatives_rate[1];
@@ -1889,7 +1889,7 @@ double TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& target
 
 double TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    const VectorXi positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+    const Tensor<int, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
     const int total_positives = positives_negatives_rate[0];
     const int total_negatives = positives_negatives_rate[1];
@@ -1936,7 +1936,7 @@ double TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor
 
 double TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const double& area_under_curve) const
 {
-    const VectorXi positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+    const Tensor<int, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
     const int total_positives = positives_negatives_rate[0];
     const int total_negatives = positives_negatives_rate[1];
@@ -2004,8 +2004,8 @@ double TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targe
 
     const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
 
-    const VectorXi columns_output_indices(0, 1, columns_number - 1);
-    const VectorXi columns_targets_indices(columns_number, 1, 2*columns_number - 1);
+    const Tensor<int, 1> columns_output_indices(0, 1, columns_number - 1);
+    const Tensor<int, 1> columns_targets_indices(columns_number, 1, 2*columns_number - 1);
 
     const Tensor<type, 2> sorted_targets = (sorted_targets_outputs.get_submatrix_columns(columns_targets_indices)).to_tensor();
     const Tensor<type, 2> sorted_outputs = (sorted_targets_outputs.get_submatrix_columns(columns_output_indices)).to_tensor();
@@ -2075,7 +2075,7 @@ double TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targe
 
     const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
 
-    const VectorXi columns_output_indices(0, 1, columns_number - 1);
+    const Tensor<int, 1> columns_output_indices(0, 1, columns_number - 1);
 
     const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
 
@@ -2207,7 +2207,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 
     const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const VectorXi target_variables_indices(1,1);
+    const Tensor<int, 1> target_variables_indices(1,1);
 
     const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
@@ -2277,7 +2277,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
     const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const VectorXi target_variables_indices(1,1);
+    const Tensor<int, 1> target_variables_indices(1,1);
 
     const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
@@ -2755,7 +2755,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    const VectorXi testing_indices = data_set_pointer->get_testing_instances_indices();
+    const Tensor<int, 1> testing_indices = data_set_pointer->get_testing_instances_indices();
 
     double decision_threshold;
 
@@ -2786,12 +2786,12 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
 /// @param testing_indices Indices of testing data.
 /// @param decision_threshold Decision threshold.
 
-VectorXi TestingAnalysis::calculate_true_positive_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-                                                                  const VectorXi& testing_indices, const double& decision_threshold) const
+Tensor<int, 1> TestingAnalysis::calculate_true_positive_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
+                                                                  const Tensor<int, 1>& testing_indices, const double& decision_threshold) const
 {
     const int rows_number = targets.dimension(0);
 
-    VectorXi true_positives_indices;
+    Tensor<int, 1> true_positives_indices;
 /*
     for(int i = 0; i < rows_number; i++)
     {
@@ -2813,12 +2813,12 @@ VectorXi TestingAnalysis::calculate_true_positive_instances(const Tensor<type, 2
 /// @param testing_indices Indices of the testing data
 /// @param decision_threshold Decision threshold.
 
-VectorXi TestingAnalysis::calculate_false_positive_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-                                                                   const VectorXi& testing_indices, const double& decision_threshold) const
+Tensor<int, 1> TestingAnalysis::calculate_false_positive_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
+                                                                   const Tensor<int, 1>& testing_indices, const double& decision_threshold) const
 {
     const int rows_number = targets.dimension(0);
 
-    VectorXi false_positives_indices;
+    Tensor<int, 1> false_positives_indices;
 /*
     for(int i = 0; i < rows_number; i++)
     {
@@ -2839,12 +2839,12 @@ VectorXi TestingAnalysis::calculate_false_positive_instances(const Tensor<type, 
 /// @param testing_indices Indices of the testing data
 /// @param decision_threshold Decision threshold.
 
-VectorXi TestingAnalysis::calculate_false_negative_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-                                                                   const VectorXi& testing_indices, const double& decision_threshold) const
+Tensor<int, 1> TestingAnalysis::calculate_false_negative_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
+                                                                   const Tensor<int, 1>& testing_indices, const double& decision_threshold) const
 {
     const int rows_number = targets.dimension(0);
 
-    VectorXi false_negatives_indices;
+    Tensor<int, 1> false_negatives_indices;
 /*
     for(int i = 0; i < rows_number; i++)
     {
@@ -2865,10 +2865,10 @@ VectorXi TestingAnalysis::calculate_false_negative_instances(const Tensor<type, 
 /// @param testing_indices Indices of the testing data
 /// @param decision_threshold Decision threshold.
 
-VectorXi TestingAnalysis::calculate_true_negative_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
-                                                                  const VectorXi& testing_indices, const double& decision_threshold) const
+Tensor<int, 1> TestingAnalysis::calculate_true_negative_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
+                                                                  const Tensor<int, 1>& testing_indices, const double& decision_threshold) const
 {
-    VectorXi true_negatives_indices;
+    Tensor<int, 1> true_negatives_indices;
 
     const int rows_number = targets.dimension(0);
 /*
@@ -2886,7 +2886,7 @@ VectorXi TestingAnalysis::calculate_true_negative_instances(const Tensor<type, 2
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
-Matrix<VectorXi, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates() const
+Matrix<Tensor<int, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -2942,7 +2942,7 @@ Matrix<VectorXi, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classific
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    const VectorXi testing_indices = data_set_pointer->get_testing_instances_indices();
+    const Tensor<int, 1> testing_indices = data_set_pointer->get_testing_instances_indices();
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
@@ -2953,12 +2953,12 @@ Matrix<VectorXi, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classific
 /// The number of rows of the matrix is the number targets.
 /// The number of columns of the matrix is the number of columns of the target data.
 
-Matrix<VectorXi, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const VectorXi& testing_indices) const
+Matrix<Tensor<int, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<int, 1>& testing_indices) const
 {
     const int rows_number = targets.dimension(0);
     const int columns_number = outputs.dimension(1);
 
-    Matrix<VectorXi, Dynamic, Dynamic> multiple_classification_rates(rows_number, columns_number);
+    Matrix<Tensor<int, 1>, Dynamic, Dynamic> multiple_classification_rates(rows_number, columns_number);
 
     int target_index;
     int output_index;

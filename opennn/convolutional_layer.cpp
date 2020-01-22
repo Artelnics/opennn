@@ -29,7 +29,7 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
 /// @param filters_dimensions A vector containing the number of filters, their rows and columns.
 
-ConvolutionalLayer::ConvolutionalLayer(const VectorXi& new_inputs_dimensions, const VectorXi& new_filters_dimensions) : Layer()
+ConvolutionalLayer::ConvolutionalLayer(const Tensor<int, 1>& new_inputs_dimensions, const Tensor<int, 1>& new_filters_dimensions) : Layer()
 {
     layer_type = Layer::Convolutional;
 
@@ -170,7 +170,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 /*
     Tensor<type, 2> convolutions({images_number, filters_number, outputs_rows_number, outputs_columns_number}, 0.0);
 
-    Tensor<type, 2> image(VectorXi({filters_number, outputs_rows_number, outputs_columns_number}));
+    Tensor<type, 2> image(Tensor<int, 1>({filters_number, outputs_rows_number, outputs_columns_number}));
 
     Tensor<type, 2> convolution(outputs_rows_number, outputs_columns_number);
 
@@ -255,7 +255,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 
     Tensor<type, 2> convolutions({images_number, filters_number, outputs_rows_number, outputs_columns_number}, 0.0);
 
-    Tensor<type, 2> image(VectorXi({filters_number, outputs_rows_number, outputs_columns_number}));
+    Tensor<type, 2> image(Tensor<int, 1>({filters_number, outputs_rows_number, outputs_columns_number}));
 
     Tensor<type, 2> convolution(outputs_rows_number, outputs_columns_number);
 
@@ -467,7 +467,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(VectorXi({images_number, filters_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, filters_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -545,7 +545,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(VectorXi({images_number, filters_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, filters_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -601,7 +601,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(VectorXi({images_number, filters_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, filters_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -694,7 +694,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_perceptron(Perceptron
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(VectorXi({images_number, filters_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, filters_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -749,7 +749,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabi
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(VectorXi({images_number, filters_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, filters_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -800,7 +800,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 
         case OpenNN::ConvolutionalLayer::PaddingOption::Same:
         {
-            layers_inputs.set(VectorXi({previous_layers_outputs.dimension(0), previous_layers_outputs.dimension(1),
+            layers_inputs.set(Tensor<int, 1>({previous_layers_outputs.dimension(0), previous_layers_outputs.dimension(1),
                                               previous_layers_outputs.dimension(2) + get_padding_height(), previous_layers_outputs.dimension(3) + get_padding_width()}));
 
             for(int image_number = 0; image_number < previous_layers_outputs.dimension(0); image_number++)
@@ -930,7 +930,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_image_convolution(const Tensor<typ
            ostringstream buffer;
 
            buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-                  << "void set(const VectorXi&) method.\n"
+                  << "void set(const Tensor<int, 1>&) method.\n"
                   << "Number of channels in image (" << image_channels_number << ") must be equal to number of channels in filter (" << filter_channels_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -1010,9 +1010,9 @@ int ConvolutionalLayer::get_outputs_columns_number() const
 
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's filters to an image.
 
-VectorXi ConvolutionalLayer::get_outputs_dimensions() const
+Tensor<int, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
-    VectorXi outputs_dimensions(3);
+    Tensor<int, 1> outputs_dimensions(3);
 
     outputs_dimensions[0] = get_filters_number();
     outputs_dimensions[1] = get_outputs_rows_number();
@@ -1160,7 +1160,7 @@ int ConvolutionalLayer::get_parameters_number() const
 /// The initialization values are random values from a normal distribution.
 /// @param filters_dimensions A vector containing the desired filters' dimensions (number of filters, number of channels, rows and columns).
 
-void ConvolutionalLayer::set(const VectorXi& new_inputs_dimensions, const VectorXi& new_filters_dimensions)
+void ConvolutionalLayer::set(const Tensor<int, 1>& new_inputs_dimensions, const Tensor<int, 1>& new_filters_dimensions)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1171,7 +1171,7 @@ void ConvolutionalLayer::set(const VectorXi& new_inputs_dimensions, const Vector
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer(const VectorXi&) constructor.\n"
+               << "ConvolutionalLayer(const Tensor<int, 1>&) constructor.\n"
                << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 3 (channels, rows, columns).\n";
 
         throw logic_error(buffer.str());
@@ -1188,7 +1188,7 @@ void ConvolutionalLayer::set(const VectorXi& new_inputs_dimensions, const Vector
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void set(const VectorXi&) method.\n"
+               << "void set(const Tensor<int, 1>&) method.\n"
                << "Number of filters dimensions (" << filters_dimensions_number << ") must be 3 (filters, rows, columns).\n";
 
         throw logic_error(buffer.str());
@@ -1206,7 +1206,7 @@ void ConvolutionalLayer::set(const VectorXi& new_inputs_dimensions, const Vector
     biases.set(filters_number);
     biases.setRandom();
 
-    synaptic_weights.set(VectorXi({filters_number, filters_channels_number, filters_rows_number, filters_columns_number}));
+    synaptic_weights.set(Tensor<int, 1>({filters_number, filters_channels_number, filters_rows_number, filters_columns_number}));
     synaptic_weights.setRandom();
 */
 }

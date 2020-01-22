@@ -430,7 +430,7 @@ void InputsSelection::set_tolerance(const double& new_tolerance)
 /// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Tensor<type, 1> InputsSelection::calculate_losses(const vector<bool> & inputs)
+Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs)
 {
 /*
 #ifdef __OPENNN_DEBUG__
@@ -565,7 +565,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const vector<bool> & inputs)
 /// Returns the mean of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const vector<bool>&inputs)
+Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool, 1>&inputs)
 {
 /*
 #ifdef __OPENNN_DEBUG__
@@ -705,7 +705,7 @@ Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const vector<bool
 /// Returns the parameters of the neural network if the inputs is in the history.
 /// @param inputs Vector of inputs to be trained with.
 
-Tensor<type, 1> InputsSelection::get_parameters_inputs(const vector<bool>& inputs) const
+Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& inputs) const
 {
 /*
 #ifdef __OPENNN_DEBUG__
@@ -715,7 +715,7 @@ Tensor<type, 1> InputsSelection::get_parameters_inputs(const vector<bool>& input
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> get_parameters_inputs(const vector<bool>&) method.\n"
+               << "Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) method.\n"
                << "Inputs must be greater than 1.\n";
 
         throw logic_error(buffer.str());

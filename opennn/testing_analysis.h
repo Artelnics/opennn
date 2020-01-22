@@ -121,19 +121,19 @@ public:
     {
         /// Vector with the indices of the instances which are true positive.
 
-        VectorXi true_positives_indices;
+        Tensor<int, 1> true_positives_indices;
 
         /// Vector with the indices of the instances which are false positive.
 
-        VectorXi false_positives_indices;
+        Tensor<int, 1> false_positives_indices;
 
         /// Vector with the indices of the instances which are false negative.
 
-        VectorXi false_negatives_indices;
+        Tensor<int, 1> false_negatives_indices;
 
         /// Vector with the indices of the instances which are true negative.
 
-        VectorXi true_negatives_indices;
+        Tensor<int, 1> true_negatives_indices;
     };
 
    // Get methods
@@ -174,7 +174,7 @@ public:
 
    vector<Histogram> calculate_error_data_histograms(const int& = 10) const;
 
-   vector<VectorXi> calculate_maximal_errors(const int& = 10) const;
+   vector<Tensor<int, 1>> calculate_maximal_errors(const int& = 10) const;
 
    Tensor<type, 2> calculate_errors() const;
    Tensor<type, 2> calculate_binary_classification_errors() const;
@@ -218,7 +218,7 @@ public:
    Matrix<int, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const;
    Matrix<int, Dynamic, Dynamic> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   VectorXi calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<int, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    Matrix<int, Dynamic, Dynamic> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Matrix<int, Dynamic, Dynamic> calculate_confusion() const;
@@ -262,16 +262,16 @@ public:
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   VectorXi calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const VectorXi&, const double&) const;
-   VectorXi calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const VectorXi&, const double&) const;
-   VectorXi calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const VectorXi&, const double&) const;
-   VectorXi calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const VectorXi&, const double&) const;
+   Tensor<int, 1> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<int, 1>&, const double&) const;
+   Tensor<int, 1> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<int, 1>&, const double&) const;
+   Tensor<int, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<int, 1>&, const double&) const;
+   Tensor<int, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<int, 1>&, const double&) const;
 
    // Multiple classification rates
 
-   Matrix<VectorXi, Dynamic, Dynamic> calculate_multiple_classification_rates() const;
+   Matrix<Tensor<int, 1>, Dynamic, Dynamic> calculate_multiple_classification_rates() const;
 
-   Matrix<VectorXi, Dynamic, Dynamic> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const VectorXi&) const;
+   Matrix<Tensor<int, 1>, Dynamic, Dynamic> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<int, 1>&) const;
 
    // Forecasting methods
 

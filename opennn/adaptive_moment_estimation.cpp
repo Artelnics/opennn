@@ -677,15 +677,15 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
-   const int selection_instances_number = data_set_pointer->get_selection_instances_number();
+   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const VectorXi& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const VectorXi& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Tensor<int, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Tensor<int, 1>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-   const VectorXi input_variables_indices = data_set_pointer->get_input_variables_indices();
-   const VectorXi target_variables_indices = data_set_pointer->get_target_variables_indices();
+   const Tensor<int, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Tensor<int, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -747,7 +747,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 /*
    for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
-       const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+       const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
        const int batches_number = training_batches.size();
 

@@ -1021,7 +1021,7 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const VectorXi&, const Tensor<type, 1>&) const, const VectorXi& dummy, const Tensor<type, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<int, 1>&, const Tensor<type, 1>&) const, const Tensor<int, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -1144,7 +1144,7 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const VectorXi&, const Tensor<type, 1>&) const, const VectorXi& dummy, const Tensor<type, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<int, 1>&, const Tensor<type, 1>&) const, const Tensor<int, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -1213,7 +1213,7 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const VectorXi&, const Tensor<type, 1>&) const, const VectorXi& dummy, const Tensor<type, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<int, 1>&, const Tensor<type, 1>&) const, const Tensor<int, 1>& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {

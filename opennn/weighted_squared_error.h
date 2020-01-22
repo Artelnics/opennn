@@ -92,8 +92,8 @@ public:
    void set_training_normalization_coefficient();
    void set_selection_normalization_coefficient();
 
-   double calculate_batch_error(const VectorXi&) const;
-   double calculate_batch_error(const VectorXi&, const Tensor<type, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 

@@ -159,7 +159,7 @@ DataSet::Column::Column(const string& new_name,
                         const VariableUse& new_column_use,
                         const ColumnType& new_type,
                         const Tensor<string, 1>& new_categories,
-                        const vector<VariableUse>& new_categories_uses)
+                        const Tensor<VariableUse, 1>& new_categories_uses)
 {
     name = new_name;
     column_use = new_column_use;
@@ -179,10 +179,11 @@ DataSet::Column::~Column()
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
+/*
     column_use = new_column_use;
 
     categories_uses.assign(categories_uses.size(), new_column_use);
-
+*/
 }
 
 
@@ -260,11 +261,11 @@ void DataSet::Column::set_type(const string& new_column_type)
 
 void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categories_uses)
 {
-    const int new_categories_uses_number = new_categories_uses.size();
+    const Index new_categories_uses_number = new_categories_uses.size();
 
     categories_uses.resize(new_categories_uses_number);
 
-    for(int i = 0; i < new_categories_uses.size(); i++)
+    for(Index i = 0; i < new_categories_uses.size(); i++)
     {
         if(new_categories_uses[i] == "Input")
         {
@@ -660,9 +661,9 @@ bool DataSet::is_instance_unused(const int& index) const
 /// and unused instances.
 /// The size of that vector is therefore four.
 
-VectorXi DataSet::get_instances_uses_numbers() const
+Tensor<int, 1> DataSet::get_instances_uses_numbers() const
 {
-    VectorXi count(4, 0);
+    Tensor<int, 1> count(4);
 
     const int instances_number = get_instances_number();
 
@@ -715,13 +716,13 @@ Tensor<type, 1> DataSet::get_instances_uses_percentages() const
 
 /// Returns the indices of the instances which will be used for training.
 
-VectorXi DataSet::get_training_instances_indices() const
+Tensor<int, 1> DataSet::get_training_instances_indices() const
 {
     const int instances_number = get_instances_number();
 
     const int training_instances_number = get_training_instances_number();
 
-    VectorXi training_indices(training_instances_number);
+    Tensor<int, 1> training_indices(training_instances_number);
 
     int count = 0;
 
@@ -739,13 +740,13 @@ VectorXi DataSet::get_training_instances_indices() const
 
 /// Returns the indices of the instances which will be used for selection.
 
-VectorXi DataSet::get_selection_instances_indices() const
+Tensor<int, 1> DataSet::get_selection_instances_indices() const
 {
     const int instances_number = get_instances_number();
 
     const int selection_instances_number = get_selection_instances_number();
 
-    VectorXi selection_indices(selection_instances_number);
+    Tensor<int, 1> selection_indices(selection_instances_number);
 
     int count = 0;
 
@@ -764,13 +765,13 @@ VectorXi DataSet::get_selection_instances_indices() const
 
 /// Returns the indices of the instances which will be used for testing.
 
-VectorXi DataSet::get_testing_instances_indices() const
+Tensor<int, 1> DataSet::get_testing_instances_indices() const
 {
    const int instances_number = get_instances_number();
 
    const int testing_instances_number = get_testing_instances_number();
 
-   VectorXi testing_indices(testing_instances_number);
+   Tensor<int, 1> testing_indices(testing_instances_number);
 
    int count = 0;
 
@@ -789,13 +790,13 @@ VectorXi DataSet::get_testing_instances_indices() const
 
 /// Returns the indices of the used instances(those which are not set unused).
 
-VectorXi DataSet::get_used_instances_indices() const
+Tensor<int, 1> DataSet::get_used_instances_indices() const
 {
     const int instances_number = get_instances_number();
 
     const int used_instances_number = instances_number - get_unused_instances_number();
 
-    VectorXi used_indices(used_instances_number);
+    Tensor<int, 1> used_indices(used_instances_number);
 
     int index = 0;
 
@@ -814,13 +815,13 @@ VectorXi DataSet::get_used_instances_indices() const
 
 /// Returns the indices of the instances set unused.
 
-VectorXi DataSet::get_unused_instances_indices() const
+Tensor<int, 1> DataSet::get_unused_instances_indices() const
 {
     const int instances_number = get_instances_number();
 
     const int unused_instances_number = get_unused_instances_number();
 
-    VectorXi unused_indices(unused_instances_number);
+    Tensor<int, 1> unused_indices(unused_instances_number);
 
     int count = 0;
 
@@ -859,21 +860,21 @@ const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-vector<VectorXi> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
+vector<Tensor<int, 1>> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
 {
 /*
-    VectorXi training_indices = get_training_instances_indices();
+    Tensor<int, 1> training_indices = get_training_instances_indices();
 
     if(shuffle_batches_instances) random_shuffle(training_indices.begin(), training_indices.end());
 
     if(training_indices.size() < shuffle_batches_instances)
     {
-        return vector<VectorXi>({training_indices});
+        return vector<Tensor<int, 1>>({training_indices});
     }
 
     const size_t batches_number = training_indices.size() / shuffle_batches_instances;
 
-    vector<VectorXi> batches(batches_number);
+    vector<Tensor<int, 1>> batches(batches_number);
 
     for(size_t k = 0; k < batches_number; ++k)
     {
@@ -892,7 +893,7 @@ vector<VectorXi> DataSet::get_training_batches(const bool& shuffle_batches_insta
 /*
     return training_indices.split(batch_instances_number);
     */
-    return vector<VectorXi>();
+    return vector<Tensor<int, 1>>();
 }
 
 
@@ -900,15 +901,15 @@ vector<VectorXi> DataSet::get_training_batches(const bool& shuffle_batches_insta
 /// @param shuffle Is a boleean.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
-vector<VectorXi> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
+vector<Tensor<int, 1>> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
 {
-    VectorXi selection_indices = get_selection_instances_indices();
+    Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
     //if(shuffle_batches_instances) random_shuffle(selection_indices.begin(), selection_indices.end());
 /*
     return selection_indices.split(batch_instances_number);
 */
-    return vector<VectorXi>();
+    return vector<Tensor<int, 1>>();
 }
 
 
@@ -916,15 +917,15 @@ vector<VectorXi> DataSet::get_selection_batches(const bool& shuffle_batches_inst
 /// If shuffle is true, then the indices within batches are shuffle, and false otherwise
 /// @param shuffle_batches_instances Is a boleean.
 
-vector<VectorXi> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
+vector<Tensor<int, 1>> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
 {
-    VectorXi testing_indices = get_testing_instances_indices();
+    Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
     //if(shuffle_batches_instances) random_shuffle(testing_indices.begin(), testing_indices.end());
 /*
     return testing_indices.split(batch_instances_number);
 */
-    return vector<VectorXi>();
+    return vector<Tensor<int, 1>>();
 
 }
 
@@ -1064,7 +1065,7 @@ void DataSet::set_testing()
 /// Sets instances with given indices in the data set for training.
 /// @param indices Indices vector with the index of instances in the data set for training.
 
-void DataSet::set_training(const VectorXi& indices)
+void DataSet::set_training(const Tensor<int, 1>& indices)
 {
     int index = 0;
 
@@ -1080,7 +1081,7 @@ void DataSet::set_training(const VectorXi& indices)
 /// Sets instances with given indices in the data set for selection.
 /// @param indices Indices vector with the index of instances in the data set for selection.
 
-void DataSet::set_selection(const VectorXi& indices)
+void DataSet::set_selection(const Tensor<int, 1>& indices)
 {
     int index = 0;
 
@@ -1096,7 +1097,7 @@ void DataSet::set_selection(const VectorXi& indices)
 /// Sets instances with given indices in the data set for testing.
 /// @param indices Indices vector with the index of instances in the data set for testing.
 
-void DataSet::set_testing(const VectorXi& indices)
+void DataSet::set_testing(const Tensor<int, 1>& indices)
 {
     int index = 0;
 
@@ -1125,7 +1126,7 @@ void DataSet::set_instances_unused()
 /// Sets instances with given indices in the data set for unused.
 /// @param indices Indices vector with the index of instances in the data set for unused.
 
-void DataSet::set_instances_unused(const VectorXi& indices)
+void DataSet::set_instances_unused(const Tensor<int, 1>& indices)
 {
     for(int i = 0; i < static_cast<int>(indices.size()); i++)
     {
@@ -1306,7 +1307,7 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
 
    const int instances_number = get_instances_number();
 /*
-   VectorXi indices(0, 1, instances_number-1);
+   Tensor<int, 1> indices(0, 1, instances_number-1);
    random_shuffle(indices.begin(), indices.end());
 
    int i = 0;
@@ -1607,11 +1608,11 @@ DataSet::VariableUse DataSet::get_column_use(const int & index) const
 
 /// Returns the uses of each columns of the data set.
 
-vector<DataSet::VariableUse> DataSet::get_columns_uses() const
+Tensor<DataSet::VariableUse, 1> DataSet::get_columns_uses() const
 {
     const int columns_number = get_columns_number();
 
-    vector<DataSet::VariableUse> columns_uses(columns_number);
+    Tensor<DataSet::VariableUse, 1> columns_uses(columns_number);
 
     for (int i = 0; i < columns_number; i++)
     {
@@ -1625,12 +1626,12 @@ vector<DataSet::VariableUse> DataSet::get_columns_uses() const
 /// Returns a vector containing the use of each column, including the categories.
 /// The size of the vector is equal to the number of variables.
 
-vector<DataSet::VariableUse> DataSet::get_variables_uses() const
+Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 {
     const int columns_number = get_columns_number();
     const int variables_number = get_variables_number();
 
-    vector<VariableUse> variables_uses(variables_number);
+    Tensor<VariableUse, 1> variables_uses(variables_number);
 
     int index = 0;
 /*
@@ -1747,7 +1748,7 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
 {
    const int input_variables_number = get_input_variables_number();
 
-   const VectorXi input_columns_indices = get_input_columns_indices();
+   const Tensor<int, 1> input_columns_indices = get_input_columns_indices();
 
    Tensor<string, 1> input_variables_names(input_variables_number);
 
@@ -1775,7 +1776,7 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 {
     const int target_variables_number = get_target_variables_number();
 
-    const VectorXi target_columns_indices = get_target_columns_indices();
+    const Tensor<int, 1> target_columns_indices = get_target_columns_indices();
 
     Tensor<string, 1> target_variables_names(target_variables_number);
 
@@ -1798,7 +1799,7 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 
 /// Returns the dimensions of the input variables.
 
-const VectorXi& DataSet::get_input_variables_dimensions() const
+const Tensor<int, 1>& DataSet::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
 }
@@ -1806,7 +1807,7 @@ const VectorXi& DataSet::get_input_variables_dimensions() const
 
 /// Returns the dimesions of the target variables.
 
-const VectorXi& DataSet::get_target_variables_dimensions() const
+const Tensor<int, 1>& DataSet::get_target_variables_dimensions() const
 {
     return target_variables_dimensions;
 }
@@ -1826,11 +1827,11 @@ int DataSet::get_used_variables_number() const
 
 /// Returns a indices vector with the positions of the inputs.
 
-VectorXi DataSet::get_input_columns_indices() const
+Tensor<int, 1> DataSet::get_input_columns_indices() const
 {
     const int input_columns_number = get_input_columns_number();
 
-    VectorXi input_columns_indices(input_columns_number);
+    Tensor<int, 1> input_columns_indices(input_columns_number);
 
     int index = 0;
 
@@ -1849,11 +1850,11 @@ VectorXi DataSet::get_input_columns_indices() const
 
 /// Returns a indices vector with the positions of the targets.
 
-VectorXi DataSet::get_target_columns_indices() const
+Tensor<int, 1> DataSet::get_target_columns_indices() const
 {
     const int target_columns_number = get_target_columns_number();
 
-    VectorXi target_columns_indices(target_columns_number);
+    Tensor<int, 1> target_columns_indices(target_columns_number);
 
     int index = 0;
 
@@ -1872,11 +1873,11 @@ VectorXi DataSet::get_target_columns_indices() const
 
 /// Returns a indices vector with the positions of the unused columns.
 
-VectorXi DataSet::get_unused_columns_indices() const
+Tensor<int, 1> DataSet::get_unused_columns_indices() const
 {
     const int unused_columns_number = get_unused_columns_number();
 
-    VectorXi unused_columns_indices(unused_columns_number);
+    Tensor<int, 1> unused_columns_indices(unused_columns_number);
 
     int index = 0;
 
@@ -1896,14 +1897,14 @@ VectorXi DataSet::get_unused_columns_indices() const
 
 /// Returns a indices vector with the positions of the used columns.
 
-VectorXi DataSet::get_used_columns_indices() const
+Tensor<int, 1> DataSet::get_used_columns_indices() const
 {
 
     const int variables_number = get_variables_number();
 
     const int used_variables_number = get_used_variables_number();
 
-    VectorXi used_indices(used_variables_number);
+    Tensor<int, 1> used_indices(used_variables_number);
 
     int index = 0;
 
@@ -2113,7 +2114,7 @@ vector<DataSet::Column> DataSet::get_columns() const
 vector<DataSet::Column> DataSet::get_used_columns() const
 {
 /*
-    const VectorXi used_columns_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_columns_indices = get_used_columns_indices();
 
     return columns.get_subvector(used_columns_indices);
 */
@@ -2248,13 +2249,13 @@ int DataSet::get_variable_index(const string& name) const
 
 /// Returns the indices of the unused variables.
 
-VectorXi DataSet::get_unused_variables_indices() const
+Tensor<int, 1> DataSet::get_unused_variables_indices() const
 {
     const int unused_number = get_unused_variables_number();
 
-    const VectorXi unused_columns_indices = get_unused_columns_indices();
+    const Tensor<int, 1> unused_columns_indices = get_unused_columns_indices();
 
-    VectorXi unused_indices(unused_number);
+    Tensor<int, 1> unused_indices(unused_number);
 
     int unused_index = 0;
     int unused_variable_index = 0;
@@ -2290,13 +2291,13 @@ VectorXi DataSet::get_unused_variables_indices() const
 
 /// Returns the indices of the input variables.
 
-VectorXi DataSet::get_input_variables_indices() const
+Tensor<int, 1> DataSet::get_input_variables_indices() const
 {
     const int inputs_number = get_input_variables_number();
 
-    const VectorXi input_columns_indices = get_input_columns_indices();
+    const Tensor<int, 1> input_columns_indices = get_input_columns_indices();
 
-    VectorXi input_variables_indices(inputs_number);
+    Tensor<int, 1> input_variables_indices(inputs_number);
 
     int input_index = 0;
     int input_variable_index = 0;
@@ -2336,13 +2337,13 @@ VectorXi DataSet::get_input_variables_indices() const
 
 /// Returns the indices of the target variables.
 
-VectorXi DataSet::get_target_variables_indices() const
+Tensor<int, 1> DataSet::get_target_variables_indices() const
 {
     const int targets_number = get_target_variables_number();
 
-    const VectorXi target_columns_indices = get_target_columns_indices();
+    const Tensor<int, 1> target_columns_indices = get_target_columns_indices();
 
-    VectorXi target_variables_indices(targets_number);
+    Tensor<int, 1> target_variables_indices(targets_number);
 
     int target_index = 0;
     int target_variable_index = 0;
@@ -2403,9 +2404,10 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-
+/*
     input_variables_dimensions.resize(1, get_input_variables_number());
     target_variables_dimensions.resize(1, get_target_variables_number());
+*/
 }
 
 
@@ -2413,7 +2415,7 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 /// @param new_columns_uses DataSet::VariableUse vector that contains the new uses to be set,
 /// note that this vector needs to be the size of the number of columns in the data set.
 
-void DataSet::set_columns_uses(const vector<VariableUse>& new_columns_uses)
+void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 {
     const int new_columns_uses_size = new_columns_uses.size();
 
@@ -2432,9 +2434,10 @@ void DataSet::set_columns_uses(const vector<VariableUse>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-
+/*
     input_variables_dimensions.resize(1, get_input_variables_number());
     target_variables_dimensions.resize(1, get_target_variables_number());
+*/
 }
 
 
@@ -2700,7 +2703,7 @@ void DataSet::set_binary_simple_columns()
 
 /// Sets new input dimensions in the data set.
 
-void DataSet::set_input_variables_dimensions(const VectorXi& new_inputs_dimensions)
+void DataSet::set_input_variables_dimensions(const Tensor<int, 1>& new_inputs_dimensions)
 {
     input_variables_dimensions = new_inputs_dimensions;
 }
@@ -2708,7 +2711,7 @@ void DataSet::set_input_variables_dimensions(const VectorXi& new_inputs_dimensio
 
 /// Sets new target dimensions in the data set.
 
-void DataSet::set_target_variables_dimensions(const VectorXi& new_targets_dimensions)
+void DataSet::set_target_variables_dimensions(const Tensor<int, 1>& new_targets_dimensions)
 {
     target_variables_dimensions = new_targets_dimensions;
 }
@@ -2949,9 +2952,9 @@ Tensor<type, 2> DataSet::get_training_data() const
 /*
    const int variables_number = get_variables_number();
 
-   VectorXi variables_indices(0, 1,variables_number-1);
+   Tensor<int, 1> variables_indices(0, 1,variables_number-1);
 
-   const VectorXi training_indices = get_training_instances_indices();
+   const Tensor<int, 1> training_indices = get_training_instances_indices();
 
    return(data.get_submatrix(training_indices, variables_indices));
 */
@@ -2969,9 +2972,9 @@ Tensor<type, 2> DataSet::get_selection_data() const
 /*
    const int variables_number = get_variables_number();
 
-   const VectorXi selection_indices = get_selection_instances_indices();
+   const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
-   VectorXi variables_indices(0, 1,variables_number-1);
+   Tensor<int, 1> variables_indices(0, 1,variables_number-1);
 
    return(data.get_submatrix(selection_indices, variables_indices));
 */
@@ -2987,9 +2990,9 @@ Tensor<type, 2> DataSet::get_testing_data() const
 {
 /*
    const int variables_number = get_variables_number();
-   VectorXi variables_indices(0, 1,variables_number-1);
+   Tensor<int, 1> variables_indices(0, 1,variables_number-1);
 
-   const VectorXi testing_indices = get_testing_instances_indices();
+   const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
    return(data.get_submatrix(testing_indices, variables_indices));
 */
@@ -3006,9 +3009,9 @@ Tensor<type, 2> DataSet::get_input_data() const
 /*
    const int instances_number = get_instances_number();
 
-   const VectorXi indices(0, 1,instances_number-1);
+   const Tensor<int, 1> indices(0, 1,instances_number-1);
 
-   const VectorXi input_variables_indices = get_input_variables_indices();
+   const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
    return(data.get_submatrix(indices, input_variables_indices));
 */
@@ -3024,9 +3027,9 @@ Tensor<type, 2> DataSet::get_target_data() const
 {
 /*
    const int instances_number = get_instances_number();
-   const VectorXi indices(0, 1, instances_number-1);
+   const Tensor<int, 1> indices(0, 1, instances_number-1);
 
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
    return(data.get_submatrix(indices, target_variables_indices));
 */
@@ -3038,12 +3041,12 @@ Tensor<type, 2> DataSet::get_target_data() const
 /// The number of rows is the number of
 /// The number of columns is the number of input variables.
 
-Tensor<type, 2> DataSet::get_input_data(const VectorXi& instances_indices) const
+Tensor<type, 2> DataSet::get_input_data(const Tensor<int, 1>& instances_indices) const
 {
 /*
-    const VectorXi& input_variables_dimensions = get_input_variables_dimensions();
+    const Tensor<int, 1>& input_variables_dimensions = get_input_variables_dimensions();
 
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
     return data.get_tensor(instances_indices, input_variables_indices, input_variables_dimensions);
 */
@@ -3055,12 +3058,12 @@ Tensor<type, 2> DataSet::get_input_data(const VectorXi& instances_indices) const
 /// The number of rows is the number of
 /// The number of columns is the number of input variables.
 
-Tensor<type, 2> DataSet::get_target_data(const VectorXi& instances_indices) const
+Tensor<type, 2> DataSet::get_target_data(const Tensor<int, 1>& instances_indices) const
 {
 /*
-    const VectorXi& target_variables_dimensions = get_target_variables_dimensions();
+    const Tensor<int, 1>& target_variables_dimensions = get_target_variables_dimensions();
 
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
     return data.get_tensor(instances_indices, target_variables_indices, target_variables_dimensions);
 */
@@ -3072,9 +3075,9 @@ Tensor<type, 2> DataSet::get_target_data(const VectorXi& instances_indices) cons
 /// The number of rows is the number of
 /// The number of columns is the number of input variables.
 
-Matrix<float, Dynamic, Dynamic> DataSet::get_input_data_float(const VectorXi& instances_indices) const
+Matrix<float, Dynamic, Dynamic> DataSet::get_input_data_float(const Tensor<int, 1>& instances_indices) const
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
     const int instances_number = instances_indices.size();
     const int inputs_number = input_variables_indices.size();
@@ -3103,9 +3106,9 @@ Matrix<float, Dynamic, Dynamic> DataSet::get_input_data_float(const VectorXi& in
 /// The number of rows is the number of
 /// The number of columns is the number of input variables.
 
-Matrix<float, Dynamic, Dynamic> DataSet::get_target_data_float(const VectorXi& instances_indices) const
+Matrix<float, Dynamic, Dynamic> DataSet::get_target_data_float(const Tensor<int, 1>& instances_indices) const
 {
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
     const int instances_number = instances_indices.size();
 
@@ -3139,11 +3142,11 @@ Matrix<float, Dynamic, Dynamic> DataSet::get_target_data_float(const VectorXi& i
 Tensor<type, 2> DataSet::get_training_input_data() const
 {
 /*
-    const VectorXi training_indices = get_training_instances_indices();
+    const Tensor<int, 1> training_indices = get_training_instances_indices();
 
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
-    const VectorXi& input_variables_dimensions = get_input_variables_dimensions();
+    const Tensor<int, 1>& input_variables_dimensions = get_input_variables_dimensions();
 
     return data.get_tensor(training_indices, input_variables_indices, input_variables_dimensions);
 */
@@ -3158,9 +3161,9 @@ Tensor<type, 2> DataSet::get_training_input_data() const
 Tensor<type, 2> DataSet::get_training_target_data() const
 {
 /*
-   const VectorXi training_indices = get_training_instances_indices();
+   const Tensor<int, 1> training_indices = get_training_instances_indices();
 
-   const VectorXi& target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1>& target_variables_indices = get_target_variables_indices();
 
    return data.get_tensor(training_indices, target_variables_indices, get_target_variables_dimensions());
 */
@@ -3176,9 +3179,9 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 Tensor<type, 2> DataSet::get_selection_input_data() const
 {
 /*
-   const VectorXi selection_indices = get_selection_instances_indices();
+   const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
-   const VectorXi input_variables_indices = get_input_variables_indices();
+   const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
    return data.get_tensor(selection_indices, input_variables_indices, get_input_variables_dimensions());
 */
@@ -3193,9 +3196,9 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
 Tensor<type, 2> DataSet::get_selection_target_data() const
 {
 /*
-   const VectorXi selection_indices = get_selection_instances_indices();
+   const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
    return data.get_tensor(selection_indices, target_variables_indices, get_target_variables_dimensions());
 */
@@ -3210,9 +3213,9 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 Tensor<type, 2> DataSet::get_testing_input_data() const
 {
 /*
-   const VectorXi input_variables_indices = get_input_variables_indices();
+   const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
-   const VectorXi testing_indices = get_testing_instances_indices();
+   const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
    return data.get_tensor(testing_indices, input_variables_indices, get_input_variables_dimensions());
 */
@@ -3228,9 +3231,9 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 Tensor<type, 2> DataSet::get_testing_target_data() const
 {
 /*
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
-   const VectorXi testing_indices = get_testing_instances_indices();
+   const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
    return data.get_tensor(testing_indices, target_variables_indices, get_target_variables_dimensions());
 */
@@ -3273,7 +3276,7 @@ Tensor<type, 1> DataSet::get_instance_data(const int& index) const
 /// @param instance_index Index of the instance.
 /// @param variables_indices Indices of the variables.
 
-Tensor<type, 1> DataSet::get_instance_data(const int& instance_index, const VectorXi& variables_indices) const
+Tensor<type, 1> DataSet::get_instance_data(const int& instance_index, const Tensor<int, 1>& variables_indices) const
 {
 /*
     #ifdef __OPENNN_DEBUG__
@@ -3285,7 +3288,7 @@ Tensor<type, 1> DataSet::get_instance_data(const int& instance_index, const Vect
       ostringstream buffer;
 
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_instance(const int&, const VectorXi&) const method.\n"
+             << "Tensor<type, 1> get_instance(const int&, const Tensor<int, 1>&) const method.\n"
              << "Index of instance must be less than number of \n";
 
       throw logic_error(buffer.str());
@@ -3305,10 +3308,10 @@ Tensor<type, 1> DataSet::get_instance_data(const int& instance_index, const Vect
 Tensor<type, 2> DataSet::get_instance_input_data(const int & instance_index) const
 {
 /*
-    const VectorXi input_variables_indices = get_input_variables_indices();
-    const VectorXi inputs_dimension = get_input_variables_dimensions();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> inputs_dimension = get_input_variables_dimensions();
 
-    return data.get_tensor(VectorXi({instance_index}),input_variables_indices,inputs_dimension);
+    return data.get_tensor(Tensor<int, 1>({instance_index}),input_variables_indices,inputs_dimension);
 */
 
     return Tensor<type, 2>();
@@ -3321,10 +3324,10 @@ Tensor<type, 2> DataSet::get_instance_input_data(const int & instance_index) con
 Tensor<type, 2> DataSet::get_instance_target_data(const int & instance_index) const
 {
 /*
-    const VectorXi target_variables_indices = get_target_variables_indices();
-    const VectorXi targets_dimension = get_target_variables_dimensions();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> targets_dimension = get_target_variables_dimensions();
 
-    return data.get_tensor(VectorXi({instance_index}),target_variables_indices,targets_dimension);
+    return data.get_tensor(Tensor<int, 1>({instance_index}),target_variables_indices,targets_dimension);
 */
     return Tensor<type, 2>();
 }
@@ -3360,7 +3363,7 @@ int DataSet::get_column_index(const string& column_name) const
 /// Note that the number of variables does not have to equal the number of columns in the data set,
 /// because OpenNN recognizes the categorical columns, separating these categories into variables of the data set.
 
-VectorXi DataSet::get_variable_indices(const int& column_index) const
+Tensor<int, 1> DataSet::get_variable_indices(const int& column_index) const
 {
     int index = 0;
 
@@ -3378,7 +3381,7 @@ VectorXi DataSet::get_variable_indices(const int& column_index) const
 
     if(columns[column_index].categories.size() > 0)
     {
-        VectorXi variable_indices(columns[column_index].categories.size());
+        Tensor<int, 1> variable_indices(columns[column_index].categories.size());
 
         for (int j = 0; j<columns[column_index].categories.size(); j++)
         {
@@ -3389,7 +3392,7 @@ VectorXi DataSet::get_variable_indices(const int& column_index) const
     }
     else
     {
-        return VectorXi(index);
+        return Tensor<int, 1>(index);
     }
 }
 
@@ -3397,7 +3400,7 @@ VectorXi DataSet::get_variable_indices(const int& column_index) const
 /// Returns the data from the data set of the given variables indices.
 /// @param variables_indices Variable indices.
 
-Tensor<type, 2> DataSet::get_column_data(const VectorXi& variables_indices) const
+Tensor<type, 2> DataSet::get_column_data(const Tensor<int, 1>& variables_indices) const
 {
 /*
     return data.get_submatrix_columns(variables_indices);
@@ -3413,7 +3416,7 @@ Tensor<type, 2> DataSet::get_column_data(const VectorXi& variables_indices) cons
 Tensor<type, 2> DataSet::get_column_data(const int& column_index) const
 {
 /*
-    const VectorXi variable_indices = get_variable_indices(column_index);
+    const Tensor<int, 1> variable_indices = get_variable_indices(column_index);
 
     return data.get_submatrix_columns(variable_indices);
 */
@@ -3470,7 +3473,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 /*
     const Tensor<string, 1> variable_names = get_variables_names();
 
-    const VectorXi variable_index = variable_names.get_indices_equal_to(variable_name);
+    const Tensor<int, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3510,7 +3513,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 /// @param variable_index Index of the variable.
 /// @param instances_indices Indices of the
 
-Tensor<type, 1> DataSet::get_variable_data(const int& variable_index, const VectorXi& instances_indices) const
+Tensor<type, 1> DataSet::get_variable_data(const int& variable_index, const Tensor<int, 1>& instances_indices) const
 {
 /*
    #ifdef __OPENNN_DEBUG__
@@ -3522,7 +3525,7 @@ Tensor<type, 1> DataSet::get_variable_data(const int& variable_index, const Vect
       ostringstream buffer;
 
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_variable(const int&, const VectorXi&) const method.\n"
+             << "Tensor<type, 1> get_variable(const int&, const Tensor<int, 1>&) const method.\n"
              << "Index of variable must be less than number of \n";
 
       throw logic_error(buffer.str());
@@ -3540,12 +3543,12 @@ Tensor<type, 1> DataSet::get_variable_data(const int& variable_index, const Vect
 /// @param variable_name Name of the variable.
 /// @param instances_indices Indices of the
 
-Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const VectorXi& instances_indices) const
+Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Tensor<int, 1>& instances_indices) const
 {
     /*
     const Tensor<string, 1> variable_names = get_variables_names();
 
-    const VectorXi variable_index = variable_names.get_indices_equal_to(variable_name);
+    const Tensor<int, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3567,7 +3570,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Ve
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<type, 1> get_variable(const string&, const VectorXi&) const method.\n"
+              << "Tensor<type, 1> get_variable(const string&, const Tensor<int, 1>&) const method.\n"
               << "Variable: " << variable_name << " appears more than once in the data set.\n";
 
        throw logic_error(buffer.str());
@@ -4132,7 +4135,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 /// Removes the training, selection and testing indices of that instances which are repeated in the data matrix.
 /// It might change the size of the vectors containing the training, selection and testing indices.
 
-VectorXi DataSet::unuse_repeated_instances()
+Tensor<int, 1> DataSet::unuse_repeated_instances()
 {
     const int instances_number = get_instances_number();
 
@@ -4143,7 +4146,7 @@ VectorXi DataSet::unuse_repeated_instances()
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "VectorXi unuse_repeated_instances() method.\n"
+              << "Tensor<int, 1> unuse_repeated_instances() method.\n"
               << "Number of instances is zero.\n";
 
        throw logic_error(buffer.str());
@@ -4151,7 +4154,7 @@ VectorXi DataSet::unuse_repeated_instances()
 
     #endif
 
-    VectorXi repeated_instances;
+    Tensor<int, 1> repeated_instances;
 
     Tensor<type, 1> instance_i;
     Tensor<type, 1> instance_j;
@@ -4185,17 +4188,17 @@ VectorXi DataSet::unuse_repeated_instances()
 /// Unuses those binary inputs whose positives does not correspond to any positive in the target variables.
 /// @todo Low priority.
 
-VectorXi DataSet::unuse_non_significant_input_columns()
+Tensor<int, 1> DataSet::unuse_non_significant_input_columns()
 {
 /*
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
     const int inputs_number = input_variables_indices.size();
 
     const int target_index = get_target_variables_indices()[0];
 
     const int instances_number = get_used_instances_number();
 
-    VectorXi non_significant_variables;
+    Tensor<int, 1> non_significant_variables;
 
     if(!is_binary_classification())
     {
@@ -4232,7 +4235,7 @@ VectorXi DataSet::unuse_non_significant_input_columns()
     return non_significant_variables;
 */
 
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 
@@ -4245,7 +4248,7 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const double& missing_ra
 
     const int instances_number = get_instances_number();
 /*
-    const VectorXi columns_missing_values = data.count_nan_columns();
+    const Tensor<int, 1> columns_missing_values = data.count_nan_columns();
 
     const Tensor<type, 1> columns_missing_ratios = columns_missing_values.to_double_vector()/(static_cast<double>(instances_number)-1.0);
 */
@@ -4269,16 +4272,16 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const double& missing_ra
 /// @param minimum_correlation Minimum correlation between variables.
 /// @param nominal_variables vector containing the classes of each categorical variable.
 
-VectorXi DataSet::unuse_uncorrelated_columns(const double& minimum_correlation)
+Tensor<int, 1> DataSet::unuse_uncorrelated_columns(const double& minimum_correlation)
 {
-    VectorXi unused_columns;
+    Tensor<int, 1> unused_columns;
 
     const Matrix<RegressionResults, Dynamic, Dynamic> correlations; //= calculate_input_target_columns_correlations();
 
     const int input_columns_number = get_input_columns_number();
     const int target_columns_number = get_target_columns_number();
 
-    const VectorXi input_columns_indices = get_input_columns_indices();
+    const Tensor<int, 1> input_columns_indices = get_input_columns_indices();
 
     for(int i = 0; i < input_columns_number; i++)
     {
@@ -4305,7 +4308,7 @@ VectorXi DataSet::unuse_uncorrelated_columns(const double& minimum_correlation)
 vector<Histogram> DataSet::calculate_columns_histograms(const int& bins_number) const
 {
    const int used_columns_number = get_used_columns_number();
-   const VectorXi used_columns_indices = get_used_columns_indices();
+   const Tensor<int, 1> used_columns_indices = get_used_columns_indices();
 
    vector<Histogram> histograms(used_columns_number);
 /*
@@ -4341,7 +4344,7 @@ vector<Histogram> DataSet::calculate_columns_histograms(const int& bins_number) 
 vector<BoxPlot> DataSet::calculate_columns_box_plots() const
 {
     const int used_columns_number = get_used_columns_number();
-    const VectorXi used_columns_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_columns_indices = get_used_columns_indices();
 
     vector<BoxPlot> box_plots(used_columns_number);
 /*
@@ -4370,7 +4373,7 @@ int DataSet::calculate_training_negatives(const int& target_index) const
 {
     int negatives = 0;
 
-    const VectorXi training_indices = get_training_instances_indices();
+    const Tensor<int, 1> training_indices = get_training_instances_indices();
 
     const int training_instances_number = training_indices.size();
 
@@ -4407,7 +4410,7 @@ int DataSet::calculate_selection_negatives(const int& target_index) const
 
     const int selection_instances_number = get_selection_instances_number();
 
-    const VectorXi selection_indices = get_selection_instances_indices();
+    const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
     for(int i = 0; i < static_cast<int>(selection_instances_number); i++)
     {
@@ -4442,7 +4445,7 @@ int DataSet::calculate_testing_negatives(const int& target_index) const
 
     const int testing_instances_number = get_testing_instances_number();
 
-    const VectorXi testing_indices = get_testing_instances_indices();
+    const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
     for(int i = 0; i < static_cast<int>(testing_instances_number); i++)
     {
@@ -4495,9 +4498,9 @@ Tensor<type, 2> DataSet::calculate_columns_descriptives_matrix() const
     /*
     const int variables_number = get_used_variables_number();
 
-    const VectorXi used_variables_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_variables_indices = get_used_columns_indices();
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const vector<Descriptives> data_statistics_vector = descriptives_missing_values(data, used_instances_indices, used_variables_indices);
 
@@ -4539,7 +4542,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_positive_instances(
 
     const int target_index = get_target_variables_indices()[0];
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
 
@@ -4557,11 +4560,11 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_positive_instances(
     }
 #endif
 
-    const VectorXi inputs_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = get_input_variables_indices();
 
     const int inputs_number = inputs_variables_indices.size();
 
-    const VectorXi positives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
+    const Tensor<int, 1> positives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
 
     Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
 
@@ -4606,7 +4609,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances(
 
     const int target_index = get_target_variables_indices()[0];
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
 
@@ -4624,11 +4627,11 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances(
     }
 #endif
 
-    const VectorXi inputs_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = get_input_variables_indices();
 
     const int inputs_number = inputs_variables_indices.size();
 
-    const VectorXi negatives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(0.0));
+    const Tensor<int, 1> negatives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(0.0));
 
     Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
 
@@ -4656,7 +4659,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances(
 vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const int& class_index) const
 {
 /*
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const Tensor<type, 1> targets = data.get_column(class_index, used_instances_indices);
 
@@ -4675,11 +4678,11 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const int& 
 
 #endif
 
-    const VectorXi inputs_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = get_input_variables_indices();
 
     const int inputs_number = inputs_variables_indices.size();
 
-    const VectorXi class_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
+    const Tensor<int, 1> class_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
 
     Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
 
@@ -4712,9 +4715,9 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const int& 
 vector<Descriptives> DataSet::calculate_columns_descriptives_training_instances() const
 {
 /*
-   const VectorXi training_indices = get_training_instances_indices();
+   const Tensor<int, 1> training_indices = get_training_instances_indices();
 
-   const VectorXi used_indices = get_used_columns_indices();
+   const Tensor<int, 1> used_indices = get_used_columns_indices();
 
    return descriptives_missing_values(data, training_indices, used_indices);
 */
@@ -4734,9 +4737,9 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_training_instances(
 vector<Descriptives> DataSet::calculate_columns_descriptives_selection_instances() const
 {
 /*
-    const VectorXi selection_indices = get_selection_instances_indices();
+    const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
-    const VectorXi used_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_indices = get_used_columns_indices();
 
     return descriptives_missing_values(data, selection_indices, used_indices);
 */
@@ -4756,9 +4759,9 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_selection_instances
 vector<Descriptives> DataSet::calculate_columns_descriptives_testing_instances() const
 {
 /*
-    const VectorXi testing_indices = get_testing_instances_indices();
+    const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
-    const VectorXi used_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_indices = get_used_columns_indices();
 
     return descriptives_missing_values(data, testing_indices, used_indices);
 */
@@ -4772,9 +4775,9 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_testing_instances()
 
 vector<Descriptives> DataSet::calculate_input_variables_descriptives() const
 {
-    const VectorXi used_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_indices = get_used_instances_indices();
 
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
     return descriptives_missing_values(data, used_indices, input_variables_indices);
 }
@@ -4791,9 +4794,9 @@ vector<Descriptives> DataSet::calculate_input_variables_descriptives() const
 
 vector<Descriptives> DataSet::calculate_target_variables_descriptives() const
 {
-   const VectorXi used_indices = get_used_instances_indices();
+   const Tensor<int, 1> used_indices = get_used_instances_indices();
 
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
    return descriptives_missing_values(data, used_indices, target_variables_indices);
 }
@@ -4802,7 +4805,7 @@ vector<Descriptives> DataSet::calculate_target_variables_descriptives() const
 /// Returns a vector containing the means of a set of given variables.
 /// @param variables_indices Indices of the variables.
 
-Tensor<type, 1> DataSet::calculate_variables_means(const VectorXi& variables_indices) const
+Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<int, 1>& variables_indices) const
 {
     const int variables_number = variables_indices.size();
 
@@ -4844,9 +4847,9 @@ Descriptives DataSet::calculate_inputs_descriptives(const int& input_index) cons
 Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 {
 /*
-    const VectorXi training_indices = get_training_instances_indices();
+    const Tensor<int, 1> training_indices = get_training_instances_indices();
 
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
     return mean_missing_values(data, training_indices, target_variables_indices);
 */
@@ -4859,9 +4862,9 @@ Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
 /*
-    const VectorXi selection_indices = get_selection_instances_indices();
+    const Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
     return mean_missing_values(data, selection_indices, target_variables_indices);
 */
@@ -4874,9 +4877,9 @@ Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 Tensor<type, 1> DataSet::calculate_testing_targets_mean() const
 {
 /*
-   const VectorXi testing_indices = get_testing_instances_indices();
+   const Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
    return mean_missing_values(data, testing_indices, target_variables_indices);
 */
@@ -4912,8 +4915,8 @@ Matrix<CorrelationResults, Dynamic, Dynamic> DataSet::calculate_input_target_col
    const int input_columns_number = get_input_columns_number();
    const int target_columns_number = get_target_columns_number();
 
-   const VectorXi input_columns_indices = get_input_columns_indices();
-   VectorXi target_columns_indices = get_target_columns_indices();
+   const Tensor<int, 1> input_columns_indices = get_input_columns_indices();
+   Tensor<int, 1> target_columns_indices = get_target_columns_indices();
 
    Matrix<CorrelationResults, Dynamic, Dynamic> correlations(input_columns_number, target_columns_number);
 /*
@@ -5109,7 +5112,7 @@ void DataSet::print_top_input_target_columns_correlations(const int& number) con
 Tensor<type, 2> DataSet::calculate_inputs_correlations() const
 {
 /*
-    const VectorXi input_columns_indices = get_input_columns_indices();
+    const Tensor<int, 1> input_columns_indices = get_input_columns_indices();
 
     const int input_columns_number = get_input_columns_number();
 
@@ -5262,8 +5265,8 @@ void DataSet::print_top_inputs_correlations(const int& number) const
 
 Tensor<type, 2> DataSet::calculate_covariance_matrix() const
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const int inputs_number = get_input_variables_number();
 
@@ -5320,13 +5323,13 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const double& min
 
     // Sort principal components
 
-    const VectorXi sorted_principal_components_indices = explained_variance.sort_descending_indices();
+    const Tensor<int, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
 
     // Choose eigenvectors
 
     const int inputs_number = covariance_matrix.dimension(1);
 
-    VectorXi principal_components_indices;
+    Tensor<int, 1> principal_components_indices;
 
     int index;
 
@@ -5396,13 +5399,13 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const Tensor<type
 
     // Sort principal components
 
-    const VectorXi sorted_principal_components_indices = explained_variance.sort_descending_indices();
+    const Tensor<int, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
 
     // Choose eigenvectors
 
     const int inputs_number = covariance_matrix.dimension(1);
 
-    VectorXi principal_components_indices;
+    Tensor<int, 1> principal_components_indices;
 
     int index;
 
@@ -5463,7 +5466,7 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 
     // Transform data
 
-    const VectorXi used_instances = get_used_instances_indices();
+    const Tensor<int, 1> used_instances = get_used_instances_indices();
 
     const int new_instances_number = get_used_instances_number();
 
@@ -5567,8 +5570,8 @@ void DataSet::subtract_inputs_mean()
 {
     vector<Descriptives> input_statistics = calculate_input_variables_descriptives();
 
-    VectorXi input_variables_indices = get_input_variables_indices();
-    VectorXi used_instances_indices = get_used_instances_indices();
+    Tensor<int, 1> input_variables_indices = get_input_variables_indices();
+    Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     int input_index;
     int instance_index;
@@ -5597,7 +5600,7 @@ void DataSet::subtract_inputs_mean()
 
 Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 {
-    const VectorXi used_inputs_indices = get_input_variables_indices();
+    const Tensor<int, 1> used_inputs_indices = get_input_variables_indices();
     const int used_inputs_number = used_inputs_indices.size();
 
     int current_distribution;
@@ -5677,7 +5680,7 @@ void DataSet::scale_data_minimum_maximum(const vector<Descriptives>& data_descri
 
 void DataSet::scale_inputs_mean_standard_deviation(const vector<Descriptives>& inputs_descriptives)
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 /*
     scale_columns_mean_standard_deviation(data, inputs_descriptives, input_variables_indices);
 */
@@ -5814,7 +5817,7 @@ Descriptives DataSet::scale_input_standard_deviation(const int& input_index)
 
 void DataSet::scale_inputs_minimum_maximum(const vector<Descriptives>& inputs_descriptives)
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 /*
     scale_columns_minimum_maximum(data, inputs_descriptives, input_variables_indices);
 */
@@ -5972,7 +5975,7 @@ void DataSet::scale_inputs(const string& scaling_unscaling_method, const vector<
 
 void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const vector<Descriptives>& inputs_descriptives)
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
    for(int i = 0; i < scaling_unscaling_methods.size(); i++)
    {
@@ -6024,7 +6027,7 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 
 void DataSet::scale_targets_mean_standard_deviation(const vector<Descriptives>& targets_descriptives)
 {
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 /*
     scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
 */
@@ -6082,7 +6085,7 @@ void DataSet::scale_targets_minimum_maximum(const vector<Descriptives>& targets_
 
     #endif
 
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
     scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
 }
@@ -6124,7 +6127,7 @@ void DataSet::scale_targets_logarithmic(const vector<Descriptives>& targets_desc
 
     #endif
 
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 /*
     scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
 */
@@ -6267,7 +6270,7 @@ void DataSet::unscale_data_minimum_maximum(const vector<Descriptives>& data_desc
 
 void DataSet::unscale_inputs_mean_standard_deviation(const vector<Descriptives>& data_descriptives)
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 /*
     unscale_columns_mean_standard_deviation(data, data_descriptives, input_variables_indices);
 */
@@ -6281,7 +6284,7 @@ void DataSet::unscale_inputs_mean_standard_deviation(const vector<Descriptives>&
 
 void DataSet::unscale_inputs_minimum_maximum(const vector<Descriptives>& data_descriptives)
 {
-    const VectorXi input_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 /*
     unscale_columns_minimum_maximum(data, data_descriptives, input_variables_indices);
 */
@@ -6295,7 +6298,7 @@ void DataSet::unscale_inputs_minimum_maximum(const vector<Descriptives>& data_de
 
 void DataSet::unscale_targets_mean_standard_deviation(const vector<Descriptives>& targets_descriptives)
 {
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 /*
     unscale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
 */
@@ -6309,7 +6312,7 @@ void DataSet::unscale_targets_mean_standard_deviation(const vector<Descriptives>
 
 void DataSet::unscale_targets_minimum_maximum(const vector<Descriptives>& data_descriptives)
 {
-    const VectorXi target_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 /*
     unscale_columns_minimum_maximum(data, data_descriptives, target_variables_indices);
 */
@@ -7408,9 +7411,9 @@ void DataSet::transform_time_series()
     const int inputs_number = get_input_variables_number();
     const int targets_number = get_target_variables_number();
 
-    input_variables_dimensions.resize(VectorXi({inputs_number}));
+    input_variables_dimensions.resize(Tensor<int, 1>({inputs_number}));
 
-    target_variables_dimensions.resize(VectorXi({targets_number}));
+    target_variables_dimensions.resize(Tensor<int, 1>({targets_number}));
 */
 }
 
@@ -7428,7 +7431,7 @@ void DataSet::transform_association()
 
 void DataSet::delete_unused_instances()
 {
-    VectorXi index(get_unused_instances_number());
+    Tensor<int, 1> index(get_unused_instances_number());
 
     int j = 0;
 
@@ -7513,14 +7516,14 @@ void DataSet::load_time_series_data_binary()
 /// of target variables.
 /// @todo Low priority. Return class_distribution is wrong
 
-VectorXi DataSet::calculate_target_distribution() const
+Tensor<int, 1> DataSet::calculate_target_distribution() const
 {
    const int instances_number = get_instances_number();
    const int targets_number = get_target_variables_number();
-   const VectorXi target_variables_indices = get_target_variables_indices();
+   const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
-   VectorXi class_distribution;
-
+   Tensor<int, 1> class_distribution;
+/*
    if(targets_number == 1) // Two classes
    {
       class_distribution.resize(2, 0);
@@ -7565,7 +7568,7 @@ VectorXi DataSet::calculate_target_distribution() const
           }
       }
    }
-
+*/
    return class_distribution;
 }
 
@@ -7576,15 +7579,15 @@ VectorXi DataSet::calculate_target_distribution() const
 /// @param percentage Percentage of instances to be unused.
 /// @todo Low priority. "total unbalanced instances" needs target class distribution function.
 
-VectorXi DataSet::balance_binary_targets_distribution(const double& percentage)
+Tensor<int, 1> DataSet::balance_binary_targets_distribution(const double& percentage)
 {
-    VectorXi unused_instances;
+    Tensor<int, 1> unused_instances;
 
     const int instances_number = get_used_instances_number();
 
-    const VectorXi target_class_distribution = calculate_target_distribution();
+    const Tensor<int, 1> target_class_distribution = calculate_target_distribution();
 /*
-    const VectorXi maximal_indices = OpenNN::maximal_indices(target_class_distribution.to_double_vector(), 2);
+    const Tensor<int, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.to_double_vector(), 2);
 
     const int maximal_target_class_index = maximal_indices[0];
     const int minimal_target_class_index = maximal_indices[1];
@@ -7595,7 +7598,7 @@ VectorXi DataSet::balance_binary_targets_distribution(const double& percentage)
 
     int unbalanced_instances_number = total_unbalanced_instances_number/10;
 
-    VectorXi actual_unused_instances;
+    Tensor<int, 1> actual_unused_instances;
 
     while(total_unbalanced_instances_number != 0)
     {
@@ -7629,26 +7632,26 @@ VectorXi DataSet::balance_binary_targets_distribution(const double& percentage)
 /// It returns a vector with the indices of the instances set unused.
 /// @todo "total unbalanced instances" needs target class distribution function
 
-VectorXi DataSet::balance_multiple_targets_distribution()
+Tensor<int, 1> DataSet::balance_multiple_targets_distribution()
 {
-    VectorXi unused_instances;
+    Tensor<int, 1> unused_instances;
 /*
     const int bins_number = 10;
 
-    const VectorXi target_class_distribution = calculate_target_distribution();
+    const Tensor<int, 1> target_class_distribution = calculate_target_distribution();
 
     const int targets_number = get_target_variables_number();
 
-    const VectorXi inputs_variables_indices = get_input_variables_indices();
-    const VectorXi targets_variables_indices = get_target_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = get_input_variables_indices();
+    const Tensor<int, 1> targets_variables_indices = get_target_variables_indices();
 
-    const VectorXi maximal_target_class_indices = maximal_indices(target_class_distribution.to_double_vector(), targets_number);
+    const Tensor<int, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.to_double_vector(), targets_number);
 
     const int minimal_target_class_index = maximal_target_class_indices[targets_number - 1];
 
     // Target class differences
 
-    VectorXi target_class_differences(targets_number);
+    Tensor<int, 1> target_class_differences(targets_number);
 
     for(int i = 0; i < targets_number; i++)
     {
@@ -7662,18 +7665,18 @@ VectorXi DataSet::balance_multiple_targets_distribution()
     int unbalanced_instances_number;
 
     int instances_number;
-    VectorXi instances_indices;
+    Tensor<int, 1> instances_indices;
 
     vector<Histogram> data_histograms;
 
     Matrix<int, Dynamic, Dynamic> total_frequencies;
-    VectorXi instance_frequencies;
+    Tensor<int, 1> instance_frequencies;
 
     int maximal_difference_index;
     int instance_index;
     int instance_target_index;
 
-    VectorXi unbalanced_instances_indices;
+    Tensor<int, 1> unbalanced_instances_indices;
 
     while(!target_class_differences.is_in(0, 0))
     {
@@ -7740,9 +7743,9 @@ VectorXi DataSet::balance_multiple_targets_distribution()
 /// @param instances_to_unuse Number of instances to set unused.
 /// @todo Low priority. instance frequency
 
-VectorXi DataSet::unuse_most_populated_target(const int& instances_to_unuse)
+Tensor<int, 1> DataSet::unuse_most_populated_target(const int& instances_to_unuse)
 {
-    VectorXi most_populated_instances(instances_to_unuse);
+    Tensor<int, 1> most_populated_instances(instances_to_unuse);
 
     if(instances_to_unuse == 0)
     {
@@ -7755,14 +7758,14 @@ VectorXi DataSet::unuse_most_populated_target(const int& instances_to_unuse)
 
     const int targets_number = get_target_variables_number();
 
-    const VectorXi inputs = get_input_variables_indices();
-    const VectorXi targets = get_target_variables_indices();
+    const Tensor<int, 1> inputs = get_input_variables_indices();
+    const Tensor<int, 1> targets = get_target_variables_indices();
 
-    const VectorXi unused_variables = get_unused_variables_indices();
+    const Tensor<int, 1> unused_variables = get_unused_variables_indices();
 
     // Instances
 
-    const VectorXi used_instances = get_used_instances_indices();
+    const Tensor<int, 1> used_instances = get_used_instances_indices();
 
     const int used_instances_number = get_used_instances_number();
 
@@ -7801,7 +7804,7 @@ VectorXi DataSet::unuse_most_populated_target(const int& instances_to_unuse)
     double value;
     Tensor<type, 1> instance;
 
-    VectorXi instance_frequencies;
+    Tensor<int, 1> instance_frequencies;
 
     Matrix<int, Dynamic, Dynamic> total_instances_frequencies(maximum_frequency, 2);
 
@@ -7853,9 +7856,9 @@ VectorXi DataSet::unuse_most_populated_target(const int& instances_to_unuse)
 /// @param percentage Percentage of the instances to be unused.
 /// @todo Low priority.
 
-VectorXi DataSet::balance_approximation_targets_distribution(const double& percentage)
+Tensor<int, 1> DataSet::balance_approximation_targets_distribution(const double& percentage)
 {
-    VectorXi unused_instances;
+    Tensor<int, 1> unused_instances;
 
     const int instances_number = get_used_instances_number();
 
@@ -7892,14 +7895,14 @@ VectorXi DataSet::balance_approximation_targets_distribution(const double& perce
 /// @param cleaning_parameter Parameter used to detect outliers.
 /// @todo Low priority.
 
-VectorXi DataSet::calculate_Tukey_outliers(const int& column_index, const double& cleaning_parameter) const
+Tensor<int, 1> DataSet::calculate_Tukey_outliers(const int& column_index, const double& cleaning_parameter) const
 {
-    VectorXi outliers;
+    Tensor<int, 1> outliers;
 
     if(columns[column_index].type != Numeric) return outliers;
 
     const int instances_number = get_used_instances_number();
-    const VectorXi instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> instances_indices = get_used_instances_indices();
 
     double interquartile_range;
 /*
@@ -7936,24 +7939,25 @@ VectorXi DataSet::calculate_Tukey_outliers(const int& column_index, const double
 /// @param cleaning_parameter Parameter used to detect outliers.
 /// @todo Low priority.
 
-vector<VectorXi> DataSet::calculate_Tukey_outliers(const double& cleaning_parameter) const
+vector<Tensor<int, 1>> DataSet::calculate_Tukey_outliers(const double& cleaning_parameter) const
 {
     const int instances_number = get_used_instances_number();
-    const VectorXi instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> instances_indices = get_used_instances_indices();
 
     const int variables_number = get_used_variables_number();
-    const VectorXi used_variables_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_variables_indices = get_used_columns_indices();
 
     double interquartile_range;
 
-    vector<VectorXi> return_values(2);
-    return_values[0] = VectorXi(instances_number, 0);
-    return_values[1] = VectorXi(variables_number, 0);
+    vector<Tensor<int, 1>> return_values(2);
+/*
+    return_values[0] = Tensor<int, 1>(instances_number, 0);
+    return_values[1] = Tensor<int, 1>(variables_number, 0);
 
     int variable_index;
 
     vector<BoxPlot> box_plots(variables_number);
-/*
+
     for(int i = 0; i < static_cast<int>(variables_number); i++)
     {
         variable_index = used_variables_indices[static_cast<int>(i)];
@@ -8007,9 +8011,9 @@ vector<VectorXi> DataSet::calculate_Tukey_outliers(const double& cleaning_parame
 
 void DataSet::unuse_Tukey_outliers(const double& cleaning_parameter)
 {
-    const vector<VectorXi> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
+    const vector<Tensor<int, 1>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 /*
-    const VectorXi outliers_instances = outliers_indices[0].get_indices_greater_than(0);
+    const Tensor<int, 1> outliers_instances = outliers_indices[0].get_indices_greater_than(0);
 
     set_instances_unused(outliers_instances);
 */
@@ -8084,7 +8088,7 @@ Tensor<type, 2> DataSet::calculate_lag_plot() const
 
     Tensor<type, 2> lag_plot(instances_number, columns_number);
 
-    VectorXi columns_indices(1, 1, columns_number);
+    Tensor<int, 1> columns_indices(1, 1, columns_number);
 
     lag_plot = data.get_submatrix_columns(columns_indices);
 
@@ -8365,9 +8369,9 @@ bool DataSet::has_data() const
 /// The size must be equal to the number of variables.
 /// @todo Low priority.
 
-VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
+Tensor<int, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
-    const VectorXi used_variables_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_variables_indices = get_used_columns_indices();
 
     const int used_variables_number = get_used_variables_number();
 
@@ -8378,7 +8382,7 @@ VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "VectorXi filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "Tensor<int, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of minimums(" << minimums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -8389,7 +8393,7 @@ VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "VectorXi filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "Tensor<int, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of maximums(" << maximums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -8401,13 +8405,13 @@ VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type
 
     Tensor<type, 1> filtered_indices(instances_number);
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     for(int j = 0; j < used_variables_number; j++)
     {
         const int current_variable_index = used_variables_indices[j];
 
-        const VectorXi current_instances_indices = used_instances_indices;
+        const Tensor<int, 1> current_instances_indices = used_instances_indices;
 
         const int current_instances_number = current_instances_indices.size();
 
@@ -8427,7 +8431,7 @@ VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type
 /*
     return filtered_indices.get_indices_greater_than(0.5);
 */
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 
@@ -8438,15 +8442,15 @@ VectorXi DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type
 /// @param maximum Value that determine the upper limit.
 /// Returns a indices vector.
 
-VectorXi DataSet::filter_column(const int& variable_index, const double& minimum, const double& maximum)
+Tensor<int, 1> DataSet::filter_column(const int& variable_index, const double& minimum, const double& maximum)
 {
     const int instances_number = get_instances_number();
 
     Tensor<type, 1> filtered_indices(instances_number);
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
-    const VectorXi current_instances_indices = used_instances_indices;
+    const Tensor<int, 1> current_instances_indices = used_instances_indices;
 
     const int current_instances_number = current_instances_indices.size();
 
@@ -8465,7 +8469,7 @@ VectorXi DataSet::filter_column(const int& variable_index, const double& minimum
     return(filtered_indices.get_indices_greater_than(0.5));
 */
 
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 
@@ -8476,7 +8480,7 @@ VectorXi DataSet::filter_column(const int& variable_index, const double& minimum
 /// @param maximum Value that determine the upper limit.
 /// Returns a indices vector.
 
-VectorXi DataSet::filter_column(const string& variable_name, const double& minimum, const double& maximum)
+Tensor<int, 1> DataSet::filter_column(const string& variable_name, const double& minimum, const double& maximum)
 {
     const int variable_index = get_variable_index(variable_name);
 
@@ -8484,7 +8488,7 @@ VectorXi DataSet::filter_column(const string& variable_name, const double& minim
 
     Tensor<type, 1> filtered_indices(instances_number);
 
-    const VectorXi used_instances_indices = get_used_instances_indices();
+    const Tensor<int, 1> used_instances_indices = get_used_instances_indices();
 
     const int current_instances_number = used_instances_indices.size();
 
@@ -8503,7 +8507,7 @@ VectorXi DataSet::filter_column(const string& variable_name, const double& minim
     return filtered_indices.get_indices_greater_than(0.5);
 */
 
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 
@@ -8534,7 +8538,7 @@ void DataSet::numeric_to_categorical(const int& variable_index)
 
     data = data.to_categorical(variable_index);
 
-    columns[variable_index].categories_uses = vector<VariableUse>(categories.size(), columns[variable_index].column_use);
+    columns[variable_index].categories_uses = Tensor<VariableUse, 1>(categories.size(), columns[variable_index].column_use);
     columns[variable_index].type = Categorical;
     columns[variable_index].categories = categories.to_string_vector();
 */
@@ -8563,9 +8567,9 @@ void DataSet::impute_missing_values_unuse()
 
 void DataSet::impute_missing_values_mean()
 {
-    const VectorXi used_columns_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_columns_indices = get_used_columns_indices();
 /*
-    const Tensor<type, 1> means = mean_missing_values(data, VectorXi(0,1,data.dimension(0)-1),used_columns_indices);
+    const Tensor<type, 1> means = mean_missing_values(data, Tensor<int, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
     const int variables_number = used_columns_indices.size();
     const int instances_number = get_instances_number();
@@ -8590,9 +8594,9 @@ void DataSet::impute_missing_values_mean()
 
 void DataSet::impute_missing_values_median()
 {
-    const VectorXi used_columns_indices = get_used_columns_indices();
+    const Tensor<int, 1> used_columns_indices = get_used_columns_indices();
 /*
-    const Tensor<type, 1> medians = median_missing_values(data, VectorXi(0,1,data.dimension(0)-1),used_columns_indices);
+    const Tensor<type, 1> medians = median_missing_values(data, Tensor<int, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
     const int variables_number = used_columns_indices.size();
     const int instances_number = get_instances_number();
@@ -9202,7 +9206,7 @@ void DataSet::read_csv_3_complete()
                 }
                 else if(columns[j].type == Categorical)
                 {
-                    const VectorXi variable_indices = get_variable_indices(j);
+                    const Tensor<int, 1> variable_indices = get_variable_indices(j);
 
                     for(int k = 0; k < variable_indices.size(); k++)
                     {
@@ -9218,7 +9222,7 @@ void DataSet::read_csv_3_complete()
                 }
                 else if(columns[j].type == Binary)
                 {
-                    const VectorXi variable_indices = get_variable_indices(j);
+                    const Tensor<int, 1> variable_indices = get_variable_indices(j);
 
                     if(tokens[j] == missing_values_label)
                     {
@@ -9240,7 +9244,7 @@ void DataSet::read_csv_3_complete()
     {
         if(columns[j].type == Categorical)
         {
-            const VectorXi variable_indices = get_variable_indices(j);
+            const Tensor<int, 1> variable_indices = get_variable_indices(j);
 
             for(int k = 0; k < variable_indices.size(); k++)
             {
@@ -9360,7 +9364,7 @@ bool DataSet::has_time_variables() const
 }
 
 
-void DataSet::get_tensor_2_d(const VectorXi& instances_indices, const VectorXi& variables_indices, Tensor<type, 2>& data)
+void DataSet::get_tensor_2_d(const Tensor<int, 1>& instances_indices, const Tensor<int, 1>& variables_indices, Tensor<type, 2>& data)
 {
 
 
@@ -9368,9 +9372,9 @@ void DataSet::get_tensor_2_d(const VectorXi& instances_indices, const VectorXi& 
 }
 
 
-VectorXi DataSet::count_nan_columns() const
+Tensor<int, 1> DataSet::count_nan_columns() const
 {
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 

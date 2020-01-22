@@ -179,7 +179,7 @@ double exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 
 #endif
 /*
-    const VectorXi negative_indices = y.get_indices_less_equal_to(0.0);
+    const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
     const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
     Tensor<type, 1> log_y(y_valid.size());
@@ -1206,7 +1206,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
 
 
-     const VectorXi negative_indices = y.get_indices_less_equal_to(0.0);
+     const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
@@ -1291,7 +1291,7 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
        exponential_regression.a =
           exp(s_y/new_size - exponential_regression.b * s_x/new_size);
 
-     const VectorXi negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<int, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
@@ -1942,7 +1942,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
      } else {
 
-        const VectorXi negative_indices = y.get_indices_less_equal_to(0.0);
+        const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
 
         const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
@@ -2025,7 +2025,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
     } else {
 
-     const VectorXi negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<int, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
@@ -2478,9 +2478,9 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
 
     Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const VectorXi nan_indices_x = x.get_nan_indices();
+    const Tensor<int, 1> nan_indices_x = x.get_nan_indices();
 
-    const VectorXi nan_indices_y = y.get_nan_indices();
+    const Tensor<int, 1> nan_indices_y = y.get_nan_indices();
 
     for(int i = 0; i < nan_indices_x.size(); i++)
     {
@@ -2880,7 +2880,7 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
     Tensor<type, 1> indices_this = vector.calculate_less_rank().to_double_vector();
 
     const Tensor<type, 1> this_unique = vector.get_unique_elements();
-    const VectorXi this_unique_frecuency = vector.count_unique();
+    const Tensor<int, 1> this_unique_frecuency = vector.count_unique();
 
     const int n = vector.size();
 
@@ -3013,7 +3013,7 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 
-Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>& matrix, const VectorXi& indices1, const VectorXi& indices2)
+Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>& matrix, const Tensor<int, 1>& indices1, const Tensor<int, 1>& indices2)
 {
     Matrix<int, Dynamic, Dynamic> contingency_table(indices1.size(), indices2.size());
 
@@ -3131,7 +3131,7 @@ double karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string,
 
     const double chi_squared_exp = chi_square_test(contingency_table.to_double_matrix());
 
-    VectorXi categories(2);
+    Tensor<int, 1> categories(2);
     categories[0] = x.get_unique_elements().size();
     categories[1] = y.get_unique_elements().size();
 
@@ -3288,9 +3288,9 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 
     Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const VectorXi nan_indices_x = x.get_nan_indices();
+    const Tensor<int, 1> nan_indices_x = x.get_nan_indices();
 
-    const VectorXi nan_indices_y = y.get_nan_indices();
+    const Tensor<int, 1> nan_indices_y = y.get_nan_indices();
 
     for(int i = 0; i < nan_indices_x.size(); i++)
     {
@@ -3402,7 +3402,7 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova(const Tensor<type, 2>& matrix,const int& index, const VectorXi& indices)
+double one_way_anova(const Tensor<type, 2>& matrix,const int& index, const Tensor<int, 1>& indices)
 {
     /*
     const double total_average = matrix.calculate_sum() / matrix.dimension(0);
@@ -3748,7 +3748,7 @@ double f_snedecor_critical_point(const Tensor<type, 2>& matrix)
 double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 {
 /*
-    VectorXi nan_indices = matrix.get_nan_indices();
+    Tensor<int, 1> nan_indices = matrix.get_nan_indices();
     const int new_size = matrix.dimension(0) - nan_indices.size();
 
     Tensor<type, 2> new_matrix(new_size,matrix.dimension(1));
@@ -3797,7 +3797,7 @@ double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index, const VectorXi& indices)
+double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index, const Tensor<int, 1>& indices)
 {
 /*
     const double total_average = matrix.calculate_sum() / matrix.dimension(0);

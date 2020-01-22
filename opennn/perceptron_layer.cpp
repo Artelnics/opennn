@@ -59,11 +59,11 @@ PerceptronLayer::~PerceptronLayer()
 }
 
 
-VectorXi PerceptronLayer::get_input_variables_dimensions() const
+Tensor<int, 1> PerceptronLayer::get_input_variables_dimensions() const
 {
     const int inputs_number = get_inputs_number();
 
-    return VectorXi(inputs_number);
+    return Tensor<int, 1>(inputs_number);
 }
 
 

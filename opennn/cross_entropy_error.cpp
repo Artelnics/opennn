@@ -90,7 +90,7 @@ CrossEntropyError::~CrossEntropyError()
 /// Returns the cross entropy error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double CrossEntropyError::calculate_batch_error(const VectorXi& batch_indices) const
+double CrossEntropyError::calculate_batch_error(const Tensor<int, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -112,7 +112,7 @@ check();
 }
 
 
-double CrossEntropyError::calculate_batch_error(const VectorXi& batch_indices, const Tensor<type, 1>& parameters) const
+double CrossEntropyError::calculate_batch_error(const Tensor<int, 1>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 

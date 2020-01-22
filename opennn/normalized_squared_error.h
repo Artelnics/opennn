@@ -85,8 +85,8 @@ public:
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const VectorXi&) const;
-   double calculate_batch_error(const VectorXi&, const Tensor<type, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -163,7 +163,7 @@ public:
 
    Tensor<type, 1> calculate_squared_errors() const;
 
-   VectorXi calculate_maximal_errors(const int& = 10) const;
+   Tensor<int, 1> calculate_maximal_errors(const int& = 10) const;
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 

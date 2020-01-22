@@ -58,9 +58,12 @@ UnscalingLayer::~UnscalingLayer()
 }
 
 
-VectorXi UnscalingLayer::get_input_variables_dimensions() const
+Tensor<int, 1> UnscalingLayer::get_input_variables_dimensions() const
 {
-    return VectorXi(1, descriptives.size());
+/*
+    return Tensor<int, 1>(1, descriptives.size());
+*/
+    return Tensor<int, 1>();
 }
 
 

@@ -691,7 +691,7 @@ Tensor<type, 2> linear_derivatives(const Tensor<type, 2>& x)
 
      const int columns_number = x.dimension(1);
 
-     Tensor<type, 2> y(VectorXi({columns_number, columns_number, n}));
+     Tensor<type, 2> y(Tensor<int, 1>({columns_number, columns_number, n}));
 
      for(int i = 0; i < n; i++)
      {
@@ -1072,7 +1072,7 @@ Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>& x)
 
  const int columns_number = x.dimension(1);
 
-// VectorXi dimensions = {columns_number, columns_number, n};
+// Tensor<int, 1> dimensions = {columns_number, columns_number, n};
 
 // Tensor<type, 2> y(columns_number, columns_number, n);
 
@@ -1176,11 +1176,11 @@ Tensor<type, 2> softmax_columns(const Tensor<type, 2>& matrix)
 /// This method converts the values of the vector to be binary.
 /// The threshold value used is 0.5.
 
-vector<bool> binary(const Tensor<type, 1>& vector)
+Tensor<bool, 1> binary(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();
 
-  std::vector<bool> result(this_size);
+  Tensor<bool, 1> result(this_size);
 
   for(int i = 0; i < this_size; i++) {
     if(result[i] < 0.5) {
