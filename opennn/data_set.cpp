@@ -8638,33 +8638,17 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    cout << "read_csv_1()" << endl;
-
-    for(int i = 0; i < columns.size(); i++)
-    {
-        cout << "column " << i << ": " << columns[i].name << endl;
-    }
-
-    print_data_file_preview();
-
-
-
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
 
-        cout << "read_csv_2()" << endl;
-
         read_csv_3_simple();
-
-        cout << "read_csv_3()" << endl;
     }
     else
     {
         read_csv_2_complete();
         read_csv_3_complete();
     }
-
 
 /*
 
@@ -9373,6 +9357,33 @@ void DataSet::get_tensor_2_d(const vector<int>& instances_indices, const vector<
 
 
 
+}
+
+
+vector<int> DataSet::count_nan_columns() const
+{
+    return vector<int>();
+}
+
+
+int DataSet::count_rows_with_nan() const
+{
+    int rows_with_nan = 0;
+/*
+    Eigen::array<int, 2> extents = {0, static_cast<int>(data.dimension(1))};
+
+    for(int row_index = 0; row_index < data.dimension(0); row_index++)
+    {
+        Eigen::array<int, 2> offsets = {row_index, 0};
+
+        Tensor<type, 1> row = data.slice(offsets, extents);
+
+        row.isnan();
+
+
+    }
+*/
+    return rows_with_nan;
 }
 
 }

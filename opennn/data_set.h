@@ -791,6 +791,9 @@ public:
 
    void get_tensor_2_d(const vector<int>&, const vector<int>&, Tensor<type, 2>&);
 
+   vector<int> count_nan_columns() const;
+   int count_rows_with_nan() const;
+
 private:
 
    /// Data file name.
