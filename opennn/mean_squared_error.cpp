@@ -135,11 +135,11 @@ check();
         targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
+
         const double batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
-*/
+
     }
 
     return training_error/training_instances_number;
