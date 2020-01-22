@@ -1145,7 +1145,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 
-string UnscalingLayer::write_none_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_none_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1164,7 +1164,7 @@ string UnscalingLayer::write_none_expression(const vector<string>& inputs_names,
 }
 
 
-string UnscalingLayer::write_none_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_none_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1176,13 +1176,13 @@ string UnscalingLayer::write_none_expression_php(const vector<string>& inputs_na
 }
 
 
-// string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const method
+// string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
 
 /// Returns a string with the expression of the unscaling process with the minimum and maximum method. 
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 
-string UnscalingLayer::write_minimum_maximum_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1190,7 +1190,7 @@ string UnscalingLayer::write_minimum_maximum_expression(const vector<string>& in
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1215,7 +1215,7 @@ string UnscalingLayer::write_minimum_maximum_expression(const vector<string>& in
 }
 
 
-string UnscalingLayer::write_minimum_maximum_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_minimum_maximum_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1223,7 +1223,7 @@ string UnscalingLayer::write_minimum_maximum_expression_php(const vector<string>
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1248,13 +1248,13 @@ string UnscalingLayer::write_minimum_maximum_expression_php(const vector<string>
 }
 
 
-// string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const method
+// string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
 
 /// Returns a string with the expression of the unscaling process with the mean and standard deviation method. 
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 
-string UnscalingLayer::write_mean_standard_deviation_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1262,7 +1262,7 @@ string UnscalingLayer::write_mean_standard_deviation_expression(const vector<str
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1287,7 +1287,7 @@ string UnscalingLayer::write_mean_standard_deviation_expression(const vector<str
 }
 
 
-string UnscalingLayer::write_mean_standard_deviation_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_mean_standard_deviation_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1295,7 +1295,7 @@ string UnscalingLayer::write_mean_standard_deviation_expression_php(const vector
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1317,7 +1317,7 @@ string UnscalingLayer::write_mean_standard_deviation_expression_php(const vector
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 
-string UnscalingLayer::write_logarithmic_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_logarithmic_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1325,7 +1325,7 @@ string UnscalingLayer::write_logarithmic_expression(const vector<string>& inputs
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1350,7 +1350,7 @@ string UnscalingLayer::write_logarithmic_expression(const vector<string>& inputs
 }
 
 
-string UnscalingLayer::write_logarithmic_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_logarithmic_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -1358,7 +1358,7 @@ string UnscalingLayer::write_logarithmic_expression_php(const vector<string>& in
 
     buffer.precision(10);
 
-    vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
     for(int i = 0; i < neurons_number; i++)
     {
@@ -1376,13 +1376,13 @@ string UnscalingLayer::write_logarithmic_expression_php(const vector<string>& in
 }
 
 
-// string write_expression(const vector<string>&, const vector<string>&) const method
+// string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
 
 /// Returns a string with the expression of the unscaling process in this layer. 
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
 
-string UnscalingLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(unscaling_method)
     {
@@ -1410,14 +1410,14 @@ string UnscalingLayer::write_expression(const vector<string>& inputs_names, cons
     ostringstream buffer;
 
     buffer << "OpenNN Exception: UnscalingLayer class.\n"
-           << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+           << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
            << "Unknown unscaling method.\n";
 
     throw logic_error(buffer.str());
 }
 
 
-string UnscalingLayer::write_expression_php(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string UnscalingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(unscaling_method)
     {
@@ -1446,7 +1446,7 @@ string UnscalingLayer::write_expression_php(const vector<string>& inputs_names, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: UnscalingLayer class.\n"
-           << "string write_expression_php(const vector<string>&, const vector<string>&) const method.\n"
+           << "string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
            << "Unknown unscaling method.\n";
 
     throw logic_error(buffer.str());

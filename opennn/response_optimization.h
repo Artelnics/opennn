@@ -80,8 +80,8 @@ public:
            const int inputs_number = neural_network_pointer->get_inputs_number();
            const int outputs_number = neural_network_pointer->get_outputs_number();
 
-           const vector<string> inputs_names = neural_network_pointer->get_inputs_names();
-           const vector<string> outputs_names = neural_network_pointer->get_outputs_names();
+           const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+           const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
 
            for(int i = 0; i < inputs_number; i++)
            {
@@ -116,9 +116,9 @@ public:
    void set_input_condition(const int&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const int&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   void set_inputs_outputs_conditions(const vector<string>&, const vector<string>&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_inputs_outputs_conditions(const Tensor<string, 1>&, const Tensor<string, 1>&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   vector<Condition> get_conditions(const vector<string>&) const;
+   vector<Condition> get_conditions(const Tensor<string, 1>&) const;
    vector<Tensor<type, 1>> get_values_conditions(const vector<Condition>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_inputs() const;

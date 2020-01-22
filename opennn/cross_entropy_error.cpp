@@ -147,7 +147,7 @@ check();
 
     // Data set
 /*
-    const int batch_instances_number = batch.inputs.dimension(0);
+    const Index batch_instances_number = batch.inputs.dimension(0);
 
     // Neural network
 

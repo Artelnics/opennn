@@ -82,8 +82,8 @@ public:
 
    const vector<ScalingMethod> get_scaling_methods() const;
 
-   vector<string> write_scaling_methods() const;
-   vector<string> write_scaling_methods_text() const;
+   Tensor<string, 1> write_scaling_methods() const;
+   Tensor<string, 1> write_scaling_methods_text() const;
 
    // Display messages
 
@@ -119,7 +119,7 @@ public:
    // Scaling method
 
    void set_scaling_methods(const vector<ScalingMethod>&);
-   void set_scaling_methods(const vector<string>&);
+   void set_scaling_methods(const Tensor<string, 1>&);
 
    void set_scaling_methods(const ScalingMethod&);
    void set_scaling_methods(const string&);
@@ -148,15 +148,15 @@ public:
 
    // Expression methods
 
-   string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
+   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    // Serialization methods
 

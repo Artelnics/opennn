@@ -158,7 +158,7 @@ DataSet::Column::Column()
 DataSet::Column::Column(const string& new_name,
                         const VariableUse& new_column_use,
                         const ColumnType& new_type,
-                        const vector<string>& new_categories,
+                        const Tensor<string, 1>& new_categories,
                         const vector<VariableUse>& new_categories_uses)
 {
     name = new_name;
@@ -258,7 +258,7 @@ void DataSet::Column::set_type(const string& new_column_type)
 /// Sets the categories uses in the data set.
 /// @param new_categories_uses String vector that contains the new categories of the data set.
 
-void DataSet::Column::set_categories_uses(const vector<string>& new_categories_uses)
+void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categories_uses)
 {
     const int new_categories_uses_number = new_categories_uses.size();
 
@@ -288,7 +288,7 @@ void DataSet::Column::set_categories_uses(const vector<string>& new_categories_u
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void Column::set_categories_uses(const vector<string>&) method.\n"
+                   << "void Column::set_categories_uses(const Tensor<string, 1>&) method.\n"
                    << "Category use not valid (" << new_categories_uses[i] << ").\n";
 
             throw logic_error(buffer.str());
@@ -525,13 +525,15 @@ int DataSet::Column::get_categories_number() const
 
 /// Returns a string vector that contains the names of the used variables in the data set.
 
-vector<string> DataSet::Column::get_used_variables_names() const
+Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 {
-    vector<string> used_variables_names;
+    Tensor<string, 1> used_variables_names;
 
     if(type != Categorical && column_use != UnusedVariable)
     {
+/*
         used_variables_names.resize(1, name);
+*/
     }
     else if(type == Categorical)
     {
@@ -539,7 +541,9 @@ vector<string> DataSet::Column::get_used_variables_names() const
         {
             if(categories_uses[i] != UnusedVariable)
             {
+/*
                 used_variables_names.push_back(categories[i]);
+*/
             }
         }
     }
@@ -1215,7 +1219,7 @@ void DataSet::set_instances_uses(const vector<InstanceUse>& new_uses)
 /// Possible values for the elements are "Training", "Selection", "Testing" and "Unused".
 /// The size of given vector must be equal to the number of instances.
 
-void DataSet::set_instances_uses(const vector<string>& new_uses)
+void DataSet::set_instances_uses(const Tensor<string, 1>& new_uses)
 {
     const int instances_number = get_instances_number();
 
@@ -1228,7 +1232,7 @@ void DataSet::set_instances_uses(const vector<string>& new_uses)
    if(new_uses_size != instances_number)
    {
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "void set_instances_uses(const vector<string>&) method.\n"
+             << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
              << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -1257,7 +1261,7 @@ void DataSet::set_instances_uses(const vector<string>& new_uses)
       else
       {
          buffer << "OpenNN Exception DataSet class.\n"
-                << "void set_instances_uses(const vector<string>&) method.\n"
+                << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
                 << "Unknown use: " << new_uses[i] << ".\n";
 
          throw logic_error(buffer.str());
@@ -1710,11 +1714,11 @@ string DataSet::get_variable_name(const int& variable_index) const
 /// Returns a string vector with the names of all the variables in the data set.
 /// The size of the vector is the number of variables.
 
-vector<string> DataSet::get_variables_names() const
+Tensor<string, 1> DataSet::get_variables_names() const
 {
     const int variables_number = get_variables_number();
 
-    vector<string> variables_names(variables_number);
+    Tensor<string, 1> variables_names(variables_number);
 
     int index = 0;
 /*
@@ -1739,13 +1743,13 @@ vector<string> DataSet::get_variables_names() const
 /// Returns the names of the input variables in the data set.
 /// The size of the vector is the number of input variables.
 
-vector<string> DataSet::get_input_variables_names() const
+Tensor<string, 1> DataSet::get_input_variables_names() const
 {
    const int input_variables_number = get_input_variables_number();
 
    const VectorXi input_columns_indices = get_input_columns_indices();
 
-   vector<string> input_variables_names(input_variables_number);
+   Tensor<string, 1> input_variables_names(input_variables_number);
 
    int index = 0;
 /*
@@ -1753,7 +1757,7 @@ vector<string> DataSet::get_input_variables_names() const
    {
        int input_index = input_columns_indices[i];
 
-       const vector<string> current_used_variables_names = columns[input_index].get_used_variables_names();
+       const Tensor<string, 1> current_used_variables_names = columns[input_index].get_used_variables_names();
 
        input_variables_names.embed(index, current_used_variables_names);
 
@@ -1767,13 +1771,13 @@ vector<string> DataSet::get_input_variables_names() const
 /// Returns the names of the target variables in the data set.
 /// The size of the vector is the number of target variables.
 
-vector<string> DataSet::get_target_variables_names() const
+Tensor<string, 1> DataSet::get_target_variables_names() const
 {
     const int target_variables_number = get_target_variables_number();
 
     const VectorXi target_columns_indices = get_target_columns_indices();
 
-    vector<string> target_variables_names(target_variables_number);
+    Tensor<string, 1> target_variables_names(target_variables_number);
 
     int index = 0;
 
@@ -1781,7 +1785,7 @@ vector<string> DataSet::get_target_variables_names() const
     {
         int target_index = target_columns_indices[i];
 
-        const vector<string> current_used_variables_names = columns[target_index].get_used_variables_names();
+        const Tensor<string, 1> current_used_variables_names = columns[target_index].get_used_variables_names();
 /*
         target_variables_names.embed(index, current_used_variables_names);
 */
@@ -1920,11 +1924,11 @@ VectorXi DataSet::get_used_columns_indices() const
 
 /// Returns a string vector that contains the names of the columns.
 
-vector<string> DataSet::get_columns_names() const
+Tensor<string, 1> DataSet::get_columns_names() const
 {
     const int columns_number = get_columns_number();
 
-    vector<string> columns_names(columns_number);
+    Tensor<string, 1> columns_names(columns_number);
 
     for(int i = 0; i < columns_number; i++)
     {
@@ -1937,11 +1941,11 @@ vector<string> DataSet::get_columns_names() const
 
 /// Returns a string vector that contains the names of the columns whose uses are Input.
 
-vector<string> DataSet::get_input_columns_names() const
+Tensor<string, 1> DataSet::get_input_columns_names() const
 {
     const int input_columns_number = get_input_columns_number();
 
-    vector<string> input_columns_names(input_columns_number);
+    Tensor<string, 1> input_columns_names(input_columns_number);
 
     int index = 0;
 
@@ -1960,11 +1964,11 @@ vector<string> DataSet::get_input_columns_names() const
 
 /// Returns a string vector which contains the names of the columns whose uses are Target.
 
-vector<string> DataSet::get_target_columns_names() const
+Tensor<string, 1> DataSet::get_target_columns_names() const
 {
     const int target_columns_number = get_target_columns_number();
 
-    vector<string> target_columns_names(target_columns_number);
+    Tensor<string, 1> target_columns_names(target_columns_number);
 
     int index = 0;
 
@@ -1984,12 +1988,12 @@ vector<string> DataSet::get_target_columns_names() const
 
 /// Returns a string vector which contains the names of the columns used whether Input, Target or Time.
 
-vector<string> DataSet::get_used_columns_names() const
+Tensor<string, 1> DataSet::get_used_columns_names() const
 {
     const int columns_number = get_columns_number();
     const int used_columns_number = get_used_columns_number();
 
-    vector<string> names(used_columns_number);
+    Tensor<string, 1> names(used_columns_number);
 
     int index = 0 ;
 
@@ -2232,7 +2236,7 @@ int DataSet::get_unused_variables_number() const
 int DataSet::get_variable_index(const string& name) const
 {
 /*
-    const vector<string> names = get_variables_names();
+    const Tensor<string, 1> names = get_variables_names();
 
     const int index = names.get_first_index(name);
 
@@ -2380,7 +2384,7 @@ VectorXi DataSet::get_target_variables_indices() const
 /// @param new_columns_uses String vector that contains the new uses to be set,
 /// note that this vector needs to be the size of the number of columns in the data set.
 
-void DataSet::set_columns_uses(const vector<string>& new_columns_uses)
+void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 {
     const int new_columns_uses_size = new_columns_uses.size();
 
@@ -2389,7 +2393,7 @@ void DataSet::set_columns_uses(const vector<string>& new_columns_uses)
         ostringstream buffer;
 
         buffer << "OpenNN Exception DataSet class.\n"
-               << "void set_columns_uses(const vector<string>&) method.\n"
+               << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
                << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
 
         throw logic_error(buffer.str());
@@ -2418,7 +2422,7 @@ void DataSet::set_columns_uses(const vector<VariableUse>& new_columns_uses)
         ostringstream buffer;
 
         buffer << "OpenNN Exception DataSet class.\n"
-               << "void set_columns_uses(const vector<string>&) method.\n"
+               << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
                << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
 
         throw logic_error(buffer.str());
@@ -2546,7 +2550,7 @@ void DataSet::set_variable_name(const int& variable_index, const string& new_var
 /// The size of that vector must be equal to the total number of variables.
 /// @param new_names Name of variables.
 
-void DataSet::set_variables_names(const vector<string>& new_variables_names)
+void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -2559,7 +2563,7 @@ void DataSet::set_variables_names(const vector<string>& new_variables_names)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Variables class.\n"
-             << "void set_names(const vector<string>&) method.\n"
+             << "void set_names(const Tensor<string, 1>&) method.\n"
              << "Size (" << size << ") must be equal to number of variables (" << variables_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -2594,7 +2598,7 @@ void DataSet::set_variables_names(const vector<string>& new_variables_names)
 /// The size of that vector must be equal to the total number of variables.
 /// @param new_names Name of variables.
 
-void DataSet::set_columns_names(const vector<string>& new_names)
+void DataSet::set_columns_names(const Tensor<string, 1>& new_names)
 {
     const int new_names_size = new_names.size();
     const int columns_number = get_columns_number();
@@ -2604,7 +2608,7 @@ void DataSet::set_columns_names(const vector<string>& new_names)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_columns_names(const vector<string>&).\n"
+               << "void set_columns_names(const Tensor<string, 1>&).\n"
                << "Size of names (" << new_names.size() << ") is not equal to columns number (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -3464,7 +3468,7 @@ Tensor<type, 1> DataSet::get_variable_data(const int& index) const
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 {
 /*
-    const vector<string> variable_names = get_variables_names();
+    const Tensor<string, 1> variable_names = get_variables_names();
 
     const VectorXi variable_index = variable_names.get_indices_equal_to(variable_name);
 
@@ -3539,7 +3543,7 @@ Tensor<type, 1> DataSet::get_variable_data(const int& variable_index, const Vect
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const VectorXi& instances_indices) const
 {
     /*
-    const vector<string> variable_names = get_variables_names();
+    const Tensor<string, 1> variable_names = get_variables_names();
 
     const VectorXi variable_index = variable_names.get_indices_equal_to(variable_name);
 
@@ -4090,7 +4094,7 @@ void DataSet::set_instance(const int& instance_index, const Tensor<type, 1>& ins
 /// Removes the input of target indices of that variables with zero standard deviation.
 /// It might change the size of the vectors containing the inputs and targets indices.
 
-vector<string> DataSet::unuse_constant_columns()
+Tensor<string, 1> DataSet::unuse_constant_columns()
 {
    const int columns_number = get_columns_number();
 
@@ -4101,7 +4105,7 @@ vector<string> DataSet::unuse_constant_columns()
       ostringstream buffer;
 
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "vector<string> unuse_constant_columns() method.\n"
+             << "Tensor<string, 1> unuse_constant_columns() method.\n"
              << "Number of columns is zero.\n";
 
       throw logic_error(buffer.str());
@@ -4109,7 +4113,7 @@ vector<string> DataSet::unuse_constant_columns()
 
    #endif
 
-   vector<string> constant_columns;
+   Tensor<string, 1> constant_columns;
 /*
    for(int i = 0; i < columns_number; i++)
    {
@@ -4235,7 +4239,7 @@ VectorXi DataSet::unuse_non_significant_input_columns()
 /// Returns a vector with the unuse variables by missing values method.
 /// @param missing_ratio Ratio to find the missing variables.
 
-vector<string> DataSet::unuse_columns_missing_values(const double& missing_ratio)
+Tensor<string, 1> DataSet::unuse_columns_missing_values(const double& missing_ratio)
 {
     const int columns_number = get_columns_number();
 
@@ -4245,7 +4249,7 @@ vector<string> DataSet::unuse_columns_missing_values(const double& missing_ratio
 
     const Tensor<type, 1> columns_missing_ratios = columns_missing_values.to_double_vector()/(static_cast<double>(instances_number)-1.0);
 */
-    vector<string> unused_variables;
+    Tensor<string, 1> unused_variables;
 /*
     for(int i = 0; i < columns_number; i++)
     {
@@ -5047,8 +5051,8 @@ void DataSet::print_input_target_columns_correlations() const
     const int inputs_number = get_input_variables_number();
     const int targets_number = get_target_variables_number();
 
-    const vector<string> inputs_names = get_input_variables_names();
-    const vector<string> targets_name = get_target_variables_names();
+    const Tensor<string, 1> inputs_names = get_input_variables_names();
+    const Tensor<string, 1> targets_name = get_target_variables_names();
 
     const Matrix<RegressionResults, Dynamic, Dynamic> correlations;// = calculate_input_target_columns_correlations();
 
@@ -5071,8 +5075,8 @@ void DataSet::print_top_input_target_columns_correlations(const int& number) con
     const int inputs_number = get_input_columns_number();
     const int targets_number = get_target_columns_number();
 
-    const vector<string> inputs_names = get_input_variables_names();
-    const vector<string> targets_name = get_target_variables_names();
+    const Tensor<string, 1> inputs_names = get_input_variables_names();
+    const Tensor<string, 1> targets_name = get_target_variables_names();
 
     const Matrix<RegressionResults, Dynamic, Dynamic> correlations;// = calculate_input_target_columns_correlations();
 
@@ -5223,7 +5227,7 @@ void DataSet::print_top_inputs_correlations(const int& number) const
 {
     const int variables_number = get_input_variables_number();
 
-    const vector<string> variables_name = get_input_variables_names();
+    const Tensor<string, 1> variables_name = get_input_variables_names();
 
     const Tensor<type, 2> variables_correlations = calculate_inputs_correlations();
 
@@ -5591,13 +5595,13 @@ void DataSet::subtract_inputs_mean()
 /// of the input variables.
 /// @todo Low priority.
 
-vector<string> DataSet::calculate_default_scaling_methods() const
+Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 {
     const VectorXi used_inputs_indices = get_input_variables_indices();
     const int used_inputs_number = used_inputs_indices.size();
 
     int current_distribution;
-    vector<string> scaling_methods(used_inputs_number);
+    Tensor<string, 1> scaling_methods(used_inputs_number);
 /*
 #pragma omp parallel for private(current_distribution)
 
@@ -5966,7 +5970,7 @@ void DataSet::scale_inputs(const string& scaling_unscaling_method, const vector<
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_inputs(const vector<string>& scaling_unscaling_methods, const vector<Descriptives>& inputs_descriptives)
+void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const vector<Descriptives>& inputs_descriptives)
 {
     const VectorXi input_variables_indices = get_input_variables_indices();
 
@@ -6003,7 +6007,7 @@ void DataSet::scale_inputs(const vector<string>& scaling_unscaling_methods, cons
              ostringstream buffer;
 
              buffer << "OpenNN Exception: DataSet class\n"
-                    << "void scale_inputs(const vector<string>&, const vector<Descriptives>&) method.\n"
+                    << "void scale_inputs(const Tensor<string, 1>&, const vector<Descriptives>&) method.\n"
                     << "Unknown scaling and unscaling method: " << scaling_unscaling_methods[i] << "\n";
 
              throw logic_error(buffer.str());
@@ -8679,9 +8683,9 @@ cout << "read_csv_1" << endl;
 }
 
 
-vector<string> DataSet::get_default_columns_names(const int& columns_number)
+Tensor<string, 1> DataSet::get_default_columns_names(const int& columns_number)
 {
-    vector<string> columns_names(columns_number);
+    Tensor<string, 1> columns_names(columns_number);
 
     for(int i = 0; i < columns_number; i++)
     {
@@ -8743,7 +8747,7 @@ void DataSet::read_csv_1()
     file.close();
 
     // Check empty file
-
+/*
     if(data_file_preview[0].empty())
     {
         ostringstream buffer;
@@ -8754,7 +8758,7 @@ void DataSet::read_csv_1()
 
         throw logic_error(buffer.str());
     }
-
+*/
     // Set rows labels and columns names
 
     if(contains_substring(data_file_preview[0][0], "id"))
@@ -8918,7 +8922,7 @@ void DataSet::read_csv_3_simple()
 
     string line;
 
-    vector<string> tokens;
+    Tensor<string, 1> tokens;
 
     int instance_index = 0;
 
@@ -8996,7 +9000,7 @@ void DataSet::read_csv_2_complete()
 
     string line;
 
-    vector<string> tokens;
+    Tensor<string, 1> tokens;
 
     int lines_count = 0;
     int tokens_count;
@@ -9054,7 +9058,7 @@ void DataSet::read_csv_2_complete()
         for(unsigned j = 0; j < columns_number; j++)
         {
             trim(tokens[j]);
-
+/*
             if(columns[j].type == Categorical)
             {
                 if(find(columns[j].categories.begin(), columns[j].categories.end(), tokens[j]) == columns[j].categories.end())
@@ -9065,7 +9069,7 @@ void DataSet::read_csv_2_complete()
                     columns[j].categories_uses.push_back(Input);
                 }
             }
-
+*/
         }
 
         lines_count++;
@@ -9121,7 +9125,7 @@ void DataSet::read_csv_3_complete()
 
     string line;
 
-    vector<string> tokens;
+    Tensor<string, 1> tokens;
 
     string token;
 

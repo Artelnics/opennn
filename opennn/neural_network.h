@@ -223,11 +223,11 @@ public:
 
    bool is_empty() const;  
 
-   vector<string> get_inputs_names() const;
+   Tensor<string, 1> get_inputs_names() const;
    string get_input_name(const int&) const;
    int get_input_index(const string&) const;
 
-   vector<string> get_outputs_names() const;
+   Tensor<string, 1> get_outputs_names() const;
    string get_output_name(const int&) const;
    int get_output_index(const string&) const;
 
@@ -259,8 +259,8 @@ public:
    void set(const string&);
    void set(const NeuralNetwork&);
 
-   void set_inputs_names(const vector<string>&);
-   void set_outputs_names(const vector<string>&);
+   void set_inputs_names(const Tensor<string, 1>&);
+   void set_outputs_names(const Tensor<string, 1>&);
 
    void set_inputs_number(const int&);
    void set_inputs_number(const vector<bool>&);
@@ -395,11 +395,11 @@ protected:
 
    /// Names of inputs
 
-   vector<string> inputs_names;
+   Tensor<string, 1> inputs_names;
 
    /// Names of ouputs
 
-   vector<string> outputs_names;
+   Tensor<string, 1> outputs_names;
 
    /// Layers
 

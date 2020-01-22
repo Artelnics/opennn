@@ -295,7 +295,7 @@ void TestingAnalysis::print_linear_regression_correlations() const
 {
     const vector<RegressionResults> linear_regression = this->linear_regression();
 
-    const vector<string> targets_name = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
     const int targets_number = linear_regression.size();
 
@@ -310,7 +310,7 @@ vector<double> TestingAnalysis::get_linear_regression_correlations_std() const
 {
     const vector<RegressionResults> linear_regression = this->linear_regression();
 
-    const vector<string> targets_name = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
     const int targets_number = linear_regression.size();
 
@@ -668,7 +668,7 @@ void TestingAnalysis::print_error_data_statistics() const
 
     const int targets_number = data_set_pointer->get_target_variables_number();
 
-    const vector<string> targets_name = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
     const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_statistics();
 

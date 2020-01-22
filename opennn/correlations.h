@@ -195,7 +195,7 @@ struct CorrelationResults
 
     // Contingency tables
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(const vector<string>&, const vector<string>&);
+    Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
     Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>&);
     Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>&, const VectorXi&, const VectorXi&);
 
@@ -203,7 +203,7 @@ struct CorrelationResults
 
     double chi_square_critical_point(const double&, const double&);
 
-    double karl_pearson_correlation(const vector<string>&, const vector<string>&);
+    double karl_pearson_correlation(const Tensor<string, 1>&, const Tensor<string, 1>&);
     double karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
     double karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
 

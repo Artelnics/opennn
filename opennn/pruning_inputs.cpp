@@ -214,7 +214,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const int used_columns_number = data_set_pointer->get_used_columns_number();
 
-    const vector<string> used_columns_names = data_set_pointer->get_used_columns_names();
+    const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
@@ -437,11 +437,12 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 /// Writes as matrix of strings the most representative atributes.
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
-{
+{  
+/*
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
    // Trials number
 
@@ -562,11 +563,14 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
+
     return string_matrix;
+*/
+    return Tensor<string, 2>();
+
 }
 
 

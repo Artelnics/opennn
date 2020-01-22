@@ -534,13 +534,13 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const int&
 {
    ostringstream buffer;
 
-   vector<string> names;
-   vector<string> values;
+   Tensor<string, 1> names;
+   Tensor<string, 1> values;
 
    // Final parameters norm
-
-   names.push_back("Final parameters norm");
 /*
+   names.push_back("Final parameters norm");
+
    buffer.str("");
    buffer << setprecision(precision) << final_parameters_norm;
 

@@ -1032,7 +1032,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     // Neural network
 
