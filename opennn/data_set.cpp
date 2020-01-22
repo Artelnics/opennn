@@ -8638,12 +8638,13 @@ void DataSet::scrub_missing_values()
 void DataSet::read_csv()
 {
     read_csv_1();
-
+cout << "read_csv_1" << endl;
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
-
+        cout << "read_csv_2" << endl;
         read_csv_3_simple();
+        cout << "read_csv_3" << endl;
     }
     else
     {
@@ -8885,6 +8886,8 @@ void DataSet::read_csv_2_simple()
     file.close();
 
     data.resize(instances_count, columns_number);
+
+    cout << "Resize: " << instances_count << "; " << columns_number << endl;
 
     set_default_columns_uses();
 
@@ -9370,20 +9373,28 @@ VectorXi DataSet::count_nan_columns() const
 int DataSet::count_rows_with_nan() const
 {
     int rows_with_nan = 0;
-/*
-    Eigen::array<int, 2> extents = {0, static_cast<int>(data.dimension(1))};
 
-    for(int row_index = 0; row_index < data.dimension(0); row_index++)
+    const int rows_number = static_cast<int>(data.dimension(0));
+    const int columns_number = static_cast<int>(data.dimension(1));
+
+    bool has_nan = true;
+
+    for(int row_index = 0; row_index < rows_number; row_index++)
     {
-        Eigen::array<int, 2> offsets = {row_index, 0};
+        has_nan = false;
 
-        Tensor<type, 1> row = data.slice(offsets, extents);
+        for(int column_index = 0; column_index < columns_number; column_index++)
+        {
+            if(isnan(data(row_index, column_index)))
+            {
+                has_nan = true;
+                break;
+            }
+        }
 
-        row.isnan();
-
-
+        if(has_nan) rows_with_nan++;
     }
-*/
+
     return rows_with_nan;
 }
 
