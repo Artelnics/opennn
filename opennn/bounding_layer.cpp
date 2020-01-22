@@ -109,9 +109,13 @@ string BoundingLayer::write_bounding_method() const
 }
 
 
-VectorXi BoundingLayer::get_input_variables_dimensions() const
+Tensor<int, 1> BoundingLayer::get_input_variables_dimensions() const
 {
-    return VectorXi(1, lower_bounds.size());
+/*
+    return Tensor<int, 1>(1, lower_bounds.size());
+*/
+
+    return Tensor<int, 1>();
 }
 
 
@@ -176,10 +180,8 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 /// Returns the upper bound value of a single bounding neuron.
 /// @param i Index of bounding neuron. 
 
-double BoundingLayer::get_upper_bound(const int& i) const
-{
-   
-
+double BoundingLayer::get_upper_bound(const Index& i) const
+{  
    #ifdef __OPENNN_DEBUG__
 
    const int neurons_number = get_neurons_number();
@@ -207,7 +209,7 @@ double BoundingLayer::get_upper_bound(const int& i) const
 
    #endif
 
-   return(upper_bounds[i]);
+   return upper_bounds(i);
 }
 
 

@@ -74,7 +74,7 @@ public:
 
        /// Order of the diferent neural networks.
 
-       VectorXi neurons_data;
+       Tensor<int, 1> neurons_data;
 
        /// Performance of the different neural networks.
 
@@ -179,7 +179,7 @@ protected:
 
     /// Order of all the neural networks trained.
 
-    VectorXi order_history;
+    Tensor<int, 1> order_history;
 
     /// Selection loss of all the neural networks trained.
 

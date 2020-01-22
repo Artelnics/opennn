@@ -214,7 +214,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 /*
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const VectorXi correlations_descending_indices = total_correlations.sort_descending_indices();
+    const Tensor<int, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
 
     data_set_pointer->set_input_columns_unused();
 
@@ -229,9 +229,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     Tensor<type, 1> current_parameters;
 
-    VectorXi current_columns_indices;
+    Tensor<int, 1> current_columns_indices;
 
-    VectorXi optimal_columns_indices;
+    Tensor<int, 1> optimal_columns_indices;
 
     Tensor<type, 1> optimal_parameters;
 
@@ -438,9 +438,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     int original_index = 0;
 
-    vector<bool> inputs_selection(inputs_number, true);
+    Tensor<bool, 1> inputs_selection(inputs_number, true);
 
-    vector<bool> optimal_inputs;
+    Tensor<bool, 1> optimal_inputs;
     Tensor<type, 1> optimal_parameters;
 
     Tensor<type, 1> selection_parameters(2);

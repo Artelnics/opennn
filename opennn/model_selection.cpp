@@ -1112,7 +1112,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
-    const VectorXi selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<int, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
     LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -1208,7 +1208,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
-    const VectorXi selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<int, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
     LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -1341,15 +1341,15 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     //
 
-    const VectorXi training_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
     const vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
 
-    const VectorXi input_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<int, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const int target_index = data_set_pointer->get_target_variables_indices()[0];
 /*
-    const VectorXi positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
+    const Tensor<int, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
 
     const int positives_instances_number = positives_instances_indices.size();
 

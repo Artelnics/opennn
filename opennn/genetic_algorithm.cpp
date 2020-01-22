@@ -60,7 +60,7 @@ GeneticAlgorithm::~GeneticAlgorithm()
 
 /// Returns the population matrix.
 
-const vector<vector<bool>>& GeneticAlgorithm::get_population() const
+const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
 {
     return(population);
 }
@@ -325,7 +325,7 @@ void GeneticAlgorithm::set_default()
 /// Sets a new popualtion.
 /// @param new_population New population matrix.
 
-void GeneticAlgorithm::set_population(const vector<vector<bool>>& new_population)
+void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -853,7 +853,9 @@ void GeneticAlgorithm::initialize_random_population()
 
     const int inputs_number = neural_network_pointer->get_inputs_number();
 
-    vector<bool> inputs(inputs_number,true);
+    Tensor<bool, 1> inputs(inputs_number);
+
+    inputs.setConstant(true);
 
     int zero_ocurrences;
 
@@ -929,7 +931,7 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     // Optimization algortihm stuff
 
-    vector<bool> inputs(inputs_number, false);
+    Tensor<bool, 1> inputs(inputs_number, false);
 
     double sum;
 
@@ -1046,7 +1048,7 @@ void GeneticAlgorithm::evaluate_population()
 
     // Optimization algorithm stuff
 
-    vector<bool> current_inputs;
+    Tensor<bool, 1> current_inputs;
 
     int index;
 
@@ -1146,7 +1148,7 @@ void GeneticAlgorithm::calculate_objetive_fitness()
 void GeneticAlgorithm::calculate_rank_fitness()
 {
 /*
-    const VectorXi rank = loss.get_column(1).calculate_greater_rank();
+    const Tensor<int, 1> rank = loss.get_column(1).calculate_greater_rank();
 
     fitness.set(loss.dimension(0),0.);
 
@@ -1170,7 +1172,7 @@ void GeneticAlgorithm::evolve_population()
     perform_crossover();
 
     perform_mutation();
-
+/*
     for(int i = 0; i < population.size(); i++)
     {
         zero_ocurrences = 0;
@@ -1188,6 +1190,7 @@ void GeneticAlgorithm::evolve_population()
             population[i][static_cast<int>(rand())%population[i].size()] = true;
         }
     }
+*/
 }
 
 
@@ -1223,9 +1226,11 @@ void GeneticAlgorithm::perform_selection()
 
     const int selected_population_size = static_cast<int>(population_size/2);
 
-    vector<vector<bool>> population_copy;
+    Tensor<bool, 2> population_copy;
 
-    vector<bool> selected_population(population.size(), false);
+    Tensor<bool, 1> selected_population(population.size());
+
+    selected_population.setConstant(false);
 
     int selected_index = 0;
 
@@ -1353,24 +1358,25 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_1point_crossover()
 {
+/*
     const int inputs_number = population[0].size();
     const int selected_population = population.size();
 
     int parent1_index;
-    vector<bool> parent1(inputs_number);
+    Tensor<bool, 1> parent1(inputs_number);
 
     int parent2_index;
-    vector<bool> parent2(inputs_number);
+    Tensor<bool, 1> parent2(inputs_number);
 
-    vector<bool> offspring1(inputs_number);
-    vector<bool> offspring2(inputs_number);
+    Tensor<bool, 1> offspring1(inputs_number);
+    Tensor<bool, 1> offspring2(inputs_number);
 
     int random_loops = 0;
 
     int first_point = crossover_first_point;
 
-    vector<vector<bool>> new_population;
-/*
+    Tensor<bool, 2> new_population;
+
     while(new_population.size() < population_size)
     {
         parent1_index = static_cast<int>(rand())%selected_population;
@@ -1437,24 +1443,25 @@ void GeneticAlgorithm::perform_1point_crossover()
 
 void GeneticAlgorithm::perform_2point_crossover()
 {
-    const int inputs_number = population[0].size();
+/*
+    const Index inputs_number = population[0].size();
     const int selected_population = population.size();
 
     int parent1_index;
-    vector<bool> parent1(inputs_number);
+    Tensor<bool, 1> parent1(inputs_number);
     int parent2_index;
-    vector<bool> parent2(inputs_number);
+    Tensor<bool, 1> parent2(inputs_number);
 
-    vector<bool> offspring1(inputs_number);
-    vector<bool> offspring2(inputs_number);
+    Tensor<bool, 1> offspring1(inputs_number);
+    Tensor<bool, 1> offspring2(inputs_number);
 
     int random_loops = 0;
 
     int first_point = crossover_first_point;
     int second_point = crossover_second_point;
 
-    vector<vector<bool>> new_population;
-/*
+    Tensor<bool, 2> new_population;
+
     while(new_population.size() < population_size)
     {
         parent1_index = static_cast<int>(rand())%selected_population;
@@ -1528,23 +1535,24 @@ void GeneticAlgorithm::perform_2point_crossover()
 
 void GeneticAlgorithm::perform_uniform_crossover()
 {
+/*
     const int inputs_number = population[0].size();
     const int selected_population = population.size();
 
     int parent1_index;
-    vector<bool> parent1(inputs_number);
+    Tensor<bool, 1> parent1(inputs_number);
 
     int parent2_index;
-    vector<bool> parent2(inputs_number);
+    Tensor<bool, 1> parent2(inputs_number);
 
-    vector<bool> offspring1(inputs_number);
-    vector<bool> offspring2(inputs_number);
+    Tensor<bool, 1> offspring1(inputs_number);
+    Tensor<bool, 1> offspring2(inputs_number);
 
     double random_uniform;
     int random_loops = 0;
 
-    vector<vector<bool>> new_population;
-/*
+    Tensor<bool, 2> new_population;
+
     while(new_population.size() < population_size)
     {
         parent1_index = static_cast<int>(rand())%selected_population;
@@ -1645,15 +1653,15 @@ void GeneticAlgorithm::perform_mutation()
 int GeneticAlgorithm::get_optimal_individual_index() const
 {
     int index = 0;
-
-    vector<bool> optimal_inputs = population[0];
+/*
+    Tensor<bool, 1> optimal_inputs = population[0];
 
     double optimum_error = loss(0,1);
 
-    vector<bool> current_inputs;
+    Tensor<bool, 1> current_inputs;
 
     double current_error;
-/*
+
     for(int i = 1; i < population_size; i++)
     {
         current_inputs = population[i];
@@ -1712,7 +1720,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double current_training_error;
     double current_selection_error;
 
-    vector<bool> current_inputs;
+    Tensor<bool, 1> current_inputs;
     vector<DataSet::VariableUse> current_uses;
     double current_mean;
     double current_standard_deviation;
@@ -1722,7 +1730,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double optimum_selection_error = 1e10;
     double optimum_training_error = 0.0;
 
-    vector<bool> optimal_inputs;
+    Tensor<bool, 1> optimal_inputs;
     Tensor<type, 1> optimal_parameters;
 
     int optimal_generation = 0;
@@ -1735,11 +1743,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     time_t beginning_time, current_time;
     double elapsed_time = 0.0;
-
+/*
     original_uses = data_set_pointer->get_columns_uses();
 
     current_uses = original_uses;
-/*
+
     optimal_inputs.set(original_uses.count_equal_to(DataSet::Input),0);
 
     Tensor<type, 2>  test(100,4);

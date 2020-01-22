@@ -109,7 +109,7 @@ public:
 
     // Get methods
 
-    const vector<vector<bool>>& get_population() const;
+    const Tensor<bool, 2>& get_population() const;
 
     const Tensor<type, 2>& get_loss() const;
 
@@ -153,7 +153,7 @@ public:
 
     void set_default();
 
-    void set_population(const vector<vector<bool>>&);
+    void set_population(const Tensor<bool, 2>&);
 
     void set_loss(const Tensor<type, 2>&);
 
@@ -252,7 +252,7 @@ private:
 
     /// Population matrix.
 
-    vector<vector<bool>> population;
+    Tensor<bool, 2> population;
 
     /// Performance of population.
 

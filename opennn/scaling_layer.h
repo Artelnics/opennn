@@ -44,7 +44,7 @@ public:
    explicit ScalingLayer();
 
    explicit ScalingLayer(const int&);
-   explicit ScalingLayer(const VectorXi&);
+   explicit ScalingLayer(const Tensor<int, 1>&);
 
    explicit ScalingLayer(const vector<Descriptives>&);
 
@@ -60,8 +60,8 @@ public:
 
    // Get methods
 
-   VectorXi get_input_variables_dimensions() const;
-   VectorXi get_outputs_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<int, 1> get_outputs_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;
@@ -93,12 +93,12 @@ public:
 
    void set();
    void set(const int&);
-   void set(const VectorXi&);
+   void set(const Tensor<int, 1>&);
    void set(const vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
-   void set(const vector<bool>&);
+   void set(const Tensor<bool, 1>&);
 
    void set_inputs_number(const int&);
    void set_neurons_number(const int&);
@@ -169,7 +169,7 @@ public:
 
 protected:
 
-   VectorXi input_variables_dimensions;
+   Tensor<int, 1> input_variables_dimensions;
 
    /// Descriptives of input variables.
 

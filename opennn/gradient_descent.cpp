@@ -753,8 +753,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const VectorXi training_indices = data_set_pointer->get_training_instances_indices();
-   const VectorXi selection_indices = data_set_pointer->get_selection_instances_indices();
+   const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
+   const Tensor<int, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 

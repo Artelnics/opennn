@@ -56,9 +56,9 @@ RecurrentLayer::~RecurrentLayer()
 }
 
 
-VectorXi RecurrentLayer::get_input_variables_dimensions() const
+Tensor<int, 1> RecurrentLayer::get_input_variables_dimensions() const
 {
-    return VectorXi();
+    return Tensor<int, 1>();
 }
 
 
@@ -395,7 +395,7 @@ void RecurrentLayer::set_inputs_number(const int& new_inputs_number)
 }
 
 
-void RecurrentLayer::set_input_shape(const VectorXi& size)
+void RecurrentLayer::set_input_shape(const Tensor<int, 1>& size)
 {
     /*
     if(size.empty() || size.size() > 1)
@@ -723,7 +723,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1030,7 +1030,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1088,7 +1088,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1184,7 +1184,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const int instances_number = inputs.dimension(0);
 /*
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {

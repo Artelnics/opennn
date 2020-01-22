@@ -77,7 +77,7 @@ public:
 
        /// Inputs of the different neural networks.
 
-       vector<vector<bool>> inputs_data;
+       Tensor<bool, 2> inputs_data;
        
        /// Performance of the different neural networks.
 
@@ -101,11 +101,11 @@ public:
 
        /// Inputs of the neural network with minimum selection error.
 
-       VectorXi optimal_inputs_indices;
+       Tensor<int, 1> optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 
-       vector<bool> optimal_inputs;
+       Tensor<bool, 1> optimal_inputs;
 
        /// Number of iterations to perform the inputs selection.
 
@@ -168,11 +168,11 @@ public:
 
     // Performances calculation methods
 
-    Tensor<type, 1> calculate_losses(const vector<bool>&);
+    Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
 
-    Tensor<type, 1> perform_mean_model_evaluation(const vector<bool>&);
+    Tensor<type, 1> perform_mean_model_evaluation(const Tensor<bool, 1>&);
 
-    Tensor<type, 1> get_parameters_inputs(const vector<bool>&) const;
+    Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -201,7 +201,7 @@ protected:
 
     /// Inputs of all the neural networks trained.
 
-    vector<vector<bool>> inputs_history;
+    Tensor<bool, 2> inputs_history;
 
     /// Selection loss of all the neural networks trained.
 

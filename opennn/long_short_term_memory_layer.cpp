@@ -540,7 +540,7 @@ void LongShortTermMemoryLayer::set_inputs_number(const int& new_inputs_number)
 /// The new biases, weights and recurrent weights are initialized at random.
 /// @param size dimensions of layer inputs.
 
-void LongShortTermMemoryLayer::set_input_shape(const VectorXi& size)
+void LongShortTermMemoryLayer::set_input_shape(const Tensor<int, 1>& size)
 {
 /*
     if(size.empty() || size.size() > 1)
@@ -1820,7 +1820,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
     const int neurons_number = get_neurons_number();
 
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -1918,7 +1918,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     const Tensor<type, 1> new_state_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number , 4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1);
     const Tensor<type, 1> new_output_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number, 4 * neurons_number * (inputs_number + neurons_number + 1) - 1);
 
-    Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -2066,7 +2066,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
      const int instances_number = inputs.dimension(0);
 
-     Tensor<type, 2> outputs(VectorXi({instances_number, neurons_number}));
+     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
      Tensor<type, 1> forget_combinations;
      Tensor<type, 1> forget_activations;

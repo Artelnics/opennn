@@ -89,7 +89,7 @@ SumSquaredError::~SumSquaredError()
 /// Returns the sum squared error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset
 
-double SumSquaredError::calculate_batch_error(const VectorXi& batch_indices) const
+double SumSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -111,7 +111,7 @@ check();
 }
 
 
-double SumSquaredError::calculate_batch_error(const VectorXi& batch_indices, const Tensor<type, 1>& parameters) const
+double SumSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -155,7 +155,7 @@ check();
 
     // Data set
 
-    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -323,7 +323,7 @@ Tensor<type, 1> SumSquaredError::calculate_squared_errors() const
 
    // Data set
 
-   const vector<VectorXi> batch_indices = data_set_pointer->get_training_batches(!is_forecasting);
+   const vector<Tensor<int, 1>> batch_indices = data_set_pointer->get_training_batches(!is_forecasting);
 
    const int batches_number = batch_indices.size();
 
@@ -383,7 +383,7 @@ check();
 
     // Data set
 
-    const vector<VectorXi> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 

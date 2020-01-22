@@ -63,7 +63,7 @@ public:
 
    // Get methods
 
-   VectorXi get_input_variables_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
    int get_inputs_number() const;
    int get_neurons_number() const;
 
@@ -75,7 +75,7 @@ public:
    double get_lower_bound(const int&) const;
 
    const Tensor<type, 1>& get_upper_bounds() const;
-   double get_upper_bound(const int&) const;
+   double get_upper_bound(const Index&) const;
 
    vector<Tensor<type, 1>> get_bounds();
 

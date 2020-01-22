@@ -29,7 +29,7 @@ NeuralNetwork::NeuralNetwork()
 /// (Approximation, Classification, Forecasting, ImageApproximation, ImageClassification).
 /// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const VectorXi& architecture)
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<int, 1>& architecture)
 {
     set(model_type, architecture);
 }
@@ -39,9 +39,9 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const
 /// It creates a neural network object with the given parameters.
 /// Note that this method is only valid when our problem presents convolutional layers.
 
-NeuralNetwork::NeuralNetwork(const VectorXi& new_inputs_dimensions,
+NeuralNetwork::NeuralNetwork(const Tensor<int, 1>& new_inputs_dimensions,
                              const int& new_blocks_number,
-                             const VectorXi& new_filters_dimensions,
+                             const Tensor<int, 1>& new_filters_dimensions,
                              const int& new_outputs_number)
 {
     set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
@@ -370,11 +370,11 @@ vector<Layer*> NeuralNetwork::get_trainable_layers_pointers() const
 
 /// Returns a vector with the indices of the trainable layers.
 
-VectorXi NeuralNetwork::get_trainable_layers_indices() const
+Tensor<int, 1> NeuralNetwork::get_trainable_layers_indices() const
 {
     const int layers_number = get_layers_number();
 
-    VectorXi trainable_layers_indices;
+    Tensor<int, 1> trainable_layers_indices;
 
     for(int i = 0; i < layers_number; i++)
     {
@@ -545,7 +545,7 @@ void NeuralNetwork::set()
 /// It also sets the rest of members to their default values. 
 /// @param architecture Architecture of the neural network.
 
-void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const VectorXi& architecture)
+void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<int, 1>& architecture)
 {        
     layers_pointers.resize(0);
 
@@ -619,9 +619,9 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Vect
 }
 
 
-void NeuralNetwork::set(const VectorXi& input_variables_dimensions,
+void NeuralNetwork::set(const Tensor<int, 1>& input_variables_dimensions,
                         const int& blocks_number,
-                        const VectorXi& filters_dimensions,
+                        const Tensor<int, 1>& filters_dimensions,
                         const int& outputs_number)
 {
     layers_pointers.resize(0);
@@ -629,7 +629,7 @@ void NeuralNetwork::set(const VectorXi& input_variables_dimensions,
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
     this->add_layer(scaling_layer);
 
-    VectorXi outputs_dimensions = scaling_layer->get_outputs_dimensions();
+    Tensor<int, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
     for(int i = 0; i < blocks_number; i++)
     {
@@ -741,7 +741,7 @@ void NeuralNetwork::set_inputs_number(const int& new_inputs_number)
 /// Sets the new inputs number of this neural network object.
 /// @param inputs Boolean vector containing the number of inputs.
 
-void NeuralNetwork::set_inputs_number(const vector<bool>& inputs)
+void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 {
     if(layers_pointers.empty()) return;
 /*
@@ -820,9 +820,9 @@ int NeuralNetwork::get_outputs_number() const
 /// <LI> Number of bounding neurons(if there is a bounding layer).</LI>
 /// </UL>
 
-VectorXi NeuralNetwork::get_architecture() const
+Tensor<int, 1> NeuralNetwork::get_architecture() const
 {
-    VectorXi architecture;
+    Tensor<int, 1> architecture;
 /*
     const int inputs_number = get_inputs_number();
 
@@ -915,13 +915,13 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 }
 
 
-VectorXi NeuralNetwork::get_trainable_layers_parameters_numbers() const
+Tensor<int, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
     const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    VectorXi trainable_layers_parameters_number(trainable_layers_number);
+    Tensor<int, 1> trainable_layers_parameters_number(trainable_layers_number);
 
     for(int i = 0; i < trainable_layers_number; i++)
     {
@@ -936,7 +936,7 @@ vector<Tensor<type, 1>> NeuralNetwork::get_trainable_layers_parameters(const Ten
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
-    const VectorXi trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    const Tensor<int, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
     vector<Tensor<type, 1>> trainable_layers_parameters(trainable_layers_number);
 
@@ -983,7 +983,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const VectorXi trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    const Tensor<int, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
     int position = 0;
 
@@ -1024,10 +1024,10 @@ int NeuralNetwork::get_layers_number() const
 }
 
 
-VectorXi NeuralNetwork::get_layers_neurons_numbers() const
+Tensor<int, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
 
-    VectorXi layers_neurons_number;
+    Tensor<int, 1> layers_neurons_number;
     /*
 
     for(int i = 0; i < layers_pointers.size(); i++)

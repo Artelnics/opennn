@@ -46,7 +46,7 @@ namespace OpenNN
 
     Tensor<type, 2> competitive(const Tensor<type, 2>&);
 
-    vector<bool> binary(const Tensor<type, 1>&);
+    Tensor<bool, 1> binary(const Tensor<type, 1>&);
 
     Tensor<type, 1> square_root(const Tensor<type, 1>&);
 

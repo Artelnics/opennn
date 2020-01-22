@@ -31,7 +31,7 @@ ScalingLayer::ScalingLayer(const int& new_neurons_number) : Layer()
 }
 
 
-ScalingLayer::ScalingLayer(const VectorXi& new_inputs_dimensions) : Layer()
+ScalingLayer::ScalingLayer(const Tensor<int, 1>& new_inputs_dimensions) : Layer()
 {
     set(new_inputs_dimensions);
 }
@@ -63,13 +63,13 @@ ScalingLayer::~ScalingLayer()
 }
 
 
-VectorXi ScalingLayer::get_input_variables_dimensions() const
+Tensor<int, 1> ScalingLayer::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
 }
 
 
-VectorXi ScalingLayer::get_outputs_dimensions() const
+Tensor<int, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;
 }
@@ -333,7 +333,7 @@ void ScalingLayer::set(const int& new_inputs_number)
 }
 
 
-void ScalingLayer::set(const VectorXi& new_inputs_dimensions)
+void ScalingLayer::set(const Tensor<int, 1>& new_inputs_dimensions)
 {
 /*
     descriptives.resize(new_inputs_dimensions.calculate_product());
@@ -389,10 +389,10 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 }
 
 
-void ScalingLayer::set(const vector<bool>& new_uses)
+void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
 {
 /*
-    const VectorXi indices = new_uses.get_indices_equal_to(true);
+    const Tensor<int, 1> indices = new_uses.get_indices_equal_to(true);
 */
 //    descriptives = descriptives.get_subvector(indices);
 
@@ -908,7 +908,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
         const int points_number = inputs.dimension(0);
 
-        outputs.set(VectorXi({points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}));
+        outputs.set(Tensor<int, 1>({points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}));
 
         for(int i = 0; i < points_number; i++)
         {

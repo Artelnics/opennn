@@ -210,7 +210,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 //    const int inputs_number = data_set_pointer->get_input_columns_number();
 
-    const VectorXi inputs_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const int used_columns_number = data_set_pointer->get_used_columns_number();
 
@@ -220,7 +220,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 /*
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const VectorXi correlations_ascending_indices = total_correlations.sort_ascending_indices();
+    const Tensor<int, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
 //    data_set_pointer->set_input_columns_unused();
 
@@ -230,9 +230,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    VectorXi current_columns_indices = inputs_variables_indices;
+    Tensor<int, 1> current_columns_indices = inputs_variables_indices;
 
-    VectorXi optimal_columns_indices;
+    Tensor<int, 1> optimal_columns_indices;
 
     Tensor<type, 1> optimal_parameters;
 

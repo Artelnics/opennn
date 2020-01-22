@@ -221,7 +221,7 @@ Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
 }
 
 
-VectorXi Layer::get_input_variables_dimensions() const
+Tensor<int, 1> Layer::get_input_variables_dimensions() const
 {
     ostringstream buffer;
 
