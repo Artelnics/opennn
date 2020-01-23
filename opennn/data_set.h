@@ -796,6 +796,10 @@ public:
    Tensor<int, 1> count_nan_columns() const;
    int count_rows_with_nan() const;
 
+   // Eigen methods
+
+   void intialize_sequential_eigen_tensor(Tensor<int, 1>&, const int&, const int&, const int&) const;
+
 private:
 
    /// Data file name.
