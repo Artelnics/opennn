@@ -94,6 +94,7 @@ MeanSquaredError::~MeanSquaredError()
 
 double MeanSquaredError::calculate_training_error() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -108,7 +109,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -124,6 +125,10 @@ check();
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     // Mean squared error
+
+    cout<<"Here";
+
+    system("pause");
 
     double training_error = 0.0;
 
@@ -143,11 +148,15 @@ check();
     }
 
     return training_error/training_instances_number;
+    */
+
+    return 0.0;
 }
 
 
 double MeanSquaredError::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -162,7 +171,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
     const int batches_number = training_batches.size();
@@ -188,14 +197,16 @@ check();
         targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
+
         const double batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
-*/
+
     }
 
     return training_error/training_instances_number;
+*/
+return 0.0;
 }
 
 
@@ -205,6 +216,7 @@ check();
 
 double MeanSquaredError::calculate_selection_error() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -223,7 +235,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
@@ -246,14 +258,17 @@ check();
         targets = data_set_pointer->get_target_data(selection_batches[static_cast<int>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
+
         const double batch_error = sum_squared_error(outputs, targets);
 
         selection_error += batch_error;
-*/
+
     }
 
     return selection_error/selection_instances_number;
+
+    */
+    return 0.0;
 }
 
 
@@ -327,7 +342,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -502,6 +517,7 @@ check();
 
 LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -520,7 +536,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -560,9 +576,9 @@ check();
             terms_second_order_loss.gradient += gradient;
             terms_second_order_loss.hessian += hessian_approximation;
          }
-*/
+
     }
-/*
+
     terms_second_order_loss.loss /= static_cast<double>(training_instances_number);
     terms_second_order_loss.gradient *= (2.0/static_cast<double>(training_instances_number));
     terms_second_order_loss.hessian *= (2.0/static_cast<double>(training_instances_number));
@@ -573,8 +589,13 @@ check();
         terms_second_order_loss.gradient += calculate_regularization_gradient();
         terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-*/
+
     return terms_second_order_loss;
+    */
+    const int parameters_number = neural_network_pointer->get_parameters_number();
+    SecondOrderLoss terms_second_order_loss(parameters_number);
+    return  terms_second_order_loss;
+
 }
 
 

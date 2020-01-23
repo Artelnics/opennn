@@ -1193,6 +1193,7 @@ vector<Tensor<type, 2>> LossIndex::calculate_layers_delta(const vector<Layer::Fo
 
 double LossIndex::calculate_training_error() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1207,7 +1208,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -1223,11 +1224,14 @@ check();
     }
 
     return training_error;
+    */
+    return 0.0;
 }
 
 
 double LossIndex::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1242,7 +1246,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -1257,6 +1261,8 @@ check();
     }
 
     return training_error;
+    */
+    return 0.0;
 }
 
 
@@ -1266,6 +1272,7 @@ check();
 
 double LossIndex::calculate_selection_error() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1280,7 +1287,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
@@ -1295,6 +1302,8 @@ check();
     }
 
     return selection_error;
+    */
+    return 0.0;
 }
 
 
@@ -1332,6 +1341,7 @@ Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<int, 1>& 
 
 Tensor<type, 1> LossIndex::calculate_training_error_gradient() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1347,7 +1357,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -1367,6 +1377,8 @@ check();
     }
 
     return training_error_gradient;
+    */
+    return 0.0;
 }
 
 

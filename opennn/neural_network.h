@@ -82,7 +82,7 @@ public:
 
        ForwardPropagation() {}
 
-       ForwardPropagation(const int& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
            batch_instances_number = new_batch_instances_number;
            neural_network_pointer = new_neural_network_pointer;
