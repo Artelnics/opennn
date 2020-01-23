@@ -15,9 +15,6 @@
 
 #include "unit_testing.h"
 
-#include "vector_test.h"
-#include "matrix_test.h"
-#include "tensor_test.h"
 #include "statistics_test.h"
 #include "numerical_differentiation_test.h"
 #include "statistics_test.h"
