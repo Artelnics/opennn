@@ -62,11 +62,6 @@ namespace OpenNN
 
     // INVERTING MATICES
 
-     double determinant(const Tensor<type, 2>&);
-
-     Tensor<type, 2> cofactor(const Tensor<type, 2>&);
-
-     Tensor<type, 2> inverse(const Tensor<type, 2>&);
 
      // LINEAR EQUATIONS
 
@@ -74,10 +69,6 @@ namespace OpenNN
      Tensor<type, 2> eigenvectors(const Tensor<type, 2>&);
 
      Tensor<type, 2> direct(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
-     Tensor<type, 2> linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&);
-
-     void linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&, Tensor<type, 2>&);
 
      // Vector distances
 
