@@ -390,6 +390,8 @@ public:
    Tensor<type, 1> get_variable_data(const int&, const Tensor<int, 1>&) const;
    Tensor<type, 1> get_variable_data(const string&, const Tensor<int, 1>&) const;
 
+   Tensor<type, 2> get_data_subtensor(const Tensor<int, 1>&, const Tensor<int, 1>&) const;
+
    // Members get methods
 
    MissingValuesMethod get_missing_values_method() const;
