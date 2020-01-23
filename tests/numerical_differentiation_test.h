@@ -92,7 +92,7 @@ public:
 private:
 
    // Constant methods
-
+/*
    double f1(const double&) const;
    double f2(const Vector<double>&) const;
    Vector<double> f3(const Vector<double>&) const;
@@ -105,7 +105,7 @@ private:
    Vector<double> f6(const Vector<double>&);
 
    Vector<double> f8(const size_t&, const size_t&, const Vector<double>&) const;
-
+*/
 };
 
 

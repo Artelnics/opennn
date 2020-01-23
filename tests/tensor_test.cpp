@@ -18,6 +18,7 @@ TensorTest::~TensorTest()
 {
 }
 
+/*
 /// @todo tensor test
 void TensorTest::test_constructor()
 {
@@ -95,7 +96,7 @@ void TensorTest::test_rest_operator()
 {
    cout << "test_rest_operator\n";
 
-   Tensor<double> a, b, c, d;
+   Tensor<double, 2> a, b, c, d;
 
    // Scalar
 
@@ -123,7 +124,7 @@ void TensorTest::test_multiplication_operator()
 {
    cout << "test_multiplication_operator\n";
 
-   Tensor<double> a, b, c, d;
+   Tensor<double, 2> a, b, c, d;
 
    // Scalar
 
@@ -147,11 +148,11 @@ void TensorTest::test_multiplication_operator()
 
    // Second order tensor
 
-   Tensor<double> t(Vector<size_t>{1,1}, 0.0);
+   Tensor<double, 2> t(Vector<size_t>{1,1}, 0.0);
 
    a.set(Vector<size_t>{1}, 0.0);
 
-   Tensor<double> p = a*t;
+   Tensor<double, 2> p = a*t;
 
    assert_true(p.get_dimension(0) == 1, LOG);
    assert_true(p.get_dimension(1) == 1, LOG);
@@ -172,7 +173,7 @@ void TensorTest::test_division_operator()
 {
    cout << "test_division_operator\n";
 
-   Tensor<double> a, b, c, d;
+   Tensor<double, 2> a, b, c, d;
 
    // Scalar
 
@@ -1234,7 +1235,7 @@ void VectorTest::test_dot_matrix()
    cout << "test_dot_matrix\n";
 
    Vector<double> vector;
-   Matrix<double> matrix;
+   Tensor<double, 2> matrix;
 
    Vector<double> number;
 
@@ -3135,9 +3136,8 @@ void VectorTest:: test_count_dates()
 
 void TensorTest::run_test_case()
 {
-
    cout << "Running tensor test case...\n";
-
+/*
   // Constructor and destructor methods
 
    test_constructor();
@@ -3148,7 +3148,7 @@ void TensorTest::run_test_case()
    test_sum_operator();
    test_rest_operator();
    test_multiplication_operator();
-/*
+
    test_division_operator();
 
    // Operation and assignment operators
