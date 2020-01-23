@@ -139,6 +139,8 @@ check();
 
 LossIndex::FirstOrderLoss SumSquaredError::calculate_first_order_loss() const
 {
+    FirstOrderLoss first_order_loss(this);
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -155,7 +157,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -169,7 +171,7 @@ check();
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
         const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-/*
+
         const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -191,9 +193,9 @@ check();
             first_order_loss.loss += loss;
             first_order_loss.gradient += gradient;
          }
-*/
+
     }
-/*
+
     first_order_loss.gradient *= 2.0;
 
     if(regularization_method != RegularizationMethod::NoRegularization)
@@ -203,6 +205,8 @@ check();
     }
 */
     return first_order_loss;
+
+
 }
 
 

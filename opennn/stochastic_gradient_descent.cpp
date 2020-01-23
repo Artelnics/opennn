@@ -818,7 +818,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    for(int epoch = 0; epoch <= epochs_number; epoch++)
    {
-       const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
        const int batches_number = training_batches.size();
 

@@ -343,9 +343,9 @@ public:
 
    inline int get_batch_instances_number() {return batch_instances_number;}
 
-   vector<Tensor<int, 1>> get_training_batches(const bool& = true) const;
-   vector<Tensor<int, 1>> get_selection_batches(const bool& = true) const;
-   vector<Tensor<int, 1>> get_testing_batches(const bool& = true) const;
+   Tensor<Index, 2> get_training_batches(const bool& = true) const;
+   Tensor<Index, 2> get_selection_batches(const bool& = true) const;
+   Tensor<Index, 2> get_testing_batches(const bool& = true) const;
 
    // Data get methods
 

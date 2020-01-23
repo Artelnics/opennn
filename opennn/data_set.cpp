@@ -860,12 +860,14 @@ const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-vector<Tensor<int, 1>> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
 {
-/*
+
     Tensor<int, 1> training_indices = get_training_instances_indices();
 
-    if(shuffle_batches_instances) random_shuffle(training_indices.begin(), training_indices.end());
+    system("pause");
+    /*
+    if(shuffle_batches_instances) std::random_shuffle(training_indices.begin(), training_indices.end());
 
     if(training_indices.size() < shuffle_batches_instances)
     {
@@ -893,7 +895,7 @@ vector<Tensor<int, 1>> DataSet::get_training_batches(const bool& shuffle_batches
 /*
     return training_indices.split(batch_instances_number);
     */
-    return vector<Tensor<int, 1>>();
+    return Tensor<Index, 2>();
 }
 
 
@@ -901,7 +903,7 @@ vector<Tensor<int, 1>> DataSet::get_training_batches(const bool& shuffle_batches
 /// @param shuffle Is a boleean.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
-vector<Tensor<int, 1>> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
 {
     Tensor<int, 1> selection_indices = get_selection_instances_indices();
 
@@ -909,7 +911,7 @@ vector<Tensor<int, 1>> DataSet::get_selection_batches(const bool& shuffle_batche
 /*
     return selection_indices.split(batch_instances_number);
 */
-    return vector<Tensor<int, 1>>();
+    return Tensor<Index, 2>();
 }
 
 
@@ -917,7 +919,7 @@ vector<Tensor<int, 1>> DataSet::get_selection_batches(const bool& shuffle_batche
 /// If shuffle is true, then the indices within batches are shuffle, and false otherwise
 /// @param shuffle_batches_instances Is a boleean.
 
-vector<Tensor<int, 1>> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
 {
     Tensor<int, 1> testing_indices = get_testing_instances_indices();
 
@@ -925,7 +927,7 @@ vector<Tensor<int, 1>> DataSet::get_testing_batches(const bool& shuffle_batches_
 /*
     return testing_indices.split(batch_instances_number);
 */
-    return vector<Tensor<int, 1>>();
+    return Tensor<Index, 2>();
 
 }
 
@@ -3015,7 +3017,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
 Tensor<type, 2> DataSet::get_input_data() const
 {
-
+/*
    const int instances_number = get_instances_number();
 
    const Tensor<int, 1> indices(0, 1,instances_number-1);
@@ -3023,6 +3025,10 @@ Tensor<type, 2> DataSet::get_input_data() const
    const Tensor<int, 1> input_variables_indices = get_input_variables_indices();
 
    return get_data_subtensor(indices, input_variables_indices);
+
+   */
+
+    return  Tensor<type, 2>();
 }
 
 
@@ -3032,13 +3038,15 @@ Tensor<type, 2> DataSet::get_input_data() const
 
 Tensor<type, 2> DataSet::get_target_data() const
 {
-
+/*
    const int instances_number = get_instances_number();
    const Tensor<int, 1> indices(0, 1, instances_number-1);
 
    const Tensor<int, 1> target_variables_indices = get_target_variables_indices();
 
    return get_data_subtensor(indices, target_variables_indices);
+   */
+    return Tensor<type, 2>();
 }
 
 
