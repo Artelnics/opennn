@@ -318,6 +318,7 @@ double WeightedSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_i
 
 Tensor<type, 1> WeightedSquaredError::calculate_training_error_gradient() const
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -336,8 +337,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -368,6 +368,8 @@ check();
     }
 
     return training_error_gradient * static_cast<type>(2.0) / training_normalization_coefficient;
+    */
+    return 0.0;
 }
 
 
@@ -395,7 +397,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -580,7 +582,7 @@ check();
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 

@@ -57,13 +57,12 @@ int main(void)
 
         // Data set
 
-//        DataSet data_set;
-/*
-        data_set.generate_Rosenbrock_data(1000000, 1001);
+        DataSet data_set;
 
-        data_set.set_batch_instances_number(1000);
+        data_set.generate_Rosenbrock_data(100, 4);
 
         data_set.set_training();
+
 
         // Neural network
 
@@ -71,7 +70,11 @@ int main(void)
         const int hidden_neurons_number = 1000;
         const int outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        Tensor<int, 1> arquitecture(3);
+
+        arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
 
         // Training strategy object
 
@@ -85,7 +88,7 @@ int main(void)
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
 
         cout << "End" << endl;
-*/
+
         return 0;
 
     }
