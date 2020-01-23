@@ -51,9 +51,6 @@ SOURCES += \
     pruning_inputs_test.cpp \
     genetic_algorithm_test.cpp \
     testing_analysis_test.cpp \
-    vector_test.cpp \
-    matrix_test.cpp \
-    tensor_test.cpp \
     numerical_differentiation_test.cpp \
     correlations_test.cpp \
     stochastic_gradient_descent_test.cpp \
@@ -96,9 +93,6 @@ HEADERS += \
     pruning_inputs_test.h \
     genetic_algorithm_test.h \
     testing_analysis_test.h  \
-    vector_test.h \
-    matrix_test.h \
-    tensor_test.h \
     numerical_differentiation_test.h \
     opennn_tests.h \
     stochastic_gradient_descent_test.h \

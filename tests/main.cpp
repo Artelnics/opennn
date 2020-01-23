@@ -42,7 +42,6 @@ int main()
    "linear_algebra\n"
    "long_short_term_memory_layer\n"
    "loss_index\n"
-   "matrix\n"
    "mean_squared_error\n"
    "minkowski_error\n"
    "missing_values\n"
@@ -65,10 +64,8 @@ int main()
    "sum_squared_error\n"
    "testing_analysis\n"
    "training_strategy\n"
-   "tensor\n"
    "unscaling_layer\n"
    "variables\n"
-   "vector\n"
    "weighted_squared_error\n"
    "Write test:\n"<< endl;
 
@@ -120,15 +117,6 @@ int main()
          tests_failed_count += test.get_tests_failed_count();
       }
 
-      else if(test == "matrix" || test == "m")
-      {
-         MatrixTest matrix_test;
-         matrix_test.run_test_case();
-         tests_count += matrix_test.get_tests_count();
-         tests_passed_count += matrix_test.get_tests_passed_count();
-         tests_failed_count += matrix_test.get_tests_failed_count();
-      }
-
       else if(test == "numerical_differentiation" || test == "")
       {
          NumericalDifferentiationTest test_numerical_differentiation;
@@ -154,15 +142,6 @@ int main()
          tests_count += matrix_test.get_tests_count();
          tests_passed_count += matrix_test.get_tests_passed_count();
          tests_failed_count += matrix_test.get_tests_failed_count();
-      }
-
-      else if(test == "vector" || test == "v")
-      {
-         VectorTest vector_test;
-         vector_test.run_test_case();
-         tests_count += vector_test.get_tests_count();
-         tests_passed_count += vector_test.get_tests_passed_count();
-         tests_failed_count += vector_test.get_tests_failed_count();
       }
 
       else if(test == "functions" || test == "f")
@@ -444,41 +423,8 @@ int main()
         tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
 
-      else if(test == "tensor" || test == "tn")
-      {
-        TensorTest tensor_test;
-        tensor_test.run_test_case();
-        tests_count += tensor_test.get_tests_count();
-        tests_passed_count += tensor_test.get_tests_passed_count();
-        tests_failed_count += tensor_test.get_tests_failed_count();
-      }
-
       else if(test == "suite" || test == "")
       {
-          // vector
-
-          VectorTest vector_test;
-          vector_test.run_test_case();
-          tests_count += vector_test.get_tests_count();
-          tests_passed_count += vector_test.get_tests_passed_count();
-          tests_failed_count += vector_test.get_tests_failed_count();
-
-          // matrix
-
-          MatrixTest matrix_test;
-          matrix_test.run_test_case();
-          tests_count += matrix_test.get_tests_count();
-          tests_passed_count += matrix_test.get_tests_passed_count();
-          tests_failed_count += matrix_test.get_tests_failed_count();
-
-          // tensor
-
-          TensorTest tensor_test;
-          tensor_test.run_test_case();
-          tests_count += tensor_test.get_tests_count();
-          tests_passed_count += tensor_test.get_tests_passed_count();
-          tests_failed_count += tensor_test.get_tests_failed_count();
-
           //functions
 
           FunctionsTest functions_test;
