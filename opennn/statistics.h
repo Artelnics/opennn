@@ -49,7 +49,7 @@ struct Descriptives {
 
   // Values constructor.
 
-  explicit Descriptives(const double &, const double &, const double &, const double &);
+  explicit Descriptives(const type&, const type&, const type&, const type&);
 
   /// Destructor.
 
@@ -57,13 +57,13 @@ struct Descriptives {
 
   // Set methods
 
-  void set_minimum(const double &);
+  void set_minimum(const type&);
 
-  void set_maximum(const double &);
+  void set_maximum(const type &);
 
-  void set_mean(const double &);
+  void set_mean(const type &);
 
-  void set_standard_deviation(const double &);
+  void set_standard_deviation(const type &);
 
   Tensor<type, 1> to_vector() const;
 
@@ -81,19 +81,19 @@ struct Descriptives {
 
   /// Smallest value of a set, function, etc.
 
-  double minimum = 0;
+  type minimum = 0;
 
   /// Biggest value of a set, function, etc.
 
-  double maximum = 0;
+  type maximum = 0;
 
   /// Mean value of a set, function, etc.
 
-  double mean = 0;
+  type mean = 0;
 
   /// Standard deviation value of a set, function, etc.
 
-  double standard_deviation = 0;
+  type standard_deviation = 0;
 
 };
 
@@ -206,7 +206,7 @@ struct Histogram
 
      double minimum(const Tensor<type, 1>&);
      int minimum(const Tensor<int, 1>&);
-     time_t minimum(const vector<time_t>&);
+     time_t minimum(const Tensor<time_t, 1>&);
      double minimum(const Tensor<type, 2>&);
      double minimum_missing_values(const Tensor<type, 1>&);
      Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<int, 1>& = Tensor<int, 1>());
@@ -216,13 +216,13 @@ struct Histogram
 
      double maximum(const Tensor<type, 1>&);
      int maximum(const Tensor<int, 1>&);
-     time_t maximum(const vector<time_t>&);
+     time_t maximum(const Tensor<time_t, 1>&);
      double maximum(const Tensor<type, 2>&);
      double maximum_missing_values(const Tensor<type, 1>&);
      Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<int, 1>& = Tensor<int, 1>());
      double maximum_matrix(const Tensor<type, 2>& matrix);
 
-     double strongest(const Tensor<type, 1>&);
+     type strongest(const Tensor<type, 1>&);
 
      // Range
      double range(const Tensor<type, 1>&);

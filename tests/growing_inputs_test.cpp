@@ -18,7 +18,7 @@ GrowingInputsTest::~GrowingInputsTest()
 {
 }
 
-/*
+
 void GrowingInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -38,7 +38,7 @@ void GrowingInputsTest::test_constructor()
 
 }
 
-
+/*
 void GrowingInputsTest::test_destructor()
 {
     cout << "test_destructor\n";

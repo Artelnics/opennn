@@ -157,7 +157,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 
     // Inputs
 
-    const int images_number = inputs.dimension(0);
+    const auto images_number = inputs.dimension(0);
 
     // Filters
 
@@ -242,7 +242,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 
     // Inputs
 
-    const int images_number = inputs.dimension(0);
+    const auto images_number = inputs.dimension(0);
 
     // Filters
 
@@ -445,14 +445,14 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
                                                                         const Tensor<type, 2>& activations_derivatives,
                                                                         const Tensor<type, 2>& next_layer_delta) const
 {
-/*
+
     // Current layer's values
 
-    const int images_number = next_layer_delta.dimension(0);
+    const auto images_number = next_layer_delta.dimension(0);
     const int filters_number = get_filters_number();
     const int output_rows_number = get_outputs_rows_number();
     const int output_columns_number = get_outputs_columns_number();
-
+/*
     // Next layer's values
 
     const int next_layers_filters_number = next_layer_pointer->get_filters_number();
