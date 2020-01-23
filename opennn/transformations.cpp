@@ -24,7 +24,7 @@ void scale_minimum_maximum(Tensor<type, 1>& vector, const Descriptives &descript
 
 void scale_minimum_maximum(Tensor<type, 1>& vector, const double& minimum, const double& maximum)
 {
-    const int size = vector.size();
+    const Index size = vector.dimension(0);
 
     for(int i = 0; i < size; i++)
     {

@@ -707,7 +707,7 @@ bool is_mixed(const Tensor<string, 1>& v)
 void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
 {
 
-    const int size = vector.size();
+    const Index size = vector.dimension(0);
 
     for(int i = 0; i < size; i++)
     {
