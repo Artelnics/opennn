@@ -176,59 +176,59 @@ private:
 
    /// Initial learning rate
 
-   double initial_learning_rate;
+   type initial_learning_rate;
 
    /// Learning rate decay over each update.
 
-   double initial_decay;
+   type initial_decay;
 
    /// Exponential decay over gradient estimates.
 
-   double beta_1;
+   type beta_1;
 
    /// Exponential decay over square gradient estimates.
 
-   double beta_2;
+   type beta_2;
 
    /// Small number to prevent any division by zero
 
-   double epsilon;
+   type epsilon;
 
    // TRAINING PARAMETERS
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   double warning_parameters_norm;
+   type warning_parameters_norm;
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   double warning_gradient_norm;   
+   type warning_gradient_norm;
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   double error_parameters_norm;
+   type error_parameters_norm;
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   double error_gradient_norm;
+   type error_gradient_norm;
 
    // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
 
-   double minimum_parameters_increment_norm;
+   type minimum_parameters_increment_norm;
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   double minimum_loss_decrease;
+   type minimum_loss_decrease;
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   double loss_goal;
+   type loss_goal;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
-   double gradient_norm_goal;
+   type gradient_norm_goal;
 
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
@@ -253,7 +253,7 @@ private:
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   double maximum_time;
+   type maximum_time;
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 

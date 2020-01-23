@@ -126,7 +126,7 @@ void Descriptives::print(const string& title) const
 }
 
 
-BoxPlot::BoxPlot(const double & new_minimum, const double & new_first_cuartile, const double & new_median, const double & new_third_quartile, const double & new_maximum)
+BoxPlot::BoxPlot(const type& new_minimum, const type& new_first_cuartile, const type& new_median, const type& new_third_quartile, const type& new_maximum)
 {
     minimum = new_minimum;
     first_quartile = new_first_cuartile;
@@ -244,7 +244,7 @@ int Histogram::calculate_maximum_frequency() const
 int Histogram::calculate_most_populated_bin() const
 {
 /*
-  return maximal_index(frequencies.to_double_vector());
+  return maximal_index(frequencies.to_type_vector());
 */
     return 0;
 }
@@ -284,17 +284,17 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 /// Returns the number of the bin to which a given value belongs to.
 /// @param value Value for which we want to get the bin.
 
-int Histogram::calculate_bin(const double &value) const
+int Histogram::calculate_bin(const type&value) const
 {
   const int bins_number = get_bins_number();
 
-  const double minimum_center = centers[0];
-  const double maximum_center = centers[bins_number - 1];
+  const type minimum_center = centers[0];
+  const type maximum_center = centers[bins_number - 1];
 
-  const double length = static_cast<double>(maximum_center - minimum_center)/static_cast<double>(bins_number - 1.0);
+  const type length = static_cast<type>(maximum_center - minimum_center)/static_cast<type>(bins_number - 1.0);
 
-  double minimum_value = centers[0] - length / 2;
-  double maximum_value = minimum_value + length;
+  type minimum_value = centers[0] - length / 2;
+  type maximum_value = minimum_value + length;
 
   if(value < maximum_value) {
     return 0;
@@ -305,7 +305,7 @@ int Histogram::calculate_bin(const double &value) const
     maximum_value = maximum_value + length;
 
     if(value >= minimum_value && value < maximum_value) {
-      return(j);
+      return j;
     }
   }
 
@@ -315,7 +315,7 @@ int Histogram::calculate_bin(const double &value) const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "int Histogram::calculate_bin(const double&) const.\n"
+           << "int Histogram::calculate_bin(const type&) const.\n"
            << "Unknown return value.\n";
 
     throw logic_error(buffer.str());
@@ -326,7 +326,7 @@ int Histogram::calculate_bin(const double &value) const
 /// Returns the frequency of the bin to which a given value bolongs to.
 /// @param value Value for which we want to get the frequency.
 
-int Histogram::calculate_frequency(const double &value) const
+int Histogram::calculate_frequency(const type&value) const
 {
   const int bin_number = calculate_bin(value);
 
@@ -336,13 +336,13 @@ int Histogram::calculate_frequency(const double &value) const
 }
 
 
-/// Returns the smallest element of a double vector.
+/// Returns the smallest element of a type vector.
 /// @param vector
 
-double minimum(const Tensor<type, 1>& vector)
+type minimum(const Tensor<type, 1>& vector)
 {
 /*
-    const double min = *min_element(vector.begin(), vector.end());
+    const type min = *min_element(vector.begin(), vector.end());
 
     return min;
 */
@@ -379,10 +379,10 @@ time_t minimum(const Tensor<time_t, 1>& vector)
 /// Returns the largest element in the vector.
 /// @param vector
 
-double maximum(const Tensor<type, 1>& vector)
+type maximum(const Tensor<type, 1>& vector)
 {
 /*
-    const double max = *max_element(vector.begin(), vector.end());
+    const type max = *max_element(vector.begin(), vector.end());
 
     return max;
 */
@@ -415,11 +415,11 @@ time_t maximum(const Tensor<time_t, 1>& vector)
 
 /// Returns the smallest element in the vector.
 
-double minimum_missing_values(const Tensor<type, 1>& vector)
+type minimum_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
-  double minimum = 999999;
+  type minimum = 999999;
 
   for(int i = 0; i < size; i++)
   {
@@ -435,11 +435,11 @@ double minimum_missing_values(const Tensor<type, 1>& vector)
 
 /// Returns the largest element in the vector.
 
-double maximum_missing_values(const Tensor<type, 1>& vector)
+type maximum_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
-  double maximum = -999999;
+  type maximum = -999999;
 
   for(int i = 0; i < size; i++) {
     if(!::isnan(vector[i]) && vector[i] > maximum) {
@@ -454,7 +454,7 @@ double maximum_missing_values(const Tensor<type, 1>& vector)
 /// Returns the mean of the elements in the vector.
 /// @param vector
 
-double mean(const Tensor<type, 1>& vector)
+type mean(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -465,7 +465,7 @@ double mean(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics class.\n"
-           << "double mean(const Tensor<type, 1>&) const method.\n"
+           << "type mean(const Tensor<type, 1>&) const method.\n"
            << "Size of vector must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -473,9 +473,9 @@ double mean(const Tensor<type, 1>& vector)
 
 #endif
 /*
-  const double sum = vector.calculate_sum();
+  const type sum = vector.calculate_sum();
 
-  const double mean = sum /static_cast<double>(size);
+  const type mean = sum /static_cast<type>(size);
 
   return mean;
 */
@@ -488,7 +488,7 @@ double mean(const Tensor<type, 1>& vector)
 /// @param begin Start element.
 /// @param end End element.
 
-double mean(const Tensor<type, 1>& vector, const int& begin, const int& end)
+type mean(const Tensor<type, 1>& vector, const int& begin, const int& end)
 {
   #ifdef __OPENNN_DEBUG__
 
@@ -496,7 +496,7 @@ double mean(const Tensor<type, 1>& vector, const int& begin, const int& end)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Statistics class.\n"
-             << "double mean(const Tensor<type, 1>& vector, const int& begin, const int& end) \n"
+             << "type mean(const Tensor<type, 1>& vector, const int& begin, const int& end) \n"
              << "Begin must be less or equal than end.\n";
 
       throw logic_error(buffer.str());
@@ -506,21 +506,21 @@ double mean(const Tensor<type, 1>& vector, const int& begin, const int& end)
 
   if(end == begin) return vector[begin];
 
-  double sum = 0.0;
+  type sum = 0.0;
 
   for(int i = begin; i <= end; i++)
   {
       sum += vector[i];
   }
 
-  return(sum /static_cast<double>(end-begin+1));
+  return(sum /static_cast<type>(end-begin+1));
 }
 
 
 /// Returns the mean of the elements in the vector.
 /// @param vector
 
-double mean_missing_values(const Tensor<type, 1>& vector)
+type mean_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -530,7 +530,7 @@ double mean_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double mean_missing_values(const Tensor<type, 1>& vector, const int& begin, const int& end) "
+           << "type mean_missing_values(const Tensor<type, 1>& vector, const int& begin, const int& end) "
               "const method.\n"
            << "Size must be greater than zero.\n";
 
@@ -539,7 +539,7 @@ double mean_missing_values(const Tensor<type, 1>& vector)
 
 #endif
 
-  double sum = 0;
+  type sum = 0;
 
   int count = 0;
 
@@ -551,7 +551,7 @@ double mean_missing_values(const Tensor<type, 1>& vector)
     }
   }
 
-  const double mean = sum /static_cast<double>(count);
+  const type mean = sum /static_cast<type>(count);
 
   return mean;
 }
@@ -560,7 +560,7 @@ double mean_missing_values(const Tensor<type, 1>& vector)
 /// Returns the variance of the elements in the vector.
 /// @param vector
 
-double variance(const Tensor<type, 1>& vector)
+type variance(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -570,7 +570,7 @@ double variance(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double variance(const Tensor<type, 1>&) const method.\n"
+           << "type variance(const Tensor<type, 1>&) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -583,8 +583,8 @@ double variance(const Tensor<type, 1>& vector)
     return(0.0);
   }
 
-  double sum = 0.0;
-  double squared_sum = 0.0;
+  type sum = 0.0;
+  type squared_sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
@@ -592,8 +592,8 @@ double variance(const Tensor<type, 1>& vector)
     squared_sum += vector[i] * vector[i];
   }
 
-  const double numerator = squared_sum -(sum * sum) /static_cast<double>(size);
-  const double denominator = size - 1.0;
+  const type numerator = squared_sum -(sum * sum) /static_cast<type>(size);
+  const type denominator = size - 1.0;
 
   if(denominator == 0.0)
   {
@@ -609,7 +609,7 @@ double variance(const Tensor<type, 1>& vector)
 /// Returns the variance of the elements in the vector.
 /// @param vector
 
-double variance_missing_values(const Tensor<type, 1>& vector)
+type variance_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -619,7 +619,7 @@ double variance_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double variance_missing_values(const Tensor<type, 1>& vector) "
+           << "type variance_missing_values(const Tensor<type, 1>& vector) "
               "const method.\n"
            << "Size must be greater than zero.\n";
 
@@ -628,8 +628,8 @@ double variance_missing_values(const Tensor<type, 1>& vector)
 
 #endif
 
-  double sum = 0.0;
-  double squared_sum = 0.0;
+  type sum = 0.0;
+  type squared_sum = 0.0;
 
   int count = 0;
 
@@ -646,8 +646,8 @@ double variance_missing_values(const Tensor<type, 1>& vector)
     return(0.0);
   }
 
-  const double numerator = squared_sum -(sum * sum) /static_cast<double>(count);
-  const double denominator = count - 1.0;
+  const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
+  const type denominator = count - 1.0;
 
   return numerator/denominator;
 }
@@ -656,7 +656,7 @@ double variance_missing_values(const Tensor<type, 1>& vector)
 /// Returns the standard deviation of the elements in the vector.
 /// @param vector
 
-double standard_deviation(const Tensor<type, 1>& vector)
+type standard_deviation(const Tensor<type, 1>& vector)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -666,7 +666,7 @@ double standard_deviation(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double standard_deviation(const Tensor<type, 1>&) const method.\n"
+           << "type standard_deviation(const Tensor<type, 1>&) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -686,8 +686,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const int& per
 
   Tensor<type, 1> std(size);
 
-  double mean_value = 0.0;
-  double sum = 0.0;
+  type mean_value = 0.0;
+  type sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
@@ -701,7 +701,7 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const int& per
           sum += (vector[j] - mean_value) *(vector[j] - mean_value);
       }
 
-      std[i] = sqrt(sum / double(period));
+      std[i] = sqrt(sum / type(period));
 
       mean_value = 0.0;
       sum = 0.0;
@@ -715,7 +715,7 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const int& per
 /// Returns the standard deviation of the elements in the vector.
 /// @param vector
 
-double standard_deviation_missing_values(const Tensor<type, 1>& vector)
+type standard_deviation_missing_values(const Tensor<type, 1>& vector)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -725,7 +725,7 @@ double standard_deviation_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double standard_deviation_missing_values(const Tensor<type, 1>& vector) const method.\n"
+           << "type standard_deviation_missing_values(const Tensor<type, 1>& vector) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -740,7 +740,7 @@ double standard_deviation_missing_values(const Tensor<type, 1>& vector)
 /// Returns the asymmetry of the elements in the vector
 /// @param vector
 
-double asymmetry(const Tensor<type, 1>& vector)
+type asymmetry(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -751,7 +751,7 @@ double asymmetry(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double asymmetry(const Tensor<type, 1>& vector) const method.\n"
+           << "type asymmetry(const Tensor<type, 1>& vector) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -764,18 +764,18 @@ double asymmetry(const Tensor<type, 1>& vector)
     return 0.0;
   }
 
-  const double standard_deviation_value = standard_deviation(vector);
+  const type standard_deviation_value = standard_deviation(vector);
 
-  const double mean_value = mean(vector);
+  const type mean_value = mean(vector);
 
-  double sum = 0.0;
+  type sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
     sum += (vector[i] - mean_value)*(vector[i] - mean_value)*(vector[i] - mean_value);
   }
-  const double numerator = sum /static_cast<double>(size);
-  const double denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
+  const type numerator = sum /static_cast<type>(size);
+  const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
 
   return numerator/denominator;
 }
@@ -784,7 +784,7 @@ double asymmetry(const Tensor<type, 1>& vector)
 /// Returns the kurtosis value of the elements in the vector.
 /// @param vector
 
-double kurtosis(const Tensor<type, 1>& vector)
+type kurtosis(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
@@ -794,7 +794,7 @@ double kurtosis(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistic Class.\n"
-           << "double kurtosis(const Tensor<type, 1>& vector) const method.\n"
+           << "type kurtosis(const Tensor<type, 1>& vector) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -806,19 +806,19 @@ double kurtosis(const Tensor<type, 1>& vector)
     return 0.0;
   }
 
-  const double standard_deviation_value = standard_deviation(vector);
+  const type standard_deviation_value = standard_deviation(vector);
 
-  const double mean_value = mean(vector);
+  const type mean_value = mean(vector);
 
-  double sum = 0.0;
+  type sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
     sum += (vector[i] - mean_value)*(vector[i] - mean_value)*(vector[i] - mean_value)*(vector[i] - mean_value);
   }
 
-  const double numerator = sum/static_cast<double>(size);
-  const double denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
+  const type numerator = sum/static_cast<type>(size);
+  const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
   return numerator/denominator - 3.0;
 }
@@ -828,7 +828,7 @@ double kurtosis(const Tensor<type, 1>& vector)
 /// @param vector
 
 
-double asymmetry_missing_values(const Tensor<type, 1>& vector)
+type asymmetry_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 #ifdef __OPENNN_DEBUG__
@@ -837,7 +837,7 @@ double asymmetry_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double asymmetry_missing_values(const Tensor<type, 1>& vector) const method.\n"
+           << "type asymmetry_missing_values(const Tensor<type, 1>& vector) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -849,11 +849,11 @@ double asymmetry_missing_values(const Tensor<type, 1>& vector)
     return 0.0;
   }
 
-  const double standard_deviation_value = standard_deviation_missing_values(vector);
+  const type standard_deviation_value = standard_deviation_missing_values(vector);
 
-  const double mean_value = mean_missing_values(vector);
+  const type mean_value = mean_missing_values(vector);
 
-  double sum = 0.0;
+  type sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
@@ -863,8 +863,8 @@ double asymmetry_missing_values(const Tensor<type, 1>& vector)
     }
   }
 /*
-  const double numerator = sum /vector.count_not_NAN();
-  const double denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
+  const type numerator = sum /vector.count_not_NAN();
+  const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
 
   return numerator/denominator;
 */
@@ -876,7 +876,7 @@ double asymmetry_missing_values(const Tensor<type, 1>& vector)
 /// @param vector
 
 
-double kurtosis_missing_values(const Tensor<type, 1>& vector)
+type kurtosis_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 #ifdef __OPENNN_DEBUG__
@@ -885,7 +885,7 @@ double kurtosis_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double kurtosis_missing_values(const Tensor<type, 1>& vector) const method.\n"
+           << "type kurtosis_missing_values(const Tensor<type, 1>& vector) const method.\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -898,11 +898,11 @@ double kurtosis_missing_values(const Tensor<type, 1>& vector)
     return 0.0;
   }
 
-  const double standard_deviation_value = standard_deviation_missing_values(vector);
+  const type standard_deviation_value = standard_deviation_missing_values(vector);
 
-  const double mean_value = mean_missing_values(vector);
+  const type mean_value = mean_missing_values(vector);
 
-  double sum = 0.0;
+  type sum = 0.0;
 
   for(int i = 0; i < size; i++)
   {
@@ -912,8 +912,8 @@ double kurtosis_missing_values(const Tensor<type, 1>& vector)
     }
   }
 /*
-  const double numerator = sum /vector.count_not_NAN();
-  const double denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
+  const type numerator = sum /vector.count_not_NAN();
+  const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
   return numerator/denominator - 3.0;
 */
@@ -923,13 +923,13 @@ double kurtosis_missing_values(const Tensor<type, 1>& vector)
 
 /// Returns the median of the elements in the vector
 
-double median(const Tensor<type, 1>& vector)
+type median(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
   Tensor<type, 1> sorted_vector(vector);
 /*
-  sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+  sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 
   int median_index;
 
@@ -955,7 +955,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
   Tensor<type, 1> sorted_vector(vector);
 /*
-  sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+  sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 
   Tensor<type, 1> quartiles(3);
 
@@ -1098,10 +1098,10 @@ Histogram histogram(const Tensor<type, 1>& vector, const int &bins_number)
   Tensor<type, 1> centers(bins_number);
   Tensor<int, 1> frequencies(bins_number, 0);
 
-  const double min = minimum(vector);
-  const double max = maximum(vector);
+  const type min = minimum(vector);
+  const type max = maximum(vector);
 
-  const double length = (max - min) /static_cast<double>(bins_number);
+  const type length = (max - min) /static_cast<type>(bins_number);
 
   minimums[0] = min;
   maximums[0] = min + length;
@@ -1156,7 +1156,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const int &bins_number)
 /// @param bins_number
 
 
-Histogram histogram_centered(const Tensor<type, 1>& vector, const double& center, const int & bins_number)
+Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const int & bins_number)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1165,7 +1165,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const double& center
 
         buffer << "OpenNN Exception: Statistics Class.\n"
                << "Histogram histogram_centered(const Tensor<type, 1>&, "
-                  "const double&, const int&) const method.\n"
+                  "const type&, const int&) const method.\n"
                << "Number of bins is less than one.\n";
 
         throw logic_error(buffer.str());
@@ -1177,11 +1177,11 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const double& center
 
       if(bins_number%2 == 0)
       {
-          bin_center = static_cast<int>(static_cast<double>(bins_number)/2.0);
+          bin_center = static_cast<int>(static_cast<type>(bins_number)/2.0);
       }
       else
       {
-          bin_center = static_cast<int>(static_cast<double>(bins_number)/2.0+1.0/2.0);
+          bin_center = static_cast<int>(static_cast<type>(bins_number)/2.0+1.0/2.0);
       }
 /*
       Tensor<type, 1> minimums(bins_number);
@@ -1190,10 +1190,10 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const double& center
       Tensor<type, 1> centers(bins_number);
       Tensor<int, 1> frequencies(bins_number, 0);
 
-      const double min = minimum(vector);
-      const double max = maximum(vector);
+      const type min = minimum(vector);
+      const type max = maximum(vector);
 
-      const double length = (max - min)/static_cast<double>(bins_number);
+      const type length = (max - min)/static_cast<type>(bins_number);
 
       minimums[bin_center-1] = center - length;
       maximums[bin_center-1] = center + length;
@@ -1277,9 +1277,9 @@ Histogram histogram(const Tensor<bool, 1>& vector)
   }
 
   Histogram histogram(2);
-  histogram.centers = centers.to_double_vector();
-  histogram.minimums = minimums.to_double_vector();
-  histogram.maximums = maximums.to_double_vector();
+  histogram.centers = centers.to_type_vector();
+  histogram.minimums = minimums.to_type_vector();
+  histogram.maximums = maximums.to_type_vector();
   histogram.frequencies = frequencies;
 
   return histogram;
@@ -1331,7 +1331,7 @@ Histogram histogram(const Tensor<int, 1>& vector, const int& bins_number)
     }
 
     Histogram histogram(centers_number);
-    histogram.centers = centers.to_double_vector();
+    histogram.centers = centers.to_type_vector();
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
@@ -1432,9 +1432,9 @@ Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
   }
 
   Histogram histogram(2);
-  histogram.centers = centers.to_double_vector();
-  histogram.minimums = minimums.to_double_vector();
-  histogram.maximums = maximums.to_double_vector();
+  histogram.centers = centers.to_type_vector();
+  histogram.minimums = minimums.to_type_vector();
+  histogram.maximums = maximums.to_type_vector();
   histogram.frequencies = frequencies;
 
   return histogram;
@@ -1680,7 +1680,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix, const Tensor<in
         }
     }
 
-    const Tensor<type, 1> mean = sums/static_cast<double>(row_indices_size);
+    const Tensor<type, 1> mean = sums/static_cast<type>(row_indices_size);
 
     Tensor<type, 1> standard_deviation(columns_indices_size);
 
@@ -1688,8 +1688,8 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix, const Tensor<in
     {
         for(int i = 0; i < columns_indices_size; i++)
         {
-            const double numerator = squared_sums[i] -(sums[i] * sums[i]) / row_indices_size;
-            const double denominator = row_indices_size - 1.0;
+            const type numerator = squared_sums[i] -(sums[i] * sums[i]) / row_indices_size;
+            const type denominator = row_indices_size - 1.0;
 
             standard_deviation[i] = numerator / denominator;
 
@@ -1737,7 +1737,7 @@ vector<Descriptives> rows_descriptives_missing_values(const Tensor<type, 2>& mat
 
 
 /// Returns the means of given rows.
-/// The format is a vector of double values.
+/// The format is a vector of type values.
 /// The size of that vector is equal to the number of given rows.
 /// @param matrix Used matrix.
 /// @param columns_indices Indices of the columns for which the descriptives are to be computed.
@@ -1776,7 +1776,7 @@ Tensor<type, 1> rows_means(const Tensor<type, 2>& matrix, const Tensor<int, 1>& 
 
 
 /// Returns the minimums values of given columns.
-/// The format is a vector of double values.
+/// The format is a vector of type values.
 /// The size of that vector is equal to the number of given columns.
 /// @param matrix Used matrix.
 /// @param columns_indices Indices of the columns for which the descriptives are to be computed.
@@ -1819,7 +1819,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<int
 
 
 /// Returns the maximums values of given columns.
-/// The format is a vector of double values.
+/// The format is a vector of type values.
 /// The size of that vector is equal to the number of given columns.
 /// @param matrix Used matrix.
 /// @param columns_indices Indices of the columns for which the descriptives are to be computed.
@@ -1861,10 +1861,10 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<int
 }
 
 
-double range(const Tensor<type, 1>& vector)
+type range(const Tensor<type, 1>& vector)
 {
-    const double min = minimum(vector);
-    const double max = maximum(vector);
+    const type min = minimum(vector);
+    const type max = maximum(vector);
 
     return abs(max - min);
 }
@@ -1916,7 +1916,7 @@ vector<BoxPlot> box_plots(const Tensor<type, 2>& matrix, const vector<Tensor<int
 
         column = matrix.get_column(columns_indices[i]).get_subvector(rows_indices[i]);
 
-        sort(column.begin(), column.end(), less<double>());
+        sort(column.begin(), column.end(), less<type>());
 
         // Minimum
 
@@ -1978,7 +1978,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double descriptives(const Tensor<type, 1>&).\n"
+           << "type descriptives(const Tensor<type, 1>&).\n"
            << "Size must be greater than zero.\n";
 
     throw logic_error(buffer.str());
@@ -1987,10 +1987,10 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 #endif
 
   Descriptives descriptives;
-  double minimum = 999999;
-  double maximum;
-  double sum = 0;
-  double squared_sum = 0;
+  type minimum = 999999;
+  type maximum;
+  type sum = 0;
+  type squared_sum = 0;
   int count = 0;
 
   maximum = -1.0*999999;
@@ -2013,9 +2013,9 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
       count++;
   }
 
-  const double mean = sum/static_cast<double>(count);
+  const type mean = sum/static_cast<type>(count);
 
-  double standard_deviation;
+  type standard_deviation;
 
   if(count <= 1)
   {
@@ -2023,8 +2023,8 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
   }
   else
   {
-      const double numerator = squared_sum -(sum * sum) / count;
-      const double denominator = size - 1.0;
+      const type numerator = squared_sum -(sum * sum) / count;
+      const type denominator = size - 1.0;
 
       standard_deviation = numerator / denominator;
   }
@@ -2053,7 +2053,7 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "double descriptives_missing_values(const Tensor<type, 1>&, "
+           << "type descriptives_missing_values(const Tensor<type, 1>&, "
               "const Tensor<int, 1>&).\n"
            << "Size must be greater than zero.\n";
 
@@ -2064,11 +2064,11 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
 
   Descriptives descriptives;
 
-  double minimum = 999999;
-  double maximum;
+  type minimum = 999999;
+  type maximum;
 
-  double sum = 0;
-  double squared_sum = 0;
+  type sum = 0;
+  type squared_sum = 0;
   int count = 0;
 
   maximum = -999999;
@@ -2092,9 +2092,9 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
       }
   }
 
-  const double mean = sum/static_cast<double>(count);
+  const type mean = sum/static_cast<type>(count);
 
-  double standard_deviation;
+  type standard_deviation;
 
   if(count <= 1)
   {
@@ -2102,8 +2102,8 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
   }
   else
   {
-      const double numerator = squared_sum -(sum * sum) / count;
-      const double denominator = size - 1.0;
+      const type numerator = squared_sum -(sum * sum) / count;
+      const type denominator = size - 1.0;
 
       standard_deviation = numerator / denominator;
   }
@@ -2133,24 +2133,24 @@ int perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     Tensor<type, 1> sorted_vector(vector);
 /*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 */
     const Descriptives descriptives = OpenNN::descriptives(vector);
 
-    const double mean = descriptives.mean;
-    const double standard_deviation = descriptives.standard_deviation;
-    const double minimum = sorted_vector[0];
-    const double maximum = sorted_vector[n-1];
+    const type mean = descriptives.mean;
+    const type standard_deviation = descriptives.standard_deviation;
+    const type minimum = sorted_vector[0];
+    const type maximum = sorted_vector[n-1];
 
  #pragma omp parallel for schedule(dynamic)
 
     for(int i = 0; i < n; i++)
     {
-        const double normal_distribution = 0.5 * erfc((mean - sorted_vector[i])/(standard_deviation*sqrt(2)));
-/*        const double half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2))); */
-        const double uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
+        const type normal_distribution = 0.5 * erfc((mean - sorted_vector[i])/(standard_deviation*sqrt(2)));
+/*        const type half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2))); */
+        const type uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
 
-        double empirical_distribution;
+        type empirical_distribution;
 
         int counter = 0;
 
@@ -2178,7 +2178,7 @@ int perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
                 }
             }
 
-            empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+            empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
         }
 
           #pragma omp critical
@@ -2203,10 +2203,10 @@ int perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&
 /*
     Tensor<type, 1> distances(3, 0.0);
 
-    double normal_distribution; // Normal distribution
-    double half_normal_distribution; // Half-normal distribution
-    double uniform_distribution; // Uniform distribution
-    double empirical_distribution; // Empirical distribution
+    type normal_distribution; // Normal distribution
+    type half_normal_distribution; // Half-normal distribution
+    type uniform_distribution; // Uniform distribution
+    type empirical_distribution; // Empirical distribution
 
     Tensor<int, 1> used_indices(1,1, vector.size());
     used_indices = used_indices.get_difference(missing_indices);
@@ -2215,16 +2215,16 @@ int perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&
     const int n = used_values.size();
 
     Tensor<type, 1> sorted_vector(used_values);
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 
     const Descriptives descriptives = OpenNN::descriptives(used_values);
 
-    const double mean = descriptives.mean;
-    const double standard_deviation = descriptives.standard_deviation;
-    const double minimum = sorted_vector[0];
-    const double maximum = sorted_vector[n-1];
+    const type mean = descriptives.mean;
+    const type standard_deviation = descriptives.standard_deviation;
+    const type minimum = sorted_vector[0];
+    const type maximum = sorted_vector[n-1];
 
-    if(abs(minimum - maximum) < numeric_limits<double>::epsilon() || standard_deviation < 1.0e-09)
+    if(abs(minimum - maximum) < numeric_limits<type>::epsilon() || standard_deviation < 1.0e-09)
     {
         return 2;
     }
@@ -2252,7 +2252,7 @@ int perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&
             }
         }
 
-        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
 
         #pragma omp critical
         {
@@ -2273,7 +2273,7 @@ Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
 /*
     const Index rows_number = matrix.dimension(0);
 
-   return matrix.calculate_columns_sum()/static_cast<double>(rows_number);
+   return matrix.calculate_columns_sum()/static_cast<type>(rows_number);
 */
     return Tensor<type, 1>();
 }
@@ -2314,7 +2314,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
          mean[j] += matrix(i,j);
       }
 
-      mean[j] /= static_cast<double>(rows_number);
+      mean[j] /= static_cast<type>(rows_number);
    }
 
    return mean;
@@ -2347,7 +2347,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<int, 1>& column
          mean[j] += matrix(i, column_index);
       }
 
-      mean[j] /= static_cast<double>(rows_number);
+      mean[j] /= static_cast<type>(rows_number);
    }
 
    return mean;
@@ -2464,7 +2464,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<int, 1>& row_in
          mean[j] += matrix(row_index,column_index);
       }
 
-      mean[j] /= static_cast<double>(rows_number);
+      mean[j] /= static_cast<type>(rows_number);
    }
 
    return mean;
@@ -2473,7 +2473,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<int, 1>& row_in
 
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
-double mean(const Tensor<type, 2>& matrix, const int& column_index)
+type mean(const Tensor<type, 2>& matrix, const int& column_index)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -2485,7 +2485,7 @@ double mean(const Tensor<type, 2>& matrix, const int& column_index)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Statistics class.\n"
-             << "double mean(const Tensor<type, 2>&, const int&) const method.\n"
+             << "type mean(const Tensor<type, 2>&, const int&) const method.\n"
              << "Number of rows must be greater than one.\n";
 
       throw logic_error(buffer.str());
@@ -2496,7 +2496,7 @@ double mean(const Tensor<type, 2>& matrix, const int& column_index)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Statistics class.\n"
-             << "double mean(const Tensor<type, 2>&, const int&) const method.\n"
+             << "type mean(const Tensor<type, 2>&, const int&) const method.\n"
              << "Index of column must be less than number of columns.\n";
 
       throw logic_error(buffer.str());
@@ -2506,14 +2506,14 @@ double mean(const Tensor<type, 2>& matrix, const int& column_index)
 
    // Mean
 
-   double mean = 0.0;
+   type mean = 0.0;
 
     for(int i = 0; i < rows_number; i++)
     {
         mean += matrix(i,column_index);
     }
 
-   mean /= static_cast<double>(rows_number);
+   mean /= static_cast<type>(rows_number);
 
    return mean;
 }
@@ -2671,7 +2671,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
    {
        Tensor<type, 1> sorted_column(matrix.get_column(j));
 
-       sort(sorted_column.begin(), sorted_column.end(), less<double>());
+       sort(sorted_column.begin(), sorted_column.end(), less<type>());
 
        if(rows_number % 2 == 0)
        {
@@ -2690,7 +2690,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 /// Returns a vector with the median values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
 
-double median(const Tensor<type, 2>& matrix, const int& column_index)
+type median(const Tensor<type, 2>& matrix, const int& column_index)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -2702,7 +2702,7 @@ double median(const Tensor<type, 2>& matrix, const int& column_index)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix template.\n"
-             << "double median(const int&) const method.\n"
+             << "type median(const int&) const method.\n"
              << "Number of rows must be greater than one.\n";
 
       throw logic_error(buffer.str());
@@ -2713,7 +2713,7 @@ double median(const Tensor<type, 2>& matrix, const int& column_index)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix template.\n"
-             << "double median(const int&) const method.\n"
+             << "type median(const int&) const method.\n"
              << "Index of column must be less than number of columns.\n";
 
       throw logic_error(buffer.str());
@@ -2723,11 +2723,11 @@ double median(const Tensor<type, 2>& matrix, const int& column_index)
 
    // median
 
-   double median = 0.0;
+   type median = 0.0;
 /*
    Tensor<type, 1> sorted_column(matrix.get_column(column_index));
 
-   sort(sorted_column.begin(), sorted_column.end(), less<double>());
+   sort(sorted_column.begin(), sorted_column.end(), less<type>());
 
    if(rows_number % 2 == 0)
    {
@@ -2765,7 +2765,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<int, 1>& colu
 
       Tensor<type, 1> sorted_column(matrix.get_column(column_index));
 
-      sort(sorted_column.begin(), sorted_column.end(), less<double>());
+      sort(sorted_column.begin(), sorted_column.end(), less<type>());
 
       if(rows_number % 2 == 0)
       {
@@ -2875,7 +2875,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<int, 1>& row_
 
       Tensor<type, 1> sorted_column(matrix.get_column(column_index, row_indices));
 
-      sort(sorted_column.begin(), sorted_column.end(), less<double>());
+      sort(sorted_column.begin(), sorted_column.end(), less<type>());
 
       if(row_indices_size % 2 == 0)
       {
@@ -2892,7 +2892,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<int, 1>& row_
 
 /// Returns the median of the elements of a vector with missing values.
 
-double median_missing_values(const Tensor<type, 1>& vector)
+type median_missing_values(const Tensor<type, 1>& vector)
 {
 /*
   const Index size = vector.dimension(0);
@@ -3043,24 +3043,24 @@ Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
 
 /// Returns true if the elements in the vector have a normal distribution with a given critical value.
 /// @param critical_value Critical value to be used in the test.
-
-bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const double& critical_value)
+/*
+bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const type& critical_value)
 {
 #ifndef Cpp11__
 
     const int n = vector.dimension(0);
 
-    const double mean = OpenNN::mean(vector);
-    const double standard_deviation = OpenNN::standard_deviation(vector);
+    const type mean = OpenNN::mean(vector);
+    const type standard_deviation = OpenNN::standard_deviation(vector);
 
     Tensor<type, 1> sorted_vector(vector);
-/*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
-*/
-    double Fx;
-    double Snx;
 
-    double D = -1;
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
+
+    type Fx;
+    type Snx;
+
+    type D = -1;
 
     for(int i = 0; i < n; i++)
     {
@@ -3080,7 +3080,7 @@ bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const doub
             {
                 if(vector[i] >= sorted_vector[j] && vector[i] < sorted_vector[j+1])
                 {
-                    Snx = static_cast<double>(j+1)/static_cast<double>(n);
+                    Snx = static_cast<type>(j+1)/static_cast<type>(n);
                 }
             }
         }
@@ -3122,26 +3122,26 @@ Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>& vector,
 
     return normality_tests;
 }
-
+*/
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// normal distribution.
 
-double normal_distribution_distance(const Tensor<type, 1>& vector)
+type normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    double normal_distribution_distance = 0.0;
+    type normal_distribution_distance = 0.0;
 
     const int n = vector.dimension(0);
 
-    const double mean_value = mean(vector);
-    const double standard_deviation = OpenNN::standard_deviation(vector);
+    const type mean_value = mean(vector);
+    const type standard_deviation = OpenNN::standard_deviation(vector);
 
-    double normal_distribution; // Normal distribution
-    double empirical_distribution; // Empirical distribution
+    type normal_distribution; // Normal distribution
+    type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
 /*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 */
     int counter = 0;
 
@@ -3162,7 +3162,7 @@ double normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
 
         normal_distribution_distance += abs(normal_distribution - empirical_distribution);
     }
@@ -3174,20 +3174,20 @@ double normal_distribution_distance(const Tensor<type, 1>& vector)
 /// Calculates the distance between the empirical distribution of the vector and the
 /// half normal distribution.
 
-double half_normal_distribution_distance(const Tensor<type, 1>& vector)
+type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    double half_normal_distribution_distance = 0.0;
+    type half_normal_distribution_distance = 0.0;
 
     const int n = vector.dimension(0);
 
-    const double standard_deviation = OpenNN::standard_deviation(vector);
+    const type standard_deviation = OpenNN::standard_deviation(vector);
 
-    double half_normal_distribution; // Half normal distribution
-    double empirical_distribution; // Empirical distribution
+    type half_normal_distribution; // Half normal distribution
+    type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
 /*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 */
     int counter = 0;
 
@@ -3208,7 +3208,7 @@ double half_normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
 
         half_normal_distribution_distance += abs(half_normal_distribution - empirical_distribution);
     }
@@ -3220,21 +3220,21 @@ double half_normal_distribution_distance(const Tensor<type, 1>& vector)
 /// Calculates the distance between the empirical distribution of the vector and the
 /// uniform distribution.
 
-double uniform_distribution_distance(const Tensor<type, 1>& vector)
+type uniform_distribution_distance(const Tensor<type, 1>& vector)
 {
-    double uniform_distribution_distance = 0.0;
+    type uniform_distribution_distance = 0.0;
 
     const int n = vector.dimension(0);
 
-    double uniform_distribution; // Uniform distribution
-    double empirical_distribution; // Empirical distribution
+    type uniform_distribution; // Uniform distribution
+    type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
 /*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 */
-    const double minimum = sorted_vector[0];
-    const double maximum = sorted_vector[n-1];
+    const type minimum = sorted_vector[0];
+    const type maximum = sorted_vector[n-1];
 
     int counter = 0;
 
@@ -3255,7 +3255,7 @@ double uniform_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
 
         uniform_distribution_distance += abs(uniform_distribution - empirical_distribution);
     }
@@ -3272,10 +3272,10 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    double significance_level = 0.05;
+    type significance_level = 0.05;
 
-    double A_significance_level;
-    double B_significance_level;
+    type A_significance_level;
+    type B_significance_level;
     Tensor<type, 1> critical_values(9);
 
     for(int i = 0; i < 9; i++)
@@ -3302,34 +3302,35 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
     }
 
     //return vector.Lilliefors_normality_test(critical_values);
-    return perform_Lilliefors_normality_test(vector,critical_values);
+    //return perform_Lilliefors_normality_test(vector,critical_values);
+  return Tensor<bool,1> ();
 
 }
 
 
 ///@todo
 
-double normality_parameter(const Tensor<type, 1>& vector)
+type normality_parameter(const Tensor<type, 1>& vector)
 {
-    const double max = maximum(vector);
-    const double min = minimum(vector);
+    const type max = maximum(vector);
+    const type min = minimum(vector);
 
     const int n = vector.dimension(0);
 
-    const double mean_value = mean(vector);
-    const double standard_deviation = OpenNN::standard_deviation(vector);
+    const type mean_value = mean(vector);
+    const type standard_deviation = OpenNN::standard_deviation(vector);
 
-    double normal_distribution;
-    double empirical_distribution;
-    double previous_normal_distribution = 0.0;
-    double previous_empirical_distribution = 0.0;
+    type normal_distribution;
+    type empirical_distribution;
+    type previous_normal_distribution = 0.0;
+    type previous_empirical_distribution = 0.0;
 
     Tensor<type, 1> sorted_vector(vector);
 /*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<double>());
+    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
 */
-    double empirical_area = 0.0;
-    double normal_area = 0.0;
+    type empirical_area = 0.0;
+    type normal_area = 0.0;
 
     int counter = 0;
 
@@ -3350,7 +3351,7 @@ double normality_parameter(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
 
         if(i == 0)
         {
@@ -3367,7 +3368,7 @@ double normality_parameter(const Tensor<type, 1>& vector)
         }
     }
 
-    const double uniform_area = (max - min)/2.0;
+    const type uniform_area = (max - min)/2.0;
 
     return uniform_area;
 }
@@ -3400,7 +3401,7 @@ int minimal_index(const Tensor<type, 1>& vector)
     if(size == 0) return int();
 
     int minimal_index = 0;
-    double minimum = vector[0];
+    type minimum = vector[0];
 
     for(int i = 1; i < size; i++)
     {
@@ -3424,7 +3425,7 @@ int maximal_index(const Tensor<type, 1>& vector)
     if(size == 0) return int();
 
     int maximal_index = 0;
-    double maximum = vector[0];
+    type maximum = vector[0];
 
     for(int i = 1; i < size; i++)
     {
@@ -3507,7 +3508,7 @@ Tensor<int, 1> minimal_indices(const Tensor<type, 2>& matrix)
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   double minimum = matrix(0,0);
+   type minimum = matrix(0,0);
    Tensor<int, 1> minimal_indices(2);
 
    for(int i = 0; i < rows_number; i++)
@@ -3527,12 +3528,12 @@ Tensor<int, 1> minimal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-Tensor<int, 1> minimal_indices_omit(const Tensor<type, 2>& matrix, const double& value_to_omit)
+Tensor<int, 1> minimal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   double minimum = 999999;
+   type minimum = 999999;
 
    Tensor<int, 1> minimal_indices(2);
 
@@ -3560,7 +3561,7 @@ Tensor<int, 1> maximal_indices(const Tensor<type, 2>& matrix)
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   double maximum = matrix(0,0);
+   type maximum = matrix(0,0);
 
    Tensor<int, 1> maximal_indices(2);
 
@@ -3581,12 +3582,12 @@ Tensor<int, 1> maximal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-Tensor<int, 1> maximal_indices_omit(const Tensor<type, 2>& matrix, const double& value_to_omit)
+Tensor<int, 1> maximal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   double maximum = 1.0e-99;
+   type maximum = 1.0e-99;
 
    Tensor<int, 1> maximum_indices(2);
 
@@ -3605,43 +3606,6 @@ Tensor<int, 1> maximal_indices_omit(const Tensor<type, 2>& matrix, const double&
 
    return maximum_indices;
 }
-
-
-/// Returns the minimum value from all elements in the matrix.
-
-double minimum_matrix(const Tensor<type, 2>& matrix)
-{
-   double minimum = static_cast<double>(999999);
-/*
-   for(int i = 0; i < matrix.size(); i++)
-   {
-         if(matrix[i] < minimum)
-         {
-            minimum = matrix[i];
-         }
-   }
-*/
-   return minimum;
-}
-
-
-/// Returns the maximum value from all elements in the matrix.
-
-double maximum_matrix(const Tensor<type, 2>& matrix)
-{
-    double maximum = static_cast<double>(-999999);
-/*
-    for(int i = 0; i < matrix.size(); i++)
-    {
-          if(matrix[i] > maximum)
-          {
-             maximum = matrix[i];
-          }
-    }
-*/
-   return maximum;
-}
-
 
 type strongest(const Tensor<type, 1>& vector)
 {
@@ -3693,7 +3657,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 
     Tensor<type, 1> means(elements_uniques);
 
-    double sum = 0.0;
+    type sum = 0.0;
     int count = 0;
 
     for(int i = 0; i < integers_number; i++)
@@ -3712,7 +3676,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 
         if(count != 0)
         {
-            means[i] = static_cast<double>(sum)/static_cast<double>(count);
+            means[i] = static_cast<type>(sum)/static_cast<type>(count);
 
         }
         else
@@ -3759,7 +3723,7 @@ Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix
 
     Tensor<type, 1> means(elements_uniques);
 
-    double sum = 0.0;
+    type sum = 0.0;
     int count = 0;
 
     for(int i = 0; i < integers_number; i++)
@@ -3778,7 +3742,7 @@ Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix
 
         if(count != 0)
         {
-            means[i] = static_cast<double>(sum)/static_cast<double>(count);
+            means[i] = static_cast<type>(sum)/static_cast<type>(count);
 
         }
         else
@@ -3842,7 +3806,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 {
     Tensor<type, 1> means(matrix.dimension(1)-1);
 
-    double sum = 0.0;
+    type sum = 0.0;
     int count = 0;
 
     for(int i = 0; i < matrix.dimension(1)-1; i++)
@@ -3862,7 +3826,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 
         if(count != 0)
         {
-            means[i] = static_cast<double>(sum)/static_cast<double>(count);
+            means[i] = static_cast<type>(sum)/static_cast<type>(count);
 
         }
         else
@@ -3881,7 +3845,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 Tensor<type, 1> means_binary_columns_missing_values(const Tensor<type, 2>& matrix)
 {
 /*
-   return means_binary_columns(matrix.delete_rows_with_value(static_cast<double>(NAN)));
+   return means_binary_columns(matrix.delete_rows_with_value(static_cast<type>(NAN)));
 */
     return Tensor<type, 1>();
 }
@@ -3913,15 +3877,15 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
   }
   else
   {
-    percentiles[0] = static_cast<double>(sorted_vector[size * 1 / 10]);
-    percentiles[1] = static_cast<double>(sorted_vector[size * 2 / 10]);
-    percentiles[2] = static_cast<double>(sorted_vector[size * 3 / 10]);
-    percentiles[3] = static_cast<double>(sorted_vector[size * 4 / 10]);
-    percentiles[4] = static_cast<double>(sorted_vector[size * 5 / 10]);
-    percentiles[5] = static_cast<double>(sorted_vector[size * 6 / 10]);
-    percentiles[6] = static_cast<double>(sorted_vector[size * 7 / 10]);
-    percentiles[7] = static_cast<double>(sorted_vector[size * 8 / 10]);
-    percentiles[8] = static_cast<double>(sorted_vector[size * 9 / 10]);
+    percentiles[0] = static_cast<type>(sorted_vector[size * 1 / 10]);
+    percentiles[1] = static_cast<type>(sorted_vector[size * 2 / 10]);
+    percentiles[2] = static_cast<type>(sorted_vector[size * 3 / 10]);
+    percentiles[3] = static_cast<type>(sorted_vector[size * 4 / 10]);
+    percentiles[4] = static_cast<type>(sorted_vector[size * 5 / 10]);
+    percentiles[5] = static_cast<type>(sorted_vector[size * 6 / 10]);
+    percentiles[6] = static_cast<type>(sorted_vector[size * 7 / 10]);
+    percentiles[7] = static_cast<type>(sorted_vector[size * 8 / 10]);
+    percentiles[8] = static_cast<type>(sorted_vector[size * 9 / 10]);
     percentiles[9] = maximum(vector);
   }
 
@@ -3957,7 +3921,7 @@ Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
 /// Returns the weighted mean of the vector.
 /// @param weights Weights of the elements of the vector in the mean.
 
-double weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weights)
+type weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weights)
 {
     const Index size = vector.dimension(0);
 
@@ -3967,7 +3931,7 @@ double weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weigh
       ostringstream buffer;
 
       buffer << "OpenNN Exception: vector Template.\n"
-             << "double calculate_weighted_mean(const Tensor<type, 1>&) const method.\n"
+             << "type calculate_weighted_mean(const Tensor<type, 1>&) const method.\n"
              << "Size must be greater than zero.\n";
 
       throw logic_error(buffer.str());
@@ -3979,7 +3943,7 @@ double weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weigh
       ostringstream buffer;
 
       buffer << "OpenNN Exception: vector Template.\n"
-             << "double calculate_weighted_mean(const Tensor<type, 1>&) "
+             << "type calculate_weighted_mean(const Tensor<type, 1>&) "
                 "const method.\n"
              << "Size of weights must be equal to vector size.\n";
 
@@ -3987,9 +3951,9 @@ double weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weigh
     }
   #endif
 
-    double weights_sum = 0;
+    type weights_sum = 0;
 
-    double sum = 0;
+    type sum = 0;
 
     for(int i = 0; i < size; i++)
     {
@@ -3997,7 +3961,7 @@ double weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weigh
         weights_sum += weights[i];
     }
 
-    const double mean = sum / weights_sum;
+    const type mean = sum / weights_sum;
 
     return mean;
 }
@@ -4024,7 +3988,7 @@ Tensor<type, 1> explained_variance(const Tensor<type, 1>& vector)
 
     #endif
 /*
-    const double this_sum = absolute_value(vector).calculate_sum();
+    const type this_sum = absolute_value(vector).calculate_sum();
 
     #ifdef __OPENNN_DEBUG__
 
