@@ -11,7 +11,7 @@
 namespace OpenNN
 {
 
-double sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+type sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     const auto error = y - x;
 
@@ -23,7 +23,7 @@ double sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 }
 
 
-double l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
+type l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
 {
    Tensor<type, 0> y;
 
@@ -48,326 +48,6 @@ double l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& 
 
 
 
-/*
-double dot(const Tensor<type, 1>& a, const Tensor<type, 1>& b)
-{
-    const int a_size = a.size();
-
-  #ifdef __OPENNN_DEBUG__
-
-    const int b_size = b.size();
-
-    if(a_size != b_size)
-    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Metrics functions.\n"
-             << "double dot(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-             << "Both vector sizes must be the same.\n";
-
-      throw logic_error(buffer.str());
-    }
-
-  #endif
-
-    double dot_product = 0.0;
-
-    for(int i = 0; i < a_size; i++)
-    {
-      dot_product += a[i] * b[i];
-    }
-
-    return dot_product;
-}
-
-
-Tensor<type, 1> dot(const Tensor<type, 1>& vector, const Tensor<type, 2>& matrix)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-  #ifdef __OPENNN_DEBUG__
-    const int vector_size = vector.size();
-
-    if(rows_number != vector_size)
-    {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Metrics functions.\n"
-             << "Tensor<type, 1> dot(const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
-             << "Matrix number of rows (" << rows_number << ") must be equal to vector size (" << vector_size << ").\n";
-
-      throw logic_error(buffer.str());
-    }
-
-  #endif
-
-    Tensor<type, 1> product(columns_number, 0.0);
-
-     for(int j = 0; j < columns_number; j++)
-     {
-        for(int i = 0; i < rows_number; i++)
-        {
-           product[j] += vector[i]*matrix(i,j);
-       }
-     }
-
-    return product;
-}
-
-
-Tensor<type, 1> dot(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    Tensor<type, 1> product(rows_number);
-
-    const Map<MatrixXd> matrix_eigen((double*)matrix.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Map<VectorXd> vector_eigen((double*)vector.data(), static_cast<int>(columns_number));
-    Map<VectorXd> product_eigen(product.data(), static_cast<int>(rows_number));
-
-    product_eigen = matrix_eigen*vector_eigen;
-
-    return product;
-}
-
-
-Tensor<type, 2> dot(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2)
-{
-    const int rows_number_1 = matrix_1.dimension(0);
-    const int columns_number_1 = matrix_1.dimension(1);
-
-    const int rows_number_2 = matrix_2.dimension(0);
-    const int columns_number_2 = matrix_2.dimension(1);
-
-    Tensor<type, 2> product(rows_number_1, columns_number_2);
-
-    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*eigen_2;
-
-    return product;
-}
-
-
-void dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, Tensor<type, 2>& result)
-{
-    const int rows_number_1 = matrix_1.dimension(0);
-    const int columns_number_1 = matrix_1.dimension(1);
-
-    const int rows_number_2 = matrix_2.rows();
-    const int columns_number_2 = matrix_2.cols();
-
-    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Map<MatrixXd> product_eigen(result.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*matrix_2;
-}
-
-
-Tensor<type, 2> dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2)
-{
-
-    const int rows_number_1 = matrix_1.dimension(0);
-    const int columns_number_1 = matrix_1.dimension(1);
-
-    const int rows_number_2 = matrix_2.rows();
-    const int columns_number_2 = matrix_2.cols();
-
-    Tensor<type, 2> product(rows_number_1, columns_number_2);
-
-    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*matrix_2;
-
-    return product;
-
-//    MatrixXd eigen_1 = tensor_to_eigen(matrix_1);
-//    MatrixXd eigen_2 = matrix_to_eigen(matrix_2);
-
-//    return eigen_to_tensor(eigen_1*eigen_2);
-
-}
-
-
-void dot(const Tensor<type, 2>& matrix_1, const MatrixXd& matrix_2, Tensor<type, 2>& product)
-{
-    const int rows_number_1 = matrix_1.dimension(0);
-    const int columns_number_1 = matrix_1.dimension(1);
-
-    const int rows_number_2 = matrix_2.rows();
-    const int columns_number_2 = matrix_2.cols();
-
-    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-//    const Map<MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*matrix_2;
-}
-
-
-void dot(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2, Tensor<type, 2>& product)
-{
-    const int rows_number_1 = matrix_1.dimension(0);
-    const int columns_number_1 = matrix_1.dimension(1);
-
-    const int rows_number_2 = matrix_2.dimension(0);
-    const int columns_number_2 = matrix_2.dimension(1);
-
-    const Map<MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-    const Map<MatrixXd> eigen_2((double*)matrix_1.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
-
-    product_eigen = eigen_1*eigen_2;
-}
-
-
-Tensor<type, 2> dot_2d_2d(const Tensor<type, 2>& tensor_1, const Tensor<type, 2>& tensor_2)
-{
-#ifdef __OPENNN_DEBUG__
-
-    const int dimensions_number_1 = tensor_1.rank();
-    const int dimensions_number_2 = tensor_2.rank();
-
-  if(dimensions_number_1 != 2)
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-           << "Dimensions number of tensor 1 (" << dimensions_number_1 << ") must be 2.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-  if(dimensions_number_2 != 2)
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-           << "Dimensions number of tensor 2 (" << dimensions_number_2 << ") must be 2.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-#endif
-
-    const int rows_number = tensor_1.dimension(0);
-    const int columns_number = tensor_1.dimension(1);
-
-    const int other_rows_number = tensor_2.dimension(0);
-    const int other_columns_number = tensor_2.dimension(1);
-
-    Tensor<type, 2> product(rows_number, other_columns_number);
-
-    const Map<MatrixXd> eigen_1((double*)tensor_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Map<MatrixXd> eigen_2((double*)tensor_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Map<MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
-
-    product_eigen = eigen_1*eigen_2;
-
-    return product;
-}
-
-
-Tensor<type, 2> dot_2d_3d(const Tensor<type, 2>& tensor_1, const Tensor<type, 2>& tensor_2)
-{
-#ifdef __OPENNN_DEBUG__
-
-    const int dimensions_number_1 = tensor_1.rank();
-    const int dimensions_number_2 = tensor_2.rank();
-
-  if(dimensions_number_1 != 2)
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-           << "Dimensions number of tensor 1 (" << dimensions_number_1 << ") must be 2.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-  if(dimensions_number_2 != 3)
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Metrics functions.\n"
-           << "Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-           << "Dimensions number of tensor 2 (" << dimensions_number_2 << ") must be 3.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-#endif
-
-  const int n = tensor_2.dimensions()[2];
-
-  const auto& dimensions_1 = tensor_1.dimensions();
-  const auto& dimensions_2 = tensor_2.dimensions();
-
-  const Tensor<type, 2> tensor_1_matrix = tensor_1.get_matrix(0);
-
-  Tensor<type, 2> product(dimensions_1[0], dimensions_2[1]);
-
-  for(int i = 0; i < n; i ++)
-  {
-      const Tensor<type, 2> i_matrix = tensor_2.get_matrix(i);
-
-      const Tensor<type, 2> i_row = tensor_1_matrix.get_submatrix_rows({i});
-
-      const Tensor<type, 2> dot_product = dot(i_row, i_matrix);
-
-      for(int k = 0; k < dimensions_2[1]; k++)
-      {
-          product(i,k) = dot_product(0,k);
-      }
-  }
-
-  return product;
-}
-
-
-Tensor<type, 2> dot(const Tensor<type, 2>& matrix, const Tensor<type, 2>& tensor)
-{
-
-    const int order = tensor.rank();
-
-    if(order == 2)
-    {
-        return dot(matrix, tensor.get_matrix(0));
-    }
-    else if(order > 2)
-    {
-
-        const int n = tensor.dimensions()[2];
-
-        Tensor<type, 2> outputs(n, matrix.dimension(1));
-
-        for(int i = 0; i < n; i ++)
-        {
-            const Tensor<type, 2> i_matrix = tensor.get_matrix(i);
-
-            const Tensor<type, 2> i_row = matrix.get_submatrix_rows({i});
-
-            Tensor<type, 2> dot_product = dot(i_row, i_matrix);
-
-            outputs.set_row(i, dot_product.to_vector());
-        }
-
-        return outputs;
-    }
-
-    return Tensor<type, 2>();
-
-}
 
 
 /// Returns the vector norm.
@@ -1825,8 +1505,8 @@ double cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
 double minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const double& minkowski_parameter)
 {
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1877,12 +1557,12 @@ double minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const
 }
 
 
-double weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const double& positives_weight, const double& negatives_weight)
+type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const double& positives_weight, const double& negatives_weight)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
     const int other_rows_number = y.dimension(0);
 
@@ -1948,7 +1628,10 @@ double weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2
 
 Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& vector)
 {
+/*
   return sign(vector);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -1961,82 +1644,6 @@ Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& vector)
   return Tensor<type, 2>(x_size, x_size, 0);
 }
 
-
-MatrixXd matrix_to_eigen(const Tensor<type, 2>& matrix)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    MatrixXd eigen(rows_number, columns_number);
-
-    for(int i = 0; i < rows_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-           eigen(i,j) = matrix(i,j);
-        }
-    }
-
-    return eigen;
-}
-
-
-MatrixXd tensor_to_eigen(const Tensor<type, 2>& matrix)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    MatrixXd eigen(rows_number, columns_number);
-
-    for(int i = 0; i < rows_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-           eigen(i,j) = matrix(i,j);
-        }
-    }
-
-    return eigen;
-}
-
-
-Tensor<type, 2> eigen_to_matrix(const MatrixXd& eigen)
-{
-    const int rows_number = eigen.rows();
-    const int columns_number = eigen.cols();
-
-    Tensor<type, 2> matrix(rows_number, columns_number);
-
-    for(int i = 0; i < rows_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-           matrix(i,j) = eigen(i,j);
-        }
-    }
-
-    return matrix;
-}
-
-
-Tensor<type, 2> eigen_to_tensor(const MatrixXd& eigen)
-{
-    const int rows_number = eigen.rows();
-    const int columns_number = eigen.cols();
-
-    Tensor<type, 2> matrix(Tensor<int, 1>(rows_number, columns_number));
-
-    for(int i = 0; i < rows_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-           matrix(i,j) = eigen(i,j);
-        }
-    }
-
-    return matrix;
-}
-*/
 
 }
 

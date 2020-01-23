@@ -26,8 +26,8 @@ return y;
 
 Tensor<type, 2> sine(const Tensor<type, 2>& x)
 {
-const int rows_number = x.dimension(0);
-const int columns_number = x.dimension(1);
+const auto rows_number = x.dimension(0);
+const suto columns_number = x.dimension(1);
 const int n = rows_number * columns_number;
 
 Tensor<type, 2> y(rows_number, columns_number);
@@ -56,8 +56,8 @@ return y;
 
 Tensor<type, 2> cosine(const Tensor<type, 2>& x)
 {
-const int rows_number = x.dimension(0);
-const int columns_number = x.dimension(1);
+const auto rows_number = x.dimension(0);
+const suto columns_number = x.dimension(1);
 const int n = rows_number * columns_number;
 
 Tensor<type, 2> y(rows_number, columns_number);
@@ -466,8 +466,8 @@ Tensor<type, 1> exponential_linear(const Tensor<type, 1>& x)
 
 Tensor<type, 2> softmax(const Tensor<type, 2>& x)
 {
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
   Tensor<type, 2> softmax(rows_number, columns_number);
 
@@ -497,8 +497,8 @@ Tensor<type, 2> softmax_rows(const Tensor<type, 2>&)
 /*
 Tensor<type, 2> hyperbolic_tangent(const Tensor<type, 2>& x)
 {
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
     const int n = x.size();
 
@@ -689,7 +689,7 @@ Tensor<type, 2> linear_derivatives(const Tensor<type, 2>& x)
 {
      const int n = x.dimension(0);
 
-     const int columns_number = x.dimension(1);
+     const suto columns_number = x.dimension(1);
 
      Tensor<type, 2> y(Tensor<int, 1>({columns_number, columns_number, n}));
 
@@ -1070,7 +1070,7 @@ Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.dimension(0);
 
- const int columns_number = x.dimension(1);
+ const suto columns_number = x.dimension(1);
 
 // Tensor<int, 1> dimensions = {columns_number, columns_number, n};
 
@@ -1125,8 +1125,8 @@ Tensor<type, 2> competitive(const Tensor<type, 2>& matrix)
 /*
 Tensor<type, 2> competitive(const Tensor<type, 2>& x)
 {
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
     Tensor<type, 2> competitive(rows_number, columns_number);
 
@@ -2005,7 +2005,7 @@ void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     const int n = x.dimension(0);
 
-    const int columns_number = x.dimension(1);
+    const suto columns_number = x.dimension(1);
 
     #pragma omp parallel for
 
@@ -2050,7 +2050,7 @@ void binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
 void competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
-    const int rows_number = x.dimension(0);
+    const auto rows_number = x.dimension(0);
 /*
     #pragma omp parallel for
 
@@ -2066,8 +2066,8 @@ void competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
 void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
-    const int rows_number = x.dimension(0);
-    const int columns_number = x.dimension(1);
+    const auto rows_number = x.dimension(0);
+    const suto columns_number = x.dimension(1);
 
     #pragma omp parallel for
 
