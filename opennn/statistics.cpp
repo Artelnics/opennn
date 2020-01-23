@@ -22,8 +22,8 @@ Descriptives::Descriptives()
 
 /// Values constructor.
 
-Descriptives::Descriptives(const double &new_minimum, const double &new_maximum,
-                           const double &new_mean, const double &new_standard_deviation)
+Descriptives::Descriptives(const type &new_minimum, const type &new_maximum,
+                           const type &new_mean, const type &new_standard_deviation)
 {
   minimum = new_minimum;
   maximum = new_maximum;
@@ -41,7 +41,8 @@ Descriptives::~Descriptives()
 /// Sets a new minimum value in the descriptives structure.
 /// @param new_minimum Minimum value.
 
-void Descriptives::set_minimum(const double &new_minimum) {
+void Descriptives::set_minimum(const type &new_minimum)
+{
   minimum = new_minimum;
 }
 
@@ -49,7 +50,7 @@ void Descriptives::set_minimum(const double &new_minimum) {
 /// Sets a new maximum value in the descriptives structure.
 /// @param new_maximum Maximum value.
 
-void Descriptives::set_maximum(const double &new_maximum) {
+void Descriptives::set_maximum(const type &new_maximum) {
   maximum = new_maximum;
 }
 
@@ -57,7 +58,7 @@ void Descriptives::set_maximum(const double &new_maximum) {
 /// Sets a new mean value in the descriptives structure.
 /// @param new_mean Mean value.
 
-void Descriptives::set_mean(const double &new_mean) {
+void Descriptives::set_mean(const type &new_mean) {
   mean = new_mean;
 }
 
@@ -65,7 +66,7 @@ void Descriptives::set_mean(const double &new_mean) {
 /// Sets a new standard deviation value in the descriptives structure.
 /// @param new_standard_deviation Standard deviation value.
 
-void Descriptives::set_standard_deviation(const double &new_standard_deviation) {
+void Descriptives::set_standard_deviation(const type &new_standard_deviation) {
   standard_deviation = new_standard_deviation;
 }
 
@@ -208,10 +209,16 @@ int Histogram::get_bins_number() const {
 
 int Histogram::count_empty_bins() const
 {
-/*
-  return frequencies.count_equal_to(0);
-*/
-    return 0;
+    const auto size = frequencies.dimension(0);
+
+    int count = 0;
+
+    for(int i = 0; i < size; i++)
+    {
+        if(frequencies(i) == 0) count++;
+    }
+
+    return count;
 }
 
 
@@ -357,7 +364,7 @@ int minimum(const Tensor<int, 1>& vector)
 }
 
 
-time_t minimum(const vector<time_t>& vector)
+time_t minimum(const Tensor<time_t, 1>& vector)
 {
     /*
     const time_t min = *min_element(vector.begin(), vector.end());
@@ -395,11 +402,14 @@ int maximum(const Tensor<int, 1>& vector)
 }
 
 
-time_t maximum(const vector<time_t>& vector)
+time_t maximum(const Tensor<time_t, 1>& vector)
 {
+/*
     const time_t max = *max_element(vector.begin(), vector.end());
 
     return max;
+*/
+    return 0;
 }
 
 
@@ -3633,13 +3643,13 @@ double maximum_matrix(const Tensor<type, 2>& matrix)
 }
 
 
-double strongest(const Tensor<type, 1>& vector)
+type strongest(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
     if(size == 0) return 0.0;
 
-    double strongest = vector[0];
+    type strongest = vector[0];
 
     for(int i = 0; i < size; i++)
     {
@@ -3811,8 +3821,8 @@ Tensor<type, 1> means_binary_column(const Tensor<type, 2>& matrix)
 
     if(count != 0)
     {
-        means[0] = static_cast<double>(means[0])/static_cast<double>(count);
-        means[1] = static_cast<double>(means[1])/static_cast<double>(count);
+        means[0] = static_cast<type>(means[0])/static_cast<type>(count);
+        means[1] = static_cast<type>(means[1])/static_cast<type>(count);
     }
     else
     {
