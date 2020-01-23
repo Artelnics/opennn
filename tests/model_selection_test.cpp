@@ -18,7 +18,7 @@ ModelSelectionTest::~ModelSelectionTest()
 {
 }
 
-
+/*
 void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -134,7 +134,7 @@ void ModelSelectionTest::test_to_XML()
 void ModelSelectionTest::test_from_XML()
 {
     cout << "test_from_XML\n";
-/*
+
     ModelSelection ms1;
     ModelSelection ms2;
 
@@ -147,7 +147,7 @@ void ModelSelectionTest::test_from_XML()
     delete document;
 
     assert_true(ms2.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
-*/
+
 }
 
 
@@ -172,21 +172,21 @@ void ModelSelectionTest::test_load()
     string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
-/*
+
     ms.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
     // Test
 
     ms.save(file_name);
     ms.load(file_name);
-*/
-}
 
+}
+*/
 
 void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
-
+/*
     // Constructor and destructor methods
 
     test_constructor();
@@ -212,6 +212,6 @@ void ModelSelectionTest::run_test_case()
     test_from_XML();
     test_save();
     test_load();
-
+*/
     cout << "End of model selection test case.\n";
 }

@@ -18,7 +18,7 @@ VectorTest::~VectorTest()
 {
 }
 
-
+/*
 void VectorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -174,14 +174,14 @@ void VectorTest::test_multiplication_operator()
 
    // Matrix
 
-   Matrix<double> m(1, 1, 0.0);
+   Tensor<double, 2> m(1, 1, 0.0);
 
    a.set(1, 0.0);
 
-   Matrix<double> p = a*m;
+   Tensor<double, 2> p = a*m;
 
-   assert_true(p.get_rows_number() == 1, LOG);
-   assert_true(p.get_columns_number() == 1, LOG);
+   assert_true(p.dimension(0) == 1, LOG);
+   assert_true(p.dimension(1) == 1, LOG);
    assert_true(p == 0.0, LOG);
 
    m.set(3, 2, 1.0);
@@ -189,8 +189,8 @@ void VectorTest::test_multiplication_operator()
 
    p = a*m;
 
-   assert_true(p.get_rows_number() == 3, LOG);
-   assert_true(p.get_columns_number() == 2, LOG);
+   assert_true(p.dimension(0) == 3, LOG);
+   assert_true(p.dimension(1) == 2, LOG);
    assert_true(p == 1.0, LOG);
 }
 
@@ -1261,7 +1261,7 @@ void VectorTest::test_dot_matrix()
    cout << "test_dot_matrix\n";
 
    Vector<double> vector;
-   Matrix<double> matrix;
+   Tensor<double, 2> matrix;
 
    Vector<double> number;
 
@@ -3158,12 +3158,12 @@ void VectorTest:: test_count_dates()
 
 //    assert_true(solution == date, LOG);
 }
-
+*/
 
 void VectorTest::run_test_case()
 {
    cout << "Running vector test case...\n";
-
+/*
   // Constructor and destructor methods
 
    test_constructor();
@@ -3394,8 +3394,7 @@ void VectorTest::run_test_case()
    test_save();
 
    test_load();
-
-
+*/
    cout << "End vector test case\n";
 }
 

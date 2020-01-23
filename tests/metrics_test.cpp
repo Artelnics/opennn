@@ -18,7 +18,7 @@ MetricsTest::~MetricsTest()
 {
 }
 
-
+/*
 void MetricsTest::test_constructor()
 {
    cout << "test_constructor\n"; 
@@ -67,7 +67,7 @@ void MetricsTest::test_l1_norm_hessian()
 {
    cout << "test_l1_norm_hessian\n";
    Vector<double> vector(3);
-   Matrix<double> hessian(3,3);
+   Tensor<double, 2> hessian(3,3);
    vector[0]=1;
    vector[1]=-2.3;
    vector[2]=3.3;
@@ -152,7 +152,7 @@ void MetricsTest::test_determinant()
 {
     cout << "test_Ldeterminat\n";
 
-    Matrix<double> matrix;
+    Tensor<double, 2> matrix;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
 
@@ -164,8 +164,8 @@ void MetricsTest::test_cofactor()
 {
     cout << "test_cofactor\n";
 
-    Matrix<double> matrix;
-    Matrix<double> cofact;
+    Tensor<double, 2> matrix;
+    Tensor<double, 2> cofact;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
     cofact=cofactor(matrix);
@@ -181,8 +181,8 @@ void MetricsTest::test_inverse()
 {
     cout << "test_inverse\n";
 
-    Matrix<double> matrix;
-    Matrix<double> inver;
+    Tensor<double, 2> matrix;
+    Tensor<double, 2> inver;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
     inver=inverse(matrix);
@@ -198,8 +198,8 @@ void MetricsTest::test_eigenvalues()
 {
     cout << "test_eigenvalues\n";
 
-    Matrix<double> matrix;
-    Matrix<double> eig;
+    Tensor<double, 2> matrix;
+    Tensor<double, 2> eig;
 
     matrix={{1,2},{1,2}};
     eig=eigenvalues(matrix);
@@ -211,8 +211,8 @@ void MetricsTest::test_eigenvectors()
 {
     cout << "test_eigenvectors\n";
 
-    Matrix<double> matrix;
-    Matrix<double> eig;
+    Tensor<double, 2> matrix;
+    Tensor<double, 2> eig;
 
     matrix = {{1,2},{1,2}};
 
@@ -226,9 +226,9 @@ void MetricsTest::test_direct()
 {
     cout << "test_direct\n";
 
-    Matrix<double> matrix_1;
-    Matrix<double> matrix_2;
-    Matrix<double> result;
+    Tensor<double, 2> matrix_1;
+    Tensor<double, 2> matrix_2;
+    Tensor<double, 2> result;
 
     //Test
 
@@ -236,7 +236,7 @@ void MetricsTest::test_direct()
     matrix_2 = {{1,3}};
     result = direct(matrix_1,matrix_2);
 
-    //assert_true(result.get_columns_number() ==)
+    //assert_true(result.dimension(1) ==)
     assert_true(result(0,1) == 3, LOG);
 
 }
@@ -246,11 +246,11 @@ void MetricsTest::test_linear_combinations()
 {
    cout << "test_linear_combinations\n";
 
-   Tensor<double> matrix_1;
-   Matrix<double> matrix_2;
+   Tensor<double, 2> matrix_1;
+   Tensor<double, 2> matrix_2;
 
    Vector<double> vector;
-   Tensor<double> result;
+   Tensor<double, 2> result;
 
    // Test
 
@@ -260,7 +260,7 @@ void MetricsTest::test_linear_combinations()
 
    result = linear_combinations(matrix_1, matrix_2, vector);
 
-   assert_true(result.get_dimensions_number() == 2, LOG);
+   assert_true(result.rank() == 2, LOG);
    assert_true(result.get_dimension(0) == 1, LOG);
    assert_true(result.get_dimension(1) == 1, LOG);
    assert_true(result(0,0) == 5.0, LOG);
@@ -357,15 +357,12 @@ void MetricsTest::test_manhattan_weighted_distance()
      assert_true(dis_3 == 5, LOG);
 
 }
-
-
-
-
+*/
 
 void MetricsTest::run_test_case()
 {
    cout << "Running linear algebra test case...\n";
-
+/*
    // Constructor and destructor methods
 
    test_linear_combinations();
@@ -402,8 +399,6 @@ void MetricsTest::run_test_case()
 
    test_direct();
 
-
-
    test_euclidean_distance();
 
    test_euclidean_weighted_distance();
@@ -415,8 +410,8 @@ void MetricsTest::run_test_case()
    test_manhattan_weighted_distance();
 
  //  test_manhattan_weighted_distance_vector();
-
-   cout << "End of linear algebra test case.\n";
+*/
+   cout << "End of metrics test case.\n";
 }
 
 // OpenNN: Open Neural Networks Library.

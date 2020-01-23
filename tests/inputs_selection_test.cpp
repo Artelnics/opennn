@@ -18,7 +18,7 @@ InputsSelectionTest::~InputsSelectionTest()
 {
 }
 
-
+/*
 void InputsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -109,13 +109,14 @@ void InputsSelectionTest::test_get_parameters_order()
     cout << "test_get_parameters_order\n";
 
 }
+*/
 
 // Unit testing methods
 
 void InputsSelectionTest::run_test_case()
 {
     cout << "Running inputs selection algorithm test case...\n";
-
+/*
     // Constructor and destructor methods
 
     test_constructor();
@@ -136,8 +137,7 @@ void InputsSelectionTest::run_test_case()
     test_calculate_losses();
 
     test_get_parameters_order();
-
+*/
     cout << "End of inputs selection algorithm test case.\n";
-
 }
 

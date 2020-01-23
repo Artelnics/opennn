@@ -330,10 +330,11 @@ public:
    void run_test_case();
 
 private:
+/*
+   static Vector<double> dot(const Tensor<double, 2>&, const Vector<double>&);
 
-   static Vector<double> dot(const Matrix<double>&, const Vector<double>&);
-
-   static Matrix<double> dot(const Matrix<double>&, const Matrix<double>&);
+   static Tensor<double, 2> dot(const Tensor<double, 2>&, const Tensor<double, 2>&);
+*/
 };
 
 

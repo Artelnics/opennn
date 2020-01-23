@@ -18,7 +18,7 @@ GradientDescentTest::~GradientDescentTest()
 {
 }
 
-
+/*
 void GradientDescentTest::test_constructor()
 {
    cout << "test_constructor\n"; 
@@ -61,7 +61,7 @@ void GradientDescentTest::test_set_reserve_all_training_history()
 void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
-/*
+
    DataSet data_set(1, 1, 2);
    data_set.randomize_data_normal();
 
@@ -149,7 +149,7 @@ void GradientDescentTest::test_perform_training()
 
 //   double gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
+
 }
 
 
@@ -175,7 +175,7 @@ void GradientDescentTest::test_resize_training_history()
 void GradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
-/*
+
    GradientDescent gd;
 
    tinyxml2::XMLDocument* document;
@@ -186,7 +186,7 @@ void GradientDescentTest::test_to_XML()
    assert_true(document != nullptr, LOG);
 
    delete document;
-*/
+
 }
 
 
@@ -194,12 +194,12 @@ void GradientDescentTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 }
-
+*/
 
 void GradientDescentTest::run_test_case()
 {
    cout << "Running gradient descent test case...\n";
-
+/*
    // Constructor and destructor methods
 
    test_constructor();
@@ -221,7 +221,7 @@ void GradientDescentTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of gradient descent test case.\n";
 }
 

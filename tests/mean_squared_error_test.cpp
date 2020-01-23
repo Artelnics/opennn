@@ -18,7 +18,7 @@ MeanSquaredErrorTest::~MeanSquaredErrorTest()
 {
 }
 
-
+/*
 void MeanSquaredErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -270,7 +270,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    const double parameters_maximum = 100.0;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<double> filters_1({2,3,2,2}, 0);
+   Tensor<double, 2> filters_1({2,3,2,2}, 0);
    filters_1.randomize_uniform(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Vector<double> biases_1(2, 0);
@@ -279,7 +279,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double> filters_2({2,2,2,2}, 0);
+   Tensor<double, 2> filters_2({2,2,2,2}, 0);
    filters_2.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Vector<double> biases_2(2, 0);
@@ -290,7 +290,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double> filters_3({1,2,2,2}, 0);
+   Tensor<double, 2> filters_3({1,2,2,2}, 0);
    filters_3.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
    Vector<double> biases_3(1, 0);
@@ -375,9 +375,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
    data_set.set(1, 1, 1);
    data_set.randomize_data_normal();
 
-   //const Matrix<double> inputs = data_set.get_training_input_data();
-   //const Matrix<double> targets = data_set.get_training_target_data();
-   //const Matrix<double> outputs = nn.calculate_outputs(inputs);
+   //const Tensor<double, 2> inputs = data_set.get_training_input_data();
+   //const Tensor<double, 2> targets = data_set.get_training_target_data();
+   //const Tensor<double, 2> outputs = nn.calculate_outputs(inputs);
 
    error = mean_squared_error.calculate_training_error();
 
@@ -404,15 +404,15 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Vector<double> error_gradient;
 
    Vector<double> error_terms;
-   Matrix<double> terms_Jacobian;
-   Matrix<double> numerical_Jacobian_terms;
+   Tensor<double, 2> terms_Jacobian;
+   Tensor<double, 2> numerical_Jacobian_terms;
 
-   Tensor<double> inputs;
-   Tensor<double> targets;
-   Tensor<double> outputs;
+   Tensor<double, 2> inputs;
+   Tensor<double, 2> targets;
+   Tensor<double, 2> outputs;
 
-   Tensor<double> output_gradient;
-   Vector<Tensor<double>> layers_delta;
+   Tensor<double, 2> output_gradient;
+   Vector<Tensor<double, 2>> layers_delta;
 
    // Test
 
@@ -436,8 +436,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test 
@@ -461,8 +461,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
@@ -491,8 +491,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
    // Test
 
@@ -568,12 +568,12 @@ void MeanSquaredErrorTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 }
-
+*/
 
 void MeanSquaredErrorTest::run_test_case()
 {
    cout << "Running mean squared error test case...\n";
-
+/*
    // Constructor and destructor methods
 
 //   test_constructor();
@@ -600,7 +600,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 //   test_to_XML();
 //   test_from_XML();
-
+*/
    cout << "End of mean squared error test case.\n";
 }
 

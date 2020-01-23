@@ -18,7 +18,7 @@ MatrixTest::~MatrixTest()
 {
 }
 
-
+/*
 void MatrixTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -29,31 +29,31 @@ void MatrixTest::test_constructor()
 
    Matrix<size_t> matrix1;
 
-   assert_true(matrix1.get_rows_number() == 0, LOG);
-   assert_true(matrix1.get_columns_number() == 0, LOG);
+   assert_true(matrix1.dimension(0) == 0, LOG);
+   assert_true(matrix1.dimension(1) == 0, LOG);
 
    // Rows and columns numbers
 
    Matrix<size_t> matrix2(0, 0);
 
-   assert_true(matrix2.get_rows_number() == 0, LOG);
-   assert_true(matrix2.get_columns_number() == 0, LOG);
+   assert_true(matrix2.dimension(0) == 0, LOG);
+   assert_true(matrix2.dimension(1) == 0, LOG);
   
-   Matrix<double> matrix3(1, 1, 1.0);
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   Tensor<double, 2> matrix3(1, 1, 1.0);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
 
    // Rows and columns numbers and initialization
 
    Matrix<size_t> matrix4(0, 0, 1);
 
-   assert_true(matrix4.get_rows_number() == 0, LOG);
-   assert_true(matrix4.get_columns_number() == 0, LOG);
+   assert_true(matrix4.dimension(0) == 0, LOG);
+   assert_true(matrix4.dimension(1) == 0, LOG);
 
    Matrix<size_t> matrix5(1, 1, 1);
 
-   assert_true(matrix5.get_rows_number() == 1, LOG);
-   assert_true(matrix5.get_columns_number() == 1, LOG);
+   assert_true(matrix5.dimension(0) == 1, LOG);
+   assert_true(matrix5.dimension(1) == 1, LOG);
    assert_true(matrix5 == true, LOG);
 
    // File constructor
@@ -61,47 +61,47 @@ void MatrixTest::test_constructor()
    matrix1.save_csv(file_name);
 
    Matrix<size_t> matrix6(file_name,',',false);
-   assert_true(matrix6.get_rows_number() == 0, LOG);
-   assert_true(matrix6.get_columns_number() == 0, LOG);
+   assert_true(matrix6.dimension(0) == 0, LOG);
+   assert_true(matrix6.dimension(1) == 0, LOG);
 
    matrix2.save_csv(file_name);
 
    Matrix<size_t> matrix7(file_name,',',false);
-   assert_true(matrix7.get_rows_number() == 0, LOG);
-   assert_true(matrix7.get_columns_number() == 0, LOG);
+   assert_true(matrix7.dimension(0) == 0, LOG);
+   assert_true(matrix7.dimension(1) == 0, LOG);
 
    matrix3.save_csv(file_name);
 
-   Matrix<double> matrix8(file_name,',',false);
-   assert_true(matrix8.get_rows_number() == 1, LOG);
-   assert_true(matrix8.get_columns_number() == 1, LOG);
+   Tensor<double, 2> matrix8(file_name,',',false);
+   assert_true(matrix8.dimension(0) == 1, LOG);
+   assert_true(matrix8.dimension(1) == 1, LOG);
 
    matrix4.save_csv(file_name);
    Matrix<size_t> matrix9(file_name,',',false);
-   assert_true(matrix9.get_rows_number() == 0, LOG);
-   assert_true(matrix9.get_columns_number() == 0, LOG);
+   assert_true(matrix9.dimension(0) == 0, LOG);
+   assert_true(matrix9.dimension(1) == 0, LOG);
 
    matrix5.save_csv(file_name);
 
-   Matrix<double> matrix10(file_name,',',false);
-   assert_true(matrix10.get_rows_number() == 1, LOG);
-   assert_true(matrix10.get_columns_number() == 1, LOG);
+   Tensor<double, 2> matrix10(file_name,',',false);
+   assert_true(matrix10.dimension(0) == 1, LOG);
+   assert_true(matrix10.dimension(1) == 1, LOG);
    assert_true(matrix10 == true, LOG);
 
    // Copy constructor
 
-   Matrix<double> a5;
-   Matrix<double> b5(a5);
+   Tensor<double, 2> a5;
+   Tensor<double, 2> b5(a5);
 
-   assert_true(b5.get_rows_number() == 0, LOG);
-   assert_true(b5.get_columns_number() == 0, LOG);
+   assert_true(b5.dimension(0) == 0, LOG);
+   assert_true(b5.dimension(1) == 0, LOG);
 
    Matrix<size_t> a6(1, 1, true);
 
    Matrix<size_t> b6(a6);
 
-   assert_true(b6.get_rows_number() == 1, LOG);
-   assert_true(b6.get_columns_number() == 1, LOG);
+   assert_true(b6.dimension(0) == 1, LOG);
+   assert_true(b6.dimension(1) == 1, LOG);
    assert_true(b6 == true, LOG);
 
    // Operator ++
@@ -136,8 +136,8 @@ void MatrixTest::test_assignment_operator()
       matrix2 = matrix1;
    }
 
-   assert_true(matrix2.get_rows_number() == 1, LOG);
-   assert_true(matrix2.get_columns_number() == 1, LOG);
+   assert_true(matrix2.dimension(0) == 1, LOG);
+   assert_true(matrix2.dimension(1) == 1, LOG);
    assert_true(matrix2 == 0, LOG);
 }
 
@@ -154,16 +154,16 @@ void MatrixTest::test_sum_operator()
    
    matrix3 = matrix1 + 1;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 2, LOG);
 
    // Test
 
    matrix3 = matrix1 + matrix2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 2, LOG);
 }
 
@@ -181,16 +181,16 @@ void MatrixTest::test_rest_operator()
 
    matrix3 = matrix1 - 1;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 0, LOG);
 
    // Test
 
    matrix3 = matrix1 - matrix2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 0, LOG);
 
    // Test
@@ -201,8 +201,8 @@ void MatrixTest::test_rest_operator()
 
    matrix4 = matrix1 + matrix2 - matrix3;
 
-   assert_true(matrix4.get_rows_number() == 3, LOG);
-   assert_true(matrix4.get_columns_number() == 3, LOG);
+   assert_true(matrix4.dimension(0) == 3, LOG);
+   assert_true(matrix4.dimension(1) == 3, LOG);
    assert_true(matrix4 == 1, LOG);
 }
 
@@ -223,8 +223,8 @@ void MatrixTest::test_multiplication_operator()
 
    matrix3 = matrix1*2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 4, LOG);
 
    // Vector
@@ -239,8 +239,8 @@ void MatrixTest::test_multiplication_operator()
 
    matrix3 = matrix1*matrix2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 4, LOG);
 }
 
@@ -255,14 +255,14 @@ void MatrixTest::test_division_operator()
    
    matrix3 = matrix1/2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 1, LOG);
 
    matrix3 = matrix1/matrix2;
 
-   assert_true(matrix3.get_rows_number() == 1, LOG);
-   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3.dimension(0) == 1, LOG);
+   assert_true(matrix3.dimension(1) == 1, LOG);
    assert_true(matrix3 == 1, LOG);
 }
 
@@ -297,8 +297,8 @@ void MatrixTest::test_greater_than_operator()
 {
    cout << "test_greater_than_operator\n";
 
-   Matrix<double> matrix1(1,1,1.0);
-   Matrix<double> matrix2(1,1,0.0);
+   Tensor<double, 2> matrix1(1,1,1.0);
+   Tensor<double, 2> matrix2(1,1,0.0);
 
    assert_true(matrix1 > 0.0, LOG);
    assert_true(matrix1 > matrix2, LOG);
@@ -309,8 +309,8 @@ void MatrixTest::test_less_than_operator()
 {
    cout << "test_less_than_operator\n";
 
-   Matrix<double> matrix1(1,1,0.0);
-   Matrix<double> matrix2(1,1,1.0);
+   Tensor<double, 2> matrix1(1,1,0.0);
+   Tensor<double, 2> matrix2(1,1,1.0);
 
    assert_true(matrix1 < 1.0, LOG);
    assert_true(matrix1 < matrix2, LOG);
@@ -321,8 +321,8 @@ void MatrixTest::test_greater_than_or_equal_to_operator()
 {
    cout << "test_greater_than_or_equal_to_operator\n";
 
-   Matrix<double> matrix1(1,1,1.0);
-   Matrix<double> matrix2(1,1,1.0);
+   Tensor<double, 2> matrix1(1,1,1.0);
+   Tensor<double, 2> matrix2(1,1,1.0);
 
    assert_true(matrix1 >= 1.0, LOG);
    assert_true(matrix1 >= matrix2, LOG);
@@ -333,8 +333,8 @@ void MatrixTest::test_less_than_or_equal_to_operator()
 {
    cout << "test_less_than_or_equal_to_operator\n";
 
-   Matrix<double> matrix1(1,1,1.0);
-   Matrix<double> matrix2(1,1,1.0);
+   Tensor<double, 2> matrix1(1,1,1.0);
+   Tensor<double, 2> matrix2(1,1,1.0);
 
    assert_true(matrix1 <= 1.0, LOG);
    assert_true(matrix1 <= matrix2, LOG);
@@ -345,7 +345,7 @@ void MatrixTest::test_output_operator()
 {
    cout << "test_output_operator\n";
 
-   Matrix<double> matrix1;
+   Tensor<double, 2> matrix1;
    Matrix<Vector<double>> matrix2;
    Matrix< Matrix<size_t> > matrix3;
 
@@ -377,7 +377,7 @@ void MatrixTest::test_get_rows_number()
 
    Matrix<size_t> m(2,3);
 
-   size_t rows_number = m.get_rows_number();
+   size_t rows_number = m.dimension(0);
 
    assert_true(rows_number == 2, LOG);
 }
@@ -389,7 +389,7 @@ void MatrixTest::test_get_columns_number()
 
    Matrix<size_t> matrix(2,3);
 
-   size_t columns_number = matrix.get_columns_number();
+   size_t columns_number = matrix.dimension(1);
 
    assert_true(columns_number == 3, LOG);
 }
@@ -411,7 +411,7 @@ void MatrixTest::test_get_rows()
 {
     cout << "test_get_rows\n";
 
-    Matrix<double> matrix(4,4);
+    Tensor<double, 2> matrix(4,4);
     Vector<double> check_matrix;
     Vector<double> solution({1, 2, 3, 4, 5, 6, 7, 8});
 
@@ -467,9 +467,9 @@ void MatrixTest::test_get_columns()
 {
     cout << "test_get_columns\n";
 
-    Matrix<double> matrix(4,4);
-    Matrix<double> check_matrix;
-    Matrix<double> solution(4,2);
+    Tensor<double, 2> matrix(4,4);
+    Tensor<double, 2> check_matrix;
+    Tensor<double, 2> solution(4,2);
 
     matrix.set_row(0, {1, 2, 3, 4});
     matrix.set_row(1, {5, 6, 7, 8});
@@ -822,38 +822,38 @@ void MatrixTest::test_set()
 
    string file_name = "../data/matrix.dat";
 
-   Matrix<double> matrix;
+   Tensor<double, 2> matrix;
 
    // Default
 
    matrix.set();
 
-   assert_true(matrix.get_rows_number() == 0, LOG);
-   assert_true(matrix.get_columns_number() == 0, LOG);
+   assert_true(matrix.dimension(0) == 0, LOG);
+   assert_true(matrix.dimension(1) == 0, LOG);
 
    // Numbers of rows and columns
 
    matrix.set(0, 0);
 
-   assert_true(matrix.get_rows_number() == 0, LOG);
-   assert_true(matrix.get_columns_number() == 0, LOG);
+   assert_true(matrix.dimension(0) == 0, LOG);
+   assert_true(matrix.dimension(1) == 0, LOG);
 
    matrix.set(2, 3);
 
-   assert_true(matrix.get_rows_number() == 2, LOG);
-   assert_true(matrix.get_columns_number() == 3, LOG);
+   assert_true(matrix.dimension(0) == 2, LOG);
+   assert_true(matrix.dimension(1) == 3, LOG);
 
    matrix.set(0, 0);
 
-   assert_true(matrix.get_rows_number() == 0, LOG);
-   assert_true(matrix.get_columns_number() == 0, LOG);
+   assert_true(matrix.dimension(0) == 0, LOG);
+   assert_true(matrix.dimension(1) == 0, LOG);
 
    // Initialization 
 
    matrix.set(3, 2, 1.0);
 
-   assert_true(matrix.get_rows_number() == 3, LOG);
-   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix.dimension(0) == 3, LOG);
+   assert_true(matrix.dimension(1) == 2, LOG);
    assert_true(matrix == 1.0, LOG);
 
    // File 
@@ -861,8 +861,8 @@ void MatrixTest::test_set()
    matrix.save_csv(file_name);
    matrix.set(file_name);
 
-   assert_true(matrix.get_rows_number() == 3, LOG);
-   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix.dimension(0) == 3, LOG);
+   assert_true(matrix.dimension(1) == 2, LOG);
    assert_true(matrix == 1.0, LOG);
 }
 
@@ -899,7 +899,7 @@ void MatrixTest::test_set_rows_number()
 
    matrix.set_rows_number(4);
 
-   assert_true(matrix.get_rows_number() == solution, LOG);
+   assert_true(matrix.dimension(0) == solution, LOG);
 }
 
 
@@ -913,7 +913,7 @@ void MatrixTest::test_set_columns_number()
 
    matrix.set_columns_number(4);
 
-   assert_true(matrix.get_columns_number() == solution, LOG);
+   assert_true(matrix.dimension(1) == solution, LOG);
 }
 
 
@@ -949,7 +949,7 @@ void MatrixTest::test_set_row()
 {
    cout << "test_set_row\n";
 
-   Matrix<double> matrix(1,1);
+   Tensor<double, 2> matrix(1,1);
 
    Vector<double> row(1, 1.0);
 
@@ -963,7 +963,7 @@ void MatrixTest::test_set_column()
 {
    cout << "test_set_column\n";
 
-   Matrix<double> matrix(1,1);
+   Tensor<double, 2> matrix(1,1);
 
    Vector<double> column(1, 1.0);
 
@@ -1061,13 +1061,13 @@ void MatrixTest::test_is_scalar()
 {
     cout << "test_is_scalar\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 1});
     matrix.set_row(2, {1, 1, 9});
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {5, 0, 0});
     matrix1.set_row(1, {0, 5, 0});
@@ -1082,13 +1082,13 @@ void MatrixTest::test_is_identity()
 {
     cout << "test_is_identity\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 1});
     matrix.set_row(2, {1, 1, 9});
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {1, 0, 0});
     matrix1.set_row(1, {0, 1, 0});
@@ -1103,13 +1103,13 @@ void MatrixTest::test_is_binary()
 {
     cout << "test_is_binary\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 1});
     matrix.set_row(2, {1, 1, 9});
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {1, 0, 0});
     matrix1.set_row(1, {0, 1, 0});
@@ -1124,7 +1124,7 @@ void MatrixTest::test_is_column_binary()
 {
     cout << "test_is_column_binary\n";
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {1, 0, 0});
     matrix1.set_row(1, {0, 1, 0});
@@ -1139,7 +1139,7 @@ void MatrixTest::test_is_column_constant()
 {
     cout << "test_is_column_constant\n";
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {1, 0, 0});
     matrix1.set_row(1, {0, 1, 0});
@@ -1154,13 +1154,13 @@ void MatrixTest::test_is_positive()
 {
     cout << "test_is_positive\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 1});
     matrix.set_row(2, {1, 1, 9});
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     matrix1.set_row(0, {1, 0, 0});
     matrix1.set_row(1, {0, -1, 0});
@@ -1175,7 +1175,7 @@ void MatrixTest::test_is_row_equal_to()
 {
     cout << "test_is_row_equal_to\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 5});
@@ -1190,7 +1190,7 @@ void MatrixTest::test_has_column_value()
 {
     cout << "test_has_column_value\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 1});
     matrix.set_row(1, {3, 5, 5});
@@ -1205,7 +1205,7 @@ void MatrixTest::test_count_diagonal_elements()
 {
     cout << "test_count_diagonal_elements\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 3;
     size_t check_matrix;
@@ -1224,7 +1224,7 @@ void MatrixTest::test_count_off_diagonal_elements()
 {
     cout << "test_count_off_diagonal_elements\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 3;
     size_t check_matrix;
@@ -1245,7 +1245,7 @@ void MatrixTest::test_count_equal_to()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 3;
     size_t check_matrix;
@@ -1261,7 +1261,7 @@ void MatrixTest::test_count_equal_to()
 
     // Column case
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     const size_t solution1 = 2;
     size_t check_matrix1;
@@ -1277,7 +1277,7 @@ void MatrixTest::test_count_equal_to()
 
     // Set values case
 
-    Matrix<double> matrix2 (3,3);
+    Tensor<double, 2> matrix2 (3,3);
 
     const size_t solution2 = 2;
     size_t check_matrix2;
@@ -1305,7 +1305,7 @@ void MatrixTest::test_count_not_equal_to()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 6;
     size_t check_matrix;
@@ -1321,7 +1321,7 @@ void MatrixTest::test_count_not_equal_to()
 
     // Column case
 
-    Matrix<double> matrix1 (3,3);
+    Tensor<double, 2> matrix1 (3,3);
 
     const size_t solution1 = 2;
     size_t check_matrix1;
@@ -1337,7 +1337,7 @@ void MatrixTest::test_count_not_equal_to()
 
     // Set values case
 
-    Matrix<double> matrix2 (3,3);
+    Tensor<double, 2> matrix2 (3,3);
 
     const size_t solution2 = 1;
     size_t check_matrix2;
@@ -1377,7 +1377,7 @@ void MatrixTest::test_count_equal_to_by_rows()
 {
     cout << "test_count_equal_to_by_rows\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const Vector<size_t> solution({1, 2, 0});
     Vector<size_t> check_matrix;
@@ -1394,7 +1394,7 @@ void MatrixTest::test_count_rows_equal_to()
 {
     cout << "test_count_rows_equal_to\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 1;
 
@@ -1410,7 +1410,7 @@ void MatrixTest::test_count_rows_not_equal_to()
 {
     cout << "test_count_rows_not_equal_to\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     const size_t solution = 2;
 
@@ -1426,7 +1426,7 @@ void MatrixTest::test_has_nan()
 {
     cout << "test_has_nan\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 5});
@@ -1440,7 +1440,7 @@ void MatrixTest::test_count_nan()
 {
     cout << "test_count_nan\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 5});
@@ -1454,7 +1454,7 @@ void MatrixTest::test_count_rows_with_nan()
 {
     cout << "test_count_rows_with_nan\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 5});
@@ -1468,7 +1468,7 @@ void MatrixTest::test_count_columns_with_nan()
 {
     cout << "test_count_columns_with_nan\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 5});
@@ -1482,7 +1482,7 @@ void MatrixTest::test_count_nan_rows()
 {
     cout << "test_count_nan_rows\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     Vector<size_t> solution({1, 0, 2});
 
@@ -1498,7 +1498,7 @@ void MatrixTest::test_count_nan_columns()
 {
     cout << "test_count_nan_columns\n";
 
-    Matrix<double> matrix (3,3);
+    Tensor<double, 2> matrix (3,3);
 
     Vector<size_t> solution({1, 0, 2});
 
@@ -1516,8 +1516,8 @@ void MatrixTest::test_filter_column_equal_to()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
-    Matrix<double> solution (2, 3);
+    Tensor<double, 2> matrix (3,3);
+    Tensor<double, 2> solution (2, 3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 2});
@@ -1545,8 +1545,8 @@ void MatrixTest::test_filter_column_not_equal_to()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
-    Matrix<double> solution (2, 3);
+    Tensor<double, 2> matrix (3,3);
+    Tensor<double, 2> solution (2, 3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 2});
@@ -1574,8 +1574,8 @@ void MatrixTest::test_filter_column_less_than()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
-    Matrix<double> solution (1,3);
+    Tensor<double, 2> matrix (3,3);
+    Tensor<double, 2> solution (1,3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 2});
@@ -1602,8 +1602,8 @@ void MatrixTest::test_filter_column_greater_than()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
-    Matrix<double> solution (2, 3);
+    Tensor<double, 2> matrix (3,3);
+    Tensor<double, 2> solution (2, 3);
 
     matrix.set_row(0, {5, 3, 0});
     matrix.set_row(1, {5, 5, 2});
@@ -1631,8 +1631,8 @@ void MatrixTest::test_filter_column_minimum_maximum()
 
     //Normal case
 
-    Matrix<double> matrix (3,3);
-    Matrix<double> solution (2, 3);
+    Tensor<double, 2> matrix (3,3);
+    Tensor<double, 2> solution (2, 3);
 
     matrix.set_row(0, {7, 3, 0});
     matrix.set_row(1, {5, 5, 2});
@@ -1654,8 +1654,8 @@ void MatrixTest::test_initialize()
 {
    cout << "test_initialize\n";
 
-   Matrix<double> matrix (3,3);
-   Matrix<double> solution (3, 3);
+   Tensor<double, 2> matrix (3,3);
+   Tensor<double, 2> solution (3, 3);
 
    solution.set_row(0, {3, 3, 3});
    solution.set_row(1, {3, 3, 3});
@@ -1745,7 +1745,7 @@ void MatrixTest::test_append_row()
 
    matrix = matrix.append_row(vector);
 
-   assert_true(matrix.get_rows_number() == 2, LOG);
+   assert_true(matrix.dimension(0) == 2, LOG);
    assert_true(matrix(1,0) == 1, LOG);
 }
 
@@ -1760,7 +1760,7 @@ void MatrixTest::test_append_column()
 
    matrix = matrix.append_column(vector);
 
-   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix.dimension(1) == 2, LOG);
    assert_true(matrix(0,1) == 1, LOG);
 }
 
@@ -1775,7 +1775,7 @@ void MatrixTest::test_insert_row()
 
    matrix = matrix.insert_row(1, vector);
 
-   assert_true(matrix.get_rows_number() == 3, LOG);
+   assert_true(matrix.dimension(0) == 3, LOG);
    assert_true(matrix(1,0) == 1, LOG);
 }
 
@@ -1790,7 +1790,7 @@ void MatrixTest::test_insert_column()
 
    matrix = matrix.insert_column(1, vector);
 
-   assert_true(matrix.get_columns_number() == 3, LOG);
+   assert_true(matrix.dimension(1) == 3, LOG);
    assert_true(matrix(0,1) == 1, LOG);
 }
 
@@ -1829,7 +1829,7 @@ void MatrixTest::test_add_column()
 
     check_matrix = matrix.add_columns(1);
 
-    assert_true(check_matrix.get_columns_number() == solution.get_columns_number(), LOG);
+    assert_true(check_matrix.dimension(1) == solution.dimension(1), LOG);
 }
 
 
@@ -1843,7 +1843,7 @@ void MatrixTest::test_add_column_first()
 
     check_matrix = matrix.add_columns_first(1);
 
-    assert_true(check_matrix.get_columns_number() == solution.get_columns_number(), LOG);
+    assert_true(check_matrix.dimension(1) == solution.dimension(1), LOG);
 }
 
 
@@ -2112,9 +2112,9 @@ void MatrixTest::test_delete_constant_rows()
 
     //Normal case
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(1,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(1,3);
+    Tensor<double, 2> check_matrix;
 
     solution.set_row(0, {1, 2, 3});
 
@@ -2134,9 +2134,9 @@ void MatrixTest::test_delete_constant_columns()
 
     //Normal case
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,1);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,1);
+    Tensor<double, 2> check_matrix;
 
     solution.set_column(0, {1, 2, 3});
 
@@ -2156,9 +2156,9 @@ void MatrixTest::test_delete_binary_columns()
 
     //Normal case
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,1);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,1);
+    Tensor<double, 2> check_matrix;
 
     solution.set_column(0, {1, 2, 3});
 
@@ -2243,9 +2243,9 @@ void MatrixTest::test_sort_ascending()
 {
     cout << "test_sort_ascending\n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2265,9 +2265,9 @@ void MatrixTest::test_sort_descending()
 {
     cout << "test_sort_descending\n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2289,9 +2289,9 @@ void MatrixTest::test_replace()
 
     //Normal case
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2321,9 +2321,9 @@ void MatrixTest::test_replace_header()
 {
     cout << "test_replace_header\n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2347,9 +2347,9 @@ void MatrixTest::test_replace_in_row()
 {
     cout << "test_replace_in_row\n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_row(0, {1, 7, 5});
     matrix.set_row(1, {3, 7, 5});
@@ -2371,9 +2371,9 @@ void MatrixTest::test_replace_in_column()
 
     // Normal case
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2495,9 +2495,9 @@ void MatrixTest::test_replace_column_equal_to()
 {
     cout << "test_replace_column_equal_to\n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2520,9 +2520,9 @@ void MatrixTest::test_replace_column_not_equal_to()
 {
     cout << "test_replace_column_equal_to \n";
 
-    Matrix<double> matrix(3,3);
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix;
+    Tensor<double, 2> matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix;
 
     matrix.set_column(0, {1, 7, 5});
     matrix.set_column(1, {3, 7, 5});
@@ -2570,7 +2570,7 @@ void MatrixTest::test_randomize_uniform()
 {
    cout << "test_randomize_uniform\n";
 
-   Matrix<double> matrix(1, 1);
+   Tensor<double, 2> matrix(1, 1);
 
    matrix.randomize_uniform();
 
@@ -2855,10 +2855,10 @@ void MatrixTest::test_multiply_rows()
 
     //Vector case
 
-    Matrix<double> matrix(3,3);
+    Tensor<double, 2> matrix(3,3);
 
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix(3,3);
 
     Vector<double> vector({2, 2, 2});
 
@@ -2876,11 +2876,11 @@ void MatrixTest::test_multiply_rows()
 
     //Matrix case
 
-    Matrix<double> matrix1(3,3);
+    Tensor<double, 2> matrix1(3,3);
 
-    Matrix<double> solution1(3,3);
-    Matrix<double> check_matrix1(3,3);
-    Matrix<double> matrix2(3,3);
+    Tensor<double, 2> solution1(3,3);
+    Tensor<double, 2> check_matrix1(3,3);
+    Tensor<double, 2> matrix2(3,3);
 
     matrix1.set_row(0, {1, 2, 3});
     matrix1.set_row(1, {4, 5, 6});
@@ -2904,9 +2904,9 @@ void MatrixTest::test_divide_rows()
 {
     cout << "test_divide_rows\n";
 
-    Matrix<double> matrix(3,3);
+    Tensor<double, 2> matrix(3,3);
 
-    Matrix<double> solution(3,3);
+    Tensor<double, 2> solution(3,3);
 
     Vector<double> vector({2, 2, 2});
 
@@ -2928,7 +2928,7 @@ void MatrixTest::test_calculate_trace()
 {
     cout << "test_calculate_trace\n";
 
-    Matrix<double> matrix1(3,3);
+    Tensor<double, 2> matrix1(3,3);
 
     double solution = 15;
 
@@ -2944,10 +2944,10 @@ void MatrixTest::test_calculate_reverse_columns()
 {
     cout << "test_calculate_reverse_columns\n";
 
-    Matrix<double> matrix(3,3);
+    Tensor<double, 2> matrix(3,3);
 
-    Matrix<double> solution(3,3);
-    Matrix<double> check_matrix(3,3);
+    Tensor<double, 2> solution(3,3);
+    Tensor<double, 2> check_matrix(3,3);
 
     matrix.set_column(0, {1, 2, 3});
     matrix.set_column(1, {4, 5, 6});
@@ -2967,10 +2967,10 @@ void MatrixTest::test_compare_rows()
 {
     cout << "test_compare_rows\n";
 
-    Matrix<double> matrix(3,3);
+    Tensor<double, 2> matrix(3,3);
 
-    Matrix<double> matrix2(3,3);
-    Matrix<double> matrix3(3,3);
+    Tensor<double, 2> matrix2(3,3);
+    Tensor<double, 2> matrix3(3,3);
 
     matrix.set_column(0, {1, 2, 3});
     matrix.set_column(1, {4, 5, 6});
@@ -2993,7 +2993,7 @@ void MatrixTest::test_dot_vector()
 {
    cout << "test_dot_vector\n";
 
-   Matrix<double> matrix;
+   Tensor<double, 2> matrix;
    Vector<double> vector1;
 
    Vector<double> vector2;
@@ -3050,9 +3050,9 @@ void MatrixTest::test_dot_matrix()
 {
    cout << "test_dot_matrix\n";
 
-   Matrix<double> matrix1;
-   Matrix<double> matrix2;
-   Matrix<double> matrix3;
+   Tensor<double, 2> matrix1;
+   Tensor<double, 2> matrix2;
+   Tensor<double, 2> matrix3;
 
    // Test
 
@@ -3107,9 +3107,9 @@ void MatrixTest::test_eigenvalues()
 {
     cout << "test_eigenvalues\n";
 
-    Matrix<double> matrix1;
+    Tensor<double, 2> matrix1;
 
-    Matrix<double> matrix2;
+    Tensor<double, 2> matrix2;
 
     // Test
 
@@ -3136,9 +3136,9 @@ void MatrixTest::test_eigenvectors()
 {
     cout << "test_eigenvectors\n";
 
-    Matrix<double> matrix1;
+    Tensor<double, 2> matrix1;
 
-    Matrix<double> matrix2;
+    Tensor<double, 2> matrix2;
 
     // Test
 
@@ -3148,8 +3148,8 @@ void MatrixTest::test_eigenvectors()
 
     matrix1 = OpenNN::eigenvectors(matrix2);
 
-    assert_true(matrix1.get_rows_number() == 10, LOG);
-    assert_true(matrix1.get_columns_number() == 10, LOG);
+    assert_true(matrix1.dimension(0) == 10, LOG);
+    assert_true(matrix1.dimension(1) == 10, LOG);
 }
 
 
@@ -3157,9 +3157,9 @@ void MatrixTest::test_direct()
 {
    cout << "test_direct\n";
 
-   Matrix<double> matrix1;
-   Matrix<double> matrix2;
-   Matrix<double> matrix3;
+   Tensor<double, 2> matrix1;
+   Tensor<double, 2> matrix2;
+   Tensor<double, 2> matrix3;
 
    // Test
 
@@ -3177,8 +3177,8 @@ void MatrixTest::test_direct()
 
    matrix3 = OpenNN::direct(matrix1, matrix2);
 
-   assert_true(matrix3.get_rows_number() == 4, LOG);
-   assert_true(matrix3.get_columns_number() == 4, LOG);
+   assert_true(matrix3.dimension(0) == 4, LOG);
+   assert_true(matrix3.dimension(1) == 4, LOG);
    assert_true(abs(matrix3(0,0) - 0) <= 10e-3, LOG);
    assert_true(abs(matrix3(3,3) - 28) <= 10e-3, LOG);
 }
@@ -3188,7 +3188,7 @@ void MatrixTest::test_determinant()
 {
    cout << "test_determinant\n";
 
-   Matrix<double> matrix(1, 1, 1);
+   Tensor<double, 2> matrix(1, 1, 1);
 
    assert_true(abs(determinant(matrix) - 1) <= 10e-3, LOG);
 
@@ -3275,8 +3275,8 @@ void MatrixTest::test_calculate_inverse()
 {
    cout << "test_calculate_inverse\n";
 
-   Matrix<double> matrix1;
-   Matrix<double> matrix2;
+   Tensor<double, 2> matrix1;
+   Tensor<double, 2> matrix2;
 
    // Test
 
@@ -3296,7 +3296,7 @@ void MatrixTest::test_calculate_inverse()
 
    matrix2 = OpenNN::inverse(matrix1);
 
-   assert_true(matrix2.get_rows_number() == 2, LOG);
+   assert_true(matrix2.dimension(0) == 2, LOG);
    assert_true(abs(matrix2(0,0) + 2.0) <= 10e-3, LOG);
    assert_true(abs(matrix2(0,1) - 1.0) <= 10e-3, LOG);
    assert_true(abs(matrix2(1,0) - 3.0/2.0) <= 10e-3, LOG);
@@ -3320,7 +3320,7 @@ void MatrixTest::test_calculate_inverse()
 
    matrix2 = OpenNN::inverse(matrix1);
 
-   assert_true(matrix2.get_rows_number() == 3, LOG);
+   assert_true(matrix2.dimension(0) == 3, LOG);
 
    matrix1.set(4, 4);
 
@@ -3346,7 +3346,7 @@ void MatrixTest::test_calculate_inverse()
 
    matrix2 = OpenNN::inverse(matrix1);
 
-   assert_true(matrix2.get_rows_number() == 4, LOG);
+   assert_true(matrix2.dimension(0) == 4, LOG);
 }
 
 
@@ -3459,8 +3459,8 @@ void MatrixTest::test_load()
    matrix.save_csv(file_name);
    matrix.load_csv(file_name);
 
-   assert_true(matrix.get_rows_number() == 0, LOG);
-   assert_true(matrix.get_columns_number() == 0, LOG);
+   assert_true(matrix.dimension(0) == 0, LOG);
+   assert_true(matrix.dimension(1) == 0, LOG);
 
    // Test
 
@@ -3469,8 +3469,8 @@ void MatrixTest::test_load()
    matrix.save_csv(file_name);
    matrix.load_csv(file_name);
 
-   assert_true(matrix.get_rows_number() == 1, LOG);
-   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix.dimension(0) == 1, LOG);
+   assert_true(matrix.dimension(1) == 2, LOG);
    assert_true(matrix == 3, LOG);
 
    // Test
@@ -3480,8 +3480,8 @@ void MatrixTest::test_load()
    matrix.save_csv(file_name);
    matrix.load_csv(file_name);
 
-   assert_true(matrix.get_rows_number() == 2, LOG);
-   assert_true(matrix.get_columns_number() == 1, LOG);
+   assert_true(matrix.dimension(0) == 2, LOG);
+   assert_true(matrix.dimension(1) == 1, LOG);
 
    // Test
 
@@ -3490,8 +3490,8 @@ void MatrixTest::test_load()
    matrix.save_csv(file_name);
    matrix.load_csv(file_name);
 
-   assert_true(matrix.get_rows_number() == 4, LOG);
-   assert_true(matrix.get_columns_number() == 4, LOG);
+   assert_true(matrix.dimension(0) == 4, LOG);
+   assert_true(matrix.dimension(1) == 4, LOG);
    assert_true(matrix == 0, LOG);
 
    // Test
@@ -3501,8 +3501,8 @@ void MatrixTest::test_load()
    matrix.save_csv(file_name);
    matrix.load_csv(file_name);
 
-   assert_true(matrix.get_rows_number() == 1, LOG);
-   assert_true(matrix.get_columns_number() == 1, LOG);
+   assert_true(matrix.dimension(0) == 1, LOG);
+   assert_true(matrix.dimension(1) == 1, LOG);
    assert_true(matrix == -99, LOG);
 
    // Test
@@ -3535,8 +3535,8 @@ void MatrixTest::test_parse()
 
     matrix.parse(string);
 
-    assert_true(matrix.get_rows_number() == 0, LOG);
-    assert_true(matrix.get_columns_number() == 0, LOG);
+    assert_true(matrix.dimension(0) == 0, LOG);
+    assert_true(matrix.dimension(1) == 0, LOG);
 
     // Test
 
@@ -3546,8 +3546,8 @@ void MatrixTest::test_parse()
 
     matrix.parse(string);
 
-    assert_true(matrix.get_rows_number() == 2, LOG);
-    assert_true(matrix.get_columns_number() == 3, LOG);
+    assert_true(matrix.dimension(0) == 2, LOG);
+    assert_true(matrix.dimension(1) == 3, LOG);
 
     // Test
 
@@ -3558,15 +3558,15 @@ void MatrixTest::test_parse()
 
     matrix.parse(string);
 
-    assert_true(matrix.get_rows_number() == 3, LOG);
-    assert_true(matrix.get_columns_number() == 2, LOG);
+    assert_true(matrix.dimension(0) == 3, LOG);
+    assert_true(matrix.dimension(1) == 2, LOG);
 }
-
+*/
 
 void MatrixTest::run_test_case()
 {
    cout << "Running matrix test case...\n";
-
+/*
    // Constructor and destructor methods
 
    test_constructor();
@@ -3839,15 +3839,15 @@ void MatrixTest::run_test_case()
    test_save();
 
    test_parse();
-
+*/
    cout << "End of matrix test case.\n";
 }
 
-
-Vector<double> MatrixTest::dot(const Matrix<double>& matrix, const Vector<double>& vector)
+/*
+Vector<double> MatrixTest::dot(const Tensor<double, 2>& matrix, const Vector<double>& vector)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const size_t rows_number = matrix.dimension(0);
+    const size_t columns_number = matrix.dimension(1);
 
     Vector<double> product(rows_number);
 
@@ -3865,14 +3865,14 @@ Vector<double> MatrixTest::dot(const Matrix<double>& matrix, const Vector<double
 }
 
 
-Matrix<double> MatrixTest::dot(const Matrix<double>& matrix, const Matrix<double>& other_matrix)
+Tensor<double, 2> MatrixTest::dot(const Tensor<double, 2>& matrix, const Tensor<double, 2>& other_matrix)
 {
-    const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
+    const size_t rows_number = matrix.dimension(0);
+    const size_t columns_number = matrix.dimension(1);
 
-    const size_t other_columns_number = other_matrix.get_columns_number();
+    const size_t other_columns_number = other_matrix.dimension(1);
 
-    Matrix<double> product(rows_number, other_columns_number);
+    Tensor<double, 2> product(rows_number, other_columns_number);
 
     for(size_t i = 0; i < rows_number; i++) {
         for(size_t j = 0; j < other_columns_number; j++) {
@@ -3884,7 +3884,7 @@ Matrix<double> MatrixTest::dot(const Matrix<double>& matrix, const Matrix<double
 
     return product;
 }
-
+*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.

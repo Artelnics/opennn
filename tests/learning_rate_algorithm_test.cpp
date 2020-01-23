@@ -18,7 +18,7 @@ LearningRateAlgorithmTest::~LearningRateAlgorithmTest()
 {
 }
 
-
+/*
 void LearningRateAlgorithmTest::test_constructor()
 {
    cout << "test_constructor\n"; 
@@ -421,12 +421,12 @@ void LearningRateAlgorithmTest::test_to_XML()
 
    delete document;
 }
-
+*/
 
 void LearningRateAlgorithmTest::run_test_case()
 {
    cout << "Running training rate algorithm test case...\n";
-
+/*
    // Constructor and destructor methods
 
    test_constructor();
@@ -486,7 +486,7 @@ void LearningRateAlgorithmTest::run_test_case()
    // Serialization methods
 
    test_to_XML();
-
+*/
    cout << "End of training rate algorithm test case.\n";
 }
 
