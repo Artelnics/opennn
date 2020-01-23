@@ -343,9 +343,9 @@ public:
 
    inline int get_batch_instances_number() {return batch_instances_number;}
 
-   vector<Tensor<int, 1>> get_training_batches(const bool& = true) const;
-   vector<Tensor<int, 1>> get_selection_batches(const bool& = true) const;
-   vector<Tensor<int, 1>> get_testing_batches(const bool& = true) const;
+   Tensor<Index, 2> get_training_batches(const bool& = true) const;
+   Tensor<Index, 2> get_selection_batches(const bool& = true) const;
+   Tensor<Index, 2> get_testing_batches(const bool& = true) const;
 
    // Data get methods
 
@@ -389,6 +389,8 @@ public:
 
    Tensor<type, 1> get_variable_data(const int&, const Tensor<int, 1>&) const;
    Tensor<type, 1> get_variable_data(const string&, const Tensor<int, 1>&) const;
+
+   Tensor<type, 2> get_data_subtensor(const Tensor<int, 1>&, const Tensor<int, 1>&) const;
 
    // Members get methods
 
@@ -793,6 +795,10 @@ public:
 
    Tensor<int, 1> count_nan_columns() const;
    int count_rows_with_nan() const;
+
+   // Eigen methods
+
+   void intialize_sequential_eigen_tensor(Tensor<int, 1>&, const int&, const int&, const int&) const;
 
 private:
 

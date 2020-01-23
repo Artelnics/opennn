@@ -137,7 +137,7 @@ double MinkowskiError::calculate_training_error() const
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -182,7 +182,7 @@ double MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameter
 
     // Data set
 
-    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
@@ -231,7 +231,7 @@ double MinkowskiError::calculate_selection_error() const
 
     // Data set
 
-    const vector<Tensor<int, 1>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
