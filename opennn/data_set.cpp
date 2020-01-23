@@ -8726,9 +8726,9 @@ void DataSet::read_csv_1()
 
     file.close();
 
-    // Check empty file    
+    // Check empty file    @todo, size() methods returns 0
 
-    if(data_file_preview[0].chip(0,0).dim() == 0)
+    /*if(data_file_preview[0].size() == 0)
     {
         ostringstream buffer;
 
@@ -8737,7 +8737,7 @@ void DataSet::read_csv_1()
                << "File " << data_file_name << " is empty.\n";
 
         throw logic_error(buffer.str());
-    }
+    }*/
 
     // Set rows labels and columns names
 
