@@ -29,7 +29,7 @@ namespace OpenNN
     type l1_norm(const Tensor<type, 1>&);
     type l2_norm(const ThreadPoolDevice&, const Tensor<type, 1>&);
 
-    Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const double &);
+    Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const type&);
 
      // Direct products
 
@@ -51,14 +51,14 @@ namespace OpenNN
 
      Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>&);
 
-     double lp_norm(const Tensor<type, 1>&, const double &);
+     type lp_norm(const Tensor<type, 1>&, const type &);
 
 
-     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const type& p);
 
-     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const type& p);
 
-     Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>&, const type& p);
 
     // INVERTING MATICES
 
@@ -72,13 +72,13 @@ namespace OpenNN
 
      // Vector distances
 
-     double euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double manhattan_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-     double manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type manhattan_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -91,30 +91,30 @@ namespace OpenNN
      Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      Tensor<type, 1> manhattan_distance(const Tensor<type, 2>&, const Tensor<type, 1>&);
-     double manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
+     type manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
 
      Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Vector errors
 
-     double sum_squared_error(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type sum_squared_error(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double minkowski_error(const Tensor<type, 1>&, const Tensor<type, 1>&, const double &);
+     type minkowski_error(const Tensor<type, 1>&, const Tensor<type, 1>&, const type&);
 
      // Tensor errors
 
      type cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&);
+     type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&);
 
-     type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
+     type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&, const type&);
 
      // Error rows
 
      Tensor<type, 1> error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
+     Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&, const type&);
 
 }
 
