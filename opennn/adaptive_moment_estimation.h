@@ -76,26 +76,26 @@ public:
 
    // Training operators
 
-   const double& get_initial_learning_rate() const;
-   const double& get_beta_1() const;
-   const double& get_beta_2() const;
-   const double& get_epsilon() const;
+   const type& get_initial_learning_rate() const;
+   const type& get_beta_1() const;
+   const type& get_beta_2() const;
+   const type& get_epsilon() const;
 
 
    // Training parameters
 
-   const double& get_warning_parameters_norm() const;
-   const double& get_warning_gradient_norm() const;
-   const double& get_error_parameters_norm() const;
-   const double& get_error_gradient_norm() const;
+   const type& get_warning_parameters_norm() const;
+   const type& get_warning_gradient_norm() const;
+   const type& get_error_parameters_norm() const;
+   const type& get_error_gradient_norm() const;
 
    // Stopping criteria
 
-   const double& get_minimum_parameters_increment_norm() const;
-   const double& get_minimum_loss_increase() const;
-   const double& get_loss_goal() const;
-   const double& get_gradient_norm_goal() const;
-   const double& get_maximum_time() const;
+   const type& get_minimum_parameters_increment_norm() const;
+   const type& get_minimum_loss_increase() const;
+   const type& get_loss_goal() const;
+   const type& get_gradient_norm_goal() const;
+   const type& get_maximum_time() const;
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
    const int& get_maximum_selection_failures() const;
@@ -115,27 +115,27 @@ public:
 
    // Training operators
 
-   void set_initial_learning_rate(const double&);
-   void set_beta_1(const double&);
-   void set_beta_2(const double&);
-   void set_epsilon(const double&);
+   void set_initial_learning_rate(const type&);
+   void set_beta_1(const type&);
+   void set_beta_2(const type&);
+   void set_epsilon(const type&);
 
    // Training parameters
 
-   void set_warning_parameters_norm(const double&);
-   void set_warning_gradient_norm(const double&);
-   void set_error_parameters_norm(const double&);
-   void set_error_gradient_norm(const double&);
+   void set_warning_parameters_norm(const type&);
+   void set_warning_gradient_norm(const type&);
+   void set_error_parameters_norm(const type&);
+   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const int&);
 
    // Stopping criteria
 
-   void set_minimum_parameters_increment_norm(const double&);
-   void set_minimum_loss_increase(const double&);
-   void set_loss_goal(const double&);
-   void set_gradient_norm_goal(const double&);
+   void set_minimum_parameters_increment_norm(const type&);
+   void set_minimum_loss_increase(const type&);
+   void set_loss_goal(const type&);
+   void set_gradient_norm_goal(const type&);
    void set_maximum_selection_error_increases(const int&);
-   void set_maximum_time(const double&);
+   void set_maximum_time(const type&);
    void set_return_minimum_selection_error_neural_network(const bool&);
    void set_apply_early_stopping(const bool&);
 
