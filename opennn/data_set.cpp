@@ -873,7 +873,7 @@ Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_insta
 
 Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> training_indices = get_training_instances_indices();
+    Tensor<Index, 1> training_indices = get_selection_instances_indices();
 
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
@@ -884,7 +884,7 @@ Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_inst
 
 Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> training_indices = get_training_instances_indices();
+    Tensor<Index, 1> training_indices = get_testing_instances_indices();
 
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
