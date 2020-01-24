@@ -863,72 +863,33 @@ const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
 
 Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
 {
-
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    system("pause");
-    /*
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.begin(), training_indices.end());
+    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
-    if(training_indices.size() < shuffle_batches_instances)
-    {
-        return vector<Tensor<Index, 1>>({training_indices});
-    }
+    return split_eigen_tensor(training_indices, batch_instances_number);
 
-    const size_t batches_number = training_indices.size() / shuffle_batches_instances;
-
-    vector<Tensor<Index, 1>> batches(batches_number);
-
-    for(size_t k = 0; k < batches_number; ++k)
-    {
-        auto start_itr = next(training_indices.cbegin(), k*shuffle_batches_instances);
-
-        auto end_itr = k*shuffle_batches_instances + shuffle_batches_instances > training_indices.size() ? training_indices.cend() : next(training_indices.cbegin(), k*shuffle_batches_instances + shuffle_batches_instances);
-
-        batches[k].resize(shuffle_batches_instances);
-
-        copy(start_itr, end_itr, batches[k].begin());
-    }
-
-    return batches;
-
-
-/*
-    return training_indices.split(batch_instances_number);
-    */
-    return Tensor<Index, 2>();
 }
 
-
-/// Returns a vector, where each element is a vector that contains the indices of the different batches of the selection instances.
-/// @param shuffle Is a boleean.
-/// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
 Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    //if(shuffle_batches_instances) random_shuffle(selection_indices.begin(), selection_indices.end());
-/*
-    return selection_indices.split(batch_instances_number);
-*/
-    return Tensor<Index, 2>();
+    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+    return split_eigen_tensor(training_indices, batch_instances_number);
+
 }
 
 
-/// Returns a vector, where each element is a vector that contains the indices of the different batches of the testing instances.
-/// If shuffle is true, then the indices within batches are shuffle, and false otherwise
-/// @param shuffle_batches_instances Is a boleean.
-
 Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    //if(shuffle_batches_instances) random_shuffle(testing_indices.begin(), testing_indices.end());
-/*
-    return testing_indices.split(batch_instances_number);
-*/
-    return Tensor<Index, 2>();
+    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+    return split_eigen_tensor(training_indices, batch_instances_number);
 
 }
 
@@ -9397,6 +9358,49 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, co
 
     new_tensor[new_size-1] = end;
 }
+
+
+Tensor<Index, 2> DataSet::split_eigen_tensor(Tensor<Index, 1>& training_indices, const Index & batch_instances_number) const
+{
+
+    if(training_indices.size() < batch_instances_number)
+    {
+        return Tensor<Index, 2>(1, training_indices.size());
+    }
+
+
+//    // determine number of sub-vectors of size n
+//    //    const size_t batches_number = (this->size() - 1) / n + 1;
+//    const size_t batches_number = this->size() / n;
+//    // create array of vectors to store the sub-vectors
+//    Vector<Vector<T>> batches(batches_number);
+//    // each iteration of this loop process next set of n elements
+//    // and store it in a vector at k'th index in vec
+//    for(size_t k = 0; k < batches_number; ++k)
+//    {
+//        // get range for next set of n elements
+//        auto start_itr = next(this->cbegin(), k*n);
+//        auto end_itr = k*n + n > this->size() ? this->cend() : next(this->cbegin(), k*n + n);
+//        // allocate memory for the sub-vector
+//        batches[k].resize(n);
+//        // code to handle the last sub-vector as it might
+//        // contain less elements
+////        if(k*n + n > this->size())
+////        {
+////            batches[k].resize(this->size() - k*n);
+////        }
+//        // copy elements from the input range to the sub-vector
+//        copy(start_itr, end_itr, batches[k].begin());
+//    }
+
+//    return batches;
+
+}
+
+
+
+
+
 
 }
 
