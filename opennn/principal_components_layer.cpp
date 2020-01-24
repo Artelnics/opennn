@@ -136,11 +136,9 @@ Tensor<type, 1> PrincipalComponentsLayer::get_explained_variance() const
 }
 
 
-// int get_inputs_number() const method
-
 /// Returns the number of inputs to the layer.
 
-int PrincipalComponentsLayer::get_inputs_number() const
+Index PrincipalComponentsLayer::get_inputs_number() const
 {
     return inputs_number;
 }
@@ -148,13 +146,13 @@ int PrincipalComponentsLayer::get_inputs_number() const
 
 /// Returns the number of principal components.
 
-int PrincipalComponentsLayer::get_principal_components_number() const
+Index PrincipalComponentsLayer::get_principal_components_number() const
 {
     return principal_components_number;
 }
 
 
-int PrincipalComponentsLayer::get_neurons_number() const
+Index PrincipalComponentsLayer::get_neurons_number() const
 {
     return principal_components_number;
 }
@@ -292,7 +290,7 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Ten
 
     buffer.precision(10);
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int principal_components_number = get_principal_components_number();
 
     for(int i = 0; i < principal_components_number;i ++)
@@ -598,7 +596,7 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Inputs number
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     file_stream.OpenElement("InputsNumber");
 

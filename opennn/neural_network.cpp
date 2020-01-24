@@ -784,7 +784,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
 /// Returns the number of inputs to the neural network.
 
-int NeuralNetwork::get_inputs_number() const
+Index NeuralNetwork::get_inputs_number() const
 {
     if(!layers_pointers.empty())
     {
@@ -824,7 +824,7 @@ Tensor<int, 1> NeuralNetwork::get_architecture() const
 {
     Tensor<int, 1> architecture;
 /*
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs_number == 0)
     {
@@ -1194,7 +1194,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
         throw logic_error(buffer.str());
     }
 
-//    const int inputs_number = get_inputs_number();
+//    const Index inputs_number = get_inputs_number();
 
 //    const int inputs_dimension = inputs.dimension(1);
 
@@ -1245,7 +1245,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 //        throw logic_error(buffer.str());
 //    }
 
-//    const int inputs_number = get_inputs_number();
+//    const Index inputs_number = get_inputs_number();
 
 //    const int inputs_columns_number = inputs.dimension(1);
 
@@ -1335,7 +1335,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction
                                                            const double& maximum,
                                                            const int& points_number) const
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     Tensor<type, 2> directional_inputs(points_number, inputs_number);
 
@@ -1361,7 +1361,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction
 
 vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_number, const int& bins_number)
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     Tensor<type, 2> inputs(points_number, inputs_number);
 /*
@@ -1836,7 +1836,7 @@ string NeuralNetwork::write_expression() const
 {
     ostringstream buffer;
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
@@ -2157,7 +2157,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 {
     ostringstream buffer;
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
@@ -2399,7 +2399,7 @@ string NeuralNetwork::write_expression_python() const
 {
     ostringstream buffer;
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
@@ -2763,7 +2763,7 @@ string NeuralNetwork::write_expression_php() const
 {
     ostringstream buffer;
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
@@ -3081,7 +3081,7 @@ string NeuralNetwork::write_expression_R() const
 {
     ostringstream buffer;
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
     const int outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
@@ -3454,7 +3454,7 @@ void NeuralNetwork::save_expression_R(const string& file_name)
 /// @todo
 void NeuralNetwork::save_data(const string& file_name) const
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
 #ifdef __OPENNN_DEBUG__
 

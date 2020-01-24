@@ -61,7 +61,7 @@ PerceptronLayer::~PerceptronLayer()
 
 Tensor<int, 1> PerceptronLayer::get_input_variables_dimensions() const
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     return Tensor<int, 1>(inputs_number);
 }
@@ -69,7 +69,7 @@ Tensor<int, 1> PerceptronLayer::get_input_variables_dimensions() const
 
 /// Returns the number of inputs to the layer.
 
-int PerceptronLayer::get_inputs_number() const
+Index PerceptronLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
 
@@ -78,7 +78,7 @@ int PerceptronLayer::get_inputs_number() const
 
 /// Returns the number of neurons in the layer.
 
-int PerceptronLayer::get_neurons_number() const
+Index PerceptronLayer::get_neurons_number() const
 {
     return biases.size();
 }
@@ -126,8 +126,8 @@ const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
 
 Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int synaptic_weights_number = synaptic_weights.size();
 /*
@@ -326,7 +326,7 @@ void PerceptronLayer::set_default()
  
 void PerceptronLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     biases.resize(1, neurons_number);
 
@@ -341,7 +341,7 @@ void PerceptronLayer::set_inputs_number(const int& new_inputs_number)
 
 void PerceptronLayer::set_neurons_number(const int& new_neurons_number)
 {    
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     biases.resize(1, new_neurons_number);
 
@@ -375,8 +375,8 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
     const int parameters_number = get_parameters_number();
 
@@ -526,7 +526,7 @@ void PerceptronLayer::prune_input(const int& index)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(index >= inputs_number)
     {
@@ -553,7 +553,7 @@ void PerceptronLayer::prune_neuron(const int& index)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(index >= neurons_number)
     {
@@ -689,7 +689,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 
@@ -741,7 +741,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations_derivatives(const Tensor<
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 
@@ -812,7 +812,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #ifdef __OPENNN_DEBUG__
 
-   const int inputs_number = get_inputs_number();
+   const Index inputs_number = get_inputs_number();
 
    const int inputs_columns_number = reshaped_inputs.dimension(1);
 
@@ -942,7 +942,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #ifdef __OPENNN_DEBUG__
 
-   const int inputs_number = get_inputs_number();
+   const Index inputs_number = get_inputs_number();
 
    const int inputs_columns_number = reshaped_inputs.dimension(1);
 
@@ -1107,8 +1107,8 @@ Tensor<type, 1> PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>&
                                                          const Layer::ForwardPropagation& ,
                                                          const Tensor<type, 2>& deltas)
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int parameters_number = get_parameters_number();
 
@@ -1137,9 +1137,9 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
-   const int inputs_number = get_inputs_number(); 
+   const Index inputs_number = get_inputs_number();
    const int inputs_name_size = inputs_names.size();
 
    if(inputs_name_size != inputs_number)
@@ -1191,8 +1191,8 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
 string PerceptronLayer::object_to_string() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
