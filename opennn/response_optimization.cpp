@@ -541,11 +541,11 @@ ResponseOptimization::Results* ResponseOptimization::perform_optimization() cons
 }
 
 
-double ResponseOptimization::calculate_random_uniform(const double& minimum, const double& maximum) const
+type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum) const
 {
-  const double random = static_cast<double>(rand()/(RAND_MAX + 1.0));
+  const type random = static_cast<type>(rand()/(RAND_MAX + 1.0));
 
-  const double random_uniform = minimum + (maximum - minimum) * random;
+  const type random_uniform = minimum + (maximum - minimum) * random;
 
   return random_uniform;
 }

@@ -26,7 +26,7 @@ namespace OpenNN
 
     // Minimum-maximum vector scaling
 
-     void scale_minimum_maximum(Tensor<type, 1>&, const double &, const double &);
+     void scale_minimum_maximum(Tensor<type, 1>&, const type &, const type &);
 
      void scale_minimum_maximum(Tensor<type, 1>&, const Descriptives&);
 
@@ -47,7 +47,7 @@ namespace OpenNN
      // Mean-std vector scaling
 
      void scale_mean_standard_deviation(Tensor<type, 1>&, const Descriptives &);
-     void scale_mean_standard_deviation(Tensor<type, 1>&, const double &, const double &);
+     void scale_mean_standard_deviation(Tensor<type, 1>&, const type &, const type &);
 
      Descriptives scale_mean_standard_deviation(Tensor<type, 1>&);
 
@@ -60,7 +60,7 @@ namespace OpenNN
 
      // Standard deviation vector scaling
 
-     void scale_standard_deviation(Tensor<type, 1>&, const double &);
+     void scale_standard_deviation(Tensor<type, 1>&, const type &);
      void scale_standard_deviation(Tensor<type, 1>&, const Tensor<type, 1>&);
      void scale_standard_deviation(Tensor<type, 1>&, const Descriptives &);
 
@@ -68,9 +68,9 @@ namespace OpenNN
 
      // Range matrix scaling
 
-     void scale_range(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const double& minimum, const double& maximum);
+     void scale_range(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const type& minimum, const type& maximum);
 
-     Tensor<Descriptives, 1> scale_range(Tensor<type, 2>&, const double&, const double&);
+     Tensor<Descriptives, 1> scale_range(Tensor<type, 2>&, const type&, const type&);
 
      // Logarithmic matrix scaling
 
@@ -122,15 +122,15 @@ namespace OpenNN
 
      // Bounding methods
 
-     void apply_lower_bound(Tensor<type, 1>&, const double&);
+     void apply_lower_bound(Tensor<type, 1>&, const type&);
 
      void apply_lower_bound(Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void apply_upper_bound(Tensor<type, 1>&, const double&);
+     void apply_upper_bound(Tensor<type, 1>&, const type&);
 
      void apply_upper_bound(Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void apply_lower_upper_bounds(Tensor<type, 1>&, const double &, const double &);
+     void apply_lower_upper_bounds(Tensor<type, 1>&, const type &, const type &);
 
      void apply_lower_upper_bounds(Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 

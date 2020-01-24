@@ -475,7 +475,7 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
 }
 
 
-void ScalingLayer::set_descriptives_eigen(const MatrixXd& descriptives_eigen)
+void ScalingLayer::set_descriptives_eigen(const Tensor<type, 2>& descriptives_eigen)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -507,7 +507,7 @@ void ScalingLayer::set_item_descriptives(const Index& i, const Descriptives& ite
 /// @param i Index of scaling neuron.
 /// @param new_minimum Minimum value.
 
-void ScalingLayer::set_minimum(const Index& i, const double& new_minimum)
+void ScalingLayer::set_minimum(const Index& i, const type& new_minimum)
 {
     descriptives[i].set_minimum(new_minimum);
 }
@@ -517,7 +517,7 @@ void ScalingLayer::set_minimum(const Index& i, const double& new_minimum)
 /// @param i Index of scaling neuron.
 /// @param new_maximum Maximum value.
 
-void ScalingLayer::set_maximum(const Index& i, const double& new_maximum)
+void ScalingLayer::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives[i].set_maximum(new_maximum);
 }
@@ -527,7 +527,7 @@ void ScalingLayer::set_maximum(const Index& i, const double& new_maximum)
 /// @param i Index of scaling neuron.
 /// @param new_mean Mean value.
 
-void ScalingLayer::set_mean(const Index& i, const double& new_mean)
+void ScalingLayer::set_mean(const Index& i, const type& new_mean)
 {
     descriptives[i].set_mean(new_mean);
 }
@@ -537,7 +537,7 @@ void ScalingLayer::set_mean(const Index& i, const double& new_mean)
 /// @param i Index of scaling neuron.
 /// @param new_standard_deviation Standard deviation value.
 
-void ScalingLayer::set_standard_deviation(const Index& i, const double& new_standard_deviation)
+void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives[i].set_standard_deviation(new_standard_deviation);
 }
@@ -921,7 +921,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
         const Index points_number = inputs.dimension(0);
 
-        outputs.set(Tensor<Index, 1>({points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}));
+        outputs.set(points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3));
 
         for(Index i = 0; i < points_number; i++)
         {

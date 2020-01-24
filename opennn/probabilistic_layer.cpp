@@ -76,7 +76,7 @@ Index ProbabilisticLayer::get_neurons_number() const
 
 /// Returns the decision threshold.
 
-const double& ProbabilisticLayer::get_decision_threshold() const
+const type& ProbabilisticLayer::get_decision_threshold() const
 {
     return decision_threshold;
 }
@@ -350,7 +350,7 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 /// Sets a new threshold value for discriminating between two classes.
 /// @param new_decision_threshold New discriminating value. It must be comprised between 0 and 1.
 
-void ProbabilisticLayer::set_decision_threshold(const double& new_decision_threshold)
+void ProbabilisticLayer::set_decision_threshold(const type& new_decision_threshold)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -359,7 +359,7 @@ void ProbabilisticLayer::set_decision_threshold(const double& new_decision_thres
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_decision_threshold(const double&) method.\n"
+               << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be greater than zero.\n";
 
         throw logic_error(buffer.str());
@@ -369,7 +369,7 @@ void ProbabilisticLayer::set_decision_threshold(const double& new_decision_thres
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_decision_threshold(const double&) method.\n"
+               << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be less than one.\n";
 
         throw logic_error(buffer.str());
@@ -529,7 +529,7 @@ void ProbabilisticLayer::prune_neuron(const Index& index)
 /// Initializes the biases of all the neurons in the probabilistic layer with a given value.
 /// @param value Biases initialization value.
 
-void ProbabilisticLayer::initialize_biases(const double& value)
+void ProbabilisticLayer::initialize_biases(const type& value)
 {
     biases.setConstant(value);
 }
@@ -538,13 +538,13 @@ void ProbabilisticLayer::initialize_biases(const double& value)
 /// Initializes the synaptic weights of all the neurons in the probabilistic layer with a given value.
 /// @param value Synaptic weights initialization value.
 
-void ProbabilisticLayer::initialize_synaptic_weights(const double& value)
+void ProbabilisticLayer::initialize_synaptic_weights(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
 
 
-void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const double& minimum,const double& maximum)
+void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const type& minimum,const type& maximum)
 {
     synaptic_weights.setRandom();
 }
@@ -553,7 +553,7 @@ void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const double& minimu
 /// Initializes all the biases and synaptic weights in the neural newtork with a given value.
 /// @param value Parameters initialization value.
 
-void ProbabilisticLayer::set_parameters_constant(const double& value)
+void ProbabilisticLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
@@ -1147,7 +1147,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 //@todo
-//        set_parameters(to_double_vector(parameters_string, ' '));
+//        set_parameters(to_type_vector(parameters_string, ' '));
     }
 
     // Decision threshold

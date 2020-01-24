@@ -123,7 +123,7 @@ public:
 
     const Index& get_population_size() const;
 
-    const double& get_mutation_rate() const;
+    const type& get_mutation_rate() const;
 
     const Index& get_elitism_size() const;
 
@@ -131,9 +131,9 @@ public:
 
     const Index& get_crossover_second_point() const;
 
-    const double& get_selective_pressure() const;
+    const type& get_selective_pressure() const;
 
-    const double& get_incest_prevention_distance() const;
+    const type& get_incest_prevention_distance() const;
 
     const bool& get_reserve_generation_mean() const;
 
@@ -169,7 +169,7 @@ public:
 
     void set_population_size(const Index&);
 
-    void set_mutation_rate(const double&);
+    void set_mutation_rate(const type&);
 
     void set_elitism_size(const Index&);
 
@@ -177,9 +177,9 @@ public:
 
     void set_crossover_second_point(const Index&);
 
-    void set_selective_pressure(const double&);
+    void set_selective_pressure(const type&);
 
-    void set_incest_prevention_distance(const double&);
+    void set_incest_prevention_distance(const type&);
 
     void set_reserve_generation_mean(const bool&);
 
@@ -287,13 +287,13 @@ private:
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
 
-    double incest_prevention_distance;
+    type incest_prevention_distance;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
     /// This is a parameter of the mutation operator.
 
-    double mutation_rate;
+    type mutation_rate;
 
     /// Elitism size.
     /// It represents the number of individuals which will always be selected for recombination.
@@ -314,7 +314,7 @@ private:
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.
 
-    double selective_pressure;
+    type selective_pressure;
 
     // Inputs selection results
 

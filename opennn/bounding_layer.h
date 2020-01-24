@@ -72,10 +72,10 @@ public:
    string write_bounding_method() const;
 
    const Tensor<type, 1>& get_lower_bounds() const;
-   double get_lower_bound(const Index&) const;
+   type get_lower_bound(const Index&) const;
 
    const Tensor<type, 1>& get_upper_bounds() const;
-   double get_upper_bound(const Index&) const;
+   type get_upper_bound(const Index&) const;
 
    // Variables bounds
 
@@ -92,10 +92,10 @@ public:
    void set_bounding_method(const string&);
 
    void set_lower_bounds(const Tensor<type, 1>&);
-   void set_lower_bound(const Index&, const double&);
+   void set_lower_bound(const Index&, const type&);
 
    void set_upper_bounds(const Tensor<type, 1>&);
-   void set_upper_bound(const Index&, const double&);
+   void set_upper_bound(const Index&, const type&);
 
    void set_display(const bool&);
 

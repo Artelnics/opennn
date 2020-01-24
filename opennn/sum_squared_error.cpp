@@ -178,7 +178,7 @@ check();
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
@@ -230,7 +230,7 @@ check();
 
     const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
+    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
 
     first_order_loss.loss = batch_error;
     first_order_loss.gradient += batch_error_gradient;
@@ -406,7 +406,7 @@ check();
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 

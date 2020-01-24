@@ -435,7 +435,7 @@ void PrincipalComponentsLayer::set_means(const Tensor<type, 1>& new_means)
 /// @param new_size New size of the vector means.
 /// @param new_value New value of the vector means.
 
-void PrincipalComponentsLayer::set_means(const Index& new_size, const double& new_value)
+void PrincipalComponentsLayer::set_means(const Index& new_size, const type& new_value)
 {
 /*
     means.set(new_size, new_value);

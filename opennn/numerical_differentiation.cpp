@@ -170,9 +170,9 @@ void NumericalDifferentiation::set_default()
 /// Calculates a proper step size for computing the derivatives, as a function of the inputs point value. 
 /// @param x Input value. 
 
-double NumericalDifferentiation::calculate_h(const double& x) const
+type NumericalDifferentiation::calculate_h(const type& x) const
 {
-   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
    return(sqrt(eta)*(1.0 + abs(x)));
 }
@@ -183,7 +183,7 @@ double NumericalDifferentiation::calculate_h(const double& x) const
 
 Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) const
 {
-   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
    const Index n = x.size();
 
@@ -204,7 +204,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
 /*
-   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
    const Index n = x.size();
 
@@ -253,8 +253,8 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 
     for(Index i = 1; i < size; i++)
     {
-        const double numerator = y[i] - y[i-1];
-        const double denominator = x[i] - x[i-1];
+        const type numerator = y[i] - y[i-1];
+        const type denominator = x[i] - x[i-1];
 
         if(denominator != 0.0)
         {

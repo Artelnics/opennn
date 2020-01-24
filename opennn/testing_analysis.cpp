@@ -1433,11 +1433,11 @@ type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type
 /// @param outputs Testing output data.
 /// @param decision_threshold Decision threshold.
 
-Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& decision_threshold) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
-    Matrix<Index, Dynamic, Dynamic> confusion(2, 2);
+    Tensor<Index, 2> confusion(2, 2);
 
     Index true_positive = 0;
     Index false_negative = 0;
@@ -1482,7 +1482,7 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_binary_clas
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Matrix<Index, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
+               << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                << "Number of elements in confusion matrix (" << confusion.sum() << ") must be equal to number of testing instances (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -1496,12 +1496,12 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_binary_clas
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 
-Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_multiple_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = targets.dimension(1);
 
-    Matrix<Index, Dynamic, Dynamic> confusion(columns_number, columns_number);
+    Tensor<Index, 2> confusion(columns_number, columns_number);
 
     Index target_index = 0;
     Index output_index = 0;
@@ -1528,7 +1528,7 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_multiple_cl
 
 Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    const Matrix<Index, Dynamic, Dynamic> confusion = calculate_confusion_binary_classification(targets, outputs, 0.5);
+    const Tensor<Index, 2> confusion = calculate_confusion_binary_classification(targets, outputs, 0.5);
     Tensor<Index, 1> positives_negatives_rate(2);
 
     positives_negatives_rate[0] = confusion(0,0) + confusion(0,1);
@@ -1542,7 +1542,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 /// If the number of outputs is one, the size of the confusion matrix is two.
 /// If the number of outputs is greater than one, the size of the confusion matrix is the number of outputs.
 
-Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion() const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
@@ -1555,7 +1555,7 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion() const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-             << "Matrix<Index, Dynamic, Dynamic> calculate_confusion() const method.\n"
+             << "Tensor<Index, 2> calculate_confusion() const method.\n"
              << "Pointer to neural network in neural network is nullptr.\n";
 
       throw logic_error(buffer.str());
@@ -1570,7 +1570,7 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion() const
        ostringstream buffer;
 
        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-              << "Matrix<Index, Dynamic, Dynamic> calculate_confusion() const method." << endl
+              << "Tensor<Index, 2> calculate_confusion() const method." << endl
               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
       throw logic_error(buffer.str());
@@ -1581,7 +1581,7 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion() const
        ostringstream buffer;
 
       buffer << "OpenNN Exception: TestingAnalysis class." << endl
-             << "Matrix<Index, Dynamic, Dynamic> calculate_confusion() const method." << endl
+             << "Tensor<Index, 2> calculate_confusion() const method." << endl
              << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
       throw logic_error(buffer.str());
@@ -2885,7 +2885,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_instances(const Tensor
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
-Matrix<Tensor<Index, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates() const
+Tensor<Tensor<Index, 1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -2901,10 +2901,6 @@ Matrix<Tensor<Index, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_c
 
     throw logic_error(buffer.str());
     }
-
-    #endif
-
-    #ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -2944,7 +2940,6 @@ Matrix<Tensor<Index, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_c
     const Tensor<Index, 1> testing_indices = data_set_pointer->get_testing_instances_indices();
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
-
 }
 
 
@@ -2952,24 +2947,25 @@ Matrix<Tensor<Index, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_c
 /// The number of rows of the matrix is the number targets.
 /// The number of columns of the matrix is the number of columns of the target data.
 
-Matrix<Tensor<Index, 1>, Dynamic, Dynamic> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<Index, 1>& testing_indices) const
+Tensor<Tensor<Index, 1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<Index, 1>& testing_indices) const
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = outputs.dimension(1);
 
-    Matrix<Tensor<Index, 1>, Dynamic, Dynamic> multiple_classification_rates(rows_number, columns_number);
+    Tensor<Tensor<Index, 1>, 2> multiple_classification_rates(rows_number, columns_number);
 
     Index target_index;
     Index output_index;
-/*
+
     for(Index i = 0; i < rows_number; i++)
     {
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
-
+/*
         multiple_classification_rates(target_index, output_index).push_back(testing_indices[i]);
-    }
 */
+    }
+
     return multiple_classification_rates;
 }
 
@@ -3205,7 +3201,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
    // Confusion matrix
 
-   const Matrix<Index, Dynamic, Dynamic> confusion = calculate_confusion();
+   const Tensor<Index, 2> confusion = calculate_confusion();
 
    const Index true_positive = confusion(0,0);
    const Index false_positive = confusion(1,0);

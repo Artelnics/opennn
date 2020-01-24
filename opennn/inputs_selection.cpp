@@ -142,7 +142,7 @@ const bool& InputsSelection::get_display() const
 
 /// Returns the goal for the selection error in the inputs selection algorithm.
 
-const double& InputsSelection::get_selection_error_goal() const
+const type& InputsSelection::get_selection_error_goal() const
 {
     return selection_error_goal;
 }
@@ -158,7 +158,7 @@ const Index& InputsSelection::get_maximum_iterations_number() const
 
 /// Returns the maximum time in the inputs selection algorithm.
 
-const double& InputsSelection::get_maximum_time() const
+const type& InputsSelection::get_maximum_time() const
 {
     return maximum_time;
 }
@@ -166,7 +166,7 @@ const double& InputsSelection::get_maximum_time() const
 
 /// Return the maximum correlation for the algorithm.
 
-const double& InputsSelection::get_maximum_correlation() const
+const type& InputsSelection::get_maximum_correlation() const
 {
     return(maximum_correlation);
 }
@@ -174,7 +174,7 @@ const double& InputsSelection::get_maximum_correlation() const
 
 /// Return the minimum correlation for the algorithm.
 
-const double& InputsSelection::get_minimum_correlation() const
+const type& InputsSelection::get_minimum_correlation() const
 {
     return(minimum_correlation);
 }
@@ -182,7 +182,7 @@ const double& InputsSelection::get_minimum_correlation() const
 
 /// Return the tolerance of error for the algorithm.
 
-const double& InputsSelection::get_tolerance() const
+const type& InputsSelection::get_tolerance() const
 {
     return(tolerance);
 }
@@ -301,7 +301,7 @@ void InputsSelection::set_display(const bool& new_display)
 /// Sets the selection error goal for the inputs selection algorithm.
 /// @param new_selection_error_goal Goal of the selection error.
 
-void InputsSelection::set_selection_error_goal(const double& new_selection_error_goal)
+void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -310,7 +310,7 @@ void InputsSelection::set_selection_error_goal(const double& new_selection_error
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_selection_error_goal(const double&) method.\n"
+               << "void set_selection_error_goal(const type&) method.\n"
                << "Selection loss goal must be greater or equal than 0.\n";
 
         throw logic_error(buffer.str());
@@ -334,7 +334,7 @@ void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_ite
 /// Sets the maximum time for the inputs selection algorithm.
 /// @param new_maximum_time Maximum time for the algorithm.
 
-void InputsSelection::set_maximum_time(const double& new_maximum_time)
+void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -343,7 +343,7 @@ void InputsSelection::set_maximum_time(const double& new_maximum_time)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_maximum_time(const double&) method.\n"
+               << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -358,7 +358,7 @@ void InputsSelection::set_maximum_time(const double& new_maximum_time)
 /// Sets the maximum value for the correlations in the inputs selection algorithm.
 /// @param new_maximum_correlation Maximum value of the correlations.
 
-void InputsSelection::set_maximum_correlation(const double& new_maximum_correlation)
+void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -367,7 +367,7 @@ void InputsSelection::set_maximum_correlation(const double& new_maximum_correlat
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_maximum_correlation(const double&) method.\n"
+               << "void set_maximum_correlation(const type&) method.\n"
                << "Maximum correlation must be comprised between 0 and 1.\n";
 
         throw logic_error(buffer.str());
@@ -382,7 +382,7 @@ void InputsSelection::set_maximum_correlation(const double& new_maximum_correlat
 /// Sets the minimum value for the correlations in the inputs selection algorithm.
 /// @param new_minimum_correlation Minimum value of the correlations.
 
-void InputsSelection::set_minimum_correlation(const double& new_minimum_correlation)
+void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -391,7 +391,7 @@ void InputsSelection::set_minimum_correlation(const double& new_minimum_correlat
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_minimum_correlation(const double&) method.\n"
+               << "void set_minimum_correlation(const type&) method.\n"
                << "Minimum correaltion must be comprised between 0 and 1.\n";
 
         throw logic_error(buffer.str());
@@ -406,7 +406,7 @@ void InputsSelection::set_minimum_correlation(const double& new_minimum_correlat
 /// Set the tolerance for the errors in the trainings of the algorithm.
 /// @param new_tolerance Value of the tolerance.
 
-void InputsSelection::set_tolerance(const double& new_tolerance)
+void InputsSelection::set_tolerance(const type& new_tolerance)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -415,7 +415,7 @@ void InputsSelection::set_tolerance(const double& new_tolerance)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_tolerance(const double&) method.\n"
+               << "void set_tolerance(const type&) method.\n"
                << "Tolerance must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -467,8 +467,8 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     OptimizationAlgorithm::Results results;
 
-    double optimum_selection_error = 999999;
-    double optimum_training_error = 999999;
+    type optimum_selection_error = 999999;
+    type optimum_training_error = 999999;
 
     Tensor<type, 1> optimum_parameters;
 
@@ -518,8 +518,8 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
         results = training_strategy_pointer->perform_training();
 
-        const double selection_error = results.final_selection_error;
-        const double training_error = results.final_training_error;
+        const type selection_error = results.final_selection_error;
+        const type training_error = results.final_training_error;
         const Tensor<type, 1> parameters = results.final_parameters;
 
         if(display && trials_number != 1)
@@ -953,7 +953,7 @@ string InputsSelection::Results::object_to_string() const
 
    // Optimum selection error
 
-   if(abs(final_selection_error - 0) > numeric_limits<double>::epsilon())
+   if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
    {
        buffer << "% Optimum selection error:\n"
               << final_selection_error << "\n";
@@ -961,7 +961,7 @@ string InputsSelection::Results::object_to_string() const
 
    // Final training loss
 
-   if(abs(final_training_error - 0) > numeric_limits<double>::epsilon())
+   if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
    {
        buffer << "% Final training loss:\n"
               << final_training_error << "\n";

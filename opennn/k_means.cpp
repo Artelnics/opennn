@@ -56,7 +56,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const I
                 distances[l] = euclidean_distance(row_data, previous_means.chip(l, 0));
             }
 
-            const double minimum_distance = minimum(distances);
+            const type minimum_distance = minimum(distances);
 
             minimum_distances[static_cast<Index>(j)] = minimum_distance;
         }
@@ -147,9 +147,9 @@ Index KMeans::calculate_sample_index_proportional_probability(const Tensor<type,
 
     Tensor<type, 1> cumulative = OpenNN::cumulative(vector);
 
-    const double sum = vector.sum();
+    const type sum = vector.sum();
 
-    const double random = calculate_random_uniform(0.,sum);
+    const type random = calculate_random_uniform(0.,sum);
 
     Index selected_index = 0;
 

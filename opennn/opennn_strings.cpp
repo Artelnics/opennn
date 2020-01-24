@@ -115,15 +115,15 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 }
 
 
-/// Returns a new vector with the elements of this string vector casted to double.
+/// Returns a new vector with the elements of this string vector casted to type.
 
-Tensor<type, 1> to_double_vector(const string& str, const char& separator)
+Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(str, separator);
 
   const Index tokens_size = tokens.dimension(0);
 
-  Tensor<type, 1> double_vector(tokens_size);
+  Tensor<type, 1> type_vector(tokens_size);
 
   for(Index i = 0; i < tokens_size; i++)
   {
@@ -133,15 +133,15 @@ Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 
           buffer << tokens[i];
 
-          double_vector(i) = stof(buffer.str());
+          type_vector(i) = stof(buffer.str());
       }
       catch(const logic_error&)
       {
-         double_vector(i) = nan("");
+         type_vector(i) = nan("");
       }
    }
 
-  return double_vector;
+  return type_vector;
 }
 
 
@@ -152,7 +152,7 @@ bool is_numeric_string(const string& str)
 {
     std::istringstream iss(str.data());
 
-    double dTestSink;
+    type dTestSink;
 
     iss >> dTestSink;
 

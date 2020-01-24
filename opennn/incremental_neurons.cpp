@@ -164,15 +164,15 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     // Loss index stuff
 
-    double prev_selection_error = 999999;
+    type prev_selection_error = 999999;
 
     Tensor<type, 1> optimal_parameters;
 
-    double optimum_training_loss = 0.0;
-    double optimum_selection_error = 0.0;
+    type optimum_training_loss = 0.0;
+    type optimum_selection_error = 0.0;
 
-    double current_training_loss = 0.0;
-    double current_selection_error = 0.0;
+    type current_training_loss = 0.0;
+    type current_selection_error = 0.0;
 
     Tensor<type, 1> current_parameters;
 
@@ -187,7 +187,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     bool end = false;
 
     time_t beginning_time, current_time;
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
     time(&beginning_time);
 
@@ -202,8 +202,8 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         // Loss index stuff
 
-        double optimum_selection_error_trial = 999999;
-        double optimum_training_error_trial = 999999;
+        type optimum_selection_error_trial = 999999;
+        type optimum_training_error_trial = 999999;
         Tensor<type, 1> optimum_parameters_trial;
 
         for(Index i = 0; i < trials_number; i++)
@@ -212,8 +212,8 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
 
-            const double current_training_error_trial = optimization_algorithm_results.final_training_error;
-            const double current_selection_error_trial = optimization_algorithm_results.final_selection_error;
+            const type current_training_error_trial = optimization_algorithm_results.final_training_error;
+            const type current_selection_error_trial = optimization_algorithm_results.final_selection_error;
             const Tensor<type, 1> current_parameters_trial = optimization_algorithm_results.final_parameters;
 
             if(current_selection_error_trial < optimum_selection_error_trial)
@@ -998,7 +998,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_selection_error_goal = atof(element->GetText());
+           const type new_selection_error_goal = atof(element->GetText());
 
            try
            {
@@ -1036,7 +1036,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_time = atoi(element->GetText());
+           const type new_maximum_time = atoi(element->GetText());
 
            try
            {
@@ -1055,7 +1055,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_tolerance = atof(element->GetText());
+           const type new_tolerance = atof(element->GetText());
 
            try
            {

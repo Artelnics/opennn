@@ -93,11 +93,11 @@ public:
 
        /// Value of minimum selection error.
 
-       double final_selection_error;
+       type final_selection_error;
 
        /// Value of loss for the neural network with minimum selection error.
 
-       double final_training_error;
+       type final_training_error;
 
        /// Inputs of the neural network with minimum selection error.
 
@@ -117,7 +117,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       double elapsed_time;
+       type elapsed_time;
     };
 
     // Get methods
@@ -136,12 +136,12 @@ public:
 
     const bool& get_display() const;
 
-    const double& get_selection_error_goal() const;
+    const type& get_selection_error_goal() const;
     const Index& get_maximum_iterations_number() const;
-    const double& get_maximum_time() const;
-    const double& get_maximum_correlation() const;
-    const double& get_minimum_correlation() const;
-    const double& get_tolerance() const;
+    const type& get_maximum_time() const;
+    const type& get_maximum_correlation() const;
+    const type& get_minimum_correlation() const;
+    const type& get_tolerance() const;
 
     // Set methods
 
@@ -159,12 +159,12 @@ public:
 
     void set_display(const bool&);
 
-    void set_selection_error_goal(const double&);
+    void set_selection_error_goal(const type&);
     void set_maximum_iterations_number(const Index&);
-    void set_maximum_time(const double&);
-    void set_maximum_correlation(const double&);
-    void set_minimum_correlation(const double&);
-    void set_tolerance(const double&);
+    void set_maximum_time(const type&);
+    void set_maximum_correlation(const type&);
+    void set_minimum_correlation(const type&);
+    void set_tolerance(const type&);
 
     // Performances calculation methods
 
@@ -245,7 +245,7 @@ protected:
 
     /// Goal value for the selection error. It is used as a stopping criterion.
 
-    double selection_error_goal;
+    type selection_error_goal;
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
@@ -253,19 +253,19 @@ protected:
 
     /// Maximum value for the correlations.
 
-    double maximum_correlation;
+    type maximum_correlation;
 
     /// Minimum value for the correlations.
 
-    double minimum_correlation;
+    type minimum_correlation;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
-    double maximum_time;
+    type maximum_time;
 
     /// Tolerance for the error in the trainings of the algorithm.
 
-    double tolerance;
+    type tolerance;
 };
 }
 

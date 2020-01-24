@@ -77,7 +77,7 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 /// Returns the minimum value for the norm of the parameters vector at wich a warning message is 
 /// written to the screen. 
 
-const double& GradientDescent::get_warning_parameters_norm() const
+const type& GradientDescent::get_warning_parameters_norm() const
 {
    return warning_parameters_norm;
 }
@@ -86,7 +86,7 @@ const double& GradientDescent::get_warning_parameters_norm() const
 /// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
 /// to the screen. 
 
-const double& GradientDescent::get_warning_gradient_norm() const
+const type& GradientDescent::get_warning_gradient_norm() const
 {
    return warning_gradient_norm;
 }
@@ -95,7 +95,7 @@ const double& GradientDescent::get_warning_gradient_norm() const
 /// Returns the training rate value at wich a warning message is written to the screen during line 
 /// minimization.
 
-const double& GradientDescent::get_warning_learning_rate() const
+const type& GradientDescent::get_warning_learning_rate() const
 {
    return warning_learning_rate;
 }
@@ -104,7 +104,7 @@ const double& GradientDescent::get_warning_learning_rate() const
 /// Returns the value for the norm of the parameters vector at wich an error message is 
 /// written to the screen and the program exits. 
 
-const double& GradientDescent::get_error_parameters_norm() const
+const type& GradientDescent::get_error_parameters_norm() const
 {
    return error_parameters_norm;
 }
@@ -113,7 +113,7 @@ const double& GradientDescent::get_error_parameters_norm() const
 /// Returns the value for the norm of the gradient vector at wich an error message is written
 /// to the screen and the program exits. 
 
-const double& GradientDescent::get_error_gradient_norm() const
+const type& GradientDescent::get_error_gradient_norm() const
 {
    return error_gradient_norm;
 }
@@ -122,7 +122,7 @@ const double& GradientDescent::get_error_gradient_norm() const
 /// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
 
-const double& GradientDescent::get_error_learning_rate() const
+const type& GradientDescent::get_error_learning_rate() const
 {
    return error_learning_rate;
 }
@@ -130,7 +130,7 @@ const double& GradientDescent::get_error_learning_rate() const
 
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training. 
 
-const double& GradientDescent::get_minimum_parameters_increment_norm() const
+const type& GradientDescent::get_minimum_parameters_increment_norm() const
 {
    return minimum_parameters_increment_norm;
 }
@@ -138,7 +138,7 @@ const double& GradientDescent::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.  
 
-const double& GradientDescent::get_minimum_loss_increase() const
+const type& GradientDescent::get_minimum_loss_increase() const
 {
    return minimum_loss_decrease;
 }
@@ -147,7 +147,7 @@ const double& GradientDescent::get_minimum_loss_increase() const
 /// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a neural network.
 
-const double& GradientDescent::get_loss_goal() const
+const type& GradientDescent::get_loss_goal() const
 {
    return loss_goal;
 }
@@ -156,7 +156,7 @@ const double& GradientDescent::get_loss_goal() const
 /// Returns the goal value for the norm of the error function gradient.
 /// This is used as a stopping criterion when training a neural network.
 
-const double& GradientDescent::get_gradient_norm_goal() const
+const type& GradientDescent::get_gradient_norm_goal() const
 {
    return gradient_norm_goal;
 }
@@ -180,7 +180,7 @@ const Index& GradientDescent::get_maximum_epochs_number() const
 
 /// Returns the maximum training time.  
 
-const double& GradientDescent::get_maximum_time() const
+const type& GradientDescent::get_maximum_time() const
 {
    return maximum_time;
 }
@@ -296,7 +296,7 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
 /// screen. 
 /// @param new_warning_parameters_norm Warning norm of parameters vector value. 
 
-void GradientDescent::set_warning_parameters_norm(const double& new_warning_parameters_norm)
+void GradientDescent::set_warning_parameters_norm(const type& new_warning_parameters_norm)
 {
    
 
@@ -307,7 +307,7 @@ void GradientDescent::set_warning_parameters_norm(const double& new_warning_para
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_warning_parameters_norm(const double&) method.\n"
+             << "void set_warning_parameters_norm(const type&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -325,7 +325,7 @@ void GradientDescent::set_warning_parameters_norm(const double& new_warning_para
 /// a warning message is written to the screen. 
 /// @param new_warning_gradient_norm Warning norm of gradient vector value. 
 
-void GradientDescent::set_warning_gradient_norm(const double& new_warning_gradient_norm)
+void GradientDescent::set_warning_gradient_norm(const type& new_warning_gradient_norm)
 {
    
 
@@ -336,7 +336,7 @@ void GradientDescent::set_warning_gradient_norm(const double& new_warning_gradie
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_warning_gradient_norm(const double&) method.\n"
+             << "void set_warning_gradient_norm(const type&) method.\n"
              << "Warning gradient norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -354,7 +354,7 @@ void GradientDescent::set_warning_gradient_norm(const double& new_warning_gradie
 /// minimization.
 /// @param new_warning_learning_rate Warning training rate value.
 
-void GradientDescent::set_warning_learning_rate(const double& new_warning_learning_rate)
+void GradientDescent::set_warning_learning_rate(const type& new_warning_learning_rate)
 {
    
 
@@ -365,7 +365,7 @@ void GradientDescent::set_warning_learning_rate(const double& new_warning_learni
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_warning_learning_rate(const double&) method.\n"
+             << "void set_warning_learning_rate(const type&) method.\n"
              << "Warning training rate must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -381,7 +381,7 @@ void GradientDescent::set_warning_learning_rate(const double& new_warning_learni
 /// screen and the program exits. 
 /// @param new_error_parameters_norm Error norm of parameters vector value. 
 
-void GradientDescent::set_error_parameters_norm(const double& new_error_parameters_norm)
+void GradientDescent::set_error_parameters_norm(const type& new_error_parameters_norm)
 {
    
 
@@ -392,7 +392,7 @@ void GradientDescent::set_error_parameters_norm(const double& new_error_paramete
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_error_parameters_norm(const double&) method.\n"
+             << "void set_error_parameters_norm(const type&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -410,7 +410,7 @@ void GradientDescent::set_error_parameters_norm(const double& new_error_paramete
 /// and the program exits. 
 /// @param new_error_gradient_norm Error norm of gradient vector value. 
 
-void GradientDescent::set_error_gradient_norm(const double& new_error_gradient_norm)
+void GradientDescent::set_error_gradient_norm(const type& new_error_gradient_norm)
 {
    
 
@@ -421,7 +421,7 @@ void GradientDescent::set_error_gradient_norm(const double& new_error_gradient_n
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_error_gradient_norm(const double&) method.\n"
+             << "void set_error_gradient_norm(const type&) method.\n"
              << "Error gradient norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -439,7 +439,7 @@ void GradientDescent::set_error_gradient_norm(const double& new_error_gradient_n
 /// bracketing a minimum.
 /// @param new_error_learning_rate Error training rate value.
 
-void GradientDescent::set_error_learning_rate(const double& new_error_learning_rate)
+void GradientDescent::set_error_learning_rate(const type& new_error_learning_rate)
 {
    
 
@@ -450,7 +450,7 @@ void GradientDescent::set_error_learning_rate(const double& new_error_learning_r
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_error_learning_rate(const double&) method.\n"
+             << "void set_error_learning_rate(const type&) method.\n"
              << "Error training rate must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -478,7 +478,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_maximum_epochs_number(const double&) method.\n"
+             << "void set_maximum_epochs_number(const type&) method.\n"
              << "Maximum epochs number must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -495,7 +495,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 /// Sets a new value for the minimum parameters increment norm stopping criterion. 
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
 
-void GradientDescent::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
+void GradientDescent::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
    
 
@@ -506,7 +506,7 @@ void GradientDescent::set_minimum_parameters_increment_norm(const double& new_mi
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void new_minimum_parameters_increment_norm(const double&) method.\n"
+             << "void new_minimum_parameters_increment_norm(const type&) method.\n"
              << "Minimum parameters increment norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -523,7 +523,7 @@ void GradientDescent::set_minimum_parameters_increment_norm(const double& new_mi
 /// Sets a new minimum loss improvement during training.  
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void GradientDescent::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
+void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
 {
    
 
@@ -534,7 +534,7 @@ void GradientDescent::set_minimum_loss_decrease(const double& new_minimum_loss_i
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_minimum_loss_decrease(const double&) method.\n"
+             << "void set_minimum_loss_decrease(const type&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -552,7 +552,7 @@ void GradientDescent::set_minimum_loss_decrease(const double& new_minimum_loss_i
 /// This is used as a stopping criterion when training a neural network.
 /// @param new_loss_goal Goal value for the loss.
 
-void GradientDescent::set_loss_goal(const double& new_loss_goal)
+void GradientDescent::set_loss_goal(const type& new_loss_goal)
 {
    loss_goal = new_loss_goal;
 }
@@ -562,7 +562,7 @@ void GradientDescent::set_loss_goal(const double& new_loss_goal)
 /// This is used as a stopping criterion when training a neural network.
 /// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
-void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goal)
+void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
    
 
@@ -573,7 +573,7 @@ void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goa
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_gradient_norm_goal(const double&) method.\n"
+             << "void set_gradient_norm_goal(const type&) method.\n"
              << "Gradient norm goal must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -599,7 +599,7 @@ void GradientDescent::set_maximum_selection_error_increases(const Index& new_max
 /// Sets a new maximum training time.  
 /// @param new_maximum_time Maximum training time.
 
-void GradientDescent::set_maximum_time(const double& new_maximum_time)
+void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
    
 
@@ -610,7 +610,7 @@ void GradientDescent::set_maximum_time(const double& new_maximum_time)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_maximum_time(const double&) method.\n"
+             << "void set_maximum_time(const type&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -676,7 +676,7 @@ void GradientDescent::set_display_period(const Index& new_display_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_display_period(const double&) method.\n"
+             << "void set_display_period(const type&) method.\n"
              << "First training rate must be greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -765,22 +765,22 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters(parameters_number);
-   double parameters_norm = 0.0;
+   type parameters_norm = 0.0;
 
    Tensor<type, 1> parameters_increment(parameters_number);
-   double parameters_increment_norm = 0.0;
+   type parameters_increment_norm = 0.0;
 
    // Loss index stuff
 
    type selection_error = 0.0;
-   double old_selection_error = 0.0;
+   type old_selection_error = 0.0;
       
-   double training_loss = 0.0;
-   double old_training_loss = 0.0;
-   double training_loss_decrease = -999999;
+   type training_loss = 0.0;
+   type old_training_loss = 0.0;
+   type training_loss_decrease = -999999;
 
    Tensor<type, 1> gradient(parameters_number);
-   double gradient_norm = 0.0;
+   type gradient_norm = 0.0;
 
    // Optimization algorithm stuff 
 
@@ -788,22 +788,22 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    Tensor<type, 1> training_direction(parameters_number);
 
-   const double first_learning_rate = 0.01;
+   const type first_learning_rate = 0.01;
 
-   double initial_learning_rate = 0.0;
-   double learning_rate = 0.0;
-   double old_learning_rate = 0.0;
+   type initial_learning_rate = 0.0;
+   type learning_rate = 0.0;
+   type old_learning_rate = 0.0;
 
-   pair<double,double> directional_point(2, 0.0);
+   pair<type,type> directional_point(2, 0.0);
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error = 999999;
+   type minimum_selection_error = 999999;
 
    bool stop_training = false;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   double elapsed_time = 0.0;
+   type elapsed_time = 0.0;
 
    results.resize_training_history(maximum_epochs_number+1);
 
@@ -865,7 +865,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       if(training_direction == 0.0) throw logic_error("Training direction is zero");
 
-      const double training_slope = dot(gradient/gradient_norm, training_direction);
+      const type training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction
 
@@ -1689,7 +1689,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = atof(element->GetText());
 
           try
           {
@@ -1708,7 +1708,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = atof(element->GetText());
 
           try
           {
@@ -1727,7 +1727,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_warning_learning_rate = atof(element->GetText());
+          const type new_warning_learning_rate = atof(element->GetText());
 
           try
           {
@@ -1746,7 +1746,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = atof(element->GetText());
 
           try
           {
@@ -1765,7 +1765,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = atof(element->GetText());
 
           try
           {
@@ -1784,7 +1784,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_error_learning_rate = atof(element->GetText());
+          const type new_error_learning_rate = atof(element->GetText());
 
           try
           {
@@ -1839,7 +1839,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = atof(element->GetText());
 
           try
           {
@@ -1858,7 +1858,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = atof(element->GetText());
 
           try
           {
@@ -1877,7 +1877,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = atof(element->GetText());
 
           try
           {
@@ -1896,7 +1896,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = atof(element->GetText());
 
           try
           {
@@ -1953,7 +1953,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = atof(element->GetText());
 
           try
           {

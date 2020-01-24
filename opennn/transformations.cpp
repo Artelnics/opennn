@@ -22,7 +22,7 @@ void scale_minimum_maximum(Tensor<type, 1>& vector, const Descriptives &descript
 }
 
 
-void scale_minimum_maximum(Tensor<type, 1>& vector, const double& minimum, const double& maximum)
+void scale_minimum_maximum(Tensor<type, 1>& vector, const type& minimum, const type& maximum)
 {
     const Index size = vector.dimension(0);
 
@@ -61,7 +61,7 @@ void scale_minimum_maximum(Tensor<type, 1>& vector, const double& minimum, const
 /// @param mean Mean value for the scaling.
 /// @param standard_deviation Standard deviation value for the scaling.
 
-void scale_mean_standard_deviation(Tensor<type, 1>& vector, const double &mean, const double &standard_deviation) {
+void scale_mean_standard_deviation(Tensor<type, 1>& vector, const type &mean, const type &standard_deviation) {
 
   if(standard_deviation < 1.0e-99) return;
 
@@ -106,7 +106,7 @@ Descriptives scale_mean_standard_deviation(Tensor<type, 1>& vector)
 /// @param vector Vector with values to be scaled(inputs,targets).
 /// @param standard_deviation Standard deviation value for the scaling.
 
-void scale_standard_deviation(Tensor<type, 1>& vector, const double &standard_deviation)
+void scale_standard_deviation(Tensor<type, 1>& vector, const type &standard_deviation)
 {
   if(standard_deviation < 1.0e-99) {
     return;
@@ -759,7 +759,7 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1
 
 void scale_range(Tensor<type, 2>& matrix,
                                   const Tensor<Descriptives, 1>& descriptives,
-                                  const double& minimum, const double& maximum)
+                                  const type& minimum, const type& maximum)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -823,7 +823,7 @@ Tensor<Descriptives, 1> scale_minimum_maximum(Tensor<type, 2>& matrix)
 /// @param minimum Minimum values.
 /// @param maximum Maximum deviation values.
 
-Tensor<Descriptives, 1> scale_range(Tensor<type, 2>& matrix, const double& minimum, const double& maximum)
+Tensor<Descriptives, 1> scale_range(Tensor<type, 2>& matrix, const type& minimum, const type& maximum)
 {
     const Tensor<Descriptives, 1> _descriptives = descriptives(matrix);
 
@@ -1301,7 +1301,7 @@ void transform_association(Tensor<type, 2>& matrix)
 /// @param vector Vector to be processed.
 /// @param lower_bound Lower bound value.
 
-void apply_lower_bound(Tensor<type, 1>& vector, const double &lower_bound)
+void apply_lower_bound(Tensor<type, 1>& vector, const type &lower_bound)
 {
   const Index this_size = vector.size();
 
@@ -1335,7 +1335,7 @@ void apply_lower_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&lower_boun
 /// @param vector Vector to be processed.
 /// @param upper_bound Upper bound value.
 
-void apply_upper_bound(Tensor<type, 1>& vector, const double&upper_bound)
+void apply_upper_bound(Tensor<type, 1>& vector, const type&upper_bound)
 {
   const Index this_size = vector.size();
 
@@ -1371,8 +1371,8 @@ void apply_upper_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&upper_boun
 /// @param lower_bound Lower bound value.
 /// @param upper_bound Upper bound value.
 
-void apply_lower_upper_bounds(Tensor<type, 1>& vector, const double &lower_bound,
-                                         const double &upper_bound)
+void apply_lower_upper_bounds(Tensor<type, 1>& vector, const type &lower_bound,
+                                         const type &upper_bound)
 {
   const Index this_size = vector.size();
 

@@ -110,23 +110,23 @@ public:
 
        /// Final neural network parameters norm.
 
-       double final_parameters_norm;
+       type final_parameters_norm;
 
        /// Final loss function evaluation.
 
-       double final_training_error;
+       type final_training_error;
 
        /// Final selection error.
 
-       double final_selection_error;
+       type final_selection_error;
 
        /// Final gradient norm.
 
-       double final_gradient_norm;
+       type final_gradient_norm;
 
        /// Elapsed time of the training process.
 
-       double elapsed_time;
+       type elapsed_time;
 
        /// Maximum number of training iterations.
 

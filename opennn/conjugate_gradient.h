@@ -78,25 +78,25 @@ public:
 
    // Training parameters
 
-   const double& get_warning_parameters_norm() const;
-   const double& get_warning_gradient_norm() const;
-   const double& get_warning_learning_rate() const;
+   const type& get_warning_parameters_norm() const;
+   const type& get_warning_gradient_norm() const;
+   const type& get_warning_learning_rate() const;
 
-   const double& get_error_parameters_norm() const;
-   const double& get_error_gradient_norm() const;
-   const double& get_error_learning_rate() const;
+   const type& get_error_parameters_norm() const;
+   const type& get_error_gradient_norm() const;
+   const type& get_error_learning_rate() const;
 
    // Stopping criteria
 
-   const double& get_minimum_parameters_increment_norm() const;
+   const type& get_minimum_parameters_increment_norm() const;
 
-   const double& get_minimum_loss_increase() const;
-   const double& get_loss_goal() const;
+   const type& get_minimum_loss_increase() const;
+   const type& get_loss_goal() const;
    const Index& get_maximum_selection_error_increases() const;
-   const double& get_gradient_norm_goal() const;
+   const type& get_gradient_norm_goal() const;
 
    const Index& get_maximum_epochs_number() const;
-   const double& get_maximum_time() const;
+   const type& get_maximum_time() const;
 
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
@@ -119,25 +119,25 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const double&);
-   void set_warning_gradient_norm(const double&);
-   void set_warning_learning_rate(const double&);
+   void set_warning_parameters_norm(const type&);
+   void set_warning_gradient_norm(const type&);
+   void set_warning_learning_rate(const type&);
 
-   void set_error_parameters_norm(const double&);
-   void set_error_gradient_norm(const double&);
-   void set_error_learning_rate(const double&);
+   void set_error_parameters_norm(const type&);
+   void set_error_gradient_norm(const type&);
+   void set_error_learning_rate(const type&);
 
    // Stopping criteria
 
-   void set_minimum_parameters_increment_norm(const double&);
+   void set_minimum_parameters_increment_norm(const type&);
 
-   void set_loss_goal(const double&);
-   void set_minimum_loss_decrease(const double&);
+   void set_loss_goal(const type&);
+   void set_minimum_loss_decrease(const type&);
    void set_maximum_selection_error_increases(const Index&);
-   void set_gradient_norm_goal(const double&);
+   void set_gradient_norm_goal(const type&);
 
    void set_maximum_epochs_number(const Index&);
-   void set_maximum_time(const double&);
+   void set_maximum_time(const type&);
 
    void set_return_minimum_selection_error_neural_network(const bool&);
    void set_apply_early_stopping(const bool&);
@@ -195,46 +195,46 @@ private:
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   double warning_parameters_norm;
+   type warning_parameters_norm;
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   double warning_gradient_norm;   
+   type warning_gradient_norm;
 
    /// Training rate value at wich a warning message is written to the screen.
 
-   double warning_learning_rate;
+   type warning_learning_rate;
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   double error_parameters_norm;
+   type error_parameters_norm;
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   double error_gradient_norm;
+   type error_gradient_norm;
 
    /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
-   double error_learning_rate;
+   type error_learning_rate;
 
 
    // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
 
-   double minimum_parameters_increment_norm;
+   type minimum_parameters_increment_norm;
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   double minimum_loss_decrease;
+   type minimum_loss_decrease;
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   double loss_goal;
+   type loss_goal;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
-   double gradient_norm_goal;
+   type gradient_norm_goal;
 
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
@@ -247,7 +247,7 @@ private:
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   double maximum_time;
+   type maximum_time;
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 

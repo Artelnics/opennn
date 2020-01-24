@@ -135,17 +135,17 @@ public:
    void prune_neuron(const Index&);
 
    // Parameters initialization methods
-   void initialize_biases(const double&); 
-   void initialize_synaptic_weights(const double&);
+   void initialize_biases(const type&);
+   void initialize_synaptic_weights(const type&);
    void initialize_synaptic_weights_glorot_uniform();
 
-   void set_parameters_constant(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
    // Parameters norm 
 
-   double calculate_parameters_norm() const;
+   type calculate_parameters_norm() const;
 
    // Perceptron layer combinations
 
