@@ -60,15 +60,15 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<int, 1>&);
+   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 
-   explicit NeuralNetwork(const Tensor<int, 1>&, const int&, const Tensor<int, 1>&, const int&);
+   explicit NeuralNetwork(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    explicit NeuralNetwork(const string&);
 
    explicit NeuralNetwork(const tinyxml2::XMLDocument&);
 
-   explicit NeuralNetwork(const vector<Layer*>&);
+   explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
    NeuralNetwork(const NeuralNetwork&);
 
@@ -96,45 +96,45 @@ public:
 
        void allocate()
        {
-           const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+           const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-           const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
            layers.resize(trainable_layers_number);
 
-           for(int i = 0; i < trainable_layers_number; i++)
+           for(Index i = 0; i < trainable_layers_number; i++)
            {
                if(trainable_layers_pointers[i]->get_type() == Layer::Convolutional)
                {
                    const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
 
-                   const int outputs_channels_number = convolutional_layer->get_filters_number();
-                   const int outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-                   const int outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+                   const Index outputs_channels_number = convolutional_layer->get_filters_number();
+                   const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+                   const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 /*
-                   layers[i].combinations.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
                {
                    const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
 
-                   const int outputs_channels_number = pooling_layer->get_inputs_channels_number();
-                   const int outputs_rows_number = pooling_layer->get_outputs_rows_number();
-                   const int outputs_columns_number = pooling_layer->get_outputs_columns_number();
+                   const Index outputs_channels_number = pooling_layer->get_inputs_channels_number();
+                   const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+                   const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
 /*
-                   layers[i].combinations.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(Tensor<int, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Recurrent)
                {
                    const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
 
-                   const int neurons_number = recurrent_layer->get_neurons_number();
+                   const Index neurons_number = recurrent_layer->get_neurons_number();
 
                    layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
                    layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
@@ -145,7 +145,7 @@ public:
                {
                    const LongShortTermMemoryLayer* long_short_term_memory_layer = dynamic_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers[i]);
 
-                   const int neurons_number = long_short_term_memory_layer->get_neurons_number();
+                   const Index neurons_number = long_short_term_memory_layer->get_neurons_number();
 
                    layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
                    layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
@@ -155,7 +155,7 @@ public:
                {
                    const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
 
-                   const int neurons_number = perceptron_layer->get_neurons_number();
+                   const Index neurons_number = perceptron_layer->get_neurons_number();
 
                    layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
                    layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
@@ -169,7 +169,7 @@ public:
                {
                    const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
 
-                   const int neurons_number = probabilistic_layer->get_neurons_number();
+                   const Index neurons_number = probabilistic_layer->get_neurons_number();
 
                    layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
                    layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
@@ -186,11 +186,11 @@ public:
 
        void print()
        {
-           const int layers_number = layers.size();
+           const Index layers_number = layers.size();
 
            cout << "Layers number: " << layers_number << endl;
 
-           for(int i = 0; i < layers_number; i++)
+           for(Index i = 0; i < layers_number; i++)
            {
                cout << "Layer " << i+1 << endl;
 
@@ -198,7 +198,7 @@ public:
            }
        }
 
-       int batch_instances_number = 0;
+       Index batch_instances_number = 0;
        NeuralNetwork* neural_network_pointer = nullptr;
 
        vector<Layer::ForwardPropagation> layers;
@@ -224,16 +224,16 @@ public:
    bool is_empty() const;  
 
    Tensor<string, 1> get_inputs_names() const;
-   string get_input_name(const int&) const;
-   int get_input_index(const string&) const;
+   string get_input_name(const Index&) const;
+   Index get_input_index(const string&) const;
 
    Tensor<string, 1> get_outputs_names() const;
-   string get_output_name(const int&) const;
-   int get_output_index(const string&) const;
+   string get_output_name(const Index&) const;
+   Index get_output_index(const string&) const;
 
-   vector<Layer*> get_layers_pointers() const;
-   vector<Layer*> get_trainable_layers_pointers() const;
-   Tensor<int, 1> get_trainable_layers_indices() const;
+   Tensor<Layer*, 1> get_layers_pointers() const;
+   Tensor<Layer*, 1> get_trainable_layers_pointers() const;
+   Tensor<Index, 1> get_trainable_layers_indices() const;
 
    ScalingLayer* get_scaling_layer_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
@@ -244,7 +244,7 @@ public:
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
    Layer* get_output_layer_pointer() const;
-   Layer* get_layer_pointer(const int&) const;
+   Layer* get_layer_pointer(const Index&) const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;
@@ -253,8 +253,8 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ProjectType&, const Tensor<int, 1>&);
-   void set(const Tensor<int, 1>&, const int&, const Tensor<int, 1>&, const int&);
+   void set(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+   void set(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    void set(const string&);
    void set(const NeuralNetwork&);
@@ -262,12 +262,12 @@ public:
    void set_inputs_names(const Tensor<string, 1>&);
    void set_outputs_names(const Tensor<string, 1>&);
 
-   void set_inputs_number(const int&);
+   void set_inputs_number(const Index&);
    void set_inputs_number(const Tensor<bool, 1>&);
 
    virtual void set_default();
 
-   void set_layers_pointers(vector<Layer*>&);
+   void set_layers_pointers(Tensor<Layer*, 1>&);
 
    void set_scaling_layer(ScalingLayer&);
 
@@ -275,25 +275,25 @@ public:
 
    // Layers 
 
-   int get_layers_number() const;
-   Tensor<int, 1> get_layers_neurons_numbers() const;
+   Index get_layers_number() const;
+   Tensor<Index, 1> get_layers_neurons_numbers() const;
 
-   int get_trainable_layers_number() const;
+   Index get_trainable_layers_number() const;
 
    // Architecture
 
    Index get_inputs_number() const;
-   int get_outputs_number() const;
+   Index get_outputs_number() const;
 
-   Tensor<int, 1> get_architecture() const;
+   Tensor<Index, 1> get_architecture() const;
 
    // Parameters
 
-   int get_parameters_number() const;
-   int get_trainable_parameters_number() const;
+   Index get_parameters_number() const;
+   Index get_trainable_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   Tensor<int, 1> get_trainable_layers_parameters_numbers() const;
+   Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
    vector<Tensor<type, 1>> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
@@ -309,7 +309,7 @@ public:
 
    double calculate_parameters_norm() const;
    Descriptives calculate_parameters_descriptives() const;
-   Histogram calculate_parameters_histogram(const int& = 10) const;
+   Histogram calculate_parameters_histogram(const Index& = 10) const;
 
    void perturbate_parameters(const double&);
 
@@ -321,10 +321,10 @@ public:
 
    Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_directional_inputs(const int&, const Tensor<type, 1>&, const double&, const double&, const int& = 101) const;
+   Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const double&, const double&, const Index& = 101) const;
 
-   vector<Histogram> calculate_outputs_histograms(const int& = 1000, const int& = 10);
-   vector<Histogram> calculate_outputs_histograms(const Tensor<type, 2>&, const int& = 10);
+   vector<Histogram> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
+   vector<Histogram> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
@@ -370,9 +370,9 @@ public:
                                       const DataSet::Batch& batch,
                                       ForwardPropagation& forward_propagation) const
    {
-       const int trainable_layers_number = get_trainable_layers_number();
+       const Index trainable_layers_number = get_trainable_layers_number();
 
-       const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+       const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
        // First layer
 
@@ -380,7 +380,7 @@ public:
 
        // Rest of layers
 
-       for(int i = 1; i < trainable_layers_number; i++)
+       for(Index i = 1; i < trainable_layers_number; i++)
        {
             trainable_layers_pointers[i]->calculate_forward_propagation(thread_pool_device,
                                                                         forward_propagation.layers[i-1].activations,
@@ -401,7 +401,7 @@ protected:
 
    /// Layers
 
-   vector<Layer*> layers_pointers;
+   Tensor<Layer*, 1> layers_pointers;
 
    /// Display messages to screen.
 

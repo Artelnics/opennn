@@ -34,25 +34,25 @@ distribution.
 
 #if defined(_MSC_VER) &&(_MSC_VER >= 1400 ) &&(!defined WINCE)
 	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
-	/*int _snprintf_s(
+    /*int _snprintf_s(
 	   char *buffer,
-	   int sizeOfBuffer,
-	   int count,
+       int sizeOfBuffer,
+       int count,
 	   const char *format [,
 		  argument] ...
 	);*/
-	static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
+    static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format );
-		int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
+        int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
 		va_end(va );
 		return result;
 	}
 
-	static inline int TIXML_VSNPRINTF(char* buffer, int size, const char* format, va_list va )
+    static inline int TIXML_VSNPRINTF(char* buffer, int size, const char* format, va_list va )
 	{
-		int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
+        int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
 		return result;
 	}
 
@@ -68,13 +68,13 @@ distribution.
 		#define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
 	#else
 		// Microsoft Visual Studio 2003 and earlier or WinCE.
-		static inline int TIXML_VSCPRINTF(const char* format, va_list va )
+        static inline int TIXML_VSCPRINTF(const char* format, va_list va )
 		{
-			int len = 512;
+            int len = 512;
 			for(;;) {
 				len = len*2;
 				char* str = new char[len]();
-				const int required = _vsnprintf(str, len, format, va);
+                const int required = _vsnprintf(str, len, format, va);
 				delete[] str;
 				if(required != -1 ) {
 					TIXMLASSERT(required >= 0 );
@@ -91,9 +91,9 @@ distribution.
 	//#warning("Using sn* functions.")
 	#define TIXML_SNPRINTF	snprintf
 	#define TIXML_VSNPRINTF	vsnprintf
-	static inline int TIXML_VSCPRINTF(const char* format, va_list va )
+    static inline int TIXML_VSCPRINTF(const char* format, va_list va )
 	{
-		int len = vsnprintf(0, 0, format, va );
+        int len = vsnprintf(0, 0, format, va );
 		TIXMLASSERT(len >= 0 );
 		return len;
 	}
@@ -1521,9 +1521,9 @@ const char* XMLElement::Attribute(const char* name, const char* value ) const
     return 0;
 }
 
-int XMLElement::IntAttribute(const char* name, int defaultValue) const 
+int XMLElement::IntAttribute(const char* name, int defaultValue) const
 {
-	int i = defaultValue;
+    int i = defaultValue;
 	QueryIntAttribute(name, &i);
 	return i;
 }
@@ -1583,7 +1583,7 @@ void	XMLElement::SetText(const char* inText )
 }
 
 
-void XMLElement::SetText(int v ) 
+void XMLElement::SetText(int v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr(v, buf, BUF_SIZE );
@@ -1710,7 +1710,7 @@ XMLError XMLElement::QueryFloatText(float* fval ) const
 
 int XMLElement::IntText(int defaultValue) const
 {
-	int i = defaultValue;
+    int i = defaultValue;
 	QueryIntText(&i);
 	return i;
 }
@@ -2022,7 +2022,7 @@ void XMLDocument::MarkInUse(XMLNode* node)
 	TIXMLASSERT(node);
 	TIXMLASSERT(node->_parent == 0);
 
-	for(int i = 0; i < _unlinked.Size(); ++i) {
+    for(int i = 0; i < _unlinked.Size(); ++i) {
 		if(node == _unlinked[i]) {
 			_unlinked.SwapRemove(i);
 			break;
@@ -2311,7 +2311,7 @@ void XMLDocument::SetError(XMLError error, int lineNum, const char* format, ...)
     TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d(0x%x) Line number=%d", ErrorIDToName(error), int(error), int(error), lineNum);
 
 	if(format) {
-		int len = strlen(buffer);
+        int len = strlen(buffer);
 		TIXML_SNPRINTF(buffer + len, BUFFER_SIZE - len, ": ");
 		len = strlen(buffer);
 
@@ -2382,9 +2382,9 @@ XMLPrinter::XMLPrinter(FILE* file, bool compact, int depth ) :
     }
     for(int i = 0; i <NUM_ENTITIES; ++i ) {
         const char entityValue = entities[i].value;
-        const unsigned char flagIndex = (unsigned char)entityValue;
-        TIXMLASSERT(flagIndex < ENTITY_RANGE );
-        _entityFlag[flagIndex] = true;
+        const unsigned char flagint = (unsigned char)entityValue;
+        TIXMLASSERT(flagint < ENTITY_RANGE );
+        _entityFlag[flagint] = true;
     }
     _restrictedEntityFlag[(unsigned char)'&'] = true;
     _restrictedEntityFlag[(unsigned char)'<'] = true;

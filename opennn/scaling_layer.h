@@ -43,8 +43,8 @@ public:
 
    explicit ScalingLayer();
 
-   explicit ScalingLayer(const int&);
-   explicit ScalingLayer(const Tensor<int, 1>&);
+   explicit ScalingLayer(const Index&);
+   explicit ScalingLayer(const Tensor<Index, 1>&);
 
    explicit ScalingLayer(const vector<Descriptives>&);
 
@@ -60,8 +60,8 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
-   Tensor<int, 1> get_outputs_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -69,7 +69,7 @@ public:
    // Inputs descriptives
 
    vector<Descriptives> get_descriptives() const;
-   Descriptives get_descriptives(const int&) const;
+   Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 2> get_descriptives_matrix() const;
 
@@ -92,16 +92,16 @@ public:
    // Set methods
 
    void set();
-   void set(const int&);
-   void set(const Tensor<int, 1>&);
+   void set(const Index&);
+   void set(const Tensor<Index, 1>&);
    void set(const vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
    void set(const Tensor<bool, 1>&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    void set_default();
 
@@ -109,12 +109,12 @@ public:
 
    void set_descriptives(const vector<Descriptives>&);
    void set_descriptives_eigen(const MatrixXd&);
-   void set_item_descriptives(const int&, const Descriptives&);
+   void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const int&, const double&);
-   void set_maximum(const int&, const double&);
-   void set_mean(const int&, const double&);
-   void set_standard_deviation(const int&, const double&);
+   void set_minimum(const Index&, const double&);
+   void set_maximum(const Index&, const double&);
+   void set_mean(const Index&, const double&);
+   void set_standard_deviation(const Index&, const double&);
 
    // Scaling method
 
@@ -132,7 +132,7 @@ public:
 
    void grow_neuron(const Descriptives& new_descriptives = Descriptives());
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Check methods
 
@@ -169,7 +169,7 @@ public:
 
 protected:
 
-   Tensor<int, 1> input_variables_dimensions;
+   Tensor<Index, 1> input_variables_dimensions;
 
    /// Descriptives of input variables.
 

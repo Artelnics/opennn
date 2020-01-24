@@ -101,7 +101,7 @@ public:
 
        /// Inputs of the neural network with minimum selection error.
 
-       Tensor<int, 1> optimal_inputs_indices;
+       Tensor<Index, 1> optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 
@@ -109,7 +109,7 @@ public:
 
        /// Number of iterations to perform the inputs selection.
 
-       int iterations_number;
+       Index iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -128,7 +128,7 @@ public:
 
     bool has_training_strategy() const;
 
-    const int& get_trials_number() const;
+    const Index& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -137,7 +137,7 @@ public:
     const bool& get_display() const;
 
     const double& get_selection_error_goal() const;
-    const int& get_maximum_iterations_number() const;
+    const Index& get_maximum_iterations_number() const;
     const double& get_maximum_time() const;
     const double& get_maximum_correlation() const;
     const double& get_minimum_correlation() const;
@@ -151,7 +151,7 @@ public:
 
     void set_default();
 
-    void set_trials_number(const int&);
+    void set_trials_number(const Index&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -160,7 +160,7 @@ public:
     void set_display(const bool&);
 
     void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const int&);
+    void set_maximum_iterations_number(const Index&);
     void set_maximum_time(const double&);
     void set_maximum_correlation(const double&);
     void set_minimum_correlation(const double&);
@@ -183,7 +183,7 @@ public:
     void delete_parameters_history();
     void check() const;
 
-    int get_input_index(const vector<DataSet::VariableUse>, const int);
+    Index get_input_index(const vector<DataSet::VariableUse>, const Index);
 
     /// Performs the inputs selection for a neural network.
 
@@ -217,7 +217,7 @@ protected:
 
     /// Number of trials for each neural network.
 
-    int trials_number;
+    Index trials_number;
 
     // Inputs selection results
 
@@ -249,7 +249,7 @@ protected:
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
-    int maximum_epochs_number;
+    Index maximum_epochs_number;
 
     /// Maximum value for the correlations.
 

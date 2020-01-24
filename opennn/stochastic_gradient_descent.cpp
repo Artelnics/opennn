@@ -159,7 +159,7 @@ const double& StochasticGradientDescent::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process.
 
-const int& StochasticGradientDescent::get_maximum_selection_failures() const
+const Index& StochasticGradientDescent::get_maximum_selection_failures() const
 {
    return(maximum_selection_failures);
 }
@@ -485,7 +485,7 @@ void StochasticGradientDescent::set_error_gradient_norm(const double& new_error_
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void StochasticGradientDescent:: set_maximum_epochs_number(const int& new_maximum_epochs_number)
+void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
    
 
@@ -608,7 +608,7 @@ void StochasticGradientDescent::set_gradient_norm_goal(const double& new_gradien
 /// Sets a new maximum number of selection failures.
 /// @param new_maximum_selection_failures Maximum number of iterations in which the selection evalutation decreases.
 
-void StochasticGradientDescent::set_maximum_selection_error_increases(const int& new_maximum_selection_failures)
+void StochasticGradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_failures)
 {
    maximum_selection_failures = new_maximum_selection_failures;
 }
@@ -617,7 +617,7 @@ void StochasticGradientDescent::set_maximum_selection_error_increases(const int&
 /// Sets a maximum number of iterations for training.
 /// @param new_maximum_iterations_number Maximum number of iterations for training.
 
-//void StochasticGradientDescent::set_maximum_iterations_number(const int& new_maximum_iterations_number)
+//void StochasticGradientDescent::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
 //{
 //   maximum_iterations_number = new_maximum_iterations_number;
 //}
@@ -692,7 +692,7 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void StochasticGradientDescent::set_display_period(const int& new_display_period)
+void StochasticGradientDescent::set_display_period(const Index& new_display_period)
 {  
    #ifdef __OPENNN_DEBUG__
 
@@ -740,13 +740,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const int selection_instances_number = data_set_pointer->get_selection_instances_number();
+   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const Tensor<int, 1> input_data_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Tensor<int, 1> target_data_dimensions = data_set_pointer->get_target_variables_dimensions();
+   const Tensor<Index, 1> input_data_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Tensor<Index, 1> target_data_dimensions = data_set_pointer->get_target_variables_dimensions();
 
-   const Tensor<int, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-   const Tensor<int, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+   const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -756,7 +756,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-   const int parameters_number = neural_network_pointer->get_parameters_number();
+   const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters_increment(parameters_number);
    Tensor<type, 1> last_increment(parameters_number);
@@ -782,7 +782,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    type learning_rate = initial_learning_rate;
 
-   int selection_failures = 0;
+   Index selection_failures = 0;
 
    Tensor<type, 1> nesterov_increment(parameters_number);
 
@@ -797,14 +797,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
-   int current_iteration = 0;
-   int learning_rate_iteration = 1;
+   Index current_iteration = 0;
+   Index learning_rate_iteration = 1;
 
     bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    int n = omp_get_max_threads();
+    Index n = omp_get_max_threads();
 
     cout << "Threads: " << n << endl;
 
@@ -816,11 +816,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Main loop
 
-   for(int epoch = 0; epoch <= epochs_number; epoch++)
+   for(Index epoch = 0; epoch <= epochs_number; epoch++)
    {
        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-       const int batches_number = training_batches.size();
+       const Index batches_number = training_batches.size();
 
        parameters_norm = l2_norm(thread_pool_device, parameters);
 
@@ -828,7 +828,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        loss = 0.0;
 
-       for(int iteration = 0; iteration < /*batches_number*/1000; iteration++)
+       for(Index iteration = 0; iteration < /*batches_number*/1000; iteration++)
        {
 //           cout << iteration << endl;
 
@@ -1167,8 +1167,8 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const int rows_number = labels.size();
-   const int columns_number = 2;
+   const Index rows_number = labels.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
@@ -1763,7 +1763,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const int new_maximum_selection_failures = static_cast<int>(atoi(element->GetText()));
+          const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
@@ -1782,7 +1782,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const int new_maximum_iterations_number = static_cast<int>(atoi(element->GetText()));
+          const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
@@ -1858,7 +1858,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const int new_display_period = static_cast<int>(atoi(element->GetText()));
+          const Index new_display_period = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
@@ -1877,7 +1877,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_save_period = static_cast<int>(atoi(element->GetText()));
+           const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
 
            try
            {

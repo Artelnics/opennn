@@ -67,7 +67,7 @@ string NumericalDifferentiation::write_numerical_differentiation_method() const
 
 /// Returns the number of precision digits required for the derivatives. 
 
-const int& NumericalDifferentiation::get_precision_digits() const
+const Index& NumericalDifferentiation::get_precision_digits() const
 {
    return(precision_digits);
 }
@@ -144,7 +144,7 @@ void NumericalDifferentiation::set_display(const bool& new_display)
 /// Sets a new number of precision digits required for the derivatives. 
 /// @param new_precision_digits Number of precision digits. 
 
-void NumericalDifferentiation::set_precision_digits(const int& new_precision_digits)
+void NumericalDifferentiation::set_precision_digits(const Index& new_precision_digits)
 {
    precision_digits = new_precision_digits;
 }
@@ -172,7 +172,7 @@ void NumericalDifferentiation::set_default()
 
 double NumericalDifferentiation::calculate_h(const double& x) const
 {
-   const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
+   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
    return(sqrt(eta)*(1.0 + abs(x)));
 }
@@ -183,13 +183,13 @@ double NumericalDifferentiation::calculate_h(const double& x) const
 
 Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) const
 {
-   const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
+   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
-   const int n = x.size();
+   const Index n = x.size();
 
    Tensor<type, 1> h(n);
 
-   for(int i = 0; i < n; i++)
+   for(Index i = 0; i < n; i++)
    {
       h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
@@ -204,15 +204,15 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
 /*
-   const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
+   const double eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
-   const int n = x.size();
+   const Index n = x.size();
 
    const auto& dimensions = x.dimensions();
 
    Tensor<type, 2> h(dimensions);
 
-   for(int i = 0; i < n; i++)
+   for(Index i = 0; i < n; i++)
    {
       h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
@@ -230,8 +230,8 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 
     #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
-    const int y_size = y.size();
+    const Index x_size = x.size();
+    const Index y_size = y.size();
 
     if(x_size != y_size)
     {
@@ -246,12 +246,12 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 
     #endif
 
-    const int size = x.size();
+    const Index size = x.size();
 
     Tensor<type, 1> derivatives(size);
     derivatives[0] = 0.0;
 
-    for(int i = 1; i < size; i++)
+    for(Index i = 1; i < size; i++)
     {
         const double numerator = y[i] - y[i-1];
         const double denominator = x[i] - x[i-1];
@@ -379,7 +379,7 @@ void NumericalDifferentiation::from_XML(const tinyxml2::XMLDocument& document)
 
      if(element)
      {
-        const int new_precision_digits = static_cast<int>(atoi(element->GetText()));
+        const Index new_precision_digits = static_cast<Index>(atoi(element->GetText()));
 
         try
         {

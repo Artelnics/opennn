@@ -74,9 +74,9 @@ public:
 
    explicit DataSet(const Tensor<type, 2>&);
 
-   explicit DataSet(const int&, const int&);
+   explicit DataSet(const Index&, const Index&);
 
-   explicit DataSet(const int&, const int&, const int&);
+   explicit DataSet(const Index&, const Index&, const Index&);
 
    explicit DataSet(const tinyxml2::XMLDocument&);
 
@@ -161,7 +161,7 @@ public:
 
        // Methods
 
-       int get_categories_number() const;
+       Index get_categories_number() const;
 
        Tensor<string, 1> get_used_variables_names() const;
 
@@ -200,11 +200,11 @@ public:
        void allocate()
        {
            const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-           const int input_variables_number = data_set_pointer->get_input_variables_number();
-           const int target_variables_number = data_set_pointer->get_target_variables_number();
+           const Index input_variables_number = data_set_pointer->get_input_variables_number();
+           const Index target_variables_number = data_set_pointer->get_target_variables_number();
 
-           const Tensor<int, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-           const Tensor<int, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+           const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+           const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
            inputs_2d = Tensor<type, 2>(batch_instances_number, input_variables_number);
            targets_2d = Tensor<type, 2>(batch_instances_number, target_variables_number);
@@ -221,7 +221,7 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<int, 1>& rows, const Tensor<int, 1>& inputs, const Tensor<int, 1>& targets)
+       void fill(const Tensor<Index, 1>& rows, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
        {
            inputs_2d.setRandom();
            targets_2d.setRandom();
@@ -256,49 +256,49 @@ public:
 
    // Instances get methods
 
-   inline int get_instances_number() const {return instances_uses.size();}
+   inline Index get_instances_number() const {return instances_uses.size();}
 
-   int get_training_instances_number() const;
-   int get_selection_instances_number() const;
-   int get_testing_instances_number() const;
+   Index get_training_instances_number() const;
+   Index get_selection_instances_number() const;
+   Index get_testing_instances_number() const;
 
-   int get_used_instances_number() const;
-   int get_unused_instances_number() const;
+   Index get_used_instances_number() const;
+   Index get_unused_instances_number() const;
 
-   Tensor<int, 1> get_training_instances_indices() const;
-   Tensor<int, 1> get_selection_instances_indices() const;
-   Tensor<int, 1> get_testing_instances_indices() const;
+   Tensor<Index, 1> get_training_instances_indices() const;
+   Tensor<Index, 1> get_selection_instances_indices() const;
+   Tensor<Index, 1> get_testing_instances_indices() const;
 
-   Tensor<int, 1> get_used_instances_indices() const;
-   Tensor<int, 1> get_unused_instances_indices() const;
+   Tensor<Index, 1> get_used_instances_indices() const;
+   Tensor<Index, 1> get_unused_instances_indices() const;
 
-   InstanceUse get_instance_use(const int&) const;
+   InstanceUse get_instance_use(const Index&) const;
    const vector<InstanceUse>& get_instances_uses() const;
 
-   Tensor<int, 1> get_instances_uses_numbers() const;
+   Tensor<Index, 1> get_instances_uses_numbers() const;
    Tensor<type, 1> get_instances_uses_percentages() const;
 
-   int get_batch_instances_number() const {return batch_instances_number;}
+   Index get_batch_instances_number() const {return batch_instances_number;}
 
    // Columns get methods
 
    vector<Column> get_columns() const;
    vector<Column> get_used_columns() const;
 
-   int get_columns_number() const;
+   Index get_columns_number() const;
 
-   int get_input_columns_number() const;
-   int get_target_columns_number() const;
-   int get_time_columns_number() const;
-   int get_unused_columns_number() const;
-   int get_used_columns_number() const;
+   Index get_input_columns_number() const;
+   Index get_target_columns_number() const;
+   Index get_time_columns_number() const;
+   Index get_unused_columns_number() const;
+   Index get_used_columns_number() const;
 
-   int get_column_index(const string&) const;
+   Index get_column_index(const string&) const;
 
-   Tensor<int, 1> get_input_columns_indices() const;
-   Tensor<int, 1> get_target_columns_indices() const;
-   Tensor<int, 1> get_unused_columns_indices() const;
-   Tensor<int, 1> get_used_columns_indices() const;
+   Tensor<Index, 1> get_input_columns_indices() const;
+   Tensor<Index, 1> get_target_columns_indices() const;
+   Tensor<Index, 1> get_unused_columns_indices() const;
+   Tensor<Index, 1> get_used_columns_indices() const;
 
    Tensor<string, 1> get_columns_names() const;
 
@@ -306,42 +306,42 @@ public:
    Tensor<string, 1> get_target_columns_names() const;
    Tensor<string, 1> get_used_columns_names() const;
 
-   ColumnType get_column_type(const int& index) const {return columns[index].type;}
+   ColumnType get_column_type(const Index& index) const {return columns[index].type;}
 
-   VariableUse get_column_use(const int &) const;
+   VariableUse get_column_use(const Index &) const;
    Tensor<VariableUse, 1> get_columns_uses() const;
 
    // Variables get methods
 
-   int get_variables_number() const;
+   Index get_variables_number() const;
 
-   int get_input_variables_number() const;
-   int get_target_variables_number() const;
-   int get_unused_variables_number() const;
-   int get_used_variables_number() const;
+   Index get_input_variables_number() const;
+   Index get_target_variables_number() const;
+   Index get_unused_variables_number() const;
+   Index get_used_variables_number() const;
 
-   string get_variable_name(const int&) const;
+   string get_variable_name(const Index&) const;
    Tensor<string, 1> get_variables_names() const;
 
    Tensor<string, 1> get_input_variables_names() const;
    Tensor<string, 1> get_target_variables_names() const;
 
-   int get_variable_index(const string&) const;
+   Index get_variable_index(const string&) const;
 
-   Tensor<int, 1> get_variable_indices(const int&) const;
-   Tensor<int, 1> get_unused_variables_indices() const;
-   Tensor<int, 1> get_input_variables_indices() const;
-   Tensor<int, 1> get_target_variables_indices() const;
+   Tensor<Index, 1> get_variable_indices(const Index&) const;
+   Tensor<Index, 1> get_unused_variables_indices() const;
+   Tensor<Index, 1> get_input_variables_indices() const;
+   Tensor<Index, 1> get_target_variables_indices() const;
 
-   VariableUse get_variable_use(const int&) const;
+   VariableUse get_variable_use(const Index&) const;
    Tensor<VariableUse, 1> get_variables_uses() const;
 
-   const Tensor<int, 1>& get_input_variables_dimensions() const;
-   const Tensor<int, 1>& get_target_variables_dimensions() const;
+   const Tensor<Index, 1>& get_input_variables_dimensions() const;
+   const Tensor<Index, 1>& get_target_variables_dimensions() const;
 
    // Batches get methods
 
-   inline int get_batch_instances_number() {return batch_instances_number;}
+   inline Index get_batch_instances_number() {return batch_instances_number;}
 
    Tensor<Index, 2> get_training_batches(const bool& = true) const;
    Tensor<Index, 2> get_selection_batches(const bool& = true) const;
@@ -360,11 +360,11 @@ public:
    Tensor<type, 2> get_input_data() const;
    Tensor<type, 2> get_target_data() const;
 
-   Tensor<type, 2> get_input_data(const Tensor<int, 1>&) const;
-   Tensor<type, 2> get_target_data(const Tensor<int, 1>&) const;
+   Tensor<type, 2> get_input_data(const Tensor<Index, 1>&) const;
+   Tensor<type, 2> get_target_data(const Tensor<Index, 1>&) const;
 
-   Matrix<float, Dynamic, Dynamic> get_input_data_float(const Tensor<int, 1>&) const;
-   Matrix<float, Dynamic, Dynamic> get_target_data_float(const Tensor<int, 1>&) const;
+   Matrix<float, Dynamic, Dynamic> get_input_data_float(const Tensor<Index, 1>&) const;
+   Matrix<float, Dynamic, Dynamic> get_target_data_float(const Tensor<Index, 1>&) const;
 
    Tensor<type, 2> get_training_input_data() const;
    Tensor<type, 2> get_training_target_data() const;
@@ -375,22 +375,22 @@ public:
    Tensor<type, 2> get_testing_input_data() const;
    Tensor<type, 2> get_testing_target_data() const;
 
-   Tensor<type, 1> get_instance_data(const int&) const;
-   Tensor<type, 1> get_instance_data(const int&, const Tensor<int, 1>&) const;
-   Tensor<type, 2> get_instance_input_data(const int&) const;
-   Tensor<type, 2> get_instance_target_data(const int&) const;
+   Tensor<type, 1> get_instance_data(const Index&) const;
+   Tensor<type, 1> get_instance_data(const Index&, const Tensor<Index, 1>&) const;
+   Tensor<type, 2> get_instance_input_data(const Index&) const;
+   Tensor<type, 2> get_instance_target_data(const Index&) const;
 
-   Tensor<type, 2> get_column_data(const int&) const;
-   Tensor<type, 2> get_column_data(const Tensor<int, 1>&) const;
+   Tensor<type, 2> get_column_data(const Index&) const;
+   Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_column_data(const string&) const;
 
-   Tensor<type, 1> get_variable_data(const int&) const;
+   Tensor<type, 1> get_variable_data(const Index&) const;
    Tensor<type, 1> get_variable_data(const string&) const;
 
-   Tensor<type, 1> get_variable_data(const int&, const Tensor<int, 1>&) const;
-   Tensor<type, 1> get_variable_data(const string&, const Tensor<int, 1>&) const;
+   Tensor<type, 1> get_variable_data(const Index&, const Tensor<Index, 1>&) const;
+   Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
-   Tensor<type, 2> get_data_subtensor(const Tensor<int, 1>&, const Tensor<int, 1>&) const;
+   Tensor<type, 2> get_data_subtensor(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
    // Members get methods
 
@@ -407,15 +407,15 @@ public:
 
    const string& get_missing_values_label() const;
 
-   const int& get_lags_number() const;
-   const int& get_steps_ahead() const;
-   const int& get_time_index() const;
+   const Index& get_lags_number() const;
+   const Index& get_steps_ahead() const;
+   const Index& get_time_index() const;
 
-   static Tensor<string, 1> get_default_columns_names(const int&);
+   static Tensor<string, 1> get_default_columns_names(const Index&);
 
    static ScalingUnscalingMethod get_scaling_unscaling_method(const string&);
 
-   int get_gmt() const;
+   Index get_gmt() const;
 
    const bool& get_display() const;
 
@@ -424,8 +424,8 @@ public:
    void set();
    void set(const Tensor<type, 2>&);
    void set(const MatrixXd&);
-   void set(const int&, const int&);
-   void set(const int&, const int&, const int&);
+   void set(const Index&, const Index&);
+   void set(const Index&, const Index&, const Index&);
    void set(const DataSet&);
    void set(const tinyxml2::XMLDocument&);
    void set(const string&);
@@ -434,21 +434,21 @@ public:
 
    // Instances set methods
 
-   void set_instances_number(const int&);
+   void set_instances_number(const Index&);
 
    void set_training();
    void set_selection();
    void set_testing();
 
-   void set_training(const Tensor<int, 1>&);
-   void set_selection(const Tensor<int, 1>&);
-   void set_testing(const Tensor<int, 1>&);
+   void set_training(const Tensor<Index, 1>&);
+   void set_selection(const Tensor<Index, 1>&);
+   void set_testing(const Tensor<Index, 1>&);
 
    void set_instances_unused();
-   void set_instances_unused(const Tensor<int, 1>&);
+   void set_instances_unused(const Tensor<Index, 1>&);
 
-   void set_instance_use(const int&, const InstanceUse&);
-   void set_instance_use(const int&, const string&);
+   void set_instance_use(const Index&, const InstanceUse&);
+   void set_instance_use(const Index&, const string&);
 
    void set_instances_uses(const vector<InstanceUse>&);
    void set_instances_uses(const Tensor<string, 1>&);
@@ -456,9 +456,9 @@ public:
    void set_testing_to_selection_instances();
    void set_selection_to_testing_instances();
 
-   void set_batch_instances_number(const int&);
+   void set_batch_instances_number(const Index&);
 
-   void set_k_fold_cross_validation_instances_uses(const int&, const int&);
+   void set_k_fold_cross_validation_instances_uses(const Index&, const Index&);
 
    // Columns set methods
 
@@ -466,39 +466,39 @@ public:
 
    void set_default_columns_names();
 
-   void set_column_name(const int&, const string&);
+   void set_column_name(const Index&, const string&);
 
    void set_columns_uses(const Tensor<string, 1>&);
    void set_columns_uses(const Tensor<VariableUse, 1>&);
    void set_columns_unused();
    void set_input_columns_unused();
 
-   void set_column_use(const int&, const VariableUse&);
+   void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
 
    void set_columns_names(const Tensor<string, 1>&);
 
-   void set_columns_number(const int&);
+   void set_columns_number(const Index&);
 
    void set_binary_simple_columns();
 
    // Variables set methods
 
    void set_variables_names(const Tensor<string, 1>&);
-   void set_variable_name(const int&, const string&);
+   void set_variable_name(const Index&, const string&);
 
    void set_input();
    void set_target();
    void set_variables_unused();
 
-   void set_input_variables_dimensions(const Tensor<int, 1>&);
-   void set_target_variables_dimensions(const Tensor<int, 1>&);
+   void set_input_variables_dimensions(const Tensor<Index, 1>&);
+   void set_target_variables_dimensions(const Tensor<Index, 1>&);
 
    // Data set methods
 
    void set_data(const Tensor<type, 2>&);
 
-   void set_instance(const int&, const Tensor<type, 1>&);
+   void set_instance(const Index&, const Tensor<type, 1>&);
 
    // Members set methods
 
@@ -515,11 +515,11 @@ public:
    void set_missing_values_method(const MissingValuesMethod&);
    void set_missing_values_method(const string&);
 
-   void set_lags_number(const int&);
-   void set_steps_ahead_number(const int&);
-   void set_time_index(const int&);
+   void set_lags_number(const Index&);
+   void set_steps_ahead_number(const Index&);
+   void set_time_index(const Index&);
 
-   void set_gmt(int&);
+   void set_gmt(Index&);
 
    void set_display(const bool&);
 
@@ -530,8 +530,8 @@ public:
 
    bool is_empty() const;
 
-   bool is_instance_used(const int&) const;
-   bool is_instance_unused(const int&) const;
+   bool is_instance_used(const Index&) const;
+   bool is_instance_unused(const Index&) const;
 
    bool has_data() const;
 
@@ -548,13 +548,13 @@ public:
 
    Tensor<string, 1> unuse_constant_columns();
 
-   Tensor<int, 1> unuse_repeated_instances();
+   Tensor<Index, 1> unuse_repeated_instances();
 
-   Tensor<int, 1> unuse_non_significant_input_columns();
+   Tensor<Index, 1> unuse_non_significant_input_columns();
 
-   Tensor<int, 1> unuse_uncorrelated_columns(const double& = 0.25);
+   Tensor<Index, 1> unuse_uncorrelated_columns(const double& = 0.25);
 
-   Tensor<int, 1> unuse_most_populated_target(const int&);
+   Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
    // Initialization methods
 
@@ -570,7 +570,7 @@ public:
 
    vector<Descriptives> calculate_columns_descriptives_positive_instances() const;
    vector<Descriptives> calculate_columns_descriptives_negative_instances() const;
-   vector<Descriptives> calculate_columns_descriptives_classes(const int&) const;
+   vector<Descriptives> calculate_columns_descriptives_classes(const Index&) const;
 
    vector<Descriptives> calculate_columns_descriptives_training_instances() const;
    vector<Descriptives> calculate_columns_descriptives_selection_instances() const;
@@ -579,21 +579,21 @@ public:
    vector<Descriptives> calculate_input_variables_descriptives() const;
    vector<Descriptives> calculate_target_variables_descriptives() const;
 
-   Tensor<type, 1> calculate_variables_means(const Tensor<int, 1>&) const;
+   Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
 
-   Descriptives calculate_inputs_descriptives(const int&) const;
+   Descriptives calculate_inputs_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_training_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
    Tensor<type, 1> calculate_testing_targets_mean() const;
 
-   int calculate_training_negatives(const int&) const;
-   int calculate_selection_negatives(const int&) const;
-   int calculate_testing_negatives(const int&) const;
+   Index calculate_training_negatives(const Index&) const;
+   Index calculate_selection_negatives(const Index&) const;
+   Index calculate_testing_negatives(const Index&) const;
 
    // Histrogram methods
 
-   vector<Histogram> calculate_columns_histograms(const int& = 10) const;
+   vector<Histogram> calculate_columns_histograms(const Index& = 10) const;
 
    // Box and whiskers
 
@@ -605,7 +605,7 @@ public:
 
    void print_inputs_correlations() const;
 
-   void print_top_inputs_correlations(const int& = 10) const;
+   void print_top_inputs_correlations(const Index& = 10) const;
 
    // Inputs-targets correlations
 
@@ -614,7 +614,7 @@ public:
 
    void print_input_target_columns_correlations() const;
 
-   void print_top_input_target_columns_correlations(const int& = 10) const;
+   void print_top_input_target_columns_correlations(const Index& = 10) const;
 
    // Principal components
 
@@ -630,10 +630,10 @@ public:
 
    // Filtering methods
 
-   Tensor<int, 1> filter_column(const int&, const double&, const double&);
-   Tensor<int, 1> filter_column(const string&, const double&, const double&);
+   Tensor<Index, 1> filter_column(const Index&, const double&, const double&);
+   Tensor<Index, 1> filter_column(const string&, const double&, const double&);
 
-   Tensor<int, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
+   Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
    // Data scaling
 
@@ -648,17 +648,17 @@ public:
    void scale_inputs_mean_standard_deviation(const vector<Descriptives>&);
    vector<Descriptives> scale_inputs_mean_standard_deviation();
 
-   void scale_input_mean_standard_deviation(const Descriptives&, const int&);
-   Descriptives scale_input_mean_standard_deviation(const int&);
+   void scale_input_mean_standard_deviation(const Descriptives&, const Index&);
+   Descriptives scale_input_mean_standard_deviation(const Index&);
 
-   void scale_input_standard_deviation(const Descriptives&, const int&);
-   Descriptives scale_input_standard_deviation(const int&);
+   void scale_input_standard_deviation(const Descriptives&, const Index&);
+   Descriptives scale_input_standard_deviation(const Index&);
 
    void scale_inputs_minimum_maximum(const vector<Descriptives>&);
    vector<Descriptives> scale_inputs_minimum_maximum();
 
-   void scale_input_minimum_maximum(const Descriptives&, const int&);
-   Descriptives scale_input_minimum_maximum(const int&);
+   void scale_input_minimum_maximum(const Descriptives&, const Index&);
+   Descriptives scale_input_minimum_maximum(const Index&);
 
    vector<Descriptives> scale_inputs(const string&);
    void scale_inputs(const string&, const vector<Descriptives>&);
@@ -695,19 +695,19 @@ public:
 
    // Classification methods
 
-   Tensor<int, 1> calculate_target_distribution() const;
+   Tensor<Index, 1> calculate_target_distribution() const;
 
-   Tensor<int, 1> balance_binary_targets_distribution(const double& = 100.0);
-   Tensor<int, 1> balance_multiple_targets_distribution();
+   Tensor<Index, 1> balance_binary_targets_distribution(const double& = 100.0);
+   Tensor<Index, 1> balance_multiple_targets_distribution();
 
 
-   Tensor<int, 1> balance_approximation_targets_distribution(const double& = 10.0);
+   Tensor<Index, 1> balance_approximation_targets_distribution(const double& = 10.0);
 
    // Outlier detection
 
-   Tensor<int, 1> calculate_Tukey_outliers(const int&, const double& = 1.5) const;
+   Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const double& = 1.5) const;
 
-   vector<Tensor<int, 1>> calculate_Tukey_outliers(const double& = 1.5) const;
+   vector<Tensor<Index, 1>> calculate_Tukey_outliers(const double& = 1.5) const;
 
    void unuse_Tukey_outliers(const double& = 1.5);
 
@@ -715,24 +715,24 @@ public:
 
    void transform_columns_time_series();
 
-   Tensor<type, 2> calculate_autocorrelations(const int& = 10) const;
-   Matrix<Tensor<type, 1>, Dynamic, Dynamic> calculate_cross_correlations(const int& = 10) const;
+   Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
+   Matrix<Tensor<type, 1>, Dynamic, Dynamic> calculate_cross_correlations(const Index& = 10) const;
 
    Tensor<type, 2> calculate_lag_plot() const;
-   Tensor<type, 2> calculate_lag_plot(const int&);
+   Tensor<type, 2> calculate_lag_plot(const Index&);
 
    // Data generation
 
-   void generate_constant_data(const int&, const int&);
-   void generate_random_data(const int&, const int&);
-   void generate_sequential_data(const int&, const int&);
-   void generate_paraboloid_data(const int&, const int&);
-   void generate_Rosenbrock_data(const int&, const int&);
-   void generate_inputs_selection_data(const int&, const int&);
-   void generate_sum_data(const int&, const int&);
+   void generate_constant_data(const Index&, const Index&);
+   void generate_random_data(const Index&, const Index&);
+   void generate_sequential_data(const Index&, const Index&);
+   void generate_paraboloid_data(const Index&, const Index&);
+   void generate_Rosenbrock_data(const Index&, const Index&);
+   void generate_inputs_selection_data(const Index&, const Index&);
+   void generate_sum_data(const Index&, const Index&);
 
-   void generate_data_binary_classification(const int&, const int&);
-   void generate_data_multiple_classification(const int&, const int&, const int&);
+   void generate_data_binary_classification(const Index&, const Index&);
+   void generate_data_multiple_classification(const Index&, const Index&, const Index&);
 
    // Serialization methods
 
@@ -772,11 +772,11 @@ public:
    void transform_time_series();
    void transform_association();
 
-   void fill_time_series(const int&);
+   void fill_time_series(const Index&);
 
    void delete_unused_instances();
 
-   void numeric_to_categorical(const int&);
+   void numeric_to_categorical(const Index&);
 
    // Missing values
 
@@ -790,14 +790,14 @@ public:
 
    Tensor<string, 1> unuse_columns_missing_values(const double&);
 
-   void get_tensor_2_d(const Tensor<int, 1>&, const Tensor<int, 1>&, Tensor<type, 2>&);
+   void get_tensor_2_d(const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
 
-   Tensor<int, 1> count_nan_columns() const;
-   int count_rows_with_nan() const;
+   Tensor<Index, 1> count_nan_columns() const;
+   Index count_rows_with_nan() const;
 
    // Eigen methods
 
-   void intialize_sequential_eigen_tensor(Tensor<int, 1>&, const int&, const int&, const int&) const;
+   void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
 
 private:
 
@@ -815,11 +815,11 @@ private:
 
    /// Number of lags.
 
-   int lags_number;
+   Index lags_number;
 
    /// Number of steps ahead.
 
-   int steps_ahead;
+   Index steps_ahead;
 
    /// Data Matrix.
    /// The number of rows is the number of instances.
@@ -841,7 +841,7 @@ private:
 
    /// Index where time variable is located for forecasting applications.
 
-   int time_index;
+   Index time_index;
 
    /// Missing values method object.
 
@@ -853,7 +853,7 @@ private:
 
    /// Number of batch instances. It is used to optimized the training strategy.
 
-   int batch_instances_number = 32;
+   Index batch_instances_number = 32;
 
    // Variables
 
@@ -873,9 +873,9 @@ private:
 
    bool has_columns_names = false;
 
-   Tensor<int, 1> input_variables_dimensions;
+   Tensor<Index, 1> input_variables_dimensions;
 
-   Tensor<int, 1> target_variables_dimensions;
+   Tensor<Index, 1> target_variables_dimensions;
 
    vector<Column> columns;
 
@@ -885,7 +885,7 @@ private:
 
    Tensor<string, 1> rows_labels;
 
-   int gmt = 0;
+   Index gmt = 0;
 
    vector<Tensor<string, 1>> data_file_preview;
 

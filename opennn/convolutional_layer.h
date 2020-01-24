@@ -51,7 +51,7 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const Tensor<int, 1>&, const Tensor<int, 1>&);
+    explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     // Destructor
 
@@ -67,42 +67,42 @@ public:
 
     ActivationFunction get_activation_function() const;
 
-    Tensor<int, 1> get_outputs_dimensions() const;
+    Tensor<Index, 1> get_outputs_dimensions() const;
 
-    int get_outputs_rows_number() const;
+    Index get_outputs_rows_number() const;
 
-    int get_outputs_columns_number() const;
+    Index get_outputs_columns_number() const;
 
     PaddingOption get_padding_option() const;
 
-    int get_column_stride() const;
+    Index get_column_stride() const;
 
-    int get_row_stride() const;
+    Index get_row_stride() const;
 
-    int get_filters_number() const;
+    Index get_filters_number() const;
 
-    int get_filters_channels_number() const;
+    Index get_filters_channels_number() const;
 
-    int get_filters_rows_number() const;
+    Index get_filters_rows_number() const;
 
-    int get_filters_columns_number() const;
+    Index get_filters_columns_number() const;
 
-    int get_padding_width() const;
-    int get_padding_height() const;
+    Index get_padding_width() const;
+    Index get_padding_height() const;
 
-    int get_inputs_channels_number() const;
-    int get_inputs_rows_number() const;
-    int get_inputs_columns_number() const;
+    Index get_inputs_channels_number() const;
+    Index get_inputs_rows_number() const;
+    Index get_inputs_columns_number() const;
 
     Index get_inputs_number() const;
     Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const;
-    int get_parameters_number() const;
+    Index get_parameters_number() const;
 
     // Set methods
 
-    void set(const Tensor<int, 1>&, const Tensor<int, 1>&);
+    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void set_activation_function(const ActivationFunction&);
 
@@ -114,9 +114,9 @@ public:
 
     void set_parameters(const Tensor<type, 1>&);
 
-    void set_row_stride(const int&);
+    void set_row_stride(const Index&);
 
-    void set_column_stride(const int&);
+    void set_column_stride(const Index&);
 
     // Initialization
 
@@ -138,43 +138,43 @@ public:
 /*
         // Inputs
 
-        const int images_number = inputs.dimension(0);
-        const int channels_number = get_inputs_channels_number();
+        const Index images_number = inputs.dimension(0);
+        const Index channels_number = get_inputs_channels_number();
 
         // Filters
 
-        const int filters_number = get_filters_number();
-        const int filters_rows_number = get_filters_rows_number();
-        const int filters_columns_number = get_filters_columns_number();
+        const Index filters_number = get_filters_number();
+        const Index filters_rows_number = get_filters_rows_number();
+        const Index filters_columns_number = get_filters_columns_number();
 
         // Outputs
 
-        const int outputs_rows_number = get_outputs_rows_number();
-        const int outputs_columns_number = get_outputs_columns_number();
+        const Index outputs_rows_number = get_outputs_rows_number();
+        const Index outputs_columns_number = get_outputs_columns_number();
 
         // Convolution loops
 
 //        #pragma omp parallel for
 
-        for(int image_index = 0; image_index < images_number; image_index++)
+        for(Index image_index = 0; image_index < images_number; image_index++)
         {
-            for(int filter_index = 0; filter_index < filters_number; filter_index++)
+            for(Index filter_index = 0; filter_index < filters_number; filter_index++)
             {
-                for(int output_row_index = 0; output_row_index < outputs_rows_number; output_row_index++)
+                for(Index output_row_index = 0; output_row_index < outputs_rows_number; output_row_index++)
                 {
-                    for(int output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
+                    for(Index output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
                     {
                         double sum = 0.0;
 
-                        for(int channel_index = 0; channel_index < channels_number; channel_index++)
+                        for(Index channel_index = 0; channel_index < channels_number; channel_index++)
                         {
-                            for(int filter_row_index = 0; filter_row_index < filters_rows_number; filter_row_index++)
+                            for(Index filter_row_index = 0; filter_row_index < filters_rows_number; filter_row_index++)
                             {
-                                const int row = output_row_index*row_stride + filter_row_index;
+                                const Index row = output_row_index*row_stride + filter_row_index;
 
-                                for(int filter_column_index = 0; filter_column_index < filters_columns_number; filter_column_index++)
+                                for(Index filter_column_index = 0; filter_column_index < filters_columns_number; filter_column_index++)
                                 {
-                                    const int column = output_column_index*column_stride + filter_column_index;
+                                    const Index column = output_column_index*column_stride + filter_column_index;
 
                                     const double image_element = inputs(image_index, channel_index, row, column);
                                     const double filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
@@ -256,11 +256,11 @@ protected:
 
    Tensor<type, 1> biases;
 
-   int row_stride = 1;
+   Index row_stride = 1;
 
-   int column_stride = 1;
+   Index column_stride = 1;
 
-   Tensor<int, 1> input_variables_dimensions;
+   Tensor<Index, 1> input_variables_dimensions;
 
    PaddingOption padding_option = NoPadding;
 

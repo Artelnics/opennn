@@ -58,7 +58,7 @@ PruningInputs::~PruningInputs()
 
 /// Returns the minimum number of inputs in the pruning inputs selection algorithm.
 
-const int& PruningInputs::get_minimum_inputs_number() const
+const Index& PruningInputs::get_minimum_inputs_number() const
 {
     return(minimum_inputs_number);
 }
@@ -66,7 +66,7 @@ const int& PruningInputs::get_minimum_inputs_number() const
 
 /// Returns the maximum number of inputs in the pruning inputs selection algorithm.
 
-const int& PruningInputs::get_maximum_inputs_number() const
+const Index& PruningInputs::get_maximum_inputs_number() const
 {
     return(maximum_inputs_number);
 }
@@ -74,7 +74,7 @@ const int& PruningInputs::get_maximum_inputs_number() const
 
 /// Returns the maximum number of selection failures in the pruning inputs algorithm.
 
-const int& PruningInputs::get_maximum_selection_failures() const
+const Index& PruningInputs::get_maximum_selection_failures() const
 {
     return(maximum_selection_failures);
 }
@@ -84,7 +84,7 @@ const int& PruningInputs::get_maximum_selection_failures() const
 
 void PruningInputs::set_default()
 {
-    int inputs_number;
+    Index inputs_number;
 
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
@@ -95,7 +95,7 @@ void PruningInputs::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_selection_failures = static_cast<int>(max(3.,inputs_number/5.));
+        maximum_selection_failures = static_cast<Index>(max(3.,inputs_number/5.));
 
         maximum_inputs_number = inputs_number;
     }
@@ -107,7 +107,7 @@ void PruningInputs::set_default()
 /// Sets the minimum inputs for the pruning inputs algorithm.
 /// @param new_minimum_inputs_number Minimum number of inputs in the pruning inputs algorithm.
 
-void PruningInputs::set_minimum_inputs_number(const int& new_minimum_inputs_number)
+void PruningInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -116,7 +116,7 @@ void PruningInputs::set_minimum_inputs_number(const int& new_minimum_inputs_numb
         ostringstream buffer;
 
         buffer << "OpenNN Exception: PruningInputs class.\n"
-               << "void set_minimum_inputs_number(const int&) method.\n"
+               << "void set_minimum_inputs_number(const Index&) method.\n"
                << "Minimum inputs number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -131,7 +131,7 @@ void PruningInputs::set_minimum_inputs_number(const int& new_minimum_inputs_numb
 /// Sets the maximum inputs for the pruning inputs algorithm.
 /// @param new_maximum_inputs_number Maximum number of inputs in the pruning inputs algorithm.
 
-void PruningInputs::set_maximum_inputs_number(const int& new_maximum_inputs_number)
+void PruningInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -140,7 +140,7 @@ void PruningInputs::set_maximum_inputs_number(const int& new_maximum_inputs_numb
         ostringstream buffer;
 
         buffer << "OpenNN Exception: PruningInputs class.\n"
-               << "void set_maximum_inputs_number(const int&) method.\n"
+               << "void set_maximum_inputs_number(const Index&) method.\n"
                << "Maximum inputs number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -155,7 +155,7 @@ void PruningInputs::set_maximum_inputs_number(const int& new_maximum_inputs_numb
 /// Sets the maximum selection failures for the pruning inputs algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the pruning inputs algorithm.
 
-void PruningInputs::set_maximum_selection_failures(const int& new_maximum_loss_failures)
+void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -164,7 +164,7 @@ void PruningInputs::set_maximum_selection_failures(const int& new_maximum_loss_f
         ostringstream buffer;
 
         buffer << "OpenNN Exception: PruningInputs class.\n"
-               << "void set_maximum_selection_failures(const int&) method.\n"
+               << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -208,11 +208,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//    const int inputs_number = data_set_pointer->get_input_columns_number();
+//    const Index inputs_number = data_set_pointer->get_input_columns_number();
 
-    const Tensor<int, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
 
-    const int used_columns_number = data_set_pointer->get_used_columns_number();
+    const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
 
@@ -220,7 +220,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 /*
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const Tensor<int, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
+    const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
 //    data_set_pointer->set_input_columns_unused();
 
@@ -230,13 +230,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    Tensor<int, 1> current_columns_indices = inputs_variables_indices;
+    Tensor<Index, 1> current_columns_indices = inputs_variables_indices;
 
-    Tensor<int, 1> optimal_columns_indices;
+    Tensor<Index, 1> optimal_columns_indices;
 
     Tensor<type, 1> optimal_parameters;
 
-    int selection_failures = 0;
+    Index selection_failures = 0;
 
     time_t beginning_time, current_time;
     double elapsed_time = 0.0;
@@ -249,7 +249,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
-    for(int epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         OptimizationAlgorithm::Results training_results;
 
@@ -257,7 +257,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         double current_selection_error;
         Tensor<type, 1> current_parameters;
 
-        int column_index;
+        Index column_index;
         string column_name;
 
         if(epoch == 0)
@@ -280,7 +280,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 //            current_columns_indices.push_back(column_index);
 
-            const int input_variables_number = data_set_pointer->get_input_variables_number();
+            const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
             data_set_pointer->set_input_variables_dimensions({input_variables_number});
 
@@ -404,11 +404,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     data_set_pointer->set_input_columns_unused();
 
-    const int optimal_inputs_number = optimal_columns_indices.size();
+    const Index optimal_inputs_number = optimal_columns_indices.size();
 
-    for(int i = 0; i< optimal_inputs_number; i++)
+    for(Index i = 0; i< optimal_inputs_number; i++)
     {
-        int optimal_input_index = optimal_columns_indices[i];
+        Index optimal_input_index = optimal_columns_indices[i];
 
         data_set_pointer->set_column_use(optimal_input_index,DataSet::Input);
     }
@@ -559,8 +559,8 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const int rows_number = labels.size();
-   const int columns_number = 2;
+   const Index rows_number = labels.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
@@ -981,7 +981,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_trials_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1095,7 +1095,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_iterations_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1190,7 +1190,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_minimum_inputs_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_minimum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1209,7 +1209,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_inputs_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1228,7 +1228,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_selection_failures = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
            try
            {

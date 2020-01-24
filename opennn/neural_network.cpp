@@ -29,7 +29,7 @@ NeuralNetwork::NeuralNetwork()
 /// (Approximation, Classification, Forecasting, ImageApproximation, ImageClassification).
 /// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<int, 1>& architecture)
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {
     set(model_type, architecture);
 }
@@ -39,10 +39,10 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const
 /// It creates a neural network object with the given parameters.
 /// Note that this method is only valid when our problem presents convolutional layers.
 
-NeuralNetwork::NeuralNetwork(const Tensor<int, 1>& new_inputs_dimensions,
-                             const int& new_blocks_number,
-                             const Tensor<int, 1>& new_filters_dimensions,
-                             const int& new_outputs_number)
+NeuralNetwork::NeuralNetwork(const Tensor<Index, 1>& new_inputs_dimensions,
+                             const Index& new_blocks_number,
+                             const Tensor<Index, 1>& new_filters_dimensions,
+                             const Index& new_outputs_number)
 {
     set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 }
@@ -73,7 +73,7 @@ NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
 /// It creates a neural network object by
 /// It also sets the rest of members to their default values.
 
-NeuralNetwork::NeuralNetwork(const vector<Layer*>& new_layers_pointers)
+NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 {
     set();
 
@@ -95,9 +95,9 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
 
 NeuralNetwork::~NeuralNetwork()
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0;  i < layers_number; i++)
+    for(Index i = 0;  i < layers_number; i++)
     {
         delete layers_pointers[i];
 
@@ -113,7 +113,7 @@ NeuralNetwork::~NeuralNetwork()
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
     const Layer::Type layer_type = layer_pointer->get_type();
-
+/*
     if(check_layer_type(layer_type))
     {
         layers_pointers.push_back(layer_pointer);
@@ -129,7 +129,9 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw logic_error(buffer.str());
     }
+*/
 }
+
 
 
 /// Check if a given layer type can be added to the structure of the neural network.
@@ -138,7 +140,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
 bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 {
-    const int layers_number = layers_pointers.size();
+    const Index layers_number = layers_pointers.size();
 
     if(layers_number > 1 && (layer_type == Layer::Recurrent || layer_type == Layer::LongShortTermMemory))
     {
@@ -163,9 +165,9 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 
 bool NeuralNetwork::has_scaling_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Scaling) return true;
     }
@@ -179,9 +181,9 @@ bool NeuralNetwork::has_scaling_layer() const
 
 bool NeuralNetwork::has_principal_components_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::PrincipalComponents) return true;
     }
@@ -195,9 +197,9 @@ bool NeuralNetwork::has_principal_components_layer() const
 
 bool NeuralNetwork::has_long_short_term_memory_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::LongShortTermMemory) return true;
     }
@@ -212,9 +214,9 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
 
 bool NeuralNetwork::has_recurrent_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Recurrent) return true;
     }
@@ -228,9 +230,9 @@ bool NeuralNetwork::has_recurrent_layer() const
 
 bool NeuralNetwork::has_unscaling_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Unscaling) return true;
     }
@@ -244,9 +246,9 @@ bool NeuralNetwork::has_unscaling_layer() const
 
 bool NeuralNetwork::has_bounding_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Bounding) return true;
     }
@@ -260,9 +262,9 @@ bool NeuralNetwork::has_bounding_layer() const
 
 bool NeuralNetwork::has_probabilistic_layer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Probabilistic) return true;
     }
@@ -276,7 +278,9 @@ bool NeuralNetwork::has_probabilistic_layer() const
 
 bool NeuralNetwork::is_empty() const
 {
-    return layers_pointers.empty();
+    if(layers_pointers.dimension(0) == 0) return true;
+
+    return false;
 }
 
 
@@ -291,7 +295,7 @@ Tensor<string, 1> NeuralNetwork::get_inputs_names() const
 /// Returns a string with the name of the variable used as inputs on a certain index.
 /// @param index Index of the variable to be examined.
 
-string NeuralNetwork::get_input_name(const int& index) const
+string NeuralNetwork::get_input_name(const Index& index) const
 {
     return inputs_names[index];
 }
@@ -300,7 +304,7 @@ string NeuralNetwork::get_input_name(const int& index) const
 /// Returns the index of the variable with a given name.
 /// @param name Name of the variable to be examined.
 
-int NeuralNetwork::get_input_index(const string& name) const
+Index NeuralNetwork::get_input_index(const string& name) const
 {
 /*
     return inputs_names.get_first_index(name);
@@ -320,7 +324,7 @@ Tensor<string, 1> NeuralNetwork::get_outputs_names() const
 /// Returns a string with the name of the variable used as outputs on a certain index.
 /// @param index Index of the variable to be examined.
 
-string NeuralNetwork::get_output_name(const int& index) const
+string NeuralNetwork::get_output_name(const Index& index) const
 {
     return outputs_names[index];
 }
@@ -329,7 +333,7 @@ string NeuralNetwork::get_output_name(const int& index) const
 /// Returns the index of the variable with a given name.
 /// @param name Name of the variable to be examined.
 
-int NeuralNetwork::get_output_index(const string& name) const
+Index NeuralNetwork::get_output_index(const string& name) const
 {
 /*
     return outputs_names.get_first_index(name);
@@ -340,7 +344,7 @@ int NeuralNetwork::get_output_index(const string& name) const
 
 /// Returns a pointer to the layers object composing this neural network object.
 
-vector<Layer*> NeuralNetwork::get_layers_pointers() const
+Tensor<Layer*, 1> NeuralNetwork::get_layers_pointers() const
 {
     return layers_pointers;
 }
@@ -348,19 +352,21 @@ vector<Layer*> NeuralNetwork::get_layers_pointers() const
 
 /// Returns a pointer to the trainable layers object composing this neural network object.
 
-vector<Layer*> NeuralNetwork::get_trainable_layers_pointers() const
+Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    vector<Layer*> trainable_layers_pointers;
+    Tensor<Layer*, 1> trainable_layers_pointers;
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
+/*
             trainable_layers_pointers.push_back(layers_pointers[i]);
+*/
         }
     }
 
@@ -370,13 +376,13 @@ vector<Layer*> NeuralNetwork::get_trainable_layers_pointers() const
 
 /// Returns a vector with the indices of the trainable layers.
 
-Tensor<int, 1> NeuralNetwork::get_trainable_layers_indices() const
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    Tensor<int, 1> trainable_layers_indices;
+    Tensor<Index, 1> trainable_layers_indices;
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
         && layers_pointers[i]->get_type() != Layer::Unscaling
@@ -394,9 +400,9 @@ Tensor<int, 1> NeuralNetwork::get_trainable_layers_indices() const
 
 ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Scaling)
         {
@@ -412,9 +418,9 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
 
 UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Unscaling)
         {
@@ -430,9 +436,9 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
 
 BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Bounding)
         {
@@ -448,9 +454,9 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
 
 ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Probabilistic)
         {
@@ -466,9 +472,9 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 
 PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::PrincipalComponents)
         {
@@ -484,9 +490,9 @@ PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer(
 
 LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::LongShortTermMemory)
         {
@@ -502,9 +508,9 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointe
 
 RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Recurrent)
         {
@@ -545,16 +551,16 @@ void NeuralNetwork::set()
 /// It also sets the rest of members to their default values. 
 /// @param architecture Architecture of the neural network.
 
-void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<int, 1>& architecture)
+void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {        
     layers_pointers.resize(0);
 
     if(architecture.size() <= 1) return;
 
-    const int size = architecture.size();
+    const Index size = architecture.size();
 
-    const int inputs_number = architecture[0];
-    const int outputs_number = architecture[size-1];
+    const Index inputs_number = architecture[0];
+    const Index outputs_number = architecture[size-1];
 
     inputs_names.resize(inputs_number);
 
@@ -564,7 +570,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
     if(model_type == Approximation)
     {
-        for(int i = 0; i < size-1; i++)
+        for(Index i = 0; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -583,7 +589,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Classification)
     {
-        for(int i = 0; i < size-2; i++)
+        for(Index i = 0; i < size-2; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -600,7 +606,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         this->add_layer(long_short_term_memory_layer_pointer);
 
-        for(int i = 1; i < size-1; i++)
+        for(Index i = 1; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -619,19 +625,19 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 }
 
 
-void NeuralNetwork::set(const Tensor<int, 1>& input_variables_dimensions,
-                        const int& blocks_number,
-                        const Tensor<int, 1>& filters_dimensions,
-                        const int& outputs_number)
+void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
+                        const Index& blocks_number,
+                        const Tensor<Index, 1>& filters_dimensions,
+                        const Index& outputs_number)
 {
     layers_pointers.resize(0);
 
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
     this->add_layer(scaling_layer);
 
-    Tensor<int, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
+    Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
-    for(int i = 0; i < blocks_number; i++)
+    for(Index i = 0; i < blocks_number; i++)
     {
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
         add_layer(convolutional_layer);
@@ -649,7 +655,7 @@ void NeuralNetwork::set(const Tensor<int, 1>& input_variables_dimensions,
     PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions.calculate_sum(), 18);
     add_layer(perceptron_layer);
 
-    const int perceptron_layer_outputs = perceptron_layer->get_neurons_number();
+    const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
 
     ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
     add_layer(probabilistic_layer);
@@ -702,7 +708,7 @@ void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names
 /// Sets the new inputs number of this neural network object.
 /// @param new_inputs_number Number of inputs.
 
-void NeuralNetwork::set_inputs_number(const int& new_inputs_number)
+void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -711,7 +717,7 @@ void NeuralNetwork::set_inputs_number(const int& new_inputs_number)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void set_inputs_number(const int&) method.\n"
+               << "void set_inputs_number(const Index&) method.\n"
                << "The number of inputs(" << new_inputs_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -728,8 +734,8 @@ void NeuralNetwork::set_inputs_number(const int& new_inputs_number)
         scaling_layer_pointer->set_inputs_number(new_inputs_number);
     }
 
-    const int trainable_layers_number = get_trainable_layers_number();
-    vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Index trainable_layers_number = get_trainable_layers_number();
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     if(trainable_layers_number > 0)
     {
@@ -743,9 +749,9 @@ void NeuralNetwork::set_inputs_number(const int& new_inputs_number)
 
 void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 {
-    if(layers_pointers.empty()) return;
+    if(layers_pointers.dimension(0) == 0) return;
 /*
-    const int new_inputs_number = inputs.count_equal_to(true);
+    const Index new_inputs_number = inputs.count_equal_to(true);
 
     set_inputs_number(new_inputs_number);
 */
@@ -760,7 +766,7 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_layers_pointers(vector<Layer*>& new_layers_pointers)
+void NeuralNetwork::set_layers_pointers(Tensor<Layer*, 1>& new_layers_pointers)
 {
     layers_pointers = new_layers_pointers;
 }
@@ -768,9 +774,9 @@ void NeuralNetwork::set_layers_pointers(vector<Layer*>& new_layers_pointers)
 
 PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() == Layer::Perceptron)
         {
@@ -786,7 +792,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-    if(!layers_pointers.empty())
+    if(layers_pointers.dimension(0) == 0)
     {
         return layers_pointers[0]->get_inputs_number();
     }
@@ -795,7 +801,7 @@ Index NeuralNetwork::get_inputs_number() const
 }
 
 
-int NeuralNetwork::get_outputs_number() const
+Index NeuralNetwork::get_outputs_number() const
 {
     if(layers_pointers.size() > 0)
     {
@@ -820,9 +826,9 @@ int NeuralNetwork::get_outputs_number() const
 /// <LI> Number of bounding neurons(if there is a bounding layer).</LI>
 /// </UL>
 
-Tensor<int, 1> NeuralNetwork::get_architecture() const
+Tensor<Index, 1> NeuralNetwork::get_architecture() const
 {
-    Tensor<int, 1> architecture;
+    Tensor<Index, 1> architecture;
 /*
     const Index inputs_number = get_inputs_number();
 
@@ -833,11 +839,11 @@ Tensor<int, 1> NeuralNetwork::get_architecture() const
 
     architecture.push_back(inputs_number);
 
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     if(layers_number > 0)
     {
-        for(int i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
             architecture.push_back(layers_pointers[i]->get_neurons_number());
         }
@@ -850,13 +856,13 @@ Tensor<int, 1> NeuralNetwork::get_architecture() const
 /// Returns the number of parameters in the neural network
 /// The number of parameters is the sum of all the neural network parameters(biases and synaptic weights) and independent parameters.
 
-int NeuralNetwork::get_parameters_number() const
+Index NeuralNetwork::get_parameters_number() const
 {
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    int parameters_number = 0;
+    Index parameters_number = 0;
 
-    for(int i = 0; i < trainable_layers_pointers.size(); i++)
+    for(Index i = 0; i < trainable_layers_pointers.size(); i++)
     {
         parameters_number += trainable_layers_pointers[i]->get_parameters_number();
     }
@@ -868,15 +874,15 @@ int NeuralNetwork::get_parameters_number() const
 /// Returns the number of parameters in the neural network
 /// The number of parameters is the sum of all the neural network trainable parameters(biases and synaptic weights) and independent parameters.
 
-int NeuralNetwork::get_trainable_parameters_number() const
+Index NeuralNetwork::get_trainable_parameters_number() const
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    int trainable_parameters_number = 0;
+    Index trainable_parameters_number = 0;
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
         trainable_parameters_number += trainable_layers_pointers[i]->get_parameters_number();
     }
@@ -890,17 +896,17 @@ int NeuralNetwork::get_trainable_parameters_number() const
 
 Tensor<type, 1> NeuralNetwork::get_parameters() const
 {
-    const int parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> parameters(parameters_number);
 
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    int position = 0;
+    Index position = 0;
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
 /*
         const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
@@ -915,15 +921,15 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 }
 
 
-Tensor<int, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    Tensor<int, 1> trainable_layers_parameters_number(trainable_layers_number);
+    Tensor<Index, 1> trainable_layers_parameters_number(trainable_layers_number);
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
         trainable_layers_parameters_number[i] = trainable_layers_pointers[i]->get_parameters_number();
     }
@@ -934,15 +940,15 @@ Tensor<int, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 
 vector<Tensor<type, 1>> NeuralNetwork::get_trainable_layers_parameters(const Tensor<type, 1>& parameters) const
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const Tensor<int, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
     vector<Tensor<type, 1>> trainable_layers_parameters(trainable_layers_number);
 
-    int index = 0;
+    Index index = 0;
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
 /*
         trainable_layers_parameters[i] = parameters.get_subvector(index, index + trainable_layers_parameters_number[i]-1);
@@ -962,9 +968,9 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int size = new_parameters.size();
+    const Index size = new_parameters.size();
 
-    const int parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
 
     if(size != parameters_number)
     {
@@ -979,15 +985,15 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
 #endif
 
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const Tensor<int, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
-    int position = 0;
+    Index position = 0;
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
         if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
         {
@@ -1018,19 +1024,19 @@ void NeuralNetwork::set_display(const bool& new_display)
 /// Returns the number of layers in the neural network.
 /// That includes perceptron, scaling, unscaling, inputs trending, outputs trending, bounding, probabilistic or conditions layers.
 
-int NeuralNetwork::get_layers_number() const
+Index NeuralNetwork::get_layers_number() const
 {
     return layers_pointers.size();
 }
 
 
-Tensor<int, 1> NeuralNetwork::get_layers_neurons_numbers() const
+Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
 
-    Tensor<int, 1> layers_neurons_number;
+    Tensor<Index, 1> layers_neurons_number;
     /*
 
-    for(int i = 0; i < layers_pointers.size(); i++)
+    for(Index i = 0; i < layers_pointers.size(); i++)
     {
         layers_neurons_number.push_back(layers_pointers[i]->get_neurons_number());
     }
@@ -1039,13 +1045,13 @@ Tensor<int, 1> NeuralNetwork::get_layers_neurons_numbers() const
 }
 
 
-int NeuralNetwork::get_trainable_layers_number() const
+Index NeuralNetwork::get_trainable_layers_number() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    int count = 0;
+    Index count = 0;
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
         && layers_pointers[i]->get_type() != Layer::Unscaling
@@ -1063,11 +1069,11 @@ int NeuralNetwork::get_trainable_layers_number() const
 
 void NeuralNetwork::initialize_parameters(const double& value)
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
         trainable_layers_pointers[i]->initialize_parameters(value);
     }
@@ -1081,11 +1087,11 @@ void NeuralNetwork::initialize_parameters(const double& value)
 
 void NeuralNetwork::set_parameters_random()
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    for(int i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < trainable_layers_number; i++)
     {
        trainable_layers_pointers[i]->set_parameters_random();
     }
@@ -1123,7 +1129,7 @@ Descriptives NeuralNetwork::calculate_parameters_descriptives() const
 /// That will be used for looking at the distribution of the parameters.
 /// @param bins_number Number of bins in the histogram(10 by default).
 
-Histogram NeuralNetwork::calculate_parameters_histogram(const int& bins_number) const
+Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
 {
     const Tensor<type, 1> parameters = get_parameters();
 /*
@@ -1181,7 +1187,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int inputs_dimensions_number = inputs.rank();
+    const Index inputs_dimensions_number = inputs.rank();
 
     if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
     {
@@ -1196,7 +1202,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 //    const Index inputs_number = get_inputs_number();
 
-//    const int inputs_dimension = inputs.dimension(1);
+//    const Index inputs_dimension = inputs.dimension(1);
 
 //    if(inputs_size != inputs_number)
 //    {
@@ -1211,13 +1217,13 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 #endif
 
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return inputs;
 
     Tensor<type, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
 
-    for(int i = 1; i < layers_number; i++)
+    for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers[i]->calculate_outputs(outputs);
     }
@@ -1232,7 +1238,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     ///@todo check for convolutional
 
-//    const int inputs_dimensions_number = inputs.rank();
+//    const Index inputs_dimensions_number = inputs.rank();
 
 //    if(inputs_dimensions_number != 2)
 //    {
@@ -1247,7 +1253,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
 //    const Index inputs_number = get_inputs_number();
 
-//    const int inputs_columns_number = inputs.dimension(1);
+//    const Index inputs_columns_number = inputs.dimension(1);
 
 //    if(inputs_columns_number != inputs_number)
 //    {
@@ -1262,13 +1268,13 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
 #endif
 
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
 
-    for(int i = 1; i < trainable_layers_number; i++)
+    for(Index i = 1; i < trainable_layers_number; i++)
     {
         outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
     }
@@ -1280,7 +1286,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
                                                           const Tensor<type, 1>& parameters) const
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1297,7 +1303,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     #endif
 
-    const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const vector<Tensor<type, 1>> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
 
@@ -1309,7 +1315,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
     }
     else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
 
-    for(int i = 1; i < trainable_layers_number; i++)
+    for(Index i = 1; i < trainable_layers_number; i++)
     {
         if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
         {
@@ -1329,11 +1335,11 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 /// @param maximum Maximum value of the input with the above index.
 /// @param points_number Number of points in the directional input data set.
 
-Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction,
+Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& direction,
                                                            const Tensor<type, 1>& point,
                                                            const double& minimum,
                                                            const double& maximum,
-                                                           const int& points_number) const
+                                                           const Index& points_number) const
 {
     const Index inputs_number = get_inputs_number();
 
@@ -1343,7 +1349,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction
 
     inputs = point;
 /*
-    for(int i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
     {
         inputs[direction] = minimum + (maximum-minimum)*i/static_cast<double>(points_number-1);
 
@@ -1359,7 +1365,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction
 /// @param bins_number Number of bins for the histograms.
 /// @todo
 
-vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_number, const int& bins_number)
+vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
 {
     const Index inputs_number = get_inputs_number();
 
@@ -1372,7 +1378,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
     {
         const vector<ScalingLayer::ScalingMethod> scaling_methods = scaling_layer_pointer->get_scaling_methods();
 
-        for(int i = 0; i < scaling_methods.size(); i++)
+        for(Index i = 0; i < scaling_methods.size(); i++)
         {
             Tensor<type, 1> input_column(points_number, 0.0);
 
@@ -1418,7 +1424,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
 /// @param inputs Matrix of the data to evaluate the neural network.
 /// @param bins_number Number of bins for the histograms.
 
-vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const int& bins_number)
+vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
 {
 /*
    const Tensor<type, 2> outputs = calculate_outputs(inputs);
@@ -1443,11 +1449,11 @@ string NeuralNetwork::object_to_string() const
 */
     // Layers
 
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     buffer << "Layers number: " << layers_number << endl;
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         buffer << "Layer " << i+1 << ":" << endl;
 
@@ -1722,11 +1728,11 @@ void NeuralNetwork::print() const
 
 void NeuralNetwork::print_summary() const
 {
-    const int layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     cout << "Layers number: " << layers_number << endl;
 
-    for(int i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         cout << "Layer " << i+1 << ": " << layers_pointers[i]->get_type_string() << endl;
     }
@@ -1818,7 +1824,7 @@ void NeuralNetwork::load_parameters(const string& file_name)
         throw logic_error(buffer.str());
     }
 
-    const int parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> new_parameters(parameters_number);
 /*
@@ -1837,7 +1843,7 @@ string NeuralNetwork::write_expression() const
     ostringstream buffer;
 
     const Index inputs_number = get_inputs_number();
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
@@ -1845,12 +1851,12 @@ string NeuralNetwork::write_expression() const
     cout << "Inputs names: " << inputs_names << endl;
     cout << "Outputs names: " << outputs_names << endl;
 */
-    int position = 0;
+    Index position = 0;
 
     string search;
     string replace;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         position = 0;
 
@@ -1911,7 +1917,7 @@ string NeuralNetwork::write_expression() const
         }
     }
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         position = 0;
 
@@ -1977,7 +1983,7 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> scaled_inputs_name(inputs_names.size());
 
-    for(int i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
         buffer.str("");
 
@@ -1990,7 +1996,7 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> principal_components_name(inputs_number);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer.str("");
 
@@ -2003,7 +2009,7 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> scaled_outputs_name(outputs_names.size());
 
-    for(int i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_names.size(); i++)
     {
         buffer.str("");
 
@@ -2016,7 +2022,7 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         buffer.str("");
 
@@ -2158,17 +2164,17 @@ string NeuralNetwork::write_mathematical_expression_php() const
     ostringstream buffer;
 
     const Index inputs_number = get_inputs_number();
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
 
-    int position = 0;
+    Index position = 0;
 
     string search;
     string replace;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         position = 0;
 
@@ -2218,7 +2224,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         }
     }
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         position = 0;
 
@@ -2272,7 +2278,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     Tensor<string, 1> scaled_inputs_name(inputs_names.size());
 
-    for(int i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
         buffer.str("");
 
@@ -2285,7 +2291,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     Tensor<string, 1> principal_components_name(inputs_number);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer.str("");
 
@@ -2298,7 +2304,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     Tensor<string, 1> scaled_outputs_name(outputs_number);
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         buffer.str("");
 
@@ -2311,7 +2317,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         buffer.str("");
 
@@ -2322,12 +2328,12 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     buffer.str("");
 
-    for(int i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
         inputs_names[i] = "$"+inputs_names[i];
     }
 
-    for(int i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_names.size(); i++)
     {
         outputs_names[i] = "$"+outputs_names[i];
     }
@@ -2400,17 +2406,17 @@ string NeuralNetwork::write_expression_python() const
     ostringstream buffer;
 
     const Index inputs_number = get_inputs_number();
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
 
-    int pos;
+    Index pos;
 
     string search;
     string replace;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
         inputs_names[i].erase(end_pos, inputs_names[i].end());
@@ -2482,7 +2488,7 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
         outputs_names[i].erase(end_pos, outputs_names[i].end());
@@ -2556,9 +2562,9 @@ string NeuralNetwork::write_expression_python() const
 
     vector<PerceptronLayer::ActivationFunction> activations;
 
-//    const int layers_number = get_layers_number();
+//    const Index layers_number = get_layers_number();
 
-//    for(int i = 0; i < layers_number; i++)
+//    for(Index i = 0; i < layers_number; i++)
 //        activations.push_back(layers_pointers[i].get_activation_function());
 
     buffer.str("");
@@ -2624,7 +2630,7 @@ string NeuralNetwork::write_expression_python() const
 //        case ProbabilisticLayer::Competitive :
 //        {
 //            buffer << "def Competitive(";
-//            for(int i = 0; i < outputs_number; i++)
+//            for(Index i = 0; i < outputs_number; i++)
 //            {
 //                buffer << "x" << i;
 
@@ -2634,7 +2640,7 @@ string NeuralNetwork::write_expression_python() const
 //            buffer << ") :\n";
 
 //            buffer << "   inputs = [";
-//            for(int i = 0; i < outputs_number; i++)
+//            for(Index i = 0; i < outputs_number; i++)
 //            {
 //                buffer << "x" << i;
 
@@ -2653,7 +2659,7 @@ string NeuralNetwork::write_expression_python() const
 //        {
 //            buffer << "from math import exp\n"
 //                      "def Softmax(";
-//            for(int i = 0; i < outputs_number; i++)
+//            for(Index i = 0; i < outputs_number; i++)
 //            {
 //                buffer << "x" << i;
 
@@ -2663,7 +2669,7 @@ string NeuralNetwork::write_expression_python() const
 //            buffer << ") :\n";
 
 //            buffer << "   inputs = [";
-//            for(int i = 0; i < outputs_number; i++)
+//            for(Index i = 0; i < outputs_number; i++)
 //            {
 //                buffer << "x" << i;
 
@@ -2696,7 +2702,7 @@ string NeuralNetwork::write_expression_python() const
            << "   print('Incorrect number of inputs')\n    "
            << "   exit()\n    ";
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << inputs_names[i] << "=inputs[" << i << "]\n    ";
     }
@@ -2718,7 +2724,7 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "\n    return ";
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         buffer << outputs_names[i];
 
@@ -2764,17 +2770,17 @@ string NeuralNetwork::write_expression_php() const
     ostringstream buffer;
 
     const Index inputs_number = get_inputs_number();
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
 
-    int pos;
+    Index pos;
 
     string search;
     string replace;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
         inputs_names[i].erase(end_pos, inputs_names[i].end());
@@ -2858,7 +2864,7 @@ string NeuralNetwork::write_expression_php() const
         }
     }
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
         outputs_names[i].erase(end_pos, outputs_names[i].end());
@@ -2943,9 +2949,9 @@ string NeuralNetwork::write_expression_php() const
 
     vector<PerceptronLayer::ActivationFunction> activations;
 
-//    const int layers_number = get_layers_number();
+//    const Index layers_number = get_layers_number();
 
-//    for(int i = 0; i < layers_number; i++)
+//    for(Index i = 0; i < layers_number; i++)
 //        activations.push_back(layers_pointers[i]->get_activation_function());
 
     buffer.str("");
@@ -3001,17 +3007,17 @@ string NeuralNetwork::write_expression_php() const
               "       throw new \\InvalidArgumentException('Incorrect number of inputs.', 2);\n"
               "   }\n\n";
 
-    for(int i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
         inputs_names[i] = "$_"+inputs_names[i];
     }
 
-    for(int i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_names.size(); i++)
     {
         outputs_names[i] = "$"+outputs_names[i];
     }
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << "   " << inputs_names[i] << "=$inputs[" << i << "];\n";
     }
@@ -3033,7 +3039,7 @@ string NeuralNetwork::write_expression_php() const
 
     buffer << "\n    return ";
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         buffer << outputs_names[i];
 
@@ -3082,17 +3088,17 @@ string NeuralNetwork::write_expression_R() const
     ostringstream buffer;
 
     const Index inputs_number = get_inputs_number();
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
 
-    int pos = 0;
+    Index pos = 0;
 
     string search;
     string replace;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         pos = 0;
 
@@ -3187,7 +3193,7 @@ string NeuralNetwork::write_expression_R() const
 
     }
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         pos = 0;
 
@@ -3261,9 +3267,9 @@ string NeuralNetwork::write_expression_R() const
 
     vector<PerceptronLayer::ActivationFunction> activations;
 
-//    const int layers_number = get_layers_number();
+//    const Index layers_number = get_layers_number();
 
-//    for(int i = 0; i < layers_number; i++)
+//    for(Index i = 0; i < layers_number; i++)
 //	{
 //        activations.push_back(layers_pointers[i]->get_activation_function());
 //	}
@@ -3300,7 +3306,7 @@ string NeuralNetwork::write_expression_R() const
            << "   return )\n    "
               "}\n    ";
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << inputs_names[i] << "=inputs[" << i+1 << "]\n    ";
     }
@@ -3344,7 +3350,7 @@ string NeuralNetwork::write_expression_R() const
 
     outputs << "outputs <- c(";
 
-    for(int i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         outputs << outputs_names[i];
 
@@ -3489,13 +3495,13 @@ void NeuralNetwork::save_data(const string& file_name) const
 
 #endif
 
-    const int outputs_number = get_outputs_number();
+    const Index outputs_number = get_outputs_number();
 
-    const int variables_number = inputs_number + outputs_number;
+    const Index variables_number = inputs_number + outputs_number;
 
 //    const vector<Descriptives> scaling_layer_descriptives = scaling_layer_pointer->get_descriptives();
 
-    const int points_number = 101;
+    const Index points_number = 101;
 
     Tensor<type, 2> data(points_number, variables_number);
 
@@ -3505,13 +3511,13 @@ void NeuralNetwork::save_data(const string& file_name) const
 
     Tensor<type, 1> increments(inputs_number);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
 //        inputs[i] = scaling_layer_descriptives[i].minimum;
 //        increments[i] = (scaling_layer_descriptives[i].maximum - scaling_layer_descriptives[i].minimum)/static_cast<double>(points_number-1.0);
     }
 /*
-    for(int i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
     {
 //        outputs = calculate_outputs(inputs.to_column_matrix());
 
@@ -3529,9 +3535,9 @@ void NeuralNetwork::save_data(const string& file_name) const
 
 vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(const Tensor<type, 2>& inputs) const
 {
-    const int trainable_layers_number = get_trainable_layers_number();
+    const Index trainable_layers_number = get_trainable_layers_number();
 
-    vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     vector<Layer::ForwardPropagation> forward_propagation(trainable_layers_number);
 
@@ -3541,7 +3547,7 @@ vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(c
 
     // Rest of layers
 
-    for(int i = 1; i < trainable_layers_number; i++)
+    for(Index i = 1; i < trainable_layers_number; i++)
     {
         forward_propagation[i] = trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation[i-1].activations);
     }
@@ -3552,13 +3558,13 @@ vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(c
 
 Layer* NeuralNetwork::get_output_layer_pointer() const
 {
-    if(layers_pointers.empty())
+    if(layers_pointers.dimension(0) == 0)
     {
         return nullptr;
     }
     else
     {
-        const int layers_number = get_layers_number();
+        const Index layers_number = get_layers_number();
 
         return layers_pointers[layers_number-1];
     }
@@ -3567,7 +3573,7 @@ Layer* NeuralNetwork::get_output_layer_pointer() const
 }
 
 
-Layer* NeuralNetwork::get_layer_pointer(const int& index) const
+Layer* NeuralNetwork::get_layer_pointer(const Index& index) const
 {
     return layers_pointers[index];
 }

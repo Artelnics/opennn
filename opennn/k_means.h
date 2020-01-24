@@ -38,13 +38,13 @@ public:
 
     struct Results
     {
-      vector<Tensor<int, 1>> clusters;
+      vector<Tensor<Index, 1>> clusters;
     };
 
 
-    Results calculate_k_means(const Tensor<type, 2>&, const int&) const;
+    Results calculate_k_means(const Tensor<type, 2>&, const Index&) const;
 
-    int calculate_sample_index_proportional_probability(const Tensor<type, 1>&) const;
+    Index calculate_sample_index_proportional_probability(const Tensor<type, 1>&) const;
 };
 
 }

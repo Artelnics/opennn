@@ -40,9 +40,9 @@ namespace OpenNN
 
      // Minimum-maximum scaling
 
-     void scale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
-     void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
      // Mean-std vector scaling
 
@@ -55,8 +55,8 @@ namespace OpenNN
 
      void scale_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&);
      vector<Descriptives> scale_mean_standard_deviation(Tensor<type, 2>&);
-     void scale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
-     void scale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
+     void scale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
      // Standard deviation vector scaling
 
@@ -78,9 +78,9 @@ namespace OpenNN
 
      vector<Descriptives> scale_logarithmic(Tensor<type, 2>&);
 
-     void scale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
-     void scale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
     ///Unscaling Methods
 
@@ -92,9 +92,9 @@ namespace OpenNN
 
      void unscale_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&);
 
-     void unscale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
      // Mean-std vector unscaling
 
@@ -104,17 +104,17 @@ namespace OpenNN
 
      void unscale_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&);
 
-     void unscale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
      // Logarighmic matrix unscaling
 
      void unscale_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&);
 
-     void unscale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<Index, 1>&);
 
      // Association
 
@@ -134,8 +134,8 @@ namespace OpenNN
 
      void apply_lower_upper_bounds(Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void transform_time_series(Tensor<type, 2>&, const int&, const int&, const int&);
-     void transform_time_series(Tensor<type, 2>&, const int&, const int&);
+     void transform_time_series(Tensor<type, 2>&, const Index&, const Index&, const Index&);
+     void transform_time_series(Tensor<type, 2>&, const Index&, const Index&);
 }
 
 #endif

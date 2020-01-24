@@ -268,7 +268,7 @@ public:
         return _allocated;
     }
 
-	void SwapRemove(int i) {
+    void SwapRemove(int i) {
 		TIXMLASSERT(i >= 0 && i < _size);
 		TIXMLASSERT(_size > 0);
 		_mem[i] = _mem[_size - 1];
@@ -608,7 +608,7 @@ public:
     static void ToStr(bool v, char* buffer, int bufferSize );
     static void ToStr(float v, char* buffer, int bufferSize );
     static void ToStr(double v, char* buffer, int bufferSize );
-	static void ToStr(int64_t v, char* buffer, int bufferSize);
+    static void ToStr(int64_t v, char* buffer, int bufferSize);
 
     // converts strings to primitive types
     static bool	ToInt(const char* str, int* value );
@@ -1144,8 +1144,8 @@ public:
 //         If the value isn't an integer, 0 will be returned. There is no error checking;
 //     	use QueryIntValue() if you need error checking.
 
-	int	IntValue() const {
-		int i = 0;
+    int	IntValue() const {
+        int i = 0;
 		QueryIntValue(&i);
 		return i;
 	}
@@ -1288,7 +1288,7 @@ public:
 //         or if there is an error.(For a method with error
 //     	checking, see QueryIntAttribute()).
 
-	int IntAttribute(const char* name, int defaultValue = 0) const;
+    int IntAttribute(const char* name, int defaultValue = 0) const;
     /// See IntAttribute()
 	unsigned UnsignedAttribute(const char* name, unsigned defaultValue = 0) const;
 	/// See IntAttribute()
@@ -1393,27 +1393,27 @@ public:
 //     	QueryAttribute("foo", &value );		// if "foo" isn't found, value will still be 10
 //     	@endverbatim
 
-	int QueryAttribute(const char* name, int* value ) const {
+    int QueryAttribute(const char* name, int* value ) const {
 		return QueryIntAttribute(name, value );
 	}
 
-	int QueryAttribute(const char* name, unsigned int* value ) const {
+    int QueryAttribute(const char* name, unsigned int* value ) const {
 		return QueryUnsignedAttribute(name, value );
 	}
 
-	int QueryAttribute(const char* name, int64_t* value) const {
+    int QueryAttribute(const char* name, int64_t* value) const {
 		return QueryInt64Attribute(name, value);
 	}
 
-	int QueryAttribute(const char* name, bool* value ) const {
+    int QueryAttribute(const char* name, bool* value ) const {
 		return QueryBoolAttribute(name, value );
 	}
 
-	int QueryAttribute(const char* name, double* value ) const {
+    int QueryAttribute(const char* name, double* value ) const {
 		return QueryDoubleAttribute(name, value );
 	}
 
-	int QueryAttribute(const char* name, float* value ) const {
+    int QueryAttribute(const char* name, float* value ) const {
 		return QueryFloatAttribute(name, value );
 	}
 
@@ -1583,7 +1583,7 @@ public:
     /// See QueryIntText()
     XMLError QueryFloatText(float* fval ) const;
 
-	int IntText(int defaultValue = 0) const;
+    int IntText(int defaultValue = 0) const;
 
 	/// See QueryIntText()
 	unsigned UnsignedText(unsigned defaultValue = 0) const;

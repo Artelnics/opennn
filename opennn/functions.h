@@ -36,7 +36,7 @@ namespace OpenNN
 
     double random_normal(const double & = 0.0, const double & = 1.0);
 
-    int factorial(const int&);
+    Index factorial(const Index&);
 
     Tensor<type, 1> exponential(const Tensor<type, 1>&);
 

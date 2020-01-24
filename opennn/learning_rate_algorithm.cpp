@@ -429,7 +429,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
        return triplet;
    }
 
-   int count = 0;
+   Index count = 0;
 
    // Right point
 
@@ -629,7 +629,7 @@ pair<double, double> LearningRateAlgorithm::calculate_Brent_method_directional_p
    {
       Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-      int count = 0;
+      Index count = 0;
 
       if(triplet.A == triplet.B)
       {

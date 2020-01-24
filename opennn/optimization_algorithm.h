@@ -82,15 +82,15 @@ public:
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       Tensor<string, 2> write_final_results(const int&) const;
+       Tensor<string, 2> write_final_results(const Index&) const;
 
        /// Resizes training history variables.
 
-       void resize_training_history(const int&);
+       void resize_training_history(const Index&);
 
        /// Writes final results of the training.
 /*
-       Tensor<string, 2> write_final_results(const int& precision = 3) const;
+       Tensor<string, 2> write_final_results(const Index& precision = 3) const;
 */
        // Training history
 
@@ -130,7 +130,7 @@ public:
 
        /// Maximum number of training iterations.
 
-       int epochs_number;
+       Index epochs_number;
 
        /// Stopping criterion.
 
@@ -148,9 +148,9 @@ public:
 
    const bool& get_display() const;
 
-   const int& get_display_period() const;
+   const Index& get_display_period() const;
 
-   const int& get_save_period() const;
+   const Index& get_save_period() const;
 
    const string& get_neural_network_file_name() const;
 
@@ -165,9 +165,9 @@ public:
 
    virtual void set_display(const bool&);
 
-   void set_display_period(const int&);
+   void set_display_period(const Index&);
 
-   void set_save_period(const int&);
+   void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
    // Training methods
@@ -203,17 +203,17 @@ protected:
 
    /// Number of training epochs in the neural network.
 
-   int epochs_number = 10000;
+   Index epochs_number = 10000;
 
    // UTILITIES
 
    /// Number of iterations between the training showing progress.
 
-   int display_period;
+   Index display_period;
 
    /// Number of iterations between the training saving progress.
 
-   int save_period;
+   Index save_period;
 
    /// Path where the neural network is saved.
 

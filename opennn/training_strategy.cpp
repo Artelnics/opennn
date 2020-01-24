@@ -1181,7 +1181,7 @@ switch(optimization_method)
 bool TrainingStrategy::check_forecasting() const
 {
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-    int timesteps = 0;
+    Index timesteps = 0;
 
     if(neural_network_pointer->has_recurrent_layer())
     {

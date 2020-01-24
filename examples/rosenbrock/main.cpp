@@ -18,7 +18,7 @@
 
 //#define EIGEN_TEST_FUNC cxx11_tensor_cuda
 
-//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
+//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE Index
 
 //#define EIGEN_USE_GPU
 
@@ -66,11 +66,11 @@ int main(void)
 
         // Neural network
 
-        const int inputs_number = data_set.get_input_variables_number();
-        const int hidden_neurons_number = 1000;
-        const int outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_neurons_number = 1000;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        Tensor<int, 1> arquitecture(3);
+        Tensor<Index, 1> arquitecture(3);
 
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 

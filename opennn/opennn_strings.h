@@ -25,7 +25,7 @@ using namespace Eigen;
 
 namespace OpenNN
 {
-    int count_tokens(const string&, const char&);
+    Index count_tokens(const string&, const char&);
 
     Tensor<string, 1> get_tokens(const string&, const char&);
 
@@ -35,7 +35,7 @@ namespace OpenNN
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
 
-    time_t date_to_timestamp(const string& date, const int& gmt = 0);
+    time_t date_to_timestamp(const string& date, const Index& gmt = 0);
 
     bool contains_substring(const string&, const string&);
 

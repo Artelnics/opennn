@@ -47,7 +47,7 @@ public:
 
    explicit LongShortTermMemoryLayer();
 
-   explicit LongShortTermMemoryLayer(const int&, const int&);
+   explicit LongShortTermMemoryLayer(const Index&, const Index&);
 
    LongShortTermMemoryLayer(const LongShortTermMemoryLayer&);
 
@@ -83,9 +83,9 @@ public:
    Tensor<type, 2> get_weights() const;
    Tensor<type, 2> get_recurrent_weights() const;
 
-   int get_timesteps() const;
+   Index get_timesteps() const;
 
-   int get_parameters_number() const;
+   Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    // Activation functions
@@ -102,16 +102,16 @@ public:
    // Set methods
 
    void set();
-   void set(const int&, const int&);
+   void set(const Index&, const Index&);
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
 
    // Architecture
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
-   void set_input_shape(const Tensor<int, 1>&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
+   void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
 
@@ -140,7 +140,7 @@ public:
    void set_recurrent_activation_function(const ActivationFunction&);
    void set_recurrent_activation_function(const string&);
 
-   void set_timesteps(const int&);
+   void set_timesteps(const Index&);
 
    // Display messages
 
@@ -252,7 +252,7 @@ public:
 
 protected:
 
-   int timesteps = 10;
+   Index timesteps = 10;
 
    Tensor<type, 1> input_biases;
    Tensor<type, 1> forget_biases;
@@ -274,8 +274,8 @@ protected:
    ActivationFunction activation_function = HyperbolicTangent;
    ActivationFunction recurrent_activation_function = HardSigmoid;
 
-   int batch;
-   int variables;
+   Index batch;
+   Index variables;
 
    Tensor<type, 1> hidden_states;
    Tensor<type, 1> cell_states;

@@ -85,8 +85,8 @@ public:
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const Tensor<int, 1>&) const;
-   double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const;
+   double calculate_batch_error(const Tensor<Index, 1>&) const;
+   double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -102,7 +102,7 @@ public:
 
         #endif
 
-        const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
         first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
 
@@ -130,7 +130,7 @@ public:
 
     // Neural network
 
-    const int layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
     // Loss index
 
@@ -163,7 +163,7 @@ public:
 
    Tensor<type, 1> calculate_squared_errors() const;
 
-   Tensor<int, 1> calculate_maximal_errors(const int& = 10) const;
+   Tensor<Index, 1> calculate_maximal_errors(const Index& = 10) const;
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
