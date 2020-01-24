@@ -60,9 +60,13 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
-        // Here your code
+        Tensor<int, 1> training_indices(4);
 
-        cout << "Bye Blank Application" << endl;
+        training_indices.setValues({1,2,3,4});
+
+        std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+        cout<<training_indices;
 
         return 0;
 
