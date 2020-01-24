@@ -810,8 +810,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     NonBlockingThreadPool simple_thread_pool(n);
 
-    //simple_thread_pool.Schedule()
-
     ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
    // Main loop
@@ -820,7 +818,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    {
        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-       const Index batches_number = training_batches.size();
+       const Index batches_number = training_batches.dimension(0);
 
        parameters_norm = l2_norm(thread_pool_device, parameters);
 
@@ -828,62 +826,62 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        loss = 0.0;
 
-       for(Index iteration = 0; iteration < /*batches_number*/1000; iteration++)
+       for(Index iteration = 0; iteration < batches_number; iteration++)
        {
-//           cout << iteration << endl;
+           cout << iteration << endl;
 
-           // Data set
+//            Data set
 
 //            batch.fill(training_batches[iteration], input_variables_indices, target_variables_indices);
 
-//            batch.print();system("pause");
+            batch.print();system("pause");
 
            // Neural network
 
-            neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+//            neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
 //            forward_propagation.print(); system("pause");
 
            //Loss
 
-           loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
+//           loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
 
 //           first_order_loss.print(); system("pause");
 
-           loss += first_order_loss.loss;
+//           loss += first_order_loss.loss;
 
            // Gradient
 
-            initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+//            initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
+//            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
 
-            if(momentum > 0.0 && !nesterov)
-            {
-                parameters_increment.device(thread_pool_device) += last_increment*momentum;
+//            if(momentum > 0.0 && !nesterov)
+//            {
+//                parameters_increment.device(thread_pool_device) += last_increment*momentum;
 
-                last_increment = parameters_increment;
+//                last_increment = parameters_increment;
 
-                parameters.device(thread_pool_device) += parameters_increment;
-            }
-            else if(momentum > 0.0 && nesterov)
-            {
-                parameters_increment.device(thread_pool_device) += last_increment*momentum;
+//                parameters.device(thread_pool_device) += parameters_increment;
+//            }
+//            else if(momentum > 0.0 && nesterov)
+//            {
+//                parameters_increment.device(thread_pool_device) += last_increment*momentum;
 
-                last_increment = parameters_increment;
+//                last_increment = parameters_increment;
 
-                nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+//                nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
 
-                parameters.device(thread_pool_device) += nesterov_increment;
-            }
-            else
-            {
-                parameters.device(thread_pool_device) += parameters_increment;
-            }
+//                parameters.device(thread_pool_device) += nesterov_increment;
+//            }
+//            else
+//            {
+//                parameters.device(thread_pool_device) += parameters_increment;
+//            }
 
-            neural_network_pointer->set_parameters(parameters);
+//            neural_network_pointer->set_parameters(parameters);
 
-            learning_rate_iteration++;
+//            learning_rate_iteration++;
 
 
        }

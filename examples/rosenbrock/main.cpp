@@ -59,9 +59,10 @@ int main(void)
 
         DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(100, 4);
-
+        data_set.generate_Rosenbrock_data(1000, 4);
         data_set.set_training();
+        data_set.set_batch_instances_number(100);
+
 
 
         // Neural network
