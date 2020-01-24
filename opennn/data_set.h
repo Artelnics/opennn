@@ -273,7 +273,7 @@ public:
    Tensor<int, 1> get_unused_instances_indices() const;
 
    InstanceUse get_instance_use(const int&) const;
-   const vector<InstanceUse>& get_instances_uses() const;
+   const Tensor<InstanceUse, 1>& get_instances_uses() const;
 
    Tensor<int, 1> get_instances_uses_numbers() const;
    Tensor<type, 1> get_instances_uses_percentages() const;
@@ -450,7 +450,7 @@ public:
    void set_instance_use(const int&, const InstanceUse&);
    void set_instance_use(const int&, const string&);
 
-   void set_instances_uses(const vector<InstanceUse>&);
+   void set_instances_uses(const Tensor<InstanceUse, 1>&);
    void set_instances_uses(const Tensor<string, 1>&);
 
    void set_testing_to_selection_instances();
@@ -850,7 +850,7 @@ private:
 
    // Instances
 
-   vector<InstanceUse> instances_uses;
+   Tensor<InstanceUse, 1> instances_uses;
 
    /// Number of batch instances. It is used to optimized the training strategy.
 
