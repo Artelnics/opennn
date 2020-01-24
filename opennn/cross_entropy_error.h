@@ -98,7 +98,7 @@ public:
 /*
         first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets);
 
-        first_order_loss.gradient = batch_error_gradient/static_cast<double>(batch_instances_number);
+        first_order_loss.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
 
         // Regularization
 

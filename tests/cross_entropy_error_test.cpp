@@ -61,7 +61,7 @@ void CrossEntropyErrorTest::test_calculate_training_error()
    neural_network.add_layer(&scaling_layer);
    neural_network.add_layer(&perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    parameters = neural_network.get_parameters();
 
@@ -89,7 +89,7 @@ void CrossEntropyErrorTest::test_calculate_selection_error()
 
 //   neural_network.add_layer(&perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    const Tensor<type, 1> parameters = neural_network.get_parameters();
    
@@ -117,8 +117,8 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
    ScalingLayer scaling_layer;
@@ -238,8 +238,8 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 

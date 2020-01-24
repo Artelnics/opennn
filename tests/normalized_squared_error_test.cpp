@@ -65,8 +65,8 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
    DataSet data_set(1,1,1);
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
    Tensor<double, 2> new_data(2, 2);
@@ -117,8 +117,8 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
 //   ScalingLayer* scaling_layer = new ScalingLayer();
@@ -145,7 +145,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    nse.set_normalization_coefficient(1.0);
 
@@ -262,8 +262,8 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 
@@ -334,7 +334,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
    cout << "test_calculate_training_error_terms\n";
 
    NeuralNetwork neural_network;
-   Vector<size_t> architecture;
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> network_parameters;
 
    DataSet data_set;
@@ -346,8 +346,8 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
    Tensor<type, 1> error_terms;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
 
    // Test
 
@@ -367,7 +367,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 
 //   error_terms = nse.calculate_training_error_terms();
 
-//   assert_true(abs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
+//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
 
 }
 
@@ -475,7 +475,7 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
     NormalizedSquaredError nse(&neural_network, &data_set);
 
     Tensor<type, 1> squared_errors;
-    Vector<size_t> maximal_errors;
+    Tensor<Index, 1> maximal_errors;
 
     // Test
 

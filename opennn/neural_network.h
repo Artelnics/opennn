@@ -301,7 +301,7 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_parameters(const double&);
+   void set_parameters_constant(const double&);
 
    void set_parameters_random();
 

@@ -620,7 +620,7 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 /// Initializes all the biases and synaptic weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void PerceptronLayer::initialize_parameters(const double& value)
+void PerceptronLayer::set_parameters_constant(const double& value)
 {
 /*
     biases.setConstant(value);

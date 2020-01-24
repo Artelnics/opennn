@@ -147,7 +147,7 @@ Index KMeans::calculate_sample_index_proportional_probability(const Tensor<type,
 
     Tensor<type, 1> cumulative = OpenNN::cumulative(vector);
 
-    const double sum = vector.calculate_sum();
+    const double sum = vector.sum();
 
     const double random = calculate_random_uniform(0.,sum);
 

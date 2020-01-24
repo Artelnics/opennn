@@ -87,7 +87,7 @@ void GradientDescentTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double minimum_parameters_increment_norm = 0.1;
 
@@ -102,7 +102,7 @@ void GradientDescentTest::test_perform_training()
 
    // Performance goal
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double loss_goal = 0.1;
 
@@ -119,7 +119,7 @@ void GradientDescentTest::test_perform_training()
 
    // Minimum loss increase
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double minimum_loss_increase = 0.1;
 
@@ -134,7 +134,7 @@ void GradientDescentTest::test_perform_training()
 
    // Gradient norm goal 
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double gradient_norm_goal = 0.1;
 

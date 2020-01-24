@@ -239,11 +239,7 @@ namespace OpenNN
 
     Tensor<type, 1> normalized(const Tensor<type, 1>&);
 
-    Tensor<type, 1> absolute_value(const Tensor<type, 1>&);
-
     Tensor<type, 2> normalized_columns(const Tensor<type, 2>&);
-
-    Tensor<type, 2> absolute_value(const Tensor<type, 2>&);
 
     void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&);
     void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
