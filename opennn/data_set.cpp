@@ -98,7 +98,6 @@ DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
 {
-
    set();
 
    set_default();
