@@ -8733,7 +8733,7 @@ void DataSet::read_csv_1()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_1() method.\n"
                << "File " << data_file_name << " is empty.\n";
 
         throw logic_error(buffer.str());
@@ -8747,6 +8747,8 @@ void DataSet::read_csv_1()
     }
 
     const int columns_number = data_file_preview[0].size();
+
+    cout << "Columns number: " << columns_number << endl;
 
     columns.resize(columns_number);
 
@@ -8773,6 +8775,7 @@ void DataSet::read_csv_1()
     {
         set_columns_names(get_default_columns_names(columns_number));
     }
+    cout << "columns names" << endl;
 
     // Columns types
 
@@ -8793,6 +8796,8 @@ void DataSet::read_csv_1()
             columns[i].type = Categorical;
         }
     }
+
+    cout << "columns types" << endl;
 }
 
 
