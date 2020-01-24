@@ -73,7 +73,7 @@ public:
 
        Tensor<type, 1> optimal_variables;
 
-       double optimum_objective;
+       type optimum_objective;
 
        void print() const
        {
@@ -141,7 +141,7 @@ private:
 
     Index evaluations_number = 1000;
 
-    double calculate_random_uniform(const double&, const double&) const;
+    type calculate_random_uniform(const type&, const type&) const;
 
 };
 

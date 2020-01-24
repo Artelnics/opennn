@@ -1156,10 +1156,10 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
     data_set_pointer->split_instances_random(1,0,0);
 
     Tensor<type, 1> minimum_error_parameters;
-    double minimum_error = 1.0;
+    type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    double cross_validation_error = 0.0;
+    type cross_validation_error = 0.0;
 
     for(Index i = 0; i < k; i++)
     {
@@ -1171,7 +1171,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
 
         data_set_pointer->set_testing_to_selection_instances();
 
-        const double current_error = loss_index_pointer->calculate_selection_error();
+        const type current_error = loss_index_pointer->calculate_selection_error();
 
         if(i == 0 || current_error < minimum_error)
         {
@@ -1204,7 +1204,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
 
 /// @todo
 
-Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const Index& k, const double& selection_ratio) const
+Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const Index& k, const type& selection_ratio) const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
@@ -1220,7 +1220,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     if(k < 2)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
               << "Number of iterations must be grater or equal than 2.\n";
 
        throw logic_error(buffer.str());
@@ -1229,7 +1229,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     if(selection_ratio <= 0.0 || selection_ratio >= 1.0)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
               << "The ratio of testing instances must be between 0.0 and 1.0.\n";
 
        throw logic_error(buffer.str());
@@ -1238,7 +1238,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1247,7 +1247,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1261,10 +1261,10 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     data_set_pointer->split_instances_random(1,0,0);
 
     Tensor<type, 1> minimum_error_parameters;
-    double minimum_error = 1.0;
+    type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    double cross_validation_error = 0.0;
+    type cross_validation_error = 0.0;
 
     for(Index i = 0; i < k; i++)
     {
@@ -1276,7 +1276,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
 
         data_set_pointer->set_testing_to_selection_instances();
 
-        const double current_error = loss_index_pointer->calculate_selection_error();
+        const type current_error = loss_index_pointer->calculate_selection_error();
 
         if(i == 0 || current_error < minimum_error)
         {
@@ -1356,16 +1356,16 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
     data_set_pointer->split_instances_random(1,0,0);
 
     Tensor<type, 1> minimum_error_parameters;
-    double minimum_error = 1.0;
+    type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
-    double cross_validation_error = 0.0;
+    type cross_validation_error = 0.0;
 
     for(Index i = 0; i < positives_instances_number; i++)
     {
         const Index current_selection_instance_index = positives_instances_indices[i];
         const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
-        const double targets = current_selection_instance[target_index];
+        const type targets = current_selection_instance[target_index];
         const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
 
         data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
@@ -1373,10 +1373,10 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
 
         training_strategy_pointer->perform_training();
 
-        const double outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
+        const type outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
 
-        const double current_error = abs(targets-outputs);
-        const double current_loss = loss_index_pointer->calculate_training_loss();
+        const type current_error = abs(targets-outputs);
+        const type current_loss = loss_index_pointer->calculate_training_loss();
 
         if(i == 0 || current_error < minimum_error)
         {

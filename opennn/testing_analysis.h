@@ -216,13 +216,13 @@ public:
 
    // Confusion methods
 
-   Matrix<Index, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
-   Matrix<Index, Dynamic, Dynamic> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
+   Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Matrix<Index, Dynamic, Dynamic> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Matrix<Index, Dynamic, Dynamic> calculate_confusion() const;
+   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Index, 2> calculate_confusion() const;
 
    // ROC curve
 
@@ -270,9 +270,9 @@ public:
 
    // Multiple classification rates
 
-   Matrix<Tensor<Index, 1>, Dynamic, Dynamic> calculate_multiple_classification_rates() const;
+   Tensor<Tensor<Index, 1>, 2> calculate_multiple_classification_rates() const;
 
-   Matrix<Tensor<Index, 1>, Dynamic, Dynamic> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
+   Tensor<Tensor<Index, 1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
    // Forecasting methods
 

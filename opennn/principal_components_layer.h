@@ -100,7 +100,7 @@ public:
    void set_principal_components(const Tensor<type, 2>&);
 
    void set_means(const Tensor<type, 1>&);
-   void set_means(const Index&, const double&);
+   void set_means(const Index&, const type&);
 
    void set_explained_variance(const Tensor<type, 1>&);
 

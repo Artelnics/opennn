@@ -373,7 +373,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
         const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         const Index column_index = tensor_index%output_columns_number;
 
-        double sum = 0.0;
+        type sum = 0.0;
 
         const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
         const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -386,9 +386,9 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
             {
                 for(Index k = lower_column_index; k < upper_column_index; k++)
                 {
-                    const double delta_element = next_layer_delta(image_index, i, j, k);
+                    const type delta_element = next_layer_delta(image_index, i, j, k);
 
-                    const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                    const type weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
                     sum += delta_element*weight;
                 }
@@ -451,7 +451,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                 const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                 const Index column_index = tensor_index%output_columns_number;
 
-                double sum = 0.0;
+                type sum = 0.0;
 
                 const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                 const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -462,7 +462,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                 {
                     for(Index j = lower_column_index; j < upper_column_index; j++)
                     {
-                        const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+                        const type delta_element = next_layer_delta(image_index, channel_index, i, j);
 
                         sum += delta_element;
                     }
@@ -507,7 +507,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                 const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                 const Index column_index = tensor_index%output_columns_number;
 
-                double sum = 0.0;
+                type sum = 0.0;
 
                 const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                 const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -531,7 +531,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 
                         Tensor<type, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
 
-                        double max_value = activations_current_submatrix(0,0);
+                        type max_value = activations_current_submatrix(0,0);
 
                         for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                         {
@@ -547,9 +547,9 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                             }
                         }
 
-                        const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+                        const type delta_element = next_layer_delta(image_index, channel_index, i, j);
 
-                        const double max_derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
+                        const type max_derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
 
                         sum += delta_element*max_derivative;
                     }
@@ -583,7 +583,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
 
     const Index next_layers_output_columns = next_layer_delta.dimension(1);
 
-    const MatrixXd next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 
@@ -600,13 +600,13 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
         Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         Index column_index = tensor_index%output_columns_number;
 
-        double sum = 0.0;
+        type sum = 0.0;
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
-            const double delta_element = next_layer_delta(image_index, sum_index);
+            const type delta_element = next_layer_delta(image_index, sum_index);
 
-            const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+            const type weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
 
             sum += delta_element*weight;
         }
@@ -638,7 +638,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 
     const Index next_layers_output_columns = next_layer_delta.dimension(1);
 
-    const MatrixXd next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 
@@ -655,13 +655,13 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
         const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         const Index column_index = tensor_index%output_columns_number;
 
-        double sum = 0.0;
+        type sum = 0.0;
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
-            const double delta_element = next_layer_delta(image_index, sum_index);
+            const type delta_element = next_layer_delta(image_index, sum_index);
 
-            const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+            const type weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
 
             sum += delta_element*weight;
         }

@@ -355,7 +355,7 @@ check();
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
@@ -366,8 +366,8 @@ check();
          }
     }
 
-    first_order_loss.loss /= static_cast<double>(training_instances_number);
-    first_order_loss.gradient *= (2.0/static_cast<double>(training_instances_number));
+    first_order_loss.loss /= static_cast<type>(training_instances_number);
+    first_order_loss.gradient *= (2.0/static_cast<type>(training_instances_number));
 */
     return first_order_loss;
 }
@@ -406,7 +406,7 @@ check();
 
     const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
 /*
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
+    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     first_order_loss.loss = batch_error / static_cast<type>(batch_instances_number);
     first_order_loss.gradient = batch_error_gradient;
@@ -486,7 +486,7 @@ check();
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
 /*
-    return error_rows(outputs, targets)/static_cast<double>(training_instances_number);
+    return error_rows(outputs, targets)/static_cast<type>(training_instances_number);
 */
     return Tensor<type, 1>();
 }
@@ -544,7 +544,7 @@ check();
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
@@ -560,9 +560,9 @@ check();
 
     }
 
-    terms_second_order_loss.loss /= static_cast<double>(training_instances_number);
-    terms_second_order_loss.gradient *= (2.0/static_cast<double>(training_instances_number));
-    terms_second_order_loss.hessian *= (2.0/static_cast<double>(training_instances_number));
+    terms_second_order_loss.loss /= static_cast<type>(training_instances_number);
+    terms_second_order_loss.gradient *= (2.0/static_cast<type>(training_instances_number));
+    terms_second_order_loss.hessian *= (2.0/static_cast<type>(training_instances_number));
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {

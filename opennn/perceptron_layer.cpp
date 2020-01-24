@@ -569,7 +569,7 @@ void PerceptronLayer::prune_neuron(const Index& index)
 /// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value. 
 /// @param value Biases initialization value. 
 
-void PerceptronLayer::initialize_biases(const double& value)
+void PerceptronLayer::initialize_biases(const type& value)
 {
 /*
     biases.setConstant(value);
@@ -580,7 +580,7 @@ void PerceptronLayer::initialize_biases(const double& value)
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with a given value.
 /// @param value Synaptic weights initialization value. 
 
-void PerceptronLayer::initialize_synaptic_weights(const double& value) 
+void PerceptronLayer::initialize_synaptic_weights(const type& value)
 {
 /*
     synaptic_weights.setConstant(value);
@@ -595,8 +595,8 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
     Index fan_in;
     Index fan_out;
 
-    double scale = 1.0;
-    double limit;
+    type scale = 1.0;
+    type limit;
 
     fan_in = synaptic_weights.dimension(0);
     fan_out = synaptic_weights.dimension(1);
@@ -612,7 +612,7 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 /// Initializes all the biases and synaptic weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void PerceptronLayer::set_parameters_constant(const double& value)
+void PerceptronLayer::set_parameters_constant(const type& value)
 {
 /*
     biases.setConstant(value);
@@ -637,7 +637,7 @@ void PerceptronLayer::set_parameters_random()
 
 /// Calculates the norm of a layer parameters vector. 
 
-double PerceptronLayer::calculate_parameters_norm() const
+type PerceptronLayer::calculate_parameters_norm() const
 {
 /*
    return l2_norm(get_parameters());
@@ -1115,7 +1115,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 //@todo
-//        set_parameters(to_double_vector(parameters_string, ' '));
+//        set_parameters(to_type_vector(parameters_string, ' '));
     }
 }
 

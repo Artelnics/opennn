@@ -72,12 +72,12 @@ string Layer::get_type_string() const
 }
 
 
-void Layer::set_parameters_constant(const double&)
+void Layer::set_parameters_constant(const type&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters_constant(const double&) method.\n"
+           << "set_parameters_constant(const type&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

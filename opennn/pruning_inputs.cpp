@@ -199,10 +199,10 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    double optimum_training_error = 999999;
-    double optimum_selection_error = 999999;
+    type optimum_training_error = 999999;
+    type optimum_selection_error = 999999;
 
-    double previus_selection_error = 999999;
+    type previus_selection_error = 999999;
 
     // Data set
 
@@ -215,9 +215,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_type();
+
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
     const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
@@ -239,7 +239,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     Index selection_failures = 0;
 
     time_t beginning_time, current_time;
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
     time(&beginning_time);
 
@@ -253,8 +253,8 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     {
         OptimizationAlgorithm::Results training_results;
 
-        double current_training_error;
-        double current_selection_error;
+        type current_training_error;
+        type current_selection_error;
         Tensor<type, 1> current_parameters;
 
         Index column_index;
@@ -1076,7 +1076,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_selection_error_goal = atof(element->GetText());
+           const type new_selection_error_goal = atof(element->GetText());
 
            try
            {
@@ -1114,7 +1114,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_correlation = atof(element->GetText());
+           const type new_maximum_correlation = atof(element->GetText());
 
            try
            {
@@ -1133,7 +1133,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_minimum_correlation = atof(element->GetText());
+           const type new_minimum_correlation = atof(element->GetText());
 
            try
            {
@@ -1152,7 +1152,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_time = atoi(element->GetText());
+           const type new_maximum_time = atoi(element->GetText());
 
            try
            {
@@ -1171,7 +1171,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_tolerance = atof(element->GetText());
+           const type new_tolerance = atof(element->GetText());
 
            try
            {

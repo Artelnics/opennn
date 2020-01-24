@@ -120,11 +120,11 @@ public:
 
     // Initialization
 
-    void initialize_biases(const double&);
+    void initialize_biases(const type&);
 
-    void initialize_synaptic_weights(const double&);
+    void initialize_synaptic_weights(const type&);
 
-    void set_parameters_constant(const double&);
+    void set_parameters_constant(const type&);
 
     // Combinations
 
@@ -164,7 +164,7 @@ public:
                 {
                     for(Index output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
                     {
-                        double sum = 0.0;
+                        type sum = 0.0;
 
                         for(Index channel_index = 0; channel_index < channels_number; channel_index++)
                         {
@@ -176,8 +176,8 @@ public:
                                 {
                                     const Index column = output_column_index*column_stride + filter_column_index;
 
-                                    const double image_element = inputs(image_index, channel_index, row, column);
-                                    const double filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
+                                    const type image_element = inputs(image_index, channel_index, row, column);
+                                    const type filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
 
                                     sum += image_element*filter_element;
                                 }

@@ -66,7 +66,7 @@ public:
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
-   const double& get_decision_threshold() const;
+   const type& get_decision_threshold() const;
 
    const ActivationFunction& get_activation_function() const;
    string write_activation_function() const;
@@ -88,7 +88,7 @@ public:
 
    void set_parameters(const Tensor<type, 1>&);
 
-   void set_decision_threshold(const double&);
+   void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
@@ -116,11 +116,11 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_biases(const double&);
-   void initialize_synaptic_weights(const double&);
-   void initialize_synaptic_weights_Glorot(const double&,const double&);
+   void initialize_biases(const type&);
+   void initialize_synaptic_weights(const type&);
+   void initialize_synaptic_weights_Glorot(const type&,const type&);
 
-   void set_parameters_constant(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
@@ -332,7 +332,7 @@ protected:
 
    ActivationFunction activation_function = Logistic;
 
-   double decision_threshold;
+   type decision_threshold;
 
    /// Display messages to screen.
 

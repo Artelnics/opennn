@@ -108,13 +108,13 @@ public:
    // Descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
-   void set_descriptives_eigen(const MatrixXd&);
+   void set_descriptives_eigen(const Tensor<type, 2>&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const Index&, const double&);
-   void set_maximum(const Index&, const double&);
-   void set_mean(const Index&, const double&);
-   void set_standard_deviation(const Index&, const double&);
+   void set_minimum(const Index&, const type&);
+   void set_maximum(const Index&, const type&);
+   void set_mean(const Index&, const type&);
+   void set_standard_deviation(const Index&, const type&);
 
    // Scaling method
 

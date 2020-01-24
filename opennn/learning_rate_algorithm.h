@@ -99,16 +99,16 @@ public:
        }
 
 
-       inline double get_length() const
+       inline type get_length() const
        {
            return(B.first - A.first);
        }
 
 
-       inline pair<double,double> minimum() const
+       inline pair<type,type> minimum() const
        {
            /*
-           const Tensor<double, 1> losses({A.second, U.second, B.second});
+           const Tensor<type, 1> losses({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
 
@@ -205,15 +205,15 @@ public:
 
        /// Left point of the triplet.
 
-       pair<double, double> A;
+       pair<type, type> A;
 
        /// Interior point of the triplet.
 
-       pair<double, double> U;
+       pair<type, type> U;
 
        /// Right point of the triplet.
 
-       pair<double, double> B;
+       pair<type, type> B;
    };
 
    // Get methods
@@ -229,11 +229,11 @@ public:
 
    // Training parameters
 
-   const double& get_loss_tolerance() const;
+   const type& get_loss_tolerance() const;
 
-   const double& get_warning_learning_rate() const;
+   const type& get_warning_learning_rate() const;
 
-   const double& get_error_learning_rate() const;
+   const type& get_error_learning_rate() const;
   
    // Utilities
    
@@ -253,11 +253,11 @@ public:
 
    // Training parameters
 
-   void set_loss_tolerance(const double&);
+   void set_loss_tolerance(const type&);
 
-   void set_warning_learning_rate(const double&);
+   void set_warning_learning_rate(const type&);
 
-   void set_error_learning_rate(const double&);
+   void set_error_learning_rate(const type&);
 
    // Utilities
 
@@ -267,16 +267,16 @@ public:
 
    // Training rate method
 
-   double calculate_golden_section_learning_rate(const Triplet&) const;
-   double calculate_Brent_method_learning_rate(const Triplet&) const;
+   type calculate_golden_section_learning_rate(const Triplet&) const;
+   type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const double&, const Tensor<type, 1>&, const double&) const;
+   Triplet calculate_bracketing_triplet(const type&, const Tensor<type, 1>&, const type&) const;
 
-   pair<double, double> calculate_fixed_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
-   pair<double, double> calculate_golden_section_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
-   pair<double, double> calculate_Brent_method_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
+   pair<type, type> calculate_fixed_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
+   pair<type, type> calculate_golden_section_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
+   pair<type, type> calculate_Brent_method_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
 
-   pair<double, double> calculate_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
+   pair<type, type> calculate_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
 
    // Serialization methods
 
@@ -301,15 +301,15 @@ protected:
 
    /// Maximum interval length for the training rate.
 
-   double loss_tolerance;
+   type loss_tolerance;
 
    /// Big training rate value at which the algorithm displays a warning. 
 
-   double warning_learning_rate;
+   type warning_learning_rate;
 
    /// Big training rate value at which the algorithm throws an exception. 
 
-   double error_learning_rate;
+   type error_learning_rate;
 
    // UTILITIES
 
@@ -317,7 +317,7 @@ protected:
 
    bool display;
 
-   const double golden_ratio = 1.618;
+   const type golden_ratio = 1.618;
 
 };
 

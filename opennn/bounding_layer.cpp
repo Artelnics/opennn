@@ -144,7 +144,7 @@ const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 /// Returns the lower bound value of a single bounding neuron.
 /// @param i Index of bounding neuron. 
 
-double BoundingLayer::get_lower_bound(const Index& i) const
+type BoundingLayer::get_lower_bound(const Index& i) const
 {
    
 
@@ -157,7 +157,7 @@ double BoundingLayer::get_lower_bound(const Index& i) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
-             << "double get_lower_bound(const Index&) const method.\n"
+             << "type get_lower_bound(const Index&) const method.\n"
              << "Index must be less than number of bounding neurons.\n";
 
 	  throw logic_error(buffer.str());
@@ -180,7 +180,7 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 /// Returns the upper bound value of a single bounding neuron.
 /// @param i Index of bounding neuron. 
 
-double BoundingLayer::get_upper_bound(const Index& i) const
+type BoundingLayer::get_upper_bound(const Index& i) const
 {  
    #ifdef __OPENNN_DEBUG__
 
@@ -191,7 +191,7 @@ double BoundingLayer::get_upper_bound(const Index& i) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
-             << "double get_upper_bound(const Index&) const method.\n"
+             << "type get_upper_bound(const Index&) const method.\n"
              << "Number of bounding neurons is zero.\n";
 
 	  throw logic_error(buffer.str());
@@ -201,7 +201,7 @@ double BoundingLayer::get_upper_bound(const Index& i) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
-             << "double get_upper_bound(const Index&) const method.\n"
+             << "type get_upper_bound(const Index&) const method.\n"
              << "Index must be less than number of bounding neurons.\n";
 
 	  throw logic_error(buffer.str());
@@ -355,7 +355,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 /// @param index Index of bounding neuron.
 /// @param new_lower_bound New lower bound for the neuron with index i.
 
-void BoundingLayer::set_lower_bound(const Index& index, const double& new_lower_bound)
+void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bound)
 {
    const Index neurons_number = get_neurons_number();
 
@@ -366,7 +366,7 @@ void BoundingLayer::set_lower_bound(const Index& index, const double& new_lower_
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_lower_bound(const Index&, const double&) method.\n"
+             << "void set_lower_bound(const Index&, const type&) method.\n"
              << "Index of bounding neurons must be less than number of bounding neurons.\n";
 
 	  throw logic_error(buffer.str());
@@ -421,7 +421,7 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 /// @param index Index of bounding neuron.
 /// @param new_upper_bound New upper bound for the bounding neuron with that index.
 
-void BoundingLayer::set_upper_bound(const Index& index, const double& new_upper_bound)
+void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bound)
 {
    const Index neurons_number = get_neurons_number();
 
@@ -434,7 +434,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const double& new_upper_
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_upper_bound(const Index&, const double&) method.\n"
+             << "void set_upper_bound(const Index&, const type&) method.\n"
              << "Index of bounding neuron must be less than number of bounding neurons.\n";
 
 	  throw logic_error(buffer.str());

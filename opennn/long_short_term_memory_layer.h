@@ -148,39 +148,39 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_biases(const double&); 
+   void initialize_biases(const type&);
 
-   void initialize_forget_biases(const double&);
-   void initialize_input_biases(const double&);
-   void initialize_state_biases(const double&);
-   void initialize_output_biases(const double&);
+   void initialize_forget_biases(const type&);
+   void initialize_input_biases(const type&);
+   void initialize_state_biases(const type&);
+   void initialize_output_biases(const type&);
 
-   void initialize_weights(const double&);
+   void initialize_weights(const type&);
 
-   void initialize_forget_weights(const double&);
-   void initialize_input_weights(const double&);
-   void initialize_state_weights(const double&);
-   void initialize_output_weights(const double&);
+   void initialize_forget_weights(const type&);
+   void initialize_input_weights(const type&);
+   void initialize_state_weights(const type&);
+   void initialize_output_weights(const type&);
 
-   void initialize_recurrent_weights(const double&);
+   void initialize_recurrent_weights(const type&);
 
-   void initialize_forget_recurrent_weights(const double&);
-   void initialize_input_recurrent_weights(const double&);
-   void initialize_state_recurrent_weights(const double&);
-   void initialize_output_recurrent_weights(const double&);
+   void initialize_forget_recurrent_weights(const type&);
+   void initialize_input_recurrent_weights(const type&);
+   void initialize_state_recurrent_weights(const type&);
+   void initialize_output_recurrent_weights(const type&);
 
-   void initialize_hidden_states(const double&);
-   void initialize_cell_states(const double&);
+   void initialize_hidden_states(const type&);
+   void initialize_cell_states(const type&);
 
-   void initialize_weights_Glorot(const double&, const double&);
+   void initialize_weights_Glorot(const type&, const type&);
 
-   void set_parameters_constant(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
    // Parameters norm 
 
-   double calculate_parameters_norm() const;
+   type calculate_parameters_norm() const;
 
    // Long short term memory layer combinations
 

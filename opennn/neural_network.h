@@ -301,17 +301,17 @@ public:
 
    // Parameters initialization methods
 
-   void set_parameters_constant(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
    // Parameters
 
-   double calculate_parameters_norm() const;
+   type calculate_parameters_norm() const;
    Descriptives calculate_parameters_descriptives() const;
    Histogram calculate_parameters_histogram(const Index& = 10) const;
 
-   void perturbate_parameters(const double&);
+   void perturbate_parameters(const type&);
 
    // Output 
 
@@ -321,7 +321,7 @@ public:
 
    Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const double&, const double&, const Index& = 101) const;
+   Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
    Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);

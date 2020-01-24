@@ -70,8 +70,6 @@ public:
 
    explicit DataSet();
 
-   explicit DataSet(const MatrixXd&);
-
    explicit DataSet(const Tensor<type, 2>&);
 
    explicit DataSet(const Index&, const Index&);
@@ -358,8 +356,8 @@ public:
    Tensor<type, 2> get_input_data(const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_target_data(const Tensor<Index, 1>&) const;
 
-   Matrix<float, Dynamic, Dynamic> get_input_data_float(const Tensor<Index, 1>&) const;
-   Matrix<float, Dynamic, Dynamic> get_target_data_float(const Tensor<Index, 1>&) const;
+   Tensor<float, 2> get_input_data_float(const Tensor<Index, 1>&) const;
+   Tensor<float, 2> get_target_data_float(const Tensor<Index, 1>&) const;
 
    Tensor<type, 2> get_training_input_data() const;
    Tensor<type, 2> get_training_target_data() const;
@@ -418,7 +416,6 @@ public:
 
    void set();
    void set(const Tensor<type, 2>&);
-   void set(const MatrixXd&);
    void set(const Index&, const Index&);
    void set(const Index&, const Index&, const Index&);
    void set(const DataSet&);
@@ -493,8 +490,6 @@ public:
 
    void set_data(const Tensor<type, 2>&);
 
-   void set_instance(const Index&, const Tensor<type, 1>&);
-
    // Members set methods
 
    void set_data_file_name(const string&);
@@ -535,9 +530,9 @@ public:
 
    // Splitting methods
 
-   void split_instances_sequential(const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2);
+   void split_instances_sequential(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
 
-   void split_instances_random(const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2);
+   void split_instances_random(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
 
    // Unusing methods
 
@@ -547,13 +542,13 @@ public:
 
    Tensor<Index, 1> unuse_non_significant_input_columns();
 
-   Tensor<Index, 1> unuse_uncorrelated_columns(const double& = 0.25);
+   Tensor<Index, 1> unuse_uncorrelated_columns(const type& = 0.25);
 
    Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
    // Initialization methods
 
-   void initialize_data(const double&);
+   void initialize_data(const type&);
 
    void set_data_random();
 
@@ -604,8 +599,8 @@ public:
 
    // Inputs-targets correlations
 
-   Matrix<CorrelationResults, Dynamic, Dynamic> calculate_input_target_columns_correlations() const;
-   Tensor<type, 2> calculate_input_target_columns_correlations_double() const;
+   Tensor<CorrelationResults, 2> calculate_input_target_columns_correlations() const;
+   Tensor<type, 2> calculate_input_target_columns_correlations_type() const;
 
    void print_input_target_columns_correlations() const;
 
@@ -615,9 +610,9 @@ public:
 
    Tensor<type, 2> calculate_covariance_matrix() const;
 
-   Tensor<type, 2> perform_principal_components_analysis(const double& = 0.0);
+   Tensor<type, 2> perform_principal_components_analysis(const type& = 0.0);
 
-   Tensor<type, 2> perform_principal_components_analysis(const Tensor<type, 2>&, const Tensor<type, 1>&, const double& = 0.0);
+   Tensor<type, 2> perform_principal_components_analysis(const Tensor<type, 2>&, const Tensor<type, 1>&, const type& = 0.0);
 
    void transform_principal_components_data(const Tensor<type, 2>&);
 
@@ -625,8 +620,8 @@ public:
 
    // Filtering methods
 
-   Tensor<Index, 1> filter_column(const Index&, const double&, const double&);
-   Tensor<Index, 1> filter_column(const string&, const double&, const double&);
+   Tensor<Index, 1> filter_column(const Index&, const type&, const type&);
+   Tensor<Index, 1> filter_column(const string&, const type&, const type&);
 
    Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -692,26 +687,26 @@ public:
 
    Tensor<Index, 1> calculate_target_distribution() const;
 
-   Tensor<Index, 1> balance_binary_targets_distribution(const double& = 100.0);
+   Tensor<Index, 1> balance_binary_targets_distribution(const type& = 100.0);
    Tensor<Index, 1> balance_multiple_targets_distribution();
 
 
-   Tensor<Index, 1> balance_approximation_targets_distribution(const double& = 10.0);
+   Tensor<Index, 1> balance_approximation_targets_distribution(const type& = 10.0);
 
    // Outlier detection
 
-   Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const double& = 1.5) const;
+   Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const type& = 1.5) const;
 
-   Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const double& = 1.5) const;
+   Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
 
-   void unuse_Tukey_outliers(const double& = 1.5);
+   void unuse_Tukey_outliers(const type& = 1.5);
 
    // Time series methods
 
    void transform_columns_time_series();
 
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-   Matrix<Tensor<type, 1>, Dynamic, Dynamic> calculate_cross_correlations(const Index& = 10) const;
+   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
 
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
@@ -783,7 +778,7 @@ public:
 
    void scrub_missing_values();
 
-   Tensor<string, 1> unuse_columns_missing_values(const double&);
+   Tensor<string, 1> unuse_columns_missing_values(const type&);
 
    void get_tensor_2_d(const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
 

@@ -357,7 +357,7 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 }
 
 
-void UnscalingLayer::set_descriptives_eigen(const MatrixXd& new_descriptives)
+void UnscalingLayer::set_descriptives_eigen(const Tensor<type, 2>& new_descriptives)
 {
     const Index neurons_number = get_neurons_number();
 

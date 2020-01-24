@@ -1067,7 +1067,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
 
 /// Initializes all the neural and the independent parameters with a given value.
 
-void NeuralNetwork::set_parameters_constant(const double& value)
+void NeuralNetwork::set_parameters_constant(const type& value)
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
@@ -1100,11 +1100,11 @@ void NeuralNetwork::set_parameters_random()
 
 /// Returns the norm of the vector of parameters.
 
-double NeuralNetwork::calculate_parameters_norm() const
+type NeuralNetwork::calculate_parameters_norm() const
 {
     const Tensor<type, 1> parameters = get_parameters();
 /*
-    const double parameters_norm = l2_norm(parameters);
+    const type parameters_norm = l2_norm(parameters);
 
     return parameters_norm;
 */
@@ -1142,7 +1142,7 @@ Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number
 /// Perturbate parameters of the neural network.
 /// @param perturbation Maximum distance of perturbation.
 
-void NeuralNetwork::perturbate_parameters(const double& perturbation)
+void NeuralNetwork::perturbate_parameters(const type& perturbation)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1151,7 +1151,7 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void perturbate_parameters(const double&) method.\n"
+               << "void perturbate_parameters(const type&) method.\n"
                << "Perturbation must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -1337,8 +1337,8 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
 Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& direction,
                                                            const Tensor<type, 1>& point,
-                                                           const double& minimum,
-                                                           const double& maximum,
+                                                           const type& minimum,
+                                                           const type& maximum,
                                                            const Index& points_number) const
 {
     const Index inputs_number = get_inputs_number();
@@ -1351,7 +1351,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 /*
     for(Index i = 0; i < points_number; i++)
     {
-        inputs[direction] = minimum + (maximum-minimum)*i/static_cast<double>(points_number-1);
+        inputs[direction] = minimum + (maximum-minimum)*i/static_cast<type>(points_number-1);
 
         directional_inputs.set_row(i, inputs);
     }
@@ -1388,22 +1388,22 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& po
             }
             else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
             {
-                double minimum = scaling_layer_pointer->get_descriptives(i).minimum;
-                double maximum = scaling_layer_pointer->get_descriptives(i).maximum;
+                type minimum = scaling_layer_pointer->get_descriptives(i).minimum;
+                type maximum = scaling_layer_pointer->get_descriptives(i).maximum;
 
                 input_column.setRandom(minimum, maximum);
             }
             else if(scaling_methods[i] == ScalingLayer::MeanStandardDeviation)
             {
-                double mean = scaling_layer_pointer->get_descriptives(i).mean;
-                double standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
+                type mean = scaling_layer_pointer->get_descriptives(i).mean;
+                type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
 
                 input_column.setRandom(mean, standard_deviation);
             }
             else if(scaling_methods[i] == ScalingLayer::StandardDeviation)
             {
-                double mean = scaling_layer_pointer->get_descriptives(i).mean;
-                double standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
+                type mean = scaling_layer_pointer->get_descriptives(i).mean;
+                type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
 
                 input_column.setRandom(mean, standard_deviation);
             }
@@ -2603,7 +2603,7 @@ string NeuralNetwork::write_expression_python() const
 */
 //    if(has_probabilistic_layer())
 //    {
-//        double decision_threshold = probabilistic_layer_pointer->get_decision_threshold();
+//        type decision_threshold = probabilistic_layer_pointer->get_decision_threshold();
 
 //        switch(probabilistic_layer_pointer->get_activation_function())
 //        {
@@ -3514,7 +3514,7 @@ void NeuralNetwork::save_data(const string& file_name) const
     for(Index i = 0; i < inputs_number; i++)
     {
 //        inputs[i] = scaling_layer_descriptives[i].minimum;
-//        increments[i] = (scaling_layer_descriptives[i].maximum - scaling_layer_descriptives[i].minimum)/static_cast<double>(points_number-1.0);
+//        increments[i] = (scaling_layer_descriptives[i].maximum - scaling_layer_descriptives[i].minimum)/static_cast<type>(points_number-1.0);
     }
 /*
     for(Index i = 0; i < points_number; i++)

@@ -937,7 +937,7 @@ void LongShortTermMemoryLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the layer with a given value.
 /// @param value Biases initialization value. 
 
-void LongShortTermMemoryLayer::initialize_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_biases(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -948,7 +948,7 @@ void LongShortTermMemoryLayer::initialize_biases(const double& value)
 /// Initializes the forget biases of all the neurons in the layer with a given value.
 /// @param value Forget biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_biases(const type& value)
 {
     forget_biases.setConstant(value);
 }
@@ -957,7 +957,7 @@ void LongShortTermMemoryLayer::initialize_forget_biases(const double& value)
 /// Initializes the input biases of all the neurons in the layer with a given value.
 /// @param value Input biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_input_biases(const type& value)
 {
      input_biases.setConstant(value);
 }
@@ -966,7 +966,7 @@ void LongShortTermMemoryLayer::initialize_input_biases(const double& value)
 /// Initializes the state biases of all the neurons in the layer with a given value.
 /// @param value State biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_state_biases(const type& value)
 {
      state_biases.setConstant(value);
 }
@@ -975,7 +975,7 @@ void LongShortTermMemoryLayer::initialize_state_biases(const double& value)
 /// Initializes the oputput biases of all the neurons in the layer with a given value.
 /// @param value Output biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_output_biases(const type& value)
 {
     output_biases.setConstant(value);
 }
@@ -983,7 +983,7 @@ void LongShortTermMemoryLayer::initialize_output_biases(const double& value)
 /// Initializes the weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_weights(const type& value)
 {
     forget_weights.setConstant(value);
     input_weights.setConstant(value);
@@ -995,7 +995,7 @@ void LongShortTermMemoryLayer::initialize_weights(const double& value)
 /// Initializes the forget weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_weights(const type& value)
 {
     forget_weights.setConstant(value);
 }
@@ -1004,7 +1004,7 @@ void LongShortTermMemoryLayer::initialize_forget_weights(const double& value)
 /// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_input_weights(const type& value)
 {
      input_weights.setConstant(value);
 }
@@ -1013,7 +1013,7 @@ void LongShortTermMemoryLayer::initialize_input_weights(const double& value)
 /// Initializes the state weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_state_weights(const type& value)
 {
      state_weights.setConstant(value);
 }
@@ -1022,7 +1022,7 @@ void LongShortTermMemoryLayer::initialize_state_weights(const double& value)
 /// Initializes the output weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_weights(const double & value)
+void LongShortTermMemoryLayer::initialize_output_weights(const type & value)
 {
     output_weights.setConstant(value);
 }
@@ -1031,7 +1031,7 @@ void LongShortTermMemoryLayer::initialize_output_weights(const double & value)
 /// Initializes the recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_recurrent_weights(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
     input_recurrent_weights.setConstant(value);
@@ -1043,7 +1043,7 @@ void LongShortTermMemoryLayer::initialize_recurrent_weights(const double& value)
 /// Initializes the forget recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
 }
@@ -1052,7 +1052,7 @@ void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const double&
 /// Initializes the input recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const type& value)
 {
      input_recurrent_weights.setConstant(value);
 }
@@ -1061,7 +1061,7 @@ void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const double& 
 /// Initializes the state recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const type& value)
 {
      state_recurrent_weights.setConstant(value);
 }
@@ -1070,7 +1070,7 @@ void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const double& 
 /// Initializes the output recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const double & value)
+void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type & value)
 {
     output_recurrent_weights.setConstant(value);
 }
@@ -1079,7 +1079,7 @@ void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const double 
 /// Initializes hidden states of the layer with a given value.
 /// @param value Hidden states initialization value.
 
-void LongShortTermMemoryLayer::initialize_hidden_states(const double& value)
+void LongShortTermMemoryLayer::initialize_hidden_states(const type& value)
 {
     hidden_states.setConstant(value);
 }
@@ -1088,13 +1088,13 @@ void LongShortTermMemoryLayer::initialize_hidden_states(const double& value)
 /// Initializes cell states of the layer with a given value.
 /// @param value Cell states initialization value.
 
-void LongShortTermMemoryLayer::initialize_cell_states(const double& value)
+void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 {
     cell_states.setConstant(value);
 }
 
 
-void LongShortTermMemoryLayer::initialize_weights_Glorot(const double& minimum,const double& maximum)
+void LongShortTermMemoryLayer::initialize_weights_Glorot(const type& minimum,const type& maximum)
 {
     /*
     get_weights().setRandom(minimum, maximum);
@@ -1105,7 +1105,7 @@ void LongShortTermMemoryLayer::initialize_weights_Glorot(const double& minimum,c
 /// Initializes all the biases, weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void LongShortTermMemoryLayer::set_parameters_constant(const double& value)
+void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -1152,7 +1152,7 @@ void LongShortTermMemoryLayer::set_parameters_random()
 
 /// Calculates the norm of a layer parameters vector. 
 
-double LongShortTermMemoryLayer::calculate_parameters_norm() const
+type LongShortTermMemoryLayer::calculate_parameters_norm() const
 {
 /*
     return(l2_norm(get_parameters()));
@@ -2171,7 +2171,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
     /*
     const Type layer_type = next_layer_pointer->get_type();
 
-    MatrixXd synaptic_weights_transpose;
+    Tensor<type, 2> synaptic_weights_transpose;
 
     if(layer_type == Perceptron)
     {

@@ -103,7 +103,7 @@ public:
 
     // Parameters initialization methods
 
-    virtual void set_parameters_constant(const double&);
+    virtual void set_parameters_constant(const type&);
 
     virtual void set_parameters_random();
 

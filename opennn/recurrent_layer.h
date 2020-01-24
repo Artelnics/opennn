@@ -132,21 +132,21 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_hidden_states(const double&);
+   void initialize_hidden_states(const type&);
 
-   void initialize_biases(const double&);
+   void initialize_biases(const type&);
 
-   void initialize_input_weights(const double&);
-   void initialize_recurrent_weights(const double&);
-   void initialize_input_weights_Glorot(const double&, const double&);
+   void initialize_input_weights(const type&);
+   void initialize_recurrent_weights(const type&);
+   void initialize_input_weights_Glorot(const type&, const type&);
 
-   void set_parameters_constant(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
    // Parameters norm
 
-   double calculate_parameters_norm() const;
+   type calculate_parameters_norm() const;
 
    // neuron layer combinations
 

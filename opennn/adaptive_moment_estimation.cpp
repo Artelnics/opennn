@@ -329,7 +329,7 @@ void AdaptiveMomentEstimation::set_warning_parameters_norm(const type& new_warni
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_warning_parameters_norm(const double&) method.\n"
+             << "void set_warning_parameters_norm(const type&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -357,7 +357,7 @@ void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_warning_gradient_norm(const double&) method.\n"
+             << "void set_warning_gradient_norm(const type&) method.\n"
              << "Warning gradient norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -386,7 +386,7 @@ void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_p
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_error_parameters_norm(const double&) method.\n"
+             << "void set_error_parameters_norm(const type&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -413,7 +413,7 @@ void AdaptiveMomentEstimation::set_error_gradient_norm(const type& new_error_gra
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_error_gradient_norm(const double&) method.\n"
+             << "void set_error_gradient_norm(const type&) method.\n"
              << "Error gradient norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -439,7 +439,7 @@ void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maxim
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_maximum_epochs_number(const double&) method.\n"
+             << "void set_maximum_epochs_number(const type&) method.\n"
              << "Maximum epochs number must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -465,7 +465,7 @@ void AdaptiveMomentEstimation::set_minimum_parameters_increment_norm(const type&
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void new_minimum_parameters_increment_norm(const double&) method.\n"
+             << "void new_minimum_parameters_increment_norm(const type&) method.\n"
              << "Minimum parameters increment norm must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -491,7 +491,7 @@ void AdaptiveMomentEstimation::set_minimum_loss_increase(const type& new_minimum
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "void set_minimum_loss_increase(const type&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -528,7 +528,7 @@ void AdaptiveMomentEstimation::set_gradient_norm_goal(const type& new_gradient_n
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_gradient_norm_goal(const double&) method.\n"
+             << "void set_gradient_norm_goal(const type&) method.\n"
              << "Gradient norm goal must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -563,7 +563,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_maximum_time(const double&) method.\n"
+             << "void set_maximum_time(const type&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -628,7 +628,7 @@ void AdaptiveMomentEstimation::set_display_period(const Index& new_display_perio
       ostringstream buffer;
 
       buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-             << "void set_display_period(const double&) method.\n"
+             << "void set_display_period(const type&) method.\n"
              << "First training rate must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -693,25 +693,25 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    type training_error = 0.0;
 
    type selection_error = 0.0;
-   double old_selection_error = 0.0;
+   type old_selection_error = 0.0;
 
-   double loss = 0.0;
-   double gradient_norm = 0.0;
+   type loss = 0.0;
+   type gradient_norm = 0.0;
 
    // Optimization algorithm stuff
 
-   double learning_rate = 0.0;
+   type learning_rate = 0.0;
 
    Index selection_failures = 0;
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error = 999999;
+   type minimum_selection_error = 999999;
 
    bool stop_training = false;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   double elapsed_time = 0.0;
+   type elapsed_time = 0.0;
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -787,7 +787,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Loss
 
-       training_error = loss/static_cast<double>(batches_number);
+       training_error = loss/static_cast<type>(batches_number);
 
        if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
 
@@ -1474,7 +1474,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = atof(element->GetText());
 
           try
           {
@@ -1493,7 +1493,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = atof(element->GetText());
 
           try
           {
@@ -1512,7 +1512,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = atof(element->GetText());
 
           try
           {
@@ -1531,7 +1531,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = atof(element->GetText());
 
           try
           {
@@ -1586,7 +1586,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = atof(element->GetText());
 
           try
           {
@@ -1605,7 +1605,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = atof(element->GetText());
 
           try
           {
@@ -1624,7 +1624,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = atof(element->GetText());
 
           try
           {
@@ -1643,7 +1643,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = atof(element->GetText());
 
           try
           {
@@ -1700,7 +1700,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = atof(element->GetText());
 
           try
           {

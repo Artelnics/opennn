@@ -195,10 +195,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    double optimum_training_error = 999999;
-    double optimum_selection_error = 999999;
-
-    double previus_selection_error = 999999;
+    type optimum_training_error = 999999;
+    type optimum_selection_error = 999999;
+    type previus_selection_error = 999999;
 
     // Data set
 
@@ -209,9 +208,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_type();
+
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
     const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
@@ -224,8 +223,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    double current_training_error = 0.0;
-    double current_selection_error = 0.0;
+    type current_training_error = 0.0;
+    type current_selection_error = 0.0;
 
     Tensor<type, 1> current_parameters;
 
@@ -238,7 +237,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Index selection_failures = 0;
 
     time_t beginning_time, current_time;
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
     time(&beginning_time);
 
@@ -266,16 +265,16 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         // Trial
 
-        double optimum_selection_error_trial = 999999;
-        double optimum_training_error_trial = 999999;
+        type optimum_selection_error_trial = 999999;
+        type optimum_training_error_trial = 999999;
         Tensor<type, 1> optimum_parameters_trial;
 
         for(Index i = 0; i < trials_number; i++)
         {
             OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
 
-            double current_training_error_trial = training_results.final_training_error;
-            double current_selection_error_trial = training_results.final_selection_error;
+            type current_training_error_trial = training_results.final_training_error;
+            type current_selection_error_trial = training_results.final_selection_error;
             Tensor<type, 1> current_parameters_trial = training_results.final_parameters;
 
             if(display)
@@ -446,10 +445,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Tensor<type, 1> selection_parameters(2);
     Tensor<type, 1> history_row;
 
-    double current_training_error;
-    double current_selection_error;
+    type current_training_error;
+    type current_selection_error;
 
-    double previus_selection_error;
+    type previus_selection_error;
 
     bool flag_input = false;
 
@@ -461,7 +460,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     time_t beginning_time, current_time;
 
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
 
    if(display)
@@ -1385,7 +1384,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_selection_error_goal = atof(element->GetText());
+            const type new_selection_error_goal = atof(element->GetText());
 
             try
             {
@@ -1423,7 +1422,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_correlation = atof(element->GetText());
+            const type new_maximum_correlation = atof(element->GetText());
 
             try
             {
@@ -1442,7 +1441,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_minimum_correlation = atof(element->GetText());
+            const type new_minimum_correlation = atof(element->GetText());
 
             try
             {
@@ -1461,7 +1460,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_time = atoi(element->GetText());
+            const type new_maximum_time = atoi(element->GetText());
 
             try
             {
@@ -1480,7 +1479,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_tolerance = atof(element->GetText());
+            const type new_tolerance = atof(element->GetText());
 
             try
             {

@@ -226,8 +226,6 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
 #endif
 
-    
-
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Index negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);

@@ -286,9 +286,9 @@ Tensor<type, 2> eigenvalues(const Tensor<type, 2>& matrix)
 
     Tensor<type, 2> eigenvalues(rows_number, 1);
 
-//    const Map<MatrixXd> this_eigen((type*)this->data(), rows_number, columns_number);
-//    const SelfAdjointEigenSolver<MatrixXd> matrix_eigen(this_eigen, EigenvaluesOnly);
-//    Map<MatrixXd> eigenvalues_eigen(eigenvalues.data(), rows_number, 1);
+//    const Map<Tensor<type, 2>> this_eigen((type*)this->data(), rows_number, columns_number);
+//    const SelfAdjointEigenSolver<Tensor<type, 2>> matrix_eigen(this_eigen, EigenvaluesOnly);
+//    Map<Tensor<type, 2>> eigenvalues_eigen(eigenvalues.data(), rows_number, 1);
 
 //    eigenvalues_eigen = matrix_eigen.eigenvalues();
 
@@ -343,9 +343,9 @@ Tensor<type, 2> eigenvectors(const Tensor<type, 2>& matrix)
 
     Tensor<type, 2> eigenvectors(rows_number, rows_number);
 /*
-    const Map<MatrixXd> this_eigen((type*)matrix.data(), rows_number, columns_number);
-    const SelfAdjointEigenSolver<MatrixXd> matrix_eigen(this_eigen, ComputeEigenvectors);
-    Map<MatrixXd> eigenvectors_eigen(eigenvectors.data(), rows_number, rows_number);
+    const Map<Tensor<type, 2>> this_eigen((type*)matrix.data(), rows_number, columns_number);
+    const SelfAdjointEigenSolver<Tensor<type, 2>> matrix_eigen(this_eigen, ComputeEigenvectors);
+    Map<Tensor<type, 2>> eigenvectors_eigen(eigenvectors.data(), rows_number, rows_number);
 
     eigenvectors_eigen = matrix_eigen.eigenvectors();
 */
