@@ -210,15 +210,6 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& 
     return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
 */
     return Tensor<type, 2>();
-
-}
-
-
-Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights_transpose() const
-{
-    //return synaptic_weights.transpose();
-
-    return Tensor<type, 2>();
 }
 
 
@@ -595,24 +586,12 @@ Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-/*
     const Index output_rows_number = inputs.dimension(0);
     const Index output_columns_number = get_neurons_number();
 
-    Tensor<type, 2> combinations(Tensor<Index, 1>({output_rows_number, output_columns_number}));
+    Tensor<type, 2> combinations = calculate_combinations(inputs);
 
     const Index inputs_dimensions_number = inputs.rank();
-
-    if(inputs_dimensions_number == 2)
-    {
-        combinations = linear_combinations(inputs, synaptic_weights, biases);
-    }
-    else
-    {
-        const Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
-
-        combinations = linear_combinations(reshaped_inputs, synaptic_weights, biases);
-    }
 
     switch(activation_function)
     {
@@ -644,8 +623,6 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
-*/
-    return Tensor<type, 2>();
 }
 
 
@@ -657,14 +634,11 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-/*
-    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
     const Tensor<type, 1> biases = get_biases(parameters);
 
-    return calculate_outputs(inputs, biases, synaptic_weights);
-*/
+    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
 
-    return Tensor<type, 2>();
+    return calculate_outputs(inputs, biases, synaptic_weights);
 }
 
 
@@ -693,12 +667,10 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
  }
 
 #endif
-/*
-Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
 #ifdef __OPENNN_DEBUG__
 
-const Index inputs_columns_number = reshaped_inputs.dimension(1);
+const Index inputs_columns_number = inputs.dimension(1);
 
 const Index inputs_number = get_inputs_number();
 
@@ -714,8 +686,8 @@ if(inputs_columns_number != inputs_number)
 }
 
 #endif
-
-    Tensor<type, 2> combinations(linear_combinations(reshaped_inputs,synaptic_weights,biases));
+/*
+    Tensor<type, 2> combinations(linear_combinations(inputs, synaptic_weights,biases));
 
     switch(activation_function)
     {
@@ -767,10 +739,10 @@ Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(cons
 
 
 Tensor<type, 2> ProbabilisticLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                                                          const Tensor<type, 2>& output_gradient) const
-{/*
+                                                           const Tensor<type, 2>& output_gradient) const
+{
     const Index neurons_number = get_neurons_number();
-
+/*
     if(neurons_number == 1)
     {
         return activations_derivatives*output_gradient;
@@ -795,10 +767,6 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
                                                             const Layer::ForwardPropagation&,
                                                             const Tensor<type, 2>& layer_deltas)
 {
-/*
-    Tensor<type, 2> reshaped_inputs = layer_inputs.to_2d_tensor();
-
-    Tensor<type, 2> reshaped_deltas = layer_deltas.to_2d_tensor();
 
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
@@ -807,19 +775,17 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
 
     const Index parameters_number = get_parameters_number();
 
-    Tensor<type, 1> error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> error_gradient(parameters_number);
 
     // Synaptic weights
-
-    error_gradient.embed(0, dot(reshaped_inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
+/*
+    error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
 
     // Biases
 
-    error_gradient.embed(synaptic_weights_number, reshaped_deltas.to_matrix().calculate_columns_sum());
-
-    return error_gradient;
+    error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
 */
-    return Tensor<type, 1>();
+    return error_gradient;
 }
 
 

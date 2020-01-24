@@ -64,10 +64,10 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 
    DataSet data_set(1,1,1);
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
    Tensor<double, 2> new_data(2, 2);
    new_data(0,0) = -1.0;
@@ -116,10 +116,10 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
 //   ScalingLayer* scaling_layer = new ScalingLayer();
 
@@ -345,7 +345,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 
    Tensor<type, 1> error_terms;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
 
@@ -379,7 +379,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Vector<Index> hidden_layers_size;
+   Tensor<Index, 1> hidden_layers_size;
    Tensor<type, 1> network_parameters;
 
    DataSet data_set;

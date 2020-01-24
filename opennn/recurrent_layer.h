@@ -85,9 +85,6 @@ public:
    Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_recurrent_weights(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> get_input_weights_transpose() const;
-   Tensor<type, 2> get_recurrent_weights_transpose() const;
-
    // Activation functions
 
    const RecurrentLayer::ActivationFunction& get_activation_function() const;

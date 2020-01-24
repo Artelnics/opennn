@@ -128,7 +128,7 @@ void UnscalingLayerTest::test_get_descriptives()
 
    UnscalingLayer ul;
 
-   Vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    // Test
 
@@ -244,8 +244,8 @@ void UnscalingLayerTest::test_write_expression()
 
    UnscalingLayer ul;
 
-   Vector<string> inputs_names;
-   Vector<string> outputs_names;
+   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> outputs_names;
 
    string expression;
 

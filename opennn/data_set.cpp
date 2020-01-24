@@ -470,7 +470,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("Categories");
 
-        for(size_t i = 0; i < categories.size(); i++)
+        for(Index i = 0; i < categories.size(); i++)
         {
             file_stream.PushText(categories[i].c_str());
 
@@ -486,7 +486,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("CategoriesUses");
 
-        for(size_t i = 0; i < categories_uses.size(); i++)
+        for(Index i = 0; i < categories_uses.size(); i++)
         {
             if(categories_uses[i] == Input)
             {
@@ -559,7 +559,7 @@ void DataSet::transform_columns_time_series()
 {
     const Index columns_number = get_columns_number();
 
-    vector<Column> new_columns;
+    Tensor<Column, 1> new_columns;
 
     if(has_time_variables())
     {
@@ -730,7 +730,7 @@ Tensor<Index, 1> DataSet::get_training_instances_indices() const
     {
        if(instances_uses[i] == Training)
        {
-          training_indices[count] = static_cast<Index>(i);
+          training_indices[count] = i;
           count++;
        }
     }
@@ -829,7 +829,7 @@ Tensor<Index, 1> DataSet::get_unused_instances_indices() const
     {
         if(instances_uses[i] == UnusedInstance)
         {
-            unused_indices[count] = static_cast<Index>(i);
+            unused_indices[count] = i;
             count++;
         }
     }
@@ -1093,7 +1093,7 @@ void DataSet::set_instances_unused(const Tensor<Index, 1>& indices)
 {
     for(Index i = 0; i < static_cast<Index>(indices.size()); i++)
     {
-        const Index index = indices[static_cast<Index>(i)];
+        const Index index = indices[i];
 
         instances_uses[index] = UnusedInstance;
     }
@@ -1163,7 +1163,7 @@ void DataSet::set_instances_uses(const Tensor<InstanceUse, 1>& new_uses)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "void set_instances_uses(const vector<Use>&) method.\n"
+             << "void set_instances_uses(const Tensor<InstanceUse, 1>&) method.\n"
              << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -2075,7 +2075,7 @@ Index DataSet::get_used_columns_number() const
 
 /// Returns the columns of the data set.
 
-vector<DataSet::Column> DataSet::get_columns() const
+Tensor<DataSet::Column, 1> DataSet::get_columns() const
 {
     return columns;
 }
@@ -2083,14 +2083,14 @@ vector<DataSet::Column> DataSet::get_columns() const
 
 /// Returns the used columns of the data set.
 
-vector<DataSet::Column> DataSet::get_used_columns() const
+Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
 {
 /*
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
     return columns.get_subvector(used_columns_indices);
 */
-    return vector<DataSet::Column>();
+    return Tensor<DataSet::Column, 1>();
 }
 
 
@@ -2643,14 +2643,14 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 
 void DataSet::set_binary_simple_columns()
 {
-    vector<type> values;
+    Tensor<type, 1> values;
 
     bool is_binary = true;
 
     for(Index column_index = 0; column_index < data.dimension(1); column_index++)
     {
         is_binary = true;
-
+/*
         values.clear();
 
         for(Index row_index = 0; row_index < data.dimension(0); row_index++)
@@ -2666,9 +2666,11 @@ void DataSet::set_binary_simple_columns()
                 is_binary = false;
                 break;
             }
+
         }
 
         if(is_binary) columns[column_index].type = Binary;
+*/
     }
 }
 
@@ -2720,7 +2722,7 @@ bool DataSet::is_multiple_classification() const
 
     for(Index i = 0; i < targets.dimension(0); i++)
     {
-        if(targets.get_row(i).calculate_sum() == 0.0)
+        if(targets.chip(i, 0).calculate_sum() == 0.0)
         {
             return false;
         }
@@ -3210,7 +3212,6 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& index) const
 
 Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Tensor<Index, 1>& variables_indices) const
 {
-/*
     #ifdef __OPENNN_DEBUG__
 
    const Index instances_number = get_instances_number();
@@ -3227,7 +3228,7 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Te
    }
 
    #endif
-
+/*
    return data.get_row(instance_index, variables_indices);
 */
    return Tensor<type, 1>();
@@ -4111,7 +4112,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_instances()
 
     for(i = 0; i < static_cast<Index>(instances_number); i++)
     {
-       instance_i = get_instance_data(static_cast<Index>(i));
+       instance_i = get_instance_data(i);
 
        for(Index j = static_cast<Index>(i+1); j < instances_number; j++)
        {
@@ -4251,24 +4252,24 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const double& minimum_corre
 /// The default number of bins is 10.
 /// @param bins_number Number of bins.
 
-vector<Histogram> DataSet::calculate_columns_histograms(const Index& bins_number) const
+Tensor<Histogram, 1> DataSet::calculate_columns_histograms(const Index& bins_number) const
 {
    const Index used_columns_number = get_used_columns_number();
    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-   vector<Histogram> histograms(used_columns_number);
+   Tensor<Histogram, 1> histograms(used_columns_number);
 /*
    #pragma omp parallel for shared(histograms)
 
    for(Index i = 0; i < static_cast<Index>(used_columns_number); i++)
    {
-       if(columns[static_cast<Index>(i)].type == Numeric)
+       if(columns[i].type == Numeric)
        {
-           const Index index = used_columns_indices[static_cast<Index>(i)];
+           const Index index = used_columns_indices[i];
 
            const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
 
-           histograms[static_cast<Index>(i)] = histogram(column, bins_number);
+           histograms[i] = histogram(column, bins_number);
        }
    }
 */
@@ -4287,24 +4288,24 @@ vector<Histogram> DataSet::calculate_columns_histograms(const Index& bins_number
 /// <li> Maximum
 /// </ul>
 
-vector<BoxPlot> DataSet::calculate_columns_box_plots() const
+Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 {
     const Index used_columns_number = get_used_columns_number();
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-    vector<BoxPlot> box_plots(used_columns_number);
+    Tensor<BoxPlot, 1> box_plots(used_columns_number);
 /*
     #pragma omp parallel for shared(box_plots)
 
     for(Index i = 0; i < static_cast<Index>(used_columns_number); i++)
     {
-        if(columns[static_cast<Index>(i)].type == Numeric)
+        if(columns[i].type == Numeric)
         {
-            const Index index = used_columns_indices[static_cast<Index>(i)];
+            const Index index = used_columns_indices[i];
 
             const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
 
-            box_plots[static_cast<Index>(i)] = box_plot(column);
+            box_plots[i] = box_plot(column);
         }
     }
 */
@@ -4325,7 +4326,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
 
     for(Index i = 0; i < training_instances_number; i++)
     {
-        const Index training_index = training_indices[static_cast<Index>(i)];
+        const Index training_index = training_indices[i];
 
         if(data(training_index, target_index) == 0.0)
         {
@@ -4360,7 +4361,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
 
     for(Index i = 0; i < static_cast<Index>(selection_instances_number); i++)
     {
-        const Index selection_index = selection_indices[static_cast<Index>(i)];
+        const Index selection_index = selection_indices[i];
 
         if(data(selection_index, target_index) == 0.0)
         {
@@ -4395,7 +4396,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 
     for(Index i = 0; i < static_cast<Index>(testing_instances_number); i++)
     {
-        const Index testing_index = testing_indices[static_cast<Index>(i)];
+        const Index testing_index = testing_indices[i];
 
         if(data(testing_index, target_index) == 0.0)
         {
@@ -4426,12 +4427,12 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 /// <li> Standard deviation.
 /// </ul>
 
-vector<Descriptives> DataSet::calculate_columns_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives() const
 {
 /*
     return descriptives_missing_values(data);
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4448,13 +4449,13 @@ Tensor<type, 2> DataSet::calculate_columns_descriptives_matrix() const
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
 
-    const vector<Descriptives> data_statistics_vector = descriptives_missing_values(data, used_instances_indices, used_variables_indices);
+    const Tensor<Descriptives, 1> data_statistics_vector = descriptives_missing_values(data, used_instances_indices, used_variables_indices);
 
     Tensor<type, 2> data_statistics_matrix(variables_number, 4);
 
     for(Index i = 0; i < static_cast<Index>(variables_number); i++)
     {
-        data_statistics_matrix.set_row(static_cast<Index>(i), data_statistics_vector[static_cast<Index>(i)].to_vector());
+        data_statistics_matrix.set_row(i, data_statistics_vector[i].to_vector());
     }
 
     return data_statistics_matrix;
@@ -4467,7 +4468,7 @@ Tensor<type, 2> DataSet::calculate_columns_descriptives_matrix() const
 /// Calculate the descriptives of the instances with positive targets in binary classification problems.
 /// @todo Low priority.
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_positive_instances() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instances() const
 {
 /*
 #ifdef __OPENNN_DEBUG__
@@ -4527,14 +4528,14 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_positive_instances(
 
     return data_statistics_matrix;
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
 /// Calculate the descriptives of the instances with neagtive targets in binary classification problems.
 /// @todo Low priority.
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instances() const
 {
 /*
 #ifdef __OPENNN_DEBUG__
@@ -4594,7 +4595,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances(
 
     return data_statistics_matrix;
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4602,7 +4603,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_negative_instances(
 /// @param class_index Data set index number to make the descriptive statistics.
 /// @todo Low priority.
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
 {
 /*
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
@@ -4645,7 +4646,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const Index
 
     return data_statistics_matrix;
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4658,7 +4659,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_classes(const Index
 /// <li> Training data standard deviation.
 /// </ul>
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_training_instances() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_training_instances() const
 {
 /*
    const Tensor<Index, 1> training_indices = get_training_instances_indices();
@@ -4667,7 +4668,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_training_instances(
 
    return descriptives_missing_values(data, training_indices, used_indices);
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4680,7 +4681,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_training_instances(
 /// <li> Selection data standard deviation.
 /// </ul>
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_selection_instances() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_selection_instances() const
 {
 /*
     const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
@@ -4689,7 +4690,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_selection_instances
 
     return descriptives_missing_values(data, selection_indices, used_indices);
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4702,7 +4703,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_selection_instances
 /// <li> Testing data standard deviation.
 /// </ul>
 
-vector<Descriptives> DataSet::calculate_columns_descriptives_testing_instances() const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_testing_instances() const
 {
 /*
     const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
@@ -4711,7 +4712,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_testing_instances()
 
     return descriptives_missing_values(data, testing_indices, used_indices);
 */
-    return vector<Descriptives>();
+    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4719,7 +4720,7 @@ vector<Descriptives> DataSet::calculate_columns_descriptives_testing_instances()
 /// This includes the minimum, maximum, mean and standard deviation.
 /// The size of this vector is the number of inputs.
 
-vector<Descriptives> DataSet::calculate_input_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
 {
     const Tensor<Index, 1> used_indices = get_used_instances_indices();
 
@@ -4738,7 +4739,7 @@ vector<Descriptives> DataSet::calculate_input_variables_descriptives() const
 /// <li> Target variables standard deviation.
 /// </ul>
 
-vector<Descriptives> DataSet::calculate_target_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 {
    const Tensor<Index, 1> used_indices = get_used_instances_indices();
 
@@ -4761,9 +4762,9 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 
     for(Index i = 0; i < static_cast<Index>(variables_number); i++)
     {
-        const Index variable_index = variables_indices[static_cast<Index>(i)];
+        const Index variable_index = variables_indices[i];
 
-        means[static_cast<Index>(i)] = mean(data.get_column(variable_index));
+        means[i] = mean(data.get_column(variable_index));
     }
 */
     return means;
@@ -5220,18 +5221,18 @@ Tensor<type, 2> DataSet::calculate_covariance_matrix() const
 /*
     for(Index i = 0; i < static_cast<Index>(inputs_number); i++)
     {
-        const Index first_input_index = input_variables_indices[static_cast<Index>(i)];
+        const Index first_input_index = input_variables_indices[i];
 
         const Tensor<type, 1> first_inputs = data.get_column(first_input_index, used_instances_indices);
 
-        for(Index j = static_cast<Index>(i); j < inputs_number; j++)
+        for(Index j = i; j < inputs_number; j++)
         {
             const Index second_input_index = input_variables_indices[j];
 
             const Tensor<type, 1> second_inputs = data.get_column(second_input_index, used_instances_indices);
 
-            covariance_matrix(static_cast<Index>(i),j) = covariance(first_inputs, second_inputs);
-            covariance_matrix(j,static_cast<Index>(i)) = covariance_matrix(static_cast<Index>(i),j);
+            covariance_matrix(i,j) = covariance(first_inputs, second_inputs);
+            covariance_matrix(j,i) = covariance_matrix(i,j);
         }
     }
 */
@@ -5421,17 +5422,19 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
     Tensor<type, 2> new_data(new_instances_number, principal_components_number);
 
     Index instance_index;
-/*
+
     for(Index i = 0; i < new_instances_number; i++)
     {
         instance_index = used_instances[i];
 
         for(Index j = 0; j < principal_components_number; j++)
         {
-            new_data(i,j) = dot(inputs.get_row(instance_index), principal_components.get_row(j));
+/*
+            new_data(i,j) = dot(inputs.chip(instance_index, 0), principal_components.chip(j, 0));
+*/
         }
     }
-
+/*
     data = new_data.assemble_columns(targets);
 */
 }
@@ -5442,7 +5445,7 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 /// @param data_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::scale_data_mean_standard_deviation(const vector<Descriptives>& data_descriptives)
+void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
 /*
    #ifdef __OPENNN_DEBUG__
@@ -5456,7 +5459,7 @@ void DataSet::scale_data_mean_standard_deviation(const vector<Descriptives>& dat
    if(descriptives_size != columns_number)
    {
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "void scale_data_mean_standard_deviation(const vector<Descriptives>&) method.\n"
+             << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
              << "Size of descriptives must be equal to number of columns.\n";
 
       throw logic_error(buffer.str());
@@ -5471,7 +5474,7 @@ void DataSet::scale_data_mean_standard_deviation(const vector<Descriptives>& dat
        if(display && abs(data_descriptives[i].standard_deviation) < 1.0e-99)
        {
           cout << "OpenNN Warning: DataSet class.\n"
-                    << "void scale_data_mean_standard_deviation(const vector< Descriptives<Type> >&) method.\n"
+                    << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
                     << "Standard deviation of variable " <<  i << " is zero.\n"
                     << "That variable won't be scaled.\n";
         }
@@ -5486,9 +5489,9 @@ void DataSet::scale_data_mean_standard_deviation(const vector<Descriptives>& dat
 /// and the minimum and maximum values calculated from the data matrix.
 /// It also returns the descriptives from all columns.
 
-vector<Descriptives> DataSet::scale_data_minimum_maximum()
+Tensor<Descriptives, 1> DataSet::scale_data_minimum_maximum()
 {
-    const vector<Descriptives> data_descriptives = calculate_columns_descriptives();
+    const Tensor<Descriptives, 1> data_descriptives = calculate_columns_descriptives();
 
     scale_data_minimum_maximum(data_descriptives);
 
@@ -5500,9 +5503,9 @@ vector<Descriptives> DataSet::scale_data_minimum_maximum()
 /// and the mean and standard deviation values calculated from the data matrix.
 /// It also returns the descriptives from all columns.
 
-vector<Descriptives> DataSet::scale_data_mean_standard_deviation()
+Tensor<Descriptives, 1> DataSet::scale_data_mean_standard_deviation()
 {
-    const vector<Descriptives> data_descriptives = calculate_columns_descriptives();
+    const Tensor<Descriptives, 1> data_descriptives = calculate_columns_descriptives();
 
     scale_data_mean_standard_deviation(data_descriptives);
 
@@ -5514,7 +5517,7 @@ vector<Descriptives> DataSet::scale_data_mean_standard_deviation()
 
 void DataSet::subtract_inputs_mean()
 {
-    vector<Descriptives> input_statistics = calculate_input_variables_descriptives();
+    Tensor<Descriptives, 1> input_statistics = calculate_input_variables_descriptives();
 
     Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
@@ -5556,19 +5559,19 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 
     for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
     {
-        current_distribution = perform_distribution_distance_analysis(data.get_column(used_inputs_indices[static_cast<Index>(i)]));
+        current_distribution = perform_distribution_distance_analysis(data.get_column(used_inputs_indices[i]));
 
         if(current_distribution == 0) // Normal distribution
         {
-            scaling_methods[static_cast<Index>(i)] = "MeanStandardDeviation";
+            scaling_methods[i] = "MeanStandardDeviation";
         }
         else if(current_distribution == 1) // Uniform distribution
         {
-            scaling_methods[static_cast<Index>(i)] = "MinimumMaximum";
+            scaling_methods[i] = "MinimumMaximum";
         }
         else // Default
         {
-            scaling_methods[static_cast<Index>(i)] = "MinimumMaximum";
+            scaling_methods[i] = "MinimumMaximum";
         }
     }
 */
@@ -5581,7 +5584,7 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 /// @param data_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::scale_data_minimum_maximum(const vector<Descriptives>& data_descriptives)
+void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Index variables_number = get_variables_number();
 
@@ -5594,7 +5597,7 @@ void DataSet::scale_data_minimum_maximum(const vector<Descriptives>& data_descri
    if(descriptives_size != variables_number)
    {
       buffer << "OpenNN Exception: DataSet class.\n"
-             << "void scale_data_minimum_maximum(const vector<Descriptives>&) method.\n"
+             << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
              << "Size of data descriptives must be equal to number of variables.\n";
 
       throw logic_error(buffer.str());
@@ -5608,7 +5611,7 @@ void DataSet::scale_data_minimum_maximum(const vector<Descriptives>& data_descri
        && abs(data_descriptives[i].maximum - data_descriptives[i].minimum) < 1.0e-99)
        {
           cout << "OpenNN Warning: DataSet class.\n"
-                    << "void scale_data_minimum_maximum(const vector< Descriptives<Type> >&) method.\n"
+                    << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
                     << "Range of variable " <<  i << " is zero.\n"
                     << "That variable won't be scaled.\n";
         }
@@ -5624,7 +5627,7 @@ void DataSet::scale_data_minimum_maximum(const vector<Descriptives>& data_descri
 /// @param inputs_descriptives vector of descriptives structures for the input variables.
 /// The size of that vector must be equal to the number of inputs.
 
-void DataSet::scale_inputs_mean_standard_deviation(const vector<Descriptives>& inputs_descriptives)
+void DataSet::scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 /*
@@ -5637,7 +5640,7 @@ void DataSet::scale_inputs_mean_standard_deviation(const vector<Descriptives>& i
 /// It updates the input variables of the data matrix.
 /// It also returns a vector of vectors with the variables descriptives.
 
-vector<Descriptives> DataSet::scale_inputs_mean_standard_deviation()
+Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
 {    
     #ifdef __OPENNN_DEBUG__
 
@@ -5646,7 +5649,7 @@ vector<Descriptives> DataSet::scale_inputs_mean_standard_deviation()
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "vector<Descriptives> scale_inputs_mean_standard_deviation() method.\n"
+              << "Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation() method.\n"
               << "Data file is not loaded.\n";
 
        throw logic_error(buffer.str());
@@ -5654,7 +5657,7 @@ vector<Descriptives> DataSet::scale_inputs_mean_standard_deviation()
 
     #endif
 
-   const vector<Descriptives> inputs_descriptives = calculate_input_variables_descriptives();
+   const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
    scale_inputs_mean_standard_deviation(inputs_descriptives);
 
@@ -5761,7 +5764,7 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 /// @param inputs_descriptives vector of descriptives structures for all the inputs in the data set.
 /// The size of that vector must be equal to the number of input variables.
 
-void DataSet::scale_inputs_minimum_maximum(const vector<Descriptives>& inputs_descriptives)
+void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 /*
@@ -5774,7 +5777,7 @@ void DataSet::scale_inputs_minimum_maximum(const vector<Descriptives>& inputs_de
 /// It updates the input variables of the data matrix.
 /// It also returns a vector of vectors with the minimum and maximum values of the input variables.
 
-vector<Descriptives> DataSet::scale_inputs_minimum_maximum()
+Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -5783,7 +5786,7 @@ vector<Descriptives> DataSet::scale_inputs_minimum_maximum()
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "vector<Descriptives> scale_inputs_minimum_maximum() method.\n"
+              << "Tensor<Descriptives, 1> scale_inputs_minimum_maximum() method.\n"
               << "Data file is not loaded.\n";
 
        throw logic_error(buffer.str());
@@ -5791,7 +5794,7 @@ vector<Descriptives> DataSet::scale_inputs_minimum_maximum()
 
     #endif
 
-   const vector<Descriptives> inputs_descriptives = calculate_input_variables_descriptives();
+   const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
    scale_inputs_minimum_maximum(inputs_descriptives);
 
@@ -5850,7 +5853,7 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 /// The method to be used is that in the scaling and unscaling method variable.
 /// Finally, it returns the descriptives.
 
-vector<Descriptives> DataSet::scale_inputs(const string& scaling_unscaling_method)
+Tensor<Descriptives, 1> DataSet::scale_inputs(const string& scaling_unscaling_method)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
     {
@@ -5867,7 +5870,7 @@ vector<Descriptives> DataSet::scale_inputs(const string& scaling_unscaling_metho
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class\n"
-                   << "vector<Descriptives> scale_inputs() method.\n"
+                   << "Tensor<Descriptives, 1> scale_inputs() method.\n"
                    << "Unknown scaling and unscaling method.\n";
 
             throw logic_error(buffer.str());
@@ -5880,7 +5883,7 @@ vector<Descriptives> DataSet::scale_inputs(const string& scaling_unscaling_metho
 /// Then it scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_inputs(const string& scaling_unscaling_method, const vector<Descriptives>& inputs_descriptives)
+void DataSet::scale_inputs(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& inputs_descriptives)
 {
    switch(get_scaling_unscaling_method(scaling_unscaling_method))
    {
@@ -5907,7 +5910,7 @@ void DataSet::scale_inputs(const string& scaling_unscaling_method, const vector<
          ostringstream buffer;
 
          buffer << "OpenNN Exception: DataSet class\n"
-                << "void scale_inputs(const string&, const vector<Descriptives>&) method.\n"
+                << "void scale_inputs(const string&, const Tensor<Descriptives, 1>&) method.\n"
                 << "Unknown scaling and unscaling method.\n";
 
          throw logic_error(buffer.str());
@@ -5919,7 +5922,7 @@ void DataSet::scale_inputs(const string& scaling_unscaling_method, const vector<
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const vector<Descriptives>& inputs_descriptives)
+void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -5956,7 +5959,7 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
              ostringstream buffer;
 
              buffer << "OpenNN Exception: DataSet class\n"
-                    << "void scale_inputs(const Tensor<string, 1>&, const vector<Descriptives>&) method.\n"
+                    << "void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                     << "Unknown scaling and unscaling method: " << scaling_unscaling_methods[i] << "\n";
 
              throw logic_error(buffer.str());
@@ -5971,7 +5974,7 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_mean_standard_deviation(const vector<Descriptives>& targets_descriptives)
+void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 /*
@@ -5984,7 +5987,7 @@ void DataSet::scale_targets_mean_standard_deviation(const vector<Descriptives>& 
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of descriptives structures with the basic descriptives of all the variables.
 
-vector<Descriptives> DataSet::scale_targets_mean_standard_deviation()
+Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -5993,7 +5996,7 @@ vector<Descriptives> DataSet::scale_targets_mean_standard_deviation()
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "vector<Descriptives> scale_targets_mean_standard_deviation() method.\n"
+              << "Tensor<Descriptives, 1> scale_targets_mean_standard_deviation() method.\n"
               << "Data file is not loaded.\n";
 
        throw logic_error(buffer.str());
@@ -6001,7 +6004,7 @@ vector<Descriptives> DataSet::scale_targets_mean_standard_deviation()
 
     #endif
 
-   const vector<Descriptives> targets_descriptives = calculate_target_variables_descriptives();
+   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
    scale_targets_mean_standard_deviation(targets_descriptives);
 
@@ -6014,7 +6017,7 @@ vector<Descriptives> DataSet::scale_targets_mean_standard_deviation()
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_minimum_maximum(const vector<Descriptives>& targets_descriptives)
+void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -6023,7 +6026,7 @@ void DataSet::scale_targets_minimum_maximum(const vector<Descriptives>& targets_
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "vector<Descriptives> scale_targets_minimum_maximum() method.\n"
+              << "Tensor<Descriptives, 1> scale_targets_minimum_maximum() method.\n"
               << "Data file is not loaded.\n";
 
        throw logic_error(buffer.str());
@@ -6041,9 +6044,9 @@ void DataSet::scale_targets_minimum_maximum(const vector<Descriptives>& targets_
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of vectors with the descriptives of the input target variables.
 
-vector<Descriptives> DataSet::scale_targets_minimum_maximum()
+Tensor<Descriptives, 1> DataSet::scale_targets_minimum_maximum()
 {
-   const vector<Descriptives> targets_descriptives = calculate_target_variables_descriptives();
+   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
    scale_targets_minimum_maximum(targets_descriptives);
 
@@ -6056,7 +6059,7 @@ vector<Descriptives> DataSet::scale_targets_minimum_maximum()
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_logarithmic(const vector<Descriptives>& targets_descriptives)
+void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -6065,7 +6068,7 @@ void DataSet::scale_targets_logarithmic(const vector<Descriptives>& targets_desc
        ostringstream buffer;
 
        buffer << "OpenNN Exception: DataSet class.\n"
-              << "vector<Descriptives> scale_targets_logarithmic() method.\n"
+              << "Tensor<Descriptives, 1> scale_targets_logarithmic() method.\n"
               << "Data file is not loaded.\n";
 
        throw logic_error(buffer.str());
@@ -6085,9 +6088,9 @@ void DataSet::scale_targets_logarithmic(const vector<Descriptives>& targets_desc
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of vectors with the descriptives of the input target variables.
 
-vector<Descriptives> DataSet::scale_targets_logarithmic()
+Tensor<Descriptives, 1> DataSet::scale_targets_logarithmic()
 {
-   const vector<Descriptives> targets_descriptives = calculate_target_variables_descriptives();
+   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
    scale_targets_logarithmic(targets_descriptives);
 
@@ -6100,7 +6103,7 @@ vector<Descriptives> DataSet::scale_targets_logarithmic()
 /// The method to be used is that in the scaling and unscaling method variable.
 /// Finally, it returns the descriptives.
 
-vector<Descriptives> DataSet::scale_targets(const string& scaling_unscaling_method)
+Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_method)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
    {
@@ -6129,7 +6132,7 @@ vector<Descriptives> DataSet::scale_targets(const string& scaling_unscaling_meth
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class\n"
-               << "vector<Descriptives> scale_targets(const string&) method.\n"
+               << "Tensor<Descriptives, 1> scale_targets(const string&) method.\n"
                << "Unknown scaling and unscaling method.\n";
 
         throw logic_error(buffer.str());
@@ -6141,7 +6144,7 @@ vector<Descriptives> DataSet::scale_targets(const string& scaling_unscaling_meth
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_targets(const string& scaling_unscaling_method, const vector<Descriptives>& targets_descriptives)
+void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& targets_descriptives)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
    {
@@ -6174,7 +6177,7 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const vector
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class\n"
-               << "void scale_targets(const string&, const vector<Descriptives>&) method.\n"
+               << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
                << "Unknown scaling and unscaling method.\n";
 
         throw logic_error(buffer.str());
@@ -6188,7 +6191,7 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const vector
 /// @param data_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_data_mean_standard_deviation(const vector<Descriptives>& data_descriptives)
+void DataSet::unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
 /*
    unscale_mean_standard_deviation(data, data_descriptives);
@@ -6201,7 +6204,7 @@ void DataSet::unscale_data_mean_standard_deviation(const vector<Descriptives>& d
 /// @param data_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_data_minimum_maximum(const vector<Descriptives>& data_descriptives)
+void DataSet::unscale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
 /*
    unscale_minimum_maximum(data, data_descriptives);
@@ -6214,7 +6217,7 @@ void DataSet::unscale_data_minimum_maximum(const vector<Descriptives>& data_desc
 /// @param data_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_inputs_mean_standard_deviation(const vector<Descriptives>& data_descriptives)
+void DataSet::unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 /*
@@ -6228,7 +6231,7 @@ void DataSet::unscale_inputs_mean_standard_deviation(const vector<Descriptives>&
 /// @param data_descriptives vector of descriptives structures for all the data in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_inputs_minimum_maximum(const vector<Descriptives>& data_descriptives)
+void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 /*
@@ -6242,7 +6245,7 @@ void DataSet::unscale_inputs_minimum_maximum(const vector<Descriptives>& data_de
 /// @param targets_descriptives vector of descriptives structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_targets_mean_standard_deviation(const vector<Descriptives>& targets_descriptives)
+void DataSet::unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 /*
@@ -6256,7 +6259,7 @@ void DataSet::unscale_targets_mean_standard_deviation(const vector<Descriptives>
 /// @param data_descriptives vector of descriptives structures for all the variables.
 /// The size of that vector must be equal to the number of variables.
 
-void DataSet::unscale_targets_minimum_maximum(const vector<Descriptives>& data_descriptives)
+void DataSet::unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 /*
@@ -6548,9 +6551,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Columns items
 
     {
-        const size_t columns_number = get_columns_number();
+        const Index columns_number = get_columns_number();
 
-        for(size_t i = 0; i < columns_number; i++)
+        for(Index i = 0; i < columns_number; i++)
         {
             file_stream.OpenElement("Column");
 
@@ -6571,7 +6574,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Instances");
 
     // Instances number
-
     {
         file_stream.OpenElement("InstancesNumber");
 
@@ -6635,7 +6637,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
-    const size_t missing_values_number = 0;//data.count_nan();
+    const Index missing_values_number = 0;//data.count_nan();
 
     {
         file_stream.OpenElement("MissingValuesNumber");
@@ -6696,13 +6698,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    for(size_t i = 0; i < data_file_preview.size(); i++)
+    for(Index i = 0; i < data_file_preview.size(); i++)
     {
         file_stream.OpenElement("Row");
 
         file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-        for(size_t j = 0; j < data_file_preview[i].size(); j++)
+        for(Index j = 0; j < data_file_preview[i].size(); j++)
         {
             file_stream.PushText(data_file_preview[i][j].c_str());
 
@@ -6872,7 +6874,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(lags_number_element->GetText())
      {
-         const size_t new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
+         const Index new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
 
          set_lags_number(new_lags_number);
      }
@@ -6892,7 +6894,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(steps_ahead_element->GetText())
      {
-         const size_t new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
+         const Index new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
 
          set_steps_ahead_number(new_steps_ahead);
      }
@@ -6912,7 +6914,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(time_index_element->GetText())
      {
-         const size_t new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
+         const Index new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
 
          set_time_index(new_time_index);
      }
@@ -6943,7 +6945,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
          throw logic_error(buffer.str());
      }
 
-     size_t new_columns_number = 0;
+     Index new_columns_number = 0;
 
      if(columns_number_element->GetText())
      {
@@ -6956,7 +6958,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(new_columns_number > 0)
      {
-         for(size_t i = 0; i < new_columns_number; i++)
+         for(Index i = 0; i < new_columns_number; i++)
          {
              const tinyxml2::XMLElement* column_element = columns_element->FirstChildElement("Column");
 
@@ -7001,7 +7003,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(instances_number_element->GetText())
      {
-         const size_t new_instances_number = static_cast<Index>(atoi(instances_number_element->GetText()));
+         const Index new_instances_number = static_cast<Index>(atoi(instances_number_element->GetText()));
 //@todo
 //         instances_uses.set(new_instances_number);
      }
@@ -7081,7 +7083,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
          throw logic_error(buffer.str());
      }
 
-     size_t new_preview_size = 0;
+     Index new_preview_size = 0;
 
      if(preview_size_element->GetText())
      {
@@ -7092,7 +7094,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      // Preview data
 
-     for(size_t i = 0; i < new_preview_size; i++)
+     for(Index i = 0; i < new_preview_size; i++)
      {
          const tinyxml2::XMLElement* row_element = preview_data_element->FirstChildElement("Row");
 
@@ -7271,14 +7273,13 @@ void DataSet::print_data() const
 
 void DataSet::print_data_preview() const
 {
-/*
    if(display)
    {
        const Index instances_number = get_instances_number();
 
        if(instances_number > 0)
        {
-          const Tensor<type, 1> first_instance = data.get_row(0);
+          const Tensor<type, 1> first_instance = data.chip(0, 0);
 
           cout << "First instance:\n"
                     << first_instance << endl;
@@ -7286,7 +7287,7 @@ void DataSet::print_data_preview() const
 
        if(instances_number > 1)
        {
-          const Tensor<type, 1> second_instance = data.get_row(1);
+          const Tensor<type, 1> second_instance = data.chip(1, 0);
 
           cout << "Second instance:\n"
                     << second_instance << endl;
@@ -7294,13 +7295,12 @@ void DataSet::print_data_preview() const
 
        if(instances_number > 2)
        {
-          const Tensor<type, 1> last_instance = data.get_row(instances_number-1);
+          const Tensor<type, 1> last_instance = data.chip(instances_number-1, 0);
 
           cout << "Instance " << instances_number << ":\n"
                     << last_instance << endl;
        }
     }
-*/
 }
 
 
@@ -7335,7 +7335,7 @@ void DataSet::transform_time_series()
     time_series_columns = columns;
 
     delete_unused_instances();
-/*
+
     if(has_time_variables())
     {
         OpenNN::transform_time_series(data, lags_number, steps_ahead, time_index);
@@ -7347,8 +7347,8 @@ void DataSet::transform_time_series()
 
     transform_columns_time_series();
 
-    vector<InstanceUse> new_instance_uses(data.dimension(0));
-
+    Tensor<InstanceUse, 1> new_instance_uses(data.dimension(0));
+/*
     instances_uses = new_instance_uses;
 
     const Index inputs_number = get_input_variables_number();
@@ -7403,7 +7403,7 @@ void DataSet::fill_time_series(const Index& period )
 
     Index j = 1;
 
-    new_data.set_row(0, data.get_row(0));
+    new_data.set_row(0, data.chip(0, 0));
 
     cout.precision(20);
 
@@ -7416,7 +7416,7 @@ void DataSet::fill_time_series(const Index& period )
       }
       if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(0,0) + i * period))
       {
-          new_data.set_row(i, data.get_row(j));
+          new_data.set_row(i, data.chip(j, 0));
 
           j = j + 1;
       }
@@ -7610,7 +7610,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
     Index instances_number;
     Tensor<Index, 1> instances_indices;
 
-    vector<Histogram> data_histograms;
+    Tensor<Histogram, 1> data_histograms;
 
     Matrix<Index, Dynamic, Dynamic> total_frequencies;
     Tensor<Index, 1> instance_frequencies;
@@ -7714,7 +7714,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
     // Most populated target
 
-    const vector<Histogram> data_histograms = calculate_columns_histograms(bins_number);
+    const Tensor<Histogram, 1> data_histograms = calculate_columns_histograms(bins_number);
 
     Index most_populated_target = 0;
     Index most_populated_bin = 0;
@@ -7755,7 +7755,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
     for(Index i = 0; i < used_instances_number; i++)
     {
-        index = used_instances[static_cast<Index>(i)];
+        index = used_instances[i];
 
         instance = get_instance_data(index);
 
@@ -7770,7 +7770,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 //            instance_frequencies = total_frequencies(data_histograms);
 /*
             total_instances_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs);
-            total_instances_frequencies(count_instances, 1) = used_instances[static_cast<Index>(i)];
+            total_instances_frequencies(count_instances, 1) = used_instances[i];
 */
             count_instances++;
         }
@@ -7882,7 +7882,7 @@ Tensor<Index, 1> DataSet::calculate_Tukey_outliers(const Index& column_index, co
 /// @param cleaning_parameter Parameter used to detect outliers.
 /// @todo Low priority.
 
-vector<Tensor<Index, 1>> DataSet::calculate_Tukey_outliers(const double& cleaning_parameter) const
+Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const double& cleaning_parameter) const
 {
     const Index instances_number = get_used_instances_number();
     const Tensor<Index, 1> instances_indices = get_used_instances_indices();
@@ -7892,31 +7892,31 @@ vector<Tensor<Index, 1>> DataSet::calculate_Tukey_outliers(const double& cleanin
 
     double interquartile_range;
 
-    vector<Tensor<Index, 1>> return_values(2);
-/*
-    return_values[0] = Tensor<Index, 1>(instances_number, 0);
-    return_values[1] = Tensor<Index, 1>(variables_number, 0);
+    Tensor<Tensor<Index, 1>, 1> return_values(2);
+
+    return_values[0] = Tensor<Index, 1>(instances_number);
+    return_values[1] = Tensor<Index, 1>(variables_number);
 
     Index variable_index;
 
-    vector<BoxPlot> box_plots(variables_number);
-
+    Tensor<BoxPlot, 1> box_plots(variables_number);
+/*
     for(Index i = 0; i < static_cast<Index>(variables_number); i++)
     {
-        variable_index = used_variables_indices[static_cast<Index>(i)];
+        variable_index = used_variables_indices[i];
 
         if(is_binary_variable(variable_index)) continue;
 
-        box_plots[static_cast<Index>(i)] = box_plot(data.get_column(variable_index));
+        box_plots[i] = box_plot(data.get_column(variable_index));
     }
 
     for(Index i = 0; i < static_cast<Index>(variables_number); i++)
     {
-        variable_index = used_variables_indices[static_cast<Index>(i)];
+        variable_index = used_variables_indices[i];
 
         if(is_binary_variable(variable_index)) continue;
 
-        const BoxPlot variable_box_plot = box_plots[static_cast<Index>(i)];
+        const BoxPlot variable_box_plot = box_plots[i];
 
         if(abs(variable_box_plot[3] - variable_box_plot[1]) < numeric_limits<double>::epsilon())
         {
@@ -7942,7 +7942,7 @@ vector<Tensor<Index, 1>> DataSet::calculate_Tukey_outliers(const double& cleanin
             }
         }
 
-        return_values[1][static_cast<Index>(i)] = variables_outliers;
+        return_values[1][i] = variables_outliers;
     }
 */
     return return_values;
@@ -7954,7 +7954,7 @@ vector<Tensor<Index, 1>> DataSet::calculate_Tukey_outliers(const double& cleanin
 
 void DataSet::unuse_Tukey_outliers(const double& cleaning_parameter)
 {
-    const vector<Tensor<Index, 1>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
+    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 /*
     const Tensor<Index, 1> outliers_instances = outliers_indices[0].get_indices_greater_than(0);
 
@@ -8141,7 +8141,7 @@ void DataSet::generate_paraboloid_data(const Index& instances_number, const Inde
 
     for(Index i = 0; i < instances_number; i++)
     {
-        const double norm = l2_norm(data.get_row(i).delete_last(1));
+        const double norm = l2_norm(data.chip(i, 0).delete_last(1));
 
         data(i, inputs_number) = norm*norm;
     }

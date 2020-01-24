@@ -201,7 +201,7 @@ public:
        Index batch_instances_number = 0;
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       vector<Layer::ForwardPropagation> layers;
+       Tensor<Layer::ForwardPropagation, 1> layers;
    };
 
 
@@ -295,7 +295,7 @@ public:
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
-   vector<Tensor<type, 1>> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
+   Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
    void set_parameters(const Tensor<type, 1>&);
 
@@ -323,8 +323,8 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const double&, const double&, const Index& = 101) const;
 
-   vector<Histogram> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
-   vector<Histogram> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
@@ -364,7 +364,7 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   vector<Layer::ForwardPropagation> calculate_forward_propagation(const Tensor<type, 2>&) const;
+   Tensor<Layer::ForwardPropagation, 1> calculate_forward_propagation(const Tensor<type, 2>&) const;
 
    void calculate_forward_propagation(const ThreadPoolDevice& thread_pool_device,
                                       const DataSet::Batch& batch,

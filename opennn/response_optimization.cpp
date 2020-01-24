@@ -50,13 +50,13 @@ void ResponseOptimization::set_evaluations_number(const Index& new_evaluations_n
 }
 
 
-vector<ResponseOptimization::Condition> ResponseOptimization::get_inputs_conditions()
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_inputs_conditions()
 {
     return inputs_conditions;
 }
 
 
-vector<ResponseOptimization::Condition> ResponseOptimization::get_outputs_conditions()
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_outputs_conditions()
 {
     return outputs_conditions;
 }
@@ -301,8 +301,8 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
 void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names, const Tensor<string, 1>& conditions_string, const Tensor<type, 1>& values)
 {
-    vector<Condition> conditions = get_conditions(conditions_string);
-    vector<Tensor<type, 1>> values_conditions = get_values_conditions(conditions, values);
+    Tensor<Condition, 1> conditions = get_conditions(conditions_string);
+    Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
 
     const Index variables_number = conditions_string.size();
 
@@ -329,11 +329,11 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 }
 
 
-vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(const Tensor<string, 1>& conditions_string) const
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(const Tensor<string, 1>& conditions_string) const
 {
     const Index conditions_size = conditions_string.size();
 
-    vector<Condition> conditions(conditions_size);
+    Tensor<Condition, 1> conditions(conditions_size);
 
     for(Index i = 0; i < conditions_size; i++)
     {
@@ -369,11 +369,11 @@ vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(con
 }
 
 
-vector<Tensor<type, 1>> ResponseOptimization::get_values_conditions(const vector<ResponseOptimization::Condition>& conditions, const Tensor<type, 1>& values) const
+Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, const Tensor<type, 1>& values) const
 {
     const Index conditions_size = conditions.size();
 
-    vector<Tensor<type, 1>> values_conditions(conditions_size);
+    Tensor<Tensor<type, 1>, 1> values_conditions(conditions_size);
 
     Index index = 0;
 

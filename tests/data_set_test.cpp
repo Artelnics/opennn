@@ -228,13 +228,13 @@ void DataSetTest::test_get_inputs()
 
    DataSet data_set(1, 3, 2);
 
-   size_t instances_number = data_set.get_instances_number();
-   size_t inputs_number = data_set.get_input_variables_number();
+   Index instances_number = data_set.get_instances_number();
+   Index inputs_number = data_set.get_input_variables_number();
 
    Tensor<double, 2> inputs = data_set.get_input_data();
 
-   size_t rows_number = inputs.dimension(0);
-   size_t columns_number = inputs.dimension(1);
+   Index rows_number = inputs.dimension(0);
+   Index columns_number = inputs.dimension(1);
 
    assert_true(instances_number == rows_number, LOG);
    assert_true(inputs_number == columns_number, LOG);
@@ -247,13 +247,13 @@ void DataSetTest::test_get_targets()
 
    DataSet data_set(1,3,2);
 
-   size_t instances_number = data_set.get_instances_number();
-   size_t targets_number = data_set.get_target_variables_number();
+   Index instances_number = data_set.get_instances_number();
+   Index targets_number = data_set.get_target_variables_number();
 
    Tensor<double, 2> targets = data_set.get_target_data();
 
-   size_t rows_number = targets.dimension(0);
-   size_t columns_number = targets.dimension(1);
+   Index rows_number = targets.dimension(0);
+   Index columns_number = targets.dimension(1);
 
    assert_true(instances_number == rows_number, LOG);
    assert_true(targets_number == columns_number, LOG);
@@ -381,7 +381,7 @@ void DataSetTest::test_calculate_data_descriptives()
 
    DataSet data_set;
 
-   Vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    // Test
 
@@ -471,7 +471,7 @@ void DataSetTest::test_calculate_training_instances_descriptives()
    cout << "test_calculate_training_instances_descriptives\n";
 
    DataSet data_set;
-   Vector<Descriptives> training_instances_descriptives;
+   Tensor<Descriptives, 1> training_instances_descriptives;
 
    // Test
 
@@ -490,7 +490,7 @@ void DataSetTest::test_calculate_selection_instances_descriptives()
    cout << "test_calculate_selection_instances_descriptives\n";
 
    DataSet data_set;
-   Vector<Descriptives> selection_instances_descriptives;
+   Tensor<Descriptives, 1> selection_instances_descriptives;
 
    // Test
 
@@ -509,7 +509,7 @@ void DataSetTest::test_calculate_testing_instances_descriptives()
    cout << "test_calculate_testing_instances_descriptives\n";
 
    DataSet data_set;
-   Vector<Descriptives> testing_instances_descriptives;
+   Tensor<Descriptives, 1> testing_instances_descriptives;
 
    // Test
 
@@ -605,7 +605,7 @@ void DataSetTest::test_calculate_data_histograms()
    matrix(2,2) = 2.0;
 
    DataSet data_set(matrix);
-   Vector<Histogram> histograms;
+   Tensor<Histogram, 1> histograms;
    histograms = data_set.calculate_columns_histograms();
    Tensor<Index, 1> sol({1, 1});
    Tensor<Index, 1> sol_2({2, 2});
@@ -657,7 +657,7 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
 
    DataSet data_set;
 
-   Vector<Descriptives> inputs_descriptives;
+   Tensor<Descriptives, 1> inputs_descriptives;
 
    // Test
 
@@ -678,7 +678,7 @@ void DataSetTest::test_scale_targets_mean_standard_deviation()
 
    DataSet data_set;
 
-   Vector<Descriptives> targets_descriptives;
+   Tensor<Descriptives, 1> targets_descriptives;
 
    // Test
 
@@ -699,7 +699,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
 
    DataSet data_set;
 
-   Vector<Descriptives> inputs_descriptives;
+   Tensor<Descriptives, 1> inputs_descriptives;
 
    // Test
 
@@ -720,7 +720,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
 
    DataSet data_set;
 
-   Vector<Descriptives> targets_descriptives;
+   Tensor<Descriptives, 1> targets_descriptives;
 
    // Test
 
@@ -741,7 +741,7 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    DataSet data_set;
 
-   Vector<Descriptives> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives;
 
    Tensor<double, 2> data;
    Tensor<double, 2> scaled_data;
@@ -769,7 +769,7 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    DataSet data_set;
 
-   Vector<Descriptives> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives;
 
    Tensor<double, 2> data;
    Tensor<double, 2> scaled_data;
@@ -803,7 +803,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
    DataSet data;
    data.set_data(matrix);
 
-   Vector<Descriptives> descrriptives(1);
+   Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
    descriptives.set_minimum(5.0);
    descriptives.set_maximum(9.0);
@@ -838,7 +838,7 @@ void DataSetTest::test_unscale_data_minimum_maximum()
    DataSet data;
    data.set_data(matrix);
 
-   Vector<Descriptives> descrriptives(1);
+   Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
    descriptives.set_minimum(5.0);
    descriptives.set_maximum(9.0);
@@ -870,7 +870,7 @@ void DataSetTest::test_unscale_inputs_mean_standard_deviation()
 
    data_set.set_display(false);
 
-   Vector<Descriptives> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives;
 
    // Test
 
@@ -897,7 +897,7 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    Tensor<double, 2> targets = data_set.get_target_data();
 
-   Vector<Descriptives> data_descriptives(4);
+   Tensor<Descriptives, 1> data_descriptives(4);
 
    data_set.unscale_targets_mean_standard_deviation(data_descriptives);
 
@@ -916,7 +916,7 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    data_set.set_display(false);
 
-   Vector<Descriptives> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives;
 
    // Test
 
@@ -943,7 +943,7 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    Tensor<double, 2> targets = data_set.get_target_data();
 
-   Vector<Descriptives> data_descriptives(4);
+   Tensor<Descriptives, 1> data_descriptives(4);
 
    data_set.unscale_targets_minimum_maximum(data_descriptives);
 
@@ -1609,10 +1609,10 @@ void DataSetTest::test_clean_Tukey_outliers()
 
     data_set.set_instance(9, instance);
 
-    const Vector<Tensor<Index, 1>> outliers_indices = data_set.calculate_Tukey_outliers(1.5);
+    const Tensor<Tensor<Index, 1>, 1> outliers_indices = data_set.calculate_Tukey_outliers(1.5);
 
     const Tensor<Index, 1> outliers_instances = outliers_indices[0].get_indices_greater_than(0);
-    size_t outliers_number = outliers_instances.size();
+    Index outliers_number = outliers_instances.size();
 
     data_set.set_instances_unused(outliers_instances);
 
@@ -1620,8 +1620,6 @@ void DataSetTest::test_clean_Tukey_outliers()
     assert_true(outliers_number == 1, LOG);
     assert_true(outliers_instances[0] == 9, LOG);
 }
-
-
 
 
 void DataSetTest::test_generate_data_binary_classification()
@@ -2514,7 +2512,7 @@ void DataSetTest::test_filter_variable()
     assert_true(data_set.filter_variable(0, 4, 5) == solution_1, LOG);
 
     //Test
-    Vector<string> header({"a","b","c"});
+    Tensor<string, 1> header({"a","b","c"});
     Tensor<double, 2> matrix_1({{1,2,3},{4,2,8},{7,8,6}}, {"a","b","c"});
     DataSet ds_1;
     ds_1.set_columns_names(true);
@@ -2613,8 +2611,8 @@ void DataSetTest::test_calculate_testing_targets_mean()
 
     DataSet data_set;
     data_set.set_data(matrix);
-    vector<size_t> target_variables_indices({2});
-    vector<size_t> testing_indices({2, 3});
+    Tensor<Index, 1> target_variables_indices({2});
+    Tensor<Index, 1> testing_indices({2, 3});
 
     data_set.set_target_variables_indices(target_variables_indices);
 
@@ -2721,12 +2719,12 @@ void DataSetTest::test_unuse_columns_missing_values()
     cout << "test_unuse_variables_missing_values\n";
 
     Tensor<double, 2> matrix({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
-//    matrix.set_header(Vector<string>({"var1","var2","var3","var4"}));
+//    matrix.set_header(Tensor<string, 1>({"var1","var2","var3","var4"}));
 
     DataSet data_set;
 
     data_set.set_data(matrix);
-    data_set.set_variables_names(Vector<string>({"var1","var2","var3"}));
+    data_set.set_variables_names(Tensor<string, 1>({"var1","var2","var3"}));
 
 //    data_set.unuse_variables_missing_values(1);
 }
@@ -2761,7 +2759,7 @@ void DataSetTest::test_calculate_training_negatives()
     Tensor<Index, 1> training_indices({0,1});
     Tensor<Index, 1> input_variables_indices({0, 1});
     Tensor<Index, 1> target_indices({2});
-    size_t target_index = 2;
+    Index target_index = 2;
 
     data_set.set_testing();
     data_set.set_training(training_indices);
@@ -2769,7 +2767,7 @@ void DataSetTest::test_calculate_training_negatives()
     data_set.set_input_variables_indices(input_variables_indices);
     data_set.set_target_variables_indices(target_indices);
 
-    size_t training_negatives = data_set.calculate_training_negatives(target_index);
+    Index training_negatives = data_set.calculate_training_negatives(target_index);
 
     Tensor<double, 2> data = data_set.get_data();
 
@@ -2791,7 +2789,7 @@ void DataSetTest::test_calculate_selection_negatives()
     Tensor<Index, 1> selection_indices({0,1});
     Tensor<Index, 1> input_variables_indices({0, 1});
     Tensor<Index, 1> target_indices({2});
-    size_t target_index = 2;
+    Index target_index = 2;
 
     data_set.set_testing();
     data_set.set_selection(selection_indices);
@@ -2799,7 +2797,7 @@ void DataSetTest::test_calculate_selection_negatives()
     data_set.set_input_variables_indices(input_variables_indices);
     data_set.set_target_variables_indices(target_indices);
 
-    size_t selection_negatives = data_set.calculate_training_negatives(target_index);
+    Index selection_negatives = data_set.calculate_training_negatives(target_index);
 
     Tensor<double, 2> data = data_set.get_data();
 

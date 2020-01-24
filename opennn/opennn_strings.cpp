@@ -409,7 +409,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i = 1; i < 13; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<Index>(i);
+                    if(month[i] != "") month_number = i;
                 }
             }
 
@@ -442,7 +442,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<Index>(i);
+                    if(month[i] != "") month_number = i;
                 }
             }
 
@@ -475,7 +475,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<Index>(i);
+                    if(month[i] != "") month_number = i;
                 }
             }
 
@@ -508,7 +508,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<Index>(i);
+                    if(month[i] != "") month_number = i;
                 }
             }
 

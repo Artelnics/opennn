@@ -97,11 +97,10 @@ public:
        }
    };
 
-
    // Get methods
 
-   vector<Condition> get_inputs_conditions();
-   vector<Condition> get_outputs_conditions();
+   Tensor<Condition, 1> get_inputs_conditions();
+   Tensor<Condition, 1> get_outputs_conditions();
 
    Tensor<type, 1> get_inputs_minimums();
    Tensor<type, 1> get_inputs_maximums();
@@ -118,8 +117,8 @@ public:
 
    void set_inputs_outputs_conditions(const Tensor<string, 1>&, const Tensor<string, 1>&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   vector<Condition> get_conditions(const Tensor<string, 1>&) const;
-   vector<Tensor<type, 1>> get_values_conditions(const vector<Condition>&, const Tensor<type, 1>&) const;
+   Tensor<Condition, 1> get_conditions(const Tensor<string, 1>&) const;
+   Tensor<Tensor<type, 1>, 1> get_values_conditions(const Tensor<Condition, 1>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_inputs() const;
 
@@ -131,8 +130,8 @@ private:
 
     NeuralNetwork* neural_network_pointer = nullptr;
 
-    vector<Condition> inputs_conditions;
-    vector<Condition> outputs_conditions;
+    Tensor<Condition, 1> inputs_conditions;
+    Tensor<Condition, 1> outputs_conditions;
 
     Tensor<type, 1> inputs_minimums;
     Tensor<type, 1> inputs_maximums;

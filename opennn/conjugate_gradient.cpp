@@ -1274,7 +1274,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    Tensor<type, 1> gradient(parameters_number);
    double gradient_norm = 0.0;
 
-   double selection_error = 0.0;
+   type selection_error = 0.0;
    double old_selection_error = 0.0;
 
    string information;

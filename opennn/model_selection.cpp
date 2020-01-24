@@ -1108,7 +1108,7 @@ void ModelSelection::Results::save(const string& file_name) const
 
 /// @todo
 
-vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Index& k) const
+Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const Index& k) const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
@@ -1124,7 +1124,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
     if(k < 2)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
               << "Number of iterations must be grater or equal than 2.\n";
 
        throw logic_error(buffer.str());
@@ -1133,7 +1133,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1142,7 +1142,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1158,7 +1158,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
     Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
-    vector<NeuralNetwork> neural_network_ensemble(k);
+    Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
     double cross_validation_error = 0.0;
 
     for(Index i = 0; i < k; i++)
@@ -1204,7 +1204,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
 
 /// @todo
 
-vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Index& k, const double& selection_ratio) const
+Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const Index& k, const double& selection_ratio) const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
@@ -1220,7 +1220,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
     if(k < 2)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
               << "Number of iterations must be grater or equal than 2.\n";
 
        throw logic_error(buffer.str());
@@ -1229,7 +1229,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
     if(selection_ratio <= 0.0 || selection_ratio >= 1.0)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
               << "The ratio of testing instances must be between 0.0 and 1.0.\n";
 
        throw logic_error(buffer.str());
@@ -1238,7 +1238,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1247,7 +1247,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
+              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const double&).\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1263,7 +1263,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
     Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
-    vector<NeuralNetwork> neural_network_ensemble(k);
+    Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
     double cross_validation_error = 0.0;
 
     for(Index i = 0; i < k; i++)
@@ -1308,7 +1308,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
 
 /// @todo Check this method.
 
-vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
+Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
@@ -1323,7 +1323,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_positives_cross_validation().\n"
+              << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1332,7 +1332,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_positives_cross_validation().\n"
+              << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1358,7 +1358,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
     Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
-    vector<NeuralNetwork> neural_network_ensemble(positives_instances_number);
+    Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
     double cross_validation_error = 0.0;
 
     for(Index i = 0; i < positives_instances_number; i++)
@@ -1409,6 +1409,6 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     return neural_network_ensemble;
 */
-    return vector<NeuralNetwork>();
+    return Tensor<NeuralNetwork, 1>();
 }
 }

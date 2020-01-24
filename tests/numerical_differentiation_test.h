@@ -96,7 +96,7 @@ private:
    double f1(const double&) const;
    double f2(const Tensor<type, 1>&) const;
    Tensor<type, 1> f3(const Tensor<type, 1>&) const;
-   double f7(const size_t&, const Tensor<type, 1>&, const size_t&, const Tensor<type, 1>&) const;
+   double f7(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const;
 
    // Non constant methods
 
@@ -104,7 +104,7 @@ private:
    double f5(const Tensor<type, 1>&);
    Tensor<type, 1> f6(const Tensor<type, 1>&);
 
-   Tensor<type, 1> f8(const size_t&, const size_t&, const Tensor<type, 1>&) const;
+   Tensor<type, 1> f8(const Index&, const Index&, const Tensor<type, 1>&) const;
 */
 };
 

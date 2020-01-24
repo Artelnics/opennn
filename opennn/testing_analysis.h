@@ -20,6 +20,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "metrics.h"
 #include "correlations.h"
 #include "data_set.h"
 #include "neural_network.h"
@@ -62,11 +63,11 @@ public:
     {
        /// Target data from data set and output data from neural network.
 
-       double correlation = 0.0;
+       type correlation = 0.0;
 
-       double intercept = 0.0;
+       type intercept = 0.0;
 
-       double slope = 0.0;
+       type slope = 0.0;
 
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
@@ -85,15 +86,15 @@ public:
 
         /// Area under a ROC curve.
 
-        double area_under_curve;
+        type area_under_curve;
 
         /// Confidence limit
 
-        double confidence_limit;
+        type confidence_limit;
 
         /// Optimal threshold of a ROC curve.
 
-        double optimal_threshold;
+        type optimal_threshold;
     };
 
 
@@ -158,23 +159,23 @@ public:
 
    // Error data methods
 
-   vector<Tensor<type, 2>> calculate_error_data() const;
-   vector<Tensor<type, 1>> calculate_percentage_error_data() const;
+   Tensor<Tensor<type, 2>, 1> calculate_error_data() const;
+   Tensor<Tensor<type, 1>, 1> calculate_percentage_error_data() const;
 
-   vector<Descriptives> calculate_absolute_errors_statistics() const;
-   vector<Descriptives> calculate_absolute_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Descriptives, 1> calculate_absolute_errors_statistics() const;
+   Tensor<Descriptives, 1> calculate_absolute_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   vector<Descriptives> calculate_percentage_errors_statistics() const;
-   vector<Descriptives> calculate_percentage_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Descriptives, 1> calculate_percentage_errors_statistics() const;
+   Tensor<Descriptives, 1> calculate_percentage_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   vector<vector<Descriptives>> calculate_error_data_statistics() const;
+   Tensor<Tensor<Descriptives, 1>, 1> calculate_error_data_statistics() const;
    void print_error_data_statistics() const;
 
-   vector<Tensor<type, 2>> calculate_error_data_statistics_matrices() const;
+   Tensor<Tensor<type, 2>, 1> calculate_error_data_statistics_matrices() const;
 
-   vector<Histogram> calculate_error_data_histograms(const Index& = 10) const;
+   Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
 
-   vector<Tensor<Index, 1>> calculate_maximal_errors(const Index& = 10) const;
+   Tensor<Tensor<Index, 1>, 1> calculate_maximal_errors(const Index& = 10) const;
 
    Tensor<type, 2> calculate_errors() const;
    Tensor<type, 2> calculate_binary_classification_errors() const;
@@ -192,30 +193,30 @@ public:
    Tensor<type, 1> calculate_binary_classification_testing_errors() const;
    Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 
-   double calculate_testing_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   double calculate_testing_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   double calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
+   type calculate_testing_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_testing_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
 
    // Linear regression analysis methods
 
-   vector<RegressionResults> linear_regression() const;
-   vector<RegressionResults> linear_regression(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<RegressionResults, 1> linear_regression() const;
+   Tensor<RegressionResults, 1> linear_regression(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void print_linear_regression_correlations() const;
-   vector<double> get_linear_regression_correlations_std() const;
+   Tensor<type, 1> get_linear_regression_correlations_std() const;
 
-   vector<LinearRegressionAnalysis> perform_linear_regression_analysis() const;
+   Tensor<LinearRegressionAnalysis, 1> perform_linear_regression_analysis() const;
    void perform_linear_regression_analysis_void() const;
 
    // Binary classifcation methods
 
    Tensor<type, 1> calculate_binary_classification_tests() const;
 
-   double calculate_logloss() const;
+   type calculate_logloss() const;
 
    // Confusion methods
 
-   Matrix<Index, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const;
+   Matrix<Index, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Matrix<Index, Dynamic, Dynamic> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -227,14 +228,14 @@ public:
 
    RocAnalysisResults perform_roc_analysis() const;
 
-   double calculate_Wilcoxon_parameter(const double&, const double&) const;
+   type calculate_Wilcoxon_parameter(const type&, const type&) const;
 
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   double calculate_area_under_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   double calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   double calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const;
-   double calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   double calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_area_under_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
+   type calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   type calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Lift Chart
 
@@ -256,16 +257,16 @@ public:
 
    // Output histogram
 
-   vector<Histogram> calculate_output_histogram(const Tensor<type, 2>&, const Index& = 10) const;
+   Tensor<Histogram, 1> calculate_output_histogram(const Tensor<type, 2>&, const Index& = 10) const;
 
    // Binary classification rates
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const double&) const;
-   Tensor<Index, 1> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const double&) const;
-   Tensor<Index, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const double&) const;
-   Tensor<Index, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const double&) const;
+   Tensor<Index, 1> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
 
    // Multiple classification rates
 
@@ -275,9 +276,9 @@ public:
 
    // Forecasting methods
 
-   vector<Tensor<type, 1>> calculate_error_autocorrelation(const Index& = 10) const;
+   Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
 
-   vector<Tensor<type, 1>> calculate_inputs_errors_cross_correlation(const Index& = 10) const;
+   Tensor<Tensor<type, 1>, 1> calculate_inputs_errors_cross_correlation(const Index& = 10) const;
 
    // Serialization methods
 

@@ -25,7 +25,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     LongShortTermMemoryLayer long_short_term_memory_layer;
     Index inputs_number;
-    size_t neurons_number;
+    Index neurons_number;
 
     Tensor<double, 2> synaptic_weights;
     Tensor<double, 2> recurrent_initializer;
@@ -110,7 +110,7 @@ void LongShortTermMemoryLayerTest::test_get_inputs_number()
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
 
    // Test
@@ -135,7 +135,7 @@ void LongShortTermMemoryLayerTest::test_get_neurons_number()
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
 
    // Test
@@ -282,7 +282,7 @@ void LongShortTermMemoryLayerTest::test_get_biases()
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
    //Test
 
@@ -480,7 +480,7 @@ void LongShortTermMemoryLayerTest::test_set_inputs_number()
     long_short_term_memory_layer.set_state_recurrent_weights(recurrent_weights.get_matrix(2));
     long_short_term_memory_layer.set_output_recurrent_weights(recurrent_weights.get_matrix(3));
 
-    size_t new_inputs_number = 6;
+    Index new_inputs_number = 6;
 
     long_short_term_memory_layer.set_inputs_number(new_inputs_number);
 
@@ -757,7 +757,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
    Tensor<double, 2> recurrent_weights;
    Tensor<double, 2> biases;
 
-   size_t instances = 3;
+   Index instances = 3;
 
     //Test
 

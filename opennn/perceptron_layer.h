@@ -81,8 +81,6 @@ public:
    Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> get_synaptic_weights_transpose() const;
-
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
    Index get_parameters_number() const;
@@ -159,7 +157,7 @@ public:
    {
         const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
-        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);        
 
         const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
 
@@ -322,7 +320,6 @@ public:
 
            const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-//           hidden_delta.device(thread_pool_device) = activations_derivatives*next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
            hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
            hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
        }

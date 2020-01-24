@@ -168,7 +168,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    Tensor<type, 1> PR_training_direction 
    = conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
 
-   size_t parameters_number = neural_network.get_parameters_number();
+   Index parameters_number = neural_network.get_parameters_number();
 
    assert_true(PR_training_direction.size() == parameters_number, LOG);
 
@@ -198,7 +198,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    Tensor<type, 1> FR_training_direction 
    = conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
 
-   size_t parameters_number = neural_network.get_parameters_number();
+   Index parameters_number = neural_network.get_parameters_number();
 
    assert_true(FR_training_direction.size() == parameters_number, LOG);
 

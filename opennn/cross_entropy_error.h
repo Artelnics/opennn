@@ -62,8 +62,8 @@ public:
 
    // Error methods
 
-   double calculate_batch_error(const Tensor<Index, 1>&) const;
-   double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 

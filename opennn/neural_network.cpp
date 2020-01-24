@@ -938,13 +938,13 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 }
 
 
-vector<Tensor<type, 1>> NeuralNetwork::get_trainable_layers_parameters(const Tensor<type, 1>& parameters) const
+Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const Tensor<type, 1>& parameters) const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
     const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
-    vector<Tensor<type, 1>> trainable_layers_parameters(trainable_layers_number);
+    Tensor<Tensor<type, 1>, 1> trainable_layers_parameters(trainable_layers_number);
 
     Index index = 0;
 
@@ -1305,7 +1305,7 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const vector<Tensor<type, 1>> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
+    const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
 
     Tensor<type, 2> outputs;
 
@@ -1365,7 +1365,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 /// @param bins_number Number of bins for the histograms.
 /// @todo
 
-vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
+Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
 {
     const Index inputs_number = get_inputs_number();
 
@@ -1376,7 +1376,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Index& point
     }
     else
     {
-        const vector<ScalingLayer::ScalingMethod> scaling_methods = scaling_layer_pointer->get_scaling_methods();
+        const Tensor<ScalingLayer::ScalingMethod, 1> scaling_methods = scaling_layer_pointer->get_scaling_methods();
 
         for(Index i = 0; i < scaling_methods.size(); i++)
         {
@@ -1416,7 +1416,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Index& point
 
     return histograms(outputs.to_matrix(), bins_number);
 */
-    return vector<Histogram>();
+    return Tensor<Histogram, 1>();
 }
 
 
@@ -1424,14 +1424,14 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Index& point
 /// @param inputs Matrix of the data to evaluate the neural network.
 /// @param bins_number Number of bins for the histograms.
 
-vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
+Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
 {
 /*
    const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
    return histograms(outputs.to_matrix(), bins_number);
 */
-   return vector<Histogram>();
+   return Tensor<Histogram, 1>();
 
 }
 
@@ -1561,7 +1561,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Inputs names
 
-    for(size_t i = 0; i < inputs_names.size(); i++)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
         file_stream.OpenElement("Input");
 
@@ -1586,7 +1586,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    for(size_t i = 0; i < layers_pointers.size(); i++)
+    for(Index i = 0; i < layers_pointers.size(); i++)
     {
         buffer << layers_pointers[i]->get_type_string();
         if(i != (layers_pointers.size()-1)) buffer << " ";
@@ -1598,7 +1598,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers information
 
-    for(size_t i = 0; i < layers_pointers.size(); i++)
+    for(Index i = 0; i < layers_pointers.size(); i++)
     {
         layers_pointers[i]->write_XML(file_stream);
     }
@@ -1624,7 +1624,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs names
 
-    for(size_t i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_names.size(); i++)
     {
         file_stream.OpenElement("Output");
 
@@ -2560,7 +2560,7 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    vector<PerceptronLayer::ActivationFunction> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
 
 //    const Index layers_number = get_layers_number();
 
@@ -2947,7 +2947,7 @@ string NeuralNetwork::write_expression_php() const
         }
     }
 
-    vector<PerceptronLayer::ActivationFunction> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
 
 //    const Index layers_number = get_layers_number();
 
@@ -3265,7 +3265,7 @@ string NeuralNetwork::write_expression_R() const
         }
     }
 
-    vector<PerceptronLayer::ActivationFunction> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
 
 //    const Index layers_number = get_layers_number();
 
@@ -3499,7 +3499,7 @@ void NeuralNetwork::save_data(const string& file_name) const
 
     const Index variables_number = inputs_number + outputs_number;
 
-//    const vector<Descriptives> scaling_layer_descriptives = scaling_layer_pointer->get_descriptives();
+//    const Tensor<Descriptives, 1> scaling_layer_descriptives = scaling_layer_pointer->get_descriptives();
 
     const Index points_number = 101;
 
@@ -3533,13 +3533,13 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 
-vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(const Tensor<type, 2>& inputs) const
+Tensor<Layer::ForwardPropagation, 1> NeuralNetwork::calculate_forward_propagation(const Tensor<type, 2>& inputs) const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
     Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    vector<Layer::ForwardPropagation> forward_propagation(trainable_layers_number);
+    Tensor<Layer::ForwardPropagation, 1> forward_propagation(trainable_layers_number);
 
     // First layer
 

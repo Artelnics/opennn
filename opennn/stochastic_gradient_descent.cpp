@@ -769,9 +769,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
-   double training_error = 0.0;
+   type training_error = 0.0;
 
-   double selection_error = 0.0;
+   type selection_error = 0.0;
    double old_selection_error = 0.0;
 
    double loss = 0.0;

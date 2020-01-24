@@ -67,11 +67,11 @@ public:
 
    // Get methods
 
-   double get_positives_weight() const;
-   double get_negatives_weight() const;
+   type get_positives_weight() const;
+   type get_negatives_weight() const;
 
-   double get_training_normalization_coefficient() const;
-   double get_selection_normalization_coefficient() const;
+   type get_training_normalization_coefficient() const;
+   type get_selection_normalization_coefficient() const;
 
    // Set methods
 
@@ -79,21 +79,21 @@ public:
 
    void set_default();
 
-   void set_positives_weight(const double&);
-   void set_negatives_weight(const double&);
+   void set_positives_weight(const type&);
+   void set_negatives_weight(const type&);
 
-   void set_training_normalization_coefficient(const double&);
-   void set_selection_normalization_coefficient(const double&);
+   void set_training_normalization_coefficient(const type&);
+   void set_selection_normalization_coefficient(const type&);
 
-   void set_weights(const double&, const double&);
+   void set_weights(const type&, const type&);
 
    void set_weights();
 
    void set_training_normalization_coefficient();
    void set_selection_normalization_coefficient();
 
-   double calculate_batch_error(const Tensor<Index, 1>&) const;
-   double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 

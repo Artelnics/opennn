@@ -401,7 +401,7 @@ void PerceptronLayerTest::test_set_inputs_number()
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
 
-    size_t new_inputs_number = 6;
+    Index new_inputs_number = 6;
 
     perceptron_layer.set_inputs_number(new_inputs_number);
 
@@ -443,7 +443,7 @@ void PerceptronLayerTest::test_set_perceptrons_number()
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
 
-    size_t new_perceptrons_number = 1;
+    Index new_perceptrons_number = 1;
 
     perceptron_layer.set_neurons_number(new_perceptrons_number);
 

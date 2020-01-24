@@ -57,23 +57,23 @@ public:
 
    // Get methods
 
-   double get_Minkowski_parameter() const;
+   type get_Minkowski_parameter() const;
 
    // Set methods
 
    void set_default();
 
-   void set_Minkowski_parameter(const double&);
+   void set_Minkowski_parameter(const type&);
 
    // loss methods
 
-   double calculate_training_error() const;
-   double calculate_training_error(const Tensor<type, 1>&) const;
+   type calculate_training_error() const;
+   type calculate_training_error(const Tensor<type, 1>&) const;
 
-   double calculate_selection_error() const;
+   type calculate_selection_error() const;
 
-   double calculate_batch_error(const Tensor<Index, 1>&) const;
-   double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    /// @todo Virtual method not implemented.
 
@@ -100,7 +100,7 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 /*
-        first_order_loss.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations - batch.targets_2d, minkowski_parameter)/static_cast<double>(training_instances_number);
+        first_order_loss.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 */
    }
 
@@ -119,7 +119,7 @@ private:
 
    /// Minkowski exponent value.
 
-   double minkowski_parameter;
+   type minkowski_parameter;
 
 };
 

@@ -83,7 +83,7 @@ NormalizedSquaredError::~NormalizedSquaredError()
 
 /// Returns the normalization coefficient.
 
-double NormalizedSquaredError::get_normalization_coefficient() const
+type NormalizedSquaredError::get_normalization_coefficient() const
 {
     return normalization_coefficient;
 }
@@ -106,13 +106,13 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    double new_normalization_coefficient = 0.0;
+    type new_normalization_coefficient = 0.0;
 
      #pragma omp parallel for reduction(+ : new_normalization_coefficient)
 
     for(Index i = 0; i < static_cast<Index>(training_instances_number); i++)
     {
-        const Index training_index = training_indices[static_cast<Index>(i)];
+        const Index training_index = training_indices[i];
 
        // Target vector
 
@@ -131,7 +131,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 /// Sets the normalization coefficient.
 /// @param new_normalization_coefficient New normalization coefficient to be set.
 
-void NormalizedSquaredError::set_normalization_coefficient(const double& new_normalization_coefficient)
+void NormalizedSquaredError::set_normalization_coefficient(const type& new_normalization_coefficient)
 {
     normalization_coefficient = new_normalization_coefficient;
 }
@@ -158,13 +158,13 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    double new_selection_normalization_coefficient = 0.0;
+    type new_selection_normalization_coefficient = 0.0;
 
      #pragma omp parallel for reduction(+ : new_selection_normalization_coefficient)
 
     for(Index i = 0; i < static_cast<Index>(selection_instances_number); i++)
     {
-        const Index selection_index = selection_indices[static_cast<Index>(i)];
+        const Index selection_index = selection_indices[i];
 
        // Target vector
 
@@ -183,7 +183,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 /// Sets the normalization coefficient from selection instances.
 /// @param new_normalization_coefficient New normalization coefficient to be set.
 
-void NormalizedSquaredError::set_selection_normalization_coefficient(const double& new_selection_normalization_coefficient)
+void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
 {
     selection_normalization_coefficient = new_selection_normalization_coefficient;
 }
@@ -211,7 +211,7 @@ void NormalizedSquaredError::set_default()
 /// @param targets Matrix with the targets values from dataset.
 /// @param targets_mean Vector with the means of the given targets.
 
-double NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) const
+type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -221,7 +221,6 @@ check();
 /*
    return sum_squared_error(targets, targets_mean);
 */
-
     return 0.0;
 }
 
@@ -231,7 +230,7 @@ check();
 /// It also calculates the outputs and the sum squared error from the targets and outputs.
 /// Returns a sum squared error of the training instances.
 
-double NormalizedSquaredError::calculate_training_error() const
+type NormalizedSquaredError::calculate_training_error() const
 {
     /*
 #ifdef __OPENNN_DEBUG__
@@ -261,18 +260,18 @@ check();
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    double training_error = 0.0;
+    type training_error = 0.0;
 
      #pragma omp parallel for reduction(+ : training_error)
 
-    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
+    for(Index i = 0; i < batches_number; i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<Index>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<Index>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
+        targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        const double batch_error = sum_squared_error(outputs, targets);
+        const type batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
     }
@@ -283,7 +282,7 @@ check();
 }
 
 
-double NormalizedSquaredError::calculate_training_error(const Tensor<type, 1>& parameters) const
+type NormalizedSquaredError::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
     /*
 #ifdef __OPENNN_DEBUG__
@@ -313,18 +312,18 @@ check();
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    double training_error = 0.0;
+    type training_error = 0.0;
 
      #pragma omp parallel for reduction(+ : training_error)
 
-    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
+    for(Index i = 0; i < batches_number; i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<Index>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<Index>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
+        targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-        const double batch_error = sum_squared_error(outputs, targets);
+        const type batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
 
@@ -340,7 +339,7 @@ check();
 /// It also calculates the outputs and the sum squared error from the targets and outputs.
 /// Returns a sum squared error of the training instances.
 
-double NormalizedSquaredError::calculate_selection_error() const
+type NormalizedSquaredError::calculate_selection_error() const
 {
     /*
 #ifdef __OPENNN_DEBUG__
@@ -361,7 +360,7 @@ check();
 
     const Index batches_number = selection_batches.size();
 
-    double selection_error = 0.0;
+    type selection_error = 0.0;
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
@@ -374,14 +373,14 @@ check();
 
      #pragma omp parallel for reduction(+ : selection_error)
 
-    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
+    for(Index i = 0; i < batches_number; i++)
     {
-        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<Index>(i)]);
-        targets = data_set_pointer->get_target_data(selection_batches[static_cast<Index>(i)]);
+        inputs = data_set_pointer->get_input_data(selection_batches.chip(i,0));
+        targets = data_set_pointer->get_target_data(selection_batches.chip(i,0));
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        const double batch_error = sum_squared_error(outputs, targets);
+        const type batch_error = sum_squared_error(outputs, targets);
 
         selection_error += batch_error;
 
@@ -397,7 +396,7 @@ check();
 /// Returns the mean squared error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double NormalizedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
+type NormalizedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -413,7 +412,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 /*
-    const double batch_error = sum_squared_error(outputs, targets);
+    const type batch_error = sum_squared_error(outputs, targets);
 
     return batch_error;
 */
@@ -421,7 +420,7 @@ check();
 }
 
 
-double NormalizedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices, const Tensor<type, 1>& parameters) const
+type NormalizedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -436,7 +435,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 /*
-    const double batch_error = sum_squared_error(outputs, targets);
+    const type batch_error = sum_squared_error(outputs, targets);
 
     return batch_error;
 */
@@ -491,13 +490,13 @@ check();
 /*
      #pragma omp parallel for
 
-    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
+    for(Index i = 0; i < batches_number; i++)
     {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
 
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
-        const vector<Layer::ForwardPropagation> forward_propagation
+        const Tensor<Layer::ForwardPropagation, 1> forward_propagation
                 = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Tensor<type, 1> error_terms
@@ -506,14 +505,14 @@ check();
         const Tensor<type, 2> output_gradient
                 = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
         const Tensor<type, 2> error_terms_Jacobian
                 = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
@@ -557,15 +556,15 @@ check();
 
     FirstOrderLoss first_order_loss(this);
 /*
-    const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
+    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
 
     const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
 
-    const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+    const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
     const Tensor<type, 1> batch_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
+    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
 
     first_order_loss.loss = batch_error / normalization_coefficient;
     first_order_loss.gradient += batch_gradient;
@@ -658,7 +657,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 
    for(Index i = 0; i < static_cast<Index>(training_instances_number); i++)
    {
-      const Index training_index = training_indices[static_cast<Index>(i)];
+      const Index training_index = training_indices[i];
 
       const Tensor<type, 2> inputs = data_set_pointer->get_instance_input_data(training_index);
 
@@ -666,7 +665,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 
       const Tensor<type, 2> targets = data_set_pointer->get_instance_target_data(training_index);
 
-      squared_errors[static_cast<Index>(i)] = sum_squared_error(outputs, targets);
+      squared_errors[i] = sum_squared_error(outputs, targets);
    }
 */
    return squared_errors;
@@ -733,24 +732,24 @@ check();
 /*
      #pragma omp parallel for
 
-    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
+    for(Index i = 0; i < batches_number; i++)
     {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
-        const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+        const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
         const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
         const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
         const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = dot(error_terms, error_terms);
+        const type loss = dot(error_terms, error_terms);
 
         const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 

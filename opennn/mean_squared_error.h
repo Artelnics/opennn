@@ -68,13 +68,13 @@ public:
 
    // Error methods
 
-   double calculate_training_error() const;
-   double calculate_training_error(const Tensor<type, 1>&) const;
+   type calculate_training_error() const;
+   type calculate_training_error(const Tensor<type, 1>&) const;
 
-   double calculate_selection_error() const;
+   type calculate_selection_error() const;
 
-   double calculate_batch_error(const Tensor<Index, 1>&) const;
-   double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&) const;
+   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -111,13 +111,13 @@ public:
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
-/*
+
            first_order_loss.loss += regularization_weight*calculate_regularization();
 
            first_order_loss.regularization_gradient = calculate_regularization_gradient();
 
            first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
-*/
+
        }
 
    }

@@ -37,14 +37,14 @@ void CorrelationsTest::test_linear_correlation()
 
     // General case
 
-    size_t size = 100;
+    Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     double correlation;
 
-    for(size_t i = 0; i < size; i++) y[i] = 2*x[i];
+    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     correlation = linear_correlation(x,y);
 
@@ -64,12 +64,12 @@ void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_calculate_spearman_linear_correlation\n";
 
-    size_t size = 100;
+    Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
 
-    for(size_t i = 0; i < size; i++) y[i] = 2*x[i];
+    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     double correlation;
 
@@ -122,14 +122,14 @@ void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_calculate_rank_linear_correlation()\n";
 
-    size_t size = 10;
+    Index size = 10;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     double correlation;
 
-    for(size_t i = 0; i < size; i++) y[i] = 2*x[i];
+    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     correlation = rank_linear_correlation(x,y);
 
@@ -149,7 +149,7 @@ void CorrelationsTest::test_logistic_correlation()
 {
     cout << "test_logistic_correlation\n";
 
-    const size_t size = 100;
+    const Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
 
@@ -157,7 +157,7 @@ void CorrelationsTest::test_logistic_correlation()
     double correlation;
     y.initialize(0.0);
 
-    for(size_t i= size - (size/2); i < size; i++) y[i] = 1;
+    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation_missing_values(x.to_column_matrix(), y);
 
@@ -165,7 +165,7 @@ void CorrelationsTest::test_logistic_correlation()
 
 //    y.initialize(1.0);
 
-//    for(size_t i= size - (size/2); i < size; i++) y[i] = 0;
+//    for(Index i= size - (size/2); i < size; i++) y[i] = 0;
 
 //    correlation = logistic_correlation(x.to_column_matrix(), y);
 
@@ -185,7 +185,7 @@ void CorrelationsTest::test_rank_logistic_correlation()
 {
     cout << "test_calculate_rank_logistic_correlation\n";
 
-    const size_t size = 10;
+    const Index size = 10;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
 
@@ -194,12 +194,12 @@ void CorrelationsTest::test_rank_logistic_correlation()
     double correlation;
 
     y.initialize(0.0);
-    for(size_t i= size - (size/2); i < size; i++) y[i] = 1;
+    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
     correlation = rank_logistic_correlation(x,y);
     assert_true(correlation <= 1, LOG);
 
     y.initialize(1.0);
-    for(size_t i= size - (size/2); i < size; i++) y[i] = 0;
+    for(Index i= size - (size/2); i < size; i++) y[i] = 0;
     correlation = rank_logistic_correlation(x,y);
     assert_true(correlation >= -1, LOG);
 
@@ -239,7 +239,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 {
     cout << "test_calculate_rank_linear_correlation_missing_values\n";
 
-    size_t size = 10;
+    Index size = 10;
 
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
@@ -311,7 +311,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 {
     cout << "test_logistic_correlation_missing_values\n";
 
-    size_t size;
+    Index size;
 
     Tensor<type, 1> x;
 
@@ -328,9 +328,9 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     y.set(size);
 
-    for(size_t i = 0; i < size/2; i++) y[i] = 0;
+    for(Index i = 0; i < size/2; i++) y[i] = 0;
 
-    for(size_t i = size - (size/2); i < size; i++) y[i] = 1;
+    for(Index i = size - (size/2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
@@ -338,9 +338,9 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     // Test
 
-    for(size_t i = 0; i < size/2; i++) y[i] = 1.0;
+    for(Index i = 0; i < size/2; i++) y[i] = 1.0;
 
-    for(size_t i= size - (size/2); i < size; i++) y[i] = 0.0;
+    for(Index i= size - (size/2); i < size; i++) y[i] = 0.0;
 
     correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
@@ -368,7 +368,7 @@ void CorrelationsTest::test_autocorrelation()
 {
     cout << "test_calculate_autocorrelation\n";
 
-    size_t size = 1000;
+    Index size = 1000;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> correlations;
@@ -382,7 +382,7 @@ void CorrelationsTest::test_cross_correlations()
 {
     cout << "test_calculate_autocorrelation\n";
 
-    size_t size = 1000;
+    Index size = 1000;
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
 
@@ -435,7 +435,7 @@ void CorrelationsTest::test_logarithmic_correlation_missing_values()
 
        Tensor<type, 1> target(vector.size());
 
-       for(size_t i = 0; i < vector.size(); i++)
+       for(Index i = 0; i < vector.size(); i++)
        {
            target[i] = log(1.5*vector[i] + 2);
        }
@@ -446,12 +446,12 @@ void CorrelationsTest::test_exponential_correlation()
 {
     cout << "test_calculate_exponential_correlation\n";
 
-    const size_t size = 100;
+    const Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
 
-    for(size_t i = 0; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         y[i] = exp(2.5*x[i] + 1.4);
     }
@@ -476,7 +476,7 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
        vector[4] = static_cast<double>(NAN);
        Tensor<type, 1> target(vector.size());
 
-       for(size_t i = 0; i < vector.size(); i++)
+       for(Index i = 0; i < vector.size(); i++)
        {
            target[i] = exp(2.5*vector[i] + 1.4);
        }
@@ -642,13 +642,13 @@ void CorrelationsTest::test_logistic_regression()
 {
     cout << "test_logistic_regression \n";
 
-    const size_t size = 100;
+    const Index size = 100;
 
     Tensor<type, 1> x(size);
 
     Tensor<type, 1> y(size);
 
-    for(size_t i = 0; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         x[i] = i + 1;
 
@@ -666,7 +666,7 @@ void CorrelationsTest::test_covariance()
 {
     cout << "test_calculate_covariance\n";
 
-    size_t size = 100;
+    Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
@@ -683,7 +683,7 @@ void CorrelationsTest::test_covariance_missing_values()
 {
     cout << "test_covariance_missing_values\n";
 
-    size_t size = 100;
+    Index size = 100;
     Tensor<type, 1> x(size);
     x.initialize_sequential();
     Tensor<type, 1> y(size);
@@ -701,9 +701,9 @@ void CorrelationsTest::test_covariance_matrix()
 {
     cout << "test_calculate_covariance_matrix\n";
 
-    size_t size = 2;
-    vector<double> vector1(size, 1.0);
-    vector<double> vector2(size, 1.0);
+    Index size = 2;
+    Tensor<double, 1> vector1(size, 1.0);
+    Tensor<double, 1> vector2(size, 1.0);
 
     Tensor<double, 2> matrix(size, 2);
     matrix.set_column(0, vector1);
@@ -757,9 +757,9 @@ void CorrelationsTest::test_contingency_table()
 {
     cout << "test_contingency_table\n";
 
-    Vector<string> vector_1({"a", "b", "b", "a" });
-    Vector<string> vector_2({"c", "c", "d", "d" });
-    Matrix<size_t> matrix(2, 2, 1);
+    Tensor<string, 1> vector_1({"a", "b", "b", "a" });
+    Tensor<string, 1> vector_2({"c", "c", "d", "d" });
+    Matrix<Index> matrix(2, 2, 1);
 
     assert_true(contingency_table(vector_1, vector_2) == matrix, LOG);
 }
@@ -769,8 +769,8 @@ void CorrelationsTest::test_chi_square_test()
 {
     cout << "test_chi_square_test\n";
 
-    Vector<string> vector_1({"a", "b", "b", "a" });
-    Vector<string> vector_2({"c", "c", "d", "d" });
+    Tensor<string, 1> vector_1({"a", "b", "b", "a" });
+    Tensor<string, 1> vector_2({"c", "c", "d", "d" });
 
     assert_true(abs(chi_square_test(contingency_table(vector_1, vector_2).to_double_matrix()) - 0.0) < 1.0e-3, LOG);
 }

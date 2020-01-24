@@ -38,7 +38,7 @@ void CrossEntropyErrorTest::test_calculate_training_error()
 
    data_set.generate_sum_data(10,2);
 
-   Vector<Descriptives> inputs = data_set.scale_inputs_minimum_maximum();
+   Tensor<Descriptives, 1> inputs = data_set.scale_inputs_minimum_maximum();
 
    scaling_layer.set_neurons_number(1);
    scaling_layer.set_inputs_number(1);
@@ -116,10 +116,10 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
    ScalingLayer scaling_layer;
 

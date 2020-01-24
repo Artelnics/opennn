@@ -760,7 +760,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    double old_training_loss = 0.0;
    double training_loss_decrease = 0.0;
 
-   double selection_error = 0.0;
+   type selection_error = 0.0;
    double old_selection_error = 0.0;
 
    Index selection_failures = 0;

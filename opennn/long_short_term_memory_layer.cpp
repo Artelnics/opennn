@@ -1291,7 +1291,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
         const Tensor<type, 1> forget_combinations = calculate_forget_combinations(current_inputs);
         const Tensor<type, 1> forget_activations = calculate_recurrent_activations(forget_combinations);
@@ -1785,7 +1785,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
 #pragma omp parallel
         {
@@ -1886,7 +1886,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
 #pragma omp parallel
         {
@@ -2034,7 +2034,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
              cell_states.setZero();
          }
 
-         const Tensor<type, 1> current_inputs = inputs.get_row(i);
+         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
  #pragma omp parallel
          {
@@ -2106,7 +2106,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
  #pragma omp parallel
         {
@@ -2308,21 +2308,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
 
      for(Index instance = 0; instance < instances_number; instance++)
      {
-         const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
          const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-         const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-         const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-         const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 
@@ -2418,21 +2418,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
 
     for(Index instance = 0; instance < instances_number; instance++)
     {
-        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2527,21 +2527,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
 
     for(Index instance = 0; instance < instances_number; instance++)
     {
-        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2636,21 +2636,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
 
      for(Index instance = 0; instance < instances_number; instance++)
      {
-         const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
          const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-         const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-         const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-         const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2747,17 +2747,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         if(instance%timesteps == 0)
         {
@@ -2850,17 +2850,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        if(instance%timesteps == 0)
        {
@@ -2952,17 +2952,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        if(instance%timesteps == 0)
        {
@@ -3054,17 +3054,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         if(instance%timesteps == 0)
         {
@@ -3152,17 +3152,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 
@@ -3241,17 +3241,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -3331,17 +3331,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -3420,17 +3420,17 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 

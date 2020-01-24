@@ -183,7 +183,7 @@ public:
     void delete_parameters_history();
     void check() const;
 
-    Index get_input_index(const vector<DataSet::VariableUse>, const Index);
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
 
     /// Performs the inputs selection for a neural network.
 
@@ -213,7 +213,7 @@ protected:
 
     /// Parameters of all the neural network trained.
 
-    vector<Tensor<type, 1>> parameters_history;
+    Tensor<Tensor<type, 1>, 1> parameters_history;
 
     /// Number of trials for each neural network.
 

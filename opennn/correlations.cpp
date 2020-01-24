@@ -186,7 +186,7 @@ double exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 
     for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
     {
-        log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
+        log_y[i] = log(y_valid[i]);
     }
 
     return linear_correlation(x.delete_indices(negative_indices), log_y);
@@ -555,8 +555,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Correlations.\n"
-           << "Vector<double calculate_cross_correlation(const "
-           << "Tensor<type, 1>&) method.\n"
+           << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
            << "Both vectors must have the same size.\n";
 
     throw logic_error(buffer.str());
@@ -828,7 +827,7 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "linear_regression(const Vector<T>&) const "
+                "linear_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -904,7 +903,7 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
 
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
-             << "RegressionResults linear_regression(const Vector<T>&) const method.\n"
+             << "RegressionResults linear_regression(const Tensor<type, 1>&) const method.\n"
              << "Y size must be equal to X size.\n";
 
       throw logic_error(buffer.str());
@@ -991,7 +990,7 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "logarithmic_regression(const Vector<T>&) const "
+                "logarithmic_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1080,7 +1079,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "logarithmic_regression(const Vector<T>&) const "
+                "logarithmic_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1161,7 +1160,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "exponential_regression(const Vector<T>&) const "
+                "exponential_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1213,7 +1212,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
      for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
+         log_y[i] = log(y_valid[i]);
      }
 
      exponential_regression.correlation = exponential_correlation(x.delete_indices(negative_indices), log_y);
@@ -1240,7 +1239,7 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "exponential_regression(const Vector<T>&) const "
+                "exponential_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1298,7 +1297,7 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 
      for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
+         log_y[i] = log(y_valid[i]);
      }
 
      exponential_regression.correlation = exponential_correlation(new_vector_x.delete_indices(negative_indices), log_y);
@@ -1326,7 +1325,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "power_regression(const Vector<T>&) const "
+                "power_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1395,7 +1394,7 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "power_regression(const Vector<T>&) const "
+                "power_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1601,7 +1600,7 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "linear_correlation(const Vector<T>&) const "
+                "linear_correlation(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1670,7 +1669,7 @@ CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, 
 
      if(x_size != n) {
        buffer << "OpenNN Exception: Vector Template.\n"
-              << "RegressionResults linear_regression(const Vector<T>&) const method.\n"
+              << "RegressionResults linear_regression(const Tensor<type, 1>&) const method.\n"
               << "Y size must be equal to X size.\n";
 
        throw logic_error(buffer.str());
@@ -1746,7 +1745,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "logarithmic_regression(const Vector<T>&) const "
+                "logarithmic_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1821,7 +1820,7 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "logarithmic_regression(const Vector<T>&) const "
+                "logarithmic_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1906,7 +1905,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "exponential_regression(const Vector<T>&) const "
+                "exponential_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -1950,7 +1949,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
         for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
         {
-             log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
+             log_y[i] = log(y_valid[i]);
         }
 
         exponential_correlation.correlation = OpenNN::linear_correlation(x.delete_indices(negative_indices), log_y);
@@ -1980,7 +1979,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "exponential_regression(const Vector<T>&) const "
+                "exponential_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -2032,7 +2031,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
      for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
+         log_y[i] = log(y_valid[i]);
      }
 
      exponential_correlation.correlation = exponential_correlation_missing_values(new_vector_x.delete_indices(negative_indices), log_y);
@@ -2064,7 +2063,7 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "power_regression(const Vector<T>&) const "
+                "power_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -2127,7 +2126,7 @@ CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, c
     if(x_size != n) {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
-                "power_regression(const Vector<T>&) const "
+                "power_regression(const Tensor<type, 1>&) const "
                 "method.\n"
              << "Y size must be equal to X size.\n";
 
@@ -2886,11 +2885,11 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 
     for(Index  i = 0; i < static_cast<Index>(this_unique.size()); i++)
     {
-        if(this_unique_frecuency[static_cast<Index>(i)] > 1)
+        if(this_unique_frecuency[i] > 1)
         {
-             const double unique = this_unique[static_cast<Index>(i)];
+             const double unique = this_unique[i];
 
-             Tensor<type, 1> indices(this_unique_frecuency[static_cast<Index>(i)]);
+             Tensor<type, 1> indices(this_unique_frecuency[i]);
 
              for(Index j = 0; j < n; j++)
              {

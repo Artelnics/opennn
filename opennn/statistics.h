@@ -272,18 +272,18 @@ struct Histogram
      // Box plot
      BoxPlot box_plot(const Tensor<type, 1>&);
      BoxPlot box_plot_missing_values(const Tensor<type, 1>&);
-     vector<BoxPlot> box_plots(const Tensor<type, 2>&, const vector<Tensor<Index, 1>>&, const Tensor<Index, 1>&);
+     Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>&, const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&);
 
      // Descriptives vector
      Descriptives descriptives(const Tensor<type, 1>&);
      Descriptives descriptives_missing_values(const Tensor<type, 1>&);
 
      // Descriptives matrix
-     vector<Descriptives> descriptives(const Tensor<type, 2>&);
-     vector<Descriptives> descriptives(const Tensor<type, 2>&);
-     vector<Descriptives> descriptives(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-     vector<Descriptives> descriptives_missing_values(const Tensor<type, 2>&);
-     vector<Descriptives> descriptives_missing_values(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+     Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&);
+     Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&);
+     Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+     Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>&);
+     Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
      // Histograms
      Histogram histogram(const Tensor<type, 1>&, const Index & = 10);
@@ -291,9 +291,9 @@ struct Histogram
      Histogram histogram_centered(const Tensor<type, 1>&, const type& = 0.0, const Index & = 10);
      Histogram histogram(const Tensor<bool, 1>&);
      Histogram histogram(const Tensor<Index, 1>&, const Index & = 10);
-     vector<Histogram> histograms(const Tensor<type, 2>&, const Index& = 10);
-     vector<Histogram> histograms_missing_values(const Tensor<type, 2>& matrix, const Index& bins_number);
-     Tensor<Index, 1> total_frequencies(const vector<Histogram>&);
+     Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
+     Tensor<Histogram, 1> histograms_missing_values(const Tensor<type, 2>& matrix, const Index& bins_number);
+     Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
 
      // Distribution
      Index perform_distribution_distance_analysis(const Tensor<type, 1>&);
@@ -331,7 +331,7 @@ struct Histogram
      // Mean weights
      type weighted_mean(const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<Index, 1> maximal_indices();
-     vector<Tensor<Index, 1>> minimal_maximal_indices();
+     Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
      // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);

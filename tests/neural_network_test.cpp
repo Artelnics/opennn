@@ -515,7 +515,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    NeuralNetwork neural_network_4;
 
-   const size_t categories = 3;
+   const Index categories = 3;
    parameters_number = 5;
 
    inputs_number = 10;
