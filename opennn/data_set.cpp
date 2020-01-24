@@ -1309,9 +1309,11 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
    }
 
    const Index instances_number = get_instances_number();
-/*
-   Tensor<Index, 1> indices(0, 1, instances_number-1);
-   random_shuffle(indices.begin(), indices.end());
+
+   Tensor<Index, 1> indices;
+
+   intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+   random_shuffle(indices.data(), indices.data() + indices.size());
 
    Index i = 0;
    Index index;
@@ -1366,8 +1368,6 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
 
       i++;
    }
-   */
-
 }
 
 
