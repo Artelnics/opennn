@@ -560,8 +560,7 @@ public:
 
    void initialize_data(const double&);
 
-   void randomize_data_uniform(const double& minimum = -1.0, const double& maximum = 1.0);
-   void randomize_data_normal(const double& mean = 0.0, const double& standard_deviation = 1.0);
+   void set_data_random();
 
    // Descriptives methods
 

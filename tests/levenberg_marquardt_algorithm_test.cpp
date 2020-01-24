@@ -112,7 +112,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
     // Test
 
     data_set.set(2, 2, 2);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     neural_network.set(NeuralNetwork::Approximation, {2, 2});
     neural_network.set_parameters_random();
@@ -150,7 +150,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    data_set.set(1, 1, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    Tensor<double, 2> inputs = data_set.get_training_input_data();
    Tensor<double, 2> targets = data_set.get_training_target_data();
@@ -178,7 +178,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    // Test
 
    data_set.set(1, 1, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
    neural_network.set_parameters_random();
@@ -257,7 +257,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
    parameters_number = neural_network.get_parameters_number();
 
    data_set.set(1,2,3);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
@@ -271,7 +271,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
    data_set.set(1, 1, 1);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 

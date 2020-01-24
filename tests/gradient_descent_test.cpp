@@ -63,7 +63,7 @@ void GradientDescentTest::test_perform_training()
    cout << "test_perform_training\n";
 
    DataSet data_set(1, 1, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
