@@ -850,7 +850,7 @@ DataSet::InstanceUse DataSet::get_instance_use(const int& index) const
 
 /// Returns the use of every instance (training, selection, testing or unused) in a vector.
 
-const Tensor<DataSet::InstanceUse, 1>& DataSet::get_instances_uses() const
+const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
 {
     return instances_uses;
 }
@@ -1190,7 +1190,7 @@ void DataSet::set_instance_use(const int& index, const string& new_use)
 /// @param new_uses vector of use structures.
 /// The size of given vector must be equal to the number of instances.
 
-void DataSet::set_instances_uses(const Tensor<InstanceUse, 1>& new_uses)
+void DataSet::set_instances_uses(const vector<InstanceUse>& new_uses)
 {
     const int instances_number = get_instances_number();
 
@@ -6621,7 +6621,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("InstancesUses");
 
         buffer.str("");
-        buffer << get_instances_uses();
+        buffer << "";//get_instances_uses();
 
         file_stream.PushText(buffer.str().c_str());
 
