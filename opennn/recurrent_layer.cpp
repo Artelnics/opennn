@@ -64,7 +64,7 @@ Tensor<int, 1> RecurrentLayer::get_input_variables_dimensions() const
 
 /// Returns the number of inputs to the layer.
 
-int RecurrentLayer::get_inputs_number() const
+Index RecurrentLayer::get_inputs_number() const
 {
     return input_weights.dimension(0);
 }
@@ -72,7 +72,7 @@ int RecurrentLayer::get_inputs_number() const
 
 /// Returns the size of the neurons vector.
 
-int RecurrentLayer::get_neurons_number() const
+Index RecurrentLayer::get_neurons_number() const
 {
    return biases.size();
 }
@@ -90,8 +90,8 @@ Tensor<type, 1> RecurrentLayer::get_hidden_states() const
 
 int RecurrentLayer::get_parameters_number() const
 {
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
     return  neurons_number * (1 + inputs_number + neurons_number);
 }
@@ -201,8 +201,8 @@ Tensor<type, 1> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) co
 Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
 {
 /*
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int input_weights_number = input_weights.size();
 
@@ -221,7 +221,7 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
 Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
 {
 /*
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int weights_number = input_weights.size();
     const int recurrent_weights_number = recurrent_weights.size();
@@ -388,7 +388,7 @@ void RecurrentLayer::set_default()
 
 void RecurrentLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     input_weights.set(new_inputs_number, neurons_number);
 */
@@ -416,7 +416,7 @@ void RecurrentLayer::set_input_shape(const Tensor<int, 1>& size)
 
 void RecurrentLayer::set_neurons_number(const int& new_neurons_number)
 {    
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 /*
     biases.set(new_neurons_number);
 
@@ -463,9 +463,9 @@ void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
     const int parameters_number = get_parameters_number();
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -662,7 +662,7 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -688,7 +688,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -706,7 +706,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
 
     const int instances_number = inputs.dimension(0);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
@@ -736,7 +736,7 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
 /*
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -777,9 +777,9 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
 
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(new_biases.size() != neurons_number)
     {
@@ -854,7 +854,7 @@ Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& com
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_number = combinations.size();
 
@@ -936,7 +936,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_number = combinations.dimension(1);
 
@@ -995,7 +995,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -1013,7 +1013,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const int instances_number = inputs.dimension(0);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
@@ -1042,7 +1042,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -1071,7 +1071,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const int instances_number = inputs.dimension(0);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
@@ -1101,8 +1101,8 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
                                                  const Tensor<type, 2>& new_input_weights,
                                                  const Tensor<type, 2>& new_recurrent_weights)
 { 
-   const int inputs_number = get_inputs_number();
-   const int neurons_number = get_neurons_number();
+   const Index inputs_number = get_inputs_number();
+   const Index neurons_number = get_neurons_number();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -1276,8 +1276,8 @@ Tensor<type, 1> RecurrentLayer::calculate_input_weights_error_gradient(const Ten
                                                                       const Tensor<type, 2> & deltas)
 {
     const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int parameters_number = inputs_number*neurons_number;
 
@@ -1335,7 +1335,7 @@ Tensor<type, 1> RecurrentLayer::calculate_recurrent_weights_error_gradient(const
                                                                           const Tensor<type, 2> & deltas)
 {
     const int instances_number = deltas.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int parameters_number = neurons_number*neurons_number;
 
@@ -1391,7 +1391,7 @@ Tensor<type, 1> RecurrentLayer::calculate_biases_error_gradient(const Tensor<typ
                                                                const Tensor<type, 2> & deltas)
 {
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int biases_number = get_biases_number();
 
@@ -1436,9 +1436,9 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
-   const int inputs_number = get_inputs_number(); 
+   const Index inputs_number = get_inputs_number(); 
    const int inputs_name_size = inputs_names.size();
 
    if(inputs_name_size != inputs_number)
@@ -1495,8 +1495,8 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
 string RecurrentLayer::object_to_string() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 

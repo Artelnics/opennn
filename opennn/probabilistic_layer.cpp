@@ -56,19 +56,19 @@ ProbabilisticLayer::~ProbabilisticLayer()
 
 Tensor<int, 1> ProbabilisticLayer::get_input_variables_dimensions() const
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     return Tensor<int, 1>(inputs_number);
 }
 
 
-int ProbabilisticLayer::get_inputs_number() const
+Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
 }
 
 
-int ProbabilisticLayer::get_neurons_number() const
+Index ProbabilisticLayer::get_neurons_number() const
 {
     return biases.size();
 }
@@ -202,8 +202,8 @@ Tensor<type, 1> ProbabilisticLayer::get_biases(const Tensor<type, 1>& parameters
 
 Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int synaptic_weights_number = synaptic_weights.size();
 /*
@@ -292,7 +292,7 @@ void ProbabilisticLayer::set(const ProbabilisticLayer& other_probabilistic_layer
 
 void ProbabilisticLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     biases.resize(neurons_number);
 /*
@@ -303,7 +303,7 @@ void ProbabilisticLayer::set_inputs_number(const int& new_inputs_number)
 
 void ProbabilisticLayer::set_neurons_number(const int& new_neurons_number)
 {
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     biases = Tensor<type, 1>(new_neurons_number);
 
@@ -327,8 +327,8 @@ void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synapti
 
 void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
     const int parameters_number = get_parameters_number();
 
@@ -400,7 +400,7 @@ void ProbabilisticLayer::set_default()
 {
     layer_type = Probabilistic;
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 1)
     {
@@ -425,7 +425,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 1 && new_activation_function == Competitive)
     {
@@ -710,7 +710,7 @@ Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
 const int inputs_columns_number = reshaped_inputs.dimension(1);
 
-const int inputs_number = get_inputs_number();
+const Index inputs_number = get_inputs_number();
 
 if(inputs_columns_number != inputs_number)
 {
@@ -779,7 +779,7 @@ Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(cons
 Tensor<type, 2> ProbabilisticLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
                                                           const Tensor<type, 2>& output_gradient) const
 {/*
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 1)
     {
@@ -810,8 +810,8 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
 
     Tensor<type, 2> reshaped_deltas = layer_deltas.to_2d_tensor();
 
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     const int synaptic_weights_number = neurons_number*inputs_number;
 
@@ -863,7 +863,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
        throw logic_error(buffer.str());
     }
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 
@@ -918,7 +918,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tens
        throw logic_error(buffer.str());
     }
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 

@@ -94,8 +94,8 @@ public:
     int get_inputs_rows_number() const;
     int get_inputs_columns_number() const;
 
-    int get_inputs_number() const;
-    int get_neurons_number() const;
+    Index get_inputs_number() const;
+    Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const;
     int get_parameters_number() const;

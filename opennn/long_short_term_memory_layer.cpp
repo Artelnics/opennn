@@ -60,7 +60,7 @@ LongShortTermMemoryLayer::~LongShortTermMemoryLayer()
 
 /// Returns the number of inputs to the layer.
 
-int LongShortTermMemoryLayer::get_inputs_number() const
+Index LongShortTermMemoryLayer::get_inputs_number() const
 {
     return input_weights.dimension(0);
 }
@@ -68,7 +68,7 @@ int LongShortTermMemoryLayer::get_inputs_number() const
 
 /// Returns the size of the neurons vector.
 
-int LongShortTermMemoryLayer::get_neurons_number() const
+Index LongShortTermMemoryLayer::get_neurons_number() const
 {
    return output_biases.size();
 }
@@ -84,10 +84,11 @@ int LongShortTermMemoryLayer::get_parameters_number() const
     return 4 * neurons_number * (1 + inputs_number + neurons_number);
 }
 
+
 /// Returns the forget biases from all the lstm in the layer.
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
-///
+
 Tensor<type, 1> LongShortTermMemoryLayer::get_forget_biases() const
 {
    return forget_biases;
@@ -212,8 +213,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> weights(inputs_number,neurons_number,4);
 
@@ -236,7 +237,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_recurrent_weights() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> recurrent_weights(neurons_number, neurons_number, 4);
 
@@ -258,7 +259,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_recurrent_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_biases() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> biases(neurons_number,4);
 /*
@@ -531,7 +532,7 @@ void LongShortTermMemoryLayer::set_default()
 
 void LongShortTermMemoryLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     set(new_inputs_number, neurons_number);
 }
 
@@ -560,7 +561,7 @@ void LongShortTermMemoryLayer::set_input_shape(const Tensor<int, 1>& size)
 
 void LongShortTermMemoryLayer::set_neurons_number(const int& new_neurons_number)
 {    
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     set(inputs_number, new_neurons_number);
 }
@@ -731,8 +732,8 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1165,7 +1166,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Te
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1191,7 +1192,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Ten
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1217,7 +1218,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Ten
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1244,7 +1245,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1270,7 +1271,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     // forget activations, input activations, state activations, output activations, state, hidden state
     Tensor<type, 2> activations_states(instances_number,neurons_number,6);
@@ -1333,7 +1334,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 
@@ -1383,7 +1384,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.size();
 
@@ -1434,7 +1435,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
     /*
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.get_dimension(2);
 
@@ -1484,7 +1485,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.size();
 
@@ -1534,7 +1535,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combinations.dimension(1);
 
@@ -1586,7 +1587,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combination.size();
 
@@ -1635,7 +1636,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const int combinations_columns_number = combination.size();
 
@@ -1685,7 +1686,7 @@ void LongShortTermMemoryLayer::update_cell_states(const Tensor<type, 1>& inputs)
 {   
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1717,7 +1718,7 @@ void LongShortTermMemoryLayer::update_hidden_states(const Tensor<type, 1>& input
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1745,7 +1746,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     /*
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -1763,7 +1764,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
     const int instances_number = inputs.dimension(0);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
@@ -1816,7 +1817,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
 /*
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1846,7 +1847,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     #endif
 
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     const Tensor<type, 2> new_forget_weights = parameters.get_subvector(0, inputs_number * neurons_number - 1).to_matrix(inputs_number, neurons_number);
     const Tensor<type, 2> new_input_weights = parameters.get_subvector(inputs_number * neurons_number, 2 * inputs_number * neurons_number - 1).to_matrix(inputs_number, neurons_number);
@@ -1916,11 +1917,11 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_weights, const Tensor<type, 2>& new_recurrent_weights)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -2067,7 +2068,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> activations(instances_number,neurons_number);
 
@@ -2198,8 +2199,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<
     /*
     const int parameters_number = get_parameters_number();
 
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
     // For each layer
 
@@ -2276,8 +2277,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
  {
     /*
     const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = inputs_number*neurons_number;
 
      Tensor<type, 1> forget_weights_error_gradient(parameters_number, 0.0);
@@ -2386,8 +2387,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = inputs_number*neurons_number;
 
     Tensor<type, 1> input_weights_error_gradient(parameters_number, 0.0);
@@ -2495,8 +2496,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = inputs_number*neurons_number;
 
     Tensor<type, 1> state_weights_error_gradient(parameters_number, 0.0);
@@ -2604,8 +2605,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
  {
     /*
      const int instances_number = inputs.dimension(0);
-     const int inputs_number = get_inputs_number();
-     const int neurons_number = get_neurons_number();
+     const Index inputs_number = get_inputs_number();
+     const Index neurons_number = get_neurons_number();
      const int parameters_number = inputs_number*neurons_number;
 
      Tensor<type, 1> output_weights_error_gradient(parameters_number, 0.0);
@@ -2713,7 +2714,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number*neurons_number;
 
     Tensor<type, 1> forget_recurrent_weights_error_gradient(parameters_number, 0.0);
@@ -2816,7 +2817,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
 {
     /*
    const int instances_number = inputs.dimension(0);
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
    const int parameters_number = neurons_number*neurons_number;
 
    Tensor<type, 1> input_recurrent_weights_error_gradient(parameters_number, 0.0);
@@ -2918,7 +2919,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
 {
     /*
    const int instances_number = inputs.dimension(0);
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
    const int parameters_number = neurons_number*neurons_number;
 
    Tensor<type, 1> state_recurrent_weights_error_gradient(parameters_number, 0.0);
@@ -3020,7 +3021,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
  {
 /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number*neurons_number;
 
     Tensor<type, 1> output_recurrent_weights_error_gradient(parameters_number, 0.0);
@@ -3122,7 +3123,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
 {
     /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number;
 
     Tensor<type, 1> forget_biases_error_gradient(parameters_number, 0.0);
@@ -3211,7 +3212,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
 {
 /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number;
 
    Tensor<type, 1> input_biases_error_gradient(parameters_number, 0.0);
@@ -3301,7 +3302,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
 {
 /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number;
 
    Tensor<type, 1> state_biases_error_gradient(parameters_number, 0.0);
@@ -3390,7 +3391,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
 {
 /*
     const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     const int parameters_number = neurons_number;
 
     Tensor<type, 1> output_biases_error_gradient(parameters_number, 0.0);
@@ -3479,9 +3480,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
 /*
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -3620,8 +3621,8 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
 string LongShortTermMemoryLayer::object_to_string() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 

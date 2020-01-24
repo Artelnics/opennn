@@ -1040,7 +1040,7 @@ void GeneticAlgorithm::evaluate_population()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
     
-    vector<DataSet::VariableUse> current_uses(original_uses);
+    Tensor<DataSet::VariableUse, 1> current_uses(original_uses);
 
     // Neural network stuff
 
@@ -1721,7 +1721,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double current_selection_error;
 
     Tensor<bool, 1> current_inputs;
-    vector<DataSet::VariableUse> current_uses;
+    Tensor<DataSet::VariableUse, 1> current_uses;
     double current_mean;
     double current_standard_deviation;
 
@@ -1911,7 +1911,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     int original_index;
 
-    vector<DataSet::VariableUse> optimal_uses = original_uses;
+    Tensor<DataSet::VariableUse, 1> optimal_uses = original_uses;
 
     for(int i = 0; i < optimal_inputs.size(); i++)
     {
