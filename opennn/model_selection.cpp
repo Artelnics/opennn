@@ -1151,7 +1151,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Inde
 
     //
 
-    const vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
+    const Tensor<DataSet::InstanceUse, 1> original_uses = data_set_pointer->get_instances_uses();
 
     data_set_pointer->split_instances_random(1,0,0);
 
@@ -1256,7 +1256,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Inde
 
     //
 
-    const vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
+    const Tensor<DataSet::InstanceUse, 1> original_uses = data_set_pointer->get_instances_uses();
 
     data_set_pointer->split_instances_random(1,0,0);
 
@@ -1343,7 +1343,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
-    const vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
+    const Tensor<DataSet::InstanceUse, 1> original_uses = data_set_pointer->get_instances_uses();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
