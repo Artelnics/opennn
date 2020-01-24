@@ -251,32 +251,65 @@ Index Histogram::calculate_most_populated_bin() const
 
 
 /// Returns a vector with the centers of the less populated bins.
+/// @todo, does it make sense?
 
 Tensor<type, 1> Histogram::calculate_minimal_centers() const
 {
-/*
+
   const Index minimum_frequency = calculate_minimum_frequency();
+
+  Index index = 0;
+
+  Tensor<type, 1> minimal_centers;
+
+  for(Index i = 0; i < frequencies.size(); i++)
+  {
+      if(minimum_frequency == frequencies(i))
+      {
+          minimal_centers(index) = frequencies(i);
+
+          index++;
+      }
+  }
+
+  return minimal_centers;
+  /*
   const Tensor<Index, 1> minimal_indices = frequencies.get_indices_equal_to(minimum_frequency);
 
   return(centers.get_subvector(minimal_indices));
 */
-
-    return Tensor<type, 1>();
 }
 
 
 /// Returns a vector with the centers of the most populated bins.
+/// @todo, does it make sense?
 
 Tensor<type, 1> Histogram::calculate_maximal_centers() const
 {
-/*
+
   const Index maximum_frequency = calculate_maximum_frequency();
 
+  Index index = 0;
+
+  Tensor<type, 1> maximal_centers;
+
+  for(Index i = 0; i < frequencies.size(); i++)
+  {
+      if(maximum_frequency == frequencies(i))
+      {
+          maximal_centers(index) = frequencies(i);
+
+          index++;
+      }
+  }
+
+  return maximal_centers;
+
+/*
   const Tensor<Index, 1> maximal_indices = frequencies.get_indices_equal_to(maximum_frequency);
 
   return(centers.get_subvector(maximal_indices));
 */
-    return Tensor<type, 1>();
 
 }
 
@@ -341,12 +374,9 @@ Index Histogram::calculate_frequency(const type&value) const
 
 type minimum(const Tensor<type, 1>& vector)
 {
-/*
-    const type min = *min_element(vector.begin(), vector.end());
+    const Tensor<type,0> min_element = vector.minimum();
 
-    return min;
-*/
-    return 0.0;
+    return min_element(0);
 }
 
 
@@ -354,13 +384,10 @@ type minimum(const Tensor<type, 1>& vector)
 
 time_t minimum(const Tensor<time_t, 1>& vector)
 {
-    /*
-    const time_t min = *min_element(vector.begin(), vector.end());
 
-    return min;
-*/
-    return 0.0;
+    const Tensor<time_t, 0> min_element = vector.minimum();
 
+    return min_element(0);
 }
 
 
@@ -369,24 +396,18 @@ time_t minimum(const Tensor<time_t, 1>& vector)
 
 type maximum(const Tensor<type, 1>& vector)
 {
-/*
-    const type max = *max_element(vector.begin(), vector.end());
+    const Tensor<type,0> max_element = vector.maximum();
 
-    return max;
-*/
-    return 0.0;
-
+    return max_element(0);
 }
 
 
 time_t maximum(const Tensor<time_t, 1>& vector)
 {
-/*
-    const time_t max = *max_element(vector.begin(), vector.end());
 
-    return max;
-*/
-    return 0;
+    const Tensor<time_t,0> max_element = vector.maximum();
+
+    return max_element(0);
 }
 
 
@@ -449,14 +470,11 @@ type mean(const Tensor<type, 1>& vector)
   }
 
 #endif
-/*
-  const type sum = vector.sum();
 
-  const type mean = sum /static_cast<type>(size);
 
-  return mean;
-*/
-    return 0.0;
+    Tensor<type, 0> mean = vector.mean();
+
+    return mean(0);
 }
 
 
@@ -807,7 +825,9 @@ type kurtosis(const Tensor<type, 1>& vector)
 
 type asymmetry_missing_values(const Tensor<type, 1>& vector)
 {
+
   const Index size = vector.dimension(0);
+
 #ifdef __OPENNN_DEBUG__
 
   if(size == 0) {
@@ -832,26 +852,28 @@ type asymmetry_missing_values(const Tensor<type, 1>& vector)
 
   type sum = 0.0;
 
+  Index count = 0;
+
   for(Index i = 0; i < size; i++)
   {
     if(!::isnan(vector[i]))
     {
       sum += (vector[i] - mean_value) *(vector[i] - mean_value) *(vector[i] - mean_value);
+
+      count++;
     }
   }
-/*
-  const type numerator = sum /vector.count_not_NAN();
+
+  const type numerator = sum /count;
   const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
 
   return numerator/denominator;
-*/
-    return 0.0;
+
 }
 
 
 /// Returns the kurtosis of the elements in the vector.
 /// @param vector
-
 
 type kurtosis_missing_values(const Tensor<type, 1>& vector)
 {
@@ -881,20 +903,23 @@ type kurtosis_missing_values(const Tensor<type, 1>& vector)
 
   type sum = 0.0;
 
+  Index count = 0;
+
   for(Index i = 0; i < size; i++)
   {
       if(!::isnan(vector[i]))
     {
       sum += (vector[i] - mean_value)*(vector[i] - mean_value)*(vector[i] - mean_value)*(vector[i] - mean_value);
+
+      count++;
     }
   }
-/*
-  const type numerator = sum /vector.count_not_NAN();
+
+  const type numerator = sum /count;
   const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
   return numerator/denominator - 3.0;
-*/
-    return 0.0;
+
 }
 
 
@@ -905,8 +930,8 @@ type median(const Tensor<type, 1>& vector)
   const Index size = vector.dimension(0);
 
   Tensor<type, 1> sorted_vector(vector);
-/*
-  sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
+
+  sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
   Index median_index;
 
@@ -919,7 +944,7 @@ type median(const Tensor<type, 1>& vector)
 
     return sorted_vector[median_index];
   }
-*/
+
     return 0.0;
 }
 
@@ -931,8 +956,21 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
   const Index size = vector.dimension(0);
 
   Tensor<type, 1> sorted_vector(vector);
-/*
-  sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
+
+  sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
+  Tensor<type, 1> first_sorted_vector(size/2);
+  Tensor<type, 1> last_sorted_vector(size/2);
+
+  for(Index i = 0; i < size/2 ; i++)
+  {
+      first_sorted_vector(i) = sorted_vector(i);
+  }
+
+  for(Index i = 0; i < size/2; i++)
+  {
+      last_sorted_vector[i] = sorted_vector[i + size - size/2];
+    }
 
   Tensor<type, 1> quartiles(3);
 
@@ -956,10 +994,11 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
   }
   else if(size % 2 == 0)
   {
-      quartiles[0] = median(sorted_vector.get_first(size/2));
+//      quartiles[0] = median(sorted_vector.get_first(size/2));
+      quartiles[0] = median(first_sorted_vector);
       quartiles[1] = median(sorted_vector);
-      quartiles[2] = median(sorted_vector.get_last(size/2));
-
+      quartiles[2] = median(last_sorted_vector);
+//      quartiles[2] = median(sorted_vector.get_last(size/2));
   }
   else
   {
@@ -968,9 +1007,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
       quartiles[2] = sorted_vector[size*3/4];
   }
 
-  return(quartiles);
-*/
-  return Tensor<type, 1>();
+  return quartiles;
 }
 
 
@@ -978,10 +1015,22 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
 Tensor<type, 1> quartiles_missing_values(const Tensor<type, 1>& vector)
 {
-/*
+
     const Index size = vector.dimension(0);
 
-    const Index new_size = vector.count_not_NAN();
+//    const Index new_size = vector.count_not_NAN();
+
+    ///@todo count nans
+
+    Index new_size = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(!isnan(vector[i]))
+        {
+             new_size++;
+        }
+    }
 
     Tensor<type, 1> new_vector(new_size);
 
@@ -998,8 +1047,6 @@ Tensor<type, 1> quartiles_missing_values(const Tensor<type, 1>& vector)
     }
 
     return quartiles(new_vector);
-*/
-    return Tensor<type, 1>();
 }
 
 
@@ -1008,8 +1055,9 @@ Tensor<type, 1> quartiles_missing_values(const Tensor<type, 1>& vector)
 BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
-/*
-    if(vector.empty()) return boxplot;
+
+
+    if(vector.dimension(0) == 0 || vector.dimension(1) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
@@ -1018,7 +1066,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
     boxplot.median = quartiles[1];
     boxplot.third_quartile = quartiles[2];
     boxplot.maximum = maximum(vector);
-*/
+
     return boxplot;
 }
 
@@ -1028,8 +1076,8 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 BoxPlot box_plot_missing_values(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
-/*
-    if(vector.empty()) return boxplot;
+
+    if(vector.dimension(0) == 0 || vector.dimension(1) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles_missing_values(vector);
 
@@ -1038,7 +1086,7 @@ BoxPlot box_plot_missing_values(const Tensor<type, 1>& vector)
     boxplot.median = quartiles[1];
     boxplot.third_quartile = quartiles[2];
     boxplot.maximum = maximum_missing_values(vector);
-*/
+
     return boxplot;
 }
 
@@ -1071,9 +1119,10 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
   Tensor<type, 1> minimums(bins_number);
   Tensor<type, 1> maximums(bins_number);
-/*
+
   Tensor<type, 1> centers(bins_number);
-  Tensor<Index, 1> frequencies(bins_number, 0);
+  Tensor<Index, 1> frequencies(bins_number);
+  frequencies.setZero();
 
   const type min = minimum(vector);
   const type max = maximum(vector);
@@ -1117,8 +1166,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
   histogram.frequencies = frequencies;
 
   return histogram;
-*/
-    return Histogram();
+
+//  return Histogram();
 }
 
 
@@ -1160,12 +1209,13 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
       {
           bin_center = static_cast<Index>(static_cast<type>(bins_number)/2.0+1.0/2.0);
       }
-/*
+
       Tensor<type, 1> minimums(bins_number);
       Tensor<type, 1> maximums(bins_number);
 
       Tensor<type, 1> centers(bins_number);
-      Tensor<Index, 1> frequencies(bins_number, 0);
+      Tensor<Index, 1> frequencies(bins_number);
+      frequencies.setZero();
 
       const type min = minimum(vector);
       const type max = maximum(vector);
@@ -1217,8 +1267,8 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
       histogram.frequencies = frequencies;
 
       return histogram;
-*/
-    return Histogram();
+
+//    return Histogram();
 }
 
 
@@ -1231,12 +1281,16 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
 Histogram histogram(const Tensor<bool, 1>& vector)
 {
-/*
-  const Tensor<Index, 1> minimums(2, 0);
-  const Tensor<Index, 1> maximums(2, 1);
 
-  const Tensor<Index, 1> centers({0,1});
-  Tensor<Index, 1> frequencies(2, 0);
+  Tensor<type, 1> minimums(2);
+  minimums.setZero();
+  Tensor<type, 1> maximums(2);
+  maximums.setConstant(1);
+
+  Tensor<type, 1> centers(2);
+  centers.setValues({0,1});
+  Tensor<Index, 1> frequencies(2);
+  frequencies.setZero();
 
   // Calculate bins frequency
 
@@ -1254,14 +1308,14 @@ Histogram histogram(const Tensor<bool, 1>& vector)
   }
 
   Histogram histogram(2);
-  histogram.centers = centers.to_type_vector();
-  histogram.minimums = minimums.to_type_vector();
-  histogram.maximums = maximums.to_type_vector();
+  histogram.centers = centers;
+  histogram.minimums = minimums;
+  histogram.maximums = maximums;
   histogram.frequencies = frequencies;
 
   return histogram;
-*/
-    return Histogram();
+
+//    return Histogram();
 }
 
 
@@ -1294,7 +1348,7 @@ Histogram histogram(const Tensor<Index, 1>& vector, const Index& bins_number)
     Tensor<Index, 1> centers = vector.get_integer_elements(bins_number);
     const Index centers_number = centers.size();
 
-    sort(centers.begin(), centers.end(), less<Index>());
+    sort(centers.data(), centers.data() + centers.size(), less<Index>());
 
     Tensor<type, 1> minimums(centers_number);
     Tensor<type, 1> maximums(centers_number);
@@ -1346,8 +1400,16 @@ Histogram histogram_missing_values(const Tensor<type, 1>& vector, const Index &b
 
 
   const Index size = vector.dimension(0);
-/*
-  const Index new_size = vector.count_not_NAN();
+
+  Index new_size = 0;
+
+  for(Index i = 0; i < size; i++)
+  {
+      if(!::isnan(vector[i]))
+      {
+           new_size++;
+      }
+   }
 
   Tensor<type, 1> new_vector(new_size);
 
@@ -1364,8 +1426,8 @@ Histogram histogram_missing_values(const Tensor<type, 1>& vector, const Index &b
    }
 
   return histogram(new_vector, bins_number);
-*/
-    return Histogram();
+
+//    return Histogram();
 }
 
 
@@ -1530,13 +1592,13 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 
    for(Index i = 0; i < columns_number; i++)
    {
-/*
-      column = matrix.get_column(i);
+
+//      column = matrix.get_column(i);
 
       descriptives[i] = OpenNN::descriptives(column);
 
 //      descriptives[i].name = matrix.get_header(i);
-*/
+
    }
 
    return descriptives;
