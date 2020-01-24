@@ -561,7 +561,7 @@ void DataSetTest::test_calculate_autocorrelations()
 
     data_set.set(20, 1, 1);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     autocorrelations = data_set.calculate_autocorrelations();
 
@@ -580,7 +580,7 @@ void DataSetTest::test_calculate_cross_correlations()
 
     data_set.set(20, 5, 1);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     cross_correlations = data_set.calculate_cross_correlations();
 
@@ -662,7 +662,7 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
    // Test
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.scale_inputs_mean_standard_deviation();
 
@@ -683,7 +683,7 @@ void DataSetTest::test_scale_targets_mean_standard_deviation()
    // Test
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.scale_targets_mean_standard_deviation();
 
@@ -704,7 +704,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    // Test
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.scale_inputs_minimum_maximum();
 
@@ -725,7 +725,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
    // Test
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.scale_targets_minimum_maximum();
 
@@ -1074,7 +1074,7 @@ void DataSetTest::test_unuse_most_populated_target()
     DataSet ds3;
 
     ds3.set(1, 10,10);
-    ds3.randomize_data_normal();
+    ds3.set_data_random();
 
     unused_instances_indices = ds3.unuse_most_populated_target(50);
 
@@ -1582,7 +1582,7 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
 
     DataSet ds2;
     ds2.set(1000, 5, 10);
-    ds2.randomize_data_normal();
+    ds2.set_data_random();
 
     unused_instances = ds2.balance_approximation_targets_distribution(100.0);
 
@@ -1597,7 +1597,7 @@ void DataSetTest::test_clean_Tukey_outliers()
     cout << "test_clean_Tukey_outliers\n";
 
     DataSet data_set(100, 5, 1);
-    data_set.randomize_data_uniform(1.0, 2.0);
+    data_set.set_data_random(1.0, 2.0);
 
     Vector<double> instance(6);
 

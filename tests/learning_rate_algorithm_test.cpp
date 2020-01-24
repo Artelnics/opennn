@@ -243,7 +243,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     DataSet data_set(2, 1, 1);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     Vector<size_t> instances_indices(0, 1, data_set.get_instances_number()-1);
 
@@ -305,7 +305,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     // Test
 
     data_set.set(1, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     instances_indices.set(0, 1, data_set.get_instances_number()-1);
 
@@ -326,7 +326,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     // Test
 
     data_set.set(3, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     instances_indices.set(0, 1, data_set.get_instances_number()-1);
 

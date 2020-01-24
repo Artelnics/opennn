@@ -6307,22 +6307,9 @@ void DataSet::initialize_data(const double& new_value)
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
 
-void DataSet::randomize_data_uniform(const double& minimum, const double& maximum)
+void DataSet::set_data_random()
 {
-/*
-   data.setRandom(minimum, maximum);
-*/
-}
-
-
-/// Initializes the data matrix with random values chosen from a normal distribution
-/// with given mean and standard deviation.
-
-void DataSet::randomize_data_normal(const double& mean, const double& standard_deviation)
-{
-/*
-   data.setRandom(mean, standard_deviation);
-*/
+   data.setRandom();
 }
 
 

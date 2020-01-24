@@ -95,7 +95,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
    parameters = neural_network.get_parameters();
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    normalized_squared_error.set_normalization_coefficient();
 
@@ -168,7 +168,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -202,7 +202,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -234,7 +234,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -264,7 +264,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
    data_set.set_target_variables_dimensions(Vector<size_t>({1}));
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    data_set.set_training();
 
    const double parameters_minimum = -100.0;
@@ -359,7 +359,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
    neural_network.set_parameters_random();
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    nse.set_normalization_coefficient();
 
@@ -399,7 +399,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    network_parameters = neural_network.get_parameters();
 
    data_set.set(2, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = nse.calculate_error_terms_Jacobian();
    numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_training_error_terms, network_parameters);
@@ -413,7 +413,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    network_parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = nse.calculate_error_terms_Jacobian();
    numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_training_error_terms, network_parameters);
@@ -426,7 +426,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    neural_network.set_parameters_random();
 
    data_set.set(2,2,2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    
 //   error_gradient = nse.calculate_error_gradient();
 
@@ -456,7 +456,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
     neural_network.set_parameters_random();
 
     data_set.set(2, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     squared_errors = nse.calculate_squared_errors();
 
@@ -483,7 +483,7 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
     neural_network.set_parameters_random();
 
     data_set.set(3, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     squared_errors = nse.calculate_squared_errors();
     maximal_errors = nse.calculate_maximal_errors(3);

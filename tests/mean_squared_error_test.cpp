@@ -80,7 +80,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_error(parameters)) < numeric_limits<double>::min(), LOG);
 
@@ -101,7 +101,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    data_set.set_training();
 
    assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
@@ -171,7 +171,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -203,7 +203,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -233,7 +233,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -263,7 +263,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
    data_set.set_target_variables_dimensions(Vector<size_t>({1}));
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    data_set.set_training();
 
    const double parameters_minimum = -100.0;
@@ -373,7 +373,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
    neural_network.set_parameters_random();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    //const Tensor<double, 2> inputs = data_set.get_training_input_data();
    //const Tensor<double, 2> targets = data_set.get_training_target_data();
@@ -503,7 +503,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-//   data_set.randomize_data_normal();
+//   data_set.set_data_random();
    data_set.initialize_data(1.0);
 
    inputs = data_set.get_training_input_data();
@@ -534,7 +534,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
    numerical_Jacobian_terms = nd.calculate_Jacobian(mean_squared_error, &MeanSquaredError::calculate_training_error_terms, parameters);
@@ -547,7 +547,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    neural_network.set_parameters_random();
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    
 //   error_gradient = mean_squared_error.calculate_error_gradient({0, 1});
 

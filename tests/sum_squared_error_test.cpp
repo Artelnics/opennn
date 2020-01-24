@@ -103,7 +103,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    parameters = neural_network.get_parameters();
 
    data_set.set(10, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
 
@@ -115,7 +115,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters*2.0)) > numeric_limits<double>::min(), LOG);
 
@@ -127,7 +127,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    assert_true(sum_squared_error.calculate_training_error() != 0.0, LOG);
 
@@ -182,7 +182,7 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
     neural_network.set_parameters_random();
 
     data_set.set(instances_number,inputs_number,outputs_number);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     Tensor<double, 2> inputs = data_set.get_input_data(instances);
     Tensor<double, 2> targets = data_set.get_target_data(instances);
@@ -230,7 +230,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     data_set.set(instances_number, inputs_number, outputs_number);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     data_set.set_training();
 
@@ -268,7 +268,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     data_set.set(instances_number, inputs_number, outputs_number);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     data_set.set_training();
 
@@ -307,7 +307,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     data_set.set(instances_number, inputs_number, outputs_number);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     data_set.set_training();
 
@@ -335,7 +335,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
    data_set.set_target_variables_dimensions(Vector<size_t>({1}));
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    data_set.set_training();
 
    const double parameters_minimum = -100.0;
@@ -511,7 +511,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
@@ -525,7 +525,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
@@ -538,7 +538,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    neural_network.set_parameters_random();
 
    data_set.set(2, 2, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   gradient = sum_squared_error.calculate_gradient();
 
@@ -612,7 +612,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    data_set.set(2,2,2);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
 //   squared_errors = sum_squared_error.calculate_squared_errors();
 

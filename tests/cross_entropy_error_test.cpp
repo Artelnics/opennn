@@ -143,7 +143,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -178,7 +178,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -211,7 +211,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -240,7 +240,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
    data_set.set_target_variables_dimensions(Vector<size_t>({1}));
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
    data_set.set_training();
 
    const double parameters_minimum = -100.0;
