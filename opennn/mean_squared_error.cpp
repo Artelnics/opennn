@@ -427,7 +427,7 @@ check();
 /*
     const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
-    first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
+    first_order_loss.loss = batch_error / static_cast<type>(batch_instances_number);
     first_order_loss.gradient = batch_error_gradient;
 
     // Regularization

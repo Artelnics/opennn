@@ -951,7 +951,7 @@ void GeneticAlgorithm::initialize_weighted_population()
         }
     }
 
-    sum = final_correlations.calculate_sum();
+    sum = final_correlations.sum();
 
     correlations_sum = cumulative(final_correlations);
 
@@ -959,7 +959,7 @@ void GeneticAlgorithm::initialize_weighted_population()
     {
         zero_ocurrences = 0;
 
-        inputs.set(inputs_number,false);
+        inputs.resize(inputs_number,false);
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -1236,7 +1236,7 @@ void GeneticAlgorithm::perform_selection()
 
     Tensor<type, 1> fitness_sum = cumulative(fitness);
 /*
-    double sum = fitness.calculate_sum();
+    double sum = fitness.sum();
 
     double random;
 
@@ -1748,7 +1748,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     current_uses = original_uses;
 
-    optimal_inputs.set(original_uses.count_equal_to(DataSet::Input),0);
+    optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
 
     Tensor<type, 2>  test(100,4);
 

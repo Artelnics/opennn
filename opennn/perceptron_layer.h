@@ -141,7 +141,7 @@ public:
    void initialize_synaptic_weights(const double&);
    void initialize_synaptic_weights_glorot_uniform();
 
-   void initialize_parameters(const double&);
+   void set_parameters_constant(const double&);
 
    void set_parameters_random();
 

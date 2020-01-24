@@ -109,7 +109,7 @@ public:
 
    // Parameters initialization methods
 
-   void test_initialize_parameters();
+   void test_set_parameters_constant();
 
    void test_initialize_biases();    
    void test_initialize_synaptic_weights();

@@ -264,7 +264,7 @@ void ScalingLayerTest::test_check_range()
 
    sl.set(1);
 
-   inputs.set(1, 0.0);
+   inputs.resize(1, 0.0);
    sl.check_range(inputs);
 
 }
@@ -276,7 +276,7 @@ void ScalingLayerTest::test_calculate_outputs()
 
    ScalingLayer scaling_layer;
    
-   Tensor<double, 2> inputs;
+   Tensor<type, 2> inputs;
 
    scaling_layer.set_display(false);
 
@@ -286,7 +286,7 @@ void ScalingLayerTest::test_calculate_outputs()
 
    scaling_layer.set(1);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
  
    assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
 
@@ -296,7 +296,7 @@ void ScalingLayerTest::test_calculate_outputs()
  
    scaling_layer.set(1);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
 
    assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
 }

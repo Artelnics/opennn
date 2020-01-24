@@ -124,7 +124,7 @@ public:
 
     void initialize_synaptic_weights(const double&);
 
-    void initialize_parameters(const double&);
+    void set_parameters_constant(const double&);
 
     // Combinations
 

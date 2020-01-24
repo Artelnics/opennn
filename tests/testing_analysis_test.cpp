@@ -123,7 +123,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.initialize_data(0.0);
@@ -152,7 +152,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.initialize_data(0.0);
@@ -186,7 +186,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -219,7 +219,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -245,7 +245,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -281,7 +281,7 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -306,7 +306,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -335,7 +335,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 3);
     data_set.set_testing();
@@ -356,13 +356,13 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Vector<size_t>> error_data_maximal;
+    Vector<Tensor<Index, 1>> error_data_maximal;
 
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 //    nn.construct_unscaling_layer();
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -393,7 +393,7 @@ void TestingAnalysisTest::test_linear_regression()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1,1,1);
 
@@ -413,7 +413,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1,1,1);
 
@@ -432,7 +432,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
 
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     DataSet data_set(1,1,1);
 
@@ -476,7 +476,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     data_set.set(1, 1, 1);
     data_set.set_testing();
@@ -535,8 +535,8 @@ void TestingAnalysisTest::test_calculate_confusion()
 
    confusion = ta.calculate_confusion_multiple_classification(actual.to_tensor(), predicted.to_tensor());
 
-   assert_true(confusion.calculate_sum() == 4, LOG);
-   assert_true(confusion.get_diagonal().calculate_sum() == 4, LOG);
+   assert_true(confusion.sum() == 4, LOG);
+   assert_true(confusion.get_diagonal().sum() == 4, LOG);
 }
 
 
@@ -546,7 +546,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1,1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1,1,1);
 
@@ -608,20 +608,20 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     Tensor<double, 2> roc_curve;
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.0;
     outputs[1] = 0.0;
@@ -646,14 +646,14 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 1.0;
     targets[2] = 1.0;
     targets[3] = 0.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.12;
     outputs[1] = 0.78;
@@ -688,20 +688,20 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     double area_under_curve;
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.0;
     outputs[1] = 0.0;
@@ -714,14 +714,14 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.0;
     outputs[1] = 1.0;
@@ -734,14 +734,14 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.78;
     outputs[1] = 0.84;
@@ -754,14 +754,14 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 1.0;
     outputs[1] = 1.0;
@@ -785,20 +785,20 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     double optimal_threshold;
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.0;
     outputs[1] = 0.0;
@@ -811,14 +811,14 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 0.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 1.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 1.0;
     outputs[1] = 1.0;
@@ -831,7 +831,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     // Test
 
-    targets.set(Vector<size_t>{5,1});
+    targets.set(Tensor<Index, 1>{5,1});
 
     targets[0] = 0.0;
     targets[1] = 1.0;
@@ -839,7 +839,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     targets[3] = 1.0;
     targets[4] = 0.0;
 
-    outputs.set(Vector<size_t>{5,1});
+    outputs.set(Tensor<Index, 1>{5,1});
 
     outputs[0] = 0.33;
     outputs[1] = 0.14;
@@ -863,20 +863,20 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     Tensor<double, 2> cumulative_gain;
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 1.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 0.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.67;
     outputs[1] = 0.98;
@@ -904,7 +904,7 @@ void TestingAnalysisTest::test_calculate_lift_chart()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     Tensor<double, 2> cumulative_gain;
 
@@ -912,14 +912,14 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     // Test
 
-    targets.set(Vector<size_t>{4,1});
+    targets.set(Tensor<Index, 1>{4,1});
 
     targets[0] = 1.0;
     targets[1] = 0.0;
     targets[2] = 1.0;
     targets[3] = 0.0;
 
-    outputs.set(Vector<size_t>{4,1});
+    outputs.set(Tensor<Index, 1>{4,1});
 
     outputs[0] = 0.67;
     outputs[1] = 0.87;
@@ -945,7 +945,7 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     Tensor<double, 2> calibration_plot;
 
@@ -994,9 +994,9 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
-    Vector<size_t> true_positives_indices;
+    Tensor<Index, 1> true_positives_indices;
 
     // Test
 
@@ -1014,7 +1014,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Vector<size_t> testing_indices(0, 1, 3);
+    const Tensor<Index, 1> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
     true_positives_indices = ta.calculate_true_positive_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
@@ -1078,9 +1078,9 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
-    Vector<size_t> false_positives_indices;
+    Tensor<Index, 1> false_positives_indices;
 
     // Test
 
@@ -1098,7 +1098,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Vector<size_t> testing_indices(0, 1, 3);
+    const Tensor<Index, 1> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
     false_positives_indices = ta.calculate_false_positive_instances(targets.to_tensor(), outputs.to_tensor(),testing_indices, threshold);
@@ -1162,9 +1162,9 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
-    Vector<size_t> false_negatives_indices;
+    Tensor<Index, 1> false_negatives_indices;
 
     // Test
 
@@ -1182,7 +1182,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Vector<size_t> testing_indices(0, 1, 3);
+    const Tensor<Index, 1> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
     false_negatives_indices = ta.calculate_false_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
@@ -1246,9 +1246,9 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
-    Vector<size_t> true_negatives_indices;
+    Tensor<Index, 1> true_negatives_indices;
 
     // Test
 
@@ -1266,7 +1266,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    const Vector<size_t> testing_indices(0, 1, 3);
+    const Tensor<Index, 1> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
     true_negatives_indices = ta.calculate_true_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
@@ -1330,7 +1330,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<double, 2> targets;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     // Test
 
@@ -1357,9 +1357,9 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     outputs(7,0) = 0; outputs(7,0) = 0; outputs(7,2) = 1;
     outputs(8,0) = 1; outputs(8,1) = 0; outputs(8,2) = 0;
 
-    const Vector<size_t> testing_indices(0, 1, 8);
+    const Tensor<Index, 1> testing_indices(0, 1, 8);
 
-    Matrix< Vector<size_t> > multiple_classification_rates = ta.calculate_multiple_classification_rates(targets.to_tensor(), outputs.to_tensor(), testing_indices);
+    Matrix< Tensor<Index, 1> > multiple_classification_rates = ta.calculate_multiple_classification_rates(targets.to_tensor(), outputs.to_tensor(), testing_indices);
 
     assert_true(multiple_classification_rates(0,0).size() == 1, LOG);
     assert_true(multiple_classification_rates(0,0)[0] == 0, LOG);

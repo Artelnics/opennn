@@ -221,10 +221,13 @@ public:
       const Tensor<type, 2> y_backward = (t.*f)(x_backward);
 
       const Tensor<type, 2> y = (t.*f)(x);
-
+/*
       const Tensor<type, 2> d = (y_forward - y_backward)/(h*2.0);
 
       return d;
+*/
+
+      return Tensor<type, 2>();
    }
 
 

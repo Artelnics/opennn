@@ -800,7 +800,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 
         case OpenNN::ConvolutionalLayer::PaddingOption::Same:
         {
-            layers_inputs.set(Tensor<Index, 1>({previous_layers_outputs.dimension(0), previous_layers_outputs.dimension(1),
+            layers_inputs.resize(Tensor<Index, 1>({previous_layers_outputs.dimension(0), previous_layers_outputs.dimension(1),
                                               previous_layers_outputs.dimension(2) + get_padding_height(), previous_layers_outputs.dimension(3) + get_padding_width()}));
 
             for(Index image_number = 0; image_number < previous_layers_outputs.dimension(0); image_number++)
@@ -1237,7 +1237,7 @@ void ConvolutionalLayer::initialize_synaptic_weights(const double& value)
 /// Initializes the layer's parameters to a given value.
 /// @param value The desired value.
 
-void ConvolutionalLayer::initialize_parameters(const double& value)
+void ConvolutionalLayer::set_parameters_constant(const double& value)
 {
     initialize_biases(value);
 
