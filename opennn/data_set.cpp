@@ -866,7 +866,7 @@ Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_insta
 
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
-    return split_eigen_tensor(training_indices, batch_instances_number);
+    return split_instances(training_indices, batch_instances_number);
 
 }
 
@@ -877,7 +877,7 @@ Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_inst
 
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
-    return split_eigen_tensor(training_indices, batch_instances_number);
+    return split_instances(training_indices, batch_instances_number);
 
 }
 
@@ -888,7 +888,7 @@ Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instan
 
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
-    return split_eigen_tensor(training_indices, batch_instances_number);
+    return split_instances(training_indices, batch_instances_number);
 
 }
 
@@ -1243,6 +1243,7 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
                            const double& selection_instances_ratio,
                            const double& testing_instances_ratio)
 {
+
    const Index used_instances_number = get_used_instances_number();
 
    if(used_instances_number == 0) return;
@@ -1314,10 +1315,13 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
 
    // Testing
 
+///@todo it fails when debug.
+   /*
    Index count_testing = 0;
 
    while(count_testing != testing_instances_number)
    {
+
       index = indices[i];
 
       if(instances_uses[index] != UnusedInstance)
@@ -1326,8 +1330,12 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
             count_testing++;
       }
 
+
       i++;
+*/
    }
+
+
 }
 
 
@@ -3545,9 +3553,9 @@ void DataSet::set(const Tensor<type, 2>& new_data)
    const Index instances_number = new_data.dimension(0);
 
    set(instances_number, variables_number);
-/*
-   data = new_data;
 
+   data = new_data;
+/*
    if(get_header_line()) set_variables_names(data.get_header());
 */
    display = true;
@@ -3769,11 +3777,11 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 /*
     data = new_data;
 */
-   set_instances_number(data.dimension(0));
+//   set_instances_number(data.dimension(0));
 
 //   set_variables_number(data.dimension(1));
 
-   set_instances_number(data.dimension(0));
+//   set_instances_number(data.dimension(0));
 
     const Index instances_number = data.dimension(0);
     const Index variables_number = data.dimension(1);
@@ -9369,49 +9377,30 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, co
 }
 
 
-Tensor<Index, 2> DataSet::split_eigen_tensor(Tensor<Index, 1>& training_indices, const Index & batch_instances_number) const
+Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, const Index & batch_size) const
 {
+    const Index training_instances_number = training_indices.dimension(0);
 
-    if(training_indices.size() < batch_instances_number)
+    const Index batches_number =  training_instances_number / batch_size;
+
+    Tensor<Index, 2> batches(batches_number, batch_size);
+
+    Index count = 0;
+
+    for(Index i = 0; i < batches_number; ++i)
     {
-        return Tensor<Index, 2>(1, training_indices.size());
+       for(Index j = 0; j < batch_size; ++j)
+       {
+        batches(i,j) = training_indices[count];
+
+        count++;
+       }
     }
 
-
-//    // determine number of sub-vectors of size n
-//    //    const size_t batches_number = (this->size() - 1) / n + 1;
-//    const size_t batches_number = this->size() / n;
-//    // create array of vectors to store the sub-vectors
-//    Vector<Vector<T>> batches(batches_number);
-//    // each iteration of this loop process next set of n elements
-//    // and store it in a vector at k'th index in vec
-//    for(size_t k = 0; k < batches_number; ++k)
-//    {
-//        // get range for next set of n elements
-//        auto start_itr = next(this->cbegin(), k*n);
-//        auto end_itr = k*n + n > this->size() ? this->cend() : next(this->cbegin(), k*n + n);
-//        // allocate memory for the sub-vector
-//        batches[k].resize(n);
-//        // code to handle the last sub-vector as it might
-//        // contain less elements
-////        if(k*n + n > this->size())
-////        {
-////            batches[k].resize(this->size() - k*n);
-////        }
-//        // copy elements from the input range to the sub-vector
-//        copy(start_itr, end_itr, batches[k].begin());
-//    }
-
-//    return batches;
-
+    return batches;
 }
 
 
-
-
-
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
