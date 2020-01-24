@@ -265,7 +265,7 @@ void DataSetTest::test_get_instance()
    cout << "test_get_instance\n";
 
    DataSet data_set;
-   Vector<double> instance;
+   Tensor<type, 1> instance;
 
    // Test
 
@@ -283,8 +283,8 @@ void DataSetTest::test_get_instance()
    data_set.initialize_data(1.0);
 
    Vector<size_t> indices_variables({1,3});
-   Vector<double> instance_0 = data_set.get_instance_data(0, indices_variables);
-   Vector<double> instance_1 = data_set.get_instance_data(1, indices_variables);
+   Tensor<type, 1> instance_0 = data_set.get_instance_data(0, indices_variables);
+   Tensor<type, 1> instance_1 = data_set.get_instance_data(1, indices_variables);
 
    assert_true(instance_0 == instance_1, LOG);
 }
@@ -365,11 +365,11 @@ void DataSetTest::test_set_instance()
 
    DataSet data_set(1, 1, 1);
 
-   Vector<double> new_instance(2, 0.0);
+   Tensor<type, 1> new_instance(2, 0.0);
 
    data_set.set_instance(0, new_instance);
 
-   Vector<double> instance = data_set.get_instance_data(0);
+   Tensor<type, 1> instance = data_set.get_instance_data(0);
 
    assert_true(instance == new_instance, LOG);
 }
@@ -576,7 +576,7 @@ void DataSetTest::test_calculate_cross_correlations()
 
     DataSet data_set;
 
-    Matrix<Vector<double>> cross_correlations;
+    Matrix<Tensor<type, 1>> cross_correlations;
 
     data_set.set(20, 5, 1);
 
@@ -609,7 +609,7 @@ void DataSetTest::test_calculate_data_histograms()
    histograms = data_set.calculate_columns_histograms();
    Vector<size_t> sol({1, 1});
    Vector<size_t> sol_2({2, 2});
-   Vector<double> centers({0,1});
+   Tensor<type, 1> centers({0,1});
 
    //Test frequencies
    assert_true(histograms[0].frequencies == sol, LOG);
@@ -629,8 +629,8 @@ void DataSetTest::test_filter_data()
 
    DataSet data_set;
 
-   Vector<double> minimums;
-   Vector<double> maximums;
+   Tensor<type, 1> minimums;
+   Tensor<type, 1> maximums;
 
    Tensor<double, 2> data;
 
@@ -1092,11 +1092,11 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     DataSet data_set(22, 2, 1);
     data_set.initialize_data(1.0);
-    Vector<double> instance0(3, 0.0);
-    Vector<double> instance1(3, 0.0);
-    Vector<double> instance2(3);
-    Vector<double> instance3(3);
-    Vector<double> instance4(3);
+    Tensor<type, 1> instance0(3, 0.0);
+    Tensor<type, 1> instance1(3, 0.0);
+    Tensor<type, 1> instance2(3);
+    Tensor<type, 1> instance3(3);
+    Tensor<type, 1> instance4(3);
 
     instance2[0] = 4.0;
     instance2[1] = 5.0;
@@ -1127,16 +1127,16 @@ void DataSetTest::test_balance_binary_targets_distribution()
     {
     DataSet data_set(10, 3, 1);
 
-    Vector<double> instance0(4);
-    Vector<double> instance1(4);
-    Vector<double> instance2(4);
-    Vector<double> instance3(4);
-    Vector<double> instance4(4);
-    Vector<double> instance5(4);
-    Vector<double> instance6(4);
-    Vector<double> instance7(4);
-    Vector<double> instance8(4);
-    Vector<double> instance9(4);
+    Tensor<type, 1> instance0(4);
+    Tensor<type, 1> instance1(4);
+    Tensor<type, 1> instance2(4);
+    Tensor<type, 1> instance3(4);
+    Tensor<type, 1> instance4(4);
+    Tensor<type, 1> instance5(4);
+    Tensor<type, 1> instance6(4);
+    Tensor<type, 1> instance7(4);
+    Tensor<type, 1> instance8(4);
+    Tensor<type, 1> instance9(4);
 
     instance0[0] = 0.9;
     instance0[1] = 5.0;
@@ -1211,16 +1211,16 @@ void DataSetTest::test_balance_binary_targets_distribution()
     {
     DataSet data_set(10, 3, 1);
 
-    Vector<double> instance0(4);
-    Vector<double> instance1(4);
-    Vector<double> instance2(4);
-    Vector<double> instance3(4);
-    Vector<double> instance4(4);
-    Vector<double> instance5(4);
-    Vector<double> instance6(4);
-    Vector<double> instance7(4);
-    Vector<double> instance8(4);
-    Vector<double> instance9(4);
+    Tensor<type, 1> instance0(4);
+    Tensor<type, 1> instance1(4);
+    Tensor<type, 1> instance2(4);
+    Tensor<type, 1> instance3(4);
+    Tensor<type, 1> instance4(4);
+    Tensor<type, 1> instance5(4);
+    Tensor<type, 1> instance6(4);
+    Tensor<type, 1> instance7(4);
+    Tensor<type, 1> instance8(4);
+    Tensor<type, 1> instance9(4);
 
     instance0[0] = 0.9;
     instance0[1] = 5.0;
@@ -1408,16 +1408,16 @@ void DataSetTest::test_balance_multiple_targets_distribution()
 
     DataSet data_set(9, 2, 2);
 
-    Vector<double> instance0(4);
-    Vector<double> instance1(4);
-    Vector<double> instance2(4);
-    Vector<double> instance3(4);
-    Vector<double> instance4(4);
-    Vector<double> instance5(4);
-    Vector<double> instance6(4);
-    Vector<double> instance7(4);
-    Vector<double> instance8(4);
-    Vector<double> instance9(4);
+    Tensor<type, 1> instance0(4);
+    Tensor<type, 1> instance1(4);
+    Tensor<type, 1> instance2(4);
+    Tensor<type, 1> instance3(4);
+    Tensor<type, 1> instance4(4);
+    Tensor<type, 1> instance5(4);
+    Tensor<type, 1> instance6(4);
+    Tensor<type, 1> instance7(4);
+    Tensor<type, 1> instance8(4);
+    Tensor<type, 1> instance9(4);
 
     instance0[0] = 0.9;
     instance0[1] = 5.0;
@@ -1500,16 +1500,16 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
 
     data_set.set(10, 3, 1);
 
-    Vector<double> instance0(4);
-    Vector<double> instance1(4);
-    Vector<double> instance2(4);
-    Vector<double> instance3(4);
-    Vector<double> instance4(4);
-    Vector<double> instance5(4);
-    Vector<double> instance6(4);
-    Vector<double> instance7(4);
-    Vector<double> instance8(4);
-    Vector<double> instance9(4);
+    Tensor<type, 1> instance0(4);
+    Tensor<type, 1> instance1(4);
+    Tensor<type, 1> instance2(4);
+    Tensor<type, 1> instance3(4);
+    Tensor<type, 1> instance4(4);
+    Tensor<type, 1> instance5(4);
+    Tensor<type, 1> instance6(4);
+    Tensor<type, 1> instance7(4);
+    Tensor<type, 1> instance8(4);
+    Tensor<type, 1> instance9(4);
 
     instance0[0] = 0.9;
     instance0[1] = 5.0;
@@ -1599,7 +1599,7 @@ void DataSetTest::test_clean_Tukey_outliers()
     DataSet data_set(100, 5, 1);
     data_set.set_data_random(1.0, 2.0);
 
-    Vector<double> instance(6);
+    Tensor<type, 1> instance(6);
 
     instance[0] = 1.0;
     instance[1] = 1.9;
@@ -2531,8 +2531,8 @@ void DataSetTest::test_calculate_variables_means()
     DataSet data_set;
     data_set.set_data(matrix);
     Vector<size_t> index({0, 1});
-    Vector<double> means = data_set.calculate_variables_means(index);
-    Vector<double> solution(2, 2.0);
+    Tensor<type, 1> means = data_set.calculate_variables_means(index);
+    Tensor<type, 1> solution(2, 2.0);
 
     assert_true(means == solution, LOG);
 }
@@ -2555,8 +2555,8 @@ void DataSetTest::test_calculate_training_targets_mean()
     // Test 3 targets
     data_set.set_target_variables_indices(indices);
 
-    Vector<double> means = data_set.calculate_training_targets_mean();
-    Vector<double> solutions({1.0 , 2.0, 3.0});
+    Tensor<type, 1> means = data_set.calculate_training_targets_mean();
+    Tensor<type, 1> solutions({1.0 , 2.0, 3.0});
 
     assert_true(means == solutions, LOG);
 
@@ -2567,8 +2567,8 @@ void DataSetTest::test_calculate_training_targets_mean()
     data_set.set_target_variables_indices(index_target);
     data_set.set_input_variables_indices(indexes_inputs);
 
-    Vector<double> mean = data_set.calculate_training_targets_mean();
-    Vector<double> solution({1.0});
+    Tensor<type, 1> mean = data_set.calculate_training_targets_mean();
+    Tensor<type, 1> solution({1.0});
 
     assert_true(mean == solution, LOG);
 
@@ -2594,8 +2594,8 @@ void DataSetTest::test_calculate_selection_targets_mean()
     // Test 3 targets
     data_set.set_target_variables_indices(indexes_targets);
 
-    Vector<double> means = data_set.calculate_selection_targets_mean();
-    Vector<double> solutions({2.0, 3.0});
+    Tensor<type, 1> means = data_set.calculate_selection_targets_mean();
+    Tensor<type, 1> solutions({2.0, 3.0});
 
     cout << "means: " << means << endl;
 
@@ -2620,7 +2620,7 @@ void DataSetTest::test_calculate_testing_targets_mean()
 
     data_set.set_testing(testing_indices);
 
-    Vector<double> mean = data_set.calculate_testing_targets_mean();
+    Tensor<type, 1> mean = data_set.calculate_testing_targets_mean();
 
     assert_true(mean == 3.0, LOG);
 
@@ -2664,11 +2664,11 @@ void DataSetTest::test_calculate_total_input_correlations()
     data_set.set_data(matrix);
     Vector<size_t> input_variables_indices({0, 1});
     Vector<size_t> target_variables_indices({2});
-    Vector<double> solution({1, 1});
+    Tensor<type, 1> solution({1, 1});
 
     data_set.set_input_variables_indices(input_variables_indices);
 
-    Vector<double> correlations_inputs = data_set.calculate_total_input_correlations();
+    Tensor<type, 1> correlations_inputs = data_set.calculate_total_input_correlations();
 
     assert_true(correlations_inputs == solution, LOG);
 
@@ -2742,7 +2742,7 @@ void DataSetTest::test_perform_principal_components_analysis()
     DataSet data_set;
     data_set.set_data(matrix);
 
-    Vector<double> solution({1,1});
+    Tensor<type, 1> solution({1,1});
 
     //data_set.perform_principal_components_analysis();
     //Tensor<double, 2> PCA = data_set.get_data();

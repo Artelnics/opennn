@@ -56,8 +56,6 @@ public:
 
    void test_lp_norm_gradient();
 
-   void test_linear_combinations();
-
 
    // INVERTING MATICES
 

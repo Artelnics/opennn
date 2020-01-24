@@ -29,7 +29,7 @@ void RecurrentLayerTest::test_constructor()
 
     Tensor<double, 2> synaptic_weights;
     Tensor<double, 2> recurrent_initializer;
-    Vector<double> biases;
+    Tensor<type, 1> biases;
 
     // Test
 
@@ -137,7 +137,7 @@ void RecurrentLayerTest::test_get_biases()
 
    RecurrentLayer recurrent_layer;
 
-   Vector<double> biases;
+   Tensor<type, 1> biases;
 
    size_t inputs_number;
    size_t neurons_number;
@@ -236,7 +236,7 @@ void RecurrentLayerTest::test_get_parameters()
 
    RecurrentLayer recurrent_layer;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -269,23 +269,23 @@ void RecurrentLayerTest::test_get_parameters()
 
    //Test
 
-   Vector<double> biases;
+   Tensor<type, 1> biases;
    Tensor<double, 2> input_weights(3, 2);
    Tensor<double, 2> recurrent_weights(2,2);
 
    recurrent_layer.set(3,  2);
-   biases.set(2);
+   biases.resize(2);
    biases[0] = 0.41;
    biases[1] = -0.70;
    recurrent_layer.set_biases(biases);
 
-   input_weights.set_column(0,Vector<double> {0.5, -2.9, 0.2});
-   input_weights.set_column(1,Vector<double> {7.2, 0.8, -1.2});
+   input_weights.set_column(0,Tensor<type, 1> {0.5, -2.9, 0.2});
+   input_weights.set_column(1,Tensor<type, 1> {7.2, 0.8, -1.2});
 
    recurrent_layer.set_input_weights(input_weights);
 
-   recurrent_weights.set_column(0,Vector<double> {7.9, -2.3});
-   recurrent_weights.set_column(1,Vector<double> {1.2, -1.5});
+   recurrent_weights.set_column(0,Tensor<type, 1> {7.9, -2.3});
+   recurrent_weights.set_column(1,Tensor<type, 1> {1.2, -1.5});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
    cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;
@@ -302,7 +302,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    NumericalDifferentiation numerical_differentiation;
 
    RecurrentLayer recurrent_layer;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
    Tensor<double, 2> inputs;
    Tensor<double, 2> combinations;
    Tensor<double, 2> activations_derivatives;
@@ -448,13 +448,13 @@ void RecurrentLayerTest::test_calculate_outputs()
    Tensor<double, 2> inputs;
    Tensor<double, 2> outputs;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    size_t instances = 3;
 
    Tensor<double, 2> new_weights;
    Tensor<double, 2> new_recurrent_weights;
-   Vector<double> new_biases;
+   Tensor<type, 1> new_biases;
 
    //Test
 
@@ -468,7 +468,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    new_weights.set(recurrent_layer.get_inputs_number(),recurrent_layer.get_neurons_number(),1.0);
    new_recurrent_weights.set(recurrent_layer.get_neurons_number(),recurrent_layer.get_neurons_number(),1.0);
-   new_biases.set(recurrent_layer.get_neurons_number(), 1.0);
+   new_biases.resize(recurrent_layer.get_neurons_number(), 1.0);
 
    recurrent_layer.set_biases(new_biases);
    recurrent_layer.set_input_weights(new_weights);

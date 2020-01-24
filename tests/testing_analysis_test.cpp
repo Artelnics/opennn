@@ -147,7 +147,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Vector<double>> error_data;
+    Vector<Tensor<type, 1>> error_data;
 
     // Test
 
@@ -442,7 +442,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<double> correlations = ta.get_linear_regression_correlations_std();
+    Tensor<type, 1> correlations = ta.get_linear_regression_correlations_std();
 
     assert_true(correlations.size() == 1, LOG);
     assert_true(correlations[0] == 1.0 , LOG);
@@ -485,7 +485,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     linear_regression_analysis = ta.perform_linear_regression_analysis();
 
     assert_true(linear_regression_analysis.size() == 1 , LOG);
-    assert_true(linear_regression_analysis[0].targets == Vector<double>{0} , LOG);
+    assert_true(linear_regression_analysis[0].targets == Tensor<type, 1>{0} , LOG);
     assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
 
 }
@@ -556,7 +556,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    TestingAnalysis ta(&neural_network, &data_set);
 
-   Vector<double> binary = ta.calculate_binary_classification_tests();
+   Tensor<type, 1> binary = ta.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
 }

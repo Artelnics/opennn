@@ -29,7 +29,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     Tensor<double, 2> synaptic_weights;
     Tensor<double, 2> recurrent_initializer;
-    Vector<double> biases;
+    Tensor<type, 1> biases;
 
     // Test
 
@@ -398,7 +398,7 @@ void LongShortTermMemoryLayerTest::test_set_biases()
     long_short_term_memory_layer.set(1, 1);
 
 
-    biases.set(1, 4, 0.0);
+    biases.resize(1, 4, 0.0);
 
     long_short_term_memory_layer.set_forget_biases(biases.get_column(0));
     long_short_term_memory_layer.set_input_biases(biases.get_column(1));
@@ -460,7 +460,7 @@ void LongShortTermMemoryLayerTest::test_set_inputs_number()
 
     long_short_term_memory_layer.set(2, 3);
 
-    biases.set(3, 4, 1.0);
+    biases.resize(3, 4, 1.0);
     long_short_term_memory_layer.set_forget_biases(biases.get_column(0));
     long_short_term_memory_layer.set_input_biases(biases.get_column(1));
     long_short_term_memory_layer.set_state_biases(biases.get_column(2));
@@ -500,7 +500,7 @@ void LongShortTermMemoryLayerTest::test_set_parameters()
 
     LongShortTermMemoryLayer long_short_term_memory_layer(1, 1);
 
-    Vector<double> parameters(12);
+    Tensor<type, 1> parameters(12);
 
     parameters.initialize_sequential();
 
@@ -516,7 +516,7 @@ void LongShortTermMemoryLayerTest::test_initialize_parameters()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -536,10 +536,10 @@ void LongShortTermMemoryLayerTest::test_initialize_biases()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Vector<double> forget_biases;
-   Vector<double> input_biases;
-   Vector<double> state_biases;
-   Vector<double> output_biases;
+   Tensor<type, 1> forget_biases;
+   Tensor<type, 1> input_biases;
+   Tensor<type, 1> state_biases;
+   Tensor<type, 1> output_biases;
 
    // Test
 
@@ -648,7 +648,7 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
    cout << "test_set_parameters_random\n";
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -669,7 +669,7 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    double parameters_norm;
 
@@ -751,7 +751,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
    Tensor<double, 2> inputs;
    Tensor<double, 2> outputs;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    Tensor<double, 2> weights;
    Tensor<double, 2> recurrent_weights;
@@ -771,7 +771,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    weights.set(Vector<size_t>({3,2,4}));
    recurrent_weights.set(Vector<size_t>({2,2,4}));
-   biases.set(2,4);
+   biases.resize(2,4);
 
    weights.initialize_sequential();
    recurrent_weights.initialize_sequential();

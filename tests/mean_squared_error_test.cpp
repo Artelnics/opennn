@@ -60,7 +60,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 {
    cout << "test_calculate_training_error\n";
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
    neural_network.initialize_parameters(0.0);
@@ -118,8 +118,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   Vector<double> error_gradient;
-   Vector<double> numerical_error_gradient;
+   Tensor<type, 1> error_gradient;
+   Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
    size_t inputs_number;
@@ -273,7 +273,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
-   Vector<double> biases_1(2, 0);
+   Tensor<type, 1> biases_1(2, 0);
    biases_1.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_1->set_biases(biases_1);
 
@@ -282,7 +282,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
-   Vector<double> biases_2(2, 0);
+   Tensor<type, 1> biases_2(2, 0);
    biases_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_biases(biases_2);
 
@@ -293,7 +293,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
-   Vector<double> biases_3(1, 0);
+   Tensor<type, 1> biases_3(1, 0);
    biases_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_biases(biases_3);
 
@@ -357,7 +357,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
 
    NeuralNetwork neural_network;
    Vector<size_t> hidden_layers_size;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    DataSet data_set;
    
@@ -365,7 +365,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
 
    double error;
 
-   Vector<double> error_terms;
+   Tensor<type, 1> error_terms;
 
    // Test
 
@@ -395,15 +395,15 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    NeuralNetwork neural_network;
    Vector<size_t> architecture;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    DataSet data_set;
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   Vector<double> error_gradient;
+   Tensor<type, 1> error_gradient;
 
-   Vector<double> error_terms;
+   Tensor<type, 1> error_terms;
    Tensor<double, 2> terms_Jacobian;
    Tensor<double, 2> numerical_Jacobian_terms;
 

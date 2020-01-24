@@ -60,7 +60,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    cout << "test_calculate_training_error\n";
 
    NeuralNetwork neural_network;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    DataSet data_set;
    Tensor<double, 2> data;
@@ -163,7 +163,7 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
    NeuralNetwork neural_network;
    NumericalDifferentiation numerical_differentation;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -211,10 +211,10 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    Vector<size_t> architecture;
 
-   Vector<double> parameters;
-   Vector<double> gradient;
-   Vector<double> numerical_gradient;
-   Vector<double> error;
+   Tensor<type, 1> parameters;
+   Tensor<type, 1> gradient;
+   Tensor<type, 1> numerical_gradient;
+   Tensor<type, 1> error;
 
    size_t inputs_number;
    size_t outputs_number;
@@ -345,7 +345,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
-   Vector<double> biases_1(2, 0);
+   Tensor<type, 1> biases_1(2, 0);
    biases_1.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_1->set_biases(biases_1);
 
@@ -354,7 +354,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
-   Vector<double> biases_2(2, 0);
+   Tensor<type, 1> biases_2(2, 0);
    biases_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_biases(biases_2);
 
@@ -365,7 +365,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<double, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
-   Vector<double> biases_3(1, 0);
+   Tensor<type, 1> biases_3(1, 0);
    biases_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_biases(biases_3);
 
@@ -414,15 +414,15 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    NeuralNetwork neural_network;
    Vector<size_t> architecture;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    DataSet data_set;
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Vector<double> gradient;
+   Tensor<type, 1> gradient;
 
-   Vector<double> terms;
+   Tensor<type, 1> terms;
    Tensor<double, 2> terms_Jacobian;
    Tensor<double, 2> numerical_Jacobian_terms;
 
@@ -585,7 +585,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Vector<double> squared_errors;
+   Tensor<type, 1> squared_errors;
 
 //   double error;
 

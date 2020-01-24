@@ -182,16 +182,16 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
    NeuralNetwork neural_network;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    SumSquaredError sum_squared_error(&neural_network);
 
    double loss;
-   Vector<double> gradient;
+   Tensor<type, 1> gradient;
 
    LearningRateAlgorithm tra(&sum_squared_error);
 
-   Vector<double> training_direction;
+   Tensor<type, 1> training_direction;
    double learning_rate;
 
    pair<double,double> directional_point;
@@ -254,7 +254,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     LearningRateAlgorithm tra(&sum_squared_error);
 
     double loss = 0.0;
-    Vector<double> training_direction;
+    Tensor<type, 1> training_direction;
     double initial_learning_rate = 0.0;
 
     LearningRateAlgorithm::Triplet triplet;
@@ -362,9 +362,9 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
    neural_network.initialize_parameters(1.0);
 
    double loss = sum_squared_error.calculate_training_loss();
-   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   Vector<double> training_direction = gradient*(-1.0);
+   Tensor<type, 1> training_direction = gradient*(-1.0);
    double initial_learning_rate = 0.001;
 
    double loss_tolerance = 1.0e-6;
@@ -393,9 +393,9 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    neural_network.initialize_parameters(1.0);
 
    double loss = sum_squared_error.calculate_training_loss();
-   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   Vector<double> training_direction = gradient*(-1.0);
+   Tensor<type, 1> training_direction = gradient*(-1.0);
    double initial_learning_rate = 0.001;
 
    double loss_tolerance = 1.0e-6;

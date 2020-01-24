@@ -581,18 +581,8 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-
 Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
-/*
-    const Index inputs_dimensions_number = inputs.rank();
-
-    Tensor<type, 2> reshaped_inputs = inputs;
-
-    if(inputs_dimensions_number != 2) reshaped_inputs = inputs.to_2d_tensor();
-
-    return linear_combinations(reshaped_inputs, synaptic_weights, biases);
-*/
 
     return Tensor<type, 2>();
 }
@@ -1135,7 +1125,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
+        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
     }
 
     // Neurons number
@@ -1153,7 +1143,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(neurons_number_element->GetText())
     {
-        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
     }
 
     // Activation function

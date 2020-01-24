@@ -6894,7 +6894,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(lags_number_element->GetText())
      {
-         const size_t new_lags_number = static_cast<size_t>(atoi(lags_number_element->GetText()));
+         const size_t new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
 
          set_lags_number(new_lags_number);
      }
@@ -6914,7 +6914,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(steps_ahead_element->GetText())
      {
-         const size_t new_steps_ahead = static_cast<size_t>(atoi(steps_ahead_element->GetText()));
+         const size_t new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
 
          set_steps_ahead_number(new_steps_ahead);
      }
@@ -6934,7 +6934,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(time_index_element->GetText())
      {
-         const size_t new_time_index = static_cast<size_t>(atoi(time_index_element->GetText()));
+         const size_t new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
 
          set_time_index(new_time_index);
      }
@@ -6969,7 +6969,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(columns_number_element->GetText())
      {
-         new_columns_number = static_cast<size_t>(atoi(columns_number_element->GetText()));
+         new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
 
          set_columns_number(new_columns_number);
      }
@@ -7023,7 +7023,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(instances_number_element->GetText())
      {
-         const size_t new_instances_number = static_cast<size_t>(atoi(instances_number_element->GetText()));
+         const size_t new_instances_number = static_cast<Index>(atoi(instances_number_element->GetText()));
 //@todo
 //         instances_uses.set(new_instances_number);
      }
@@ -7107,7 +7107,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
      if(preview_size_element->GetText())
      {
-         new_preview_size = static_cast<size_t>(atoi(preview_size_element->GetText()));
+         new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 //@todo
 //         if(new_preview_size > 0) data_file_preview.set(new_preview_size);
      }

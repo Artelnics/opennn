@@ -1235,8 +1235,8 @@ public:
    template<class T>
    Tensor<type, 2> calculate_central_differences_gradient_matrix(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 2>&) const, const Index& integer, const Tensor<type, 2>& x) const
    {
-       const auto rows_number = x.dimension(0);
-       const auto columns_number = x.dimension(1);
+       const Index rows_number = x.dimension(0);
+       const Index columns_number = x.dimension(1);
 
       Tensor<type, 2> gradient(rows_number, columns_number);
 

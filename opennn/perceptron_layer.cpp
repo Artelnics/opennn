@@ -107,7 +107,7 @@ Index PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-const Tensor<type, 2>& PerceptronLayer::get_biases() const
+const Tensor<type, 1>& PerceptronLayer::get_biases() const
 {   
    return biases;
 }
@@ -258,7 +258,7 @@ const bool& PerceptronLayer::get_display() const
 
 void PerceptronLayer::set()
 {
-    biases.resize(0, 0);
+    biases.resize(0);
 
     synaptic_weights.resize(0, 0);
 
@@ -274,7 +274,7 @@ void PerceptronLayer::set()
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases = Tensor<type, 2>(1, new_neurons_number);
+    biases = Tensor<type, 1>(new_neurons_number);
 
     biases.setRandom();
 
@@ -328,10 +328,9 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(1, neurons_number);
+    biases.resize(neurons_number);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
-
 }
 
 
@@ -343,7 +342,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {    
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(1, new_neurons_number);
+    biases.resize(new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -352,7 +351,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 /// Sets the biases of all perceptrons in the layer from a single vector.
 /// @param new_biases New set of biases in the layer. 
 
-void PerceptronLayer::set_biases(const Tensor<type, 2>& new_biases)
+void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
     biases = new_biases;
 }
@@ -657,9 +656,6 @@ double PerceptronLayer::calculate_parameters_norm() const
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
-/*
-    return linear_combinations(inputs, synaptic_weights, biases);
-*/
     return Tensor<type, 2>();
 }
 
@@ -670,7 +666,6 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
     const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
     const Tensor<type, 1> new_biases = get_biases(parameters);
 
-    return calculate_combinations(inputs, new_biases, new_synaptic_weights);
 */
     return Tensor<type, 2>();
 }
@@ -678,9 +673,6 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
-/*
-    return linear_combinations(inputs, new_synaptic_weights, new_biases);
-*/
     return Tensor<type, 2>();
 }
 
@@ -807,14 +799,12 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
     }
 
     #endif
-/*
-    Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
    #ifdef __OPENNN_DEBUG__
 
    const Index inputs_number = get_inputs_number();
 
-   const Index inputs_columns_number = reshaped_inputs.dimension(1);
+   const Index inputs_columns_number = inputs.dimension(1);
 
    if(inputs_columns_number != inputs_number)
    {
@@ -829,93 +819,20 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    Tensor<type, 2> outputs = linear_combinations(reshaped_inputs, synaptic_weights, biases);
+    Tensor<type, 2> outputs;// = calculate_combinations(inputs, synaptic_weights, biases);
 
-    switch(activation_function)
-    {
-        case PerceptronLayer::Linear:
-        {
-             // do nothing
-        }
-        break;
-
-        case PerceptronLayer::HyperbolicTangent:
-        {
-             transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return tanh(value);});
-        }
-        break;
-
-       case PerceptronLayer::Logistic:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return 1.0 / (1.0 + exp(-value));});
-       }
-       break;
-
-       case PerceptronLayer::Threshold:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 0.0 : 1.0;});
-       }
-       break;
-
-       case PerceptronLayer::SymmetricThreshold:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? -1.0 : 1.0;});
-       }
-       break;
-
-       case PerceptronLayer::RectifiedLinear:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 0.0 : value;});
-       }
-       break;
-
-       case PerceptronLayer::ScaledExponentialLinear:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 1.0507 * 1.67326 * (exp(value) - 1.0) :  1.0507 * value;});
-       }
-       break;
-
-       case PerceptronLayer::SoftPlus:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return log(1 + exp(value));});
-       }
-       break;
-
-       case PerceptronLayer::SoftSign:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ?  value/(1.0-value) : value/(1.0 + value);});
-       }
-       break;
-
-       case PerceptronLayer::ExponentialLinear:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ?  1.0 * (exp(value)- 1.0) : value;});
-        }
-       break;
-
-       case PerceptronLayer::HardSigmoid:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){if(value < -2.5){return 0.0;}else if(value > 2.5){return 1.0;}else{return 0.2*value + 0.5;}});
-       }
-       break;
-
-    }
+//    calculate_activations()
 
     return outputs;
-*/
-    return Tensor<type, 2>();
 }
 
 
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-/*
     const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
     const Tensor<type, 1> biases = get_biases(parameters);
 
     return calculate_outputs(inputs, biases, synaptic_weights);
-*/
-    return Tensor<type, 2>();
 }
 
 
@@ -937,14 +854,12 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
     }
 
     #endif
-/*
-    Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
    #ifdef __OPENNN_DEBUG__
 
    const Index inputs_number = get_inputs_number();
 
-   const Index inputs_columns_number = reshaped_inputs.dimension(1);
+   const Index inputs_columns_number = inputs.dimension(1);
 
    if(inputs_columns_number != inputs_number)
    {
@@ -959,102 +874,22 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-   Tensor<type, 2> outputs(linear_combinations(reshaped_inputs, new_synaptic_weights, new_biases));
-
-   switch(activation_function)
-   {
-       case Linear:
-       {
-             // Do nothing
-       }
-       break;
-
-       case HyperbolicTangent:
-       {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return tanh(value);});
-       }
-       break;
-
-      case Logistic:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return 1.0 / (1.0 + exp(-value));});
-      }
-      break;
-
-      case Threshold:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 0.0 : 1.0;});
-      }
-      break;
-
-      case SymmetricThreshold:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? -1.0 : 1.0;});
-      }
-      break;
-
-      case RectifiedLinear:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 0.0 : value;});
-      }
-      break;
-
-      case ScaledExponentialLinear:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ? 1.0507 * 1.67326 * (exp(value) - 1.0) :  1.0507 * value;});
-      }
-      break;
-
-      case SoftPlus:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return log(1 + exp(value));});
-      }
-      break;
-
-      case SoftSign:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ?  value / (1 - value) :  value / (1 + value);});
-      }
-      break;
-
-      case ExponentialLinear:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ?  1.0 * (exp(value)- 1) : value;});
-      }
-      break;
-
-      case HardSigmoid:
-      {
-           transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){if(value < -2.5){return 0.0;}else if(value > 2.5){return 1.0;}else{return 0.2*value + 0.5;}});
-      }
-      break;
-   }
+   Tensor<type, 2> outputs;// = calculate_combinations(inputs, new_synaptic_weights, new_biases);
 
    return outputs;
-*/
-    return Tensor<type, 2>();
 }
 
 
 Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation forward_propagation;
-/*
-    Tensor<type, 2> combinations;
 
-    if(inputs.rank() != 2)
-    {
-        combinations = calculate_combinations(inputs.to_2d_tensor());
-    }
-    else
-    {
-        combinations = calculate_combinations(inputs);
-    }
+    forward_propagation.combinations = calculate_combinations(inputs);
 
-    layers.activations = calculate_activations(combinations);
+    forward_propagation.activations = calculate_activations(forward_propagation.combinations);
 
-    layers.activations_derivatives = calculate_activations_derivatives(combinations);
-*/
+    forward_propagation.activations_derivatives = calculate_activations_derivatives(forward_propagation.combinations);
+
     return forward_propagation;
 }
 
@@ -1087,7 +922,6 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
 
         synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
     }        
-
 
 /*
     return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
@@ -1239,7 +1073,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
+        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
     }
 
     // Neurons number
@@ -1257,7 +1091,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(neurons_number_element->GetText())
     {
-        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
     }
 
     // Activation function

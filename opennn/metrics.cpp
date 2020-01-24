@@ -1163,8 +1163,8 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
 type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const type& minkowski_parameter)
 {
-    const auto rows_number = x.dimension(0);
-    const auto columns_number = x.dimension(1);
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1219,8 +1219,8 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
 {
 #ifdef __OPENNN_DEBUG__
 
-    const auto rows_number = x.dimension(0);
-    const auto columns_number = x.dimension(1);
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
 
     const Index other_rows_number = y.dimension(0);
 

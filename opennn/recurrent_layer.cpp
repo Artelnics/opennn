@@ -344,7 +344,7 @@ void RecurrentLayer::set()
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
 /*
-    biases.set(new_neurons_number);
+    biases.resize(new_neurons_number);
 
     input_weights.set(new_inputs_number, new_neurons_number);
 
@@ -418,7 +418,7 @@ void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
 {    
     const Index inputs_number = get_inputs_number();
 /*
-    biases.set(new_neurons_number);
+    biases.resize(new_neurons_number);
 
     input_weights.set(inputs_number, new_neurons_number);
 
@@ -436,7 +436,7 @@ void RecurrentLayer::set_timesteps(const Index & new_timesteps)
 void RecurrentLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    biases.set(new_biases);
+    biases.resize(new_biases);
 */
 }
 

@@ -132,9 +132,6 @@ public:
 
    void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations) const
    {
-       /*
-       linear_combinations(inputs, synaptic_weights, biases, combinations);
-       */
    }
 
    // Outputs

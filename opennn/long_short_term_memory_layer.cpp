@@ -475,10 +475,10 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 {
 /*
 
-    input_biases.set(new_neurons_number);
-    forget_biases.set(new_neurons_number);
-    state_biases.set(new_neurons_number);
-    output_biases.set(new_neurons_number);
+    input_biases.resize(new_neurons_number);
+    forget_biases.resize(new_neurons_number);
+    state_biases.resize(new_neurons_number);
+    output_biases.resize(new_neurons_number);
 
     input_weights.set(new_inputs_number, new_neurons_number);
     forget_weights.set(new_inputs_number, new_neurons_number);
@@ -573,7 +573,7 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    forget_biases.set(new_biases);
+    forget_biases.resize(new_biases);
     */
 }
 
@@ -584,7 +584,7 @@ void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_bias
 void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    input_biases.set(new_biases);
+    input_biases.resize(new_biases);
 */
 }
 
@@ -596,7 +596,7 @@ void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biase
 void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    state_biases.set(new_biases);
+    state_biases.resize(new_biases);
 */
 }
 
@@ -608,7 +608,7 @@ void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biase
 void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    output_biases.set(new_biases);
+    output_biases.resize(new_biases);
 */
 }
 

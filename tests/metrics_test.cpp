@@ -36,8 +36,8 @@ void MetricsTest::test_l1_norm()
 {
    cout << "test_l1_norm\n";
 
-   Vector<double> vector;
-   vector.set(3);
+   Tensor<type, 1> vector;
+   vector.resize(3);
    vector[0]=1;
    vector[1]=2;
    vector[2]=3;
@@ -50,8 +50,8 @@ void MetricsTest::test_l1_norm_gradient()
 {
    cout << "test_l1_norm_gradient\n";
 
-   Vector<double> vector(3);
-   Vector<double> gradient(3);
+   Tensor<type, 1> vector(3);
+   Tensor<type, 1> gradient(3);
    vector[0]=1;
    vector[1]=-2.3;
    vector[2]=3.3;
@@ -66,7 +66,7 @@ void MetricsTest::test_l1_norm_gradient()
 void MetricsTest::test_l1_norm_hessian()
 {
    cout << "test_l1_norm_hessian\n";
-   Vector<double> vector(3);
+   Tensor<type, 1> vector(3);
    Tensor<double, 2> hessian(3,3);
    vector[0]=1;
    vector[1]=-2.3;
@@ -80,7 +80,7 @@ void MetricsTest::test_l1_norm_hessian()
 void MetricsTest::test_l2_norm()
 {
    cout << "test_l2_norm\n";
-   Vector<double> vector(3);
+   Tensor<type, 1> vector(3);
    vector[0]=3;
    vector[1]=4;
    vector[2]=5;
@@ -93,8 +93,8 @@ void MetricsTest::test_l2_norm_gradient()
 {
    cout << "test_l2_norm_gradient\n";
 
-   Vector<double> vector(3);
-   Vector<double> gradient;
+   Tensor<type, 1> vector(3);
+   Tensor<type, 1> gradient;
    vector[0]=3;
    vector[1]=4;
    vector[2]=5;
@@ -119,7 +119,7 @@ void MetricsTest::test_Lp_norm()
 {
    cout << "test_Lp_norm\n";
 
-   Vector<double> vector(4);
+   Tensor<type, 1> vector(4);
 
    vector[0]=0;
    vector[1]=1;
@@ -136,8 +136,8 @@ void MetricsTest::test_Lp_norm_gradient()
 {
    cout << "test_Lp_gradient\n";
 
-   Vector<double> vector({1,2});
-   Vector<double> gradient;
+   Tensor<type, 1> vector({1,2});
+   Tensor<type, 1> gradient;
    const double p = 8*pow(pow(17,0.75), -1.0);
 
 //   gradient = lp_norm_gradient(vector,4);
@@ -242,39 +242,6 @@ void MetricsTest::test_direct()
 }
 
 
-void MetricsTest::test_linear_combinations()
-{
-   cout << "test_linear_combinations\n";
-
-   Tensor<double, 2> matrix_1;
-   Tensor<double, 2> matrix_2;
-
-   Vector<double> vector;
-   Tensor<double, 2> result;
-
-   // Test
-
-   matrix_1.set({1,1}, 1.0);
-   matrix_2.set(1,1, 2.0);
-   vector.set(1, 3.0);
-
-   result = linear_combinations(matrix_1, matrix_2, vector);
-
-   assert_true(result.rank() == 2, LOG);
-   assert_true(result.get_dimension(0) == 1, LOG);
-   assert_true(result.get_dimension(1) == 1, LOG);
-   assert_true(result(0,0) == 5.0, LOG);
-
-   // Test
-
-   matrix_1.set({2,3}, 1.0);
-   matrix_2.set(3, 4, 2.0);
-   vector.set(4, 3.0);
-
-   //result =
-
-}
-
 
 void MetricsTest::test_euclidean_distance()
 {
@@ -286,8 +253,8 @@ void MetricsTest::test_euclidean_weighted_distance()
 {
      cout << "test_euclidean_weighted_distance\n";
 
-     Vector<double> vector_1;
-     Vector<double> vector_2;
+     Tensor<type, 1> vector_1;
+     Tensor<type, 1> vector_2;
      double dis;
 
      vector_1={{1,2,3}};
@@ -304,8 +271,8 @@ void MetricsTest::test_euclidean_weighted_distance_vector()
 {
      cout << "test_euclidean_weighted__distance_vector\n";
 
-     Vector<double> vector_1;
-     Vector<double> vector_2;
+     Tensor<type, 1> vector_1;
+     Tensor<type, 1> vector_2;
      double dis;
 
      vector_1={{1,2,5}};

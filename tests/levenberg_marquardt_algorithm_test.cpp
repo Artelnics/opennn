@@ -103,7 +103,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    Vector<double> terms;
+    Tensor<type, 1> terms;
 
     double loss;
 
@@ -137,11 +137,11 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Vector<double> terms;
+   Tensor<type, 1> terms;
    Tensor<double, 2> terms_Jacobian;
 
-   Vector<double> gradient;
-   Vector<double> mse_gradient;
+   Tensor<type, 1> gradient;
+   Tensor<type, 1> mse_gradient;
 
    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
@@ -218,7 +218,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
    size_t parameters_number;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    DataSet data_set;
 
@@ -314,7 +314,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    DataSet data_set;
    
    SumSquaredError sum_squared_error(&neural_network, &data_set);
-   Vector<double> gradient;
+   Tensor<type, 1> gradient;
 
    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
    lma.set_display(false);
@@ -461,7 +461,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
    LevenbergMarquardtAlgorithm lma;
 
    Tensor<double, 2> a;
-   Vector<double> b;
+   Tensor<type, 1> b;
 
    Tensor<double, 2> inverse;
 
