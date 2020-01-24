@@ -24,23 +24,23 @@ void CorrelationsTest::test_linear_correlation()
 
     //Perfect case
 
-    const Vector<double> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    const Vector<double> vector2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
     const double solution = 1;
 
     assert_true(linear_correlation(vector1, vector2) - solution <= 0.000001, LOG);
 
-    const Vector<double> vector3({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
+    const Tensor<type, 1> vector3({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
 
     assert_true(linear_correlation(vector1, vector3) + solution <= 0.000001, LOG);
 
     // General case
 
     size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     double correlation;
 
@@ -65,9 +65,9 @@ void CorrelationsTest::test_spearman_linear_correlation()
     cout << "test_calculate_spearman_linear_correlation\n";
 
     size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     for(size_t i = 0; i < size; i++) y[i] = 2*x[i];
 
@@ -96,15 +96,15 @@ void CorrelationsTest::test_linear_correlation_missing_values()
 
 //Test missing values
 
-    Vector<double> vector;
-    vector.set(5);
+    Tensor<type, 1> vector;
+    vector.resize(5);
     vector[0] = 1;
     vector[1] = 2;
     vector[2] = 3;
     vector[3] = 4;
     vector[4] = 5;
 
-    Vector<double> target;
+    Tensor<type, 1> target;
     target.set(5);
     target[0] = 1;
     target[1] = 2;
@@ -123,9 +123,9 @@ void CorrelationsTest::test_rank_linear_correlation()
     cout << "test_calculate_rank_linear_correlation()\n";
 
     size_t size = 10;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     double correlation;
 
@@ -150,10 +150,10 @@ void CorrelationsTest::test_logistic_correlation()
     cout << "test_logistic_correlation\n";
 
     const size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
 
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
     double correlation;
     y.initialize(0.0);
 
@@ -186,10 +186,10 @@ void CorrelationsTest::test_rank_logistic_correlation()
     cout << "test_calculate_rank_logistic_correlation\n";
 
     const size_t size = 10;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
 
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     double correlation;
 
@@ -213,9 +213,9 @@ void CorrelationsTest::test_logistic_error_gradient()
 {
     cout << "test_logistic_error_gradient\n";
 
-    const Vector<double> solution = {0.09296,0.152088};
+    const Tensor<type, 1> solution = {0.09296,0.152088};
 
-    const Vector<double> error_gradient = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
+    const Tensor<type, 1> error_gradient = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
 
     assert_true( abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
     assert_true( abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
@@ -226,9 +226,9 @@ void CorrelationsTest::test_logistic_error_gradient_missing_values()
 {
     cout << "test_logistic_error_gradient\n";
 
-    const Vector<double> solution = {0.09296,0.152088};
+    const Tensor<type, 1> solution = {0.09296,0.152088};
 
-    const Vector<double> error_gradient = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
+    const Tensor<type, 1> error_gradient = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
 
     assert_true( abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
     assert_true( abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
@@ -241,8 +241,8 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     size_t size = 10;
 
-    Vector<double> x(size);
-    Vector<double> y(size);
+    Tensor<type, 1> x(size);
+    Tensor<type, 1> y(size);
     Vector<size_t> z(0);
 
     x.initialize_sequential();
@@ -264,15 +264,15 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     assert_true(abs(correlation) <= 1.0, LOG);
 
     //Test missing values
-    Vector<double> vector;
-    vector.set(5);
+    Tensor<type, 1> vector;
+    vector.resize(5);
     vector[0] = 1;
     vector[1] = 2;
     vector[2] = 3;
     vector[3] = 4;
     vector[4] = 5;
 
-    Vector<double> target;
+    Tensor<type, 1> target;
     target.set(5);
     target[0] = 1;
     target[1] = 2;
@@ -285,7 +285,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     assert_true((rank_linear_correlation - 1.0) < 1.0e-3, LOG );
 
     // Test with ties
-    Vector<double> vector_ties;
+    Tensor<type, 1> vector_ties;
     vector_ties.set(5);
     vector_ties[0] = 1;
     vector_ties[1] = 1;
@@ -293,7 +293,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     vector_ties[3] = static_cast<double>(NAN);
     vector_ties[4] = 5;
 
-    Vector<double> target_ties;
+    Tensor<type, 1> target_ties;
     target_ties.set(5);
     target_ties[0] = 1;
     target_ties[1] = 1;
@@ -313,9 +313,9 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     size_t size;
 
-    Vector<double> x;
+    Tensor<type, 1> x;
 
-    Vector<double> y;
+    Tensor<type, 1> y;
 
     double correlation;
 
@@ -369,9 +369,9 @@ void CorrelationsTest::test_autocorrelation()
     cout << "test_calculate_autocorrelation\n";
 
     size_t size = 1000;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> correlations;
+    Tensor<type, 1> correlations;
 
     correlations = autocorrelations(x, size/100);
     assert_true(minimum(correlations) > 0.9, LOG);
@@ -383,13 +383,13 @@ void CorrelationsTest::test_cross_correlations()
     cout << "test_calculate_autocorrelation\n";
 
     size_t size = 1000;
-    Vector<double> x(size);
-    Vector<double> y(size);
+    Tensor<type, 1> x(size);
+    Tensor<type, 1> y(size);
 
     x.initialize_sequential();
     y.initialize_sequential();
 
-    Vector<double> cros_correlations;
+    Tensor<type, 1> cros_correlations;
 
     cros_correlations = cross_correlations(x, y, 10);
     assert_true(cros_correlations < 5.0, LOG);
@@ -403,8 +403,8 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     //Perfect case
 
-    const Vector<double> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    const Vector<double> vector2({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
+    const Tensor<type, 1> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector2({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
 
     const double solution = 1;
 
@@ -412,8 +412,8 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     assert_true(correl - solution <= 0.0001, LOG);
 
-    const Vector<double> vector_1({100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,});
-    const Vector<double> vector_2({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
+    const Tensor<type, 1> vector_1({100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,});
+    const Tensor<type, 1> vector_2({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
 
     assert_true(logarithmic_correlation(vector_1, vector_2) - solution <= 0.00001, LOG);
 }
@@ -425,15 +425,15 @@ void CorrelationsTest::test_logarithmic_correlation_missing_values()
 
        //Test missing values
 
-       Vector<double> vector;
-       vector.set(5);
+       Tensor<type, 1> vector;
+       vector.resize(5);
        vector[0] = 1;
        vector[1] = 2;
        vector[2] = 3;
        vector[3] = 4;
        vector[4] = static_cast<double>(NAN);
 
-       Vector<double> target(vector.size());
+       Tensor<type, 1> target(vector.size());
 
        for(size_t i = 0; i < vector.size(); i++)
        {
@@ -447,9 +447,9 @@ void CorrelationsTest::test_exponential_correlation()
     cout << "test_calculate_exponential_correlation\n";
 
     const size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     for(size_t i = 0; i < size; i++)
     {
@@ -467,14 +467,14 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
 
     //Test missing values
 
-       Vector<double> vector;
-       vector.set(5);
+       Tensor<type, 1> vector;
+       vector.resize(5);
        vector[0] = 1;
        vector[1] = 2;
        vector[2] = 3;
        vector[3] = 4;
        vector[4] = static_cast<double>(NAN);
-       Vector<double> target(vector.size());
+       Tensor<type, 1> target(vector.size());
 
        for(size_t i = 0; i < vector.size(); i++)
        {
@@ -490,8 +490,8 @@ void CorrelationsTest::test_linear_regression()
 {
     cout << "test_linear_regression\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60});
-    const Vector<double> vector2({94, 118, 147, 180, 230});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230});
 
     const double solution1 = 74.067;
     const double solution2 = 2.6402;
@@ -509,8 +509,8 @@ void CorrelationsTest::test_linear_regression_missing_values()
 {
     cout << "test_linear_regression_missing_values\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60, NAN});
-    const Vector<double> vector2({94, 118, 147, 180, 230, 100});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60, NAN});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230, 100});
 
     const double solution1 = 74.067;
     const double solution2 = 2.6402;
@@ -528,8 +528,8 @@ void CorrelationsTest::test_exponential_regression()
 {
     cout << "test_exponential_regression\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60});
-    const Vector<double> vector2({94, 118, 147, 180, 230});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230});
 
     const double solution1 = 87.805;
     const double solution2 = 0.017;
@@ -547,8 +547,8 @@ void CorrelationsTest::test_exponential_regression_missing_values()
 {
     cout << "test_exponential_regression_missing_values\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60, NAN});
-    const Vector<double> vector2({94, 118, 147, 180, 230, 100});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60, NAN});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230, 100});
 
     const double solution1 = 87.805;
     const double solution2 = 0.017;
@@ -566,8 +566,8 @@ void CorrelationsTest::test_logarithmic_regression()
 {
     cout << "test_logarithmic_regression\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60});
-    const Vector<double> vector2({94, 118, 147, 180, 230});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230});
 
     const double solution1 = -83.935;
     const double solution2 = 73.935;
@@ -585,8 +585,8 @@ void CorrelationsTest::test_logarithmic_regression_missing_values()
 {
     cout << "test_logarithmic_regression_missing_values\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60, NAN});
-    const Vector<double> vector2({94, 118, 147, 180, 230, 100});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60, NAN});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230, 100});
 
     const double solution1 = -83.935;
     const double solution2 = 73.935;
@@ -604,8 +604,8 @@ void CorrelationsTest::test_power_regression()
 {
     cout << "test_power_regression\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60});
-    const Vector<double> vector2({94, 118, 147, 180, 230});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230});
 
     const double solution1 = 30.213;
     const double solution2 = 0.491;
@@ -623,8 +623,8 @@ void CorrelationsTest::test_power_regression_missing_values()
 {
     cout << "test_power_regression_missing_values\n";
 
-    const Vector<double> vector1({10, 16, 25, 40, 60, NAN});
-    const Vector<double> vector2({94, 118, 147, 180, 230, 100});
+    const Tensor<type, 1> vector1({10, 16, 25, 40, 60, NAN});
+    const Tensor<type, 1> vector2({94, 118, 147, 180, 230, 100});
 
     const double solution1 = 30.213;
     const double solution2 = 0.491;
@@ -644,9 +644,9 @@ void CorrelationsTest::test_logistic_regression()
 
     const size_t size = 100;
 
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
 
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
 
     for(size_t i = 0; i < size; i++)
     {
@@ -667,9 +667,9 @@ void CorrelationsTest::test_covariance()
     cout << "test_calculate_covariance\n";
 
     size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
     y.initialize_sequential();
 
     double covariance = OpenNN::covariance(x,y);
@@ -684,9 +684,9 @@ void CorrelationsTest::test_covariance_missing_values()
     cout << "test_covariance_missing_values\n";
 
     size_t size = 100;
-    Vector<double> x(size);
+    Tensor<type, 1> x(size);
     x.initialize_sequential();
-    Vector<double> y(size);
+    Tensor<type, 1> y(size);
     y.initialize_sequential();
 
     double covariance = OpenNN::covariance(x,y);
@@ -722,15 +722,15 @@ void CorrelationsTest::test_less_rank_with_ties()
 {
     cout << "test_calculate_less_rank_with_ties\n";
 
-    Vector<double> vector1(0.0, 1, 2.0);
-    Vector<double> vector2({5, 2, 3});
-    Vector<double> vector3(3, 4.0);
-    Vector<double> vector_solution_1(0.0, 1, 2.0);
-    Vector<double> vector_solution_2({2, 0, 1});
+    Tensor<type, 1> vector1(0.0, 1, 2.0);
+    Tensor<type, 1> vector2({5, 2, 3});
+    Tensor<type, 1> vector3(3, 4.0);
+    Tensor<type, 1> vector_solution_1(0.0, 1, 2.0);
+    Tensor<type, 1> vector_solution_2({2, 0, 1});
 
-    Vector<double> ranks_1;
-    Vector<double> ranks_2;
-    Vector<double> ranks_3;
+    Tensor<type, 1> ranks_1;
+    Tensor<type, 1> ranks_2;
+    Tensor<type, 1> ranks_3;
 
     double average_ranks;
 
@@ -739,7 +739,7 @@ void CorrelationsTest::test_less_rank_with_ties()
     ranks_3 = less_rank_with_ties(vector3);
 
     average_ranks = mean(ranks_3);
-    Vector<double> vector_solution_3(3, average_ranks);
+    Tensor<type, 1> vector_solution_3(3, average_ranks);
 
     assert_true(ranks_1 == vector_solution_1 + 1, LOG);
     assert_true(ranks_2 == vector_solution_2 + 1, LOG);
@@ -867,7 +867,7 @@ void CorrelationsTest::test_one_way_anova_correlation()
     matrix.set_column(1, {0, 0, 0, 1, 1, 1, 0, 0, 0});
     matrix.set_column(2, {0, 0, 0, 0, 0, 0, 1, 1, 1});
 
-    const Vector<double> vector{643, 655, 702, 469, 427, 525, 484, 456, 402};
+    const Tensor<type, 1> vector{643, 655, 702, 469, 427, 525, 484, 456, 402};
 
     const double num = one_way_anova_correlation(matrix, vector);
 
@@ -885,7 +885,7 @@ void CorrelationsTest::test_one_way_anova_correlation_missing_values()
     matrix.set_column(1, {0, 0, 0, 1, 1, 1, 0, 0, 0, 0});
     matrix.set_column(2, {0, 0, 0, 0, 0, 0, 1, 1, 1, 1});
 
-    const Vector<double> vector{643, 655, 702, 469, 427, 525, NAN, 484, 456, 402};
+    const Tensor<type, 1> vector{643, 655, 702, 469, 427, 525, NAN, 484, 456, 402};
 
     const double solution = 0.94562;
 
@@ -926,7 +926,7 @@ void CorrelationsTest::test_f_snedecor_critical_point_missing_values()
     matrix.set_column(1, {0, 0, 0, 1, 1, 1, 0, 0, 0, 0});
     matrix.set_column(2, {0, 0, 0, 0, 0, 0, NAN, 1, 1, 1});
 
-    const Vector<double> vector{643, 655, 702, 469, 427, 525, NAN, 484, 456, 402};
+    const Tensor<type, 1> vector{643, 655, 702, 469, 427, 525, NAN, 484, 456, 402};
 
     const double solution = 0.893524;
 

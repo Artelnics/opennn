@@ -115,8 +115,8 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
 
    Tensor<double, 2> matrix;
 
-   Vector<double> x1(5);
-   Vector<double> x2(3);
+   Tensor<type, 1> x1(5);
+   Tensor<type, 1> x2(3);
 
    const size_t dummy_1 = 0;
    const size_t dummy_2 = 0;
@@ -205,8 +205,8 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_gradient()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
-   Vector<double> g;
+   Tensor<type, 1> x;
+   Tensor<type, 1> g;
 	   
    // Test
 
@@ -225,8 +225,8 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
-   Vector<double> g;
+   Tensor<type, 1> x;
+   Tensor<type, 1> g;
 	   
    // Test
 
@@ -245,8 +245,8 @@ void NumericalDifferentiationTest::test_calculate_training_loss_gradient()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
-   Vector<double> g;
+   Tensor<type, 1> x;
+   Tensor<type, 1> g;
 	   
    // Test
 
@@ -278,7 +278,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> H;
 	   
    // Test
@@ -298,7 +298,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> H;
 	   
    // Test
@@ -318,7 +318,7 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> H;
 	   
    Tensor<double, 2> forward;
@@ -371,7 +371,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_Jacobian()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> J;
 
    Tensor<double, 2> J_true;
@@ -395,7 +395,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_Jacobian()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> J;
 
    Tensor<double, 2> J_true;
@@ -420,7 +420,7 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
    size_t dummy;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Tensor<double, 2> J;
 
    Tensor<double, 2> J_true;
@@ -475,7 +475,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian_fo
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Vector<Tensor<double, 2>> H;
 
    // Test
@@ -501,7 +501,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_fo
 
    NumericalDifferentiation nd;
 
-   Vector<double> x(2, 0.0);
+   Tensor<type, 1> x(2, 0.0);
 
    Vector<Tensor<double, 2>> hessian = nd.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f3, x);
 
@@ -523,7 +523,7 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
    NumericalDifferentiation nd;
 
-   Vector<double> x;
+   Tensor<type, 1> x;
    Vector<Tensor<double, 2>> H;
 
    // Test
@@ -627,25 +627,25 @@ double NumericalDifferentiationTest::f1(const double& x) const
 }
 
 
-double NumericalDifferentiationTest::f2(const Vector<double>& x) const
+double NumericalDifferentiationTest::f2(const Tensor<type, 1>& x) const
 {
    return(x.calculate_sum());
 }
 
 
-Vector<double> NumericalDifferentiationTest::f3(const Vector<double>& x) const
+Tensor<type, 1> NumericalDifferentiationTest::f3(const Tensor<type, 1>& x) const
 { 
    return x;
 }
 
 
-double NumericalDifferentiationTest::f7(const size_t&, const Vector<double>& x, const size_t&, const Vector<double>& y) const
+double NumericalDifferentiationTest::f7(const size_t&, const Tensor<type, 1>& x, const size_t&, const Tensor<type, 1>& y) const
 {
    return l2_norm(x.assemble(y));
 }
 
 
-Vector<double> NumericalDifferentiationTest::f8(const size_t&, const size_t&, const Vector<double>& x) const
+Tensor<type, 1> NumericalDifferentiationTest::f8(const size_t&, const size_t&, const Tensor<type, 1>& x) const
 {
     return x*x*(x+1.0);
 }

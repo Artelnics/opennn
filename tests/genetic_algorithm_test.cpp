@@ -102,7 +102,7 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 
     Tensor<double, 2> loss(4,2);
 
-    Vector<double> fitness;
+    Tensor<type, 1> fitness;
 
     ga.set_population_size(4);
 
@@ -152,7 +152,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     Vector< Vector<bool> > selected_population;
 
-    Vector<double> fitness(4);
+    Tensor<type, 1> fitness(4);
 
     Tensor<double, 2> loss(4,2);
 
@@ -208,7 +208,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     Vector< Vector<bool> > crossover_population;
 
-    Vector<double> fitness(4);
+    Tensor<type, 1> fitness(4);
 
     Tensor<double, 2> loss(4,2);
 

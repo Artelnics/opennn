@@ -56,12 +56,12 @@ void ConvolutionalLayerTest::test_get_parameters()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<double, 2> new_synaptic_weights;
-    Vector<double> new_biases;
-    Vector<double> new_parameters;
+    Tensor<type, 1> new_biases;
+    Tensor<type, 1> new_parameters;
 
     // Test
 
-    new_synaptic_weights.set(Vector<size_t>({2,3,2,2}));
+    new_synaptic_weights.resize(Vector<size_t>({2,3,2,2}));
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
@@ -86,8 +86,8 @@ void ConvolutionalLayerTest::test_get_parameters()
     new_synaptic_weights(1,2,0,1) = 2.312;
     new_synaptic_weights(1,2,1,0) = 2.321;
     new_synaptic_weights(1,2,1,1) = 2.322;
-    new_biases = Vector<double>({4,8});
-    new_parameters = Vector<double>({1.111,2.111,1.211,2.211,1.311,2.311,1.121,2.121,1.221,2.221,1.321,2.321,
+    new_biases = Tensor<type, 1>({4,8});
+    new_parameters = Tensor<type, 1>({1.111,2.111,1.211,2.211,1.311,2.311,1.121,2.121,1.221,2.221,1.321,2.321,
                                      1.112,2.112,1.212,2.212,1.312,2.312,1.122,2.122,1.222,2.222,1.322,2.322,
                                      4,8});
 
@@ -193,11 +193,11 @@ void ConvolutionalLayerTest::test_set_parameters()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<double, 2> new_synaptic_weights;
-    Vector<double> new_biases;
+    Tensor<type, 1> new_biases;
 
     // Test
 
-    new_synaptic_weights.set(Vector<size_t>({2,2,2,2}));
+    new_synaptic_weights.resize(Vector<size_t>({2,2,2,2}));
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
@@ -214,7 +214,7 @@ void ConvolutionalLayerTest::test_set_parameters()
     new_synaptic_weights(1,1,0,1) = 2.212;
     new_synaptic_weights(1,1,1,0) = 2.221;
     new_synaptic_weights(1,1,1,1) = 2.222;
-    new_biases = Vector<double>({-1,1});
+    new_biases = Tensor<type, 1>({-1,1});
 
     convolutional_layer.set({2,3,3}, {2,2,2});
     convolutional_layer.set_parameters({1.111,2.111,1.211,2.211,1.121,2.121,1.221,2.221,1.112,2.112,1.212,2.212,1.122,2.122,1.222,2.222,-1,1});

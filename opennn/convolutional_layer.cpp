@@ -1203,10 +1203,10 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
     const Index filters_rows_number = new_filters_dimensions[1];
     const Index filters_columns_number = new_filters_dimensions[2];
 
-    biases.set(filters_number);
+    biases.resize(filters_number);
     biases.setRandom();
 
-    synaptic_weights.set(Tensor<Index, 1>({filters_number, filters_channels_number, filters_rows_number, filters_columns_number}));
+    synaptic_weights.resize(Tensor<Index, 1>({filters_number, filters_channels_number, filters_rows_number, filters_columns_number}));
     synaptic_weights.setRandom();
 */
 }

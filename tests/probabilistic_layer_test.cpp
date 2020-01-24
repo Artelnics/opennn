@@ -124,15 +124,15 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
    Tensor<double, 2> inputs;
    Tensor<double, 2> outputs;
-   Vector<double> biases;
+   Tensor<type, 1> biases;
    Tensor<double, 2> synaptic_weights;
 
    // Test
 
-   synaptic_weights.set(1,1,1.0);
+   synaptic_weights.resize(1,1,1.0);
    probabilistic_layer.set_synaptic_weights(synaptic_weights);
 
-   biases.set(1,1.0);
+   biases.resize(1,1.0);
    probabilistic_layer.set_synaptic_weights(synaptic_weights);
 
    probabilistic_layer.set_neurons_number(1);

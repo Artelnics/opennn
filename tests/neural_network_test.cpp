@@ -150,7 +150,7 @@ void NeuralNetworkTest::test_get_parameters()
    cout << "test_get_parameters\n";
 
    NeuralNetwork neural_network;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -210,7 +210,7 @@ void NeuralNetworkTest::test_set_parameters()
    NeuralNetwork neural_network;
 
    size_t parameters_number;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -243,7 +243,7 @@ void NeuralNetworkTest::test_initialize_parameters()
    cout << "test_initialize_parameters\n";
 
    NeuralNetwork neural_network;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -268,7 +268,7 @@ void NeuralNetworkTest::test_set_parameters_random()
    cout << "test_set_parameters_random\n";
 
    NeuralNetwork neural_network;
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -314,7 +314,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    size_t parameters_number;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 
@@ -483,7 +483,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    inputs.set({10,3,28,28}, 0);
 
    convolutional_layer->set({3,28,28}, {5,7,7});
-   convolutional_layer->set_parameters(Vector<double>(740, 0));
+   convolutional_layer->set_parameters(Tensor<type, 1>(740, 0));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::MaxPooling);
    pooling_layer->set_pool_size(2,2);
@@ -538,7 +538,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::Linear);
    convolutional_layer->set({2,3,3}, {5,2,2});
-   convolutional_layer->set_parameters(Vector<double>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
                                                       -2,-1,0,1,2}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::NoPooling);
@@ -632,7 +632,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::Linear);
    convolutional_layer->set({2,3,3}, {5,2,2});
-   convolutional_layer->set_parameters(Vector<double>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
                                                       -2,-1,0,1,2}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::MaxPooling);
@@ -697,7 +697,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::Linear);
    convolutional_layer->set({2,3,3}, {5,2,2});
-   convolutional_layer->set_parameters(Vector<double>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
                                                       -2,-1,0,1,2}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::AveragePooling);
@@ -798,7 +798,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
    convolutional_layer->set({1,6,6}, {3,3,3});
-   convolutional_layer->set_parameters(Vector<double>({1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,-1,0,1}));
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,-1,0,1}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::AveragePooling);
    pooling_layer->set_pool_size(2,2);
@@ -942,7 +942,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::SoftSign);
    convolutional_layer->set({1,6,6}, {3,3,3});
-   convolutional_layer->set_parameters(Vector<double>({1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,-1,0,1}));
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,-1,0,1}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::MaxPooling);
    pooling_layer->set_pool_size(2,2);
@@ -1052,7 +1052,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::Linear);
    convolutional_layer->set({2,3,3}, {5,2,2});
-   convolutional_layer->set_parameters(Vector<double>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
                                                       -2,-1,0,1,2}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::NoPooling);
@@ -1112,7 +1112,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    convolutional_layer->set_activation_function(OpenNN::ConvolutionalLayer::Linear);
    convolutional_layer->set({2,3,3}, {5,2,2});
-   convolutional_layer->set_parameters(Vector<double>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
+   convolutional_layer->set_parameters(Tensor<type, 1>({1,1,1,1,1,-1,0,4,1,1,0,1,3,2,3,0,0,2,4,9,0,0,2,2,2,0,1,3,4,4,1,0,4,1,1,-1,1,1,1,1,
                                                       -2,-1,0,1,2}));
 
    pooling_layer->set_pooling_method(OpenNN::PoolingLayer::MaxPooling);
@@ -1150,7 +1150,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
 
    size_t parameters_number;
 
-   Vector<double> parameters;
+   Tensor<type, 1> parameters;
 
    // Test
 

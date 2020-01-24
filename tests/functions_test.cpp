@@ -60,13 +60,13 @@ void FunctionsTest::test_exponential()
 
     // Trivial case
 
-    const Vector<double> exp = exponential({0});
+    const Tensor<type, 1> exp = exponential({0});
     assert_true( abs(exp[0] - 1) <= 10e-3, LOG);
 
     //Random numbers
 
-    const Vector<double> solution({0.000911882,162754.7914});
-    const Vector<double> exp2 = exponential({-7, 12});
+    const Tensor<type, 1> solution({0.000911882,162754.7914});
+    const Tensor<type, 1> exp2 = exponential({-7, 12});
 
     assert_true(abs(exp2[0] - solution[0]) <= 10e-3, LOG);
     assert_true(abs(exp2[1] - solution[1]) <= 10e-3, LOG);
@@ -79,13 +79,13 @@ void FunctionsTest::test_logarithm()
 
     // Trivial case
 
-    const Vector<double> log = logarithm({0});
+    const Tensor<type, 1> log = logarithm({0});
     //assert_true( abs(log[0]) <= 10e-3, LOG);
 
     //Random numbers
 
-    const Vector<double> solution({2.079181246,0.954242509});
-    const Vector<double> log2 = logarithm({10, 9});
+    const Tensor<type, 1> solution({2.079181246,0.954242509});
+    const Tensor<type, 1> log2 = logarithm({10, 9});
 
 //    assert_true(abs(log2[0] - solution[0]) <= 10e-3, LOG);
 //    assert_true(abs(log2[1] - solution[1]) <= 10e-3, LOG);
@@ -98,15 +98,15 @@ void FunctionsTest::test_power()
 
     // Trivial case
 
-     Vector<double> pow = power({1},0);
+     Tensor<type, 1> pow = power({1},0);
     assert_true( abs(pow[0] - 1) <= 10e-3, LOG);
 
     //Random numbers
 
-    const Vector<double> solution({10.95445115,3.99925E-06,169});
-    const Vector<double> pow2= power({120},0.5);
-    const Vector<double> pow3= power({63},-3);
-    const Vector<double> pow4= power({13},2);
+    const Tensor<type, 1> solution({10.95445115,3.99925E-06,169});
+    const Tensor<type, 1> pow2= power({120},0.5);
+    const Tensor<type, 1> pow3= power({63},-3);
+    const Tensor<type, 1> pow4= power({13},2);
 
     assert_true(abs(pow2[0] - solution[0]) <= 10e-3, LOG);
     assert_true(abs(pow3[0] - solution[1]) <= 10e-3, LOG);
@@ -118,7 +118,7 @@ void FunctionsTest::test_binary()
 {
     cout << "test_binary\n";
 
-    const Vector<double> vector({0.3, 1.7, 0.1, 5});
+    const Tensor<type, 1> vector({0.3, 1.7, 0.1, 5});
 
     const Vector<bool> solution({0, 1, 0, 1});
 
@@ -130,8 +130,8 @@ void FunctionsTest::test_square_root()
 {
     cout << "test_square_root\n";
 
-    const Vector<double> vector({ 100, 25, 36});
-    const Vector<double> solution({10, 5, 6});
+    const Tensor<type, 1> vector({ 100, 25, 36});
+    const Tensor<type, 1> solution({10, 5, 6});
 
     assert_true( square_root(vector) - solution == 0, LOG);
 }
@@ -141,8 +141,8 @@ void FunctionsTest::test_cumulative()
 {
     cout << "test_cumulative\n";
 
-    const Vector<double> vector({1, 2, 3, 4});
-    const Vector<double> solution({1, 3, 6, 10});
+    const Tensor<type, 1> vector({1, 2, 3, 4});
+    const Tensor<type, 1> solution({1, 3, 6, 10});
 
     assert_true(cumulative(vector) == solution, LOG);
 }
@@ -154,15 +154,15 @@ void FunctionsTest::test_lower_bounded()
 
     //Vector-number case
 
-    const Vector<double> vector({4, 5, 6, 7, 8, 12, 15});
-    const Vector<double> solution({7, 7, 7, 7, 8, 12, 15});
+    const Tensor<type, 1> vector({4, 5, 6, 7, 8, 12, 15});
+    const Tensor<type, 1> solution({7, 7, 7, 7, 8, 12, 15});
 
     assert_true(lower_bounded(vector, 7) == solution, LOG);
 
     // Vector-vector case
 
-    const Vector<double> vector2({8, 6, 9, 4, 3, 12, 4});
-    const Vector<double> solution2({8, 6, 9, 7, 8, 12, 15});
+    const Tensor<type, 1> vector2({8, 6, 9, 4, 3, 12, 4});
+    const Tensor<type, 1> solution2({8, 6, 9, 7, 8, 12, 15});
 
     assert_true(lower_bounded(vector,vector2) == solution2, LOG);
 
@@ -190,15 +190,15 @@ void FunctionsTest::test_upper_bounded()
 
     //Vector-number case
 
-    const Vector<double> vector({4, 5, 6, 7, 8, 12, 15});
-    const Vector<double> solution({4, 5, 6, 7, 7, 7, 7});
+    const Tensor<type, 1> vector({4, 5, 6, 7, 8, 12, 15});
+    const Tensor<type, 1> solution({4, 5, 6, 7, 7, 7, 7});
 
     assert_true(upper_bounded(vector, 7) == solution, LOG);
 
     //Vector-vector case
 
-    const Vector<double> vector2({8, 6, 9, 4, 3, 12, 4});
-    const Vector<double> solution2({4, 5, 6, 4, 3, 12, 4});
+    const Tensor<type, 1> vector2({8, 6, 9, 4, 3, 12, 4});
+    const Tensor<type, 1> solution2({4, 5, 6, 4, 3, 12, 4});
 
     assert_true(upper_bounded(vector,vector2) == solution2, LOG);
 
@@ -226,16 +226,16 @@ void FunctionsTest::test_lower_upper_bounded()
 
     // Vector-number case
 
-    const Vector<double> vector({4, 5, 6, 7, 8, 12, 15});
-    const Vector<double> solution({5, 5, 6, 7, 8, 12, 13});
+    const Tensor<type, 1> vector({4, 5, 6, 7, 8, 12, 15});
+    const Tensor<type, 1> solution({5, 5, 6, 7, 8, 12, 13});
 
     assert_true(lower_upper_bounded(vector, 5,13) == solution, LOG);
 
     //Vector-vector case
 
-    const Vector<double> vector2({5, 5, 5, 5, 5, 5, 5});
-    const Vector<double> solution2({5, 5, 6, 7, 8, 12, 12});
-    const Vector<double> vector3({12, 12, 12, 12, 12, 12, 12});
+    const Tensor<type, 1> vector2({5, 5, 5, 5, 5, 5, 5});
+    const Tensor<type, 1> solution2({5, 5, 6, 7, 8, 12, 12});
+    const Tensor<type, 1> vector3({12, 12, 12, 12, 12, 12, 12});
 
     assert_true(lower_upper_bounded(vector,vector2,vector3) == solution2, LOG);
 
@@ -417,7 +417,7 @@ void FunctionsTest::test_logistic_derivatives()
 {
 
     Tensor<double, 2> tensor1;
-    Vector<double> tensor2;
+    Tensor<type, 1> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);
@@ -440,7 +440,7 @@ void FunctionsTest::test_logistic_second_derivatives()
 {
 
     Tensor<double, 2> tensor1;
-    Vector<double> tensor2;
+    Tensor<type, 1> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);

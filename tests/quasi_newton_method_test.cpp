@@ -90,14 +90,14 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
    neural_network.initialize_parameters(1.0);
 
-   Vector<double> old_parameters = neural_network.get_parameters();
-   Vector<double> old_gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> old_parameters = neural_network.get_parameters();
+   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> old_inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
    neural_network.initialize_parameters(-0.5);
 
-   Vector<double> parameters = neural_network.get_parameters();
-   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> parameters = neural_network.get_parameters();
+   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
 //   Tensor<double, 2> DFP_inverse_hessian
@@ -174,14 +174,14 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 
    neural_network.initialize_parameters(1.0);
 
-   Vector<double> old_parameters = neural_network.get_parameters();
-   Vector<double> old_gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> old_parameters = neural_network.get_parameters();
+   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> old_inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
    neural_network.initialize_parameters(-0.5);
 
-   Vector<double> parameters = neural_network.get_parameters();
-   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> parameters = neural_network.get_parameters();
+   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
 //   Tensor<double, 2> BFGS_inverse_hessian
@@ -207,14 +207,14 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
    neural_network.initialize_parameters(1.0);
 
-   Vector<double> old_parameters = neural_network.get_parameters();
-   Vector<double> old_gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> old_parameters = neural_network.get_parameters();
+   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> old_inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
    neural_network.initialize_parameters(-0.5);
 
-   Vector<double> parameters = neural_network.get_parameters();
-   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+   Tensor<type, 1> parameters = neural_network.get_parameters();
+   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<double, 2> inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
 //   Tensor<double, 2> inverse_hessian_approximation

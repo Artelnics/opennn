@@ -1419,7 +1419,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
+    const size_t neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 

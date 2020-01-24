@@ -216,7 +216,7 @@ void UnscalingLayerTest::test_calculate_outputs()
 
    UnscalingLayer ul(1);
 
-   Vector<double> inputs(1);
+   Tensor<type, 1> inputs(1);
 
    ul.set_display(false);
 

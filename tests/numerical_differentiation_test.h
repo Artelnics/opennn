@@ -94,17 +94,17 @@ private:
    // Constant methods
 /*
    double f1(const double&) const;
-   double f2(const Vector<double>&) const;
-   Vector<double> f3(const Vector<double>&) const;
-   double f7(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
+   double f2(const Tensor<type, 1>&) const;
+   Tensor<type, 1> f3(const Tensor<type, 1>&) const;
+   double f7(const size_t&, const Tensor<type, 1>&, const size_t&, const Tensor<type, 1>&) const;
 
    // Non constant methods
 
    double f4(const double&);
-   double f5(const Vector<double>&);
-   Vector<double> f6(const Vector<double>&);
+   double f5(const Tensor<type, 1>&);
+   Tensor<type, 1> f6(const Tensor<type, 1>&);
 
-   Vector<double> f8(const size_t&, const size_t&, const Vector<double>&) const;
+   Tensor<type, 1> f8(const size_t&, const size_t&, const Tensor<type, 1>&) const;
 */
 };
 

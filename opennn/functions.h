@@ -32,9 +32,9 @@ using namespace Eigen;
 
 namespace OpenNN
 {
-    double random_uniform(const double & = -1.0, const double & = 1.0);
+    type random_uniform(const type & = -1.0, const type & = 1.0);
 
-    double random_normal(const double & = 0.0, const double & = 1.0);
+    type random_normal(const type & = 0.0, const type & = 1.0);
 
     Index factorial(const Index&);
 
@@ -42,7 +42,7 @@ namespace OpenNN
 
     Tensor<type, 1> logarithm(const Tensor<type, 1>&);
 
-    Tensor<type, 1> power(const Tensor<type, 1>&, const double&);
+    Tensor<type, 1> power(const Tensor<type, 1>&, const type&);
 
     Tensor<type, 2> competitive(const Tensor<type, 2>&);
 
@@ -52,25 +52,25 @@ namespace OpenNN
 
     Tensor<type, 1> cumulative(const Tensor<type, 1>&);
 
-    Tensor<type, 1> lower_bounded(const Tensor<type, 1>&, const double &);
+    Tensor<type, 1> lower_bounded(const Tensor<type, 1>&, const type &);
 
     Tensor<type, 1> lower_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Tensor<type, 1> upper_bounded(const Tensor<type, 1>&, const double &);
+    Tensor<type, 1> upper_bounded(const Tensor<type, 1>&, const type &);
 
     Tensor<type, 1> upper_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>&, const double &, const double &);
+    Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>&, const type &, const type &);
 
     Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Tensor<type, 2> lower_bounded(const Tensor<type, 2>&, const double&);
-    Tensor<type, 2> upper_bounded(const Tensor<type, 2>&, const double&);
+    Tensor<type, 2> lower_bounded(const Tensor<type, 2>&, const type&);
+    Tensor<type, 2> upper_bounded(const Tensor<type, 2>&, const type&);
 
     Tensor<type, 2> lower_upper_bounded(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
     Tensor<type, 2> lower_upper_bounded(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Tensor<type, 1> logistic_function(const Tensor<type, 1>&, const double&, const double&);
+    Tensor<type, 1> logistic_function(const Tensor<type, 1>&, const type&, const type&);
 
     Tensor<type, 1> hard_sigmoid(const Tensor<type, 1>&);
 
@@ -142,7 +142,6 @@ namespace OpenNN
     // LOGISTIC
 
     Tensor<type, 2> logistic(const Tensor<type, 2>&);
-    Tensor<type, 2> logistic_second_derivatives(const Tensor<type, 2>&);
 
     // BINARY
 

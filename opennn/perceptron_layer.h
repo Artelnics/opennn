@@ -75,7 +75,7 @@ public:
 
    // Parameters
 
-   const Tensor<type, 2>& get_biases() const;
+   const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
    Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
@@ -113,7 +113,7 @@ public:
 
    // Parameters
 
-   void set_biases(const Tensor<type, 2>&);
+   void set_biases(const Tensor<type, 1>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&);
@@ -352,8 +352,8 @@ public:
 
        // Synaptic weights
 
-       const size_t synaptic_weights_number = get_synaptic_weights_number();
-       const size_t biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
+       const Index biases_number = get_biases_number();
 
        Eigen::array<Index, 1> one_dim{{inputs_number*neurons_number}};
 
@@ -400,7 +400,7 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 2> biases;
+   Tensor<type, 1> biases;
 
    /// This matrix containing conection strengths from a layer's inputs to its neurons.
 

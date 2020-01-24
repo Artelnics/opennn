@@ -97,7 +97,7 @@ void ScalingLayerTest::test_get_means()
 
    ScalingLayer sl;
 
-   Vector<double> means;
+   Tensor<type, 1> means;
 
    // Test
 
@@ -258,7 +258,7 @@ void ScalingLayerTest::test_check_range()
    cout << "test_check_range\n";
 
    ScalingLayer sl;
-   Vector<double> inputs;
+   Tensor<type, 1> inputs;
 
    // Test
 
