@@ -834,7 +834,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //            batch.fill(training_batches[iteration], input_variables_indices, target_variables_indices);
 
-            batch.print();system("pause");
+//            batch.print();system("pause");
 
            // Neural network
 
