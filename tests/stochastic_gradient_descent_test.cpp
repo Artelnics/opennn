@@ -66,7 +66,7 @@ void StochasticGradientDescentTest::test_perform_training()
    data_set.randomize_data_normal();
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 

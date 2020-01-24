@@ -591,9 +591,9 @@ void PerceptronLayerTest::test_initialize_synaptic_weights()
 }
 
 
-void PerceptronLayerTest::test_randomize_parameters_uniform()
+void PerceptronLayerTest::test_set_parameters_random()
 {
-   cout << "test_randomize_parameters_uniform\n";
+   cout << "test_set_parameters_random\n";
 
    PerceptronLayer perceptron_layer;
    Vector<double> parameters;
@@ -602,29 +602,11 @@ void PerceptronLayerTest::test_randomize_parameters_uniform()
 
    perceptron_layer.set(1,1);
 
-   perceptron_layer.randomize_parameters_uniform();
+   perceptron_layer.set_parameters_random();
    parameters = perceptron_layer.get_parameters();
    
    assert_true(parameters >= -1.0, LOG);
    assert_true(parameters <= 1.0, LOG);   
-}
-
-
-void PerceptronLayerTest::test_randomize_parameters_normal()
-{
-   cout << "test_randomize_parameters_normal\n";
-
-   PerceptronLayer perceptron_layer;
-   Vector<double> parameters;
-
-   // Test
-
-   perceptron_layer.set(1, 1);
-
-   perceptron_layer.randomize_parameters_normal(1.0, 0.0);
-   parameters = perceptron_layer.get_parameters();
-
-   assert_true(parameters == 1.0, LOG);
 }
 
 
@@ -1293,17 +1275,13 @@ void PerceptronLayerTest::run_test_case()
 
    test_initialize_synaptic_weights();
 
-   test_randomize_parameters_uniform();
-
-   test_randomize_parameters_normal();
+   test_set_parameters_random();
 
    // Parameters initialization methods
 
    test_initialize_parameters();
 
-   test_randomize_parameters_uniform();
-
-   test_randomize_parameters_normal();
+   test_set_parameters_random();
 
    // Parameters norm
 

@@ -98,7 +98,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -110,7 +110,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -122,7 +122,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -179,7 +179,7 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
     instances.initialize_sequential();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number,hidden_neurons,outputs_number});
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     data_set.set(instances_number,inputs_number,outputs_number);
     data_set.randomize_data_normal();
@@ -246,7 +246,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     neural_network.add_layer(perceptron_layer);
 
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     parameters = neural_network.get_parameters();
 
@@ -285,7 +285,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     neural_network.add_layer(perceptron_layer);
 
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     parameters = neural_network.get_parameters();
 
@@ -376,10 +376,10 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
@@ -507,7 +507,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
    data_set.set(1, 1, 1);
@@ -521,7 +521,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 2);
@@ -535,7 +535,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(2, 2, 2);
    data_set.randomize_data_normal();
@@ -608,7 +608,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    neural_network.set(NeuralNetwork::Approximation, {2,2,2});
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(2,2,2);
 

@@ -90,7 +90,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
    hidden_neurons = 3;
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -180,7 +180,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
 
@@ -212,7 +212,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    neural_network.add_layer(long_short_term_memory_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
 
@@ -244,7 +244,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    neural_network.add_layer(recurrent_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
 
@@ -305,10 +305,10 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
@@ -356,7 +356,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
    outputs_number = 7;
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.randomize_data_normal();
@@ -395,7 +395,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    network_parameters = neural_network.get_parameters();
 
    data_set.set(2, 1, 1);
@@ -409,7 +409,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    network_parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 2);
@@ -423,7 +423,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(2,2,2);
    data_set.randomize_data_normal();
@@ -453,7 +453,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     data_set.set(2, 1, 1);
     data_set.randomize_data_normal();
@@ -480,7 +480,7 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     data_set.set(3, 1, 1);
     data_set.randomize_data_normal();

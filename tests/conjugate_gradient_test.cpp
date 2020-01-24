@@ -234,7 +234,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Test
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    old_loss = sum_squared_error.calculate_training_loss();
 

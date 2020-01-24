@@ -92,7 +92,7 @@ void MinkowskiErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -182,7 +182,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = me.calculate_training_error_gradient();
 
@@ -212,7 +212,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(long_short_term_memory_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = me.calculate_training_error_gradient();
 
@@ -242,7 +242,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(recurrent_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = me.calculate_training_error_gradient();
 
@@ -301,10 +301,10 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);

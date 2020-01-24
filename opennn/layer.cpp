@@ -84,24 +84,12 @@ void Layer::initialize_parameters(const double&)
 }
 
 
-void Layer::randomize_parameters_uniform(const double& , const double&)
+void Layer::set_parameters_random()
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "randomize_parameters_uniform(const double&, const double&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-
-void Layer::randomize_parameters_normal(const double&, const double&)
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "randomize_parameters_normal(const double& , const double&) method.\n"
+           << "set_parameters_random() method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

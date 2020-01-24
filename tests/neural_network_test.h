@@ -70,8 +70,7 @@ public:
    // Parameters initialization methods
 
    void test_initialize_parameters();
-   void test_randomize_parameters_uniform();
-   void test_randomize_parameters_normal();
+   void test_set_parameters_random();
 
    // Parameters norm 
 

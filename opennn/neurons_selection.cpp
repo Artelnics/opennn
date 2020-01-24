@@ -555,7 +555,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
 
     for(int i = 0; i < trials_number; i++)
     {
-        neural_network.randomize_parameters_normal();
+        neural_network.set_parameters_random();
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
 

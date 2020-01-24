@@ -105,8 +105,7 @@ public:
 
     virtual void initialize_parameters(const double&);
 
-    virtual void randomize_parameters_uniform(const double& = -1.0, const double& = 1.0);
-    virtual void randomize_parameters_normal(const double& = 0.0, const double& = 1.0);
+    virtual void set_parameters_random();
 
     // Architecture
 

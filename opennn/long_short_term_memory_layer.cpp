@@ -1130,77 +1130,22 @@ void LongShortTermMemoryLayer::initialize_parameters(const double& value)
 /// Initializes all the biases, weights and recurrent weights in the neural newtork at random with values comprised
 /// between -1 and +1.
 
-void LongShortTermMemoryLayer::randomize_parameters_uniform()
+void LongShortTermMemoryLayer::set_parameters_random()
 {
-/*
-     forget_biases.setRandom(-1.0, 1.0);
-     input_biases.setRandom(-1.0, 1.0);
-     state_biases.setRandom(-1.0, 1.0);
-     output_biases.setRandom(-1.0, 1.0);
+     forget_biases.setRandom();
+     input_biases.setRandom();
+     state_biases.setRandom();
+     output_biases.setRandom();
 
-     forget_weights.setRandom(-1.0, 1.0);
-     input_weights.setRandom(-1.0, 1.0);
-     state_weights.setRandom(-1.0, 1.0);
-     output_weights.setRandom(-1.0, 1.0);
+     forget_weights.setRandom();
+     input_weights.setRandom();
+     state_weights.setRandom();
+     output_weights.setRandom();
 
-     forget_recurrent_weights.setRandom(-1.0, 1.0);
-     input_recurrent_weights.setRandom(-1.0, 1.0);
-     state_recurrent_weights.setRandom(-1.0, 1.0);
-     output_recurrent_weights.setRandom(-1.0, 1.0);
-*/
-}
-
-
-/// Initializes all the biases, weights and recurrent weights in the layer of neurons at random with values
-/// comprised between a minimum and a maximum values.
-/// @param minimum Minimum initialization value.
-/// @param maximum Maximum initialization value.
-
-void LongShortTermMemoryLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
-{
-/*
-     forget_biases.setRandom(minimum, maximum);
-     input_biases.setRandom(minimum, maximum);
-     state_biases.setRandom(minimum, maximum);
-     output_biases.setRandom(minimum, maximum);
-
-     forget_weights.setRandom(minimum, maximum);
-     input_weights.setRandom(minimum, maximum);
-     state_weights.setRandom(minimum, maximum);
-     output_weights.setRandom(minimum, maximum);
-
-     forget_recurrent_weights.setRandom(minimum, maximum);
-     input_recurrent_weights.setRandom(minimum, maximum);
-     state_recurrent_weights.setRandom(minimum, maximum);
-     output_recurrent_weights.setRandom(minimum, maximum);
-*/
-}
-
-
-/// Initializes all the biases, weights and recurrent weights in the layer of neurons with random random values
-/// chosen from a normal distribution with a given mean and a given standard deviation.
-/// @param mean Mean of normal distribution.
-/// @param standard_deviation Standard deviation of normal distribution.
-
-
-void LongShortTermMemoryLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
-{
-/*
-    forget_biases.setRandom(mean, standard_deviation);
-    input_biases.setRandom(mean, standard_deviation);
-    state_biases.setRandom(mean, standard_deviation);
-    output_biases.setRandom(mean, standard_deviation);
-
-    forget_weights.setRandom(mean, standard_deviation);
-    input_weights.setRandom(mean, standard_deviation);
-    state_weights.setRandom(mean, standard_deviation);
-    output_weights.setRandom(mean, standard_deviation);
-
-    forget_recurrent_weights.setRandom(mean, standard_deviation);
-    input_recurrent_weights.setRandom(mean, standard_deviation);
-    state_recurrent_weights.setRandom(mean, standard_deviation);
-    output_recurrent_weights.setRandom(mean, standard_deviation);
-*/
+     forget_recurrent_weights.setRandom();
+     input_recurrent_weights.setRandom();
+     state_recurrent_weights.setRandom();
+     output_recurrent_weights.setRandom();
 }
 
 

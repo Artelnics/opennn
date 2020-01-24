@@ -573,50 +573,13 @@ void ProbabilisticLayer::initialize_parameters(const double& value)
 /// Initializes all the biases and synaptic weights in the neural newtork at random with values comprised
 /// between -1 and +1.
 
-void ProbabilisticLayer::randomize_parameters_uniform()
+void ProbabilisticLayer::set_parameters_random()
 {
    biases.setRandom();
 
    synaptic_weights.setRandom();
 }
 
-
-/// Initializes all the biases and synaptic weights in the probabilistic layer at random with values
-/// comprised between a minimum and a maximum values.
-/// @param minimum Minimum initialization value.
-/// @param maximum Maximum initialization value.
-
-void ProbabilisticLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
-{
-    biases.setRandom();
-
-    synaptic_weights.setRandom();
-
-}
-
-
-/// Initializes all the biases and synaptic weights in the newtork with random values chosen from a
-/// normal distribution with mean 0 and standard deviation 1.
-
-void ProbabilisticLayer::randomize_parameters_normal()
-{
-    biases.setRandom();
-
-    synaptic_weights.setRandom();
-}
-
-
-/// Initializes all the biases and synaptic weights in the probabilistic layer with random random values
-/// chosen from a normal distribution with a given mean and a given standard deviation.
-/// @param mean Mean of normal distribution.
-/// @param standard_deviation Standard deviation of normal distribution.
-
-void ProbabilisticLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
-{
-    biases.setRandom();
-
-    synaptic_weights.setRandom();
-}
 
 
 Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs) const

@@ -145,9 +145,7 @@ public:
 
    void initialize_parameters(const double&);
 
-   void randomize_parameters_uniform(const double&, const double&);
-
-   void randomize_parameters_normal(const double&, const double&);
+   void set_parameters_random();
 
    // Parameters norm
 

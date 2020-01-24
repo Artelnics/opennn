@@ -637,28 +637,13 @@ void RecurrentLayer::initialize_parameters(const double& value)
 /// @param minimum Minimum initialization value.
 /// @param maximum Maximum initialization value.
 
-void RecurrentLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
+void RecurrentLayer::set_parameters_random()
 {
     biases.setRandom();
 
     input_weights.setRandom();
 
     recurrent_weights.setRandom();
-}
-
-
-/// Initializes all the biases, input weights and recurrent weights in the layer of neurons with random random values
-/// chosen from a normal distribution with a given mean and a given standard deviation.
-/// @param mean Mean of normal distribution.
-/// @param standard_deviation Standard deviation of normal distribution.
-
-void RecurrentLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
-{
-     biases.setRandom();
-
-     input_weights.setRandom();
-
-     recurrent_weights.setRandom();
 }
 
 

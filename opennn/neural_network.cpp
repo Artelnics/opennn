@@ -1079,7 +1079,7 @@ void NeuralNetwork::initialize_parameters(const double& value)
 /// @param minimum Minimum initialization value.
 /// @param maximum Maximum initialization value.
 
-void NeuralNetwork::randomize_parameters_uniform(const double& minimum, const double& maximum)
+void NeuralNetwork::set_parameters_random()
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
@@ -1087,26 +1087,7 @@ void NeuralNetwork::randomize_parameters_uniform(const double& minimum, const do
 
     for(int i = 0; i < trainable_layers_number; i++)
     {
-       trainable_layers_pointers[i]->randomize_parameters_uniform(minimum, maximum);
-    }
-}
-
-
-/// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
-/// parameters) at random with values chosen from a normal distribution with a given mean and a given standard 
-/// deviation.
-/// @param mean Mean of normal distribution.
-/// @param standard_deviation Standard deviation of normal distribution.
-
-void NeuralNetwork::randomize_parameters_normal(const double& mean, const double& standard_deviation)
-{
-    const int trainable_layers_number = get_trainable_layers_number();
-
-    vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    for(int i = 0; i < trainable_layers_number; i++)
-    {
-         trainable_layers_pointers[i]->randomize_parameters_normal(mean, standard_deviation);
+       trainable_layers_pointers[i]->set_parameters_random();
     }
 }
 
