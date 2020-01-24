@@ -63,8 +63,8 @@ public:
 
    Tensor<int, 1> get_input_variables_dimensions() const;
 
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    const double& get_decision_threshold() const;
 
@@ -184,7 +184,7 @@ public:
            throw logic_error(buffer.str());
         }
 */
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
         const int combinations_columns_number = combinations.dimension(1);
 
@@ -242,7 +242,7 @@ public:
            throw logic_error(buffer.str());
         }
 
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
         const int combinations_columns_number = combinations.dimension(1);
 

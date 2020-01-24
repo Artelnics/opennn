@@ -282,7 +282,7 @@ public:
 
    // Architecture
 
-   int get_inputs_number() const;
+   Index get_inputs_number() const;
    int get_outputs_number() const;
 
    Tensor<int, 1> get_architecture() const;

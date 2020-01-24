@@ -1297,8 +1297,8 @@ void DataSetTest::test_balance_binary_targets_distribution()
     Tensor<double, 2> data1(9,10);
     Tensor<double, 2> data2(90,10);
 
-    data1.randomize_normal();
-    data2.randomize_normal();
+    data1.setRandom();
+    data2.setRandom();
 
     data1.set_column(9, 0.0);
     data2.set_column(9, 1.0);

@@ -711,7 +711,7 @@ void StatisticsTest::test_calculate_histogram()
 
    // Test
    vector.set(20);
-   vector.randomize_normal();
+   vector.setRandom();
 
    histogram = OpenNN::histogram(vector, 10);
 

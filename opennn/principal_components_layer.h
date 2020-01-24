@@ -76,9 +76,9 @@ public:
 
    Tensor<type, 1> get_explained_variance() const;
 
-   int get_inputs_number() const;
-   int get_principal_components_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_principal_components_number() const;
+   Index get_neurons_number() const;
 
 
    // Inputs principal components function

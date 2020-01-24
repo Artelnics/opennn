@@ -59,8 +59,8 @@ public:
 
    bool is_empty() const;
 
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    // Parameters
 

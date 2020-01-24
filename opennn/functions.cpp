@@ -1347,7 +1347,7 @@ Tensor<type, 1> lower_bounded(const Tensor<type, 1>& vector, const Tensor<type, 
 
     buffer
         << "OpenNN Exception: vector Template.\n"
-        << "vector<T> calculate_lower_bounded(const vector<T>&) const method.\n"
+        << "Tensor<type, 1> calculate_lower_bounded(const Tensor<type, 1>&) const method.\n"
         << "Lower bound size must be equal to vector size.\n";
 
     throw logic_error(buffer.str());
@@ -1401,8 +1401,6 @@ Tensor<type, 1> upper_bounded(const Tensor<type, 1>& vector, const Tensor<type, 
 {
   const int this_size = vector.size();
 
-  
-
 #ifdef __OPENNN_DEBUG__
 
   const int upper_bound_size = upper_bound.size();
@@ -1412,7 +1410,7 @@ Tensor<type, 1> upper_bounded(const Tensor<type, 1>& vector, const Tensor<type, 
 
     buffer
         << "OpenNN Exception: vector Template.\n"
-        << "vector<T> calculate_upper_bounded(const vector<T>&) const method.\n"
+        << "Tensor<type, 1> calculate_upper_bounded(const Tensor<type, 1>&) const method.\n"
         << "Upper bound size must be equal to vector size.\n";
 
     throw logic_error(buffer.str());
@@ -1485,8 +1483,7 @@ Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>& vector, const Tensor<
     ostringstream buffer;
 
     buffer << "OpenNN Exception: vector Template.\n"
-           << "vector<T> calculate_lower_upper_bounded(const vector<T>&, const "
-              "vector<T>&) const method.\n"
+           << "Tensor<type, 1> calculate_lower_upper_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
            << "Lower and upper bound sizes must be equal to vector size.\n";
 
     throw logic_error(buffer.str());

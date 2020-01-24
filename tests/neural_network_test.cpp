@@ -413,7 +413,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    assert_true(neural_network.calculate_outputs(inputs) == 0.5, LOG);
 //            || neural_network.calculate_outputs(inputs) == 1.0, LOG);
 
-   inputs.randomize_normal(-10.0, 25.0);
+   inputs.setRandom(-10.0, 25.0);
 
    assert_true(neural_network.calculate_outputs(inputs) >= 0.0, LOG);
    assert_true(neural_network.calculate_outputs(inputs) <= 1.0, LOG);
@@ -435,7 +435,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    neural_network_4.add_layer(probabilistic_layer_5);
 
    inputs.set({parameters_number, inputs_number}, 0.0);
-   inputs.randomize_normal();
+   inputs.setRandom();
 
    assert_true(minimum(neural_network_4.calculate_outputs(inputs)) >= 0.0, LOG);
    assert_true(maximum(neural_network_4.calculate_outputs(inputs)) <= 1.0, LOG);
@@ -456,7 +456,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    architecture.set(5);
 
-   architecture.randomize_uniform(5, 10);
+   architecture.setRandom(5, 10);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
@@ -1180,7 +1180,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    neural_network.set(NeuralNetwork::Approximation, {4, 3, 5});
 
    inputs.set(Vector<size_t>({1, 4}));
-   inputs.randomize_normal();
+   inputs.setRandom();
 
    neural_network.get_parameters().initialize_sequential();
 
@@ -1254,7 +1254,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    assert_true(neural_network.calculate_outputs(inputs) >=0 &&
                neural_network.calculate_outputs(inputs) <= 1, LOG);
 
-   inputs.randomize_normal(-10.0, 25.0);
+   inputs.setRandom(-10.0, 25.0);
 
    assert_true(neural_network.calculate_outputs(inputs) >= 0.0, LOG);
    assert_true(neural_network.calculate_outputs(inputs) <= 1.0, LOG);
@@ -1265,7 +1265,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    neural_network.set(NeuralNetwork::Approximation, {4, 3, 5});
 
    inputs.set(Vector<size_t>({1, 4}));
-   inputs.randomize_normal();
+   inputs.setRandom();
 
    neural_network.get_parameters().initialize_sequential();
 
@@ -1293,7 +1293,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
 
    architecture.set(5);
 
-   architecture.randomize_uniform(5, 10);
+   architecture.setRandom(5, 10);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 

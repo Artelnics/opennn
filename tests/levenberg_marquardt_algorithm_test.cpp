@@ -494,9 +494,9 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
    // Test
 
    a.set(100, 100);
-   a.randomize_normal();
+   a.setRandom();
    b.set(100);
-   b.randomize_normal();
+   b.setRandom();
 
    lma.perform_Householder_QR_decomposition(a, b);
 

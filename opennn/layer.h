@@ -150,8 +150,8 @@ public:
 
     virtual Tensor<int, 1> get_input_variables_dimensions() const;
 
-    virtual int get_inputs_number() const;
-    virtual int get_neurons_number() const;
+    virtual Index get_inputs_number() const;
+    virtual Index get_neurons_number() const;
 
     virtual void set_inputs_number(const int&);
     virtual void set_neurons_number(const int&);

@@ -64,8 +64,8 @@ public:
    // Get methods
 
    Tensor<int, 1> get_input_variables_dimensions() const;
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    const BoundingMethod& get_bounding_method() const;
 
@@ -76,8 +76,6 @@ public:
 
    const Tensor<type, 1>& get_upper_bounds() const;
    double get_upper_bound(const Index&) const;
-
-   vector<Tensor<type, 1>> get_bounds();
 
    // Variables bounds
 
@@ -98,8 +96,6 @@ public:
 
    void set_upper_bounds(const Tensor<type, 1>&);
    void set_upper_bound(const int&, const double&);
-
-   void set_bounds(const vector<Tensor<type, 1>>&);
 
    void set_display(const bool&);
 

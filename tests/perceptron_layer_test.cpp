@@ -783,7 +783,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set(1, 1);
 
    inputs.set(Vector<size_t>({2,1}));
-   inputs.randomize_normal();
+   inputs.setRandom();
 
    biases.set(1);
    biases.initialize_sequential();
@@ -1169,7 +1169,7 @@ void PerceptronLayerTest::test_calculate_outputs()
    perceptron_layer.set(1, 1);
 
    inputs.set(Vector<size_t>({1,1}));
-   inputs.randomize_normal();
+   inputs.setRandom();
 
    parameters = perceptron_layer.get_parameters();
 

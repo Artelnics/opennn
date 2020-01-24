@@ -119,17 +119,17 @@ Tensor<int, 1> BoundingLayer::get_input_variables_dimensions() const
 }
 
 
-int BoundingLayer::get_inputs_number() const
+Index BoundingLayer::get_inputs_number() const
 {
-    return lower_bounds.size();
+    return lower_bounds.dimension(0);
 }
 
 
 /// Return the neurons number in the bounding layer.
 
-int BoundingLayer::get_neurons_number() const
+Index BoundingLayer::get_neurons_number() const
 {
-    return lower_bounds.size();
+    return lower_bounds.dimension(0);
 }
 
 
@@ -150,7 +150,7 @@ double BoundingLayer::get_lower_bound(const int& i) const
 
    #ifdef __OPENNN_DEBUG__
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    if(i >= neurons_number)
    {
@@ -184,7 +184,7 @@ double BoundingLayer::get_upper_bound(const Index& i) const
 {  
    #ifdef __OPENNN_DEBUG__
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    if(neurons_number == 0)
    {
@@ -210,17 +210,6 @@ double BoundingLayer::get_upper_bound(const Index& i) const
    #endif
 
    return upper_bounds(i);
-}
-
-
-/// Returns the lower bounds and the upper bounds of all the bounding neurons.
-/// The format is a vector of pointers to vectors of size two. 
-/// The first element contains the lower bound values.
-/// The second element contains the upper bound values.
-
-vector<Tensor<type, 1>> BoundingLayer::get_bounds()
-{
-   return {lower_bounds, upper_bounds};
 }
 
 
@@ -340,7 +329,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
    #ifdef __OPENNN_DEBUG__
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    if(new_lower_bounds.size() != neurons_number)
    {
@@ -368,7 +357,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 
 void BoundingLayer::set_lower_bound(const int& index, const double& new_lower_bound)
 {
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -406,7 +395,7 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 
    #ifdef __OPENNN_DEBUG__
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    if(new_upper_bounds.size() != neurons_number)
    {
@@ -434,7 +423,7 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 
 void BoundingLayer::set_upper_bound(const int& index, const double& new_upper_bound)
 {
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    
 
@@ -460,52 +449,6 @@ void BoundingLayer::set_upper_bound(const int& index, const double& new_upper_bo
 
    upper_bounds[index] = new_upper_bound;
 */
-}
-
-
-/// Sets both the lower bounds and the upper bounds of all the neurons in the layer.
-/// The format is a vector of two real vectors.
-/// The first element must contain the lower bound values for the bounding neurons.
-/// The second element must contain the upper bound values for the bounding neurons.
-/// These values are used for unscaling variables so that they are neither less than the lower bounds nor greater than the upper bounds. 
-/// @param new_bounds New set of lower and upper bounds.
-
-void BoundingLayer::set_bounds(const vector<Tensor<type, 1>>& new_bounds)
-{
-   #ifdef __OPENNN_DEBUG__
-
-   const int size = new_bounds.size();
-
-   const int neurons_number = get_neurons_number();
-
-   if(size != 2)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_bounds(const vector<Tensor<type, 1>>&) method.\n"
-             << "Number of rows must be 2.\n";
-
-	  throw logic_error(buffer.str());
-   }
-   else if(new_bounds[0].size() != neurons_number
-        && new_bounds[1].size() != neurons_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_bounds(const vector<Tensor<type, 1>>&) method.\n"
-             << "Number of columns("<< new_bounds[0].size() <<") must be equal to number of bounding neurons(" << neurons_number << ").\n";
-
-	  throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   // Set lower and upper bounds of bounding neurons
-
-   set_lower_bounds(new_bounds[0]);
-   set_upper_bounds(new_bounds[1]);
 }
 
 
@@ -542,7 +485,7 @@ void BoundingLayer::prune_neuron(const int& index)
 {   
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(index >= neurons_number)
     {
@@ -583,7 +526,7 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
        throw logic_error(buffer.str());
     }
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     const int inputs_columns_number = inputs.dimension(1);
 
@@ -627,7 +570,7 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
    if(bounding_method == Bounding)
    {
-       const int neurons_number = get_neurons_number();
+       const Index neurons_number = get_neurons_number();
 
        for(int i = 0; i < neurons_number; i++)
        {
@@ -654,7 +597,7 @@ string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names
 
    if(bounding_method == Bounding)
    {
-       const int neurons_number = get_neurons_number();
+       const Index neurons_number = get_neurons_number();
 
        for(int i = 0; i < neurons_number; i++)
        {
@@ -704,7 +647,7 @@ tinyxml2::XMLDocument* BoundingLayer::to_XML() const
     tinyxml2::XMLElement* size_element = document->NewElement("BoundingNeuronsNumber");
     bounding_layer_element->LinkEndChild(size_element);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     buffer.str("");
     buffer << neurons_number;
@@ -798,7 +741,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    file_stream.OpenElement("BoundingNeuronsNumber");
 
-   const int neurons_number = get_neurons_number();
+   const Index neurons_number = get_neurons_number();
 
    buffer.str("");
    buffer << neurons_number;
