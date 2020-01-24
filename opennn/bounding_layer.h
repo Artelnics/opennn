@@ -41,7 +41,7 @@ public:
 
    explicit BoundingLayer();
 
-   explicit BoundingLayer(const int&);
+   explicit BoundingLayer(const Index&);
 
    explicit BoundingLayer(const tinyxml2::XMLDocument&);
 
@@ -63,7 +63,7 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -72,7 +72,7 @@ public:
    string write_bounding_method() const;
 
    const Tensor<type, 1>& get_lower_bounds() const;
-   double get_lower_bound(const int&) const;
+   double get_lower_bound(const Index&) const;
 
    const Tensor<type, 1>& get_upper_bounds() const;
    double get_upper_bound(const Index&) const;
@@ -80,22 +80,22 @@ public:
    // Variables bounds
 
    void set();
-   void set(const int&);
+   void set(const Index&);
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
 
    void set_lower_bounds(const Tensor<type, 1>&);
-   void set_lower_bound(const int&, const double&);
+   void set_lower_bound(const Index&, const double&);
 
    void set_upper_bounds(const Tensor<type, 1>&);
-   void set_upper_bound(const int&, const double&);
+   void set_upper_bound(const Index&, const double&);
 
    void set_display(const bool&);
 
@@ -103,7 +103,7 @@ public:
 
    // Pruning and growing
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Lower and upper bounds
 

@@ -15,7 +15,7 @@ type sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     const auto error = y - x;
 
-    const Eigen::array<Eigen::IndexPair<int>, 2> product_dimensions = { Eigen::IndexPair<int>(0, 0), Eigen::IndexPair<int>(1, 1) };
+    const Eigen::array<Eigen::IndexPair<Index>, 2> product_dimensions = { Eigen::IndexPair<Index>(0, 0), Eigen::IndexPair<Index>(1, 1) };
 
     const Tensor<type, 0> sse = error.contract(error, product_dimensions);
 
@@ -27,18 +27,18 @@ type l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
 {
    Tensor<type, 0> y;
 
-   y.device(threadPoolDevice) = x.square().sum(Eigen::array<int, 1>({0}));
+   y.device(threadPoolDevice) = x.square().sum(Eigen::array<Index, 1>({0}));
 
    return y(0);
 
  /*
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   //vector.sum()
 
   type norm = 0.0;
 
-  for(int i = 0; i < x_size; i++) {
+  for(Index i = 0; i < x_size; i++) {
     norm += vector[i] *vector[i];
   }
 
@@ -65,11 +65,11 @@ type l1_norm(const Tensor<type, 1>& vector)
 
 type l2_norm(const Tensor<type, 1>& vector)
 {
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   type norm = 0.0;
 
-  for(int i = 0; i < x_size; i++) {
+  for(Index i = 0; i < x_size; i++) {
     norm += vector[i] *vector[i];
   }
 
@@ -82,7 +82,7 @@ type l2_norm(const Tensor<type, 1>& vector)
 Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& vector)
 {
 
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   Tensor<type, 1> gradient(x_size);
 /*
@@ -102,7 +102,7 @@ Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& vector)
 
 Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& vector)
 {
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   Tensor<type, 2> hessian(x_size, x_size);
 /*
@@ -136,11 +136,11 @@ type lp_norm(const Tensor<type, 1>& vector, const type &p)
 
 #endif
 
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   type norm = 0.0;
 
-  for(int i = 0; i < x_size; i++) {
+  for(Index i = 0; i < x_size; i++) {
     norm += pow(abs(vector[i]), p);
   }
 
@@ -169,7 +169,7 @@ Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>& vector, const type &p)
 
 #endif
 
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
   Tensor<type, 1> gradient(x_size);
 
@@ -181,7 +181,7 @@ Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>& vector, const type &p)
   }
   else
   {
-    for(int i = 0; i < x_size; i++)
+    for(Index i = 0; i < x_size; i++)
     {
       gradient[i] =
          vector[i] * pow(abs(vector[i]), p - 2.0) / pow(p_norm, p - 1.0);
@@ -197,11 +197,11 @@ Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>& vector, const type &p)
 
 Tensor<type, 2> direct(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int y_size = y.size();
+  const Index y_size = y.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
@@ -219,11 +219,11 @@ Tensor<type, 2> direct(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
    #pragma omp parallel for if(x_size > 1000)
 
-  for(int i = 0; i < static_cast<int>(x_size); i++)
+  for(Index i = 0; i < static_cast<Index>(x_size); i++)
   {
-    for(int j = 0; j < x_size; j++)
+    for(Index j = 0; j < x_size; j++)
     {
-      direct(static_cast<int>(i), j) = x[static_cast<int>(i)] * y[j];
+      direct(static_cast<Index>(i), j) = x[static_cast<Index>(i)] * y[j];
     }
   }
 
@@ -362,21 +362,21 @@ Tensor<type, 2> direct(const Tensor<type, 2>& matrix, const Tensor<type, 2>& oth
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   const int other_rows_number = other_matrix.dimension(0);
-   const int other_columns_number = other_matrix.dimension(1);
+   const Index other_rows_number = other_matrix.dimension(0);
+   const Index other_columns_number = other_matrix.dimension(1);
 
    Tensor<type, 2> direct(rows_number*other_rows_number, columns_number*other_columns_number);
 
-   int alpha;
-   int beta;
+   Index alpha;
+   Index beta;
 
-   for(int i = 0; i < rows_number; i++)
+   for(Index i = 0; i < rows_number; i++)
    {
-       for(int j = 0; j < columns_number; j++)
+       for(Index j = 0; j < columns_number; j++)
        {
-           for(int k = 0; k < other_rows_number; k++)
+           for(Index k = 0; k < other_rows_number; k++)
            {
-               for(int l = 0; l < other_columns_number; l++)
+               for(Index l = 0; l < other_columns_number; l++)
                {
                    alpha = other_rows_number*i+k;
                    beta = other_columns_number*j+l;
@@ -415,9 +415,9 @@ Tensor<type, 1> lp_norm(const Tensor<type, 2>& matrix, const type& p)
 
     Tensor<type, 1> norm(rows_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for(int j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             norm[i] += pow(abs(matrix(i,j)), p);
         }
@@ -473,9 +473,9 @@ Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>& matrix, const type& p)
       }
       else
       {
-        for(int i = 0; i < rows_number; i++)
+        for(Index i = 0; i < rows_number; i++)
         {
-            for(int j = 0; j < columns_number; j++)
+            for(Index j = 0; j < columns_number; j++)
             {
                 gradient(i,j) = matrix(i,j) * pow(abs(matrix(i,j)), p - 2.0) / pow(p_norm[i], p - 1.0);
             }
@@ -492,7 +492,7 @@ Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>& matrix, const type& p)
 
 type euclidean_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& vector_2)
 {
-    const int x_size = vector.size();
+    const Index x_size = vector.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -514,7 +514,7 @@ type euclidean_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& ve
     type distance = 0.0;
     type error;
 
-    for(int i = 0; i < x_size; i++)
+    for(Index i = 0; i < x_size; i++)
     {
         error = vector[i] - vector_2[i];
 
@@ -528,7 +528,7 @@ type euclidean_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& ve
 type euclidean_weighted_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& vector_2, const Tensor<type, 1>& weights)
 {
 
-    const int x_size = vector.size();
+    const Index x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
   const Index y_size = vector_2.dimension(0);
@@ -549,7 +549,7 @@ type euclidean_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
     type distance = 0.0;
     type error;
 
-    for(int i = 0; i < x_size; i++) {
+    for(Index i = 0; i < x_size; i++) {
         error = vector[i] - vector_2[i];
 
         distance += error * error * weights[i];
@@ -562,7 +562,7 @@ type euclidean_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
 Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>& vector, const Tensor<type, 1>& vector_2, const Tensor<type, 1>& weights)
 {
 
-    const int x_size = vector.size();
+    const Index x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
   const Index y_size = vector_2.dimension(0);
@@ -584,7 +584,7 @@ Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>& vector
 
     type error;
 
-    for(int i = 0; i < x_size; i++) {
+    for(Index i = 0; i < x_size; i++) {
         error = vector[i] - vector_2[i];
 
         distance[i] = error * error * weights[i];
@@ -597,7 +597,7 @@ Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>& vector
 type manhattan_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>&vector_2)
 {
 
-    const int x_size = vector.size();
+    const Index x_size = vector.size();
 #ifdef __OPENNN_DEBUG__
 
   const Index y_size = vector_2.dimension(0);
@@ -618,7 +618,7 @@ type manhattan_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>&vec
     type distance = 0.0;
     type error;
 
-    for(int i = 0; i < x_size; i++) {
+    for(Index i = 0; i < x_size; i++) {
         error = abs(vector[i] - vector_2[i]);
 
         distance += error;
@@ -652,7 +652,7 @@ type manhattan_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
     type distance = 0.0;
     type error;
 
-    for(int i = 0; i < x_size; i++)
+    for(Index i = 0; i < x_size; i++)
     {
         error = abs(vector[i] - vector_2[i]);
 
@@ -665,7 +665,7 @@ type manhattan_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
 
 Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>& vector, const Tensor<type, 1>& vector_2, const Tensor<type, 1>& weights)
 {
-    const int x_size = vector.size();
+    const Index x_size = vector.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -687,7 +687,7 @@ Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>& vector
     Tensor<type, 1> distance(x_size);
     type error;
 
-    for(int i = 0; i < x_size; i++)
+    for(Index i = 0; i < x_size; i++)
     {
         error = abs(vector[i] - vector_2[i]);
 
@@ -704,11 +704,11 @@ Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>& vector
 
 type sum_squared_error(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int y_size = y.size();
+  const Index y_size = y.size();
 
   if(y_size != x_size) {
     ostringstream buffer;
@@ -725,7 +725,7 @@ type sum_squared_error(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
   type sum_squared_error = 0.0;
   type error;
 
-  for(int i = 0; i < x_size; i++)
+  for(Index i = 0; i < x_size; i++)
   {
     error = x[i] - y[i];
 
@@ -746,7 +746,7 @@ type minkowski_error(const Tensor<type, 1>& vector,
                        const Tensor<type, 1>& vector_2,
                        const type& minkowski_parameter)
 {
-  const int x_size = vector.size();
+  const Index x_size = vector.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -787,7 +787,7 @@ type minkowski_error(const Tensor<type, 1>& vector,
 
   type minkowski_error = 0.0;
 
-  for(int i = 0; i < x_size; i++)
+  for(Index i = 0; i < x_size; i++)
   {
     minkowski_error +=
         pow(abs(vector[i] - vector_2[i]), minkowski_parameter);
@@ -820,7 +820,7 @@ Tensor<type, 1> euclidean_distance(const Tensor<type, 2>& matrix, const Tensor<t
 
      Tensor<type, 1> distances(rows_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances[i] = euclidean_distance(matrix.get_row(i), instance);
     }
@@ -838,9 +838,9 @@ Tensor<type, 1> euclidean_distance(const Tensor<type, 2>& matrix, const Tensor<t
 
     type error;
 
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for(int j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             error = matrix(i,j) - other_matrix(i,j);
 
@@ -875,7 +875,7 @@ Tensor<type, 1> euclidean_weighted_distance(const Tensor<type, 2>& matrix, const
 
      Tensor<type, 1> distances(rows_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances[i] = euclidean_weighted_distance(matrix.get_row(i), instance, weights);
     }
@@ -906,7 +906,7 @@ Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>& matrix
 
      Tensor<type, 2> distances(rows_number,columns_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances.set_row(i, euclidean_weighted_distance_vector(matrix.get_row(i), instance,weights));
     }
@@ -917,7 +917,7 @@ Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>& matrix
 
 /// Calculates the distance between two rows in the matrix
 
-type manhattan_distance(const Tensor<type, 2>& matrix, const int& first_index, const int& second_index)
+type manhattan_distance(const Tensor<type, 2>& matrix, const Index& first_index, const Index& second_index)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -926,7 +926,7 @@ type manhattan_distance(const Tensor<type, 2>& matrix, const int& first_index, c
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_distance(const int&, const int&) method.\n"
+               << "manhattan_distance(const Index&, const Index&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -955,7 +955,7 @@ Tensor<type, 1> manhattan_distance(const Tensor<type, 2>& matrix, const Tensor<t
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Metrics functions.\n"
-               << "manhattan_distance(const int&, const int&) method.\n"
+               << "manhattan_distance(const Index&, const Index&) method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -965,7 +965,7 @@ Tensor<type, 1> manhattan_distance(const Tensor<type, 2>& matrix, const Tensor<t
 
      Tensor<type, 1> distances(rows_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances[i] = manhattan_distance(matrix.get_row(i), instance);
     }
@@ -995,7 +995,7 @@ Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>& matrix, const
 
      Tensor<type, 1> distances(rows_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances[i] = manhattan_weighted_distance(matrix.get_row(i), instance, weights);
     }
@@ -1026,7 +1026,7 @@ Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>& matrix
 
      Tensor<type, 2> distances(rows_number,columns_number);
 /*
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         distances.set_row(i,manhattan_weighted_distance_vector(matrix.get_row(i),instance,weights));
     }
@@ -1042,9 +1042,9 @@ Tensor<type, 1> error_rows(const Tensor<type, 2>& matrix, const Tensor<type, 2>&
 
     Tensor<type, 1> error_rows(rows_number);
 
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for(int j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             error_rows[i] += (matrix(i,j) - other_matrix(i,j))*(matrix(i,j) - other_matrix(i,j));
         }
@@ -1063,9 +1063,9 @@ Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>& matrix, const Tensor<
 
     Tensor<type, 1> weighted_error_rows(rows_number);
 
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for(int j =0; j < columns_number; j++)
+        for(Index j =0; j < columns_number; j++)
         {
             if(other_matrix(i,j) == 1.0)
             {
@@ -1086,12 +1086,12 @@ Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>& matrix, const Tensor<
 
 type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const int x_rows_number = x.dimension(0);
-    const int x_columns_number = x.dimension(1);
+    const Index x_rows_number = x.dimension(0);
+    const Index x_columns_number = x.dimension(1);
 
     #ifdef __OPENNN_DEBUG__
 
-    const int y_rows_number = y.dimension(0);
+    const Index y_rows_number = y.dimension(0);
 
     if(y_rows_number != x_rows_number)
     {
@@ -1104,7 +1104,7 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
        throw logic_error(buffer.str());
     }
 
-    const int y_columns_number = y.dimension(1);
+    const Index y_columns_number = y.dimension(1);
 
     if(y_columns_number != x_columns_number)
     {
@@ -1121,9 +1121,9 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
     type cross_entropy_error = 0.0;
 
-    for(int i = 0; i < x_rows_number; i++)
+    for(Index i = 0; i < x_rows_number; i++)
     {
-        for(int j = 0; j < x_columns_number; j++)
+        for(Index j = 0; j < x_columns_number; j++)
         {
             const type y_value = y(static_cast<unsigned>(i), static_cast<unsigned>(j));
             const type x_value = x(i,j);
@@ -1168,7 +1168,7 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
 
 #ifdef __OPENNN_DEBUG__
 
-    const int other_rows_number = y.dimension(0);
+    const Index other_rows_number = y.dimension(0);
 
     if(other_rows_number != rows_number)
     {
@@ -1181,7 +1181,7 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
        throw logic_error(buffer.str());
     }
 
-    const int other_columns_number = y.dimension(1);
+    const Index other_columns_number = y.dimension(1);
 
     if(other_columns_number != columns_number)
     {
@@ -1199,11 +1199,11 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
     type minkowski_error = 0.0;
     type row_minkowski_error = 0.0;
 
-    for(int i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         row_minkowski_error = 0.0;
 
-        for(int j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
         }
@@ -1222,7 +1222,7 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
     const auto rows_number = x.dimension(0);
     const auto columns_number = x.dimension(1);
 
-    const int other_rows_number = y.dimension(0);
+    const Index other_rows_number = y.dimension(0);
 
     if(other_rows_number != rows_number)
     {
@@ -1235,7 +1235,7 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
        throw logic_error(buffer.str());
     }
 
-    const int other_columns_number = y.dimension(1);
+    const Index other_columns_number = y.dimension(1);
 
     if(other_columns_number != columns_number)
     {
@@ -1254,7 +1254,7 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
 
     type error = 0.0;
 /*
-    for(int i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); i++)
     {
         error = x[i] - y[i];
 

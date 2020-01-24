@@ -86,7 +86,7 @@ public:
    const double& get_error_gradient_norm() const;
    const double& get_error_learning_rate() const;
 
-   const int& get_epochs_number() const;
+   const Index& get_epochs_number() const;
 
    // Stopping criteria
 
@@ -95,9 +95,9 @@ public:
    const double& get_minimum_loss_increase() const;
    const double& get_loss_goal() const;
    const double& get_gradient_norm_goal() const;
-   const int& get_maximum_selection_error_decreases() const;
+   const Index& get_maximum_selection_error_decreases() const;
 
-   const int& get_maximum_epochs_number() const;
+   const Index& get_maximum_epochs_number() const;
    const double& get_maximum_time() const;
 
    const bool& get_return_minimum_selection_error_neural_network() const;
@@ -137,9 +137,9 @@ public:
    void set_minimum_loss_decrease(const double&);
    void set_loss_goal(const double&);
    void set_gradient_norm_goal(const double&);
-   void set_maximum_selection_error_increases(const int&);
+   void set_maximum_selection_error_increases(const Index&);
 
-   void set_maximum_epochs_number(const int&);
+   void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const double&);
 
    void set_return_minimum_selection_error_neural_network(const bool&);
@@ -152,7 +152,7 @@ public:
 
    // Utilities
 
-   void set_display_period(const int&);
+   void set_display_period(const Index&);
 
    // Training methods
 
@@ -245,11 +245,11 @@ private:
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   int maximum_selection_error_decreases;
+   Index maximum_selection_error_decreases;
 
    /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
 
-   int maximum_epochs_number;
+   Index maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 

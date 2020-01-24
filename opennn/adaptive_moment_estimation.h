@@ -98,7 +98,7 @@ public:
    const type& get_maximum_time() const;
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
-   const int& get_maximum_selection_failures() const;
+   const Index& get_maximum_selection_failures() const;
 
    // Reserve training history
 
@@ -126,7 +126,7 @@ public:
    void set_warning_gradient_norm(const type&);
    void set_error_parameters_norm(const type&);
    void set_error_gradient_norm(const type&);
-   void set_maximum_epochs_number(const int&);
+   void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
 
@@ -134,7 +134,7 @@ public:
    void set_minimum_loss_increase(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
-   void set_maximum_selection_error_increases(const int&);
+   void set_maximum_selection_error_increases(const Index&);
    void set_maximum_time(const type&);
    void set_return_minimum_selection_error_neural_network(const bool&);
    void set_apply_early_stopping(const bool&);
@@ -146,7 +146,7 @@ public:
 
    // Utilities
 
-   void set_display_period(const int&);
+   void set_display_period(const Index&);
 
    // Training methods
 
@@ -233,23 +233,23 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   int maximum_selection_failures;
+   Index maximum_selection_failures;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
-   int maximum_iterations_number;
+   Index maximum_iterations_number;
 
    /// Initial batch size
 
-   int training_initial_batch_size;
+   Index training_initial_batch_size;
 
    /// Maximum training batch size
 
-   int training_maximum_batch_size;
+   Index training_maximum_batch_size;
 
    /// Maximum epochs number
 
-   int maximum_epochs_number;
+   Index maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 

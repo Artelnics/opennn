@@ -13,14 +13,14 @@ namespace OpenNN
 
 /// @todo
 
-KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const int& k) const
+KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const Index& k) const
 {
     Results k_means_results;
 /*
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    vector<Tensor<int, 1>> clusters(k);
+    vector<Tensor<Index, 1>> clusters(k);
 
     Tensor<type, 2> previous_means(k, columns_number);
     Tensor<type, 2> means(k, columns_number);
@@ -28,42 +28,42 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const i
     const Tensor<type, 1> minimums = OpenNN::columns_minimums(matrix);
     const Tensor<type, 1> maximums = OpenNN::columns_maximums(matrix);
 
-    int iterations = 0;
+    Index iterations = 0;
 
     bool end = false;
 
     // Calculate initial means
 
-    Tensor<int, 1> selected_rows(k);
+    Tensor<Index, 1> selected_rows(k);
 
-    const int initial_center = calculate_random_uniform<int>(0, rows_number);
+    const Index initial_center = calculate_random_uniform<Index>(0, rows_number);
 
     previous_means.set_row(0, matrix.get_row(initial_center));
     selected_rows[0] = initial_center;
 
-    for(int i = 1; i < k; i++)
+    for(Index i = 1; i < k; i++)
     {
         Tensor<type, 1> minimum_distances(rows_number, 0.0);
 
-        for(int j = 0; j < rows_number; j++)
+        for(Index j = 0; j < rows_number; j++)
         {
             Tensor<type, 1> distances(i, 0.0);
 
             const Tensor<type, 1> row_data = matrix.get_row(j);
 
-            for(int l = 0; l < i; l++)
+            for(Index l = 0; l < i; l++)
             {
                 distances[l] = euclidean_distance(row_data, previous_means.get_row(l));
             }
 
             const double minimum_distance = minimum(distances);
 
-            minimum_distances[static_cast<int>(j)] = minimum_distance;
+            minimum_distances[static_cast<Index>(j)] = minimum_distance;
         }
 
-        int sample_index = calculate_sample_index_proportional_probability(minimum_distances);
+        Index sample_index = calculate_sample_index_proportional_probability(minimum_distances);
 
-        int random_failures = 0;
+        Index random_failures = 0;
 
         while(selected_rows.contains(sample_index))
         {
@@ -98,24 +98,24 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const i
 
  #pragma omp parallel for
 
-        for(int i = 0; i < rows_number; i++)
+        for(Index i = 0; i < rows_number; i++)
         {
             Tensor<type, 1> distances(k, 0.0);
 
             const Tensor<type, 1> current_row = matrix.get_row(i);
 
-            for(int j = 0; j < k; j++)
+            for(Index j = 0; j < k; j++)
             {
                 distances[j] = euclidean_distance(current_row, previous_means.get_row(j));
             }
 
-            const int minimum_distance_index = minimal_index(distances);
+            const Index minimum_distance_index = minimal_index(distances);
 
   #pragma omp critical
-            clusters[minimum_distance_index].push_back(static_cast<int>(i));
+            clusters[minimum_distance_index].push_back(static_cast<Index>(i));
         }
 
-        for(int i = 0; i < k; i++)
+        for(Index i = 0; i < k; i++)
         {
             means.set_row(i, rows_means(matrix, clusters[i]));
         }
@@ -140,10 +140,10 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const i
 }
 
 
-int KMeans::calculate_sample_index_proportional_probability(const Tensor<type, 1>& vector) const
+Index KMeans::calculate_sample_index_proportional_probability(const Tensor<type, 1>& vector) const
 {
 /*
-    const int this_size = vector.size();
+    const Index this_size = vector.size();
 
     Tensor<type, 1> cumulative = OpenNN::cumulative(vector);
 
@@ -151,9 +151,9 @@ int KMeans::calculate_sample_index_proportional_probability(const Tensor<type, 1
 
     const double random = calculate_random_uniform(0.,sum);
 
-    int selected_index = 0;
+    Index selected_index = 0;
 
-    for(int i = 0; i < this_size; i++)
+    for(Index i = 0; i < this_size; i++)
     {
         if(i == 0 && random < cumulative[0])
         {

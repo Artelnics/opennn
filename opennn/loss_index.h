@@ -93,7 +93,7 @@ public:
            cout << "Output gradient:" << endl;
            cout << output_gradient << endl;
 
-           for(int i = 0; i < layers_delta.size(); i++)
+           for(Index i = 0; i < layers_delta.size(); i++)
            {
                cout << "Layers delta " << i << ":" << endl;
                cout << layers_delta[i] << endl;
@@ -138,7 +138,7 @@ public:
 
        SecondOrderLoss() {}
 
-       SecondOrderLoss(const int& parameters_number)
+       SecondOrderLoss(const Index& parameters_number)
        {
            loss = 0.0;
            gradient = Tensor<type, 1>(parameters_number);
@@ -247,8 +247,8 @@ public:
 
    virtual double calculate_selection_error() const;
 
-   virtual double calculate_batch_error(const Tensor<int, 1>&) const = 0;
-   virtual double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const = 0;
+   virtual double calculate_batch_error(const Tensor<Index, 1>&) const = 0;
+   virtual double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const = 0;
 
    // GRADIENT METHODS
 
@@ -256,7 +256,7 @@ public:
 
    virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
-   virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<int, 1>&) const;
+   virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<Index, 1>&) const;
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 
@@ -264,8 +264,8 @@ public:
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<int, 1>&) const {return Tensor<type, 1>();}
-   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<int, 1>&) const {return Tensor<type, 2>();}
+   virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
+   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
    virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
@@ -290,9 +290,9 @@ public:
 
    void calculate_layers_delta(const ThreadPoolDevice& thread_pool_device, const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
    {
-        const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
         if(trainable_layers_number == 0) return;
 
@@ -306,17 +306,17 @@ public:
 
       // Hidden layers
 
-      for(int i = static_cast<int>(trainable_layers_number)-2; i >= 0; i--)
+      for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
       {
-          Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<int>(i+1)];
+          Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
 
-          trainable_layers_pointers[static_cast<int>(i)]
+          trainable_layers_pointers[static_cast<Index>(i)]
           ->calculate_hidden_delta(thread_pool_device,
                                    previous_layer_pointer,
-                                   forward_propagation.layers[static_cast<int>(i)].activations,
-                                   forward_propagation.layers[static_cast<int>(i)].activations_derivatives,
-                                   first_order_loss.layers_delta[static_cast<int>(i+1)],
-                                   first_order_loss.layers_delta[static_cast<int>(i)]);
+                                   forward_propagation.layers[static_cast<Index>(i)].activations,
+                                   forward_propagation.layers[static_cast<Index>(i)].activations_derivatives,
+                                   first_order_loss.layers_delta[static_cast<Index>(i+1)],
+                                   first_order_loss.layers_delta[static_cast<Index>(i)]);
       }
    }
 
@@ -327,7 +327,7 @@ public:
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  FirstOrderLoss& first_order_loss) const
    {
-       const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        #ifdef __OPENNN_DEBUG__
 
@@ -335,7 +335,7 @@ public:
 
        // Hidden errors size
 
-       const int layers_delta_size = first_order_loss.layers_delta.size();
+       const Index layers_delta_size = first_order_loss.layers_delta.size();
 
        if(layers_delta_size != trainable_layers_number)
        {
@@ -350,11 +350,11 @@ public:
 
        #endif
 
-       const Tensor<int, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+       const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-       const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+       const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-       int index = 0;
+       Index index = 0;
 
        trainable_layers_pointers[0]->calculate_error_gradient(thread_pool_device,
                                                               batch.inputs_2d,
@@ -362,14 +362,14 @@ public:
                                                               first_order_loss.layers_delta[0],
                                                               first_order_loss.layers_error_gradient[0]);
 
-       for(int i = 0; i < trainable_layers_parameters_number[0]; i++)
+       for(Index i = 0; i < trainable_layers_parameters_number[0]; i++)
        {
             first_order_loss.error_gradient[i] = first_order_loss.layers_error_gradient[0](i);
        }
 
        index += trainable_layers_parameters_number[0];
 
-       for(int i = 1; i < trainable_layers_number; i++)
+       for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(thread_pool_device,
                    forward_propagation.layers[i-1].activations,
@@ -377,7 +377,7 @@ public:
                    first_order_loss.layers_delta[i],
                    first_order_loss.layers_error_gradient[i]);
 
-           for(int j = 0; j < trainable_layers_parameters_number[i]; j++)
+           for(Index j = 0; j < trainable_layers_parameters_number[i]; j++)
            {
                 first_order_loss.error_gradient[index + j] = first_order_loss.layers_error_gradient[i](j);
            }

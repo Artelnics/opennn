@@ -44,7 +44,7 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
-    void set_evaluations_number(const int&);
+    void set_evaluations_number(const Index&);
 
    
 
@@ -77,18 +77,18 @@ public:
 
        void print() const
        {
-           const int inputs_number = neural_network_pointer->get_inputs_number();
-           const int outputs_number = neural_network_pointer->get_outputs_number();
+           const Index inputs_number = neural_network_pointer->get_inputs_number();
+           const Index outputs_number = neural_network_pointer->get_outputs_number();
 
            const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
            const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
 
-           for(int i = 0; i < inputs_number; i++)
+           for(Index i = 0; i < inputs_number; i++)
            {
                cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
            }
 
-           for(int i = 0; i < outputs_number; i++)
+           for(Index i = 0; i < outputs_number; i++)
            {
                cout << outputs_names[i] << " " << optimal_variables[inputs_number+i] << endl;
            }
@@ -113,8 +113,8 @@ public:
    void set_input_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   void set_input_condition(const int&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
-   void set_output_condition(const int&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
    void set_inputs_outputs_conditions(const Tensor<string, 1>&, const Tensor<string, 1>&, const Tensor<type, 1>& = Tensor<type, 1>());
 
@@ -140,7 +140,7 @@ private:
     Tensor<type, 1> outputs_minimums;
     Tensor<type, 1> outputs_maximums;
 
-    int evaluations_number = 1000;
+    Index evaluations_number = 1000;
 
     double calculate_random_uniform(const double&, const double&) const;
 

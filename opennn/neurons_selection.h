@@ -74,7 +74,7 @@ public:
 
        /// Order of the diferent neural networks.
 
-       Tensor<int, 1> neurons_data;
+       Tensor<Index, 1> neurons_data;
 
        /// Performance of the different neural networks.
 
@@ -98,11 +98,11 @@ public:
 
        /// Order of the neural network with minimum selection error.
 
-       int optimal_neurons_number;
+       Index optimal_neurons_number;
 
        /// Number of iterations to perform the order selection.
 
-       int iterations_number;
+       Index iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -119,9 +119,9 @@ public:
 
     bool has_training_strategy() const;
 
-    const int& get_maximum_order() const;
-    const int& get_minimum_order() const;
-    const int& get_trials_number() const;
+    const Index& get_maximum_order() const;
+    const Index& get_minimum_order() const;
+    const Index& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -130,7 +130,7 @@ public:
     const bool& get_display() const;
 
     const double& get_selection_error_goal() const;
-    const int& get_maximum_iterations_number() const;
+    const Index& get_maximum_iterations_number() const;
     const double& get_maximum_time() const;
     const double& get_tolerance() const;
 
@@ -140,9 +140,9 @@ public:
 
     void set_default();
 
-    void set_maximum_order(const int&);
-    void set_minimum_order(const int&);
-    void set_trials_number(const int&);
+    void set_maximum_order(const Index&);
+    void set_minimum_order(const Index&);
+    void set_trials_number(const Index&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -151,13 +151,13 @@ public:
     void set_display(const bool&);
 
     void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const int&);
+    void set_maximum_iterations_number(const Index&);
     void set_maximum_time(const double&);
     void set_tolerance(const double&);
 
     // Loss calculation methods
 
-    Tensor<type, 1> calculate_losses(const int&, NeuralNetwork&);
+    Tensor<type, 1> calculate_losses(const Index&, NeuralNetwork&);
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -179,7 +179,7 @@ protected:
 
     /// Order of all the neural networks trained.
 
-    Tensor<int, 1> order_history;
+    Tensor<Index, 1> order_history;
 
     /// Selection loss of all the neural networks trained.
 
@@ -193,15 +193,15 @@ protected:
 
     /// Minimum number of hidden neurons.
 
-    int minimum_order;
+    Index minimum_order;
 
     /// Maximum number of hidden neurons.
 
-    int maximum_order;
+    Index maximum_order;
 
     /// Number of trials for each neural network.
 
-    int trials_number;
+    Index trials_number;
 
     // Order selection results
 
@@ -227,7 +227,7 @@ protected:
 
     /// Maximum number of iterations to perform_neurons_selection. It is used as a stopping criterion.
 
-    int maximum_iterations_number;
+    Index maximum_iterations_number;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 

@@ -48,7 +48,7 @@ public:
 
    explicit UnscalingLayer();
 
-   explicit UnscalingLayer(const int&);
+   explicit UnscalingLayer(const Index&);
 
    explicit UnscalingLayer(const vector<Descriptives>&);
 
@@ -68,7 +68,7 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -89,13 +89,13 @@ public:
    // Set methods
 
    void set();
-   void set(const int&);
+   void set(const Index&);
    void set(const vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    virtual void set_default();
 
@@ -104,12 +104,12 @@ public:
    void set_descriptives(const vector<Descriptives>&);
    void set_descriptives_eigen(const MatrixXd&);
 
-   void set_item_descriptives(const int&, const Descriptives&);
+   void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const int&, const double&);
-   void set_maximum(const int&, const double&);
-   void set_mean(const int&, const double&);
-   void set_standard_deviation(const int&, const double&);
+   void set_minimum(const Index&, const double&);
+   void set_maximum(const Index&, const double&);
+   void set_mean(const Index&, const double&);
+   void set_standard_deviation(const Index&, const double&);
 
    // Outputs unscaling method
 
@@ -122,7 +122,7 @@ public:
 
    // Pruning and growing
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Check methods
 

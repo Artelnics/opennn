@@ -71,17 +71,17 @@ public:
 
     // Get methods
 
-    const int& get_step() const;
+    const Index& get_step() const;
 
-    const int& get_maximum_selection_failures() const;
+    const Index& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_step(const int&);
+    void set_step(const Index&);
 
-    void set_maximum_selection_failures(const int&);
+    void set_maximum_selection_failures(const Index&);
 
     // Order selection methods
 
@@ -103,11 +103,11 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   int step;
+   Index step;
 
    /// Maximum number of iterations at which the selection error increases.
 
-   int maximum_selection_failures;
+   Index maximum_selection_failures;
 
 };
 

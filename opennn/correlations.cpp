@@ -19,13 +19,13 @@ namespace OpenNN
 double linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 /*
-  const int n = x.size();
+  const Index n = x.size();
 
   if(x.is_constant() || y.is_constant()) return 1.0;
 
   #ifdef __OPENNN_DEBUG__
 
-    const int y_size = y.size();
+    const Index y_size = y.size();
 
     ostringstream buffer;
 
@@ -48,7 +48,7 @@ double linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
   double s_xy = 0.0;
 
-  for(int i = 0; i < n; i++)
+  for(Index i = 0; i < n; i++)
   {
     s_x += x[i];
     s_y += y[i];
@@ -179,14 +179,14 @@ double exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 
 #endif
 /*
-    const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
+    const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
     const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
     Tensor<type, 1> log_y(y_valid.size());
 
-    for(int i = 0; i < static_cast<int>(log_y.size()); i++)
+    for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
     {
-        log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
+        log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
     }
 
     return linear_correlation(x.delete_indices(negative_indices), log_y);
@@ -308,7 +308,7 @@ double logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     scale_minimum_maximum(scaled_x);
 
 /*
-    const int epochs_number = 50000;
+    const Index epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -323,7 +323,7 @@ double logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     Tensor<type, 1> last_increment(2, 0.0);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -386,7 +386,7 @@ double logistic_correlation_missing_values(const Tensor<type, 1>& x, const Tenso
     scale_minimum_maximum(scaled_x);
 
 
-    const int epochs_number = 50000;
+    const Index epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -401,7 +401,7 @@ double logistic_correlation_missing_values(const Tensor<type, 1>& x, const Tenso
 
     Tensor<type, 1> last_increment(2, 0.0);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_x, new_y);
 
@@ -504,24 +504,24 @@ double power_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<ty
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
-Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const int &lags_number)
+Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_number)
 {
   Tensor<type, 1> autocorrelation(lags_number);
 
   const double mean = OpenNN::mean(x);
 
-  const int this_size = x.size();
+  const Index this_size = x.size();
 
   double numerator = 0;
   double denominator = 0;
 
-  for(int i = 0; i < lags_number; i++)
+  for(Index i = 0; i < lags_number; i++)
   {
-    for(int j = 0; j < this_size - i; j++)
+    for(Index j = 0; j < this_size - i; j++)
     {
       numerator += ((x[j] - mean) *(x[j + i] - mean)) /static_cast<double>(this_size - i);
     }
-    for(int j = 0; j < this_size; j++)
+    for(Index j = 0; j < this_size; j++)
     {
       denominator += ((x[j] - mean) *(x[j] - mean)) /static_cast<double>(this_size);
     }
@@ -548,7 +548,7 @@ Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const int &lags_numbe
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
 
-Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const int &maximum_lags_number)
+Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number)
 {
   if(y.size() != x.size())
   {
@@ -567,7 +567,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
   const double this_mean = mean(x);
   const double y_mean = mean(y);
 
-  const int this_size = x.size();
+  const Index this_size = x.size();
 
   double numerator = 0;
 
@@ -575,18 +575,18 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
   double y_denominator = 0;
   double denominator = 0;
 
-  for(int i = 0; i < maximum_lags_number; i++)
+  for(Index i = 0; i < maximum_lags_number; i++)
   {
     numerator = 0;
     this_denominator = 0;
     y_denominator = 0;
 
-    for(int j = 0; j < this_size - i; j++)
+    for(Index j = 0; j < this_size - i; j++)
     {
       numerator += (x[j] - this_mean) *(y[j + i] - y_mean);
     }
 
-    for(int j = 0; j < this_size; j++)
+    for(Index j = 0; j < this_size; j++)
     {
       this_denominator += (x[j] - this_mean) *(x[j] - this_mean);
       y_denominator += (y[j] - y_mean) *(y[j] - y_mean);
@@ -612,11 +612,11 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
 
 Tensor<type, 1> logistic_error_gradient(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   const int n = y.size();
+   const Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
   ostringstream buffer;
 
@@ -640,7 +640,7 @@ Tensor<type, 1> logistic_error_gradient(const double& a, const double& b, const 
 
     #pragma omp parallel for
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
         exponential = exp(-a - b * x[i]);
 
@@ -664,11 +664,11 @@ Tensor<type, 1> logistic_error_gradient(const double& a, const double& b, const 
 
 Tensor<type, 1> logistic_error_gradient_missing_values(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   const int n = y.size();
+   const Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
   ostringstream buffer;
 
@@ -699,7 +699,7 @@ Tensor<type, 1> logistic_error_gradient_missing_values(const double& a, const do
 
     double exponential;
 
-    for(int i = 0; i < new_n; i ++)
+    for(Index i = 0; i < new_n; i ++)
     {
         exponential = exp(-a - b * new_vector_x[i]);
 
@@ -729,11 +729,11 @@ double logistic(const double& a, const double& b, const double& x)
 
 double logistic_error(const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
   ostringstream buffer;
 
@@ -752,7 +752,7 @@ double logistic_error(const double& a, const double& b, const Tensor<type, 1>& x
 
     double sum_squared_error = 0.0;
 
-    for(int i = 0; i < x.size(); i ++)
+    for(Index i = 0; i < x.size(); i ++)
     {
         error = logistic(a, b, x[i]) - y[i];
 
@@ -768,11 +768,11 @@ double logistic_error(const double& a, const double& b, const Tensor<type, 1>& x
 double  logistic_error_missing_values
 (const double& a, const double& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
-  const int x_size = x.size();
+  const Index x_size = x.size();
 
   ostringstream buffer;
 
@@ -800,7 +800,7 @@ double  logistic_error_missing_values
 
     double error = 0.0;
 
-    for(int i = 0; i < new_n; i ++)
+    for(Index i = 0; i < new_n; i ++)
     {
         f_x[i] = logistic(a, b, new_vector_x[i]);
 
@@ -817,11 +817,11 @@ double  logistic_error_missing_values
 
 RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -845,7 +845,7 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += x[i];
       s_y += y[i];
 
@@ -894,11 +894,11 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
 RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   int n = y.size();
+   Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -927,7 +927,7 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
 
     double s_xy = 0;
 
-    for(int i = 0; i < new_vector_x.size(); i++) {
+    for(Index i = 0; i < new_vector_x.size(); i++) {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
 
@@ -980,11 +980,11 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
 RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 /*
-   int n = y.size();
+   Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1018,7 +1018,7 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
 
     double y1 = 0;
 
-    for(int i = 0; i < new_vector_x.size(); i++)
+    for(Index i = 0; i < new_vector_x.size(); i++)
     {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
@@ -1027,7 +1027,7 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
       y1 += new_vector_y[i];
     }
 
-     for(int i = 0; i < new_vector_x.size(); i++)
+     for(Index i = 0; i < new_vector_x.size(); i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
 
@@ -1069,11 +1069,11 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
 RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 /*
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1101,7 +1101,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
     double y1 = 0;
 
-    for(int i = 0; i < n; i++)
+    for(Index i = 0; i < n; i++)
     {
       s_x += x[i];
       s_y += y[i];
@@ -1110,7 +1110,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
       y1 += y[i];
     }
 
-     for(int i = 0; i < n; i++)
+     for(Index i = 0; i < n; i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
 
@@ -1150,11 +1150,11 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
 RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1177,7 +1177,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += x[i];
 
       s_y += log(y[i]);
@@ -1206,14 +1206,14 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
 
 
-     const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
+     const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
 
-     for(int i = 0; i < static_cast<int>(log_y.size()); i++)
+     for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
+         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
      }
 
      exponential_regression.correlation = exponential_correlation(x.delete_indices(negative_indices), log_y);
@@ -1232,8 +1232,8 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 {
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
-    int n = y.size();
+    const Index x_size = x.size();
+    Index n = y.size();
 
     ostringstream buffer;
 
@@ -1263,7 +1263,7 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 
     double s_xy = 0;
 
-    for(int i = 0; i < new_size; i++)
+    for(Index i = 0; i < new_size; i++)
     {
       s_x += new_vector_x[i];
 
@@ -1291,14 +1291,14 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
        exponential_regression.a =
           exp(s_y/new_size - exponential_regression.b * s_x/new_size);
 
-     const Tensor<int, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<Index, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
 
-     for(int i = 0; i < static_cast<int>(log_y.size()); i++)
+     for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
+         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
      }
 
      exponential_regression.correlation = exponential_correlation(new_vector_x.delete_indices(negative_indices), log_y);
@@ -1315,11 +1315,11 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 
 RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1342,7 +1342,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += log(x[i]);
       s_y += log(y[i]);
 
@@ -1384,11 +1384,11 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
 
 RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    int n = y.size();
+    Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1418,7 +1418,7 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += log(new_vector_x[i]);
       s_y += log(new_vector_y[i]);
 
@@ -1481,7 +1481,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
     Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const int epochs_number = 100000;
+    const Index epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -1491,7 +1491,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
     Tensor<type, 1> gradient(2);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -1548,7 +1548,7 @@ RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, c
 
     Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const int epochs_number = 100000;
+    const Index epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -1558,7 +1558,7 @@ RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, c
 
     Tensor<type, 1> gradient(2);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_vector_x, new_vector_y);
 
@@ -1590,11 +1590,11 @@ RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, c
 
 CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1618,7 +1618,7 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += x[i];
       s_y += y[i];
 
@@ -1660,11 +1660,11 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
 CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    int n = y.size();
+    Index n = y.size();
 
    #ifdef __OPENNN_DEBUG__
 
-     const int x_size = x.size();
+     const Index x_size = x.size();
 
      ostringstream buffer;
 
@@ -1693,7 +1693,7 @@ CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, 
 
      double s_xy = 0;
 
-     for(int i = 0; i < new_vector_x.size(); i++) {
+     for(Index i = 0; i < new_vector_x.size(); i++) {
        s_x += new_vector_x[i];
        s_y += new_vector_y[i];
 
@@ -1735,11 +1735,11 @@ CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, 
 
 CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1767,7 +1767,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     double y1 = 0;
 
-    for(int i = 0; i < n; i++)
+    for(Index i = 0; i < n; i++)
     {
       s_x += x[i];
       s_y += y[i];
@@ -1776,7 +1776,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
       y1 += y[i];
     }
 
-     for(int i = 0; i < n; i++)
+     for(Index i = 0; i < n; i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
 
@@ -1810,11 +1810,11 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
 CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-   int n = y.size();
+   Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1849,7 +1849,7 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
 
     double y1 = 0;
 
-    for(int i = 0; i < new_vector_x.size(); i++)
+    for(Index i = 0; i < new_vector_x.size(); i++)
     {
       s_x += new_vector_x[i];
       s_y += new_vector_y[i];
@@ -1858,7 +1858,7 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
       y1 += new_vector_y[i];
     }
 
-     for(int i = 0; i < new_vector_x.size(); i++)
+     for(Index i = 0; i < new_vector_x.size(); i++)
      {
          s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
 
@@ -1895,11 +1895,11 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
 
 CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -1922,7 +1922,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += x[i];
 
       s_y += log(y[i]);
@@ -1942,15 +1942,15 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
      } else {
 
-        const Tensor<int, 1> negative_indices = y.get_indices_less_equal_to(0.0);
+        const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
 
         const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
         Tensor<type, 1> log_y(y_valid.size());
 
-        for(int i = 0; i < static_cast<int>(log_y.size()); i++)
+        for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
         {
-             log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
+             log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
         }
 
         exponential_correlation.correlation = OpenNN::linear_correlation(x.delete_indices(negative_indices), log_y);
@@ -1969,11 +1969,11 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     /*
-    int n = y.size();
+    Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -2003,7 +2003,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
     double s_xy = 0;
 
-    for(int i = 0; i < new_size; i++)
+    for(Index i = 0; i < new_size; i++)
     {
       s_x += new_vector_x[i];
 
@@ -2025,14 +2025,14 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
     } else {
 
-     const Tensor<int, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+     const Tensor<Index, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
      const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
 
      Tensor<type, 1> log_y(y_valid.size());
 
-     for(int i = 0; i < static_cast<int>(log_y.size()); i++)
+     for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
      {
-         log_y[static_cast<int>(i)] = log(y_valid[static_cast<int>(i)]);
+         log_y[static_cast<Index>(i)] = log(y_valid[static_cast<Index>(i)]);
      }
 
      exponential_correlation.correlation = exponential_correlation_missing_values(new_vector_x.delete_indices(negative_indices), log_y);
@@ -2053,11 +2053,11 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     /*
-    const int n = y.size();
+    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -2080,7 +2080,7 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += log(x[i]);
       s_y += log(y[i]);
 
@@ -2116,11 +2116,11 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     /*
-    int n = y.size();
+    Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
 
-    const int x_size = x.size();
+    const Index x_size = x.size();
 
     ostringstream buffer;
 
@@ -2150,7 +2150,7 @@ CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, c
 
     double s_xy = 0;
 
-    for(int i = 0; i < n; i++) {
+    for(Index i = 0; i < n; i++) {
       s_x += log(new_vector_x[i]);
       s_y += log(new_vector_y[i]);
 
@@ -2205,7 +2205,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     scale_minimum_maximum(scaled_x);
 
 
-    const int epochs_number = 50000;
+    const Index epochs_number = 50000;
     const double learning_rate = 0.01;
     const double momentum = 0.9;
 
@@ -2220,7 +2220,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     Tensor<type, 1> last_increment(2, 0.0);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {               
         error = logistic_error(coefficients[0], coefficients[1], x, y);
 
@@ -2288,7 +2288,7 @@ CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>& x
 
     Tensor<type, 1> coefficients({0.0, 0.0});
 
-    const int epochs_number = 100000;
+    const Index epochs_number = 100000;
     double step_size = 0.01;
 
     const double error_goal = 1.0e-8;
@@ -2298,7 +2298,7 @@ CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>& x
 
     Tensor<type, 1> gradient(2);
 
-    for(int i = 0; i < epochs_number; i++)
+    for(Index i = 0; i < epochs_number; i++)
     {
         error = logistic_error(coefficients[0], coefficients[1], new_vector_x, new_vector_y);
 
@@ -2335,7 +2335,7 @@ CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>& x
 
 CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const int n = x.dimension(0);
+    const Index n = x.dimension(0);
 /*
     #ifdef  __OPENNN_DEBUG__
 
@@ -2344,7 +2344,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Index karl_pearson_correlation_missing_values const method.\n"
               << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2355,7 +2355,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Index karl_pearson_correlation_missing_values const method.\n"
               << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2366,7 +2366,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation const method.\n"
+              << "Index karl_pearson_correlation const method.\n"
               << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
@@ -2374,15 +2374,15 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
 
     #endif
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
+    Matrix<Index, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
 
-    for(int i = 0; i < x.dimension(1); i ++)
+    for(Index i = 0; i < x.dimension(1); i ++)
     {
-        for(int j = 0; j < y.dimension(1); j ++)
+        for(Index j = 0; j < y.dimension(1); j ++)
         {
-            int count = 0;
+            Index count = 0;
 
-            for(int k = 0; k < n; k ++)
+            for(Index k = 0; k < n; k ++)
             {
                 if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
                 {
@@ -2394,7 +2394,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
         }
     }
 
-    int k;
+    Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
      else k = y.dimension(1);
@@ -2420,7 +2420,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
 CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
 /*
-    int n = x.dimension(0);
+    Index n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
@@ -2459,11 +2459,11 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
 
     #endif
 
-    const int NAN_x = x.count_rows_with_nan();
+    const Index NAN_x = x.count_rows_with_nan();
 
-    const int NAN_y = y.count_rows_with_nan();
+    const Index NAN_y = y.count_rows_with_nan();
 
-    int new_size;
+    Index new_size;
 
     if(NAN_x <= NAN_y )
     {
@@ -2478,18 +2478,18 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
 
     Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const Tensor<int, 1> nan_indices_x = x.get_nan_indices();
+    const Tensor<Index, 1> nan_indices_x = x.get_nan_indices();
 
-    const Tensor<int, 1> nan_indices_y = y.get_nan_indices();
+    const Tensor<Index, 1> nan_indices_y = y.get_nan_indices();
 
-    for(int i = 0; i < nan_indices_x.size(); i++)
+    for(Index i = 0; i < nan_indices_x.size(); i++)
     {
 
         new_x = x.delete_rows(nan_indices_x);
         new_y = y.delete_rows(nan_indices_x);
     }
 
-    for(int j = 0; j < nan_indices_y.size(); j++)
+    for(Index j = 0; j < nan_indices_y.size(); j++)
     {
         new_x = x.delete_rows(nan_indices_y);
         new_y = y.delete_rows(nan_indices_y);
@@ -2497,15 +2497,15 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
 
     n = new_x.dimension(0);
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
+    Matrix<Index, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
 
-    for(int i = 0; i < new_x.dimension(1); i ++)
+    for(Index i = 0; i < new_x.dimension(1); i ++)
     {
-        for(int j = 0; j < new_y.dimension(1); j ++)
+        for(Index j = 0; j < new_y.dimension(1); j ++)
         {
-            int count = 0;
+            Index count = 0;
 
-            for(int k = 0; k < n; k ++)
+            for(Index k = 0; k < n; k ++)
             {
                 if(abs(new_x(k,i) + new_y(k,j) - 2) <= 0.0001)
                 {
@@ -2517,7 +2517,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
         }
     }
 
-    int k;
+    Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
     else k = y.dimension(1);
@@ -2571,9 +2571,9 @@ CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, con
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(int j = 0; j < matrix.dimension(1); j++)
+        for(Index j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -2586,7 +2586,7 @@ CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, con
 
     }
 
-    for(int i = 0; i < matrix.dimension(1); i ++)
+    for(Index i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -2624,13 +2624,13 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
     }
 
 #endif
-    const int this_size = matrix.dimension(0);
+    const Index this_size = matrix.dimension(0);
 
-    const int not_NAN_x = this_size - matrix.count_rows_with_nan();
+    const Index not_NAN_x = this_size - matrix.count_rows_with_nan();
 
-    const int not_NAN_y = vector.count_not_NAN();
+    const Index not_NAN_y = vector.count_not_NAN();
 
-    int new_size;
+    Index new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -2645,15 +2645,15 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
 
     Tensor<type, 1> new_y(new_size);
 
-    int index = 0;
+    Index index = 0;
 
-    for(int i = 0; i < this_size ; i++)
+    for(Index i = 0; i < this_size ; i++)
     {
         if(!::isnan(vector[i]))
         {
             new_y[index] = vector[i];
 
-            for(int j = 0; j < matrix1.dimension(1); j++)
+            for(Index j = 0; j < matrix1.dimension(1); j++)
             {
                 if(!::isnan(matrix[i]))
                 {
@@ -2678,9 +2678,9 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(int j = 0; j < matrix1.dimension(1); j++)
+        for(Index j = 0; j < matrix1.dimension(1); j++)
         {
            new_matrix(i,j) = matrix1(i,j) * new_y[i];
 
@@ -2692,7 +2692,7 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
         total_sum_of_squares += pow(new_y[i] - total_average,2);
     }
 
-    for(int i = 0; i < matrix1.dimension(1); i ++)
+    for(Index i = 0; i < matrix1.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -2716,8 +2716,8 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
 
 double covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2)
 {
-    const int size_1 = vector_1.size();
-    const int size_2 = vector_2.size();
+    const Index size_1 = vector_1.size();
+    const Index size_2 = vector_2.size();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2754,7 +2754,7 @@ double covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector
      double numerator = 0.0;
      double denominator = static_cast<double>(size_2-1);
 
-     for(int i = 0; i < size_1; i++)
+     for(Index i = 0; i < size_1; i++)
      {
          numerator += (vector_1[i] - mean_1)*(vector_2[i]-mean_2);
      }
@@ -2774,8 +2774,8 @@ double covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const int size_1 = new_x.size();
-    const int size_2 = new_y.size();
+    const Index size_1 = new_x.size();
+    const Index size_2 = new_y.size();
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2812,7 +2812,7 @@ double covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>
      double numerator = 0.0;
      double denominator = static_cast<double>(size_2-1);
 
-     for(int i = 0; i < size_1; i++)
+     for(Index i = 0; i < size_1; i++)
      {
          numerator += (new_x[i] - mean_1)*(new_y[i]-mean_2);
      }
@@ -2829,7 +2829,7 @@ Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
 {
     const Index columns_number = matrix.dimension(1);
 
-    const int size = columns_number;
+    const Index size = columns_number;
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2851,11 +2851,11 @@ Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
     Tensor<type, 1> first_column;
     Tensor<type, 1> second_column;
 /*
-    for(int i = 0; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         first_column = matrix.get_column(i);
 
-        for(int j = i; j < size; j++)
+        for(Index j = i; j < size; j++)
         {
             second_column = matrix.get_column(j);
 
@@ -2880,19 +2880,19 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
     Tensor<type, 1> indices_this = vector.calculate_less_rank().to_double_vector();
 
     const Tensor<type, 1> this_unique = vector.get_unique_elements();
-    const Tensor<int, 1> this_unique_frecuency = vector.count_unique();
+    const Tensor<Index, 1> this_unique_frecuency = vector.count_unique();
 
-    const int n = vector.size();
+    const Index n = vector.size();
 
-    for(int  i = 0; i < static_cast<int>(this_unique.size()); i++)
+    for(Index  i = 0; i < static_cast<Index>(this_unique.size()); i++)
     {
-        if(this_unique_frecuency[static_cast<int>(i)] > 1)
+        if(this_unique_frecuency[static_cast<Index>(i)] > 1)
         {
-             const double unique = this_unique[static_cast<int>(i)];
+             const double unique = this_unique[static_cast<Index>(i)];
 
-             Tensor<type, 1> indices(this_unique_frecuency[static_cast<int>(i)]);
+             Tensor<type, 1> indices(this_unique_frecuency[static_cast<Index>(i)]);
 
-             for(int j = 0; j < n; j++)
+             for(Index j = 0; j < n; j++)
              {
                  if(abs(vector[j] - unique) < 1.0e-99)
                  {
@@ -2902,7 +2902,7 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 
              const double mean_index = mean(indices);
 
-             for(int j = 0; j < n; j++)
+             for(Index j = 0; j < n; j++)
              {
                  if(abs(vector[j] - unique) < 1.0e-99)
                  {
@@ -2921,7 +2921,7 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 /// @param vector1 First variable.
 /// @param vector2 Second variable.
 
-Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
+Matrix<Index, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
 {
     /*
     Matrix<string, Dynamic, Dynamic> data_set = {vector1, vector2};
@@ -2931,14 +2931,14 @@ Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>& vector1
     const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
     const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
-    const int rows_number = categories_vector1.size();
-    const int columns_number = categories_vector2.size();
+    const Index rows_number = categories_vector1.size();
+    const Index columns_number = categories_vector2.size();
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
+    Matrix<Index, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
 
-    for(int i = 0 ; i < rows_number; i ++)
+    for(Index i = 0 ; i < rows_number; i ++)
     {
-        for(int j = 0 ; j < columns_number; j ++)
+        for(Index j = 0 ; j < columns_number; j ++)
         {
             contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
         }
@@ -2947,14 +2947,14 @@ Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>& vector1
     return contingency_table;
 */
 
-    return Matrix<int, Dynamic, Dynamic>();
+    return Matrix<Index, Dynamic, Dynamic>();
 }
 
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 /// @param contingency_table Data set to perform the test.
 
-Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>& matrix)
+Matrix<Index, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>& matrix)
 {
 /*
     #ifdef __OPENNN_DEBUG__
@@ -2964,7 +2964,7 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int contingency_table const method.\n"
+              << "Index contingency_table const method.\n"
               << "Number of columns("<< matrix.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2975,7 +2975,7 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int contingency_table const method.\n"
+              << "Index contingency_table const method.\n"
               << "Number of columns("<< matrix.dimension(1) <<") must be lower than two.\n";
 
        throw logic_error(buffer.str());
@@ -2992,14 +2992,14 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
     const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
     const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
-    const int rows_number = categories_vector1.size();
-    const int columns_number = categories_vector2.size();
+    const Index rows_number = categories_vector1.size();
+    const Index columns_number = categories_vector2.size();
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
+    Matrix<Index, Dynamic, Dynamic> contingency_table(rows_number,columns_number);
 
-    for(int i = 0 ; i < rows_number; i ++)
+    for(Index i = 0 ; i < rows_number; i ++)
     {
-        for(int j = 0 ; j < columns_number; j ++)
+        for(Index j = 0 ; j < columns_number; j ++)
         {
             contingency_table(i,j) = matrix.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
         }
@@ -3007,32 +3007,32 @@ Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>
 
     return contingency_table;
 */
-    return Matrix<int, Dynamic, Dynamic>();
+    return Matrix<Index, Dynamic, Dynamic>();
 }
 
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 
-Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>& matrix, const Tensor<int, 1>& indices1, const Tensor<int, 1>& indices2)
+Matrix<Index, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& indices1, const Tensor<Index, 1>& indices2)
 {
-    Matrix<int, Dynamic, Dynamic> contingency_table(indices1.size(), indices2.size());
+    Matrix<Index, Dynamic, Dynamic> contingency_table(indices1.size(), indices2.size());
 
-    for(int i = 0; i < indices1.size(); i ++)
+    for(Index i = 0; i < indices1.size(); i ++)
     {
 
-        int count = 0;
+        Index count = 0;
 
-        int i_2;
+        Index i_2;
 
         i_2 = indices1[i];
 
-        for(int j = 0; j < indices2.size(); j ++)
+        for(Index j = 0; j < indices2.size(); j ++)
         {
-            int j_2;
+            Index j_2;
 
             j_2 = indices2[j];
 
-            for(int k = 0; k < matrix.dimension(0); k ++)
+            for(Index k = 0; k < matrix.dimension(0); k ++)
             {
                 if(matrix(k,i_2) + matrix(k,j_2) - 2 <= 0.0001)
                 {
@@ -3060,9 +3060,9 @@ double chi_square_test(const Tensor<type, 2>& matrix)
 
     Tensor<type, 2> row_colum(sum_rows.size(),sum_columns.size());
 
-    for(int i = 0; i < sum_columns.size(); i++)
+    for(Index i = 0; i < sum_columns.size(); i++)
     {
-      for(int j = 0; j < sum_rows.size(); j++)
+      for(Index j = 0; j < sum_rows.size(); j++)
       {
             row_colum(j,i) = sum_columns[i]*sum_rows[j];
       }
@@ -3074,9 +3074,9 @@ double chi_square_test(const Tensor<type, 2>& matrix)
 
     Tensor<type, 2> chi (sum_rows.size(),sum_columns.size());
 
-    for(int i = 0; i < sum_rows.size(); i++)
+    for(Index i = 0; i < sum_rows.size(); i++)
     {
-          for(int j = 0; j < sum_columns.size(); j ++)
+          for(Index j = 0; j < sum_columns.size(); j ++)
           {
                 chi(i,j) = squared(i,j)/ei(i,j);
           }
@@ -3127,15 +3127,15 @@ double chi_square_critical_point(const double& alpha, const double& degrees_of_f
 double karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
 {
 /*
-    const Matrix<int, Dynamic, Dynamic> contingency_table = OpenNN::contingency_table(x,y);
+    const Matrix<Index, Dynamic, Dynamic> contingency_table = OpenNN::contingency_table(x,y);
 
     const double chi_squared_exp = chi_square_test(contingency_table.to_double_matrix());
 
-    Tensor<int, 1> categories(2);
+    Tensor<Index, 1> categories(2);
     categories[0] = x.get_unique_elements().size();
     categories[1] = y.get_unique_elements().size();
 
-    const int k = minimum(categories);
+    const Index k = minimum(categories);
 
     return sqrt(k/(k-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
 */
@@ -3150,7 +3150,7 @@ double karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string,
 
 double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const int n = x.dimension(0);
+    const Index n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
@@ -3159,7 +3159,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Index karl_pearson_correlation_missing_values const method.\n"
               << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -3170,7 +3170,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation_missing_values const method.\n"
+              << "Index karl_pearson_correlation_missing_values const method.\n"
               << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -3181,7 +3181,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix template."
-              << "int karl_pearson_correlation const method.\n"
+              << "Index karl_pearson_correlation const method.\n"
               << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
 
        throw logic_error(buffer.str());
@@ -3189,15 +3189,15 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
 
     #endif
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
+    Matrix<Index, Dynamic, Dynamic> contingency_table(x.dimension(1),y.dimension(1));
 
-    for(int i = 0; i < x.dimension(1); i ++)
+    for(Index i = 0; i < x.dimension(1); i ++)
     {
-        for(int j = 0; j < y.dimension(1); j ++)
+        for(Index j = 0; j < y.dimension(1); j ++)
         {
-            int count = 0;
+            Index count = 0;
 
-            for(int k = 0; k < n; k ++)
+            for(Index k = 0; k < n; k ++)
             {
                 if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
                 {
@@ -3209,7 +3209,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
         }
     }
 
-    int k;
+    Index k;
 /*
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
      else k = y.dimension(1);
@@ -3230,7 +3230,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
 
 double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    int n = x.dimension(0);
+    Index n = x.dimension(0);
 
     #ifdef  __OPENNN_DEBUG__
 
@@ -3269,11 +3269,11 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 
     #endif
 /*
-    const int NAN_x = x.count_rows_with_nan();
+    const Index NAN_x = x.count_rows_with_nan();
 
-    const int NAN_y = y.count_rows_with_nan();
+    const Index NAN_y = y.count_rows_with_nan();
 
-    int new_size;
+    Index new_size;
 
     if(NAN_x <= NAN_y )
     {
@@ -3288,18 +3288,18 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 
     Tensor<type, 2> new_y(new_size,y.dimension(1));
 
-    const Tensor<int, 1> nan_indices_x = x.get_nan_indices();
+    const Tensor<Index, 1> nan_indices_x = x.get_nan_indices();
 
-    const Tensor<int, 1> nan_indices_y = y.get_nan_indices();
+    const Tensor<Index, 1> nan_indices_y = y.get_nan_indices();
 
-    for(int i = 0; i < nan_indices_x.size(); i++)
+    for(Index i = 0; i < nan_indices_x.size(); i++)
     {
 
         new_x = x.delete_rows(nan_indices_x);
         new_y = y.delete_rows(nan_indices_x);
     }
 
-    for(int j = 0; j < nan_indices_y.size(); j++)
+    for(Index j = 0; j < nan_indices_y.size(); j++)
     {
         new_x = x.delete_rows(nan_indices_y);
         new_y = y.delete_rows(nan_indices_y);
@@ -3307,15 +3307,15 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 
     n = new_x.dimension(0);
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
+    Matrix<Index, Dynamic, Dynamic> contingency_table(new_x.dimension(1),new_y.dimension(1));
 
-    for(int i = 0; i < new_x.dimension(1); i ++)
+    for(Index i = 0; i < new_x.dimension(1); i ++)
     {
-        for(int j = 0; j < new_y.dimension(1); j ++)
+        for(Index j = 0; j < new_y.dimension(1); j ++)
         {
-            int count = 0;
+            Index count = 0;
 
-            for(int k = 0; k < n; k ++)
+            for(Index k = 0; k < n; k ++)
             {
                 if(abs(new_x(k,i) + new_y(k,j) - 2) <= 0.0001)
                 {
@@ -3327,7 +3327,7 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
         }
     }
 
-    int k;
+    Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
     else k = y.dimension(1);
@@ -3349,7 +3349,7 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
 /*
-    const int n = matrix.dimension(0);
+    const Index n = matrix.dimension(0);
 
     Tensor<type, 2> new_matrix(matrix.dimension(0),matrix.dimension(1));
 
@@ -3362,9 +3362,9 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(int j = 0; j < matrix.dimension(1); j++)
+        for(Index j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -3378,7 +3378,7 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
 
     }
 
-    for(int i = 0; i < matrix.dimension(1); i ++)
+    for(Index i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -3402,7 +3402,7 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova(const Tensor<type, 2>& matrix,const int& index, const Tensor<int, 1>& indices)
+double one_way_anova(const Tensor<type, 2>& matrix,const Index& index, const Tensor<Index, 1>& indices)
 {
     /*
     const double total_average = matrix.calculate_sum() / matrix.dimension(0);
@@ -3416,9 +3416,9 @@ double one_way_anova(const Tensor<type, 2>& matrix,const int& index, const Tenso
     Tensor<type, 1> treatment_sum_of_squares(new_matrix.dimension(1) - 1);
     Tensor<type, 1> error_sum_of_squares(new_matrix.dimension(1) - 1);
 
-    for(int i = 0; i < new_matrix.dimension(1) - 1; i++)
+    for(Index i = 0; i < new_matrix.dimension(1) - 1; i++)
     {
-        for(int j  = 0; j < new_matrix.dimension(0); j++)
+        for(Index j  = 0; j < new_matrix.dimension(0); j++)
         {
             treatments_element[i] = new_matrix.calculate_column_sum(i);
 
@@ -3482,9 +3482,9 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<typ
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(int j = 0; j < matrix.dimension(1); j++)
+        for(Index j = 0; j < matrix.dimension(1); j++)
         {
            new_matrix(i,j) = matrix(i,j) * vector[i];
 
@@ -3497,7 +3497,7 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<typ
 
     }
 
-    for(int i = 0; i < matrix.dimension(1); i ++)
+    for(Index i = 0; i < matrix.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -3531,13 +3531,13 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
     }
 
 #endif
-    const int this_size = matrix.dimension(0);
+    const Index this_size = matrix.dimension(0);
 
-    const int not_NAN_x = this_size - matrix.count_rows_with_nan();
+    const Index not_NAN_x = this_size - matrix.count_rows_with_nan();
 
-    const int not_NAN_y = vector.count_not_NAN();
+    const Index not_NAN_y = vector.count_not_NAN();
 
-    int new_size;
+    Index new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -3552,15 +3552,15 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
 
     Tensor<type, 1> new_y(new_size);
 
-    int index = 0;
+    Index index = 0;
 
-    for(int i = 0; i < this_size ; i++)
+    for(Index i = 0; i < this_size ; i++)
     {
         if(!::isnan(vector[i]))
         {
             new_y[index] = vector[i];
 
-            for(int j = 0; j < matrix1.dimension(1); j++)
+            for(Index j = 0; j < matrix1.dimension(1); j++)
             {
                 if(!::isnan(matrix[i]))
                 {
@@ -3585,9 +3585,9 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
 
-    for(int i = 0; i < n; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(int j = 0; j < matrix1.dimension(1); j++)
+        for(Index j = 0; j < matrix1.dimension(1); j++)
         {
            new_matrix(i,j) = matrix1(i,j) * new_y[i];
 
@@ -3599,7 +3599,7 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
         total_sum_of_squares += pow(new_y[i] - total_average,2);
     }
 
-    for(int i = 0; i < matrix1.dimension(1); i ++)
+    for(Index i = 0; i < matrix1.dimension(1); i ++)
     {
         treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average,2);
     }
@@ -3619,8 +3619,8 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
 double f_snedecor_critical_point(const Tensor<type, 2>& matrix, const double& alpha)
 {
 /*
-    const int degrees_of_freedom1 = matrix.dimension(1) - 1;
-    const int degrees_of_freedom2 = matrix.dimension(1) * matrix.dimension(0) - matrix.count_equal_to(0) - matrix.dimension(1);
+    const Index degrees_of_freedom1 = matrix.dimension(1) - 1;
+    const Index degrees_of_freedom2 = matrix.dimension(1) * matrix.dimension(0) - matrix.count_equal_to(0) - matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3663,8 +3663,8 @@ double f_snedecor_critical_point(const Tensor<type, 2>& matrix, const double& al
 double f_snedecor_critical_point(const Matrix<string, Dynamic, Dynamic>& matrix, const double& alpha)
 {
     /*
-    const int degrees_of_freedom1 = matrix.dimension(1) - 2;
-    const int degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1) + 1;
+    const Index degrees_of_freedom1 = matrix.dimension(1) - 2;
+    const Index degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1) + 1;
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3706,8 +3706,8 @@ double f_snedecor_critical_point(const Matrix<string, Dynamic, Dynamic>& matrix,
 
 double f_snedecor_critical_point(const Tensor<type, 2>& matrix)
 {
-    const int degrees_of_freedom1 = matrix.dimension(1) - 1;
-    const int degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1);
+    const Index degrees_of_freedom1 = matrix.dimension(1) - 1;
+    const Index degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3748,15 +3748,15 @@ double f_snedecor_critical_point(const Tensor<type, 2>& matrix)
 double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 {
 /*
-    Tensor<int, 1> nan_indices = matrix.get_nan_indices();
-    const int new_size = matrix.dimension(0) - nan_indices.size();
+    Tensor<Index, 1> nan_indices = matrix.get_nan_indices();
+    const Index new_size = matrix.dimension(0) - nan_indices.size();
 
     Tensor<type, 2> new_matrix(new_size,matrix.dimension(1));
 
     new_matrix = matrix.delete_rows(nan_indices);
 
-    const int degrees_of_freedom1 = new_matrix.dimension(1) - 1;
-    const int degrees_of_freedom2 = new_matrix.dimension(0) - new_matrix.dimension(1);
+    const Index degrees_of_freedom1 = new_matrix.dimension(1) - 1;
+    const Index degrees_of_freedom2 = new_matrix.dimension(0) - new_matrix.dimension(1);
 
     const double zeta1 = degrees_of_freedom1/2.0;
     const double zeta2 = degrees_of_freedom2/2.0;
@@ -3797,7 +3797,7 @@ double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index, const Tensor<int, 1>& indices)
+double one_way_anova_correlation(const Tensor<type, 2>& matrix,const Index& index, const Tensor<Index, 1>& indices)
 {
 /*
     const double total_average = matrix.calculate_sum() / matrix.dimension(0);
@@ -3811,9 +3811,9 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index,
     Tensor<type, 1> treatment_sum_of_squares(new_matrix.dimension(1) - 1);
     Tensor<type, 1> error_sum_of_squares(new_matrix.dimension(1) - 1);
 
-    for(int i = 0; i < new_matrix.dimension(1) - 1; i++)
+    for(Index i = 0; i < new_matrix.dimension(1) - 1; i++)
     {
-        for(int j  = 0; j < new_matrix.dimension(0); j++)
+        for(Index j  = 0; j < new_matrix.dimension(0); j++)
         {
 
             treatments_element[i] = new_matrix.calculate_column_sum(i);
@@ -3846,11 +3846,11 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix,const int& index,
 pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     /*
-    const int not_NAN_x = x.count_not_NAN();
+    const Index not_NAN_x = x.count_not_NAN();
 
-    const int not_NAN_y = y.count_not_NAN();
+    const Index not_NAN_y = y.count_not_NAN();
 
-    int new_size;
+    Index new_size;
 
     if(not_NAN_x <= not_NAN_y )
     {
@@ -3865,9 +3865,9 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 
     Tensor<type, 1> new_vector_y(new_size);
 
-    int index = 0;
+    Index index = 0;
 
-    for(int i = 0; i < new_vector_x.size() ; i++)
+    for(Index i = 0; i < new_vector_x.size() ; i++)
     {
         if(!::isnan(x[i]) && !::isnan(y[i]))
         {

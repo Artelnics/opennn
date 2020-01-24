@@ -134,8 +134,8 @@ public:
 
     // Cross validation methods
 
-    vector<NeuralNetwork> perform_k_fold_cross_validation(const int& = 4) const;
-    vector<NeuralNetwork> perform_random_cross_validation(const int& = 4, const double& = 0.25) const;
+    vector<NeuralNetwork> perform_k_fold_cross_validation(const Index& = 4) const;
+    vector<NeuralNetwork> perform_random_cross_validation(const Index& = 4, const double& = 0.25) const;
     vector<NeuralNetwork> perform_positives_cross_validation() const;
 
     // Model selection methods

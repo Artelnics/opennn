@@ -379,7 +379,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Vector<int> hidden_layers_size;
+   Vector<Index> hidden_layers_size;
    Vector<double> network_parameters;
 
    DataSet data_set;

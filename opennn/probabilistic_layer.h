@@ -45,7 +45,7 @@ public:
 
    explicit ProbabilisticLayer();
 
-   explicit ProbabilisticLayer(const int&, const int&);
+   explicit ProbabilisticLayer(const Index&, const Index&);
 
    ProbabilisticLayer(const ProbabilisticLayer&);
 
@@ -61,7 +61,7 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -77,11 +77,11 @@ public:
    // Set methods
 
    void set();
-   void set(const int&, const int&);
+   void set(const Index&, const Index&);
    void set(const ProbabilisticLayer&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    void set_biases(const Tensor<type, 1>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
@@ -105,7 +105,7 @@ public:
 
    Tensor<type, 2> get_synaptic_weights_transpose() const;
 
-   int get_parameters_number() const;
+   Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    // Display messages
@@ -114,7 +114,7 @@ public:
 
    // Pruning and growing
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Parameters initialization methods
 
@@ -171,7 +171,7 @@ public:
    {
         #ifdef __OPENNN_DEBUG__
 /*
-        const int dimensions_number = combinations.dimensions_number();
+        const Index dimensions_number = combinations.dimensions_number();
 
         if(dimensions_number != 2)
         {
@@ -186,7 +186,7 @@ public:
 */
         const Index neurons_number = get_neurons_number();
 
-        const int combinations_columns_number = combinations.dimension(1);
+        const Index combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
@@ -229,7 +229,7 @@ public:
    {
         #ifdef __OPENNN_DEBUG__
 
-        const int dimensions_number = combinations.rank();
+        const Index dimensions_number = combinations.rank();
 
         if(dimensions_number != 2)
         {
@@ -244,7 +244,7 @@ public:
 
         const Index neurons_number = get_neurons_number();
 
-        const int combinations_columns_number = combinations.dimension(1);
+        const Index combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {

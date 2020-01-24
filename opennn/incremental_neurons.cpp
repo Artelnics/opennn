@@ -59,7 +59,7 @@ IncrementalNeurons::~IncrementalNeurons()
 
 /// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
 
-const int& IncrementalNeurons::get_step() const
+const Index& IncrementalNeurons::get_step() const
 {
     return step;
 }
@@ -67,7 +67,7 @@ const int& IncrementalNeurons::get_step() const
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
-const int& IncrementalNeurons::get_maximum_selection_failures() const
+const Index& IncrementalNeurons::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
@@ -86,7 +86,7 @@ void IncrementalNeurons::set_default()
 /// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
 
-void IncrementalNeurons::set_step(const int& new_step)
+void IncrementalNeurons::set_step(const Index& new_step)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -95,7 +95,7 @@ void IncrementalNeurons::set_step(const int& new_step)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_step(const int&) method.\n"
+               << "void set_step(const Index&) method.\n"
                << "New_step(" << new_step << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -106,7 +106,7 @@ void IncrementalNeurons::set_step(const int& new_step)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_step(const int&) method.\n"
+               << "void set_step(const Index&) method.\n"
                << "New_step must be less than the distance between maximum_order and minimum_order(" << maximum_order-minimum_order << ").\n";
 
         throw logic_error(buffer.str());
@@ -121,7 +121,7 @@ void IncrementalNeurons::set_step(const int& new_step)
 /// Sets the maximum selection failures for the Incremental order selection algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the Incremental order selection algorithm.
 
-void IncrementalNeurons::set_maximum_selection_failures(const int& new_maximum_loss_failures)
+void IncrementalNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -130,7 +130,7 @@ void IncrementalNeurons::set_maximum_selection_failures(const int& new_maximum_l
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_maximum_selection_failures(const int&) method.\n"
+               << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -158,9 +158,9 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
-    const int trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
 
     // Loss index stuff
 
@@ -178,11 +178,11 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     // Optimization algorithm stuff
 
-    int optimal_neurons_number = 0;
+    Index optimal_neurons_number = 0;
 
-    int neurons_number = minimum_order;
-    int iterations = 0;
-    int selection_failures = 0;
+    Index neurons_number = minimum_order;
+    Index iterations = 0;
+    Index selection_failures = 0;
 
     bool end = false;
 
@@ -193,7 +193,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     // Main loop
 /*
-    for(int i = 0; i < maximum_order; i++)
+    for(Index i = 0; i < maximum_order; i++)
     {
         // Calculate losses
 
@@ -206,7 +206,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         double optimum_training_error_trial = 999999;
         Tensor<type, 1> optimum_parameters_trial;
 
-        for(int i = 0; i < trials_number; i++)
+        for(Index i = 0; i < trials_number; i++)
         {
             neural_network->set_parameters_random();
 
@@ -486,8 +486,8 @@ Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const int rows_number = labels.size();
-   const int columns_number = 2;
+   const Index rows_number = labels.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
@@ -827,7 +827,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_minimum_order = static_cast<int>(atoi(element->GetText()));
+           const Index new_minimum_order = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -846,7 +846,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_order = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_order = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -865,7 +865,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_step = static_cast<int>(atoi(element->GetText()));
+           const Index new_step = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -884,7 +884,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_trials_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1017,7 +1017,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_iterations_number = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
@@ -1074,7 +1074,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const int new_maximum_selection_failures = static_cast<int>(atoi(element->GetText()));
+           const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
            try
            {

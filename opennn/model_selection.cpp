@@ -576,7 +576,7 @@ void ModelSelection::check() const
 
 //
 
-    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     if(selection_instances_number == 0)
     {
@@ -1108,11 +1108,11 @@ void ModelSelection::Results::save(const string& file_name) const
 
 /// @todo
 
-vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int& k) const
+vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const Index& k) const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
-    const Tensor<int, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
     LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -1124,7 +1124,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
     if(k < 2)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const int&).\n"
+              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
               << "Number of iterations must be grater or equal than 2.\n";
 
        throw logic_error(buffer.str());
@@ -1133,7 +1133,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const int&).\n"
+              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1142,7 +1142,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const int&).\n"
+              << "vector<NeuralNetwork> perform_k_fold_cross_validation(const Index&).\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1161,7 +1161,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
     vector<NeuralNetwork> neural_network_ensemble(k);
     double cross_validation_error = 0.0;
 
-    for(int i = 0; i < k; i++)
+    for(Index i = 0; i < k; i++)
     {
         data_set_pointer->set_k_fold_cross_validation_instances_uses(k,i);
 
@@ -1204,11 +1204,11 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
 
 /// @todo
 
-vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int& k, const double& selection_ratio) const
+vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const Index& k, const double& selection_ratio) const
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
-    const Tensor<int, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
     LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -1220,7 +1220,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     if(k < 2)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const int&, const double&).\n"
+              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
               << "Number of iterations must be grater or equal than 2.\n";
 
        throw logic_error(buffer.str());
@@ -1229,7 +1229,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     if(selection_ratio <= 0.0 || selection_ratio >= 1.0)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const int&, const double&).\n"
+              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
               << "The ratio of testing instances must be between 0.0 and 1.0.\n";
 
        throw logic_error(buffer.str());
@@ -1238,7 +1238,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     if(!data_set_pointer || data_set_pointer->has_data())
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const int&, const double&).\n"
+              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
               << "There is no data set assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1247,7 +1247,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     if(!neural_network_pointer)
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "vector<NeuralNetwork> perform_random_cross_validation(const int&, const double&).\n"
+              << "vector<NeuralNetwork> perform_random_cross_validation(const Index&, const double&).\n"
               << "There is no neural network assigned.\n";
 
        throw logic_error(buffer.str());
@@ -1266,7 +1266,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     vector<NeuralNetwork> neural_network_ensemble(k);
     double cross_validation_error = 0.0;
 
-    for(int i = 0; i < k; i++)
+    for(Index i = 0; i < k; i++)
     {
         data_set_pointer->split_instances_random(1-selection_ratio,0.0,selection_ratio);
 
@@ -1341,17 +1341,17 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     //
 
-    const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
     const vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
 
-    const Tensor<int, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
-    const int target_index = data_set_pointer->get_target_variables_indices()[0];
+    const Index target_index = data_set_pointer->get_target_variables_indices()[0];
 /*
-    const Tensor<int, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
+    const Tensor<Index, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
 
-    const int positives_instances_number = positives_instances_indices.size();
+    const Index positives_instances_number = positives_instances_indices.size();
 
     data_set_pointer->split_instances_random(1,0,0);
 
@@ -1361,9 +1361,9 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
     vector<NeuralNetwork> neural_network_ensemble(positives_instances_number);
     double cross_validation_error = 0.0;
 
-    for(int i = 0; i < positives_instances_number; i++)
+    for(Index i = 0; i < positives_instances_number; i++)
     {
-        const int current_selection_instance_index = positives_instances_indices[i];
+        const Index current_selection_instance_index = positives_instances_indices[i];
         const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
         const double targets = current_selection_instance[target_index];
         const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);

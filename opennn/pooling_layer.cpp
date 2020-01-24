@@ -22,7 +22,7 @@ PoolingLayer::PoolingLayer() : Layer()
 /// After setting new dimensions for the input, it creates an empty PoolingLayer object.
 /// @param new_input_variables_dimensions A vector containing the new number of channels, rows and columns for the input.
 
-PoolingLayer::PoolingLayer(const Tensor<int, 1>& new_input_variables_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
     input_variables_dimensions = new_input_variables_dimensions;
 
@@ -35,7 +35,7 @@ PoolingLayer::PoolingLayer(const Tensor<int, 1>& new_input_variables_dimensions)
 /// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
-PoolingLayer::PoolingLayer(const Tensor<int, 1>& new_input_variables_dimensions, const Tensor<int, 1>& pool_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
 {
     input_variables_dimensions = new_input_variables_dimensions;
 
@@ -61,7 +61,7 @@ Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
-        const int input_variables_dimensions_number = inputs.rank();
+        const Index input_variables_dimensions_number = inputs.rank();
 
         if(input_variables_dimensions_number != 4)
         {
@@ -102,37 +102,37 @@ Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 2>& inputs) const
 {
 /*
-    const int images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(0);
 
-    const int channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(1);
 
-    const int inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(2);
 
-    const int inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(3);
 
-    const int outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-    const int outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
     Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
-    for(int image_index = 0; image_index < images_number; image_index ++)
+    for(Index image_index = 0; image_index < images_number; image_index ++)
     {
-        for(int channel_index = 0; channel_index < channels_number; channel_index ++)
+        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
         {
-            for(int row_index = 0; row_index < outputs_rows_number; row_index ++)
+            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
             {
-                for(int column_index = 0; column_index < outputs_columns_number; column_index ++)
+                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
                     outputs(image_index, channel_index, row_index, column_index) = 0;
 
-                    for(int window_row = 0; window_row < pool_rows_number; window_row ++)
+                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        const int row = row_index*row_stride + window_row;
+                        const Index row = row_index*row_stride + window_row;
 
-                        for(int window_column = 0; window_column < pool_columns_number; window_column ++)
+                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const int column = column_index*column_stride + window_column;
+                            const Index column = column_index*column_stride + window_column;
 
                             outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
                         }
@@ -165,38 +165,38 @@ Tensor<type, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 2>
 Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2>& inputs) const
 {
 /*
-    const int images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(0);
 
-    const int channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(1);
 
-    const int inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(2);
 
-    const int inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(3);
 
-    const int outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-    const int outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
     Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
-    for(int image_index = 0; image_index < images_number; image_index ++)
+    for(Index image_index = 0; image_index < images_number; image_index ++)
     {
-        for(int channel_index = 0; channel_index < channels_number; channel_index ++)
+        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
         {
-            for(int row_index = 0; row_index < outputs_rows_number; row_index ++)
+            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
             {
-                for(int column_index = 0; column_index < outputs_columns_number; column_index ++)
+                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
                     outputs(image_index, channel_index, row_index, column_index) =
                             inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
 
-                    for(int window_row = 0; window_row < pool_rows_number; window_row ++)
+                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        const int row = row_index*row_stride + window_row;
+                        const Index row = row_index*row_stride + window_row;
 
-                        for(int window_column = 0; window_column < pool_columns_number; window_column ++)
+                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const int column = column_index*column_stride + window_column;
+                            const Index column = column_index*column_stride + window_column;
 
                             if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
                             {
@@ -341,50 +341,50 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 {
     // Current layer's values
 
-    const int images_number = next_layer_delta.dimension(0);
-    const int channels_number = get_inputs_channels_number();
-    const int output_rows_number = get_outputs_rows_number();
-    const int output_columns_number = get_outputs_columns_number();
+    const Index images_number = next_layer_delta.dimension(0);
+    const Index channels_number = get_inputs_channels_number();
+    const Index output_rows_number = get_outputs_rows_number();
+    const Index output_columns_number = get_outputs_columns_number();
 
     // Next layer's values
 
-    const int next_layers_filters_number = next_layer_pointer->get_filters_number();
-    const int next_layers_filter_rows = next_layer_pointer->get_filters_rows_number();
-    const int next_layers_filter_columns = next_layer_pointer->get_filters_columns_number();
-    const int next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
-    const int next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
-    const int next_layers_row_stride = next_layer_pointer->get_row_stride();
-    const int next_layers_column_stride = next_layer_pointer->get_column_stride();
+    const Index next_layers_filters_number = next_layer_pointer->get_filters_number();
+    const Index next_layers_filter_rows = next_layer_pointer->get_filters_rows_number();
+    const Index next_layers_filter_columns = next_layer_pointer->get_filters_columns_number();
+    const Index next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+    const Index next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+    const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
+    const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
     const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 /*
-    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
 
-    const int size = hidden_delta.size();
+    const Index size = hidden_delta.size();
 
     #pragma omp parallel for
 
-    for(int tensor_index = 0; tensor_index < size; tensor_index++)
+    for(Index tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        const int image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-        const int channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-        const int row_index = (tensor_index/output_columns_number)%output_rows_number;
-        const int column_index = tensor_index%output_columns_number;
+        const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+        const Index column_index = tensor_index%output_columns_number;
 
         double sum = 0.0;
 
-        const int lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
-        const int upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-        const int lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
-        const int upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+        const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
+        const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+        const Index lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
+        const Index upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
-        for(int i = 0; i < next_layers_filters_number; i++)
+        for(Index i = 0; i < next_layers_filters_number; i++)
         {
-            for(int j = lower_row_index; j < upper_row_index; j++)
+            for(Index j = lower_row_index; j < upper_row_index; j++)
             {
-                for(int k = lower_column_index; k < upper_column_index; k++)
+                for(Index k = lower_column_index; k < upper_column_index; k++)
                 {
                     const double delta_element = next_layer_delta(image_index, i, j, k);
 
@@ -422,45 +422,45 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
         {
             // Current layer's values
 
-            const int images_number = next_layer_delta.dimension(0);
-            const int channels_number = get_inputs_channels_number();
-            const int output_rows_number = get_outputs_rows_number();
-            const int output_columns_number = get_outputs_columns_number();
+            const Index images_number = next_layer_delta.dimension(0);
+            const Index channels_number = get_inputs_channels_number();
+            const Index output_rows_number = get_outputs_rows_number();
+            const Index output_columns_number = get_outputs_columns_number();
 
             // Next layer's values
 
-            const int next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
-            const int next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
-            const int next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
-            const int next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
-            const int next_layers_row_stride = next_layer_pointer->get_row_stride();
-            const int next_layers_column_stride = next_layer_pointer->get_column_stride();
+            const Index next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
+            const Index next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
+            const Index next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+            const Index next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+            const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
+            const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
 
-            const int size = hidden_delta.size();
+            const Index size = hidden_delta.size();
 
             #pragma omp parallel for
 
-            for(int tensor_index = 0; tensor_index < size; tensor_index++)
+            for(Index tensor_index = 0; tensor_index < size; tensor_index++)
             {
-                const int image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-                const int channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-                const int row_index = (tensor_index/output_columns_number)%output_rows_number;
-                const int column_index = tensor_index%output_columns_number;
+                const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+                const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+                const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+                const Index column_index = tensor_index%output_columns_number;
 
                 double sum = 0.0;
 
-                const int lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
-                const int upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                const int lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
-                const int upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+                const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
+                const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+                const Index lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
+                const Index upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
-                for(int i = lower_row_index; i < upper_row_index; i++)
+                for(Index i = lower_row_index; i < upper_row_index; i++)
                 {
-                    for(int j = lower_column_index; j < upper_column_index; j++)
+                    for(Index j = lower_column_index; j < upper_column_index; j++)
                     {
                         const double delta_element = next_layer_delta(image_index, channel_index, i, j);
 
@@ -478,51 +478,51 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
         {
             // Current layer's values
 
-            const int images_number = next_layer_delta.dimension(0);
-            const int channels_number = get_inputs_channels_number();
-            const int output_rows_number = get_outputs_rows_number();
-            const int output_columns_number = get_outputs_columns_number();
+            const Index images_number = next_layer_delta.dimension(0);
+            const Index channels_number = get_inputs_channels_number();
+            const Index output_rows_number = get_outputs_rows_number();
+            const Index output_columns_number = get_outputs_columns_number();
 
             // Next layer's values
 
-            const int next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
-            const int next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
-            const int next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
-            const int next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
-            const int next_layers_row_stride = next_layer_pointer->get_row_stride();
-            const int next_layers_column_stride = next_layer_pointer->get_column_stride();
+            const Index next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
+            const Index next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
+            const Index next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+            const Index next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+            const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
+            const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
             // Hidden delta calculation
 
-            Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
 
-            const int size = hidden_delta.size();
+            const Index size = hidden_delta.size();
 
             #pragma omp parallel for
 
-            for(int tensor_index = 0; tensor_index < size; tensor_index++)
+            for(Index tensor_index = 0; tensor_index < size; tensor_index++)
             {
-                const int image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-                const int channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-                const int row_index = (tensor_index/output_columns_number)%output_rows_number;
-                const int column_index = tensor_index%output_columns_number;
+                const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+                const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+                const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+                const Index column_index = tensor_index%output_columns_number;
 
                 double sum = 0.0;
 
-                const int lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
-                const int upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                const int lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
-                const int upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+                const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
+                const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+                const Index lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
+                const Index upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
-                for(int i = lower_row_index; i < upper_row_index; i++)
+                for(Index i = lower_row_index; i < upper_row_index; i++)
                 {
-                    for(int j = lower_column_index; j < upper_column_index; j++)
+                    for(Index j = lower_column_index; j < upper_column_index; j++)
                     {
                         Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
 
-                        for(int submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
+                        for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                         {
-                            for(int submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
+                            for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                             {
                                 activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
                                         activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
@@ -533,9 +533,9 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 
                         double max_value = activations_current_submatrix(0,0);
 
-                        for(int submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
+                        for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                         {
-                            for(int submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
+                            for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                             {
                                 if(activations_current_submatrix(submatrix_row_index, submatrix_column_index) > max_value)
                                 {
@@ -574,35 +574,35 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
 /*
     // Current layer's values
 
-    const int images_number = next_layer_delta.dimension(0);
-    const int channels_number = get_inputs_channels_number();
-    const int output_rows_number = get_outputs_rows_number();
-    const int output_columns_number = get_outputs_columns_number();
+    const Index images_number = next_layer_delta.dimension(0);
+    const Index channels_number = get_inputs_channels_number();
+    const Index output_rows_number = get_outputs_rows_number();
+    const Index output_columns_number = get_outputs_columns_number();
 
     // Next layer's values
 
-    const int next_layers_output_columns = next_layer_delta.dimension(1);
+    const Index next_layers_output_columns = next_layer_delta.dimension(1);
 
     const MatrixXd next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
 
-    const int size = hidden_delta.size();
+    const Index size = hidden_delta.size();
 
     #pragma omp parallel for
 
-    for(int tensor_index = 0; tensor_index < size; tensor_index++)
+    for(Index tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        int image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-        int channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-        int row_index = (tensor_index/output_columns_number)%output_rows_number;
-        int column_index = tensor_index%output_columns_number;
+        Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+        Index column_index = tensor_index%output_columns_number;
 
         double sum = 0.0;
 
-        for(int sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
+        for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
             const double delta_element = next_layer_delta(image_index, sum_index);
 
@@ -629,35 +629,35 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 /*
     // Current layer's values
 
-    const int images_number = next_layer_delta.dimension(0);
-    const int channels_number = get_inputs_channels_number();
-    const int output_rows_number = get_outputs_rows_number();
-    const int output_columns_number = get_outputs_columns_number();
+    const Index images_number = next_layer_delta.dimension(0);
+    const Index channels_number = get_inputs_channels_number();
+    const Index output_rows_number = get_outputs_rows_number();
+    const Index output_columns_number = get_outputs_columns_number();
 
     // Next layer's values
 
-    const int next_layers_output_columns = next_layer_delta.dimension(1);
+    const Index next_layers_output_columns = next_layer_delta.dimension(1);
 
     const MatrixXd next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 
-    Tensor<type, 2> hidden_delta(Tensor<int, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
 
-    const int size = hidden_delta.size();
+    const Index size = hidden_delta.size();
 
     #pragma omp parallel for
 
-    for(int tensor_index = 0; tensor_index < size; tensor_index++)
+    for(Index tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        const int image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-        const int channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-        const int row_index = (tensor_index/output_columns_number)%output_rows_number;
-        const int column_index = tensor_index%output_columns_number;
+        const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+        const Index column_index = tensor_index%output_columns_number;
 
         double sum = 0.0;
 
-        for(int sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
+        for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
             const double delta_element = next_layer_delta(image_index, sum_index);
 
@@ -695,23 +695,23 @@ Index PoolingLayer::get_neurons_number() const
 /// Returns a vector containing the positions on the input image covered by a given neuron.
 /// @param neuron The neuron's number.
 
-Tensor<int, 1> PoolingLayer::get_inputs_indices(const int& neuron) const
+Tensor<Index, 1> PoolingLayer::get_inputs_indices(const Index& neuron) const
 {
     if(neuron > get_neurons_number() - 1)
     {
-        return Tensor<int, 1>();
+        return Tensor<Index, 1>();
     }
 
-    const int row_index = neuron / get_outputs_columns_number();
-    const int column_index = neuron % get_outputs_columns_number();
+    const Index row_index = neuron / get_outputs_columns_number();
+    const Index column_index = neuron % get_outputs_columns_number();
 
-    Tensor<int, 1> indices;
+    Tensor<Index, 1> indices;
 
     // With stride = 1
 /*
-    for(int i = row_index; i < row_index + pool_rows_number; i++)
+    for(Index i = row_index; i < row_index + pool_rows_number; i++)
     {
-        for(int j = column_index; j < column_index + pool_columns_number; j++)
+        for(Index j = column_index; j < column_index + pool_columns_number; j++)
         {
             indices.push_back(i*input_variables_dimensions[2] + j );
         }
@@ -723,26 +723,26 @@ Tensor<int, 1> PoolingLayer::get_inputs_indices(const int& neuron) const
 
 /// Returns the layer's input's dimensions.
 
-Tensor<int, 1> PoolingLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> PoolingLayer::get_input_variables_dimensions() const
 {
 /*
     const Index batch_instances_number = 0;
-    const int filters_number = 0;
-    const int outputs_rows_number = get_outputs_rows_number();
-    const int outputs_columns_number = get_outputs_columns_number();
+    const Index filters_number = 0;
+    const Index outputs_rows_number = get_outputs_rows_number();
+    const Index outputs_columns_number = get_outputs_columns_number();
 
-    return Tensor<int, 1>({batch_instances_number, filters_number, outputs_rows_number, outputs_columns_number});
+    return Tensor<Index, 1>({batch_instances_number, filters_number, outputs_rows_number, outputs_columns_number});
 */
 
-    return Tensor<int, 1>();
+    return Tensor<Index, 1>();
 }
 
 
 /// Returns the layer's outputs dimensions.
 
-Tensor<int, 1> PoolingLayer::get_outputs_dimensions() const
+Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
-    Tensor<int, 1> outputs_dimensions(3);
+    Tensor<Index, 1> outputs_dimensions(3);
 
     outputs_dimensions[0] = input_variables_dimensions[0];
     outputs_dimensions[1] = get_outputs_rows_number();
@@ -772,7 +772,7 @@ Index PoolingLayer::get_inputs_channels_number() const
 
 /// Returns the number of rows of the layer's input.
 
-int PoolingLayer::get_inputs_rows_number() const
+Index PoolingLayer::get_inputs_rows_number() const
 {
     return input_variables_dimensions[1];
 }
@@ -780,7 +780,7 @@ int PoolingLayer::get_inputs_rows_number() const
 
 /// Returns the number of columns of the layer's input.
 
-int PoolingLayer::get_inputs_columns_number() const
+Index PoolingLayer::get_inputs_columns_number() const
 {
     return input_variables_dimensions[2];
 }
@@ -788,7 +788,7 @@ int PoolingLayer::get_inputs_columns_number() const
 
 /// Returns the number of rows of the layer's output.
 
-int PoolingLayer::get_outputs_rows_number() const
+Index PoolingLayer::get_outputs_rows_number() const
 {
     return (input_variables_dimensions[1] - pool_rows_number)/row_stride + 1;
 }
@@ -796,7 +796,7 @@ int PoolingLayer::get_outputs_rows_number() const
 
 /// Returns the number of columns of the layer's output.
 
-int PoolingLayer::get_outputs_columns_number() const
+Index PoolingLayer::get_outputs_columns_number() const
 {
     return (input_variables_dimensions[2] - pool_columns_number)/column_stride + 1;
 }
@@ -804,7 +804,7 @@ int PoolingLayer::get_outputs_columns_number() const
 
 /// Returns the padding width.
 
-int PoolingLayer::get_padding_width() const
+Index PoolingLayer::get_padding_width() const
 {
     return padding_width;
 }
@@ -812,7 +812,7 @@ int PoolingLayer::get_padding_width() const
 
 /// Returns the pooling filter's row stride.
 
-int PoolingLayer::get_row_stride() const
+Index PoolingLayer::get_row_stride() const
 {
     return row_stride;
 }
@@ -820,7 +820,7 @@ int PoolingLayer::get_row_stride() const
 
 /// Returns the pooling filter's column stride.
 
-int PoolingLayer::get_column_stride() const
+Index PoolingLayer::get_column_stride() const
 {
     return column_stride;
 }
@@ -828,7 +828,7 @@ int PoolingLayer::get_column_stride() const
 
 /// Returns the number of rows of the pooling filter.
 
-int PoolingLayer::get_pool_rows_number() const
+Index PoolingLayer::get_pool_rows_number() const
 {
     return pool_rows_number;
 }
@@ -836,7 +836,7 @@ int PoolingLayer::get_pool_rows_number() const
 
 /// Returns the number of columns of the pooling filter.
 
-int PoolingLayer::get_pool_columns_number() const
+Index PoolingLayer::get_pool_columns_number() const
 {
     return pool_columns_number;
 }
@@ -844,7 +844,7 @@ int PoolingLayer::get_pool_columns_number() const
 
 /// Returns the number of parameters of the layer.
 
-int PoolingLayer::get_parameters_number() const
+Index PoolingLayer::get_parameters_number() const
 {
     return 0;
 }
@@ -869,7 +869,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_input_variables_dimensions(const Tensor<int, 1>& new_input_variables_dimensions)
+void PoolingLayer::set_input_variables_dimensions(const Tensor<Index, 1>& new_input_variables_dimensions)
 {
     input_variables_dimensions = new_input_variables_dimensions;
 }
@@ -878,7 +878,7 @@ void PoolingLayer::set_input_variables_dimensions(const Tensor<int, 1>& new_inpu
 /// Sets the padding width.
 /// @param new_padding_width The desired width.
 
-void PoolingLayer::set_padding_width(const int& new_padding_width)
+void PoolingLayer::set_padding_width(const Index& new_padding_width)
 {
     padding_width = new_padding_width;
 }
@@ -887,7 +887,7 @@ void PoolingLayer::set_padding_width(const int& new_padding_width)
 /// Sets the pooling filter's row stride.
 /// @param new_row_stride The desired row stride.
 
-void PoolingLayer::set_row_stride(const int& new_row_stride)
+void PoolingLayer::set_row_stride(const Index& new_row_stride)
 {
     row_stride = new_row_stride;
 }
@@ -896,7 +896,7 @@ void PoolingLayer::set_row_stride(const int& new_row_stride)
 /// Sets the pooling filter's column stride.
 /// @param new_column_stride The desired column stride.
 
-void PoolingLayer::set_column_stride(const int& new_column_stride)
+void PoolingLayer::set_column_stride(const Index& new_column_stride)
 {
     column_stride = new_column_stride;
 }
@@ -906,8 +906,8 @@ void PoolingLayer::set_column_stride(const int& new_column_stride)
 /// @param new_pool_rows_number The desired number of rows.
 /// @param new_pool_columns_number The desired number of columns.
 
-void PoolingLayer::set_pool_size(const int& new_pool_rows_number,
-                                 const int& new_pool_columns_number)
+void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
+                                 const Index& new_pool_columns_number)
 {
     pool_rows_number = new_pool_rows_number;
 

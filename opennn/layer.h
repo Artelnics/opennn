@@ -110,7 +110,7 @@ public:
     // Architecture
 
     virtual Tensor<type, 1> get_parameters() const;
-    virtual int get_parameters_number() const;
+    virtual Index get_parameters_number() const;
 
     virtual void set_parameters(const Tensor<type, 1>&);
 
@@ -148,13 +148,13 @@ public:
 
     // Get neurons number
 
-    virtual Tensor<int, 1> get_input_variables_dimensions() const;
+    virtual Tensor<Index, 1> get_input_variables_dimensions() const;
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
 
-    virtual void set_inputs_number(const int&);
-    virtual void set_neurons_number(const int&);
+    virtual void set_inputs_number(const Index&);
+    virtual void set_neurons_number(const Index&);
 
     virtual string object_to_string() const;
 

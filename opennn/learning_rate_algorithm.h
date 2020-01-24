@@ -110,7 +110,7 @@ public:
            /*
            const vector<double> losses({A.second, U.second, B.second});
 
-           const int minimal_index = OpenNN::minimal_index(losses);
+           const Index minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;

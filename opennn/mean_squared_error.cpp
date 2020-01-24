@@ -111,14 +111,14 @@ check();
 
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const int training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const int batches_number = training_batches.size();
+    const Index batches_number = training_batches.size();
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const int inputs_number = data_set_pointer->get_input_variables_number();
-    const int targets_number = data_set_pointer->get_target_variables_number();
+    const Index inputs_number = data_set_pointer->get_input_variables_number();
+    const Index targets_number = data_set_pointer->get_target_variables_number();
 
     Tensor<type, 2> inputs(batch_instances_number, inputs_number);
     Tensor<type, 2> targets(batch_instances_number, targets_number);
@@ -134,10 +134,10 @@ check();
 
     #pragma omp parallel for reduction(+ : training_error)
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<Index>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<Index>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
@@ -172,14 +172,14 @@ check();
     // Data set
 
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-    const int training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const int batches_number = training_batches.size();
+    const Index batches_number = training_batches.size();
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const int inputs_number = data_set_pointer->get_input_variables_number();
-    const int targets_number = data_set_pointer->get_target_variables_number();
+    const Index inputs_number = data_set_pointer->get_input_variables_number();
+    const Index targets_number = data_set_pointer->get_target_variables_number();
 
     Tensor<type, 2> inputs(batch_instances_number, inputs_number);
     Tensor<type, 2> targets(batch_instances_number, targets_number);
@@ -191,10 +191,10 @@ check();
 
      #pragma omp parallel for reduction(+ : training_error)
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
-        targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<Index>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<Index>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
@@ -225,7 +225,7 @@ check();
 
     // Data set
 
-    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
      //Neural network
 
@@ -237,12 +237,12 @@ check();
 
     const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
-    const int batches_number = selection_batches.size();
+    const Index batches_number = selection_batches.size();
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-    const int inputs_number = data_set_pointer->get_input_variables_number();
-    const int targets_number = data_set_pointer->get_target_variables_number();
+    const Index inputs_number = data_set_pointer->get_input_variables_number();
+    const Index targets_number = data_set_pointer->get_target_variables_number();
 
     Tensor<type, 2> inputs(batch_instances_number, inputs_number);
     Tensor<type, 2> targets(batch_instances_number, targets_number);
@@ -252,10 +252,10 @@ check();
 
      #pragma omp parallel for reduction(+ : selection_error)
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
     {
-        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<int>(i)]);
-        targets = data_set_pointer->get_target_data(selection_batches[static_cast<int>(i)]);
+        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<Index>(i)]);
+        targets = data_set_pointer->get_target_data(selection_batches[static_cast<Index>(i)]);
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
@@ -276,7 +276,7 @@ check();
 /// Returns the mean squared error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double MeanSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices) const
+double MeanSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -299,7 +299,7 @@ check();
 }
 
 
-double MeanSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices,
+double MeanSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices,
                                                const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -334,7 +334,7 @@ check();
 
     // Neural network
 
-    const int layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
      bool is_forecasting = false;
 
@@ -344,18 +344,18 @@ check();
 
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const int training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const int batches_number = training_batches.size();
+    const Index batches_number = training_batches.size();
 
     FirstOrderLoss first_order_loss(this);
 /*
      #pragma omp parallel for
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
     {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<int>(i)]);
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<int>(i)]);
+        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<Index>(i)]);
+        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<Index>(i)]);
 
         const vector<Layer::ForwardPropagation> forward_propagation
                 = neural_network_pointer->calculate_forward_propagation(inputs);
@@ -410,7 +410,7 @@ check();
 
     // Neural network
 
-    const int layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
     // Loss index
 
@@ -455,7 +455,7 @@ check();
 
 #endif
 
-    const int instances_number = data_set_pointer->get_training_instances_number();
+    const Index instances_number = data_set_pointer->get_training_instances_number();
 
     return (outputs-targets)*static_cast<type>(2.0)/static_cast<type>(instances_number);
 }
@@ -503,7 +503,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    const int training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 /*
     return error_rows(outputs, targets)/static_cast<double>(training_instances_number);
 */
@@ -526,9 +526,9 @@ check();
 
     // Neural network
 
-    const int layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const int parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
      bool is_forecasting = false;
 
@@ -538,15 +538,15 @@ check();
 
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const int training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const int batches_number = training_batches.size();
+    const Index batches_number = training_batches.size();
 
     SecondOrderLoss terms_second_order_loss(parameters_number);
 
      #pragma omp parallel for
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(Index i = 0; i < static_cast<Index>(batches_number); i++)
     {
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
@@ -592,7 +592,7 @@ check();
 
     return terms_second_order_loss;
     */
-    const int parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
     SecondOrderLoss terms_second_order_loss(parameters_number);
     return  terms_second_order_loss;
 

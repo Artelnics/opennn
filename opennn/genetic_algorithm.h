@@ -121,15 +121,15 @@ public:
 
     const FitnessAssignment& get_fitness_assignment_method() const;
 
-    const int& get_population_size() const;
+    const Index& get_population_size() const;
 
     const double& get_mutation_rate() const;
 
-    const int& get_elitism_size() const;
+    const Index& get_elitism_size() const;
 
-    const int& get_crossover_first_point() const;
+    const Index& get_crossover_first_point() const;
 
-    const int& get_crossover_second_point() const;
+    const Index& get_crossover_second_point() const;
 
     const double& get_selective_pressure() const;
 
@@ -167,15 +167,15 @@ public:
     void set_fitness_assignment_method(const string&);
     void set_crossover_method(const string&);
 
-    void set_population_size(const int&);
+    void set_population_size(const Index&);
 
     void set_mutation_rate(const double&);
 
-    void set_elitism_size(const int&);
+    void set_elitism_size(const Index&);
 
-    void set_crossover_first_point(const int&);
+    void set_crossover_first_point(const Index&);
 
-    void set_crossover_second_point(const int&);
+    void set_crossover_second_point(const Index&);
 
     void set_selective_pressure(const double&);
 
@@ -229,7 +229,7 @@ public:
 
     // Order selection methods
 
-    int get_optimal_individual_index() const;
+    Index get_optimal_individual_index() const;
 
     GeneticAlgorithmResults* perform_inputs_selection();
 
@@ -282,7 +282,7 @@ private:
 
     /// Size of the population.
 
-    int population_size;
+    Index population_size;
 
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
@@ -299,17 +299,17 @@ private:
     /// It represents the number of individuals which will always be selected for recombination.
     /// This is a parameter of the selection operator.
 
-    int elitism_size;
+    Index elitism_size;
 
     /// First point used in the OnePoint and TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    int crossover_first_point;
+    Index crossover_first_point;
 
     /// Second point used in the TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    int crossover_second_point;
+    Index crossover_second_point;
 
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.

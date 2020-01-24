@@ -74,21 +74,21 @@ public:
 
     // Get methods
 
-    const int& get_maximum_inputs_number() const;
+    const Index& get_maximum_inputs_number() const;
 
-    const int& get_minimum_inputs_number() const;
+    const Index& get_minimum_inputs_number() const;
 
-    const int& get_maximum_selection_failures() const;
+    const Index& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_maximum_inputs_number(const int&);
+    void set_maximum_inputs_number(const Index&);
 
-    void set_minimum_inputs_number(const int&);
+    void set_minimum_inputs_number(const Index&);
 
-    void set_maximum_selection_failures(const int&);
+    void set_maximum_selection_failures(const Index&);
 
     // Order selection methods
 
@@ -110,15 +110,15 @@ private:
 
     /// Maximum number of inputs in the neural network.
 
-    int maximum_inputs_number;
+    Index maximum_inputs_number;
 
     /// Minimum number of inputs in the neural network.
 
-    int minimum_inputs_number = 1;
+    Index minimum_inputs_number = 1;
 
     /// Maximum number of iterations at which the selection error increases.
 
-    int maximum_selection_failures = 10;
+    Index maximum_selection_failures = 10;
 };
 
 }

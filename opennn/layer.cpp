@@ -108,7 +108,7 @@ void Layer::set_parameters(const Tensor<type, 1>&)
 }
 
 
-int Layer::get_parameters_number() const
+Index Layer::get_parameters_number() const
 {
     ostringstream buffer;
 
@@ -209,7 +209,7 @@ Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
 }
 
 
-Tensor<int, 1> Layer::get_input_variables_dimensions() const
+Tensor<Index, 1> Layer::get_input_variables_dimensions() const
 {
     ostringstream buffer;
 
@@ -245,24 +245,24 @@ Index Layer::get_neurons_number() const
 }
 
 
-void Layer::set_inputs_number(const int &)
+void Layer::set_inputs_number(const Index &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_inputs_number(const int &) method.\n"
+           << "set_inputs_number(const Index &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-void Layer::set_neurons_number(const int &)
+void Layer::set_neurons_number(const Index &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_neurons_number(const int &) method.\n"
+           << "set_neurons_number(const Index &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

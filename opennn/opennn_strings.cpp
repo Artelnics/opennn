@@ -15,7 +15,7 @@ namespace OpenNN
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
 
-int count_tokens(string& str, const char& separator)
+Index count_tokens(string& str, const char& separator)
 {
 //    if(!(this->find(separator) != string::npos))
 //    {
@@ -23,7 +23,7 @@ int count_tokens(string& str, const char& separator)
 //
 //        buffer << "OpenNN Exception:\n"
 //               << "string class.\n"
-//               << "inline int count_tokens(const string&) const method.\n"
+//               << "inline Index count_tokens(const string&) const method.\n"
 //               << "Separator not found in string: \"" << separator << "\".\n";
 //
 //        throw logic_error(buffer.str());
@@ -31,7 +31,7 @@ int count_tokens(string& str, const char& separator)
 
     trim(str);
 
-    int tokens_count = 0;
+    Index tokens_count = 0;
 
     // Skip delimiters at beginning.
 
@@ -60,9 +60,9 @@ int count_tokens(string& str, const char& separator)
 }
 
 
-int count_tokens(const string& s, const char& c)
+Index count_tokens(const string& s, const char& c)
 {
-    return static_cast<int>(count(s.begin(), s.end(), c) + 1);
+    return static_cast<Index>(count(s.begin(), s.end(), c) + 1);
 }
 
 
@@ -74,7 +74,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
     const string new_string = get_trimmed(str);
 
-    const int tokens_number = count_tokens(new_string, separator);
+    const Index tokens_number = count_tokens(new_string, separator);
 
     Tensor<string, 1> tokens(tokens_number);
 
@@ -84,7 +84,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 
     // Find first "non-delimiter"
 
-    int index = 0;
+    Index index = 0;
 
     string::size_type pos = new_string.find_first_of(separator, lastPos);
 
@@ -105,7 +105,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
         index++;
     }
 
-    for(int i = 0; i < tokens.size(); i++)
+    for(Index i = 0; i < tokens.size(); i++)
     {
         trim(tokens[i]);
     }
@@ -121,11 +121,11 @@ Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 {
     const Tensor<string, 1> tokens = get_tokens(str, separator);
 
-  const int tokens_size = tokens.size();
+  const Index tokens_size = tokens.dimension(0);
 
   Tensor<type, 1> double_vector(tokens_size);
 
-  for(int i = 0; i < tokens_size; i++)
+  for(Index i = 0; i < tokens_size; i++)
   {
       try
       {
@@ -133,11 +133,11 @@ Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 
           buffer << tokens[i];
 
-          double_vector[i] = stod(buffer.str());
+          double_vector(i) = stof(buffer.str());
       }
       catch(const logic_error&)
       {
-         double_vector[i] = nan("");
+         double_vector(i) = nan("");
       }
    }
 
@@ -215,7 +215,7 @@ bool is_date_time_string(const string& str)
 /// @param date Date in string fortmat to be converted.
 /// @param gmt Greenwich Mean Time.
 
-time_t date_to_timestamp(const string& date, const int& gmt)
+time_t date_to_timestamp(const string& date, const Index& gmt)
 {
     struct tm time_structure;
 
@@ -403,13 +403,13 @@ time_t date_to_timestamp(const string& date, const int& gmt)
         {
             regex_search(date, month, months);
 
-            int month_number = 0;
+            Index month_number = 0;
 
             if(!month.empty())
             {
-                for(int i = 1; i < 13; i++)
+                for(Index i = 1; i < 13; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<int>(i);
+                    if(month[i] != "") month_number = static_cast<Index>(i);
                 }
             }
 
@@ -437,12 +437,12 @@ time_t date_to_timestamp(const string& date, const int& gmt)
         {
             regex_search(date, month, months);
 
-            int month_number = 0;
+            Index month_number = 0;
             if(!month.empty())
             {
-                for(int i =1 ; i<13  ; i++)
+                for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<int>(i);
+                    if(month[i] != "") month_number = static_cast<Index>(i);
                 }
             }
 
@@ -470,12 +470,12 @@ time_t date_to_timestamp(const string& date, const int& gmt)
         {
             regex_search(date, month, months);
 
-            int month_number = 0;
+            Index month_number = 0;
             if(!month.empty())
             {
-                for(int i =1 ; i<13  ; i++)
+                for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<int>(i);
+                    if(month[i] != "") month_number = static_cast<Index>(i);
                 }
             }
 
@@ -503,12 +503,12 @@ time_t date_to_timestamp(const string& date, const int& gmt)
         {
             regex_search(date,month,months);
 
-            int month_number = 0;
+            Index month_number = 0;
             if(!month.empty())
             {
-                for(int i =1 ; i<13  ; i++)
+                for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = static_cast<int>(i);
+                    if(month[i] != "") month_number = static_cast<Index>(i);
                 }
             }
 
@@ -632,7 +632,7 @@ string prepend(const string& pre, const string& str)
 
 bool is_numeric_string_vector(const Tensor<string, 1>& v)
 {
-    for(int i = 0; i < v.size(); i++)
+    for(Index i = 0; i < v.size(); i++)
     {
         if(!is_numeric_string(v[i])) return false;
     }
@@ -643,7 +643,7 @@ bool is_numeric_string_vector(const Tensor<string, 1>& v)
 
 bool has_numbers(const Tensor<string, 1>& v)
 {
-    for(int i = 0; i < v.size(); i++)
+    for(Index i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i])) return true;
     }
@@ -654,7 +654,7 @@ bool has_numbers(const Tensor<string, 1>& v)
 
 bool has_strings(const Tensor<string, 1>& v)
 {
-    for(int i = 0; i < v.size(); i++)
+    for(Index i = 0; i < v.size(); i++)
     {
         if(!is_numeric_string(v[i])) return true;
     }
@@ -667,7 +667,7 @@ bool has_strings(const Tensor<string, 1>& v)
 
 bool is_not_numeric(const Tensor<string, 1>& v)
 {
-    for(int i = 0; i < v.size(); i++)
+    for(Index i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i])) return false;
     }
@@ -684,7 +684,7 @@ bool is_mixed(const Tensor<string, 1>& v)
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
 
-    for(int i = 0; i < v.size(); i++)
+    for(Index i = 0; i < v.size(); i++)
     {
         if(is_numeric_string(v[i]))
         {
@@ -713,16 +713,15 @@ bool is_mixed(const Tensor<string, 1>& v)
 
 void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
 {
-
     const Index size = vector.dimension(0);
 
-    for(int i = 0; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
-        int position = 0;
+        Index position = 0;
 
-        while((position = vector[i].find(find_what, position)) != string::npos)
+        while((position = vector(i).find(find_what, position)) != string::npos)
         {
-             vector[i].replace(position, find_what.length(), replace_with);
+             vector(i).replace(position, find_what.length(), replace_with);
 
              position += replace_with.length();
         }
@@ -732,7 +731,7 @@ void replace_substring(Tensor<string, 1>& vector, const string& find_what, const
 
 void replace(string& source, const string& find_what, const string& replace_with)
 {
-    int position = 0;
+    Index position = 0;
 
     while((position = source.find(find_what, position)) != string::npos)
     {

@@ -131,8 +131,8 @@ struct CorrelationResults
 
     // Time series correlation methods
 
-    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const int & = 10);
-    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const int & = 10);
+    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
+    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
 
     // Logistic error methods
 
@@ -195,9 +195,9 @@ struct CorrelationResults
 
     // Contingency tables
 
-    Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    Matrix<int, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>&);
-    Matrix<int, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>&, const Tensor<int, 1>&, const Tensor<int, 1>&);
+    Matrix<Index, Dynamic, Dynamic> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
+    Matrix<Index, Dynamic, Dynamic> contingency_table(Matrix<string, Dynamic, Dynamic>&);
+    Matrix<Index, Dynamic, Dynamic> contingency_table(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     double chi_square_test(const Tensor<type, 2>&);
 
@@ -210,7 +210,7 @@ struct CorrelationResults
     //One way ANOVA
 
     double one_way_anova(const Tensor<type, 2>&, const Tensor<type, 1>&);
-    double one_way_anova(const Tensor<type, 2>& ,const int&, const Tensor<int, 1>&);
+    double one_way_anova(const Tensor<type, 2>& ,const Index&, const Tensor<Index, 1>&);
 
     double one_way_anova_correlation(const Tensor<type, 2>&, const Tensor<type, 1>&);
     double one_way_anova_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -220,7 +220,7 @@ struct CorrelationResults
     double f_snedecor_critical_point(const Tensor<type, 2>&);
     double f_snedecor_critical_point_missing_values(const Tensor<type, 2>&);
 
-    double one_way_anova_correlation(const Tensor<type, 2>& ,const int& , const Tensor<int, 1>&);
+    double one_way_anova_correlation(const Tensor<type, 2>& ,const Index& , const Tensor<Index, 1>&);
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 

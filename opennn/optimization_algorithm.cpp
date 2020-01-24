@@ -100,7 +100,7 @@ const bool& OptimizationAlgorithm::get_display() const
 
 /// Returns the number of iterations between the training showing progress.
 
-const int& OptimizationAlgorithm::get_display_period() const
+const Index& OptimizationAlgorithm::get_display_period() const
 {
    return(display_period);
 }
@@ -108,7 +108,7 @@ const int& OptimizationAlgorithm::get_display_period() const
 
 /// Returns the number of iterations between the training saving progress.
 
-const int& OptimizationAlgorithm::get_save_period() const
+const Index& OptimizationAlgorithm::get_save_period() const
 {
    return(save_period);
 }
@@ -169,7 +169,7 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void OptimizationAlgorithm::set_display_period(const int& new_display_period)
+void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 {
    
 
@@ -180,7 +180,7 @@ void OptimizationAlgorithm::set_display_period(const int& new_display_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_display_period(const int&) method.\n"
+             << "void set_display_period(const Index&) method.\n"
              << "Display period must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -196,7 +196,7 @@ void OptimizationAlgorithm::set_display_period(const int& new_display_period)
 /// @param new_save_period
 /// Number of iterations between the training saving progress.
 
-void OptimizationAlgorithm::set_save_period(const int& new_save_period)
+void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 {
    
 
@@ -207,7 +207,7 @@ void OptimizationAlgorithm::set_save_period(const int& new_save_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_save_period(const int&) method.\n"
+             << "void set_save_period(const Index&) method.\n"
              << "Save period must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -486,7 +486,7 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 /// Resizes all the training history variables.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_training_history(const int& new_size)
+void OptimizationAlgorithm::Results::resize_training_history(const Index& new_size)
 {
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
@@ -530,7 +530,7 @@ void OptimizationAlgorithm::Results::save(const string&) const
 
 
 
-Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const int& precision) const
+Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Index& precision) const
 {
    ostringstream buffer;
 
@@ -611,8 +611,8 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const int&
 
    values.push_back(write_stopping_condition());
 
-   const int rows_number = names.size();
-   const int columns_number = 2;
+   const Index rows_number = names.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> final_results(rows_number, columns_number);
 

@@ -46,7 +46,7 @@ public:
 
    // INPUTS AND PRINCIPAL COMPONENTS NUMBER CONSTRUCTOR
 
-   explicit PrincipalComponentsLayer(const int&, const int&);
+   explicit PrincipalComponentsLayer(const Index&, const Index&);
 
    // COPY CONSTRUCTOR
 
@@ -90,17 +90,17 @@ public:
    // Set methods
 
    void set();
-   void set(const int&, const int&);
+   void set(const Index&, const Index&);
    void set(const PrincipalComponentsLayer&);
 
-   void set_inputs_number(const int&);
-   void set_principal_components_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_principal_components_number(const Index&);
 
-   void set_principal_component(const int&, const Tensor<type, 1>&);
+   void set_principal_component(const Index&, const Tensor<type, 1>&);
    void set_principal_components(const Tensor<type, 2>&);
 
    void set_means(const Tensor<type, 1>&);
-   void set_means(const int&, const double&);
+   void set_means(const Index&, const double&);
 
    void set_explained_variance(const Tensor<type, 1>&);
 
@@ -140,11 +140,11 @@ protected:
 
    /// Inputs number
 
-   int inputs_number;
+   Index inputs_number;
 
    /// Principal components number
 
-   int principal_components_number;
+   Index principal_components_number;
 
    /// Means of the input variables
 

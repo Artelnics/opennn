@@ -30,7 +30,7 @@ UnitTesting::~UnitTesting()
 
 /// Returns the number of tests which have been performed by the test case. 
 
-int UnitTesting::get_tests_count() const
+Index UnitTesting::get_tests_count() const
 {
    return(tests_count);
 }
@@ -38,7 +38,7 @@ int UnitTesting::get_tests_count() const
 
 /// Returns the number of tests which have passed the test case. 
 
-int UnitTesting::get_tests_passed_count() const
+Index UnitTesting::get_tests_passed_count() const
 {
    return(tests_passed_count);
 }
@@ -46,7 +46,7 @@ int UnitTesting::get_tests_passed_count() const
 
 /// Returns the number of tests which have failed the test case. 
 
-int UnitTesting::get_tests_failed_count() const
+Index UnitTesting::get_tests_failed_count() const
 {
    return(tests_failed_count);
 }
@@ -54,7 +54,7 @@ int UnitTesting::get_tests_failed_count() const
 
 /// Returns the number of iterations for loops of random tests. 
 
-int UnitTesting::get_random_tests_number() const
+Index UnitTesting::get_random_tests_number() const
 {
    return(random_tests_number);
 }
@@ -77,7 +77,7 @@ const bool& UnitTesting::get_display() const
 /// Sets a new value for the number of tests performed by the test case. 
 /// @param new_tests_count Number of tests performed. 
 
-void UnitTesting::set_tests_count(const int& new_tests_count)
+void UnitTesting::set_tests_count(const Index& new_tests_count)
 {
    tests_count = new_tests_count;
 }
@@ -86,7 +86,7 @@ void UnitTesting::set_tests_count(const int& new_tests_count)
 /// Sets a new value for the number of tests which have passed the test case. 
 /// @param new_tests_passed_count Number of tests passed. 
 
-void UnitTesting::set_tests_passed_count(const int& new_tests_passed_count)
+void UnitTesting::set_tests_passed_count(const Index& new_tests_passed_count)
 {
    tests_passed_count = new_tests_passed_count;
 }
@@ -95,7 +95,7 @@ void UnitTesting::set_tests_passed_count(const int& new_tests_passed_count)
 /// Sets a new value for the number of tests which have failed the test case. 
 /// @param new_tests_failed_count Number of tests failed. 
 
-void UnitTesting::set_tests_failed_count(const int& new_tests_failed_count)
+void UnitTesting::set_tests_failed_count(const Index& new_tests_failed_count)
 {
    tests_failed_count = new_tests_failed_count;
 }
@@ -110,7 +110,7 @@ void UnitTesting::set_numerical_differentiation_tests(const bool& new_numerical_
 /// Sets a new value for the number of iterations in loops of random tests. 
 /// @param new_random_tests_number Number of random tests in each loop. 
 
-void UnitTesting::set_random_tests_number(const int& new_random_tests_number)
+void UnitTesting::set_random_tests_number(const Index& new_random_tests_number)
 {
    random_tests_number = new_random_tests_number;
 }

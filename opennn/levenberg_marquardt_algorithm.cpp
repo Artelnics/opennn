@@ -127,7 +127,7 @@ const double& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const int& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() const
+const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() const
 {
    return(maximum_selection_error_decreases);
 }
@@ -135,7 +135,7 @@ const int& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() 
 
 /// Returns the maximum number of iterations for training.
 
-const int& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
+const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 {
    return(maximum_epochs_number);
 }
@@ -570,7 +570,7 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const double& new_gradi
 /// Sets a new maximum number of selection failures. 
 /// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const int& new_maximum_selection_error_decreases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_decreases)
 {
    maximum_selection_error_decreases = new_maximum_selection_error_decreases;
 }
@@ -579,7 +579,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const in
 /// Sets a maximum number of iterations for training.
 /// @param new_maximum_epochs_number Maximum number of iterations for training.
 
-void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const int& new_maximum_epochs_number)
+void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
    maximum_epochs_number = new_maximum_epochs_number;
 }
@@ -652,7 +652,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool
 /// @param new_display_period
 /// Number of iterations between the training showing progress. 
 
-void LevenbergMarquardtAlgorithm::set_display_period(const int& new_display_period)
+void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_period)
 {
    #ifdef __OPENNN_DEBUG__ 
      
@@ -742,13 +742,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    results.resize_training_history(1+maximum_epochs_number);
 
-   const int selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
+   const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const int parameters_number = neural_network_pointer->get_parameters_number();
+   const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -763,7 +763,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
-   int selection_failures = 0;
+   Index selection_failures = 0;
 
    double gradient_norm = 0.0;
 
@@ -783,7 +783,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    // Main loop
 /*
-   for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
+   for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network
 
@@ -1190,8 +1190,8 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
    values.push_back(buffer.str());
 
 
-   const int rows_number = labels.size();
-   const int columns_number = 2;
+   const Index rows_number = labels.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
@@ -1898,7 +1898,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(maximum_selection_error_decreases_element)
    {
-      const int new_maximum_selection_error_decreases = static_cast<int>(atoi(maximum_selection_error_decreases_element->GetText()));
+      const Index new_maximum_selection_error_decreases = static_cast<Index>(atoi(maximum_selection_error_decreases_element->GetText()));
 
       try
       {
@@ -1916,7 +1916,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(maximum_epochs_number_element)
    {
-      const int new_maximum_epochs_number = static_cast<int>(atoi(maximum_epochs_number_element->GetText()));
+      const Index new_maximum_epochs_number = static_cast<Index>(atoi(maximum_epochs_number_element->GetText()));
 
       try
       {
@@ -1988,7 +1988,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(display_period_element)
    {
-      const int new_display_period = static_cast<int>(atoi(display_period_element->GetText()));
+      const Index new_display_period = static_cast<Index>(atoi(display_period_element->GetText()));
 
       try
       {
@@ -2006,7 +2006,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
        if(element)
        {
-          const int new_save_period = static_cast<int>(atoi(element->GetText()));
+          const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
@@ -2062,7 +2062,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
 Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b) const
 {
-    const int n = A.dimension(0);
+    const Index n = A.dimension(0);
 
     Tensor<type, 1> x(n);
 /*

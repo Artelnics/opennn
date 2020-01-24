@@ -47,7 +47,7 @@ public:
 
    explicit RecurrentLayer();
 
-   explicit RecurrentLayer(const int&, const int&);
+   explicit RecurrentLayer(const Index&, const Index&);
 
    RecurrentLayer(const RecurrentLayer&);
 
@@ -59,7 +59,7 @@ public:
 
    bool is_empty() const;
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -68,17 +68,17 @@ public:
 
    // Parameters
 
-   int get_timesteps()const;
+   Index get_timesteps()const;
 
    Tensor<type, 1> get_biases() const;
    Tensor<type, 2> get_input_weights() const;
    Tensor<type, 2> get_recurrent_weights() const;
 
-   int get_biases_number() const;
-   int get_input_weights_number() const;
-   int get_recurrent_weights_number() const;
+   Index get_biases_number() const;
+   Index get_input_weights_number() const;
+   Index get_recurrent_weights_number() const;
 
-   int get_parameters_number() const;
+   Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
@@ -101,20 +101,20 @@ public:
    // Set methods
 
    void set();
-   void set(const int&, const int&);
+   void set(const Index&, const Index&);
    void set(const RecurrentLayer&);
 
    void set_default();
 
    // Architecture
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
-   void set_input_shape(const Tensor<int, 1>&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
+   void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
 
-   void set_timesteps(const int&);
+   void set_timesteps(const Index&);
 
    void set_biases(const Tensor<type, 1>&);
 
@@ -223,7 +223,7 @@ public:
 
 protected:
 
-   int timesteps = 1;
+   Index timesteps = 1;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.

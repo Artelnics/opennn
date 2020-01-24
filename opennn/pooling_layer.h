@@ -53,9 +53,9 @@ public:
 
     explicit PoolingLayer();
 
-    explicit PoolingLayer(const Tensor<int, 1>&);
+    explicit PoolingLayer(const Tensor<Index, 1>&);
 
-    explicit PoolingLayer(const Tensor<int, 1>&, const Tensor<int, 1>&);
+    explicit PoolingLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     // Destructor
 
@@ -63,55 +63,55 @@ public:
 
      // Get methods
 
-     Tensor<int, 1> get_input_variables_dimensions() const;
-     Tensor<int, 1> get_outputs_dimensions() const;
+     Tensor<Index, 1> get_input_variables_dimensions() const;
+     Tensor<Index, 1> get_outputs_dimensions() const;
 
      Index get_inputs_number() const;
 
      Index get_inputs_channels_number() const;
 
-     int get_inputs_rows_number() const;
+     Index get_inputs_rows_number() const;
 
-     int get_inputs_columns_number() const;
+     Index get_inputs_columns_number() const;
 
      Index get_neurons_number() const;
 
-     int get_outputs_rows_number() const;
+     Index get_outputs_rows_number() const;
 
-     int get_outputs_columns_number() const;
+     Index get_outputs_columns_number() const;
 
-     int get_padding_width() const;
+     Index get_padding_width() const;
 
-     int get_row_stride() const;
+     Index get_row_stride() const;
 
-     int get_column_stride() const;
+     Index get_column_stride() const;
 
-     int get_pool_rows_number() const;
+     Index get_pool_rows_number() const;
 
-     int get_pool_columns_number() const;
+     Index get_pool_columns_number() const;
 
-     int get_parameters_number() const;
+     Index get_parameters_number() const;
 
      Tensor<type, 1> get_parameters() const;
 
-     Tensor<int, 1> get_inputs_indices(const int&) const;
+     Tensor<Index, 1> get_inputs_indices(const Index&) const;
 
      PoolingMethod get_pooling_method() const;
 
      // Set methods
 
-     void set_inputs_number(const int&) {}
-     void set_neurons_number(const int&) {}
+     void set_inputs_number(const Index&) {}
+     void set_neurons_number(const Index&) {}
 
-     void set_input_variables_dimensions(const Tensor<int, 1>&);
+     void set_input_variables_dimensions(const Tensor<Index, 1>&);
 
-    void set_padding_width(const int&);
+    void set_padding_width(const Index&);
 
-    void set_row_stride(const int&);
+    void set_row_stride(const Index&);
 
-    void set_column_stride(const int&);
+    void set_column_stride(const Index&);
 
-    void set_pool_size(const int&, const int&);
+    void set_pool_size(const Index&, const Index&);
 
     void set_pooling_method(const PoolingMethod&);
 
@@ -174,17 +174,17 @@ public:
 
 protected:
 
-    Tensor<int, 1> input_variables_dimensions;
+    Tensor<Index, 1> input_variables_dimensions;
 
-    int pool_rows_number = 2;
+    Index pool_rows_number = 2;
 
-    int pool_columns_number = 2;
+    Index pool_columns_number = 2;
 
-    int padding_width = 0;
+    Index padding_width = 0;
 
-    int row_stride = 1;
+    Index row_stride = 1;
 
-    int column_stride = 1;
+    Index column_stride = 1;
 
     PoolingMethod pooling_method = AveragePooling;
 
