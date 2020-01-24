@@ -220,31 +220,27 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>& rows, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
+       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
        {
-           inputs_2d.setRandom();
-           targets_2d.setRandom();
-
-/*
-           const size_t rows_number = rows.size();
-           const size_t inputs_number = inputs.size();
-           const size_t targets_number = targets.size();
+           const Index rows_number = instances.dimension(0);
+           const Index inputs_number = inputs.dimension(0);
+           const Index targets_number = targets.dimension(0);
 
            const Tensor<type, 2>& data = data_set_pointer->get_data();
 
-           for(size_t i = 0; i < rows_number; i++)
+           for(Index i = 0; i < rows_number; i++)
            {
-               for(size_t j = 0; j < inputs_number; j++)
+               for(Index j = 0; j < inputs_number; j++)
                {
-                   inputs_2d(i,j) = data(rows[i], inputs[j]);
+                   inputs_2d(i,j) = data(instances[i], inputs[j]);
                }
 
-               for(size_t j = 0; j < targets_number; j++)
+               for(Index j = 0; j < targets_number; j++)
                {
-                   targets_2d(i,j) = data(rows[i], targets[j]);
+                   targets_2d(i,j) = data(instances[i], targets[j]);
                }
            }
-*/
+
        }
 
        DataSet* data_set_pointer = nullptr;
