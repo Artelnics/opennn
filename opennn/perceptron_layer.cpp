@@ -634,54 +634,13 @@ void PerceptronLayer::initialize_parameters(const double& value)
 /// Initializes all the biases and synaptic weights in the neural newtork at random with values comprised 
 /// between -1 and +1.
 
-void PerceptronLayer::randomize_parameters_uniform()
+void PerceptronLayer::set_parameters_random()
 {
 /*
    biases.setRandom(-1.0, 1.0);
 
    synaptic_weights.setRandom(-1.0, 1.0);
 */
-}
-
-
-/// Initializes all the biases and synaptic weights in the layer of perceptrons at random with values 
-/// comprised between a minimum and a maximum values.
-/// @param minimum Minimum initialization value.
-/// @param maximum Maximum initialization value.
-
-void PerceptronLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
-{
-/*
-    biases.setRandom(minimum, maximum);
-
-    synaptic_weights.setRandom(minimum, maximum);
-*/
-}
-
-
-/// Initializes all the biases and synaptic weights in the newtork with random values chosen from a 
-/// normal distribution with mean 0 and standard deviation 1.
-
-void PerceptronLayer::randomize_parameters_normal()
-{
-/*
-    biases.setRandom();
-
-    synaptic_weights.setRandom();
-*/
-}
-
-
-/// Initializes all the biases and synaptic weights in the layer of perceptrons with random random values 
-/// chosen from a normal distribution with a given mean and a given standard deviation.
-/// @param mean Mean of normal distribution.
-/// @param standard_deviation Standard deviation of normal distribution.
-
-void PerceptronLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
-{
-    biases.setRandom();
-
-    synaptic_weights.setRandom();
 }
 
 

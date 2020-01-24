@@ -113,8 +113,7 @@ public:
 
    void test_initialize_biases();    
    void test_initialize_synaptic_weights();
-   void test_randomize_parameters_uniform();
-   void test_randomize_parameters_normal();
+   void test_set_parameters_random();
 
    // Combination
 

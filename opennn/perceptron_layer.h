@@ -143,11 +143,7 @@ public:
 
    void initialize_parameters(const double&);
 
-   void randomize_parameters_uniform();
-   void randomize_parameters_uniform(const double&, const double&);
-
-   void randomize_parameters_normal();
-   void randomize_parameters_normal(const double& = 0.0, const double& = 1.0);
+   void set_parameters_random();
 
    // Parameters norm 
 

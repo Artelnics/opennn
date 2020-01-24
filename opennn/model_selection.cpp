@@ -1165,7 +1165,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
     {
         data_set_pointer->set_k_fold_cross_validation_instances_uses(k,i);
 
-        neural_network_pointer->randomize_parameters_normal();
+        neural_network_pointer->set_parameters_random();
 
         training_strategy_pointer->perform_training();
 
@@ -1270,7 +1270,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
     {
         data_set_pointer->split_instances_random(1-selection_ratio,0.0,selection_ratio);
 
-        neural_network_pointer->randomize_parameters_normal();
+        neural_network_pointer->set_parameters_random();
 
         training_strategy_pointer->perform_training();
 
@@ -1369,7 +1369,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
         const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
 
         data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
-        neural_network_pointer->randomize_parameters_normal();
+        neural_network_pointer->set_parameters_random();
 
         training_strategy_pointer->perform_training();
 

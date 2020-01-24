@@ -82,7 +82,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    data_set.set_training();
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
 //   nn.set_layer_activation_function(0, PerceptronLayer::Logistic);
 //   nn.set_layer_activation_function(1, PerceptronLayer::Logistic);
@@ -97,7 +97,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
 
@@ -246,7 +246,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = wse.calculate_training_error_gradient();
 
@@ -298,7 +298,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(long_short_term_memory_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = wse.calculate_training_error_gradient();
 
@@ -350,7 +350,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(recurrent_layer);
    neural_network.add_layer(output_perceptron_layer);
 
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    error_gradient = wse.calculate_training_error_gradient();
 
@@ -429,10 +429,10 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
+   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
@@ -495,7 +495,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(3, 2, 2);
    data_set.generate_data_binary_classification(3, 2);
@@ -509,7 +509,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {3, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    data_set.set(9, 3, 1);
    data_set.generate_data_binary_classification(9, 3);
@@ -596,7 +596,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
    data_set.set(3, 1, 1);
@@ -610,7 +610,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2, 1});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
    data_set.set(2, 2, 1);
@@ -624,7 +624,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
 //   nn.set(2, 2, 2);
-//   nn.randomize_parameters_normal();
+//   nn.set_parameters_random();
 
 //   data_set.set(2, 2, 2);
 //   data_set.generate_data_binary_classification(4, 2);

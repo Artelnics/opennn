@@ -91,8 +91,7 @@ public:
    void test_initialize_weights();
    void test_initialize_recurrent_weights();
 
-   void test_randomize_parameters_uniform();
-   void test_randomize_parameters_normal();
+   void test_set_parameters_random();
 
    // Calculate outputs
 

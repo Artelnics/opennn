@@ -257,15 +257,15 @@ void NeuralNetworkTest::test_initialize_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
 
-   neural_network.randomize_parameters_normal(1.0, 0.0);
+   neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
    assert_true(parameters == 1.0, LOG);
 }
 
 
-void NeuralNetworkTest::test_randomize_parameters_uniform()
+void NeuralNetworkTest::test_set_parameters_random()
 {
-   cout << "test_randomize_parameters_uniform\n";
+   cout << "test_set_parameters_random\n";
 
    NeuralNetwork neural_network;
    Vector<double> parameters;
@@ -273,25 +273,10 @@ void NeuralNetworkTest::test_randomize_parameters_uniform()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 6, 1});
-   neural_network.randomize_parameters_uniform(-1.0, 1.0);
+   neural_network.set_parameters_random(-1.0, 1.0);
 
    assert_true(neural_network.get_parameters() >= -1.0, LOG);
    assert_true(neural_network.get_parameters() <= 1.0, LOG);
-}
-
-void NeuralNetworkTest::test_randomize_parameters_normal()
-{
-   cout << "test_randomize_parameters_normal\n";
-
-   NeuralNetwork neural_network;
-   Vector<double> network_parameters;
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.randomize_parameters_normal(1.0, 0.0);
-   network_parameters = neural_network.get_parameters();
-   assert_true(network_parameters == 1.0, LOG);
 }
 
 
@@ -1517,8 +1502,7 @@ void NeuralNetworkTest::run_test_case()
    // Parameters initialization methods
 
    test_initialize_parameters();
-   test_randomize_parameters_uniform();
-   test_randomize_parameters_normal();
+   test_set_parameters_random();
 
    // Parameters norm
 

@@ -342,7 +342,7 @@ void LongShortTermMemoryLayerTest::test_get_weights()
 
    long_short_term_memory_layer.set(3, 2);
 
-   long_short_term_memory_layer.randomize_parameters_uniform();
+   long_short_term_memory_layer.set_parameters_random();
 
    assert_true(long_short_term_memory_layer.get_forget_weights() == long_short_term_memory_layer.get_weights().get_matrix(0), LOG);
    assert_true(long_short_term_memory_layer.get_input_weights() == long_short_term_memory_layer.get_weights().get_matrix(1), LOG);
@@ -376,7 +376,7 @@ void LongShortTermMemoryLayerTest::test_get_recurrent_weights()
 
    long_short_term_memory_layer.set(3, 2);
 
-   long_short_term_memory_layer.randomize_parameters_uniform();
+   long_short_term_memory_layer.set_parameters_random();
 
    assert_true(long_short_term_memory_layer.get_forget_recurrent_weights() == long_short_term_memory_layer.get_recurrent_weights().get_matrix(0), LOG);
    assert_true(long_short_term_memory_layer.get_input_recurrent_weights() == long_short_term_memory_layer.get_recurrent_weights().get_matrix(1), LOG);
@@ -643,9 +643,9 @@ void LongShortTermMemoryLayerTest::test_initialize_recurrent_weights()
    assert_true(output_recurrent_weights == long_short_term_memory_layer.get_recurrent_weights().get_matrix(3), LOG);
 }
 
-void LongShortTermMemoryLayerTest::test_randomize_parameters_uniform()
+void LongShortTermMemoryLayerTest::test_set_parameters_random()
 {
-   cout << "test_randomize_parameters_uniform\n";
+   cout << "test_set_parameters_random\n";
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
    Vector<double> parameters;
@@ -654,30 +654,12 @@ void LongShortTermMemoryLayerTest::test_randomize_parameters_uniform()
 
    long_short_term_memory_layer.set(1,1);
 
-   long_short_term_memory_layer.randomize_parameters_uniform();
+   long_short_term_memory_layer.set_parameters_random();
    parameters = long_short_term_memory_layer.get_parameters();
 
    assert_true(parameters >= -1.0, LOG);
    assert_true(parameters <= 1.0, LOG);
 
-}
-
-
-void LongShortTermMemoryLayerTest::test_randomize_parameters_normal()
-{
-   cout << "test_randomize_parameters_normal\n";
-
-   LongShortTermMemoryLayer long_short_term_memory_layer;
-   Vector<double> parameters;
-
-   // Test
-
-   long_short_term_memory_layer.set(1, 1);
-
-   long_short_term_memory_layer.randomize_parameters_normal(1.0, 0.0);
-   parameters = long_short_term_memory_layer.get_parameters();
-
-   assert_true(parameters == 1.0, LOG);
 }
 
 
@@ -898,9 +880,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
    test_initialize_weights();
    test_initialize_recurrent_weights();
 
-   test_randomize_parameters_uniform();
-
-   test_randomize_parameters_normal();
+   test_set_parameters_random();
 
    // Parameters norm
 

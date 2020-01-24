@@ -514,7 +514,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     for(int i = 0; i < trials_number; i++)
     {
-        neural_network->randomize_parameters_normal();
+        neural_network->set_parameters_random();
 
         results = training_strategy_pointer->perform_training();
 
@@ -662,7 +662,7 @@ Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool
             }
         }
 
-        neural_network->randomize_parameters_normal();
+        neural_network->set_parameters_random();
 
         results = training_strategy_pointer->perform_training();
 
