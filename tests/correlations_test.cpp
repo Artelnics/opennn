@@ -243,7 +243,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
-    Vector<size_t> z(0);
+    Tensor<Index, 1> z(0);
 
     x.initialize_sequential();
     z.setRandom(0, size);

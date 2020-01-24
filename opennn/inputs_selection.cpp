@@ -641,7 +641,7 @@ Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool
     mean_final[0] = current_loss[0];
     mean_final[1] = current_loss[1];
 
-    final_parameters.set(neural_network->get_parameters());
+    final_parameters.resize(neural_network->get_parameters());
 
     for(Index i = 1; i < trials_number; i++)
     {

@@ -80,7 +80,7 @@ void MinkowskiErrorTest::test_calculate_training_error()
    Tensor<type, 1> parameters;
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1,1,1);
    data_set.initialize_data(0.0);
@@ -123,8 +123,8 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
@@ -149,7 +149,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
 
@@ -258,8 +258,8 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 

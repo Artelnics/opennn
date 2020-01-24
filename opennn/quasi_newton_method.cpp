@@ -1347,7 +1347,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
               break;
            }
 
-           old_parameters.set();
+           old_parameters.resize();
            old_gradient.set();
        }
 

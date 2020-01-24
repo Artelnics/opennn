@@ -450,7 +450,7 @@ type mean(const Tensor<type, 1>& vector)
 
 #endif
 /*
-  const type sum = vector.calculate_sum();
+  const type sum = vector.sum();
 
   const type mean = sum /static_cast<type>(size);
 
@@ -3965,7 +3965,7 @@ Tensor<type, 1> explained_variance(const Tensor<type, 1>& vector)
 
     #endif
 /*
-    const type this_sum = absolute_value(vector).calculate_sum();
+    const type this_sum = absolute_value(vector).sum();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4011,7 +4011,7 @@ Tensor<type, 1> explained_variance(const Tensor<type, 1>& vector)
 /*
     #ifdef __OPENNN_DEBUG__
 
-      if(explained_variance.calculate_sum() != 1.0) {
+      if(explained_variance.sum() != 1.0) {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: vector Template.\n"

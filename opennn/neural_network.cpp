@@ -652,7 +652,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
 /*
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions.calculate_sum(), 18);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions.sum(), 18);
     add_layer(perceptron_layer);
 
     const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
@@ -1067,7 +1067,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
 
 /// Initializes all the neural and the independent parameters with a given value.
 
-void NeuralNetwork::initialize_parameters(const double& value)
+void NeuralNetwork::set_parameters_constant(const double& value)
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
@@ -1075,7 +1075,7 @@ void NeuralNetwork::initialize_parameters(const double& value)
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        trainable_layers_pointers[i]->initialize_parameters(value);
+        trainable_layers_pointers[i]->set_parameters_constant(value);
     }
 }
 

@@ -72,7 +72,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 2, 2);
    data_set.initialize_data(0.0);
@@ -86,7 +86,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 2, 2);
    data_set.initialize_data(1.0);
@@ -147,7 +147,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    neural_network.add_layer(perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    training_error = sum_squared_error.calculate_training_error();
 
@@ -174,7 +174,7 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
     size_t instances_number = 10;
     size_t hidden_neurons = 1;
 
-    Vector<size_t> instances;
+    Tensor<Index, 1> instances;
     instances.set(instances_number);
     instances.initialize_sequential();
 
@@ -194,10 +194,10 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
 
     Vector<Tensor<double, 2>> layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
-    assert_true(layers_delta[0].get_dimension(0) == instances_number, LOG);
-    assert_true(layers_delta[0].get_dimension(1) == hidden_neurons, LOG);
-    assert_true(layers_delta[1].get_dimension(0) == instances_number, LOG);
-    assert_true(layers_delta[1].get_dimension(1) == outputs_number, LOG);
+    assert_true(layers_delta[0].dimension(0) == instances_number, LOG);
+    assert_true(layers_delta[0].dimension(1) == hidden_neurons, LOG);
+    assert_true(layers_delta[1].dimension(0) == instances_number, LOG);
+    assert_true(layers_delta[1].dimension(1) == outputs_number, LOG);
 }
 
 
@@ -209,15 +209,15 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    NeuralNetwork neural_network;
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Vector<size_t> architecture;
+   Tensor<Index, 1> architecture;
 
    Tensor<type, 1> parameters;
    Tensor<type, 1> gradient;
    Tensor<type, 1> numerical_gradient;
    Tensor<type, 1> error;
 
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t instances_number;
    size_t hidden_neurons;
 
@@ -333,8 +333,8 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 
@@ -413,7 +413,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Vector<size_t> architecture;
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -426,12 +426,12 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Tensor<double, 2> terms_Jacobian;
    Tensor<double, 2> numerical_Jacobian_terms;
 
-   Vector<size_t> instances;
+   Tensor<Index, 1> instances;
 
-   Tensor<double, 2> inputs;
+   Tensor<type, 2> inputs;
    Tensor<double, 2> targets;
 
-   Tensor<double, 2> outputs;
+   Tensor<type, 2> outputs;
    Tensor<double, 2> output_gradient;
 
    Vector<Tensor<double, 2>> layers_activations;
@@ -444,7 +444,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
 
@@ -472,7 +472,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test 
 
    neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 2, 5);
    sum_squared_error.set(&neural_network, &data_set);
@@ -486,13 +486,13 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   architecture.set(3);
+   architecture.resize(3);
    architecture[0] = 5;
    architecture[1] = 1;
    architecture[2] = 2;
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(5, 2, 3);
    sum_squared_error.set(&neural_network, &data_set);
@@ -567,7 +567,7 @@ void SumSquaredErrorTest::test_calculate_selection_error()
 
 //   data_set.set();
 
-//   Vector<size_t> indices;
+//   Tensor<Index, 1> indices;
 
 //   selection_error = sum_squared_error.calculate_indices_error(indices);
    
@@ -593,7 +593,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    neural_network.set(NeuralNetwork::Approximation, {1,1,1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1,1,1);
 
@@ -618,7 +618,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
 //   error = sum_squared_error.calculate_training_error();
 
-//   assert_true(abs(squared_errors.calculate_sum() - error) < 1.0e-12, LOG);
+//   assert_true(abs(squared_errors.sum() - error) < 1.0e-12, LOG);
 }
 
 

@@ -61,7 +61,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    Tensor<type, 1> parameters;
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
    data_set.initialize_data(0.0);
@@ -109,7 +109,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, Vector<size_t>({3, 1}));
+   neural_network.set(NeuralNetwork::Approximation, Tensor<Index, 1>({3, 1}));
 
    data_set.set(2, 3, 1);
    data_set.generate_data_binary_classification(2, 3);
@@ -125,7 +125,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    neural_network.set(NeuralNetwork::Approximation, {3, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(2, 3, 1);
    data_set.generate_data_binary_classification(2, 3);
@@ -138,7 +138,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    neural_network.set(NeuralNetwork::Approximation, {3, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 3, 1);
    data_set.generate_data_binary_classification(3, 3);
@@ -163,8 +163,8 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
    ScalingLayer* scaling_layer = new ScalingLayer();
@@ -191,7 +191,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
 
@@ -387,8 +387,8 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    const Tensor<double, 2> data = inputs.append_column(outputs);
 
    data_set.set_data(data);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_training();
 
    const double parameters_minimum = -100.0;
@@ -459,7 +459,7 @@ void WeightedSquaredErrorTest::test_calculate_selection_error()
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
 
@@ -481,7 +481,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
    cout << "test_calculate_training_error_terms\n";
 
    NeuralNetwork neural_network;
-   Vector<size_t> hidden_layers_size;
+   Tensor<Index, 1> hidden_layers_size;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -504,7 +504,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
 
 //   error_terms = wse.calculate_training_error_terms();
 
-   assert_true(abs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
+   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
 
    // Test
 
@@ -518,7 +518,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
 
 //   error_terms = wse.calculate_training_error_terms();
 
-   assert_true(abs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
+   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
 }
 
 
@@ -529,7 +529,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Vector<size_t> architecture;
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -546,7 +546,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
 
@@ -561,7 +561,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 2, 5);
    wse.set(&neural_network, &data_set);
@@ -575,13 +575,13 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   architecture.set(3);
+   architecture.resize(3);
    architecture[0] = 2;
    architecture[1] = 1;
    architecture[2] = 2;
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(2, 2, 5);
    wse.set(&neural_network, &data_set);

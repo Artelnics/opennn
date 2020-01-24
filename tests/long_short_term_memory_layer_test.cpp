@@ -24,7 +24,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
     cout << "test_constructor\n";
 
     LongShortTermMemoryLayer long_short_term_memory_layer;
-    size_t inputs_number;
+    Index inputs_number;
     size_t neurons_number;
 
     Tensor<double, 2> synaptic_weights;
@@ -52,11 +52,11 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     assert_true(long_short_term_memory_layer.get_weights().rank() == 3, LOG);
 
-    assert_true(long_short_term_memory_layer.get_weights().get_dimension(0)
+    assert_true(long_short_term_memory_layer.get_weights().dimension(0)
              == long_short_term_memory_layer.get_inputs_number(), LOG);
-    assert_true(long_short_term_memory_layer.get_weights().get_dimension(1)
+    assert_true(long_short_term_memory_layer.get_weights().dimension(1)
              == long_short_term_memory_layer.get_neurons_number(), LOG);
-    assert_true(long_short_term_memory_layer.get_weights().get_dimension(2) == 4, LOG);
+    assert_true(long_short_term_memory_layer.get_weights().dimension(2) == 4, LOG);
 
     //Test
 
@@ -74,11 +74,11 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     assert_true(long_short_term_memory_layer.get_weights().rank() == 3, LOG);
 
-    assert_true(long_short_term_memory_layer.get_recurrent_weights().get_dimension(0)
+    assert_true(long_short_term_memory_layer.get_recurrent_weights().dimension(0)
              == long_short_term_memory_layer.get_neurons_number(), LOG);
-    assert_true(long_short_term_memory_layer.get_recurrent_weights().get_dimension(1)
+    assert_true(long_short_term_memory_layer.get_recurrent_weights().dimension(1)
              == long_short_term_memory_layer.get_neurons_number(), LOG);
-    assert_true(long_short_term_memory_layer.get_recurrent_weights().get_dimension(2) == 4, LOG);
+    assert_true(long_short_term_memory_layer.get_recurrent_weights().dimension(2) == 4, LOG);
 
 }
 
@@ -109,7 +109,7 @@ void LongShortTermMemoryLayerTest::test_get_inputs_number()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   size_t inputs_number;
+   Index inputs_number;
    size_t neurons_number;
 
 
@@ -134,7 +134,7 @@ void LongShortTermMemoryLayerTest::test_get_neurons_number()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   size_t inputs_number;
+   Index inputs_number;
    size_t neurons_number;
 
 
@@ -281,7 +281,7 @@ void LongShortTermMemoryLayerTest::test_get_biases()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   size_t inputs_number;
+   Index inputs_number;
    size_t neurons_number;
 
    //Test
@@ -328,14 +328,14 @@ void LongShortTermMemoryLayerTest::test_get_weights()
 
    long_short_term_memory_layer.set(3,2);
 
-   long_short_term_memory_layer.initialize_parameters(0.0);
+   long_short_term_memory_layer.set_parameters_constant(0.0);
 
    weights = long_short_term_memory_layer.get_weights();
 
    assert_true(weights.rank() == 3, LOG);
-   assert_true(weights.get_dimension(0) == 3, LOG);
-   assert_true(weights.get_dimension(1) == 2, LOG);
-   assert_true(weights.get_dimension(2) == 4, LOG);
+   assert_true(weights.dimension(0) == 3, LOG);
+   assert_true(weights.dimension(1) == 2, LOG);
+   assert_true(weights.dimension(2) == 4, LOG);
    assert_true(weights == 0.0, LOG);
 
    //Test
@@ -362,14 +362,14 @@ void LongShortTermMemoryLayerTest::test_get_recurrent_weights()
 
    long_short_term_memory_layer.set(3,2);
 
-   long_short_term_memory_layer.initialize_parameters(0.0);
+   long_short_term_memory_layer.set_parameters_constant(0.0);
 
    recurrent_weights = long_short_term_memory_layer.get_recurrent_weights();
 
    assert_true(recurrent_weights.rank() == 3, LOG);
-   assert_true(recurrent_weights.get_dimension(0) == 2, LOG);
-   assert_true(recurrent_weights.get_dimension(1) == 2, LOG);
-   assert_true(recurrent_weights.get_dimension(2) == 4, LOG);
+   assert_true(recurrent_weights.dimension(0) == 2, LOG);
+   assert_true(recurrent_weights.dimension(1) == 2, LOG);
+   assert_true(recurrent_weights.dimension(2) == 4, LOG);
    assert_true(recurrent_weights == 0.0, LOG);
 
    //Test
@@ -510,9 +510,9 @@ void LongShortTermMemoryLayerTest::test_set_parameters()
 }
 
 
-void LongShortTermMemoryLayerTest::test_initialize_parameters()
+void LongShortTermMemoryLayerTest::test_set_parameters_constant()
 {
-   cout << "test_initialize_parameters\n";
+   cout << "test_set_parameters_constant\n";
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
@@ -521,7 +521,7 @@ void LongShortTermMemoryLayerTest::test_initialize_parameters()
    // Test
 
    long_short_term_memory_layer.set(3, 2);
-   long_short_term_memory_layer.initialize_parameters(0.0);
+   long_short_term_memory_layer.set_parameters_constant(0.0);
 
    parameters = long_short_term_memory_layer.get_parameters();
 
@@ -676,7 +676,7 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
    // Test
 
    long_short_term_memory_layer.set(1, 2);
-   long_short_term_memory_layer.initialize_parameters(0.0);
+   long_short_term_memory_layer.set_parameters_constant(0.0);
    parameters=long_short_term_memory_layer.get_parameters();
 
    parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
@@ -704,7 +704,7 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    long_short_term_memory_layer.set(4, 2);
 
-   parameters.set(56, 1.0);
+   parameters.resize(56, 1.0);
 
    long_short_term_memory_layer.set_parameters(parameters);
 
@@ -748,8 +748,8 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Tensor<double, 2> inputs;
-   Tensor<double, 2> outputs;
+   Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
 
    Tensor<type, 1> parameters;
 
@@ -767,10 +767,10 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
    long_short_term_memory_layer.set_activation_function("HyperbolicTangent");
    long_short_term_memory_layer.set_recurrent_activation_function("HardSigmoid");
 
-   inputs.set({instances, 3},1.0);
+   inputs.resize({instances, 3},1.0);
 
-   weights.set(Vector<size_t>({3,2,4}));
-   recurrent_weights.set(Vector<size_t>({2,2,4}));
+   weights.set(Tensor<Index, 1>({3,2,4}));
+   recurrent_weights.set(Tensor<Index, 1>({2,2,4}));
    biases.resize(2,4);
 
    weights.initialize_sequential();
@@ -806,7 +806,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    long_short_term_memory_layer.set_timesteps(3);
 
-   inputs.set({3,1}, 1.0);
+   inputs.resize({3,1}, 1.0);
 
    long_short_term_memory_layer.initialize_biases(0.0);
    long_short_term_memory_layer.initialize_weights(1.0);
@@ -873,7 +873,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
    // Parameters initialization methods
 
-   test_initialize_parameters();
+   test_set_parameters_constant();
 
    test_initialize_biases();
 

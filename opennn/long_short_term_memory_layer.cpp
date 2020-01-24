@@ -1105,7 +1105,7 @@ void LongShortTermMemoryLayer::initialize_weights_Glorot(const double& minimum,c
 /// Initializes all the biases, weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void LongShortTermMemoryLayer::initialize_parameters(const double& value)
+void LongShortTermMemoryLayer::set_parameters_constant(const double& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -1437,7 +1437,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.get_dimension(2);
+    const Index combinations_columns_number = combinations.dimension(2);
 
     if(combinations_columns_number != neurons_number)
     {

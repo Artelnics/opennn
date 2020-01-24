@@ -216,7 +216,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
    NeuralNetwork neural_network;
 
-   size_t parameters_number;
+   Index parameters_number;
 
    Tensor<type, 1> parameters;
 
@@ -234,7 +234,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    parameters_number = neural_network.get_parameters_number();
 

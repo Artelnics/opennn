@@ -97,7 +97,7 @@ public:
 
        // Loss index
 
-       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<double>(batch_instances_number);
+       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<type>(batch_instances_number);
 
        calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
