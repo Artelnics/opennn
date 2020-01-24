@@ -72,10 +72,10 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    // Test
 
-   size_t instances_number = 1000;
-   size_t inputs_number = 90;
-   size_t outputs_number = 1;
-   size_t hidden_neurons_number = 180;
+   Index instances_number = 1000;
+   Index inputs_number = 90;
+   Index outputs_number = 1;
+   Index hidden_neurons_number = 180;
 
    data_set.set(instances_number, inputs_number, outputs_number);
    data_set.generate_data_binary_classification(instances_number, inputs_number);
@@ -162,10 +162,10 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
    ScalingLayer* scaling_layer = new ScalingLayer();
 
@@ -220,7 +220,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    outputs[0] = 1.0;
    outputs[1] = 0.0;
 
-   for(size_t i = 2; i < instances_number; i++)
+   for(Index i = 2; i < instances_number; i++)
    {
         if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
         {
@@ -274,7 +274,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    outputs[0] = 1.0;
    outputs[1] = 0.0;
 
-   for(size_t i = 2; i < instances_number; i++)
+   for(Index i = 2; i < instances_number; i++)
    {
         if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
         {
@@ -326,7 +326,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    outputs[0] = 1.0;
    outputs[1] = 0.0;
 
-   for(size_t i = 2; i < instances_number; i++)
+   for(Index i = 2; i < instances_number; i++)
    {
         if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
         {
@@ -373,7 +373,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> outputs(instances_number, outputs_number);
    outputs[0] = 1.0;
    outputs[1] = 0.0;
-   for(size_t i = 2; i < instances_number; i++)
+   for(Index i = 2; i < instances_number; i++)
    {
         if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
         {

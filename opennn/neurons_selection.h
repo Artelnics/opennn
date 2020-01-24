@@ -189,7 +189,7 @@ protected:
 
     Tensor<type, 1> training_loss_history;
 
-    vector<Tensor<type, 1>> parameters_history;
+    Tensor<Tensor<type, 1>, 1> parameters_history;
 
     /// Minimum number of hidden neurons.
 

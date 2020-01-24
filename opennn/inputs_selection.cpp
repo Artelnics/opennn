@@ -993,7 +993,7 @@ string InputsSelection::Results::object_to_string() const
 /// @param uses Vector of the uses of the variables.
 /// @param input_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const vector<DataSet::VariableUse> uses, const Index input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> uses, const Index input_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1002,7 +1002,7 @@ Index InputsSelection::get_input_index(const vector<DataSet::VariableUse> uses, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "const Index get_input_index(const vector<DataSet::VariableUse>, const Index) method.\n"
+               << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  input_number << ".\n";
 
         throw logic_error(buffer.str());

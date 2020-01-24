@@ -277,8 +277,8 @@ public:
 
    // Columns get methods
 
-   vector<Column> get_columns() const;
-   vector<Column> get_used_columns() const;
+   Tensor<Column, 1> get_columns() const;
+   Tensor<Column, 1> get_used_columns() const;
 
    Index get_columns_number() const;
 
@@ -559,20 +559,20 @@ public:
 
    // Descriptives methods
 
-   vector<Descriptives> calculate_columns_descriptives() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives() const;
 
    Tensor<type, 2> calculate_columns_descriptives_matrix() const;
 
-   vector<Descriptives> calculate_columns_descriptives_positive_instances() const;
-   vector<Descriptives> calculate_columns_descriptives_negative_instances() const;
-   vector<Descriptives> calculate_columns_descriptives_classes(const Index&) const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_positive_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_negative_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_classes(const Index&) const;
 
-   vector<Descriptives> calculate_columns_descriptives_training_instances() const;
-   vector<Descriptives> calculate_columns_descriptives_selection_instances() const;
-   vector<Descriptives> calculate_columns_descriptives_testing_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_testing_instances() const;
 
-   vector<Descriptives> calculate_input_variables_descriptives() const;
-   vector<Descriptives> calculate_target_variables_descriptives() const;
+   Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
+   Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
 
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
 
@@ -588,11 +588,11 @@ public:
 
    // Histrogram methods
 
-   vector<Histogram> calculate_columns_histograms(const Index& = 10) const;
+   Tensor<Histogram, 1> calculate_columns_histograms(const Index& = 10) const;
 
    // Box and whiskers
 
-   vector<BoxPlot> calculate_columns_box_plots() const;
+   Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
 
    // Inputs correlations
 
@@ -633,15 +633,15 @@ public:
    // Data scaling
 
    Tensor<string, 1> calculate_default_scaling_methods() const;
-   void scale_data_minimum_maximum(const vector<Descriptives>&);
-   void scale_data_mean_standard_deviation(const vector<Descriptives>&);
-   vector<Descriptives> scale_data_minimum_maximum();
-   vector<Descriptives> scale_data_mean_standard_deviation();
+   void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_data_minimum_maximum();
+   Tensor<Descriptives, 1> scale_data_mean_standard_deviation();
 
    // Input variables scaling
 
-   void scale_inputs_mean_standard_deviation(const vector<Descriptives>&);
-   vector<Descriptives> scale_inputs_mean_standard_deviation();
+   void scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation();
 
    void scale_input_mean_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_mean_standard_deviation(const Index&);
@@ -649,44 +649,44 @@ public:
    void scale_input_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_standard_deviation(const Index&);
 
-   void scale_inputs_minimum_maximum(const vector<Descriptives>&);
-   vector<Descriptives> scale_inputs_minimum_maximum();
+   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_inputs_minimum_maximum();
 
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   vector<Descriptives> scale_inputs(const string&);
-   void scale_inputs(const string&, const vector<Descriptives>&);
-   void scale_inputs(const Tensor<string, 1>&, const vector<Descriptives>&);
+   Tensor<Descriptives, 1> scale_inputs(const string&);
+   void scale_inputs(const string&, const Tensor<Descriptives, 1>&);
+   void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Target variables scaling
 
-   void scale_targets_minimum_maximum(const vector<Descriptives>&);
-   vector<Descriptives> scale_targets_minimum_maximum();
+   void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_targets_minimum_maximum();
 
-   void scale_targets_mean_standard_deviation(const vector<Descriptives>&);
-   vector<Descriptives> scale_targets_mean_standard_deviation();
+   void scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_targets_mean_standard_deviation();
 
-   void scale_targets_logarithmic(const vector<Descriptives>&);
-   vector<Descriptives> scale_targets_logarithmic();
+   void scale_targets_logarithmic(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_targets_logarithmic();
 
-   vector<Descriptives> scale_targets(const string&);
-   void scale_targets(const string&, const vector<Descriptives>&);
+   Tensor<Descriptives, 1> scale_targets(const string&);
+   void scale_targets(const string&, const Tensor<Descriptives, 1>&);
 
    // Data unscaling
 
-   void unscale_data_minimum_maximum(const vector<Descriptives>&);
-   void unscale_data_mean_standard_deviation(const vector<Descriptives>&);
+   void unscale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
 
    // Input variables unscaling
 
-   void unscale_inputs_minimum_maximum(const vector<Descriptives>&);
-   void unscale_inputs_mean_standard_deviation(const vector<Descriptives>&);
+   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
 
    // Target variables unscaling
 
-   void unscale_targets_minimum_maximum(const vector<Descriptives>&);
-   void unscale_targets_mean_standard_deviation(const vector<Descriptives>&);
+   void unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
 
    // Classification methods
 
@@ -702,7 +702,7 @@ public:
 
    Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const double& = 1.5) const;
 
-   vector<Tensor<Index, 1>> calculate_Tukey_outliers(const double& = 1.5) const;
+   Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const double& = 1.5) const;
 
    void unuse_Tukey_outliers(const double& = 1.5);
 
@@ -830,7 +830,7 @@ private:
 
    Tensor<type, 2> time_series_data;
 
-   vector<Column> time_series_columns;
+   Tensor<Column, 1> time_series_columns;
 
    /// Display messages to screen.
 
@@ -874,7 +874,7 @@ private:
 
    Tensor<Index, 1> target_variables_dimensions;
 
-   vector<Column> columns;
+   Tensor<Column, 1> columns;
 
    /// Header wihch contains the rows label.
 
@@ -884,7 +884,7 @@ private:
 
    Index gmt = 0;
 
-   vector<Tensor<string, 1>> data_file_preview;
+   Tensor<Tensor<string, 1>, 1> data_file_preview;
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"

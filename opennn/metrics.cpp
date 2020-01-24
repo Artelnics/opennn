@@ -223,7 +223,7 @@ Tensor<type, 2> direct(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
   {
     for(Index j = 0; j < x_size; j++)
     {
-      direct(static_cast<Index>(i), j) = x[static_cast<Index>(i)] * y[j];
+      direct(i, j) = x[i] * y[j];
     }
   }
 
@@ -822,7 +822,7 @@ Tensor<type, 1> euclidean_distance(const Tensor<type, 2>& matrix, const Tensor<t
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances[i] = euclidean_distance(matrix.get_row(i), instance);
+        distances[i] = euclidean_distance(matrix.chip(i, 0), instance);
     }
 */
     return distances;
@@ -877,7 +877,7 @@ Tensor<type, 1> euclidean_weighted_distance(const Tensor<type, 2>& matrix, const
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances[i] = euclidean_weighted_distance(matrix.get_row(i), instance, weights);
+        distances[i] = euclidean_weighted_distance(matrix.chip(i, 0), instance, weights);
     }
 */
     return distances;
@@ -908,7 +908,7 @@ Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>& matrix
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances.set_row(i, euclidean_weighted_distance_vector(matrix.get_row(i), instance,weights));
+        distances.set_row(i, euclidean_weighted_distance_vector(matrix.chip(i, 0), instance,weights));
     }
 */
     return distances;
@@ -967,7 +967,7 @@ Tensor<type, 1> manhattan_distance(const Tensor<type, 2>& matrix, const Tensor<t
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances[i] = manhattan_distance(matrix.get_row(i), instance);
+        distances[i] = manhattan_distance(matrix.chip(i, 0), instance);
     }
 */
     return distances;
@@ -997,7 +997,7 @@ Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>& matrix, const
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances[i] = manhattan_weighted_distance(matrix.get_row(i), instance, weights);
+        distances[i] = manhattan_weighted_distance(matrix.chip(i, 0), instance, weights);
     }
 */
     return distances;
@@ -1028,7 +1028,7 @@ Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>& matrix
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        distances.set_row(i,manhattan_weighted_distance_vector(matrix.get_row(i),instance,weights));
+        distances.set_row(i,manhattan_weighted_distance_vector(matrix.chip(i, 0),instance,weights));
     }
 */
     return distances;
@@ -1125,7 +1125,7 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
     {
         for(Index j = 0; j < x_columns_number; j++)
         {
-            const type y_value = y(static_cast<unsigned>(i), static_cast<unsigned>(j));
+            const type y_value = y(i, static_cast<unsigned>(j));
             const type x_value = x(i,j);
 
             if(y_value == 0.0 && x_value == 0.0)

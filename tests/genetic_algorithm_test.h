@@ -15,7 +15,6 @@
 
 using namespace OpenNN;
 
-
 class GeneticAlgorithmTest : public UnitTesting
 {
 
@@ -27,15 +26,9 @@ public:
 
    // CONSTRUCTOR
 
-   explicit GeneticAlgorithmTest();
+   explicit GeneticAlgorithmTest();  
 
-
-   
-
-   virtual ~GeneticAlgorithmTest();
-
-
-   
+   virtual ~GeneticAlgorithmTest(); 
 
    // Constructor and destructor methods
 
@@ -77,7 +70,6 @@ public:
    // Unit testing methods
 
    void run_test_case();
-
 };
 
 

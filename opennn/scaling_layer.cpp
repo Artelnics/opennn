@@ -42,7 +42,7 @@ ScalingLayer::ScalingLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Laye
 /// The rest of members of this object are initialized with the default values.
 /// @param new_descriptives Vector of vectors with the variables descriptives.
 
-ScalingLayer::ScalingLayer(const vector<Descriptives>& new_descriptives) : Layer()
+ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
     set(new_descriptives);
 }
@@ -90,7 +90,7 @@ Index ScalingLayer::get_neurons_number() const
 /// Returns all the scaling layer descriptives.
 /// The format is a vector of descriptives structures of size the number of scaling neurons.
 
-vector<Descriptives> ScalingLayer::get_descriptives() const
+Tensor<Descriptives, 1> ScalingLayer::get_descriptives() const
 {
     return descriptives;
 }
@@ -154,7 +154,7 @@ Tensor<type, 1> ScalingLayer::get_maximums() const
         maximums[i] = descriptives[i].maximum;
     }
 
-    return(maximums);
+    return maximums;
 }
 
 
@@ -194,7 +194,7 @@ Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 
 /// Returns the methods used for scaling.
 
-const vector<ScalingLayer::ScalingMethod> ScalingLayer::get_scaling_methods() const
+const Tensor<ScalingLayer::ScalingMethod, 1> ScalingLayer::get_scaling_methods() const
 {
     return scaling_methods;
 }
@@ -327,7 +327,9 @@ void ScalingLayer::set(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
-    scaling_methods.resize(new_inputs_number, MinimumMaximum);
+    scaling_methods.resize(new_inputs_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 
     set_default();
 }
@@ -351,11 +353,13 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// The size of this vector must be 4. 
 /// The size of each subvector will be the size of the scaling layer. 
 
-void ScalingLayer::set(const vector<Descriptives>& new_descriptives)
+void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
 
-    scaling_methods.resize(new_descriptives.size(), MinimumMaximum);
+    scaling_methods.resize(new_descriptives.size());
+
+    scaling_methods.setConstant(MinimumMaximum);
 
     set_default();
 }
@@ -403,14 +407,20 @@ void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
 void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
-    scaling_methods.resize(new_inputs_number, MinimumMaximum);
+
+    scaling_methods.resize(new_inputs_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 }
 
 
 void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 {
     descriptives.resize(new_neurons_number);
-    scaling_methods.resize(new_neurons_number, MinimumMaximum);
+
+    scaling_methods.resize(new_neurons_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 }
 
 
@@ -438,7 +448,7 @@ void ScalingLayer::set_default()
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
 /// @param new_descriptives Scaling layer descriptives.
 
-void ScalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
+void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -451,7 +461,7 @@ void ScalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_descriptives(const vector<Descriptives>&) method.\n"
+               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -469,14 +479,14 @@ void ScalingLayer::set_descriptives_eigen(const MatrixXd& descriptives_eigen)
 {
     const Index neurons_number = get_neurons_number();
 
-    vector<Descriptives> descriptives(neurons_number);
+    Tensor<Descriptives, 1> descriptives(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        descriptives[i].set_minimum(descriptives_eigen(static_cast<Index>(i), 0));
-        descriptives[i].set_maximum(descriptives_eigen(static_cast<Index>(i), 1));
-        descriptives[i].set_mean(descriptives_eigen(static_cast<Index>(i), 2));
-        descriptives[i].set_standard_deviation(descriptives_eigen(static_cast<Index>(i), 3));
+        descriptives[i].set_minimum(descriptives_eigen(i, 0));
+        descriptives[i].set_maximum(descriptives_eigen(i, 1));
+        descriptives[i].set_mean(descriptives_eigen(i, 2));
+        descriptives[i].set_standard_deviation(descriptives_eigen(i, 3));
     }
 
     set_descriptives(descriptives);
@@ -536,7 +546,7 @@ void ScalingLayer::set_standard_deviation(const Index& i, const double& new_stan
 /// Sets the methods to be used for scaling each variable.
 /// @param new_scaling_methods New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const vector<ScalingLayer::ScalingMethod>& new_scaling_methods)
+void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod, 1>& new_scaling_methods)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -547,7 +557,7 @@ void ScalingLayer::set_scaling_methods(const vector<ScalingLayer::ScalingMethod>
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const vector<ScalingMethod>&) method.\n"
+               << "void set_scaling_methods(const Tensor<ScalingMethod, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -582,7 +592,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 
 #endif
 
-    vector<ScalingMethod> new_scaling_methods(neurons_number);
+    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -641,7 +651,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 
 #endif
 
-    vector<ScalingMethod> new_scaling_methods(neurons_number);
+    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -707,7 +717,9 @@ void ScalingLayer::set_display(const bool& new_display)
 
 void ScalingLayer::grow_neuron(const Descriptives& new_descriptives)
 {
+/*
     descriptives.push_back(new_descriptives);
+*/
 }
 
 
@@ -732,8 +744,9 @@ void ScalingLayer::prune_neuron(const Index& index)
     }
 
 #endif
-
+/*
     descriptives.erase(descriptives.begin() + static_cast<long long>(index));
+*/
 }
 
 
@@ -1292,7 +1305,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     // Scaling layer
 
@@ -1309,17 +1322,17 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 //@todo
-//    const Vector<string> scaling_methods_string = write_scaling_methods();
+//    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
 
     // Scaling neurons
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         // Scaling neuron
 
         file_stream.OpenElement("ScalingNeuron");
 
-        file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
+        file_stream.PushAttribute("Index",i+1);
 
         // Minimum
 
@@ -1419,15 +1432,15 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // size_t does not work
+    unsigned index = 0; // Index does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         start_element = scaling_neuron_element;

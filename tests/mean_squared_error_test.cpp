@@ -121,10 +121,10 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
 //   ScalingLayer* scaling_layer = new ScalingLayer();
 
@@ -412,7 +412,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Tensor<type, 2> outputs;
 
    Tensor<double, 2> output_gradient;
-   Vector<Tensor<double, 2>> layers_delta;
+   Tensor<Tensor<double, 2>, 1> layers_delta;
 
    // Test
 
@@ -428,7 +428,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 
-   Vector<Layer::ForwardPropagation> forward_propagation = neural_network.calculate_forward_propagation(inputs);
+   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 

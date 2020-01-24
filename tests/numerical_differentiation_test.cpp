@@ -118,8 +118,8 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
    Tensor<type, 1> x1(5);
    Tensor<type, 1> x2(3);
 
-   const size_t dummy_1 = 0;
-   const size_t dummy_2 = 0;
+   const Index dummy_1 = 0;
+   const Index dummy_2 = 0;
 
    x1.setRandom();
    x2.setRandom();
@@ -418,7 +418,7 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
    NumericalDifferentiation nd;
 
-   size_t dummy;
+   Index dummy;
 
    Tensor<type, 1> x;
    Tensor<double, 2> J;
@@ -476,7 +476,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian_fo
    NumericalDifferentiation nd;
 
    Tensor<type, 1> x;
-   Vector<Tensor<double, 2>> H;
+   Tensor<Tensor<double, 2>, 1> H;
 
    // Test
 
@@ -503,7 +503,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_fo
 
    Tensor<type, 1> x(2, 0.0);
 
-   Vector<Tensor<double, 2>> hessian = nd.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f3, x);
+   Tensor<Tensor<double, 2>, 1> hessian = nd.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f3, x);
 
    assert_true(hessian.size() == 2, LOG);
 
@@ -524,7 +524,7 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
    NumericalDifferentiation nd;
 
    Tensor<type, 1> x;
-   Vector<Tensor<double, 2>> H;
+   Tensor<Tensor<double, 2>, 1> H;
 
    // Test
 
@@ -639,13 +639,13 @@ Tensor<type, 1> NumericalDifferentiationTest::f3(const Tensor<type, 1>& x) const
 }
 
 
-double NumericalDifferentiationTest::f7(const size_t&, const Tensor<type, 1>& x, const size_t&, const Tensor<type, 1>& y) const
+double NumericalDifferentiationTest::f7(const Index&, const Tensor<type, 1>& x, const Index&, const Tensor<type, 1>& y) const
 {
    return l2_norm(x.assemble(y));
 }
 
 
-Tensor<type, 1> NumericalDifferentiationTest::f8(const size_t&, const size_t&, const Tensor<type, 1>& x) const
+Tensor<type, 1> NumericalDifferentiationTest::f8(const Index&, const Index&, const Tensor<type, 1>& x) const
 {
     return x*x*(x+1.0);
 }

@@ -122,10 +122,10 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   size_t instances_number;
+   Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   size_t hidden_neurons;
+   Index hidden_neurons;
 
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
 

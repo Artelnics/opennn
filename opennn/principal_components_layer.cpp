@@ -224,7 +224,7 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
 
             for(Index j = 0; j < principal_components_number; j++)
             {
-                outputs(i,j) = inputs_adjust.dot(used_principal_components.get_row(j));
+                outputs(i,j) = inputs_adjust.dot(used_principal_components.chip(j, 0));
             }
 
         }
@@ -554,7 +554,7 @@ tinyxml2::XMLDocument* PrincipalComponentsLayer::to_XML() const
         principal_components_element->LinkEndChild(eigenvector_element);
 
         buffer.str("");
-        buffer << principal_components.get_row(i);
+        buffer << principal_components.chip(i, 0);
 
         tinyxml2::XMLText* eigenvector_text = document->NewText(buffer.str().c_str());
         eigenvector_element->LinkEndChild(eigenvector_text);
@@ -650,12 +650,12 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
         {
             file_stream.OpenElement("PrincipalComponent");
 
-            file_stream.PushAttribute("Index", static_cast<unsigned>(i)+1);
+            file_stream.PushAttribute("Index", i+1);
 
             // Principal component
 /*
             buffer.str("");
-            buffer << principal_components.get_row(i);
+            buffer << principal_components.chip(i, 0);
 */
             file_stream.PushText(buffer.str().c_str());
 

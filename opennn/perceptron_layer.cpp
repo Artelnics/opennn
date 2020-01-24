@@ -129,21 +129,13 @@ Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& par
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
 /*
     return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
 */
     return Tensor<type, 2>();
 }
 
-
-Tensor<type, 2> PerceptronLayer::get_synaptic_weights_transpose() const
-{
-/*
-    return synaptic_weights.transpose();
-*/
-    return Tensor<type, 2>();
-}
 
 
 Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) const
@@ -905,7 +897,6 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
                                                        const Tensor<type, 2>& activations_derivatives,
                                                        const Tensor<type, 2>& next_layer_delta) const
 {
-
     const Type layer_type = next_layer_pointer->get_type();
 
     Tensor<type, 2> synaptic_weights_transpose;
@@ -913,14 +904,10 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
     if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
-        synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
     else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-        synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
     }        
 
 /*
@@ -952,11 +939,11 @@ Tensor<type, 1> PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>&
 
     // Synaptic weights
 /*
-    layer_error_gradient.embed(0, dot(reshaped_inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
+    layer_error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
 
     // Biases
 
-    layer_error_gradient.embed(synaptic_weights_number, reshaped_deltas.to_matrix().calculate_columns_sum());
+    layer_error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
 */
     return layer_error_gradient;
 
@@ -1006,9 +993,8 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
    for(Index j = 0; j < outputs_names.size(); j++)
    {
-/*
        buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
-
+/*
        for(Index i = 0; i < inputs_names.size() - 1; i++)
        {
 

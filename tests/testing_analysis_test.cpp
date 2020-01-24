@@ -118,7 +118,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Tensor<double, 2>> error_data;
+    Tensor<Tensor<double, 2>, 1> error_data;
 
     // Test
 
@@ -147,7 +147,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Tensor<type, 1>> error_data;
+    Tensor<Tensor<type, 1>, 1> error_data;
 
     // Test
 
@@ -180,7 +180,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Descriptives> error_data;
+    Tensor<Descriptives, 1> error_data;
 
     // Test
 
@@ -213,7 +213,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Descriptives> error_data;
+    Tensor<Descriptives, 1> error_data;
 
     // Test
 
@@ -239,7 +239,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector< Vector<Descriptives> > error_data_statistics;
+    Tensor< Tensor<Descriptives, 1>, 1> error_data_statistics;
 
     // Test
 
@@ -275,7 +275,7 @@ void TestingAnalysisTest::test_print_error_data_statistics()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector< Vector<Descriptives> > error_data_statistics;
+    Tensor< Tensor<Descriptives, 1>, 1> error_data_statistics;
 
     // Test
 
@@ -300,7 +300,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector< Tensor<double, 2> > error_data_statistics;
+    Tensor< Tensor<double, 2>, 1> error_data_statistics;
 
     // Test
 
@@ -317,7 +317,6 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
     assert_true(error_data_statistics.size() == 1, LOG);
     assert_true(error_data_statistics[0].dimension(0) == 2, LOG);
     assert_true(error_data_statistics[0].dimension(1) == 4, LOG);
-
 }
 
 
@@ -329,7 +328,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Histogram> error_data_histograms;
+    Tensor<Histogram, 1> error_data_histograms;
 
     // Test
 
@@ -356,7 +355,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector<Tensor<Index, 1>> error_data_maximal;
+    Tensor<Tensor<Index, 1>, 1> error_data_maximal;
 
     // Test
 
@@ -387,7 +386,7 @@ void TestingAnalysisTest::test_linear_regression()
 
    TestingAnalysis ta(&neural_network, &data_set);
 
-   Vector<RegressionResults> linear_regression;
+   Tensor<RegressionResults, 1> linear_regression;
 
     // Test
 
@@ -470,7 +469,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Vector< TestingAnalysis::LinearRegressionAnalysis > linear_regression_analysis;
+    Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> linear_regression_analysis;
 
     // Test
 
@@ -487,8 +486,8 @@ void TestingAnalysisTest::test_perform_linear_regression()
     assert_true(linear_regression_analysis.size() == 1 , LOG);
     assert_true(linear_regression_analysis[0].targets == Tensor<type, 1>{0} , LOG);
     assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
-
 }
+
 
 void TestingAnalysisTest::test_print_linear_regression_analysis()
 {
@@ -516,7 +515,7 @@ void TestingAnalysisTest::test_calculate_confusion()
    Tensor<double, 2> actual;
    Tensor<double, 2> predicted;
 
-   Matrix<size_t> confusion;
+   Matrix<Index> confusion;
 
    // Test
 

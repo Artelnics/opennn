@@ -25,7 +25,7 @@ void RecurrentLayerTest::test_constructor()
 
     RecurrentLayer recurrent_layer;
     Index inputs_number;
-    size_t neurons_number;
+    Index neurons_number;
 
     Tensor<double, 2> synaptic_weights;
     Tensor<double, 2> recurrent_initializer;
@@ -87,7 +87,7 @@ void RecurrentLayerTest::test_get_inputs_number()
    RecurrentLayer recurrent_layer;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
 
    // Test
@@ -113,7 +113,7 @@ void RecurrentLayerTest::test_get_neurons_number()
    RecurrentLayer recurrent_layer;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
    // Test
 
@@ -140,7 +140,7 @@ void RecurrentLayerTest::test_get_biases()
    Tensor<type, 1> biases;
 
    Index inputs_number;
-   size_t neurons_number;
+   Index neurons_number;
 
    //Test
 
@@ -450,7 +450,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    Tensor<type, 1> parameters;
 
-   size_t instances = 3;
+   Index instances = 3;
 
    Tensor<double, 2> new_weights;
    Tensor<double, 2> new_recurrent_weights;

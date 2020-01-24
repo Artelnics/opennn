@@ -120,7 +120,7 @@ void FunctionsTest::test_binary()
 
     const Tensor<type, 1> vector({0.3, 1.7, 0.1, 5});
 
-    const Vector<bool> solution({0, 1, 0, 1});
+    const Tensor<bool, 1> solution({0, 1, 0, 1});
 
     assert_true(binary(vector) == solution, LOG);
 }

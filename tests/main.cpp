@@ -86,9 +86,9 @@ int main()
 
       string message;
 
-      size_t tests_count = 0;
-      size_t tests_passed_count = 0;
-      size_t tests_failed_count = 0;
+      Index tests_count = 0;
+      Index tests_passed_count = 0;
+      Index tests_failed_count = 0;
 
       if(test == "correlations" || test == "")
       {

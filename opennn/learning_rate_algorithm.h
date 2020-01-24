@@ -108,7 +108,7 @@ public:
        inline pair<double,double> minimum() const
        {
            /*
-           const vector<double> losses({A.second, U.second, B.second});
+           const Tensor<double, 1> losses({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
 

@@ -46,7 +46,7 @@ public:
    explicit ScalingLayer(const Index&);
    explicit ScalingLayer(const Tensor<Index, 1>&);
 
-   explicit ScalingLayer(const vector<Descriptives>&);
+   explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
    ScalingLayer(const ScalingLayer&);
 
@@ -68,7 +68,7 @@ public:
 
    // Inputs descriptives
 
-   vector<Descriptives> get_descriptives() const;
+   Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 2> get_descriptives_matrix() const;
@@ -80,7 +80,7 @@ public:
 
    // Variables scaling and unscaling
 
-   const vector<ScalingMethod> get_scaling_methods() const;
+   const Tensor<ScalingMethod, 1> get_scaling_methods() const;
 
    Tensor<string, 1> write_scaling_methods() const;
    Tensor<string, 1> write_scaling_methods_text() const;
@@ -94,7 +94,7 @@ public:
    void set();
    void set(const Index&);
    void set(const Tensor<Index, 1>&);
-   void set(const vector<Descriptives>&);
+   void set(const Tensor<Descriptives, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
@@ -107,7 +107,7 @@ public:
 
    // Descriptives
 
-   void set_descriptives(const vector<Descriptives>&);
+   void set_descriptives(const Tensor<Descriptives, 1>&);
    void set_descriptives_eigen(const MatrixXd&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
@@ -118,7 +118,7 @@ public:
 
    // Scaling method
 
-   void set_scaling_methods(const vector<ScalingMethod>&);
+   void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
    void set_scaling_methods(const Tensor<string, 1>&);
 
    void set_scaling_methods(const ScalingMethod&);
@@ -173,11 +173,11 @@ protected:
 
    /// Descriptives of input variables.
 
-   vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    /// Vector of scaling methods for each variable.
 
-   vector<ScalingMethod> scaling_methods;
+   Tensor<ScalingMethod, 1> scaling_methods;
 
    /// Display warning messages to screen. 
 

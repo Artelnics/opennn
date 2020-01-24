@@ -2522,7 +2522,7 @@ public:
    // HESSIAN FORM METHODS
 
 
-   // vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
+   // Tensor<Tensor<type, 2>, 1> calculate_forward_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
@@ -2531,7 +2531,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {      
       Tensor<type, 1> y = (t.*f)(x);   
 
@@ -2553,7 +2553,7 @@ public:
       Tensor<type, 1> y_forward_k(s);       
       Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
       {
@@ -2604,7 +2604,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
+   // Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
@@ -2613,7 +2613,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       Tensor<type, 1> y = (t.*f)(x);   
 
@@ -2647,7 +2647,7 @@ public:
 	  Tensor<type, 1> y_backward_j_forward_k;
       Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
 	  {
@@ -2720,7 +2720,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
+   // Tensor<Tensor<type, 2>, 1> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
@@ -2729,7 +2729,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2744,7 +2744,7 @@ public:
          }
       }
 
-      return vector<Tensor<type, 2>>();
+      return Tensor<Tensor<type, 2>, 1>();
    }
 
 
@@ -2757,7 +2757,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_forward_differences_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_forward_differences_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {      
       Tensor<type, 1> y = (t.*f)(dummy_vector, x);   
@@ -2780,7 +2780,7 @@ public:
       Tensor<type, 1> y_forward_k(s);       
       Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
       {
@@ -2831,7 +2831,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_central_differences_hessian
+   // Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian
    //(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
@@ -2843,7 +2843,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_central_differences_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       Tensor<type, 1> y = (t.*f)(dummy_vector, x);   
@@ -2878,7 +2878,7 @@ public:
 	  Tensor<type, 1> y_backward_j_forward_k;
       Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
 	  {
@@ -2951,7 +2951,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_hessian
+   // Tensor<Tensor<type, 2>, 1> calculate_hessian
    //(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
@@ -2963,7 +2963,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
@@ -2979,7 +2979,7 @@ public:
     	 }
       }
 
-      return vector<Tensor<type, 2>>();
+      return Tensor<Tensor<type, 2>, 1>();
    }
 
 
@@ -2992,7 +2992,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {      
       Tensor<type, 1> y = (t.*f)(dummy, x);   
 
@@ -3014,7 +3014,7 @@ public:
       Tensor<type, 1> y_forward_k(s);       
       Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
       {
@@ -3065,7 +3065,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&) const method
+   // Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const. 
@@ -3076,7 +3076,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       Tensor<type, 1> y = (t.*f)(dummy, x);   
 
@@ -3110,7 +3110,7 @@ public:
 	  Tensor<type, 1> y_backward_j_forward_k;
       Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
 	  {
@@ -3183,7 +3183,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&) const method
+   // Tensor<Tensor<type, 2>, 1> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const. 
@@ -3194,7 +3194,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
+   Tensor<Tensor<type, 2>, 1> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -3209,7 +3209,7 @@ public:
     	 }
       }
 
-      return vector<Tensor<type, 2>>();
+      return Tensor<Tensor<type, 2>, 1>();
    }
 
 
@@ -3223,7 +3223,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_forward_differences_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_forward_differences_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {      
       Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
@@ -3246,7 +3246,7 @@ public:
       Tensor<type, 1> y_forward_k(s);       
       Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
       {
@@ -3297,7 +3297,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_central_differences_hessian
+   // Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian
    //(const T&, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
@@ -3310,7 +3310,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_central_differences_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_central_differences_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       const Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
@@ -3345,7 +3345,7 @@ public:
 	  Tensor<type, 1> y_backward_j_forward_k;
       Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<type, 2>> H(s);
+      Tensor<Tensor<type, 2>, 1> H(s);
 
       for(Index i = 0; i < s; i++)
 	  {
@@ -3418,7 +3418,7 @@ public:
    }
 
 
-   // vector<Tensor<type, 2>> calculate_hessian
+   // Tensor<Tensor<type, 2>, 1> calculate_hessian
    //(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
@@ -3431,7 +3431,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<type, 2>> calculate_hessian
+   Tensor<Tensor<type, 2>, 1> calculate_hessian
   (const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Index& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
@@ -3447,7 +3447,7 @@ public:
     	 }   	         
       }
 
-      return vector<Tensor<type, 2>>();
+      return Tensor<Tensor<type, 2>, 1>();
    }
 
 

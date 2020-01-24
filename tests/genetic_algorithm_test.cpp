@@ -68,7 +68,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     GeneticAlgorithm ga(&ts);
 
-    Vector< Vector<bool> > population;
+    Tensor<bool, 2> population;
 
     ga.set_population_size(10);
 
@@ -148,9 +148,9 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     GeneticAlgorithm ga(&ts);
 
-    Vector< Vector<bool> > population;
+    Tensor<bool, 2> population;
 
-    Vector< Vector<bool> > selected_population;
+    Tensor< Tensor<bool, 1>, 1> selected_population;
 
     Tensor<type, 1> fitness(4);
 
@@ -203,10 +203,10 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     GeneticAlgorithm ga(&ts);
 
-    Vector< Vector<bool> > population(4);
-    Vector<bool> individual(2);
+    Tensor< Tensor<bool, 1>, 1> population(4);
+    Tensor<bool, 1> individual(2);
 
-    Vector< Vector<bool> > crossover_population;
+    Tensor< Tensor<bool, 1>, 1> crossover_population;
 
     Tensor<type, 1> fitness(4);
 
@@ -287,10 +287,10 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     GeneticAlgorithm ga(&ts);
 
-    Vector< Vector<bool> > population(4);
-    Vector<bool> individual(1);
+    Tensor< Tensor<bool, 1>, 1> population(4);
+    Tensor<bool, 1> individual(1);
 
-    Vector< Vector<bool> > mutated_population;
+    Tensor< Tensor<bool, 1>, 1> mutated_population;
 
     individual[0] = 1;
     population[0] = individual;
@@ -349,7 +349,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     data.set(20,3);
 
-    for(size_t i = 0; i < 20; i++)
+    for(Index i = 0; i < 20; i++)
     {
         data(i,0) = static_cast<double>(i);
         data(i,1) = 10.0;
@@ -385,16 +385,16 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     // Test
 
-//    size_t j = -10;
+//    Index j = -10;
 
-//    for(size_t i = 0; i < 10; i++)
+//    for(Index i = 0; i < 10; i++)
 //    {
 //        data(i,0) = (double)j;
 //        data(i,1) = rand();
 //        data(i,2) = 1.0;
 //        j+=1;
 //    }
-//    for(size_t i = 10; i < 20; i++)
+//    for(Index i = 10; i < 20; i++)
 //    {
 //        data(i,0) = (double)i;
 //        data(i,1) = rand();

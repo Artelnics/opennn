@@ -199,7 +199,7 @@ void StatisticsTest::test_calculate_bin()
     cout << "test_calculate_bin\n";
 
     Tensor<type, 1> vector;
-    size_t bin;
+    Index bin;
     Histogram histogram;
     vector.resize(1.0, 1.0, 11.0);
     histogram = OpenNN::histogram(vector, 10);
@@ -223,7 +223,7 @@ void StatisticsTest::test_calculate_frequency()
     cout << "test_calculate_frequency\n";
 
     Tensor<type, 1> vector;
-    size_t frequency;
+    Index frequency;
     Histogram histogram;
 
     // Test
@@ -733,7 +733,7 @@ void StatisticsTest::test_calculate_histograms()
     matrix(2,0) = 3.0;
     matrix(2,1) = 3.0;
     matrix(2,2) = 3.0;
-    Vector<Histogram> histogram(matrix.dimension(1));
+    Tensor<Histogram, 1> histogram(matrix.dimension(1));
     histogram = histograms(matrix, 3);
     Tensor<Index, 1> solution({1, 1, 1});
 
@@ -751,7 +751,7 @@ void StatisticsTest::test_total_frequencies()
     Tensor<type, 1> vector2;
     Tensor<type, 1> vector3;
     Tensor<Index, 1> total_frequencies;
-    Vector<Histogram> histograms(2);
+    Tensor<Histogram, 1> histograms(2);
 
     // Test
     vector1.set(0.0, 1, 9.0);
@@ -787,7 +787,7 @@ void StatisticsTest::test_histograms_missing_values()
     matrix(2,0) = 3.0;
     matrix(2,1) = 3.0;
     matrix(2,2) = 2.0;
-    Vector<Histogram> histograms(3);
+    Tensor<Histogram, 1> histograms(3);
     histograms = histograms_missing_values(matrix, 3);
     Tensor<Index, 1> solution({1, 1, 1});
     Tensor<Index, 1> solution_missing_values({1, 0, 1});

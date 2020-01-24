@@ -33,7 +33,7 @@ void ScalingLayerTest::test_constructor()
    assert_true(sl2.get_descriptives().size() == 3, LOG);
    assert_true(sl2.get_scaling_methods().size() == 3, LOG);
 
-   Vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    descriptives.set(2);
 
@@ -71,7 +71,7 @@ void ScalingLayerTest::test_get_neurons_number()
 
    sl1.set(3);
 
-   Vector<Descriptives> descriptives(3);
+   Tensor<Descriptives, 1> descriptives(3);
 
    sl1.set_descriptives(descriptives);
 
@@ -320,8 +320,8 @@ void ScalingLayerTest::test_write_expression()
 
    ScalingLayer sl;
 
-   Vector<string> inputs_names;
-   Vector<string> outputs_names;
+   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> outputs_names;
 
    string expression;
 

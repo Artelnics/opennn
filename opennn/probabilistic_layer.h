@@ -103,8 +103,6 @@ public:
    Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> get_synaptic_weights_transpose() const;
-
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
@@ -167,8 +165,8 @@ public:
    void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
         #ifdef __OPENNN_DEBUG__
-/*
-        const Index dimensions_number = combinations.dimensions_number();
+
+        const Index dimensions_number = combinations.rank();
 
         if(dimensions_number != 2)
         {
@@ -180,7 +178,7 @@ public:
 
            throw logic_error(buffer.str());
         }
-*/
+
         const Index neurons_number = get_neurons_number();
 
         const Index combinations_columns_number = combinations.dimension(1);
@@ -200,7 +198,6 @@ public:
 
         switch(activation_function)
         {
-/*
             case Binary: binary(combinations, activations); return;
 
             case Logistic: logistic(combinations, activations); return;
@@ -208,7 +205,6 @@ public:
             case Competitive: competitive(combinations, activations); return;
 
             case Softmax: softmax(combinations, activations); return;
-*/
         }
 
         ostringstream buffer;
@@ -258,7 +254,6 @@ public:
 
         switch(activation_function)
         {
-/*
             case Binary:
             {
                  ostringstream buffer;
@@ -288,7 +283,6 @@ public:
             {
                 softmax_derivatives(combinations, activations_derivatives); return;
             }
-*/
         }
 
         ostringstream buffer;

@@ -110,15 +110,14 @@ public:
 
            cout << "Gradient:" << endl;
            cout << gradient << endl;
-
        }
 
        Tensor<type, 2> output_gradient;
 
-       vector<Tensor<type, 2>> layers_delta;
-       vector<Tensor<type, 1>> layers_error_gradient;
+       Tensor<Tensor<type, 2>, 1> layers_delta;
+       Tensor<Tensor<type, 1>, 1> layers_error_gradient;
 
-       double loss;
+       type loss;
 
        Tensor<type, 1> error_gradient;
        Tensor<type, 1> regularization_gradient;
@@ -145,7 +144,7 @@ public:
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 
-       double loss;
+       type loss;
        Tensor<type, 1> gradient;
        Tensor<type, 2> hessian;
    };
@@ -195,7 +194,7 @@ public:
       return data_set_pointer;
    }
 
-   const double& get_regularization_weight() const;
+   const type& get_regularization_weight() const;
 
    const bool& get_display() const;
 
@@ -224,7 +223,7 @@ public:
 
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
-   void set_regularization_weight(const double&);
+   void set_regularization_weight(const type&);
 
    void set_display(const bool&);
 
@@ -232,9 +231,9 @@ public:
 
    // Loss methods
 
-   double calculate_training_loss() const;
-   double calculate_training_loss(const Tensor<type, 1>&) const;
-   double calculate_training_loss(const Tensor<type, 1>&, const type&) const;
+   type calculate_training_loss() const;
+   type calculate_training_loss(const Tensor<type, 1>&) const;
+   type calculate_training_loss(const Tensor<type, 1>&, const type&) const;
 
    // Loss gradient methods
 
@@ -242,13 +241,13 @@ public:
 
    // ERROR METHODS
 
-   virtual double calculate_training_error() const;
-   virtual double calculate_training_error(const Tensor<type, 1>&) const;
+   virtual type calculate_training_error() const;
+   virtual type calculate_training_error(const Tensor<type, 1>&) const;
 
-   virtual double calculate_selection_error() const;
+   virtual type calculate_selection_error() const;
 
-   virtual double calculate_batch_error(const Tensor<Index, 1>&) const = 0;
-   virtual double calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const = 0;
+   virtual type calculate_batch_error(const Tensor<Index, 1>&) const = 0;
+   virtual type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const = 0;
 
    // GRADIENT METHODS
 
@@ -276,17 +275,17 @@ public:
 
    // Regularization methods
 
-   double calculate_regularization() const;
+   type calculate_regularization() const;
    Tensor<type, 1> calculate_regularization_gradient() const;
    Tensor<type, 2> calculate_regularization_hessian() const;
 
-   double calculate_regularization(const Tensor<type, 1>&) const;
+   type calculate_regularization(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
    Tensor<type, 2> calculate_regularization_hessian(const Tensor<type, 1>&) const;
 
    // Delta methods
 
-   vector<Tensor<type, 2>> calculate_layers_delta(const vector<Layer::ForwardPropagation>&, const Tensor<type, 2>&) const;
+   Tensor<Tensor<type, 2>, 1> calculate_layers_delta(const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<type, 2>&) const;
 
    void calculate_layers_delta(const ThreadPoolDevice& thread_pool_device, const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
    {
@@ -310,17 +309,17 @@ public:
       {
           Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
 
-          trainable_layers_pointers[static_cast<Index>(i)]
+          trainable_layers_pointers[i]
           ->calculate_hidden_delta(thread_pool_device,
                                    previous_layer_pointer,
-                                   forward_propagation.layers[static_cast<Index>(i)].activations,
-                                   forward_propagation.layers[static_cast<Index>(i)].activations_derivatives,
+                                   forward_propagation.layers[i].activations,
+                                   forward_propagation.layers[i].activations_derivatives,
                                    first_order_loss.layers_delta[static_cast<Index>(i+1)],
-                                   first_order_loss.layers_delta[static_cast<Index>(i)]);
+                                   first_order_loss.layers_delta[i]);
       }
    }
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<type, 2>>&) const;
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
 
    void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
                                  const DataSet::Batch& batch,
@@ -388,7 +387,7 @@ public:
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<type, 2>>&) const;
+   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
 
    // Serialization methods
 
@@ -428,7 +427,7 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight = 0.01;
+   type regularization_weight;
 
    /// Display messages to screen. 
 

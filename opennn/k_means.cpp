@@ -20,7 +20,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const I
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    vector<Tensor<Index, 1>> clusters(k);
+    Tensor<Tensor<Index, 1>, 1> clusters(k);
 
     Tensor<type, 2> previous_means(k, columns_number);
     Tensor<type, 2> means(k, columns_number);
@@ -38,7 +38,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const I
 
     const Index initial_center = calculate_random_uniform<Index>(0, rows_number);
 
-    previous_means.set_row(0, matrix.get_row(initial_center));
+    previous_means.set_row(0, matrix.chip(initial_center, 0));
     selected_rows[0] = initial_center;
 
     for(Index i = 1; i < k; i++)
@@ -49,11 +49,11 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const I
         {
             Tensor<type, 1> distances(i, 0.0);
 
-            const Tensor<type, 1> row_data = matrix.get_row(j);
+            const Tensor<type, 1> row_data = matrix.chip(j, 0);
 
             for(Index l = 0; l < i; l++)
             {
-                distances[l] = euclidean_distance(row_data, previous_means.get_row(l));
+                distances[l] = euclidean_distance(row_data, previous_means.chip(l, 0));
             }
 
             const double minimum_distance = minimum(distances);
@@ -102,17 +102,17 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const I
         {
             Tensor<type, 1> distances(k, 0.0);
 
-            const Tensor<type, 1> current_row = matrix.get_row(i);
+            const Tensor<type, 1> current_row = matrix.chip(i, 0);
 
             for(Index j = 0; j < k; j++)
             {
-                distances[j] = euclidean_distance(current_row, previous_means.get_row(j));
+                distances[j] = euclidean_distance(current_row, previous_means.chip(j, 0));
             }
 
             const Index minimum_distance_index = minimal_index(distances);
 
   #pragma omp critical
-            clusters[minimum_distance_index].push_back(static_cast<Index>(i));
+            clusters[minimum_distance_index].push_back(i);
         }
 
         for(Index i = 0; i < k; i++)

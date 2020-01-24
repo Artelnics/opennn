@@ -428,8 +428,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 
 /*
-    vector<DataSet::VariableUse> current_uses(columns_uses);
-   vector<DataSet::VariableUse> optimum_uses = current_uses;
+    Tensor<DataSet::VariableUse, 1> current_uses(columns_uses);
+   Tensor<DataSet::VariableUse, 1> optimum_uses = current_uses;
 
 
     // Optimization algorithm stuff

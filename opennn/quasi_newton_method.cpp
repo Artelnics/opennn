@@ -1217,7 +1217,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    // Loss index stuff
 
    double training_loss = 0.0;
-   double training_error = 0.0;
+   type training_error = 0.0;
    double old_training_loss = 0.0;
    double training_loss_decrease = 0.0;
 
@@ -1231,7 +1231,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
    Tensor<type, 2> old_inverse_hessian;
 
-   double selection_error = 0.0;
+   type selection_error = 0.0;
    double old_selection_error = 0.0;
 
    // Optimization algorithm stuff

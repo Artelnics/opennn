@@ -847,7 +847,7 @@ Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>& x)
  for(Index i = 0; i < n; i ++)
  {
 /*
-     const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
+     const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).chip(i, 0));
 
      for(Index j = 0; j < columns_number; j++)
      {
@@ -882,7 +882,7 @@ Tensor<type, 2> competitive(const Tensor<type, 2>& matrix)
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        const Index maximal_index = OpenNN::maximal_index(matrix.get_row(i));
+        const Index maximal_index = OpenNN::maximal_index(matrix.chip(i, 0));
 
         competitive(i, maximal_index) = 1;
     }
@@ -1694,7 +1694,7 @@ void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
     for(Index i = 0; i < n; i ++)
     {
 /*
-        const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
+        const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).chip(i, 0));
 
         for(Index j = 0; j < columns_number; j++)
         {
@@ -1737,7 +1737,7 @@ void competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < rows_number; i++)
     {
-        const Index maximal_index = OpenNN::maximal_index(x.get_matrix(0).get_row(i));
+        const Index maximal_index = OpenNN::maximal_index(x.get_matrix(0).chip(i, 0));
 
         y(i, maximal_index) = 1;
     }

@@ -772,7 +772,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    // Loss index stuff
 
-   double selection_error = 0.0;
+   type selection_error = 0.0;
    double old_selection_error = 0.0;
       
    double training_loss = 0.0;
