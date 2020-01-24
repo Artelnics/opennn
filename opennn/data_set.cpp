@@ -850,7 +850,7 @@ DataSet::InstanceUse DataSet::get_instance_use(const Index& index) const
 
 /// Returns the use of every instance (training, selection, testing or unused) in a vector.
 
-const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
+const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 {
     return instances_uses;
 }
@@ -1151,7 +1151,7 @@ void DataSet::set_instance_use(const Index& index, const string& new_use)
 /// @param new_uses vector of use structures.
 /// The size of given vector must be equal to the number of instances.
 
-void DataSet::set_instances_uses(const vector<InstanceUse>& new_uses)
+void DataSet::set_instances_uses(const Tensor<InstanceUse, 1>& new_uses)
 {
     const Index instances_number = get_instances_number();
 
@@ -6582,7 +6582,15 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("InstancesUses");
 
         buffer.str("");
-        buffer << "";//get_instances_uses();
+
+        const Index instances_number = get_instances_number();
+
+        for(Index i = 0; i < instances_number; i++)
+        {
+            buffer << instances_uses[i];
+
+            if(i < (instances_number-1)) buffer << " ";
+        }
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -6636,6 +6644,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     if(missing_values_number > 0)
     {
         // Columns missing values number
+
+        count_nan_columns();
 
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
