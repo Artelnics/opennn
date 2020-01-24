@@ -179,11 +179,12 @@ DataSet::Column::~Column()
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
-/*
     column_use = new_column_use;
 
-    categories_uses.assign(categories_uses.size(), new_column_use);
-*/
+    for(int i = 0; i < categories_uses.size(); i ++)
+    {
+        categories_uses[i] = new_column_use;
+    }
 }
 
 
@@ -532,7 +533,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
     if(type != Categorical && column_use != UnusedVariable)
     {
-/*
+/* @todo
         used_variables_names.resize(1, name);
 */
     }
@@ -542,7 +543,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
         {
             if(categories_uses[i] != UnusedVariable)
             {
-/*
+/*@todo
                 used_variables_names.push_back(categories[i]);
 */
             }
@@ -849,7 +850,7 @@ DataSet::InstanceUse DataSet::get_instance_use(const int& index) const
 
 /// Returns the use of every instance (training, selection, testing or unused) in a vector.
 
-const vector<DataSet::InstanceUse>& DataSet::get_instances_uses() const
+const Tensor<DataSet::InstanceUse, 1>& DataSet::get_instances_uses() const
 {
     return instances_uses;
 }
@@ -1189,7 +1190,7 @@ void DataSet::set_instance_use(const int& index, const string& new_use)
 /// @param new_uses vector of use structures.
 /// The size of given vector must be equal to the number of instances.
 
-void DataSet::set_instances_uses(const vector<InstanceUse>& new_uses)
+void DataSet::set_instances_uses(const Tensor<InstanceUse, 1>& new_uses)
 {
     const int instances_number = get_instances_number();
 
@@ -1365,7 +1366,8 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
 
       i++;
    }
-*/
+   */
+
 }
 
 
@@ -6632,7 +6634,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("InstancesUses");
 
         buffer.str("");
-        buffer << "";//get_instances_uses();
+        buffer << get_instances_uses();
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -8623,10 +8625,19 @@ void DataSet::read_csv()
 {
     read_csv_1();
 cout << "read_csv_1" << endl;
+
+cout << "data_preview[0]: " << data_file_preview[0] << endl;
+cout << "data_preview[1]: " << data_file_preview[1] << endl;
+cout << "data_preview[2]: " << data_file_preview[2] << endl;
+
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
         cout << "read_csv_2" << endl;
+
+//        cout << "Columns uses: " << get_columns_uses() << endl;
+
+
         read_csv_3_simple();
         cout << "read_csv_3" << endl;
     }
@@ -8728,7 +8739,7 @@ void DataSet::read_csv_1()
 
     // Check empty file    @todo, size() methods returns 0
 
-    /*if(data_file_preview[0].size() == 0)
+    if(data_file_preview[0].size() == 0)
     {
         ostringstream buffer;
 
@@ -8737,7 +8748,7 @@ void DataSet::read_csv_1()
                << "File " << data_file_name << " is empty.\n";
 
         throw logic_error(buffer.str());
-    }*/
+    }
 
     // Set rows labels and columns names
 
@@ -8775,7 +8786,6 @@ void DataSet::read_csv_1()
     {
         set_columns_names(get_default_columns_names(columns_number));
     }
-    cout << "columns names" << endl;
 
     // Columns types
 
@@ -8796,8 +8806,6 @@ void DataSet::read_csv_1()
             columns[i].type = Categorical;
         }
     }
-
-    cout << "columns types" << endl;
 }
 
 
@@ -8876,8 +8884,6 @@ void DataSet::read_csv_2_simple()
 
     data.resize(instances_count, columns_number);
 
-    cout << "Resize: " << instances_count << "; " << columns_number << endl;
-
     set_default_columns_uses();
 
     instances_uses.resize(instances_count);
@@ -8925,6 +8931,8 @@ void DataSet::read_csv_3_simple()
         }
     }
 
+    cout << "end read header" << endl;
+
     // Read data
 
     while(file.good())
@@ -8955,6 +8963,8 @@ void DataSet::read_csv_3_simple()
 
         instance_index++;
     }
+
+    cout << "end read data" << endl;
 
     // Check Binary
 
