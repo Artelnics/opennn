@@ -1478,13 +1478,13 @@ Matrix<Index, Dynamic, Dynamic> TestingAnalysis::calculate_confusion_binary_clas
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
 /*
-    if(confusion.calculate_sum() != rows_number)
+    if(confusion.sum() != rows_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
                << "Matrix<Index, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const method.\n"
-               << "Number of elements in confusion matrix (" << confusion.calculate_sum() << ") must be equal to number of testing instances (" << rows_number << ").\n";
+               << "Number of elements in confusion matrix (" << confusion.sum() << ") must be equal to number of testing instances (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }

@@ -263,8 +263,8 @@ void FunctionsTest::test_threshold()
     Tensor<double, 2> tensor1;
     Tensor<double, 2> tensor2;
 
-    tensor1.set(Vector<size_t>({4,1}));
-    tensor2.set(Vector<size_t>({4,1}));
+    tensor1.set(Tensor<Index, 1>({4,1}));
+    tensor2.set(Tensor<Index, 1>({4,1}));
 
     tensor1[0] = -1;
     tensor1[1] = 1;

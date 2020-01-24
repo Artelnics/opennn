@@ -562,7 +562,7 @@ void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const double& minimu
 /// Initializes all the biases and synaptic weights in the neural newtork with a given value.
 /// @param value Parameters initialization value.
 
-void ProbabilisticLayer::initialize_parameters(const double& value)
+void ProbabilisticLayer::set_parameters_constant(const double& value)
 {
     biases.setConstant(value);
 

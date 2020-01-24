@@ -122,8 +122,8 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
    ProbabilisticLayer probabilistic_layer;
 
-   Tensor<double, 2> inputs;
-   Tensor<double, 2> outputs;
+   Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
    Tensor<type, 1> biases;
    Tensor<double, 2> synaptic_weights;
 
@@ -139,7 +139,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
 
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
@@ -151,7 +151,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    probabilistic_layer.set_neurons_number(1);
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 1, LOG);
@@ -228,7 +228,7 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     probabilistic_layer.set(1,1);
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-    combinations.set({1, 1}, 0.0);
+    combinations.resize({1, 1}, 0.0);
 
     derivatives = probabilistic_layer.calculate_activations_derivatives(combinations);
     assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<double>::min(), LOG);
@@ -239,7 +239,7 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     {
        probabilistic_layer.set(2, 4);
 
-       combinations.set({1,4}, 1.0);
+       combinations.resize({1,4}, 1.0);
 
        probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 

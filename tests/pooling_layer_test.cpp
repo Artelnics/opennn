@@ -37,12 +37,12 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     PoolingLayer pooling_layer;
 
-    Tensor<double, 2> inputs;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
     // Test
 
-    inputs.set(Vector<size_t>({6,6,6,6}));
+    inputs.resize(({6,6,6,6}));
 
     pooling_layer.set_pool_size(1,1);
     pooling_layer.set_row_stride(1);
@@ -50,14 +50,14 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 6 &&
-                outputs.get_dimension(1) == 6 &&
-                outputs.get_dimension(2) == 6 &&
-                outputs.get_dimension(3) == 6, LOG);
+    assert_true(outputs.dimension(0) == 6 &&
+                outputs.dimension(1) == 6 &&
+                outputs.dimension(2) == 6 &&
+                outputs.dimension(3) == 6, LOG);
 
     // Test
 
-    inputs.set(Vector<size_t>({10,3,20,20}));
+    inputs.resize(({10,3,20,20}));
 
     pooling_layer.set_pool_size(2,2);
     pooling_layer.set_row_stride(1);
@@ -65,14 +65,14 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 10 &&
-                outputs.get_dimension(1) == 3 &&
-                outputs.get_dimension(2) == 19 &&
-                outputs.get_dimension(3) == 19, LOG);
+    assert_true(outputs.dimension(0) == 10 &&
+                outputs.dimension(1) == 3 &&
+                outputs.dimension(2) == 19 &&
+                outputs.dimension(3) == 19, LOG);
 
     // Test
 
-    inputs.set(Vector<size_t>({1,1,4,4}));
+    inputs.resize(({1,1,4,4}));
     inputs(0,0,0,0) = 1.0;
     inputs(0,0,0,1) = 2.0;
     inputs(0,0,0,2) = 3.0;
@@ -96,10 +96,10 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 1 &&
-                outputs.get_dimension(1) == 1 &&
-                outputs.get_dimension(2) == 3 &&
-                outputs.get_dimension(3) == 3 &&
+    assert_true(outputs.dimension(0) == 1 &&
+                outputs.dimension(1) == 1 &&
+                outputs.dimension(2) == 3 &&
+                outputs.dimension(3) == 3 &&
                 outputs(0,0,0,0) == 7.0 &&
                 outputs(0,0,0,1) == 4.5 &&
                 outputs(0,0,0,2) == 3.0 &&
@@ -112,7 +112,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     // Test
 
-    inputs.set(Vector<size_t>({1,1,4,4}));
+    inputs.resize(({1,1,4,4}));
     inputs(0,0,0,0) = 1.0;
     inputs(0,0,0,1) = 2.0;
     inputs(0,0,0,2) = 3.0;
@@ -136,10 +136,10 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 1 &&
-                outputs.get_dimension(1) == 1 &&
-                outputs.get_dimension(2) == 2 &&
-                outputs.get_dimension(3) == 2 &&
+    assert_true(outputs.dimension(0) == 1 &&
+                outputs.dimension(1) == 1 &&
+                outputs.dimension(2) == 2 &&
+                outputs.dimension(3) == 2 &&
                 outputs(0,0,0,0) - 7.8888 < 0.001 &&
                 outputs(0,0,0,1) - 13.5555 < 0.001 &&
                 outputs(0,0,1,0) - 46.4444 < 0.001 &&
@@ -153,12 +153,12 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     PoolingLayer pooling_layer;
 
-    Tensor<double, 2> inputs;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
     // Test
 
-    inputs.set(Vector<size_t>({6,6,6,6}));
+    inputs.resize(({6,6,6,6}));
 
     pooling_layer.set_pool_size(1,1);
     pooling_layer.set_row_stride(1);
@@ -166,14 +166,14 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 6 &&
-                outputs.get_dimension(1) == 6 &&
-                outputs.get_dimension(2) == 6 &&
-                outputs.get_dimension(3) == 6, LOG);
+    assert_true(outputs.dimension(0) == 6 &&
+                outputs.dimension(1) == 6 &&
+                outputs.dimension(2) == 6 &&
+                outputs.dimension(3) == 6, LOG);
 
     // Test
 
-    inputs.set(Vector<size_t>({10,3,20,20}));
+    inputs.resize(({10,3,20,20}));
 
     pooling_layer.set_pool_size(2,2);
     pooling_layer.set_row_stride(1);
@@ -181,14 +181,14 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 10 &&
-                outputs.get_dimension(1) == 3 &&
-                outputs.get_dimension(2) == 19 &&
-                outputs.get_dimension(3) == 19, LOG);
+    assert_true(outputs.dimension(0) == 10 &&
+                outputs.dimension(1) == 3 &&
+                outputs.dimension(2) == 19 &&
+                outputs.dimension(3) == 19, LOG);
 
     // Test
 
-    inputs.set(Vector<size_t>({1,1,4,4}));
+    inputs.resize(({1,1,4,4}));
     inputs(0,0,0,0) = 1.0;
     inputs(0,0,0,1) = 2.0;
     inputs(0,0,0,2) = 3.0;
@@ -212,10 +212,10 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 1 &&
-                outputs.get_dimension(1) == 1 &&
-                outputs.get_dimension(2) == 3 &&
-                outputs.get_dimension(3) == 3 &&
+    assert_true(outputs.dimension(0) == 1 &&
+                outputs.dimension(1) == 1 &&
+                outputs.dimension(2) == 3 &&
+                outputs.dimension(3) == 3 &&
                 outputs(0,0,0,0) == 16.0 &&
                 outputs(0,0,0,1) == 9.0 &&
                 outputs(0,0,0,2) == 4.0 &&
@@ -228,7 +228,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     // Test
 
-    inputs.set(Vector<size_t>({1,1,4,4}));
+    inputs.resize(({1,1,4,4}));
     inputs(0,0,0,0) = 1.0;
     inputs(0,0,0,1) = 2.0;
     inputs(0,0,0,2) = 3.0;
@@ -252,10 +252,10 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
-    assert_true(outputs.get_dimension(0) == 1 &&
-                outputs.get_dimension(1) == 1 &&
-                outputs.get_dimension(2) == 2 &&
-                outputs.get_dimension(3) == 2 &&
+    assert_true(outputs.dimension(0) == 1 &&
+                outputs.dimension(1) == 1 &&
+                outputs.dimension(2) == 2 &&
+                outputs.dimension(3) == 2 &&
                 outputs(0,0,0,0) == 27.0 &&
                 outputs(0,0,0,1) == 64.0 &&
                 outputs(0,0,1,0) == 27.0 &&

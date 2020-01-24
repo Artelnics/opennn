@@ -63,7 +63,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    Tensor<type, 1> parameters;
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
    data_set.initialize_data(0.0);
@@ -85,7 +85,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 //   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_error(parameters)) < numeric_limits<double>::min(), LOG);
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
    data_set.initialize_data(0.0);
@@ -122,8 +122,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 1> numerical_error_gradient;
 
    size_t instances_number;
-   size_t inputs_number;
-   size_t outputs_number;
+   Index inputs_number;
+   Index outputs_number;
    size_t hidden_neurons;
 
 //   ScalingLayer* scaling_layer = new ScalingLayer();
@@ -150,7 +150,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
@@ -261,8 +261,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Vector<size_t>({3,7,7}));
-   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 
@@ -334,7 +334,7 @@ void MeanSquaredErrorTest::test_calculate_selection_error()
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
 
@@ -356,7 +356,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
    cout << "test_calculate_training_error_terms\n";
 
    NeuralNetwork neural_network;
-   Vector<size_t> hidden_layers_size;
+   Tensor<Index, 1> hidden_layers_size;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -394,7 +394,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Vector<size_t> architecture;
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -407,9 +407,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Tensor<double, 2> terms_Jacobian;
    Tensor<double, 2> numerical_Jacobian_terms;
 
-   Tensor<double, 2> inputs;
+   Tensor<type, 2> inputs;
    Tensor<double, 2> targets;
-   Tensor<double, 2> outputs;
+   Tensor<type, 2> outputs;
 
    Tensor<double, 2> output_gradient;
    Vector<Tensor<double, 2>> layers_delta;
@@ -418,7 +418,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
 
@@ -443,7 +443,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test 
 
    neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 2, 5);
    mean_squared_error.set(&neural_network, &data_set);
@@ -467,13 +467,13 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   architecture.set(3);
+   architecture.resize(3);
    architecture[0] = 2;
    architecture[1] = 1;
    architecture[2] = 2;
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
 
    data_set.set(2, 2, 5);
    mean_squared_error.set(&neural_network, &data_set);
@@ -497,7 +497,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.initialize_parameters(0.0);
+   neural_network.set_parameters_constant(0.0);
    //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
 //   nn.set_parameters_random();
    parameters = neural_network.get_parameters();

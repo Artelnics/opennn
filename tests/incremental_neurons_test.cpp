@@ -97,7 +97,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
     data_set.set_columns_uses({"Input","Target"});
 
     neural_network.set(NeuralNetwork::Approximation, {1, 3, 1});
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
@@ -145,7 +145,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
     data_set.set(data);
 
     neural_network.set(NeuralNetwork::Approximation, {1, 3, 1});
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 

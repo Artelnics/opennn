@@ -104,10 +104,10 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   neural_network.initialize_parameters(2.0);
+   neural_network.set_parameters_constant(2.0);
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_gradient();
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_gradient();
 
 //   double PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
@@ -131,10 +131,10 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   neural_network.initialize_parameters(2.0);
+   neural_network.set_parameters_constant(2.0);
    Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
    double FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
@@ -158,11 +158,11 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   neural_network.initialize_parameters(2.0);
+   neural_network.set_parameters_constant(2.0);
    Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_error_gradient();
    Tensor<type, 1> old_training_direction = old_gradient;   
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_error_gradient();
 
    Tensor<type, 1> PR_training_direction 
@@ -188,11 +188,11 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   neural_network.initialize_parameters(2.0);
+   neural_network.set_parameters_constant(2.0);
    Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_error_gradient();
    Tensor<type, 1> old_training_direction = old_gradient;   
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_error_gradient();
 	
    Tensor<type, 1> FR_training_direction 
@@ -249,7 +249,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    minimum_parameters_increment_norm = 0.1;
 
@@ -264,7 +264,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Performance goal
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    loss_goal = 0.1;
 
@@ -283,7 +283,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Minimum evaluation improvement
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double minimum_loss_increase = 0.1;
 
@@ -298,7 +298,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Gradient norm goal 
 
-   neural_network.initialize_parameters(-1.0);
+   neural_network.set_parameters_constant(-1.0);
 
    double gradient_norm_goal = 0.1;
 

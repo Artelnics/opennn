@@ -256,7 +256,7 @@ void StatisticsTest::test_minimum_missing_values()
    cout << "test_minimum_missing_values\n";
 
    Tensor<type, 1> vector;
-   Vector<size_t> missing_values;
+   Tensor<Index, 1> missing_values;
    double minimum;
 
    // Test
@@ -673,7 +673,7 @@ void StatisticsTest::test_calculate_histogram()
 
    Tensor<type, 1> vector;
    Tensor<type, 1> centers;
-   Vector<size_t> frequencies;
+   Tensor<Index, 1> frequencies;
    Histogram histogram;
 
    // Test
@@ -707,7 +707,7 @@ void StatisticsTest::test_calculate_histogram()
    assert_true(frequencies[7] == 1, LOG);
    assert_true(frequencies[8] == 1, LOG);
    assert_true(frequencies[9] == 1, LOG);
-   assert_true(histogram.frequencies.calculate_sum() == 10, LOG);
+   assert_true(histogram.frequencies.sum() == 10, LOG);
 
    // Test
    vector.resize(20);
@@ -715,7 +715,7 @@ void StatisticsTest::test_calculate_histogram()
 
    histogram = OpenNN::histogram(vector, 10);
 
-   assert_true(histogram.frequencies.calculate_sum() == 20, LOG);
+   assert_true(histogram.frequencies.sum() == 20, LOG);
 }
 
 
@@ -735,7 +735,7 @@ void StatisticsTest::test_calculate_histograms()
     matrix(2,2) = 3.0;
     Vector<Histogram> histogram(matrix.dimension(1));
     histogram = histograms(matrix, 3);
-    Vector<size_t> solution({1, 1, 1});
+    Tensor<Index, 1> solution({1, 1, 1});
 
     assert_true(histogram[0].frequencies == solution, LOG);
     assert_true(histogram[1].frequencies == solution, LOG);
@@ -750,7 +750,7 @@ void StatisticsTest::test_total_frequencies()
     Tensor<type, 1> vector1;
     Tensor<type, 1> vector2;
     Tensor<type, 1> vector3;
-    Vector<size_t> total_frequencies;
+    Tensor<Index, 1> total_frequencies;
     Vector<Histogram> histograms(2);
 
     // Test
@@ -789,8 +789,8 @@ void StatisticsTest::test_histograms_missing_values()
     matrix(2,2) = 2.0;
     Vector<Histogram> histograms(3);
     histograms = histograms_missing_values(matrix, 3);
-    Vector<size_t> solution({1, 1, 1});
-    Vector<size_t> solution_missing_values({1, 0, 1});
+    Tensor<Index, 1> solution({1, 1, 1});
+    Tensor<Index, 1> solution_missing_values({1, 0, 1});
 
     assert_true(histograms[0].frequencies == solution, LOG);
     assert_true(histograms[1].frequencies == solution, LOG);
@@ -840,7 +840,7 @@ void StatisticsTest::test_calculate_minimal_indices()
     cout << "test_calculate_minimal_indices\n";
 
     Tensor<type, 1> vector;
-    Vector<size_t> min_indices;
+    Tensor<Index, 1> min_indices;
 
     // Test
     vector.resize(1);
@@ -898,9 +898,9 @@ void StatisticsTest::test_calculate_maximal_indices()
 
     Tensor<type, 1> vector({0, 1, 2, 3, 4, 5, 6});
 
-    Vector<size_t> solution({6, 5, 4, 3});
+    Tensor<Index, 1> solution({6, 5, 4, 3});
 
-    Vector<size_t> maximal_indices = OpenNN::maximal_indices(vector, 4);
+    Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(vector, 4);
 
     assert_true((maximal_indices[0] - solution[0]) < 1.0e-7, LOG);
     assert_true((maximal_indices[1] - solution[1]) < 1.0e-7, LOG);
@@ -993,7 +993,7 @@ void StatisticsTest::test_calculate_histogram_missing_values()
     //Histogram_missing_values
     Histogram graphic;
     Tensor<type, 1> centers;
-    Vector<size_t> frequencies;
+    Tensor<Index, 1> frequencies;
     Tensor<type, 1> vector;
     vector.resize(5);
     vector[0] = 1;
@@ -1012,7 +1012,7 @@ void StatisticsTest::test_calculate_histogram_missing_values()
     Histogram graphic_2;
 
     Tensor<type, 1> centers_2;
-    Vector<size_t> frequencies_2;
+    Tensor<Index, 1> frequencies_2;
 
     Tensor<type, 1> vector_2;
     vector_2.set(4);

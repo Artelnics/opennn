@@ -178,7 +178,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 {
    cout << "test_calculate_fixed_directional_point\n";
 
-   Vector<size_t> indices;
+   Tensor<Index, 1> indices;
 
    NeuralNetwork neural_network;
 
@@ -200,7 +200,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
 
    loss = sum_squared_error.calculate_training_loss();
 
@@ -225,7 +225,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
 
    training_direction.set(2, -1.0);
    learning_rate = 1.0;
@@ -245,7 +245,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     data_set.set_data_random();
 
-    Vector<size_t> instances_indices(0, 1, data_set.get_instances_number()-1);
+    Tensor<Index, 1> instances_indices(0, 1, data_set.get_instances_number()-1);
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
 
@@ -278,7 +278,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-    neural_network.initialize_parameters(0.0);
+    neural_network.set_parameters_constant(0.0);
 
     loss = sum_squared_error.calculate_training_loss();
     training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -292,7 +292,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-    neural_network.initialize_parameters(1.0);
+    neural_network.set_parameters_constant(1.0);
 
     loss = sum_squared_error.calculate_training_loss();
     training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -351,7 +351,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
    cout << "test_calculate_golden_section_directional_point\n";
 
    DataSet data_set(1, 1, 1);
-   Vector<size_t> indices(1,1,data_set.get_instances_number()-1);
+   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
 
@@ -359,7 +359,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
    LearningRateAlgorithm tra(&sum_squared_error);
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
 
    double loss = sum_squared_error.calculate_training_loss();
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -383,14 +383,14 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    cout << "test_calculate_Brent_method_directional_point\n";
 
    DataSet data_set(1, 1, 1);
-   Vector<size_t> indices(1,1,data_set.get_instances_number()-1);
+   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
    SumSquaredError sum_squared_error(&neural_network);
 
    LearningRateAlgorithm tra(&sum_squared_error);
 
-   neural_network.initialize_parameters(1.0);
+   neural_network.set_parameters_constant(1.0);
 
    double loss = sum_squared_error.calculate_training_loss();
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();

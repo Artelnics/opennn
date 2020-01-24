@@ -1029,11 +1029,11 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
 
      for(Index i = 0; i < new_vector_x.size(); i++)
      {
-         s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
+         s_xx += pow((x1[i] - x1.sum() / new_vector_x.size()),2);
 
          s_yy += pow(new_vector_y[i] - y1 / new_vector_y.size(),2);
 
-         s_xy += (x1[i] - x1.calculate_sum() / new_vector_x.size()) * (new_vector_y[i] - y1/new_vector_y.size());
+         s_xy += (x1[i] - x1.sum() / new_vector_x.size()) * (new_vector_y[i] - y1/new_vector_y.size());
      }
 
      RegressionResults logarithmic_regression;
@@ -1051,7 +1051,7 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
      {
        logarithmic_regression.b = s_xy/s_xx;
 
-       logarithmic_regression.a = new_vector_y.calculate_sum()/new_vector_y.size() - logarithmic_regression.b * x1.calculate_sum()/new_vector_x.size();
+       logarithmic_regression.a = new_vector_y.sum()/new_vector_y.size() - logarithmic_regression.b * x1.sum()/new_vector_x.size();
 
        logarithmic_regression.correlation = linear_correlation(logarithm(new_vector_x), new_vector_y);
     }
@@ -1112,11 +1112,11 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
      for(Index i = 0; i < n; i++)
      {
-         s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
+         s_xx += pow((x1[i] - x1.sum()/x.size()),2);
 
          s_yy += pow(y[i] - y1/y.size(),2);
 
-         s_xy += (x1[i] - x1.calculate_sum()/x.size())*(y[i] - y1/y.size());
+         s_xy += (x1[i] - x1.sum()/x.size())*(y[i] - y1/y.size());
      }
 
      RegressionResults logarithmic_regression;
@@ -1133,7 +1133,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
        logarithmic_regression.b = s_xy/s_xx;
 
-       logarithmic_regression.a = y.calculate_sum()/y.size() - logarithmic_regression.b * x1.calculate_sum()/x.size();
+       logarithmic_regression.a = y.sum()/y.size() - logarithmic_regression.b * x1.sum()/x.size();
 
        logarithmic_regression.correlation = linear_correlation(logarithm(x), y);
     }
@@ -1778,11 +1778,11 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
      for(Index i = 0; i < n; i++)
      {
-         s_xx += pow((x1[i] - x1.calculate_sum()/x.size()),2);
+         s_xx += pow((x1[i] - x1.sum()/x.size()),2);
 
          s_yy += pow(y[i] - y1/y.size(),2);
 
-         s_xy += (x1[i] - x1.calculate_sum()/x.size())*(y[i] - y1/y.size());
+         s_xy += (x1[i] - x1.sum()/x.size())*(y[i] - y1/y.size());
      }
 
      CorrelationResults logarithmic_correlation;
@@ -1860,11 +1860,11 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
 
      for(Index i = 0; i < new_vector_x.size(); i++)
      {
-         s_xx += pow((x1[i] - x1.calculate_sum() / new_vector_x.size()),2);
+         s_xx += pow((x1[i] - x1.sum() / new_vector_x.size()),2);
 
          s_yy += pow(new_vector_y[i] - y1 / new_vector_y.size(),2);
 
-         s_xy += (x1[i] - x1.calculate_sum() / new_vector_x.size()) * (new_vector_y[i] - y1/new_vector_y.size());
+         s_xy += (x1[i] - x1.sum() / new_vector_x.size()) * (new_vector_y[i] - y1/new_vector_y.size());
      }
 
      CorrelationResults logarithmic_correlation;
@@ -2405,7 +2405,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
 
     karl_pearson.correlation_type = KarlPearson_correlation;
 
-    karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
+    karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.sum()));
 
     return karl_pearson;
 */
@@ -2528,7 +2528,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2
 
     karl_pearson.correlation_type = KarlPearson_correlation;
 
-    karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
+    karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.sum()));
 
     return karl_pearson;
 */
@@ -2566,7 +2566,7 @@ CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, con
 
     Tensor<type, 1> groups_average(matrix.dimension(1));
 
-    const double total_average = vector.calculate_sum() / n;
+    const double total_average = vector.sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
@@ -2673,7 +2673,7 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
 
     Tensor<type, 1> groups_average(matrix1.dimension(1));
 
-    const double total_average = new_y.calculate_sum() / n;
+    const double total_average = new_y.sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
@@ -3056,7 +3056,7 @@ double chi_square_test(const Tensor<type, 2>& matrix)
     const Tensor<type, 1> sum_columns = matrix.calculate_columns_sum();
     const Tensor<type, 1> sum_rows = matrix.calculate_rows_sum();
 
-    const double total = sum_columns.calculate_sum();
+    const double total = sum_columns.sum();
 
     Tensor<type, 2> row_colum(sum_rows.size(),sum_columns.size());
 
@@ -3082,7 +3082,7 @@ double chi_square_test(const Tensor<type, 2>& matrix)
           }
     }
 
-    return chi.calculate_sum();
+    return chi.sum();
 */
     return 0.0;
 }
@@ -3216,7 +3216,7 @@ double karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>&
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
-    const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
+    const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.sum()));
 
     return karl_pearson_correlation;
 */
@@ -3334,7 +3334,7 @@ double karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const T
 
     const double chi_squared = chi_square_test(contingency_table.to_double_matrix());
 
-    const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.calculate_sum()));
+    const double karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table.sum()));
 
     return karl_pearson_correlation;
 */
@@ -3357,7 +3357,7 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
 
     Tensor<type, 1> groups_average(matrix.dimension(1));
 
-    const double total_average = vector.calculate_sum() / n;
+    const double total_average = vector.sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
@@ -3405,7 +3405,7 @@ double one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vecto
 double one_way_anova(const Tensor<type, 2>& matrix,const Index& index, const Tensor<Index, 1>& indices)
 {
     /*
-    const double total_average = matrix.calculate_sum() / matrix.dimension(0);
+    const double total_average = matrix.sum() / matrix.dimension(0);
 
     const Tensor<type, 2> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
 
@@ -3437,9 +3437,9 @@ double one_way_anova(const Tensor<type, 2>& matrix,const Index& index, const Ten
         }
     }
 
-    const double mean_square_treatment = treatment_sum_of_squares.calculate_sum() / (indices.size() - 1);
+    const double mean_square_treatment = treatment_sum_of_squares.sum() / (indices.size() - 1);
 
-    const double mean_square_error = error_sum_of_squares.calculate_sum() / (new_matrix.dimension(0) - indices.size());
+    const double mean_square_error = error_sum_of_squares.sum() / (new_matrix.dimension(0) - indices.size());
 
     const double f_statistic_test = mean_square_treatment / mean_square_error;
 
@@ -3477,7 +3477,7 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<typ
 
     Tensor<type, 1> groups_average(matrix.dimension(1));
 /*
-    const double total_average = vector.calculate_sum() / n;
+    const double total_average = vector.sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
@@ -3580,7 +3580,7 @@ double one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, c
 
     Tensor<type, 1> groups_average(matrix1.dimension(1));
 
-    const double total_average = new_y.calculate_sum() / n;
+    const double total_average = new_y.sum() / n;
 
     double total_sum_of_squares = 0.0;
     double treatment_sum_of_squares = 0.0;
@@ -3800,7 +3800,7 @@ double f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 double one_way_anova_correlation(const Tensor<type, 2>& matrix,const Index& index, const Tensor<Index, 1>& indices)
 {
 /*
-    const double total_average = matrix.calculate_sum() / matrix.dimension(0);
+    const double total_average = matrix.sum() / matrix.dimension(0);
 
     const Tensor<type, 2> new_matrix = matrix.get_submatrix_columns(indices).assemble_columns(matrix.get_submatrix_columns({index}));
 
@@ -3833,7 +3833,7 @@ double one_way_anova_correlation(const Tensor<type, 2>& matrix,const Index& inde
         }
     }
 
-    const double one_way_anova_correlation = sqrt(treatment_sum_of_squares.calculate_sum()/ total_sum_of_squares.calculate_sum());
+    const double one_way_anova_correlation = sqrt(treatment_sum_of_squares.sum()/ total_sum_of_squares.sum());
 
     return one_way_anova_correlation;
 */

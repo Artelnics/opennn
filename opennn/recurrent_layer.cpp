@@ -620,7 +620,7 @@ void RecurrentLayer::initialize_input_weights_Glorot(const double& minimum,const
 /// Initializes all the biases, input weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void RecurrentLayer::initialize_parameters(const double& value)
+void RecurrentLayer::set_parameters_constant(const double& value)
 {
     biases.setConstant(value);
 
