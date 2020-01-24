@@ -731,9 +731,9 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 /*
    for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
-       const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+       const Tensor<int, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-       const int batches_number = training_batches.size();
+       const Index batches_number = training_batches.dimension(0);
 
        parameters_norm = l2_norm(parameters);
 
@@ -1066,7 +1066,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const int rows_number = labels.size();
+   const Index rows_number = labels.dimension(0);
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);

@@ -66,15 +66,15 @@ public:
      Tensor<int, 1> get_input_variables_dimensions() const;
      Tensor<int, 1> get_outputs_dimensions() const;
 
-     int get_inputs_number() const;
+     Index get_inputs_number() const;
 
-     int get_inputs_channels_number() const;
+     Index get_inputs_channels_number() const;
 
      int get_inputs_rows_number() const;
 
      int get_inputs_columns_number() const;
 
-     int get_neurons_number() const;
+     Index get_neurons_number() const;
 
      int get_outputs_rows_number() const;
 

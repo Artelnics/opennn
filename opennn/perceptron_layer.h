@@ -70,8 +70,8 @@ public:
 
    Tensor<int, 1> get_input_variables_dimensions() const;
 
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    // Parameters
 
@@ -180,7 +180,7 @@ public:
    {
         #ifdef __OPENNN_DEBUG__
 
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
         const int combinations_columns_number = combinations.dimension(1);
 
@@ -228,7 +228,7 @@ public:
    {
         #ifdef __OPENNN_DEBUG__
 
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
         const int combinations_columns_number = combinations.dimension(1);
 
@@ -347,8 +347,8 @@ public:
                                  const Tensor<type, 2>& deltas,
                                  Tensor<type, 1>& error_gradient)
    {
-       const int inputs_number = get_inputs_number();
-       const int neurons_number = get_neurons_number();
+       const Index inputs_number = get_inputs_number();
+       const Index neurons_number = get_neurons_number();
 
        // Synaptic weights
 

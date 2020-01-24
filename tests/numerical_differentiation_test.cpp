@@ -121,8 +121,8 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
    const size_t dummy_1 = 0;
    const size_t dummy_2 = 0;
 
-   x1.randomize_normal();
-   x2.randomize_normal();
+   x1.setRandom();
+   x2.setRandom();
 
    matrix = nd.calculate_forward_differences_second_derivatives(*this, &NumericalDifferentiationTest::f7, dummy_1, x1, dummy_2, x2);
 
@@ -351,7 +351,7 @@ void NumericalDifferentiationTest::test_calculate_hessian()
    // Test
 
    x.set(4);
-   x.randomize_normal();
+   x.setRandom();
 
    nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
 

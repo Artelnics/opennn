@@ -221,7 +221,7 @@ Tensor<int, 1> Layer::get_input_variables_dimensions() const
 }
 
 
-int Layer::get_inputs_number() const
+Index Layer::get_inputs_number() const
 {
     ostringstream buffer;
 
@@ -233,7 +233,7 @@ int Layer::get_inputs_number() const
 }
 
 
-int Layer::get_neurons_number() const
+Index Layer::get_neurons_number() const
 {
     ostringstream buffer;
 

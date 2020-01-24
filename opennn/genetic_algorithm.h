@@ -278,7 +278,7 @@ private:
 
     /// Initial uses of the variables in the data set.
 
-    vector<DataSet::VariableUse> original_uses;
+    Tensor<DataSet::VariableUse, 1> original_uses;
 
     /// Size of the population.
 

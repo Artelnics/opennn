@@ -246,7 +246,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     Vector<size_t> z(0);
 
     x.initialize_sequential();
-    z.randomize_uniform(0, size);
+    z.setRandom(0, size);
 
     double correlation;
 

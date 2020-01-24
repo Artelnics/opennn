@@ -1120,13 +1120,13 @@ int ConvolutionalLayer::get_padding_height() const
 }
 
 
-int ConvolutionalLayer::get_inputs_number() const
+Index ConvolutionalLayer::get_inputs_number() const
 {
     return get_inputs_channels_number()*get_inputs_rows_number()*get_inputs_columns_number();
 }
 
 
-int ConvolutionalLayer::get_neurons_number() const
+Index ConvolutionalLayer::get_neurons_number() const
 {
     return get_filters_number()*get_outputs_rows_number()*get_outputs_columns_number();
 }

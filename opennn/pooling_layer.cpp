@@ -686,7 +686,7 @@ Tensor<type, 1> PoolingLayer::calculate_error_gradient(const Tensor<type, 2>& ,
 
 /// Returns the number of neurons the layer applies to an image.
 
-int PoolingLayer::get_neurons_number() const
+Index PoolingLayer::get_neurons_number() const
 {
     return get_outputs_rows_number() * get_outputs_columns_number();
 }
@@ -753,7 +753,7 @@ Tensor<int, 1> PoolingLayer::get_outputs_dimensions() const
 
 /// Returns the number of inputs of the layer.
 
-int PoolingLayer::get_inputs_number() const
+Index PoolingLayer::get_inputs_number() const
 {
 /*
     return input_variables_dimensions.calculate_product();
@@ -764,7 +764,7 @@ int PoolingLayer::get_inputs_number() const
 
 /// Returns the number of channels of the layers' input.
 
-int PoolingLayer::get_inputs_channels_number() const
+Index PoolingLayer::get_inputs_channels_number() const
 {
     return input_variables_dimensions[0];
 }
