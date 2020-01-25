@@ -1599,10 +1599,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
    {
 
 //      column = matrix.get_column(i);
-       for(Index j = 0; j < rows_number; j++)
-       {
-           column(j) = matrix(j,i);
-       }
+       column = matrix.chip(i,1);
 
       descriptives[i] = OpenNN::descriptives(column);
 
@@ -1646,10 +1643,7 @@ Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>& matri
    for(Index i = 0; i < columns_number; i++)
    {
 //      column = matrix.get_column(i);
-      for(Index j = 0; j < rows_number; j++)
-      {
-          column(j) = matrix(j,i);
-      }
+       column =  matrix.chip(i,1);
 
       descriptives[i] = descriptives_missing_values(column);
    }
@@ -1668,14 +1662,22 @@ Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>& matri
    Tensor<Descriptives, 1> descriptives(columns_size);
 
    Tensor<type, 1> column(rows_size);
-/*
+
    for(Index i = 0; i < columns_size; i++)
    {
-      column = matrix.get_column(columns_indices[i], rows_indices);
+//      column = matrix.get_column(columns_indices[i], rows_indices);
+       Index column_index = columns_indices(i);
+
+       for(Index j = 0; j < rows_size; j++)
+       {
+           Index row_index  = rows_indices(j);
+
+           column(j) = matrix(row_index,column_index);
+       }
 
       descriptives[i] = descriptives_missing_values(column);
    }
-*/
+
    return descriptives;
 }
 
@@ -1693,7 +1695,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     const Index columns_indices_size = columns_indices.size();
 
     Tensor<Descriptives, 1> descriptives(columns_indices_size);
-/*
+
     Index row_index, column_index;
 
     Tensor<type, 1> minimums(columns_indices_size);
@@ -1756,7 +1758,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         descriptives[i].mean = mean[i];
         descriptives[i].standard_deviation = standard_deviation[i];
     }
-*/
+
     return descriptives;
 }
 
@@ -1776,14 +1778,21 @@ Tensor<Descriptives, 1> rows_descriptives_missing_values(const Tensor<type, 2>& 
     Tensor<Descriptives, 1> descriptives(columns_number);
 
     Tensor<type, 1> column(row_indices_size);
-/*
+
     for(Index i = 0; i < columns_number; i++)
     {
-        column = matrix.get_column(i, row_indices);
+//        column = matrix.get_column(i, row_indices);
+
+        for(Index j = 0; j < row_indices_size; j++)
+        {
+            Index row_index = row_indices(j);
+
+            column(j) = matrix(row_index,i);
+        }
 
         descriptives[i] = descriptives_missing_values(column);
     }
-*/
+
     return descriptives;
 }
 
@@ -1799,30 +1808,38 @@ Tensor<type, 1> rows_means(const Tensor<type, 2>& matrix, const Tensor<Index, 1>
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Index, 1> used_row_indices;
-/*
-    if(row_indices.empty())
+
+//    if(row_indices.empty())
+    if(matrix.dimension(0) == 0 && matrix.dimension(1) == 0)
     {
         used_row_indices.resize(matrix.dimension(0));
-        used_row_indices.initialize_sequential();
+//        used_row_indices.initialize_sequential(); @todo
     }
     else
     {
         used_row_indices = row_indices;
     }
-*/
+
     const Index row_indices_size = used_row_indices.size();
 
     Tensor<type, 1> means(columns_number);
 
     Tensor<type, 1> column(row_indices_size);
-/*
+
     for(Index i = 0; i < columns_number; i++)
     {
-        column = matrix.get_column(i, used_row_indices);
+//        column = matrix.get_column(i, used_row_indices);
+
+        for(Index j = 0; j < row_indices_size; j++)
+        {
+            Index row_index = row_indices(j);
+
+            column(j) = matrix(row_index,i);
+        }
 
         means[i] = mean_missing_values(column);
     }
-*/
+
     return means;
 }
 
@@ -1839,33 +1856,38 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Index, 1> used_columns_indices;
-/*
-    if(columns_indices.empty())
+
+//    if(columns_indices.empty())
+    if(columns_indices.dimension(0) == 0 | columns_indices.dimension(1) == 0)
     {
         used_columns_indices.resize(columns_number);
-        used_columns_indices.initialize_sequential();
+//        used_columns_indices.initialize_sequential();
     }
     else
     {
         used_columns_indices = columns_indices;
     }
-*/
+
     const Index columns_indices_size = used_columns_indices.size();
 
     Tensor<type, 1> minimums(columns_indices_size);
 
-    Index index;
+    Index column_index;
     Tensor<type, 1> column(rows_number);
-/*
+
     for(Index i = 0; i < columns_indices_size; i++)
     {
-        index = used_columns_indices[i];
+        column_index = used_columns_indices[i];
 
-        column = matrix.get_column(index);
+//        column = matrix.get_column(index);
+        for(Index j = 0; j < rows_number; j++)
+        {
+            column(j) = matrix(j,column_index);
+        }
 
         minimums[i] = minimum(column);
     }
-*/
+
     return minimums;
 }
 
@@ -1882,33 +1904,38 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Index, 1> used_columns_indices;
-/*
-    if(columns_indices.empty())
+
+//    if(columns_indices.empty())
+    if(columns_indices.dimension(0) == 0 && columns_indices.dimension(1) == 0)
     {
         used_columns_indices.resize(columns_number);
-        used_columns_indices.initialize_sequential();
+//        used_columns_indices.initialize_sequential();@todo
     }
     else
     {
         used_columns_indices = columns_indices;
     }
-*/
+
     const Index columns_indices_size = used_columns_indices.size();
 
     Tensor<type, 1> maximums(columns_indices_size);
 
-    Index index;
+    Index column_index;
     Tensor<type, 1> column(rows_number);
-/*
+
     for(Index i = 0; i < columns_indices_size; i++)
     {
-        index = used_columns_indices[i];
+        column_index = used_columns_indices(i);
 
-        column = matrix.get_column(index);
+//        column = matrix.get_column(index);
+        for(Index j = 0; j < rows_number; j++)
+        {
+            column(j) = matrix(j,column_index);
+        }
 
-        maximums[i] = maximum(column);
+        maximums(i) = maximum(column);
     }
-*/
+
     return maximums;
 }
 
@@ -2322,11 +2349,11 @@ Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1
 
 Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
 {
-/*
+
     const Index rows_number = matrix.dimension(0);
 
-   return matrix.calculate_columns_sum()/static_cast<type>(rows_number);
-*/
+//   return matrix.calculate_columns_sum()/static_cast<type>(rows_number);
+
     return Tensor<type, 1>();
 }
 
