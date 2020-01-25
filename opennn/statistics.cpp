@@ -1880,10 +1880,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
         column_index = used_columns_indices[i];
 
 //        column = matrix.get_column(index);
-        for(Index j = 0; j < rows_number; j++)
-        {
-            column(j) = matrix(j,column_index);
-        }
+        column = matrix.chip(column_index,1);
 
         minimums[i] = minimum(column);
     }
@@ -1928,10 +1925,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
         column_index = used_columns_indices(i);
 
 //        column = matrix.get_column(index);
-        for(Index j = 0; j < rows_number; j++)
-        {
-            column(j) = matrix(j,column_index);
-        }
+        column = matrix.chip(column_index,1);
 
         maximums(i) = maximum(column);
     }
@@ -2347,14 +2341,47 @@ Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1
 }
 
 
+/// Returns a vector with the mean values of all the matrix columns.
+/// The size is equal to the number of columns in the matrix.
+/// @param matrix Matrix used.
+/// @todo to delete.
+
 Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
 {
 
     const Index rows_number = matrix.dimension(0);
 
+    const Index columns_number = matrix.dimension(1);
+
+#ifdef __OPENNN_DEBUG__
+
+if(rows_number == 0)
+{
+   ostringstream buffer;
+
+   buffer << "OpenNN Exception: Statistics class.\n"
+          << "Tensor<type, 1> mean(const Tensor<type, 2>&) const method.\n"
+          << "Number of rows must be greater than one.\n";
+
+   throw logic_error(buffer.str());
+}
+
+#endif
+
+    Tensor<type, 1> columns_mean(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        Tensor<type, 0> mean = matrix.chip(i,1).mean();
+
+        columns_mean(i) = mean(0);
+    }
+
+    return columns_mean;
+
 //   return matrix.calculate_columns_sum()/static_cast<type>(rows_number);
 
-    return Tensor<type, 1>();
+//    return Tensor<type, 1>();
 }
 
 
@@ -2552,6 +2579,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
+
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
@@ -2603,7 +2631,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
 Tensor<type, 1> mean_missing_values(const Tensor<type, 2>& matrix)
 {
-/*
+/* @todo , initialize sequential
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
@@ -2705,16 +2733,25 @@ Tensor<type, 1> mean_missing_values(const Tensor<type, 2>& matrix, const Tensor<
 
    Tensor<type, 1> mean(columns_indices_size);
    mean.setZero();
-/*
+
+   Tensor<type, 1> column_missing_values(row_indices_size);
+
    for(Index j = 0; j < columns_indices_size; j++)
    {
        const Index column_index = columns_indices[j];
 
-       Tensor<type, 1> column_missing_values(matrix.get_column(column_index, row_indices));
+       for(Index k = 0; k < row_indices_size; k++)
+       {
+           const Index row_index = row_indices(k);
+
+           column_missing_values(k) = matrix(row_index,column_index);
+       }
+
+//       Tensor<type, 1> column_missing_values(matrix.get_column(column_index, row_indices));
 
        mean[j] = mean_missing_values(column_missing_values);
    }
-*/
+
    return mean;
 }
 
@@ -2745,12 +2782,12 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
    // median
 
    Tensor<type, 1> median(columns_number);
-/*
+
    for(Index j = 0; j < columns_number; j++)
    {
-       Tensor<type, 1> sorted_column(matrix.get_column(j));
+       Tensor<type, 1> sorted_column(matrix.chip(j,1));
 
-       sort(sorted_column.begin(), sorted_column.end(), less<type>());
+       sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
        if(rows_number % 2 == 0)
        {
@@ -2761,7 +2798,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
          median[j] = sorted_column[rows_number*2/4];
        }
    }
-*/
+
    return median;
 }
 
@@ -2803,10 +2840,10 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
    // median
 
    type median = 0.0;
-/*
-   Tensor<type, 1> sorted_column(matrix.get_column(column_index));
 
-   sort(sorted_column.begin(), sorted_column.end(), less<type>());
+   Tensor<type, 1> sorted_column(matrix.chip(column_index,1));
+
+   sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
    if(rows_number % 2 == 0)
    {
@@ -2816,7 +2853,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
    {
      median = sorted_column[rows_number*2/4];
    }
-*/
+
    return median;
 }
 
@@ -2837,14 +2874,14 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
    // median
 
    Tensor<type, 1> median(columns_indices_size);
-/*
+
    for(Index j = 0; j < columns_indices_size; j++)
    {
       column_index = columns_indices[j];
 
-      Tensor<type, 1> sorted_column(matrix.get_column(column_index));
+      Tensor<type, 1> sorted_column(matrix.chip(column_index, 1));
 
-      sort(sorted_column.begin(), sorted_column.end(), less<type>());
+      sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
       if(rows_number % 2 == 0)
       {
@@ -2855,7 +2892,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
         median[j] = sorted_column[rows_number*2/4];
       }
    }
-*/
+
    return median;
 }
 
@@ -2947,14 +2984,21 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
    // median
 
    Tensor<type, 1> median(columns_indices_size);
-/*
+
    for(Index j = 0; j < columns_indices_size; j++)
    {
       column_index = columns_indices[j];
 
-      Tensor<type, 1> sorted_column(matrix.get_column(column_index, row_indices));
+      Tensor<type, 1> sorted_column(row_indices_size);//(matrix.get_column(column_index, row_indices));
 
-      sort(sorted_column.begin(), sorted_column.end(), less<type>());
+      for(Index k = 0; k < row_indices_size; k++)
+      {
+          const Index row_index = row_indices(k);
+
+          sorted_column(k) = matrix(row_index, column_index);
+      }
+
+      sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
       if(row_indices_size % 2 == 0)
       {
@@ -2965,7 +3009,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
         median[j] = sorted_column[row_indices_size * 2 / 4];
       }
    }
-*/
+
    return median;
 }
 
@@ -2973,12 +3017,20 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
 type median_missing_values(const Tensor<type, 1>& vector)
 {
-/*
+
   const Index size = vector.dimension(0);
 
-  const Index nan = vector.count_NAN();
+//  const Index nan = vector.count_NAN();
 
-  const Index new_size = size - nan;
+  Index new_size = 0;
+
+  for(Index i = 0; i < size; i++)
+  {
+      if(!::isnan(vector[i]))
+      {
+           new_size++;
+      }
+  }
 
   Tensor<type, 1> new_vector(new_size);
 
@@ -2996,8 +3048,7 @@ type median_missing_values(const Tensor<type, 1>& vector)
      }
 
   return median(new_vector);
-*/
-    return 0.0;
+
 }
 
 
@@ -3106,16 +3157,23 @@ Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
    // median
 
    Tensor<type, 1> median(columns_indices_size);
-/*
+
    for(Index j = 0; j < columns_indices_size; j++)
    {
       const Index column_index = columns_indices[j];
 
-      Tensor<type, 1> column_missing_values(matrix.get_column(column_index, row_indices));
+      Tensor<type, 1> column_missing_values(row_indices_size);//(matrix.get_column(column_index, row_indices));
+
+      for(Index k = 0; k < row_indices_size; k++)
+      {
+          const Index row_index = row_indices(k);
+
+          column_missing_values(k) = matrix(row_index,column_index);
+      }
 
       median[j] = median_missing_values(column_missing_values);
    }
-*/
+
    return median;
 }
 
@@ -3309,9 +3367,9 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
     type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
-/*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-*/
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
     const type minimum = sorted_vector[0];
     const type maximum = sorted_vector[n-1];
 
@@ -3405,9 +3463,9 @@ type normality_parameter(const Tensor<type, 1>& vector)
     type previous_empirical_distribution = 0.0;
 
     Tensor<type, 1> sorted_vector(vector);
-/*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-*/
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
     type empirical_area = 0.0;
     type normal_area = 0.0;
 
@@ -4129,3 +4187,21 @@ Tensor<type, 1> explained_variance(const Tensor<type, 1>& vector)
 }
 
 }
+
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
