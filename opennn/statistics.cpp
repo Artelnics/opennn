@@ -1551,14 +1551,14 @@ Tensor<Histogram, 1> histograms_missing_values(const Tensor<type, 2>& matrix, co
    Tensor<Histogram, 1> histograms(columns_number);
 
    Tensor<type, 1> column(rows_number);
-/*
+
    for(Index i = 0; i < columns_number; i++)
    {
-      column = matrix.get_column(i);
+      column = matrix.chip(i,1);
 
     histograms[i] = histogram_missing_values(column, bins_number);
    }
-*/
+
    return histograms;
 }
 
@@ -3277,9 +3277,9 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
     type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
-/*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-*/
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
     Index counter = 0;
 
     for(Index i = 0; i < n; i++)
@@ -3323,9 +3323,9 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
     type empirical_distribution; // Empirical distribution
 
     Tensor<type, 1> sorted_vector(vector);
-/*
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-*/
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
     Index counter = 0;
 
     for(Index i = 0; i < n; i++)
@@ -4036,7 +4036,15 @@ Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
 {
     const Index size = x.size();
 
-    Index new_size;
+    Index new_size = 0;
+
+    for(Index i = 0; i < size ; i++)
+    {
+        if(!::isnan(x[i]))
+        {
+            new_size++;
+        }
+    }
 
     Tensor<type, 1> new_x(new_size);
 
@@ -4044,13 +4052,14 @@ Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < size ; i++)
     {
-        if(!isnan(x[i]))
+        if(!::isnan(x[i]))
         {
             new_x[index] = x[i];
 
             index++;
         }
     }
+
     return percentiles(new_x);
 }
 
