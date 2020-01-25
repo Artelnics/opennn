@@ -243,10 +243,15 @@ Index Histogram::calculate_maximum_frequency() const
 
 Index Histogram::calculate_most_populated_bin() const
 {
-/*
-  return maximal_index(frequencies.to_type_vector());
-*/
-    return 0;
+
+   const Tensor<Index, 0> max_element = frequencies.maximum();
+
+   for(Index i = 0; i < frequencies.size(); i++)
+   {
+       if(max_element(0) == frequencies(i)) return i;
+   }
+
+   return 0;
 }
 
 
@@ -1594,6 +1599,10 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
    {
 
 //      column = matrix.get_column(i);
+       for(Index j = 0; j < rows_number; j++)
+       {
+           column(j) = matrix(j,i);
+       }
 
       descriptives[i] = OpenNN::descriptives(column);
 
@@ -1633,14 +1642,18 @@ Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>& matri
    Tensor<Descriptives, 1> descriptives(columns_number);
 
    Tensor<type, 1> column(rows_number);
-/*
+
    for(Index i = 0; i < columns_number; i++)
    {
-      column = matrix.get_column(i);
+//      column = matrix.get_column(i);
+      for(Index j = 0; j < rows_number; j++)
+      {
+          column(j) = matrix(j,i);
+      }
 
       descriptives[i] = descriptives_missing_values(column);
    }
-*/
+
    return descriptives;
 }
 
