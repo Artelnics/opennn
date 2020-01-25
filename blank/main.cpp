@@ -60,10 +60,12 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
-        Tensor<type, 2> a(2,2);
-        a.setValues({{1,2},{3,4}});
+        Tensor<type, 2> a(4,4);
+        a.setValues({{1,2,0,9},{3,4,0,9},{5,6,0,9},{7,8,0,9}});
 
-        cout << a(1,0) << endl;
+        cout << a << endl;
+        // chip(i,j) : i number the row or column, if j=0 select rows and j=1 select columns.
+        cout << a.chip(1,0) << endl;
 
         return 0;
 
