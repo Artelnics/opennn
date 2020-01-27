@@ -88,11 +88,13 @@ int main(void)
         Tensor<type, 1 > a(4);
         a.setValues({1,2,3,4});
 
-        cout << a << endl;
+        Tensor<Index, 1> arquitecture(3);
 
-        a.setConstant(1);
+        arquitecture.setValues({4, 3, 1});
 
-        cout << a << endl;
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+
+        cout << neural_network.get_architecture() << endl;
 
         return 0;
     }
