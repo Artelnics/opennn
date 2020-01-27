@@ -3412,8 +3412,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
         }
     }
 
-//    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
-
 #ifdef __OPENNN_DEBUG__
 
     const Index variables_size = variable_index.size();
@@ -3443,7 +3441,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 #endif
     return data.chip(variable_index[0], 1);
 
-//    return Tensor<type, 1>();
 }
 
 
@@ -3515,8 +3512,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
             index++;
         }
     }
-
-//    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
 
 #ifdef __OPENNN_DEBUG__
 

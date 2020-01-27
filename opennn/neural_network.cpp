@@ -313,9 +313,15 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-/*
-    return inputs_names.get_first_index(name);
-*/
+
+    for(Index i = 0; i < inputs_names.size(); i++)
+    {
+        if(inputs_names(i) == name)
+        {
+            return i;
+            break;
+        }
+    }
     return 0;
 }
 
@@ -342,9 +348,16 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-/*
-    return outputs_names.get_first_index(name);
-*/
+
+    for(Index i = 0; i < outputs_names.size(); i++)
+    {
+        if(outputs_names(i) == name)
+        {
+            return i;
+            break;
+        }
+    }
+
     return 0;
 }
 
