@@ -3213,10 +3213,22 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Te
    }
 
    #endif
-/*
-   return data.get_row(instance_index, variables_indices);
-*/
-   return Tensor<type, 1>();
+
+   const Index variables_number = variables_indices.size();
+
+   Tensor<type, 1 > row(variables_number);
+
+   for(Index i = 0; i < variables_number; i++)
+   {
+       Index variable_index = variables_indices(i);
+
+       row(i) = data(instance_index, variable_index);
+   }
+
+   return row;
+
+   //return data.get_row(instance_index, variables_indices);
+
 }
 
 
