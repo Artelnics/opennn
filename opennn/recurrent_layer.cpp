@@ -1189,22 +1189,33 @@ Tensor<type, 1> RecurrentLayer::calculate_error_gradient(const Tensor<type, 2> &
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> error_gradient(parameters_number);
-/*
+
     // Input weights
 
-    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers,deltas));
+//    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers,deltas));
+    for(Index i = 0; i < calculate_input_weights_error_gradient(inputs,layers,deltas).size(); i++)
+    {
+        error_gradient(i) = (calculate_input_weights_error_gradient(inputs,layers,deltas))(i);
+    }
 
     // Recurent weights
 
-    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,layers,deltas));
+//    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,layers,deltas));
+    for(Index i = 0; i < calculate_recurrent_weights_error_gradient(inputs,layers,deltas).size(); i++)
+    {
+        error_gradient(i + input_weights_number) = (calculate_recurrent_weights_error_gradient(inputs,layers,deltas))(i);
+    }
 
     // Biases
 
-    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers,deltas));
+//    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers,deltas));
+    for(Index i = 0; i < calculate_biases_error_gradient(inputs,layers,deltas).size(); i++)
+    {
+        error_gradient(i + input_weights_number+recurrent_weights_number) = (calculate_biases_error_gradient(inputs,layers,deltas))(i);
+    }
 
     return error_gradient;
-*/
-    return Tensor<type, 1>();
+
 }
 
 

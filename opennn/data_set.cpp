@@ -1591,12 +1591,16 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
     Tensor<VariableUse, 1> variables_uses(variables_number);
 
     Index index = 0;
-/*
+
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns[i].type == Categorical)
         {
-            variables_uses.embed(index, columns[i].categories_uses);
+//            variables_uses.embed(index, columns[i].categories_uses);
+            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
+            {
+                variables_uses(i + index) = (columns[i].categories_uses)(i);
+            }
             index += columns[i].categories.size();
         }
         else
@@ -1605,7 +1609,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
             index++;
         }
     }
-*/
+
     return variables_uses;
 }
 
@@ -1679,12 +1683,16 @@ Tensor<string, 1> DataSet::get_variables_names() const
     Tensor<string, 1> variables_names(variables_number);
 
     Index index = 0;
-/*
+
     for(Index i = 0; i < columns.size(); i++)
     {
         if(columns[i].type == Categorical)
         {
-            variables_names.embed(index, columns[i].categories);
+//            variables_names.embed(index, columns[i].categories);
+            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
+            {
+                variables_names(i + index) = (columns[i].categories_uses)(i);
+            }
             index += columns[i].categories.size();
         }
         else
@@ -1693,7 +1701,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
             index++;
         }
     }
-*/
+
     return variables_names;
 }
 
@@ -1710,18 +1718,22 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
    Tensor<string, 1> input_variables_names(input_variables_number);
 
    Index index = 0;
-/*
+
    for(Index i = 0; i < input_columns_indices.size(); i++)
    {
        Index input_index = input_columns_indices[i];
 
        const Tensor<string, 1> current_used_variables_names = columns[input_index].get_used_variables_names();
 
-       input_variables_names.embed(index, current_used_variables_names);
+//       input_variables_names.embed(index, current_used_variables_names);
+       for(Index i = 0; i < current_used_variables_names.size(); i++)
+       {
+           input_variables_names(i + index) = current_used_variables_names(i);
+       }
 
        index += current_used_variables_names.size();
    }
-*/
+
    return input_variables_names;
 }
 
@@ -1744,9 +1756,13 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
         Index target_index = target_columns_indices[i];
 
         const Tensor<string, 1> current_used_variables_names = columns[target_index].get_used_variables_names();
-/*
-        target_variables_names.embed(index, current_used_variables_names);
-*/
+
+//        target_variables_names.embed(index, current_used_variables_names);
+        for(Index i = 0; i < current_used_variables_names.size(); i++)
+        {
+            target_variables_names(i + index) = current_used_variables_names(i);
+        }
+
         index += current_used_variables_names.size();
     }
 
@@ -4787,7 +4803,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
    Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
    Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
-/*
+
 #pragma omp parallel for
 
    for(Index i = 0; i < input_columns_number; i++)
@@ -4828,12 +4844,12 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                correlations(i,j) = karl_pearson_correlations_missing_values(input, target);
            }
            else if(input_type == Numeric && target_type == Binary)
-           {
-               correlations(i,j) = logistic_correlations_missing_values(input, target);
+           {               
+               correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
            }
            else if(input_type == Binary && target_type == Numeric)
            {
-               correlations(i,j) = logistic_correlations_missing_values(input, target);
+               correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
            }
            else if(input_type == Categorical && target_type == Numeric)
            {
@@ -4841,7 +4857,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
            }
            else if(input_type == Numeric && target_type == Categorical)
            {
-               correlations(i,j) = one_way_anova_correlations_missing_values(target, input);
+               correlations(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
            }
            else
            {
@@ -4855,7 +4871,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
            }
        }
    }
-*/
+
    return correlations;
 }
 
@@ -4867,7 +4883,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
 Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_type() const
 {
-/*
+
     Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
@@ -4884,8 +4900,6 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_type() cons
     }
 
     return correlations_type;
-*/
-    return Tensor<type, 2>();
 }
 
 

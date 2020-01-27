@@ -440,16 +440,25 @@ Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& input
     Tensor<type, 1> error_gradient(parameters_number);
 
     Index index = 0;
-/*
-    error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
-*/
+
+//    error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
+    for(Index i = 0; i < trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]).size(); i++)
+    {
+        error_gradient(i + index) = (trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]))(i);
+    }
+
     index += trainable_layers_parameters_number[0];
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-/*
-      error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
-*/
+
+//      error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
+      for(Index i = 0; i < trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]).size(); i++)
+      {
+          error_gradient(i + index) = (trainable_layers_pointers[i]->calculate_error_gradient(
+                                      forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]))(i);
+      }
+
       index += trainable_layers_parameters_number[i];
     }
 
@@ -505,16 +514,24 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
    Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
    Index index = 0;
-/*
-   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
-*/
+
+//   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
+   for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[0], inputs).size(); i++)
+   {
+       error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[0], inputs))(i);
+   }
+
    index += layers_parameters_number[0];
 
    for(Index i = 1; i < layers_number; i++)
    {
-/*
-      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
-*/
+
+//      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
+      for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations).size(); i++)
+      {
+          error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations))(i);
+      }
+
       index += layers_parameters_number[i];
    }
 
