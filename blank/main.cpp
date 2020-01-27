@@ -60,6 +60,9 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
+        Tensor<type, 1> a(3);
+        a.setValues({1,2,3});
+
         return 0;
 
     }

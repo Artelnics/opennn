@@ -1460,7 +1460,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = atoi(element->GetText());
+            const type new_maximum_time = atof(element->GetText());
 
             try
             {
