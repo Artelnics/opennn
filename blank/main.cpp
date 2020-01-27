@@ -85,6 +85,8 @@ int main(void)
     {
         cout << "Hello Blank Application." << endl;
 
+        cout << Tensor<type, 2>(2,2).setConstant(2) << endl;
+
 
         return 0;
     }

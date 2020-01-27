@@ -54,10 +54,10 @@ type l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
 
 type l1_norm(const Tensor<type, 1>& vector)
 {
-/*
-  return absolute_value(vector).sum();
-*/
-    return 0;
+
+   Tensor<type, 0> l1 = (vector.abs()).sum();
+
+   return l1(0);
 }
 
 

@@ -220,7 +220,7 @@ ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer() const
         throw logic_error(buffer.str());
     }
 
-    return(conjugate_gradient_pointer);
+    return conjugate_gradient_pointer;
 }
 
 
@@ -260,7 +260,7 @@ LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm
         throw logic_error(buffer.str());
     }
 
-    return(Levenberg_Marquardt_algorithm_pointer);
+    return Levenberg_Marquardt_algorithm_pointer;
 }
 
 
@@ -280,7 +280,7 @@ StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent_poi
         throw logic_error(buffer.str());
     }
 
-    return(stochastic_gradient_descent_pointer);
+    return stochastic_gradient_descent_pointer;
 }
 
 
@@ -300,7 +300,7 @@ AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation_point
         throw logic_error(buffer.str());
     }
 
-    return(adaptive_moment_estimation_pointer);
+    return adaptive_moment_estimation_pointer;
 }
 
 
@@ -324,7 +324,7 @@ SumSquaredError* TrainingStrategy::get_sum_squared_error_pointer() const
 
      #endif
 
-    return(sum_squared_error_pointer);
+    return sum_squared_error_pointer;
 }
 
 
@@ -348,7 +348,7 @@ MeanSquaredError* TrainingStrategy::get_mean_squared_error_pointer() const
 
      #endif
 
-    return(mean_squared_error_pointer);
+    return mean_squared_error_pointer;
 }
 
 
@@ -374,7 +374,7 @@ NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error_pointer()
 
      #endif
 
-    return(normalized_squared_error_pointer);
+    return normalized_squared_error_pointer;
 }
 
 
@@ -402,7 +402,7 @@ MinkowskiError* TrainingStrategy::get_Minkowski_error_pointer() const
 
      #endif
 
-    return(Minkowski_error_pointer);
+    return Minkowski_error_pointer;
 }
 
 
@@ -428,7 +428,7 @@ CrossEntropyError* TrainingStrategy::get_cross_entropy_error_pointer() const
 
      #endif
 
-    return(cross_entropy_error_pointer);
+    return cross_entropy_error_pointer;
 }
 
 
@@ -456,14 +456,14 @@ WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer() con
 
      #endif
 
-    return(weighted_squared_error_pointer);
+    return weighted_squared_error_pointer;
 }
 
 /// Returns the type of the main loss algorithm composing this training strategy object.
 
 const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 {
-   return(loss_method);
+   return loss_method;
 }
 
 
@@ -471,7 +471,7 @@ const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 
 const TrainingStrategy::OptimizationMethod& TrainingStrategy::get_optimization_method() const
 {
-   return(optimization_method);
+   return optimization_method;
 }
 
 
@@ -728,13 +728,13 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
    {
       case SUM_SQUARED_ERROR:
       {
-/*
-         sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
+
+//         sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
 
          sum_squared_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(sum_squared_error_pointer);
-*/
+
       }
       break;
 
@@ -750,49 +750,49 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 
       case NORMALIZED_SQUARED_ERROR:
       {
-/*
+
          normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
 
          normalized_squared_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(normalized_squared_error_pointer);
-*/
+
       }
       break;
 
       case MINKOWSKI_ERROR:
       {
-/*
-         Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
+
+//         Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
 
          Minkowski_error_pointer->set_regularization_method(regularization_method);
 
          set_loss_index_pointer(Minkowski_error_pointer);
-*/
+
       }
       break;
 
       case WEIGHTED_SQUARED_ERROR:
       {
-/*
-        weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
+
+//        weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
 
         weighted_squared_error_pointer->set_regularization_method(regularization_method);
 
         set_loss_index_pointer(weighted_squared_error_pointer);
-*/
+
       }
       break;
 
       case CROSS_ENTROPY_ERROR:
       {
-/*
+
         cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
 
         cross_entropy_error_pointer->set_regularization_method(regularization_method);
 
         set_loss_index_pointer(cross_entropy_error_pointer);
-*/
+
       }
       break;
    }
