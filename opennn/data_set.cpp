@@ -7228,9 +7228,44 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-/*
-    data.save_binary(binary_data_file_name);
-*/
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: DataSet template." << endl
+              << "void save_data_binary(const string) method." << endl
+              << "Cannot open data binary file." << endl;
+
+       throw logic_error(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = data.dimension(1);
+    Index rows_number = data.dimension(0);
+
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
 }
 
 
