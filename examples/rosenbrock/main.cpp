@@ -71,15 +71,15 @@ int main(void)
 
         data_set.set_training();
 
-
-
         data_set.set_batch_instances_number(2);
 
 
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = 1000;
+
+        const Index hidden_neurons_number = 1;
+
         const Index outputs_number = data_set.get_target_variables_number();
 
         Tensor<Index, 1> arquitecture(3);
@@ -88,13 +88,16 @@ int main(void)
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
 
-        // Training strategy object
+        // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+
         training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
+
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
