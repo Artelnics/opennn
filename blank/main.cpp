@@ -83,20 +83,16 @@ int main(void)
 {
     try
     {
+        cout << "Hello Blank Application." << endl;
 
+        Tensor<type, 1 > a(4);
+        a.setValues({1,2,3,4});
 
-        Index value = 3;
+        cout << a << endl;
 
-        Tensor<Index, 1> vector(3);
+        a.setConstant(1);
 
-        vector.setZero();
-
-        for(Index i=0; i<10; i++)
-        {
-
-            push_back(vector, i);
-
-        }
+        cout << a << endl;
 
         return 0;
     }
