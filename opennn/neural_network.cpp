@@ -116,7 +116,15 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
     if(check_layer_type(layer_type))
     {
-        layers_pointers;//.push_back(layer_pointer);
+        const Index old_layers_number = get_layers_number();
+
+        Tensor<Layer*, 1> old_layers_pointers = get_layers_pointers();
+
+        layers_pointers.resize(old_layers_number+1);
+
+        for(Index i = 0; i < old_layers_number; i++) layers_pointers(i) = old_layers_pointers(i);
+
+        layers_pointers(old_layers_number) = layer_pointer;
     }
     else
     {
@@ -129,7 +137,6 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw logic_error(buffer.str());
     }
-
 }
 
 
@@ -356,7 +363,11 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<Layer*, 1> trainable_layers_pointers;
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Layer*, 1> trainable_layers_pointers(trainable_layers_number);
+
+    Index trainable_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -364,9 +375,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
-/*
-            trainable_layers_pointers.push_back(layers_pointers[i]);
-*/
+            trainable_layers_pointers[trainable_layer_index] = layers_pointers[i];
+            trainable_layer_index++;
         }
     }
 

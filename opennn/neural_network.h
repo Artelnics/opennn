@@ -116,6 +116,7 @@ public:
                    layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
                    layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
+
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
                {
@@ -374,9 +375,13 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
+       cout<<"trainable_layers_pointer"<<trainable_layers_pointers[0];
+
        // First layer
 
+
        trainable_layers_pointers[0]->calculate_forward_propagation(thread_pool_device, batch.inputs_2d, forward_propagation.layers[0]);
+
 
        // Rest of layers
 
