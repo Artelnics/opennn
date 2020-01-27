@@ -3376,10 +3376,31 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
 
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 {
-/*
+
     const Tensor<string, 1> variable_names = get_variables_names();
 
-    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
+    Index size = 0;
+
+    for(Index i = 0; i < variable_names.size(); i++)
+    {
+        if(variable_names(i) ==  variable_name) size++;
+    }
+
+    Tensor<Index, 1> variable_index(size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < variable_names.size(); i++)
+    {
+        if(variable_names(i) ==  variable_name)
+        {
+            variable_index(index) = i;
+
+            index++;
+        }
+    }
+
+//    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3409,8 +3430,8 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 
 #endif
     return data.chip(variable_index[0], 1);
-*/
-    return Tensor<type, 1>();
+
+//    return Tensor<type, 1>();
 }
 
 
@@ -3420,7 +3441,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 
 Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& instances_indices) const
 {
-/*
+
    #ifdef __OPENNN_DEBUG__
 
    const Index variables_number = get_variables_number();
@@ -3438,9 +3459,20 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Te
 
    #endif
 
-   return(data.get_column(variable_index, instances_indices));
-*/
-    return Tensor<type, 1>();
+   const Index instances_indices_size = instances_indices.size();
+
+   Tensor<type, 1 > column(instances_indices_size);
+
+   for(Index i = 0; i < instances_indices_size; i++)
+   {
+       Index instance_index = instances_indices(i);
+
+       column(i) = data(instance_index, variable_index);
+   }
+
+    return column;
+//   return(data.get_column(variable_index, instances_indices));
+
 }
 
 
