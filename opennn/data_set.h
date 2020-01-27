@@ -356,9 +356,6 @@ public:
    Tensor<type, 2> get_input_data(const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_target_data(const Tensor<Index, 1>&) const;
 
-   Tensor<float, 2> get_input_data_float(const Tensor<Index, 1>&) const;
-   Tensor<float, 2> get_target_data_float(const Tensor<Index, 1>&) const;
-
    Tensor<type, 2> get_training_input_data() const;
    Tensor<type, 2> get_training_target_data() const;
 
@@ -785,6 +782,7 @@ public:
 
    Tensor<Index, 1> count_nan_columns() const;
    Index count_rows_with_nan() const;
+   Index count_nan() const;
 
    // Eigen methods
 

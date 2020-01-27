@@ -3014,70 +3014,6 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& instances_indic
 }
 
 
-/// Returns a matrix with the input variables in the data set is float type.
-/// The number of rows is the number of
-/// The number of columns is the number of input variables.
-
-Tensor<float, 2> DataSet::get_input_data_float(const Tensor<Index, 1>& instances_indices) const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index instances_number = instances_indices.size();
-    const Index inputs_number = input_variables_indices.size();
-
-    Tensor<float, 2> inputs_float(instances_number, inputs_number);
-
-    Index instance_index;
-    Index input_index;
-
-    for(Index i = 0; i < instances_number; i++)
-    {
-       instance_index = instances_indices[i];
-
-       for(Index j = 0; j < inputs_number; j++)
-       {
-          input_index = input_variables_indices[j];
-          inputs_float(i,j) = static_cast<float>(data(instance_index,input_index));
-       }
-    }
-
-    return(inputs_float);
-}
-
-
-/// Returns a matrix with the target variables in the data set is float type.
-/// The number of rows is the number of
-/// The number of columns is the number of input variables.
-
-Tensor<float, 2> DataSet::get_target_data_float(const Tensor<Index, 1>& instances_indices) const
-{
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    const Index instances_number = instances_indices.size();
-
-    const Index targets_number = target_variables_indices.size();
-
-    Tensor<float, 2> targets_float(instances_number, targets_number);
-
-    Index instance_index;
-    Index target_index;
-
-    for(Index i = 0; i < instances_number; i++)
-    {
-       instance_index = instances_indices[i];
-
-       for(Index j = 0; j < targets_number; j++)
-       {
-          target_index = target_variables_indices[j];
-
-          targets_float(i,j) = static_cast<float>(data(instance_index,target_index));
-       }
-    }
-
-    return targets_float;
-}
-
-
 /// Returns a matrix with training instances and input variables.
 /// The number of rows is the number of training
 /// The number of columns is the number of input variables.
@@ -3312,7 +3248,10 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
     }
     else
     {
-        return Tensor<Index, 1>(index);
+        Tensor<Index, 1> indices(1);
+        indices.setConstant(index);
+
+        return indices;
     }
 }
 
@@ -6618,7 +6557,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
-    const Index missing_values_number = 0;//data.count_nan();
+    const Index missing_values_number = count_nan();
 
     {
         file_stream.OpenElement("MissingValuesNumber");
@@ -6635,13 +6574,20 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         // Columns missing values number
 
-        count_nan_columns();
-
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
+            const auto columns_missing_values_number = count_nan_columns();
+            const Index columns_number = columns_missing_values_number.size();
+
             buffer.str("");
-            buffer << "0";//data.count_nan_columns();
+
+            for (Index i = 0; i < columns_number; i++)
+            {
+                buffer << columns_missing_values_number(i);
+
+                if(i != (columns_number-1)) buffer << " ";
+            }
 
             file_stream.PushText(buffer.str().c_str());
 
@@ -6654,14 +6600,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.OpenElement("RowsMissingValuesNumber");
 
             buffer.str("");
-            buffer << "0";//data.count_rows_with_nan();
+            buffer << count_rows_with_nan();
 
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
         }
     }
-
     // Missing values
 
     file_stream.CloseElement();
@@ -8649,22 +8594,12 @@ void DataSet::scrub_missing_values()
 void DataSet::read_csv()
 {
     read_csv_1();
-cout << "read_csv_1" << endl;
-
-cout << "data_preview[0]: " << data_file_preview[0] << endl;
-cout << "data_preview[1]: " << data_file_preview[1] << endl;
-cout << "data_preview[2]: " << data_file_preview[2] << endl;
 
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
-        cout << "read_csv_2" << endl;
-
-//        cout << "Columns uses: " << get_columns_uses() << endl;
-
 
         read_csv_3_simple();
-        cout << "read_csv_3" << endl;
     }
     else
     {
@@ -8783,8 +8718,6 @@ void DataSet::read_csv_1()
     }
 
     const Index columns_number = data_file_preview[0].size();
-
-    cout << "Columns number: " << columns_number << endl;
 
     columns.resize(columns_number);
 
@@ -8956,8 +8889,6 @@ void DataSet::read_csv_3_simple()
         }
     }
 
-    cout << "end read header" << endl;
-
     // Read data
 
     while(file.good())
@@ -8988,8 +8919,6 @@ void DataSet::read_csv_3_simple()
 
         instance_index++;
     }
-
-    cout << "end read data" << endl;
 
     // Check Binary
 
@@ -9386,7 +9315,27 @@ void DataSet::get_tensor_2_d(const Tensor<Index, 1>& instances_indices, const Te
 
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
-    return Tensor<Index, 1>();
+    const Index columns_number = get_columns_number();
+    const Index rows_number = get_instances_number();
+
+    Tensor<Index, 1> nan_columns(get_columns_number());
+    nan_columns.setZero();
+
+    for(Index column_index = 0; column_index < columns_number; column_index++)
+    {
+        const Index current_variable_index = get_variable_indices(column_index)(0);
+
+        for(Index row_index = 0; row_index < rows_number; row_index++)
+        {
+            if(isnan(data(row_index,current_variable_index)))
+            {
+                nan_columns(column_index) = nan_columns(column_index) + 1;
+            }
+        }
+
+    }
+
+    return nan_columns;
 }
 
 
@@ -9394,8 +9343,8 @@ Index DataSet::count_rows_with_nan() const
 {
     Index rows_with_nan = 0;
 
-    const Index rows_number = static_cast<Index>(data.dimension(0));
-    const Index columns_number = static_cast<Index>(data.dimension(1));
+    const Index rows_number = data.dimension(0);
+    const Index columns_number = data.dimension(1);
 
     bool has_nan = true;
 
@@ -9417,6 +9366,29 @@ Index DataSet::count_rows_with_nan() const
 
     return rows_with_nan;
 }
+
+
+Index DataSet::count_nan() const
+{
+    const Index rows_number = data.dimension(0);
+    const Index columns_number = data.dimension(1);
+
+    Index nan_number = 0;
+
+    for(Index row_index = 0; row_index < rows_number; row_index++)
+    {
+        for(Index column_index = 0; column_index < columns_number; column_index++)
+        {
+            if(isnan(data(row_index, column_index)))
+            {
+                nan_number++;
+            }
+        }
+    }
+
+    return nan_number;
+}
+
 
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const
