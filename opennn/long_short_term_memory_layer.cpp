@@ -2005,10 +2005,10 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
      const Tensor<type, 2> new_state_recurrent_weights(new_recurrent_weights.get_matrix(2));
      const Tensor<type, 2> new_output_recurrent_weights(new_recurrent_weights.get_matrix(3));
 
-     const Tensor<type, 1> new_forget_biases(new_biases.get_column(0));
-     const Tensor<type, 1> new_input_biases(new_biases.get_column(1));
-     const Tensor<type, 1> new_state_biases(new_biases.get_column(2));
-     const Tensor<type, 1> new_output_biases(new_biases.get_column(3));
+     const Tensor<type, 1> new_forget_biases(new_biases.chip(0,1));
+     const Tensor<type, 1> new_input_biases(new_biases.chip(1,1));
+     const Tensor<type, 1> new_state_biases(new_biases.chip(2,1));
+     const Tensor<type, 1> new_output_biases(new_biases.chip(3,1));
 
      const Index instances_number = inputs.dimension(0);
 
