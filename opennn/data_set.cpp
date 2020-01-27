@@ -3482,10 +3482,31 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Te
 
 Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Tensor<Index, 1>& instances_indices) const
 {
-    /*
+
     const Tensor<string, 1> variable_names = get_variables_names();
 
-    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
+    Index size = 0;
+
+    for(Index i = 0; i < variable_names.size(); i++)
+    {
+        if(variable_names(i) ==  variable_name) size++;
+    }
+
+    Tensor<Index, 1> variable_index(size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < variable_names.size(); i++)
+    {
+        if(variable_names(i) ==  variable_name)
+        {
+            variable_index(index) = i;
+
+            index++;
+        }
+    }
+
+//    const Tensor<Index, 1> variable_index = variable_names.get_indices_equal_to(variable_name);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3515,9 +3536,20 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 
 #endif
 
-    return(data.get_column(variable_index[0], instances_indices));
-*/
-    return Tensor<type, 1>();
+    const Index instances_indices_size = instances_indices.size();
+
+    Tensor<type, 1 > column(instances_indices_size);
+
+    for(Index i = 0; i < instances_indices_size; i++)
+    {
+        Index instance_index = instances_indices(i);
+
+        column(i) = data(instance_index, variable_index(0));
+    }
+
+    return column;
+
+//    return(data.get_column(variable_index[0], instances_indices));
 }
 
 
