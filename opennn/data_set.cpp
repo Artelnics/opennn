@@ -4698,6 +4698,7 @@ Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) co
 /*
    return descriptives_missing_values(data.chip(input_index,1));
 */
+    return Descriptives();
 }
 
 
