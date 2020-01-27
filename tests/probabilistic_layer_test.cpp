@@ -20,7 +20,7 @@ ProbabilisticLayerTest::~ProbabilisticLayerTest()
 
 }
 
-/*
+
 void ProbabilisticLayerTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -115,7 +115,7 @@ void ProbabilisticLayerTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-
+/*
 void ProbabilisticLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
