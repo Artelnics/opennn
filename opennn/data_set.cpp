@@ -2908,7 +2908,7 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 
 Tensor<type, 2> DataSet::get_training_data() const
 {
-
+/*
    const Index variables_number = get_variables_number();
 
    Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
@@ -2916,7 +2916,8 @@ Tensor<type, 2> DataSet::get_training_data() const
    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
    return get_data_subtensor(training_indices, variables_indices);
-
+   */
+   return Tensor<type,2>();
 }
 
 
