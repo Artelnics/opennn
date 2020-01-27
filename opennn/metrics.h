@@ -28,6 +28,7 @@ namespace OpenNN
     type sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     type l1_norm(const Tensor<type, 1>&);
+    type l2_norm(const Tensor<type, 1>& vector);
     type l2_norm(const ThreadPoolDevice&, const Tensor<type, 1>&);
 
     Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const type&);

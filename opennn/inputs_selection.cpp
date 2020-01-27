@@ -111,7 +111,7 @@ const Index& InputsSelection::get_trials_number() const
 
 const bool& InputsSelection::get_reserve_error_data() const
 {
-    return(reserve_error_data);
+    return reserve_error_data;
 }
 
 
@@ -119,7 +119,7 @@ const bool& InputsSelection::get_reserve_error_data() const
 
 const bool& InputsSelection::get_reserve_selection_error_data() const
 {
-    return(reserve_selection_error_data);
+    return reserve_selection_error_data;
 }
 
 
@@ -127,7 +127,7 @@ const bool& InputsSelection::get_reserve_selection_error_data() const
 
 const bool& InputsSelection::get_reserve_minimal_parameters() const
 {
-    return(reserve_minimal_parameters);
+    return reserve_minimal_parameters;
 }
 
 
@@ -168,7 +168,7 @@ const type& InputsSelection::get_maximum_time() const
 
 const type& InputsSelection::get_maximum_correlation() const
 {
-    return(maximum_correlation);
+    return maximum_correlation;
 }
 
 
@@ -176,7 +176,7 @@ const type& InputsSelection::get_maximum_correlation() const
 
 const type& InputsSelection::get_minimum_correlation() const
 {
-    return(minimum_correlation);
+    return minimum_correlation;
 }
 
 
@@ -184,7 +184,7 @@ const type& InputsSelection::get_minimum_correlation() const
 
 const type& InputsSelection::get_tolerance() const
 {
-    return(tolerance);
+    return tolerance;
 }
 
 

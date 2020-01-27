@@ -110,7 +110,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 
 const type& QuasiNewtonMethod::get_warning_parameters_norm() const
 {
-   return(warning_parameters_norm);       
+   return warning_parameters_norm;
 }
 
 
@@ -118,7 +118,7 @@ const type& QuasiNewtonMethod::get_warning_parameters_norm() const
 
 const type& QuasiNewtonMethod::get_warning_gradient_norm() const
 {
-   return(warning_gradient_norm);       
+   return warning_gradient_norm;
 }
 
 
@@ -126,7 +126,7 @@ const type& QuasiNewtonMethod::get_warning_gradient_norm() const
 
 const type& QuasiNewtonMethod::get_warning_learning_rate() const
 {
-   return(warning_learning_rate);
+   return warning_learning_rate;
 }
 
 
@@ -134,7 +134,7 @@ const type& QuasiNewtonMethod::get_warning_learning_rate() const
 
 const type& QuasiNewtonMethod::get_error_parameters_norm() const
 {
-   return(error_parameters_norm);
+   return error_parameters_norm;
 }
 
 
@@ -143,7 +143,7 @@ const type& QuasiNewtonMethod::get_error_parameters_norm() const
 
 const type& QuasiNewtonMethod::get_error_gradient_norm() const
 {
-   return(error_gradient_norm);
+   return error_gradient_norm;
 }
 
 
@@ -152,7 +152,7 @@ const type& QuasiNewtonMethod::get_error_gradient_norm() const
 
 const type& QuasiNewtonMethod::get_error_learning_rate() const
 {
-   return(error_learning_rate);
+   return error_learning_rate;
 }
 
 // const Index& get_epochs_number() const method
@@ -161,7 +161,7 @@ const type& QuasiNewtonMethod::get_error_learning_rate() const
 
 const Index& QuasiNewtonMethod::get_epochs_number() const
 {
-   return(epochs_number);
+   return epochs_number;
 }
 
 
@@ -171,7 +171,7 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
 {
-   return(minimum_parameters_increment_norm);
+   return minimum_parameters_increment_norm;
 }
 
 
@@ -181,7 +181,7 @@ const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
 
 const type& QuasiNewtonMethod::get_minimum_loss_increase() const
 {
-   return(minimum_loss_decrease);
+   return minimum_loss_decrease;
 }
 
 
@@ -190,7 +190,7 @@ const type& QuasiNewtonMethod::get_minimum_loss_increase() const
 
 const type& QuasiNewtonMethod::get_loss_goal() const
 {
-   return(loss_goal);
+   return loss_goal;
 }
 
 
@@ -201,7 +201,7 @@ const type& QuasiNewtonMethod::get_loss_goal() const
 
 const type& QuasiNewtonMethod::get_gradient_norm_goal() const
 {
-   return(gradient_norm_goal);
+   return gradient_norm_goal;
 }
 
 
@@ -209,7 +209,7 @@ const type& QuasiNewtonMethod::get_gradient_norm_goal() const
 
 const Index& QuasiNewtonMethod::get_maximum_selection_error_decreases() const
 {
-   return(maximum_selection_error_decreases);
+   return maximum_selection_error_decreases;
 }
 
 
@@ -217,7 +217,7 @@ const Index& QuasiNewtonMethod::get_maximum_selection_error_decreases() const
 
 const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
 {
-   return(maximum_epochs_number);
+   return maximum_epochs_number;
 }
 
 
@@ -225,7 +225,7 @@ const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
 
 const type& QuasiNewtonMethod::get_maximum_time() const
 {
-   return(maximum_time);
+   return maximum_time;
 }
 
 
@@ -233,7 +233,7 @@ const type& QuasiNewtonMethod::get_maximum_time() const
 
 const bool& QuasiNewtonMethod::get_return_minimum_selection_error_neural_network() const
 {
-    return(return_minimum_selection_error_neural_network);
+    return return_minimum_selection_error_neural_network;
 }
 
 
@@ -241,7 +241,7 @@ const bool& QuasiNewtonMethod::get_return_minimum_selection_error_neural_network
 
 const bool& QuasiNewtonMethod::get_apply_early_stopping() const
 {
-    return(apply_early_stopping);
+    return apply_early_stopping;
 }
 
 
@@ -249,7 +249,7 @@ const bool& QuasiNewtonMethod::get_apply_early_stopping() const
 
 const bool& QuasiNewtonMethod::get_reserve_training_error_history() const
 {
-   return(reserve_training_error_history);
+   return reserve_training_error_history;
 }
 
 
@@ -257,7 +257,7 @@ const bool& QuasiNewtonMethod::get_reserve_training_error_history() const
 
 const bool& QuasiNewtonMethod::get_reserve_selection_error_history() const
 {
-   return(reserve_selection_error_history);
+   return reserve_selection_error_history;
 }
 
 
