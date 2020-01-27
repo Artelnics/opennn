@@ -61,7 +61,6 @@ int main(void)
         cout << "Hello Blank Application" << endl;
 
         return 0;
-
     }
        catch(exception& e)
     {
