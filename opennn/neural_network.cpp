@@ -113,10 +113,10 @@ NeuralNetwork::~NeuralNetwork()
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
     const Layer::Type layer_type = layer_pointer->get_type();
-/*
+
     if(check_layer_type(layer_type))
     {
-        layers_pointers.push_back(layer_pointer);
+        layers_pointers;//.push_back(layer_pointer);
     }
     else
     {
@@ -129,7 +129,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw logic_error(buffer.str());
     }
-*/
+
 }
 
 

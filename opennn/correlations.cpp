@@ -2849,20 +2849,20 @@ Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
 
     Tensor<type, 1> first_column;
     Tensor<type, 1> second_column;
-/*
+
     for(Index i = 0; i < size; i++)
     {
-        first_column = matrix.get_column(i);
+        first_column = matrix.chip(i,1);
 
         for(Index j = i; j < size; j++)
         {
-            second_column = matrix.get_column(j);
+            second_column = matrix.chip(j,1);
 
             covariance_matrix(i,j) = covariance(first_column, second_column);
             covariance_matrix(j,i) = covariance_matrix(i,j);
         }
     }
-*/
+
     return covariance_matrix;
 }
 
@@ -2984,8 +2984,8 @@ Tensor<Index, 2> contingency_table(Tensor<string, 2>& matrix)
 
     matrix.set_header({"variable1", "variable2"});
 
-    const Tensor<string, 1> vector1 = matrix.get_column(0);
-    const Tensor<string, 1> vector2 = matrix.get_column(1);
+    const Tensor<string, 1> vector1 = matrix.chip(0,1);
+    const Tensor<string, 1> vector2 = matrix.chip(1,1);
 
     const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
     const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();

@@ -4668,16 +4668,18 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     const Index variables_number = variables_indices.size();
 
     Tensor<type, 1> means(variables_number);
-/*
+
 #pragma omp parallel for
 
     for(Index i = 0; i < variables_number; i++)
     {
         const Index variable_index = variables_indices[i];
 
-        means[i] = mean(data.get_column(variable_index));
+        Tensor<type, 1> mean = (data.chip(variable_index,1)).mean();
+
+        means(i) = mean(0);
     }
-*/
+
     return means;
 }
 
@@ -4694,9 +4696,8 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) const
 {
 /*
-   return descriptives_missing_values(data.get_column(input_index));
+   return descriptives_missing_values(data.chip(input_index,1));
 */
-   return Descriptives();
 }
 
 
@@ -4704,14 +4705,13 @@ Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) co
 
 Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 {
-/*
+
     const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     return mean_missing_values(data, training_indices, target_variables_indices);
-*/
-    return Tensor<type, 1>();
+
 }
 
 
