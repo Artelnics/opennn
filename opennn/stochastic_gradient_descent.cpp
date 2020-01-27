@@ -833,14 +833,17 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
-            batch.print();system("pause");
-/*
-//            Neural network
+//          Neural network
+
 
             neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
-            forward_propagation.print(); system("pause");
 
+
+//            forward_propagation.print();
+
+//            system("pause");
+/*
 //           Loss
 
            loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
