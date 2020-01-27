@@ -939,13 +939,17 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-/*
+
         const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
 
-        parameters.embed(position, layer_parameters);
+//        parameters.embed(position, layer_parameters);
+        for(Index i = 0; i < layer_parameters.size(); i++)
+        {
+            parameters(i + position) = layer_parameters(i);
+        }
 
         position += layer_parameters.size();
-*/
+
     }
 
     return parameters;

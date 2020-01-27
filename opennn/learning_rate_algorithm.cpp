@@ -74,7 +74,7 @@ LossIndex* LearningRateAlgorithm::get_loss_index_pointer() const
 
     #endif
 
-   return(loss_index_pointer);
+   return loss_index_pointer;
 }
 
 
