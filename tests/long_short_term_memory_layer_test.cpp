@@ -434,7 +434,7 @@ void LongShortTermMemoryLayerTest::test_set_recurrent_weights()
 
     LongShortTermMemoryLayer long_short_term_memory_layer(1, 2);
 
-    Tensor<double, 2> recurrent_weights({2, 2, 4},  0.0);
+    Tensor<double, 2> recurrent_weights({2, 2, 4}, 0.0);
 
     long_short_term_memory_layer.set_forget_recurrent_weights(recurrent_weights.get_matrix(0));
     long_short_term_memory_layer.set_input_recurrent_weights(recurrent_weights.get_matrix(1));

@@ -2283,13 +2283,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
 
      Tensor<type, 1> forget_weights_error_gradient(parameters_number, 0.0);
 
-     Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
+     Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number,  0.0);
+     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number, 0.0);
 
      const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
      const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2393,13 +2393,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
 
     Tensor<type, 1> input_weights_error_gradient(parameters_number, 0.0);
 
-    Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-    Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number, 0.0);
 
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2502,13 +2502,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
 
     Tensor<type, 1> state_weights_error_gradient(parameters_number, 0.0);
 
-    Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-    Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number, 0.0);
 
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2611,13 +2611,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
 
      Tensor<type, 1> output_weights_error_gradient(parameters_number, 0.0);
 
-     Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
+     Tensor<type, 2> input_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> forget_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> state_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> output_combinations_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number,  0.0);
-     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number,  0.0);
+     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number, 0.0);
+     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number, 0.0);
 
      const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
      const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2719,13 +2719,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
 
     Tensor<type, 1> forget_recurrent_weights_error_gradient(parameters_number, 0.0);
 
-    Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-    Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2822,13 +2822,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
 
    Tensor<type, 1> input_recurrent_weights_error_gradient(parameters_number, 0.0);
 
-   Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-   Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
    const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
    const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -2924,13 +2924,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
 
    Tensor<type, 1> state_recurrent_weights_error_gradient(parameters_number, 0.0);
 
-   Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-   Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+   Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
    const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
    const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -3026,13 +3026,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
 
     Tensor<type, 1> output_recurrent_weights_error_gradient(parameters_number, 0.0);
 
-    Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> state_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> output_combinations_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
-    Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number, 0.0);
 
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -3128,13 +3128,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
 
     Tensor<type, 1> forget_biases_error_gradient(parameters_number, 0.0);
 
-    Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number, 0.0);
 
-    Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number, 0.0);
+    Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number, 0.0);
 
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
@@ -3210,21 +3210,20 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
                                                                                const Tensor<type, 2>& deltas,
                                                                                const Tensor<type, 2>& activations_states)
 {
-/*
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
-   Tensor<type, 1> input_biases_error_gradient(parameters_number, 0.0);
+   Tensor<type, 1> input_biases_error_gradient(parameters_number);
 
-   Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number);
 
-   Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number,  0.0);
-
+   Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
+/*
    const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
    const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
    const Tensor<type, 2> state_activations = activations_states.get_matrix(2);
@@ -3237,7 +3236,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
    const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
    const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-   for(Index instance = 0; instance < instances_number; instance++)
+   for(Index instance = 0; instance < instances_number; instance++), 0.0);
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
@@ -3300,21 +3299,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
                                                                                const Tensor<type, 2>& deltas,
                                                                                const Tensor<type, 2>& activations_states)
 {
-/*
+
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
-   Tensor<type, 1> state_biases_error_gradient(parameters_number, 0.0);
+   Tensor<type, 1> state_biases_error_gradient(parameters_number);
 
-   Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
+   Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number);
 
-   Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number,  0.0);
-   Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number,  0.0);
-
+   Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
+   Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
+/*
    const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
    const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
    const Tensor<type, 2> state_activations = activations_states.get_matrix(2);
@@ -3389,21 +3388,20 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
                                                                                 const Tensor<type, 2>& deltas,
                                                                                 const Tensor<type, 2>& activations_states)
 {
-/*
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
-    Tensor<type, 1> output_biases_error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> output_biases_error_gradient(parameters_number);
 
-    Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> input_combinations_biases_derivatives(parameters_number, neurons_number);
+    Tensor<type, 2> forget_combinations_biases_derivatives(parameters_number, neurons_number);
+    Tensor<type, 2> state_combinations_biases_derivatives(parameters_number, neurons_number);
+    Tensor<type, 2> output_combinations_biases_derivatives(parameters_number, neurons_number);
 
-    Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number,  0.0);
-    Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number,  0.0);
-
+    Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
+    Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
+/*
     const Tensor<type, 2> forget_activations = activations_states.get_matrix(0);
     const Tensor<type, 2> input_activations = activations_states.get_matrix(1);
     const Tensor<type, 2> state_activations = activations_states.get_matrix(2);
@@ -3479,7 +3477,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
 
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-/*
+
     const Index neurons_number = get_neurons_number();
 
     const Index inputs_number = get_inputs_number();
@@ -3517,7 +3515,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
    ostringstream buffer;
 
    // Forget gate
-
+/*
    for(Index j = 0; j < neurons_number; j++)
    {
        buffer << "forget_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[j] << "+";
