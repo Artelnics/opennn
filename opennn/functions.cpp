@@ -900,7 +900,7 @@ Tensor<type, 2> softmax_columns(const Tensor<type, 2>& matrix)
 /*
     for(Index i = 0; i < columns_number; i++)
     {
-        softmax.set_column(i, OpenNN::softmax(matrix.get_column(i)));
+        softmax.set_column(i, OpenNN::softmax(matrix.chip(i,1)));
     }
 */
     return softmax;
@@ -1345,7 +1345,7 @@ Tensor<type, 2> normalized_columns(const Tensor<type, 2>& matrix)
 /*
     for(Index i = 0; i < columns_number; i++)
     {
-        softmax.set_column(i, normalized(matrix.get_column(i)));
+        softmax.set_column(i, normalized(matrix.chip(i,1)));
     }
 */
     return softmax;

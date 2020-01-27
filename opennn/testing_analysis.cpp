@@ -281,12 +281,12 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression(const Tensor<typ
     const Index outputs_number = data_set_pointer->get_target_variables_number();
 
    Tensor<RegressionResults, 1> linear_regression(outputs_number);
-/*
+
    for(Index i = 0; i < outputs_number; i++)
    {
-       linear_regression[i] = OpenNN::linear_regression(output.get_column(i), target.get_column(i));
+       linear_regression[i] = OpenNN::linear_regression(output.chip(i,1), target.chip(i,1));
    }
-*/
+
    return linear_regression;
 }
 
@@ -362,11 +362,11 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
    // Approximation testing stuff
 
    Tensor<LinearRegressionAnalysis, 1> linear_regression_results(outputs_number);
-/*
+
    for(Index i = 0;  i < outputs_number; i++)
    {
-       const Tensor<type, 1> targets = testing_targets.get_column(i);
-       const Tensor<type, 1> outputs = testing_outputs.get_column(i);
+       const Tensor<type, 1> targets = testing_targets.chip(i,1);
+       const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
        const RegressionResults linear_regression = OpenNN::linear_regression(outputs, targets);
 
@@ -377,7 +377,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
        linear_regression_results[i].slope = linear_regression.b;
        linear_regression_results[i].correlation = linear_regression.correlation;
    }
-*/
+
    return linear_regression_results;
 }
 

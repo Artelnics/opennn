@@ -5294,7 +5294,7 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const type& minim
     {
         index = sorted_principal_components_indices[i];
 
-        principal_components.set_row(i, eigenvectors.get_column(index));
+        principal_components.set_row(i, eigenvectors.chip(index,1));
     }
 
     // Return feature matrix
@@ -5370,7 +5370,7 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const Tensor<type
     {
         index = sorted_principal_components_indices[i];
 
-        principal_components.set_row(i, eigenvectors.get_column(index));
+        principal_components.set_row(i, eigenvectors.chip(index,1));
     }
 
     // Return feature matrix
@@ -5654,7 +5654,7 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
 /*
-    Tensor<type, 1> column = data.get_column(input_index);
+    Tensor<type, 1> column = data.chip(input_index,1);
 
     scale_mean_standard_deviation(column, input_statistics);
 
@@ -5701,7 +5701,7 @@ Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_ind
 void DataSet::scale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
 /*
-    Tensor<type, 1> column = data.get_column(input_index);
+    Tensor<type, 1> column = data.chip(input_index,1);
 
     scale_standard_deviation(column, input_statistics);
 
@@ -5790,7 +5790,7 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
 /*
-    Tensor<type, 1> column = data.get_column(input_index);
+    Tensor<type, 1> column = data.chip(input_index,1);
 
     scale_minimum_maximum(column, input_statistics);
 
@@ -7967,7 +7967,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
         if(is_binary_variable(variable_index)) continue;
 
-        box_plots[i] = box_plot(data.get_column(variable_index));
+        box_plots[i] = box_plot(data.chip(variable_index,1));
     }
 
     for(Index i = 0; i < variables_number; i++)
