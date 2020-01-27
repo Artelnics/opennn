@@ -85,16 +85,6 @@ int main(void)
     {
         cout << "Hello Blank Application." << endl;
 
-        Tensor<type, 1 > a(4);
-        a.setValues({1,2,3,4});
-
-        Tensor<Index, 1> arquitecture(3);
-
-        arquitecture.setValues({4, 3, 1});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-
-        cout << neural_network.get_architecture() << endl;
 
         return 0;
     }

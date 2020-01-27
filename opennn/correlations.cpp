@@ -18,10 +18,10 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-/*
-  const Index n = x.size();
 
-  if(x.is_constant() || y.is_constant()) return 1.0;
+  const Index n = x.size();
+//@todo
+//  if(x.is_constant() || y.is_constant()) return 1.0;
 
   #ifdef __OPENNN_DEBUG__
 
@@ -90,8 +90,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
   }
 
   return linear_correlation;
-*/
-    return 0.0;
+
 }
 
 
@@ -130,15 +129,14 @@ type rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     }
 
     #endif
-/*
-    if(x.is_constant() || y.is_constant()) return 1;
+
+//    if(x.is_constant() || y.is_constant()) return 1;
 
     const Tensor<type, 1> ranks_x = less_rank_with_ties(x);
     const Tensor<type, 1> ranks_y = less_rank_with_ties(y);
 
     return linear_correlation(ranks_x, ranks_y);
-*/
-    return 0.0;
+
 }
 
 
