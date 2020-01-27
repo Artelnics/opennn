@@ -2653,13 +2653,13 @@ Tensor<type, 1> mean_missing_values(const Tensor<type, 2>& matrix, const Tensor<
 {
 
    const Index columns_indices_size = columns_indices.size();
+   const Index row_indices_size = row_indices.size();
 
    #ifdef __OPENNN_DEBUG__
 
    const Index rows_number = matrix.dimension(0);
    const Index columns_number = matrix.dimension(1);
 
-   const Index row_indices_size = row_indices.size();
 
    // Rows check
 
@@ -3082,10 +3082,10 @@ Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
     const Index columns_indices_size = columns_indices.size();
+    const Index row_indices_size = row_indices.size();
 
    #ifdef __OPENNN_DEBUG__
 
-   const Index row_indices_size = row_indices.size();
 
    // Rows check
 
