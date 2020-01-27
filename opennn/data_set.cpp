@@ -3799,14 +3799,14 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-/*
+
     data = new_data;
-*/
-//   set_instances_number(data.dimension(0));
+
+   set_instances_number(data.dimension(0));
 
 //   set_variables_number(data.dimension(1));
 
-//   set_instances_number(data.dimension(0));
+   set_instances_number(data.dimension(0));
 
     const Index instances_number = data.dimension(0);
     const Index variables_number = data.dimension(1);
@@ -4410,10 +4410,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives() const
 {
-/*
     return descriptives_missing_values(data);
-*/
-    return Tensor<Descriptives, 1>();
 }
 
 
@@ -4469,9 +4466,20 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     const Index target_index = get_target_variables_indices()[0];
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-/*
-    const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
 
+    const Index instances_number = used_instances_indices.size();
+
+    Tensor<type, 1 > targets(instances_number);
+
+    for (Index i = 0; i < instances_number; i++)
+    {
+        Index instace_index = used_instances_indices(i);
+
+        targets(i) = data(instace_index, target_index);
+    }
+
+//    const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
+/*
 #ifdef __OPENNN_DEBUG__
 
     if(!targets.is_binary())
@@ -4856,12 +4864,12 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
            if(input_type == Numeric && target_type == Numeric)
            {
-               correlations(i,j) = linear_correlations_missing_values(input.get_column(0), target.get_column(0));
+               correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
 
-               const CorrelationResults linear_correlation = linear_correlations_missing_values(input.get_column(0), target.get_column(0));
-               const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.get_column(0), target.get_column(0));
-               const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.get_column(0), target.get_column(0));
-               const CorrelationResults power_correlation = power_correlations_missing_values(input.get_column(0), target.get_column(0));
+               const CorrelationResults linear_correlation = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+               const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+               const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+               const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
 
                CorrelationResults strongest_correlation = linear_correlation;
 
@@ -4873,7 +4881,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
            }
            else if(input_type == Binary && target_type == Binary)
            {
-               correlations(i,j) = linear_correlations_missing_values(input.get_column(0), target.get_column(0));
+               correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
            }
            else if(input_type == Categorical && target_type == Categorical)
            {
@@ -4889,7 +4897,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
            }
            else if(input_type == Categorical && target_type == Numeric)
            {
-               correlations(i,j) = one_way_anova_correlations_missing_values(input, target.get_column(0));
+               correlations(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
            }
            else if(input_type == Numeric && target_type == Categorical)
            {
@@ -5054,19 +5062,19 @@ Tensor<type, 2> DataSet::calculate_inputs_correlations() const
 
             if(type_i == Numeric && type_j == Numeric)
             {
-                correlations(i,j) = linear_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
+                correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
 
-                const type linear_correlation = linear_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
-                const type exponential_correlation = exponential_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
-                const type logarithmic_correlation = logarithmic_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
-                const type power_correlation = power_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
+                const type linear_correlation = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                const type exponential_correlation = exponential_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                const type logarithmic_correlation = logarithmic_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                const type power_correlation = power_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
                 const Tensor<type, 1> correlations_i_j({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation});
 
                 correlations(i,j) = strongest(correlations_i_j);
             }
             else if(type_i == Binary && type_j == Binary)
             {
-                correlations(i,j) = linear_correlation_missing_values(column_i.get_column(0), column_j.get_column(0));
+                correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
             }
             else if(type_i == Categorical && type_j == Categorical)
             {
@@ -5082,11 +5090,11 @@ Tensor<type, 2> DataSet::calculate_inputs_correlations() const
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
-                correlations(i,j) = one_way_anova_correlation(column_i, column_j.get_column(0));
+                correlations(i,j) = one_way_anova_correlation(column_i, column_j.chip(0,1));
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
-                correlations(i,j) = one_way_anova_correlation(column_j, column_i.get_column(0));
+                correlations(i,j) = one_way_anova_correlation(column_j, column_i.chip(0,1));
             }
             else
             {
@@ -5239,7 +5247,7 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const type& minim
 
     // Calculate explained variance
 
-    const Tensor<type, 1> explained_variance = OpenNN::explained_variance(eigenvalues.get_column(0));
+    const Tensor<type, 1> explained_variance = OpenNN::explained_variance(eigenvalues.chip(0,1));
 
     // Sort principal components
 
@@ -8040,10 +8048,9 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_nu
 /*
     for(Index j = 0; j < variables_number; j++)
     {
-        autocorrelations.set_row(j, OpenNN::autocorrelations(data.get_column(j), maximum_lags_number));
+        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
     }
 */
-
     return autocorrelations;
 }
 
@@ -8057,17 +8064,17 @@ Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& la
     Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
 
     Tensor<type, 1> actual_column;
-/*
+
     for(Index i = 0; i < variables_number; i++)
     {
-        actual_column = data.get_column(i);
+        actual_column = data.chip(i,1);
 
         for(Index j = 0; j < variables_number; j++)
         {
-            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.get_column(j), lags_number);
+            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
         }
     }
-*/
+
     return cross_correlations;
 }
 
