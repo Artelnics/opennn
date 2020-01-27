@@ -98,7 +98,7 @@ bool LearningRateAlgorithm::has_loss_index() const
 
 const LearningRateAlgorithm::LearningRateMethod& LearningRateAlgorithm::get_learning_rate_method() const
 {
-   return(learning_rate_method);
+   return learning_rate_method;
 }
 
 
@@ -139,7 +139,7 @@ const type& LearningRateAlgorithm::get_loss_tolerance() const
 
 const type& LearningRateAlgorithm::get_warning_learning_rate() const
 {
-   return(warning_learning_rate);
+   return warning_learning_rate;
 }
 
 
@@ -148,7 +148,7 @@ const type& LearningRateAlgorithm::get_warning_learning_rate() const
 
 const type& LearningRateAlgorithm::get_error_learning_rate() const
 {
-   return(error_learning_rate);
+   return error_learning_rate;
 }
 
 
