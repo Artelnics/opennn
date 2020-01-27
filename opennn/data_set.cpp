@@ -7383,9 +7383,54 @@ void DataSet::fill_time_series(const Index& period )
 
 void DataSet::load_data_binary()
 {
-/*
-    data.load_binary(data_file_name);
-*/
+    ifstream file;
+
+    file.open(data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template.\n"
+               << "void load_binary(const string&) method.\n"
+               << "Cannot open binary file: " << data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    data = Tensor<type, 2>(rows_number, columns_number);
+
+    Index row_index = 0;
+    Index column_index = 0;
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+       data(row_index, column_index) = value;
+
+       row_index++;
+
+       if((i+1)%rows_number == 0)
+       {
+           column_index++;
+           row_index = 0;
+       }
+    }
+
+    file.close();
 }
 
 
