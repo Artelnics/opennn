@@ -745,12 +745,12 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
     const Index outputs_number = error_data.size();
 
     Tensor<Tensor<Index, 1>, 1> maximal_errors(outputs_number);
-/*
+
     for(Index i = 0; i < outputs_number; i++)
     {
-        maximal_errors[i] = maximal_indices(error_data[i].get_column(0), instances_number);
+        maximal_errors[i] = maximal_indices(error_data[i].chip(0,1), instances_number);
     }
-*/
+
     return maximal_errors;
 }
 
@@ -2687,9 +2687,9 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
 {
     Tensor<Histogram, 1> output_histogram(1);
-/*
-    output_histogram [0] = histogram(outputs.get_column(0), bins_number);
-*/
+
+//    output_histogram [0] = histogram(outputs.chip(0,1), bins_number);
+
     return output_histogram;
 }
 
@@ -3035,12 +3035,12 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     const Tensor<type, 2> error = targets - outputs;
 
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
-/*
+
     for(Index i = 0; i < targets_number; i++)
     {
-        error_autocorrelations[i] = autocorrelations(error.get_column(i), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(error.chip(i,1), maximum_lags_number);
     }
-*/
+
     return error_autocorrelations;
 }
 
@@ -3110,12 +3110,12 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     const Tensor<type, 2> errors = targets - outputs;
 
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
-/*
+
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(inputs.get_column(i), errors.get_column(i), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
-*/
+
     return inputs_errors_cross_correlation;
 }
 

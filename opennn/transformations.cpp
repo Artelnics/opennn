@@ -1424,7 +1424,7 @@ void transform_time_series(Tensor<type, 2>& matrix,
 
     const Index columns_number = matrix.dimension(1);
 
-    const Tensor<type, 1> time = matrix.get_column(time_index);
+    const Tensor<type, 1> time = matrix.chip(time_index,1);
 
     matrix = matrix.delete_column(time_index);
     const Index new_rows_number = rows_number - lags_number - steps_ahead_number + 1;
