@@ -281,10 +281,11 @@ public:
                                       const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
+       cout<<"here1";
        calculate_combinations(thread_pool_device, inputs, forward_propagation.combinations);
-
+cout<<"here2";
        calculate_activations(thread_pool_device, forward_propagation.combinations, forward_propagation.activations);
-
+cout<<"here3";
        calculate_activations_derivatives(thread_pool_device, forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
