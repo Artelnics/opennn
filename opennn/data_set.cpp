@@ -1262,6 +1262,7 @@ void DataSet::split_instances_random(const type& training_instances_ratio,
    Tensor<Index, 1> indices;
 
    intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+
    random_shuffle(indices.data(), indices.data() + indices.size());
 
    Index i = 0;
@@ -1303,13 +1304,11 @@ void DataSet::split_instances_random(const type& training_instances_ratio,
 
    // Testing
 
-///@todo it fails when debug.
-   /*
+
    Index count_testing = 0;
 
    while(count_testing != testing_instances_number)
    {
-
       index = indices[i];
 
       if(instances_uses[index] != UnusedInstance)
@@ -1318,9 +1317,7 @@ void DataSet::split_instances_random(const type& training_instances_ratio,
             count_testing++;
       }
 
-
       i++;
-*/
    }
 
 
@@ -9352,7 +9349,7 @@ Index DataSet::count_rows_with_nan() const
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const
 {
-    const Index new_size = (end-start)/step;
+    const Index new_size = (end-start)/step+1;
 
     new_tensor.resize(new_size);
     new_tensor[0] = start;
@@ -9387,6 +9384,7 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
     }
 
     return batches;
+}
 }
 
 
