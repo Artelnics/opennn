@@ -2908,7 +2908,7 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 
 Tensor<type, 2> DataSet::get_training_data() const
 {
-/*
+
    const Index variables_number = get_variables_number();
 
    Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
@@ -2916,8 +2916,7 @@ Tensor<type, 2> DataSet::get_training_data() const
    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
    return get_data_subtensor(training_indices, variables_indices);
-   */
-   return Tensor<type,2>();
+
 }
 
 
@@ -3471,8 +3470,6 @@ Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Te
    }
 
     return column;
-//   return(data.get_column(variable_index, instances_indices));
-
 }
 
 
@@ -3548,8 +3545,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
     }
 
     return column;
-
-//    return(data.get_column(variable_index[0], instances_indices));
 }
 
 
@@ -4477,8 +4472,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
 
         targets(i) = data(instace_index, target_index);
     }
-
-//    const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
 /*
 #ifdef __OPENNN_DEBUG__
 
