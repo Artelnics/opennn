@@ -821,7 +821,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-    if(layers_pointers.dimension(0) == 0)
+    if(layers_pointers.dimension(0) != 0)
     {
         return layers_pointers[0]->get_inputs_number();
     }
@@ -857,27 +857,29 @@ Index NeuralNetwork::get_outputs_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_architecture() const
 {
-    Tensor<Index, 1> architecture;
-/*
+    const Index layers_number = get_layers_number();
+
+    Tensor<Index, 1> architecture(layers_number);
+
     const Index inputs_number = get_inputs_number();
 
     if(inputs_number == 0)
     {
-        return(architecture);
+        return architecture;
     }
 
-    architecture.push_back(inputs_number);
+//    architecture.push_back(inputs_number);
 
-    const Index layers_number = get_layers_number();
+//    architecture(0) = inputs_number;
 
     if(layers_number > 0)
     {
         for(Index i = 0; i < layers_number; i++)
         {
-            architecture.push_back(layers_pointers[i]->get_neurons_number());
+            architecture(i) = layers_pointers(i)->get_neurons_number(); //.push_back(layers_pointers[i]->get_neurons_number());
         }
     }
-    */
+
     return architecture;
 }
 
