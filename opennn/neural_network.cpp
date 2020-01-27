@@ -403,7 +403,11 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<Index, 1> trainable_layers_indices;
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> trainable_layers_indices(trainable_layers_number);
+
+    Index trainable_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -411,6 +415,8 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
+            trainable_layers_indices[trainable_layer_index] = i;
+            trainable_layer_index++;
             //trainable_layers_indices.push_back(i);
         }
     }
