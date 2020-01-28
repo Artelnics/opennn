@@ -23,6 +23,7 @@
 #include <exception>
 #include <regex>
 //#include <math.h>
+#include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
