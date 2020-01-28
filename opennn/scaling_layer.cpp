@@ -1321,8 +1321,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-//@todo
-//    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
+
+    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
 
     // Scaling neurons
 
@@ -1383,8 +1383,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("ScalingMethod");
 
         buffer.str("");
-        //@todo
-//        buffer << scaling_methods_string[i];
+        buffer << scaling_methods_string[i];
 
         file_stream.PushText(buffer.str().c_str());
 

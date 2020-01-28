@@ -613,8 +613,6 @@ void DataSet::transform_columns_time_series()
             new_column_index++;
         }
 
-
-
         if(lag_index > 0 && column_index == columns_number - 1)
         {
             lag_index--;
