@@ -60,7 +60,7 @@ ConjugateGradient::~ConjugateGradient()
 
 const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
 {
-   return(learning_rate_algorithm);
+   return learning_rate_algorithm;
 }
 
 
@@ -76,7 +76,7 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 
 const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
 {
-   return(training_direction_method);
+   return training_direction_method;
 }
 
 
@@ -105,7 +105,7 @@ string ConjugateGradient::write_training_direction_method() const
 
 const type& ConjugateGradient::get_warning_parameters_norm() const
 {
-   return(warning_parameters_norm);       
+   return warning_parameters_norm;
 }
 
 
@@ -113,7 +113,7 @@ const type& ConjugateGradient::get_warning_parameters_norm() const
 
 const type& ConjugateGradient::get_warning_gradient_norm() const
 {
-   return(warning_gradient_norm);       
+   return warning_gradient_norm;
 }
 
 
@@ -121,7 +121,7 @@ const type& ConjugateGradient::get_warning_gradient_norm() const
 
 const type& ConjugateGradient::get_warning_learning_rate() const
 {
-   return(warning_learning_rate);
+   return warning_learning_rate;
 }
 
 
@@ -129,7 +129,7 @@ const type& ConjugateGradient::get_warning_learning_rate() const
 
 const type& ConjugateGradient::get_error_parameters_norm() const
 {
-   return(error_parameters_norm);
+   return error_parameters_norm;
 }
 
 
@@ -138,7 +138,7 @@ const type& ConjugateGradient::get_error_parameters_norm() const
 
 const type& ConjugateGradient::get_error_gradient_norm() const
 {
-   return(error_gradient_norm);
+   return error_gradient_norm;
 }
 
 
@@ -147,7 +147,7 @@ const type& ConjugateGradient::get_error_gradient_norm() const
 
 const type& ConjugateGradient::get_error_learning_rate() const
 {
-   return(error_learning_rate);
+   return error_learning_rate;
 }
 
 
@@ -155,7 +155,7 @@ const type& ConjugateGradient::get_error_learning_rate() const
 
 const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
 {
-   return(minimum_parameters_increment_norm);
+   return minimum_parameters_increment_norm;
 }
 
 
@@ -163,7 +163,7 @@ const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
 
 const type& ConjugateGradient::get_minimum_loss_increase() const
 {
-   return(minimum_loss_decrease);
+   return minimum_loss_decrease;
 }
 
 
@@ -172,7 +172,7 @@ const type& ConjugateGradient::get_minimum_loss_increase() const
 
 const type& ConjugateGradient::get_loss_goal() const
 {
-   return(loss_goal);
+   return loss_goal;
 }
 
 
@@ -181,7 +181,7 @@ const type& ConjugateGradient::get_loss_goal() const
 
 const type& ConjugateGradient::get_gradient_norm_goal() const
 {
-   return(gradient_norm_goal);
+   return gradient_norm_goal;
 }
 
 
@@ -189,7 +189,7 @@ const type& ConjugateGradient::get_gradient_norm_goal() const
 
 const Index& ConjugateGradient::get_maximum_selection_error_increases() const
 {
-   return(maximum_selection_error_decreases);
+   return maximum_selection_error_decreases;
 }
 
 
@@ -197,7 +197,7 @@ const Index& ConjugateGradient::get_maximum_selection_error_increases() const
 
 const Index& ConjugateGradient::get_maximum_epochs_number() const
 {
-   return(maximum_epochs_number);
+   return maximum_epochs_number;
 }
 
 
@@ -205,7 +205,7 @@ const Index& ConjugateGradient::get_maximum_epochs_number() const
 
 const type& ConjugateGradient::get_maximum_time() const
 {
-   return(maximum_time);
+   return maximum_time;
 }
 
 
@@ -213,7 +213,7 @@ const type& ConjugateGradient::get_maximum_time() const
 
 const bool& ConjugateGradient::get_return_minimum_selection_error_neural_network() const
 {
-    return(return_minimum_selection_error_neural_network);
+    return return_minimum_selection_error_neural_network;
 }
 
 
@@ -221,7 +221,7 @@ const bool& ConjugateGradient::get_return_minimum_selection_error_neural_network
 
 const bool& ConjugateGradient::get_apply_early_stopping() const
 {
-    return(apply_early_stopping);
+    return apply_early_stopping;
 }
 
 
@@ -229,7 +229,7 @@ const bool& ConjugateGradient::get_apply_early_stopping() const
 
 const bool& ConjugateGradient::get_reserve_training_error_history() const
 {
-   return(reserve_training_error_history);
+   return reserve_training_error_history;
 }
 
 
@@ -237,7 +237,7 @@ const bool& ConjugateGradient::get_reserve_training_error_history() const
 
 const bool& ConjugateGradient::get_reserve_selection_error_history() const
 {
-   return(reserve_selection_error_history);
+   return reserve_selection_error_history;
 }
 
 
@@ -405,7 +405,7 @@ void ConjugateGradient::set_warning_parameters_norm(const type& new_warning_para
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -434,7 +434,7 @@ void ConjugateGradient::set_warning_gradient_norm(const type& new_warning_gradie
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -463,7 +463,7 @@ void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learni
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_learning_rate < 0.0)
+   if(new_warning_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -490,7 +490,7 @@ void ConjugateGradient::set_error_parameters_norm(const type& new_error_paramete
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -519,7 +519,7 @@ void ConjugateGradient::set_error_gradient_norm(const type& new_error_gradient_n
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -548,7 +548,7 @@ void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_r
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_learning_rate < 0.0)
+   if(new_error_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -576,7 +576,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -604,7 +604,7 @@ void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_i
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -643,7 +643,7 @@ void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goa
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -689,7 +689,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -846,8 +846,8 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     #endif
 
    type FR_parameter = 0.0;
-/*
-   const type numerator = dot(gradient, gradient);
+
+/*   const type numerator = dot(gradient, gradient);
    const type denominator = dot(old_gradient, old_gradient);
 
    // Prevent a possible division by 0
@@ -1306,7 +1306,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type first_learning_rate = 0.01;
 
    // Main loop    
-   /*
+
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network
@@ -1388,7 +1388,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       // Calculate loss training_slope
 
-      training_slope = dot(gradient/gradient_norm, training_direction);
+//      training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction 
 
@@ -1552,8 +1552,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                   << "Training loss: " << training_loss << "\n"
                   << "Gradient norm: " << gradient_norm << "\n"
                   << information
-                  << "Training rate: " << learning_rate << "\n"
-                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                  << "Training rate: " << learning_rate << "\n";
+//                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
              if(selection_instances_number > 0)
              {
@@ -1587,8 +1587,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                    << "Training loss: " << training_loss << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << information 
-                   << "Training rate: " << learning_rate << "\n"
-                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                   << "Training rate: " << learning_rate << "\n";
+//                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
          if(selection_instances_number > 0)
          {
@@ -1622,7 +1622,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
        training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
-*/
+
    results.final_parameters = parameters;
    results.final_parameters_norm = parameters_norm;
 
