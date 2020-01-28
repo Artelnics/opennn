@@ -107,7 +107,7 @@ Index PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-const Tensor<type, 1>& PerceptronLayer::get_biases() const
+const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {   
    return biases;
 }
@@ -271,7 +271,7 @@ const bool& PerceptronLayer::get_display() const
 
 void PerceptronLayer::set()
 {
-    biases.resize(0);
+    biases.resize(0, 0);
 
     synaptic_weights.resize(0, 0);
 
@@ -287,7 +287,7 @@ void PerceptronLayer::set()
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases = Tensor<type, 1>(new_neurons_number);
+    biases = Tensor<type, 2>(new_neurons_number, 1);
 
     biases.setRandom();
 
@@ -341,7 +341,7 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(neurons_number);
+    biases.resize(neurons_number,1);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
@@ -355,7 +355,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {    
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number);
+    biases.resize(new_neurons_number, 1);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -364,7 +364,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 /// Sets the biases of all perceptrons in the layer from a single vector.
 /// @param new_biases New set of biases in the layer. 
 
-void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
+void PerceptronLayer::set_biases(const Tensor<type, 2>& new_biases)
 {
     biases = new_biases;
 }
@@ -924,8 +924,9 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
    for(Index j = 0; j < outputs_names.size(); j++)
    {
-       buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 /*
+       buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
+
        for(Index i = 0; i < inputs_names.size() - 1; i++)
        {
 
