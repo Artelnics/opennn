@@ -847,8 +847,16 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
    type FR_parameter = 0.0;
 
-/*   const type numerator = dot(gradient, gradient);
-   const type denominator = dot(old_gradient, old_gradient);
+   Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) };
+
+   const Tensor<type, 0> dot_numerator = gradient.contract(gradient, product_dims);
+   const Tensor<type, 0> dot_denominator = old_gradient.contract(old_gradient, product_dims);
+
+   const type numerator = dot_numerator(0);
+   const type denominator = dot_denominator(0);
+
+//   const type numerator = dot(gradient, gradient);
+//   const type denominator = dot(old_gradient, old_gradient);
 
    // Prevent a possible division by 0
 
@@ -870,8 +878,6 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
       FR_parameter = 1.0;
 
    return FR_parameter;
-*/
-   return static_cast<type>(0.0);
 }
 
 
@@ -922,11 +928,19 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     }
 
     #endif
-/*
+
    type PR_parameter = 0.0;
 
-   const type numerator = dot(gradient-old_gradient, gradient);
-   const type denominator = dot(old_gradient, old_gradient);
+   Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product
+
+   const Tensor<type, 0> dot_numerator = (gradient-old_gradient).contract(gradient, product_dims);
+   const Tensor<type, 0> dot_denominator = old_gradient.contract(old_gradient, product_dims);
+
+   const type numerator = dot_numerator(0);
+   const type denominator = dot_denominator(0);
+
+//   const type numerator = dot(gradient-old_gradient, gradient);
+//   const type denominator = dot(old_gradient, old_gradient);
 
    // Prevent a possible division by 0
 
@@ -952,8 +966,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
    }
 
    return PR_parameter;
-*/
-    return static_cast<type>(0.0);
 
 }
 
@@ -1024,13 +1036,11 @@ Tensor<type, 1> ConjugateGradient::calculate_PR_training_direction
    const Tensor<type, 1> conjugate_direction_term = old_training_direction*PR_parameter;
 
    const Tensor<type, 1> PR_training_direction = gradient_descent_term + conjugate_direction_term;
-/*
+
    const type PR_training_direction_norm = l2_norm(PR_training_direction);
 
    return(PR_training_direction/PR_training_direction_norm);
-*/
 
-   return Tensor<type, 1>();
 }
 
 
@@ -1100,12 +1110,11 @@ Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
    const Tensor<type, 1> conjugate_direction_term = old_training_direction*FR_parameter;
 
    const Tensor<type, 1> FR_training_direction = gradient_descent_term + conjugate_direction_term;
-/*
+
    const type FR_training_direction_norm = l2_norm(FR_training_direction);
 
    return(FR_training_direction/FR_training_direction_norm);
-*/
-    return Tensor<type, 1>();
+
 }
 
 
@@ -1186,7 +1195,7 @@ Tensor<type, 1> ConjugateGradient::calculate_training_direction
 
    const Tensor<type, 1> training_direction(parameters_number);
 
-   return(training_direction);
+   return training_direction;
 
 }
 
@@ -1303,7 +1312,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    Index selection_failures = 0;
    
-   type first_learning_rate = 0.01;
+   type first_learning_rate = static_cast<type>(0.01);
 
    // Main loop    
 
@@ -1387,6 +1396,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
 
       // Calculate loss training_slope
+
+      Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+
+      const Tensor<type, 0> dot_training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
+
+      const type training_slope = dot_training_slope(0);
 
 //      training_slope = dot(gradient/gradient_norm, training_direction);
 

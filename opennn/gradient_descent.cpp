@@ -808,7 +808,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    results.resize_training_history(maximum_epochs_number+1);
 
    // Main loop
-/*
+
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network stuff
@@ -850,7 +850,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      if(gradient == 0.0) throw logic_error("Gradient is zero");
+      if(gradient(0) == 0.0) throw logic_error("Gradient is zero");
 
       gradient_norm = l2_norm(gradient);
 
@@ -863,9 +863,18 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       training_direction = calculate_training_direction(gradient);
 
-      if(training_direction == 0.0) throw logic_error("Training direction is zero");
+//      if(training_direction == 0.0) throw logic_error("Training direction is zero");
+      if(training_direction(0) == 0.0) throw logic_error("Training direction is zero");
 
-      const type training_slope = dot(gradient/gradient_norm, training_direction);
+      // Calculate loss training_slope
+
+      Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+
+      const Tensor<type, 0> dot_training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
+
+      const type training_slope = dot_training_slope(0);
+
+//      const type training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction
 
@@ -1014,10 +1023,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                       << "Training loss: " << training_loss << "\n"
                       << "Gradient norm: " << gradient_norm << "\n"
                       << loss_index_pointer->write_information()
-                      << "Training rate: " << learning_rate << "\n"
-                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                      << "Training rate: " << learning_rate << "\n";
+//                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(!selection_indices.empty() != 0)
+//            if(!selection_indices.empty() != 0)
+            if(selection_indices.dimension(0)!=0 != 0)
             {
                cout << "Selection error: " << selection_error << endl;
             }
@@ -1048,10 +1058,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
               << "Training loss: " << training_loss << "\n"
               << "Gradient norm: " << gradient_norm << "\n"
               << loss_index_pointer->write_information()
-              << "Training rate: " << learning_rate << "\n"
-              << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+              << "Training rate: " << learning_rate << "\n";
+//              << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-         if(!selection_indices.empty() != 0)
+         if(selection_indices.dimension(0)!=0 != 0)
          {
             cout << "Selection error: " << selection_error << endl;
          }
@@ -1092,7 +1102,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
-*/
+
    return results;
 }
 
