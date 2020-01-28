@@ -24,14 +24,13 @@
 
 // OpenNN includes
 
-#include "statistics.h"
-#include "transformations.h"
+//#include "statistics.h"
+//#include "transformations.h"
+//#include "functions.h"
 #include "config.h"
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
-
-
 
 using namespace std;
 using namespace Eigen;

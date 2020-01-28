@@ -25,6 +25,7 @@ CONFIG(debug, debug|release) {
 
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+
 QMAKE_LFLAGS += -fopenmp -pthread -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }else:!macx{
@@ -39,13 +40,19 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 
 # Eigen library
 
-INCLUDEPATH += eigen
+#INCLUDEPATH += ../eigen
 
 HEADERS += \
+    numerical_differentiation.h \
     config.h \
     opennn_strings.h \
-    statistics.h \
     functions.h \
+    statistics.h \
+    correlations.h \
+    transformations.h \
+    metrics.h \
+    k_means.h \
+    tinyxml2.h \
     data_set.h \
     layer.h \
     scaling_layer.h \
@@ -54,22 +61,16 @@ HEADERS += \
     probabilistic_layer.h \
     pooling_layer.h \
     convolutional_layer.h \
+    bounding_layer.h \
+    long_short_term_memory_layer.h \
+    recurrent_layer.h \
+    principal_components_layer.h \
     neural_network.h \
     loss_index.h \
     mean_squared_error.h \
     optimization_algorithm.h \
     stochastic_gradient_descent.h\
     training_strategy.h \
-    tinyxml2.h \
-    correlations.h \
-    transformations.h \
-    metrics.h \
-    k_means.h \
-    numerical_differentiation.h \
-    bounding_layer.h \
-    long_short_term_memory_layer.h \
-    recurrent_layer.h \
-    principal_components_layer.h \
     neural_network.h \
     sum_squared_error.h\
     normalized_squared_error.h\
@@ -98,9 +99,15 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    numerical_differentiation.cpp \
     opennn_strings.cpp \
-    statistics.cpp \
     functions.cpp \
+    statistics.cpp \
+    correlations.cpp \
+    transformations.cpp \
+    metrics.cpp \
+    k_means.cpp \
+    tinyxml2.cpp \
     data_set.cpp \
     layer.cpp \
     scaling_layer.cpp \
@@ -108,23 +115,17 @@ SOURCES += \
     perceptron_layer.cpp \
     probabilistic_layer.cpp \
     pooling_layer.cpp \
-    convolutional_layer.cpp \
-    neural_network.cpp \
-    loss_index.cpp \
-    optimization_algorithm.cpp \
-    mean_squared_error.cpp \
-    stochastic_gradient_descent.cpp \
-    training_strategy.cpp \
-    tinyxml2.cpp \
-    metrics.cpp \
-    correlations.cpp \
-    transformations.cpp \
-    k_means.cpp \
-    numerical_differentiation.cpp \
     bounding_layer.cpp \
+    convolutional_layer.cpp \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
     principal_components_layer.cpp \
+    neural_network.cpp \
+    loss_index.cpp \
+    mean_squared_error.cpp \
+    stochastic_gradient_descent.cpp \
+    training_strategy.cpp \
+    optimization_algorithm.cpp \
     data_set.cpp \
     sum_squared_error.cpp \
     normalized_squared_error.cpp \
@@ -154,10 +155,10 @@ SOURCES += \
 
 #DEFINES += __OPENNN_CUDA__
 
-contains(DEFINES, __OPENNN_CUDA__){
+#contains(DEFINES, __OPENNN_CUDA__){
 
-    include(../../arte/opennn_cuda/cuda_config.pri)
+#    include(../../arte/opennn_cuda/cuda_config.pri)
 
-    include(../../arte/opennn_cuda/cuda_path.pri)
+#    include(../../arte/opennn_cuda/cuda_path.pri)
 
-}
+#}
