@@ -99,14 +99,6 @@ public:
 
    void test_set_display();
 
-   // Growing and pruning
-
-   void test_grow_inputs();
-   void test_grow_perceptrons();
-
-   void test_prune_input();
-   void test_prune_neuron();
-
    // Parameters initialization methods
 
    void test_set_parameters_constant();

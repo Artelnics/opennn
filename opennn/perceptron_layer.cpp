@@ -275,7 +275,7 @@ void PerceptronLayer::set()
 
     synaptic_weights.resize(0, 0);
 
-   set_default();
+    set_default();
 }
 
 
@@ -500,101 +500,12 @@ void PerceptronLayer::set_display(const bool& new_display)
 }
 
 
-/// Makes the perceptron layer to have one more input.
-
-void PerceptronLayer::grow_input()
-{
-    const Index new_inputs_number = get_inputs_number() + 1;
-
-    set_inputs_number(new_inputs_number);
-}
-
-
-/// Makes the perceptron layer to have one more perceptron.
-
-void PerceptronLayer::grow_perceptron()
-{
-    const Index new_neurons_number = get_neurons_number() + 1;
-
-    set_neurons_number(new_neurons_number);
-}
-
-
-/// Makes the perceptron layer to have perceptrons_added more perceptrons.
-/// @param neurons_added Number of perceptrons to be added.
-
-void PerceptronLayer::grow_perceptrons(const Index& neurons_added)
-{
-    const Index new_neurons_number = get_neurons_number() + neurons_added;
-
-    set_neurons_number(new_neurons_number);
-}
-
-
-/// This method removes a given input from the layer of perceptrons.
-/// @param index Index of input to be pruned.
-
-void PerceptronLayer::prune_input(const Index& index)
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index inputs_number = get_inputs_number();
-
-    if(index >= inputs_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_input(const Index&) method.\n"
-              << "Index of input is equal or greater than number of inputs.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif    
-/*
-    synaptic_weights = synaptic_weights.delete_row(index);
-*/
-}
-
-
-/// This method removes a given perceptron from the layer.
-/// @param index Index of perceptron to be pruned.
-
-void PerceptronLayer::prune_neuron(const Index& index)
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    if(index >= neurons_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_neuron(const Index&) method.\n"
-              << "Index of perceptron is equal or greater than number of perceptrons.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-/*
-    biases = biases.delete_index(index);
-
-    synaptic_weights = synaptic_weights.delete_column(index);
-*/
-}
-
-
 /// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value. 
 /// @param value Biases initialization value. 
 
 void PerceptronLayer::initialize_biases(const type& value)
 {
-/*
     biases.setConstant(value);
-*/
 }
 
 
@@ -603,9 +514,7 @@ void PerceptronLayer::initialize_biases(const type& value)
 
 void PerceptronLayer::initialize_synaptic_weights(const type& value)
 {
-/*
     synaptic_weights.setConstant(value);
-*/
 }
 
 
@@ -624,6 +533,7 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 
     scale /= ((fan_in + fan_out) / 2.0);
     limit = sqrt(3.0 * scale);
+
 /*
     synaptic_weights.setRandom(-limit, limit);
 */
