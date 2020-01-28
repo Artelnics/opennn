@@ -4584,7 +4584,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const In
     const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
 
     const Index inputs_number = inputs_variables_indices.size();
-/*
+
     const Tensor<Index, 1> class_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
 
     Tensor<type, 2> data_statistics_matrix(inputs_number, 4);

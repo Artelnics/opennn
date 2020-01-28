@@ -29,7 +29,7 @@
 
 // OpenNN includes
 
-#include "metrics.h"
+//#include "metrics.h"
 #include "statistics.h"
 #include "transformations.h"
 #include "correlations.h"
@@ -39,7 +39,7 @@
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #ifdef __OPENNN_CUDA__

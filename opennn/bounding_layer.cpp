@@ -488,8 +488,6 @@ void BoundingLayer::prune_neuron(const Index& index)
 
     #ifdef __OPENNN_DEBUG__
 
-    const Index neurons_number = get_neurons_number();
-
     if(index >= neurons_number)
     {
        ostringstream buffer;

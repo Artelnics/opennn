@@ -1885,7 +1885,7 @@ string NeuralNetwork::write_expression() const
 /*
     cout << "Inputs names: " << inputs_names << endl;
     cout << "Outputs names: " << outputs_names << endl;
-*/
+
     Index position = 0;
 
     string search;
@@ -2189,6 +2189,9 @@ string NeuralNetwork::write_expression() const
     }
 
     return expression;
+    */
+
+    return "";
 }
 
 
