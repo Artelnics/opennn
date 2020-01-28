@@ -159,6 +159,7 @@ public:
        // Methods
 
        Index get_categories_number() const;
+       Index get_used_categories_number() const;
 
        Tensor<string, 1> get_used_variables_names() const;
 

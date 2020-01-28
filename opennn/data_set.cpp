@@ -512,6 +512,21 @@ Index DataSet::Column::get_categories_number() const
 }
 
 
+/// Returns the number of used categories.
+
+Index DataSet::Column::get_used_categories_number() const
+{
+    Index used_categories_number = 0;
+
+    for(Index i = 0; i < categories.size(); i++)
+    {
+        if(categories_uses[i] != UnusedVariable) used_categories_number++;
+    }
+
+    return used_categories_number;
+}
+
+
 /// Returns a string vector that contains the names of the used variables in the data set.
 
 Tensor<string, 1> DataSet::Column::get_used_variables_names() const
@@ -520,19 +535,22 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
     if(type != Categorical && column_use != UnusedVariable)
     {
-/* @todo
-        used_variables_names.resize(1, name);
-*/
+        used_variables_names.resize(1);
+        used_variables_names.setConstant(name);
     }
     else if(type == Categorical)
     {
+        used_variables_names.resize(get_used_categories_number());
+
+        Index category_index = 0;
+
         for(Index i = 0; i < categories.size(); i++)
         {
             if(categories_uses[i] != UnusedVariable)
             {
-/*@todo
-                used_variables_names.push_back(categories[i]);
-*/
+                used_variables_names[category_index] = categories[i];
+
+                category_index++;
             }
         }
     }
@@ -1725,10 +1743,9 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
 
        const Tensor<string, 1> current_used_variables_names = columns[input_index].get_used_variables_names();
 
-//       input_variables_names.embed(index, current_used_variables_names);
-       for(Index i = 0; i < current_used_variables_names.size(); i++)
+       for(Index j = 0; j < current_used_variables_names.size(); j++)
        {
-           input_variables_names(i + index) = current_used_variables_names(i);
+           input_variables_names(index + j) = current_used_variables_names(j);
        }
 
        index += current_used_variables_names.size();
@@ -1757,10 +1774,9 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 
         const Tensor<string, 1> current_used_variables_names = columns[target_index].get_used_variables_names();
 
-//        target_variables_names.embed(index, current_used_variables_names);
-        for(Index i = 0; i < current_used_variables_names.size(); i++)
+        for(Index j = 0; j < current_used_variables_names.size(); j++)
         {
-            target_variables_names(i + index) = current_used_variables_names(i);
+            target_variables_names(index + j) = current_used_variables_names(j);
         }
 
         index += current_used_variables_names.size();
