@@ -152,7 +152,7 @@ type MinkowskiError::calculate_training_error() const
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 /*
      #pragma omp parallel for reduction(+ : training_error)
 
@@ -197,7 +197,7 @@ type MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameters)
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 /*
      #pragma omp parallel for reduction(+ : training_error)
 
@@ -244,7 +244,7 @@ type MinkowskiError::calculate_selection_error() const
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 /*
      #pragma omp parallel for reduction(+ : training_error)
 

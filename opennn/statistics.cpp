@@ -15,7 +15,7 @@ Descriptives::Descriptives()
   name = "Descriptives";
   minimum = -1.0;
   maximum = 1.0;
-  mean = 0.0;
+  mean = static_cast<type>(0.0);
   standard_deviation = 1.0;
 }
 
@@ -91,7 +91,8 @@ Tensor<type, 1> Descriptives::to_vector() const
 /// Returns true if the minimum value is -1 and the maximum value is +1,
 /// and false otherwise.
 
-bool Descriptives::has_minimum_minus_one_maximum_one() {
+bool Descriptives::has_minimum_minus_one_maximum_one()
+{
   if(-1.000001 < minimum && minimum < -0.999999 && 0.999999 < maximum &&
       maximum < 1.000001) {
     return true;
@@ -142,7 +143,6 @@ BoxPlot::BoxPlot(const type& new_minimum, const type& new_first_cuartile, const 
 
 void Descriptives::save(const string &file_name) const
 {
-/*
   ofstream file(file_name.c_str());
 
   if(!file.is_open()) {
@@ -165,7 +165,6 @@ void Descriptives::save(const string &file_name) const
   // Close file
 
   file.close();
-*/
 }
 
 
@@ -291,7 +290,6 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
 
 Tensor<type, 1> Histogram::calculate_maximal_centers() const
 {
-
   const Index maximum_frequency = calculate_maximum_frequency();
 
   Index index = 0;
@@ -309,7 +307,6 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
   }
 
   return maximal_centers;
-
 /*
   const Tensor<Index, 1> maximal_indices = frequencies.get_indices_equal_to(maximum_frequency);
 
@@ -409,7 +406,6 @@ type maximum(const Tensor<type, 1>& vector)
 
 time_t maximum(const Tensor<time_t, 1>& vector)
 {
-
     const Tensor<time_t,0> max_element = vector.maximum();
 
     return max_element(0);
@@ -444,7 +440,8 @@ type maximum_missing_values(const Tensor<type, 1>& vector)
 
   type maximum = -999999;
 
-  for(Index i = 0; i < size; i++) {
+  for(Index i = 0; i < size; i++)
+  {
     if(!::isnan(vector[i]) && vector[i] > maximum) {
       maximum = vector[i];
     }
@@ -568,7 +565,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
   if(end == begin) return vector[begin];
 
-  type sum = 0.0;
+  type sum = static_cast<type>(0.0);
 
   for(Index i = begin; i <= end; i++)
   {
@@ -645,8 +642,8 @@ type variance(const Tensor<type, 1>& vector)
     return(0.0);
   }
 
-  type sum = 0.0;
-  type squared_sum = 0.0;
+  type sum = static_cast<type>(0.0);
+  type squared_sum = static_cast<type>(0.0);
 
   for(Index i = 0; i < size; i++)
   {
@@ -690,8 +687,8 @@ type variance_missing_values(const Tensor<type, 1>& vector)
 
 #endif
 
-  type sum = 0.0;
-  type squared_sum = 0.0;
+  type sum = static_cast<type>(0.0);
+  type squared_sum = static_cast<type>(0.0);
 
   Index count = 0;
 
@@ -748,8 +745,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
   Tensor<type, 1> std(size);
 
-  type mean_value = 0.0;
-  type sum = 0.0;
+  type mean_value = static_cast<type>(0.0);
+  type sum = static_cast<type>(0.0);
 
   for(Index i = 0; i < size; i++)
   {
@@ -765,8 +762,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
       std[i] = sqrt(sum / type(period));
 
-      mean_value = 0.0;
-      sum = 0.0;
+      mean_value = static_cast<type>(0.0);
+      sum = static_cast<type>(0.0);
   }
 
 
@@ -830,7 +827,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
   const type mean_value = mean(vector);
 
-  type sum = 0.0;
+  type sum = static_cast<type>(0.0);
 
   for(Index i = 0; i < size; i++)
   {
@@ -872,7 +869,7 @@ type kurtosis(const Tensor<type, 1>& vector)
 
   const type mean_value = mean(vector);
 
-  type sum = 0.0;
+  type sum = static_cast<type>(0.0);
 
   for(Index i = 0; i < size; i++)
   {
@@ -917,7 +914,7 @@ type asymmetry_missing_values(const Tensor<type, 1>& vector)
 
   const type mean_value = mean_missing_values(vector);
 
-  type sum = 0.0;
+  type sum = static_cast<type>(0.0);
 
   Index count = 0;
 
@@ -968,7 +965,7 @@ type kurtosis_missing_values(const Tensor<type, 1>& vector)
 
   const type mean_value = mean_missing_values(vector);
 
-  type sum = 0.0;
+  type sum = static_cast<type>(0.0);
 
   Index count = 0;
 
@@ -1506,14 +1503,16 @@ Histogram histogram_missing_values(const Tensor<type, 1>& vector, const Index &b
 /// The second subvector contains the center of the bins.
 /// @param vector
 /// @todo missing values
-/*
+
 Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
 {
   Tensor<Index, 1> minimums(2);
   Tensor<Index, 1> maximums(2);
 
   Tensor<Index, 1> centers(2);
-  Tensor<Index, 1> frequencies(2, 0);
+  Tensor<Index, 1> frequencies(2);
+
+  frequencies.setConstant(0);
 
   minimums[0] = 0;
   maximums[0] = 0;
@@ -1527,7 +1526,9 @@ Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
 
   const Index size = vector.dimension(0);
 
-  for(Index i = 0; i < size; i++) {
+  for(Index i = 0; i < size; i++)
+  {
+/*
     if(!missing_values.contains(i)) {
     for(Index j = 0; j < 2; j++) {
       if(static_cast<Index>(vector[i]) == minimums[j]) {
@@ -1535,17 +1536,19 @@ Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
       }
     }
     }
+*/
   }
 
   Histogram histogram(2);
+/*
   histogram.centers = centers.to_type_vector();
   histogram.minimums = minimums.to_type_vector();
   histogram.maximums = maximums.to_type_vector();
   histogram.frequencies = frequencies;
-
+*/
   return histogram;
 }
-*/
+
 
 /// Returns a vector containing the sum of the frequencies of the bins to which
 /// this vector belongs.
@@ -1580,11 +1583,11 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
    Tensor<Histogram, 1> histograms(columns_number);
 
    Tensor<type, 1> column(rows_number);
-/*
+
    for(Index i = 0; i < columns_number; i++)
    {
       column = matrix.chip(i,1);
-
+/*
       if(column.is_binary())
       {
           histograms[i] = histogram(column.to_bool_vector());
@@ -1593,8 +1596,9 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
       {
           histograms[i] = histogram(column, bins_number);
       }
-   }
 */
+   }
+
    return histograms;
 }
 
@@ -1664,7 +1668,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
       descriptives[i] = OpenNN::descriptives(column);
 
 //      descriptives[i].name = matrix.get_header(i);
-
    }
 
    return descriptives;
@@ -2168,7 +2171,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 
   if(count <= 1)
   {
-    standard_deviation = 0.0;
+    standard_deviation = static_cast<type>(0.0);
   }
   else
   {
@@ -2247,7 +2250,7 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
 
   if(count <= 1)
   {
-    standard_deviation = 0.0;
+    standard_deviation = static_cast<type>(0.0);
   }
   else
   {
@@ -2305,7 +2308,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         if(vector[i] < sorted_vector[0])
         {
-            empirical_distribution = 0.0;
+            empirical_distribution = static_cast<type>(0.0);
         }
         else if(vector[i] >= sorted_vector[n-1])
         {
@@ -2689,7 +2692,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
    // Mean
 
-   type mean = 0.0;
+   type mean = static_cast<type>(0.0);
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -2915,7 +2918,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
    // median
 
-   type median = 0.0;
+   type median = static_cast<type>(0.0);
 
    Tensor<type, 1> sorted_column(matrix.chip(column_index,1));
 
@@ -3281,7 +3284,7 @@ bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const type
 
         if(vector[i] < sorted_vector[0])
         {
-            Snx = 0.0;
+            Snx = static_cast<type>(0.0);
         }
         else if(vector[i] >= sorted_vector[n-1])
         {
@@ -3342,7 +3345,7 @@ Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>& vector,
 
 type normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type normal_distribution_distance = 0.0;
+    type normal_distribution_distance = static_cast<type>(0.0);
 
     const Index n = vector.dimension(0);
 
@@ -3389,7 +3392,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
 type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type half_normal_distribution_distance = 0.0;
+    type half_normal_distribution_distance = static_cast<type>(0.0);
 
     const Index n = vector.dimension(0);
 
@@ -3435,7 +3438,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
 type uniform_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type uniform_distribution_distance = 0.0;
+    type uniform_distribution_distance = static_cast<type>(0.0);
 
     const Index n = vector.dimension(0);
 
@@ -3535,15 +3538,15 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     type normal_distribution;
     type empirical_distribution;
-    type previous_normal_distribution = 0.0;
-    type previous_empirical_distribution = 0.0;
+    type previous_normal_distribution = static_cast<type>(0.0);
+    type previous_empirical_distribution = static_cast<type>(0.0);
 
     Tensor<type, 1> sorted_vector(vector);
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
-    type empirical_area = 0.0;
-    type normal_area = 0.0;
+    type empirical_area = static_cast<type>(0.0);
+    type normal_area = static_cast<type>(0.0);
 
     Index counter = 0;
 
@@ -3870,12 +3873,12 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 
     Tensor<type, 1> means(elements_uniques);
 
-    type sum = 0.0;
+    type sum = static_cast<type>(0.0);
     Index count = 0;
 
     for(Index i = 0; i < integers_number; i++)
     {
-        sum = 0.0;
+        sum = static_cast<type>(0.0);
         count = 0;
 
         for(unsigned j = 0; j < rows_number; j++)
@@ -3894,7 +3897,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
         }
         else
         {
-            means[i] = 0.0;
+            means[i] = static_cast<type>(0.0);
         }
     }
 
@@ -3936,12 +3939,12 @@ Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix
 
     Tensor<type, 1> means(elements_uniques);
 
-    type sum = 0.0;
+    type sum = static_cast<type>(0.0);
     Index count = 0;
 
     for(Index i = 0; i < integers_number; i++)
     {
-        sum = 0.0;
+        sum = static_cast<type>(0.0);
         count = 0;
 
         for(unsigned j = 0; j < rows_number; j++)
@@ -3960,7 +3963,7 @@ Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix
         }
         else
         {
-            means[i] = 0.0;
+            means[i] = static_cast<type>(0.0);
         }
     }
 
@@ -4003,8 +4006,8 @@ Tensor<type, 1> means_binary_column(const Tensor<type, 2>& matrix)
     }
     else
     {
-        means[0] = 0.0;
-        means[1] = 0.0;
+        means[0] = static_cast<type>(0.0);
+        means[1] = static_cast<type>(0.0);
     }
 
     return means;
@@ -4019,12 +4022,12 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 {
     Tensor<type, 1> means(matrix.dimension(1)-1);
 
-    type sum = 0.0;
+    type sum = static_cast<type>(0.0);
     Index count = 0;
 
     for(Index i = 0; i < matrix.dimension(1)-1; i++)
     {
-        sum = 0.0;
+        sum = static_cast<type>(0.0);
         count = 0;
 
         for(Index j = 0; j < matrix.dimension(0); j++)
@@ -4044,7 +4047,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
         }
         else
         {
-            means[i] = 0.0;
+            means[i] = static_cast<type>(0.0);
         }
     }
     return means;
@@ -4249,7 +4252,7 @@ Tensor<type, 1> explained_variance(const Tensor<type, 1>& vector)
 
         if(explained_variance[i] - 0.0 < 1.0e-16)
         {
-            explained_variance[i] = 0.0;
+            explained_variance[i] = static_cast<type>(0.0);
         }
     }
 */
