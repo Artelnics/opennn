@@ -567,6 +567,11 @@ public:
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
 
+   Tensor<type, 1> calculate_input_variables_minimums() const;
+   Tensor<type, 1> calculate_target_variables_minimums() const;
+   Tensor<type, 1> calculate_input_variables_maximums() const;
+   Tensor<type, 1> calculate_target_variables_maximums() const;
+
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
 
    Descriptives calculate_inputs_descriptives(const Index&) const;

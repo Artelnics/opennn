@@ -4699,6 +4699,30 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 }
 
 
+Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_input_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_target_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
+{
+    return columns_maximums(data, get_used_instances_indices(), get_input_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
+{
+    return columns_maximums(data, get_used_instances_indices(), get_target_variables_indices());
+}
+
+
 /// Returns a vector containing the means of a set of given variables.
 /// @param variables_indices Indices of the variables.
 
