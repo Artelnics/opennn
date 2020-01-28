@@ -1683,13 +1683,14 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 void NeuralNetworkTest::run_test_case()
 {
    cout << "Running neural network test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
 
    test_destructor();
 
+/*
    // Assignment operators methods
 
    test_assignment_operator();

@@ -375,8 +375,6 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-       cout<<"trainable_layers_pointer"<<trainable_layers_pointers[0];
-
        // First layer
 
 

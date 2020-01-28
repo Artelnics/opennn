@@ -96,6 +96,8 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
+        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(MeanSquaredError::NoRegularization);
+
         training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
