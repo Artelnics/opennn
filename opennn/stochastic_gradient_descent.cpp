@@ -736,14 +736,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Tensor<type, 2>& data = data_set_pointer->get_data();
-
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-
-   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
-
-   const Tensor<Index, 1> input_data_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Tensor<Index, 1> target_data_dimensions = data_set_pointer->get_target_variables_dimensions();
 
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
@@ -797,20 +790,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
+
    Index current_iteration = 0;
    Index learning_rate_iteration = 1;
 
-    bool is_forecasting = false;
+   bool is_forecasting = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+   if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    Index n = omp_get_max_threads();
+   Index n = omp_get_max_threads();
 
-    cout << "Threads: " << n << endl;
+   cout << "Threads: " << n << endl;
 
-    NonBlockingThreadPool simple_thread_pool(n);
+   NonBlockingThreadPool simple_thread_pool(n);
 
-    ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
+   ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
    // Main loop
 
@@ -829,15 +823,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
 
-//          Data set
 
-            batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+//         Data set
 
-//          Neural network
+           batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
-            neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+//         Neural network
 
-          forward_propagation.print();
+           neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+
+           forward_propagation.print();
 /*
 
 //           Loss
