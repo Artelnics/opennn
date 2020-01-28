@@ -59,20 +59,22 @@ int main(void)
 
         // Data set
 
-        Tensor<type, 2> data(6,3);
+        Tensor<type, 2> data(10000,3);
 
-        data.setValues({{0,1,2},
-                       {3,4,5},
-                       {6,7,8},
-                       {9,10,11},
-                       {12,13,14},
-                       {15,16,17}});
+//        data.setValues({{0,1,2},
+//                       {3,4,5},
+//                       {6,7,8},
+//                       {9,10,11},
+//                       {12,13,14},
+//                       {15,16,17}});
+
+        data.setRandom();
 
         DataSet data_set(data);
 
         data_set.set_training();
 
-        data_set.set_batch_instances_number(3);
+        data_set.set_batch_instances_number(10000);
 
 
         // Neural network
@@ -99,7 +101,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(MeanSquaredError::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(100);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 

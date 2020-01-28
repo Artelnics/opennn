@@ -147,7 +147,6 @@ public:
                                Tensor<type, 2>& combinations) const
    {
 
-
         const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
         combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
