@@ -18,11 +18,11 @@
 // OpenNN includes
 
 #include "config.h"
-#include "functions.h"
+//#include "functions.h"
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
@@ -209,7 +209,7 @@ struct Histogram
      time_t minimum(const Tensor<time_t, 1>&);
      type minimum(const Tensor<type, 2>&);
      type minimum_missing_values(const Tensor<type, 1>&);
-     Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>());
+     Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
      // Maximum
 
@@ -218,7 +218,7 @@ struct Histogram
      time_t maximum(const Tensor<time_t, 1>&);
      type maximum(const Tensor<type, 2>&);
      type maximum_missing_values(const Tensor<type, 1>&);
-     Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>());
+     Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
      type strongest(const Tensor<type, 1>&);
 

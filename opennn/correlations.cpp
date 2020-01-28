@@ -18,7 +18,6 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-
   const Index n = x.size();
 //@todo
 //  if(x.is_constant() || y.is_constant()) return 1.0;
@@ -243,8 +242,10 @@ type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
      }
 
 #endif
-
+/*
     return linear_correlation(logarithm(x), y);
+*/
+     return 0.0;
 }
 
 
@@ -303,9 +304,9 @@ type logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 #endif
 
     Tensor<type, 1> scaled_x(x);
-    scale_minimum_maximum(scaled_x);
+/*    scale_minimum_maximum(scaled_x);
 
-/*
+
     const Index epochs_number = 50000;
     const type learning_rate = 0.01;
     const type momentum = 0.9;
@@ -465,7 +466,10 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     }
 
 #endif
+/*
     return linear_correlation(logarithm(x), logarithm(y));
+*/
+    return 0.0;
 }
 
 
@@ -493,8 +497,10 @@ type power_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
-
+/*
     return linear_correlation(logarithm(new_x), logarithm(new_y));
+*/
+    return 0.0;
 }
 
 
@@ -505,7 +511,7 @@ type power_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type
 Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_number)
 {
   Tensor<type, 1> autocorrelation(lags_number);
-
+/*
   const type mean = OpenNN::mean(x);
 
   const Index this_size = x.size();
@@ -536,7 +542,7 @@ Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_num
     numerator = 0;
     denominator = 0;
   }
-
+*/
   return autocorrelation;
 }
 
@@ -560,7 +566,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
   }
 
   Tensor<type, 1> cross_correlation(maximum_lags_number);
-
+/*
   const type this_mean = mean(x);
   const type y_mean = mean(y);
 
@@ -597,7 +603,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
       cross_correlation[i] = numerator / denominator;
     }
   }
-
+*/
   return cross_correlation;
 }
 
@@ -1349,7 +1355,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
     }
 
     RegressionResults power_regression;
-
+/*
     power_regression.regression_type = Power;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0) {
@@ -1370,7 +1376,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
 
         power_regression.correlation = linear_correlation(logarithm(x), logarithm(y));
     }
-
+*/
     return power_regression;
 }
 
@@ -1425,7 +1431,7 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
     }
 
     RegressionResults power_regression;
-
+/*
     power_regression.regression_type = Power;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0) {
@@ -1447,7 +1453,7 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
         power_regression.correlation = power_regression.correlation = linear_correlation(logarithm(new_vector_x), logarithm(new_vector_y));
 
     }
-
+*/
     return power_regression;
 }
 
@@ -2744,7 +2750,7 @@ type covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2
      {
          return 0.0;
      }
-
+/*
      const type mean_1 = mean(vector_1);
      const type mean_2 = mean(vector_2);
 
@@ -2757,6 +2763,9 @@ type covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2
      }
 
      return numerator/denominator;
+*/
+    return 0.0;
+
 }
 
 
@@ -2802,7 +2811,7 @@ type covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& 
      {
          return 0.0;
      }
-
+/*
      const type mean_1 = mean(new_x);
      const type mean_2 = mean(new_y);
 
@@ -2815,6 +2824,8 @@ type covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& 
      }
 
      return numerator/denominator;
+*/
+    return 0.0;
 }
 
 

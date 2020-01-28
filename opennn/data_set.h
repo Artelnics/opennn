@@ -29,7 +29,7 @@
 
 // OpenNN includes
 
-#include "metrics.h"
+//#include "metrics.h"
 #include "statistics.h"
 #include "transformations.h"
 #include "correlations.h"
@@ -39,7 +39,7 @@
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #ifdef __OPENNN_CUDA__
@@ -566,6 +566,11 @@ public:
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
+
+   Tensor<type, 1> calculate_input_variables_minimums() const;
+   Tensor<type, 1> calculate_target_variables_minimums() const;
+   Tensor<type, 1> calculate_input_variables_maximums() const;
+   Tensor<type, 1> calculate_target_variables_maximums() const;
 
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
 
