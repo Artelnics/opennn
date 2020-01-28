@@ -484,6 +484,8 @@ void BoundingLayer::set_default()
 
 void BoundingLayer::prune_neuron(const Index& index)
 {   
+    const Index neurons_number = get_neurons_number();
+
     #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();

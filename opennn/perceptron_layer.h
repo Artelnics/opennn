@@ -125,15 +125,6 @@ public:
 
    void set_display(const bool&);
 
-   // Growing and pruning
-
-   void grow_input();
-   void grow_perceptron();
-   void grow_perceptrons(const Index&);
-
-   void prune_input(const Index&);
-   void prune_neuron(const Index&);
-
    // Parameters initialization methods
    void initialize_biases(const type&);
    void initialize_synaptic_weights(const type&);
