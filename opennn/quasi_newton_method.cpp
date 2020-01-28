@@ -59,7 +59,7 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
 {
-   return(learning_rate_algorithm);
+   return learning_rate_algorithm;
 }
 
 
@@ -75,7 +75,7 @@ LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm_pointer()
 
 const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::get_inverse_hessian_approximation_method() const
 {
-   return(inverse_hessian_approximation_method);
+   return inverse_hessian_approximation_method;
 }
 
 
@@ -394,7 +394,7 @@ void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_para
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -425,7 +425,7 @@ void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradie
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -456,7 +456,7 @@ void QuasiNewtonMethod::set_warning_learning_rate(const type& new_warning_learni
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_learning_rate < 0.0)
+   if(new_warning_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -485,7 +485,7 @@ void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_paramete
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -516,7 +516,7 @@ void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_n
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -547,7 +547,7 @@ void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_r
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_learning_rate < 0.0)
+   if(new_error_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -577,7 +577,7 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -605,7 +605,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_i
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -648,7 +648,7 @@ void QuasiNewtonMethod::set_gradient_norm_goal(const type& new_gradient_norm_goa
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -696,7 +696,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
