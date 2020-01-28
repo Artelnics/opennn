@@ -137,7 +137,7 @@ Index BoundingLayer::get_neurons_number() const
 
 const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 {
-   return(lower_bounds);               
+   return lower_bounds;
 }
 
 
@@ -165,7 +165,7 @@ type BoundingLayer::get_lower_bound(const Index& i) const
 
    #endif
 
-   return(lower_bounds[i]);
+   return lower_bounds[i];
 }
 
 
@@ -173,7 +173,7 @@ type BoundingLayer::get_lower_bound(const Index& i) const
 
 const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 {
-   return(upper_bounds);               
+   return upper_bounds;
 }
 
 
@@ -441,14 +441,15 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
    }
 
    #endif
-/*
+
    if(upper_bounds.size() != neurons_number)
    {
-      upper_bounds.resize(neurons_number, 999999);
+      upper_bounds.resize(neurons_number);
+      upper_bounds.setConstant(999999);
    }
 
    upper_bounds[index] = new_upper_bound;
-*/
+
 }
 
 
@@ -499,10 +500,31 @@ void BoundingLayer::prune_neuron(const Index& index)
     }
 
     #endif
-/*
-    lower_bounds.erase(lower_bounds.begin() + static_cast<long>(index));
-    upper_bounds.erase(upper_bounds.begin() + static_cast<long>(index));
-*/
+
+    const Index new_neurons_number = neurons_number - 1;
+
+    Tensor<type, 1> old_lower_bounds(lower_bounds);
+    Tensor<type, 1> old_upper_bounds(upper_bounds);
+
+    lower_bounds.resize(new_neurons_number);
+    upper_bounds.resize(new_neurons_number);
+
+    Index old_index = 0;
+
+    for(Index i = 0; i < new_neurons_number; i++)
+    {
+        if(i == index) old_index++;
+
+        lower_bounds(i) = old_lower_bounds(old_index);
+        upper_bounds(i) = old_upper_bounds(old_index);
+
+        old_index++;
+    }
+
+
+//    lower_bounds.erase(lower_bounds.data() + static_cast<long>(index));
+//    upper_bounds.erase(upper_bounds.data() + static_cast<long>(index));
+
 }
 
 
