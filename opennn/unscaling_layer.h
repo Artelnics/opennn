@@ -28,7 +28,7 @@
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 
 namespace OpenNN
 {

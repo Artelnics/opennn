@@ -18,11 +18,11 @@
 // OpenNN includes
 
 #include "config.h"
-#include "functions.h"
+//#include "functions.h"
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;

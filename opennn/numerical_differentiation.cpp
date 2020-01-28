@@ -203,7 +203,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
 Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
-/*
+
    const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
 
    const Index n = x.size();
@@ -214,20 +214,17 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
 
    for(Index i = 0; i < n; i++)
    {
-      h[i] = sqrt(eta)*(1.0 + abs(x[i]));
+      /// @todo
+      //h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
 
    return(h);
-*/
-   return Tensor<type, 2>();
 }
 
 
 Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
                                                                                     const Tensor<type, 1>& y) const
-{
-    
-
+{   
     #ifdef __OPENNN_DEBUG__
 
     const Index x_size = x.size();

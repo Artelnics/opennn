@@ -15,7 +15,7 @@
 
 #include <math.h>
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "config.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
