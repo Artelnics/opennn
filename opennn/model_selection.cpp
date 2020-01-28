@@ -1159,7 +1159,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    type cross_validation_error = 0.0;
+    type cross_validation_error = static_cast<type>(0.0);
 
     for(Index i = 0; i < k; i++)
     {
@@ -1264,7 +1264,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    type cross_validation_error = 0.0;
+    type cross_validation_error = static_cast<type>(0.0);
 
     for(Index i = 0; i < k; i++)
     {
@@ -1359,7 +1359,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
-    type cross_validation_error = 0.0;
+    type cross_validation_error = static_cast<type>(0.0);
 
     for(Index i = 0; i < positives_instances_number; i++)
     {

@@ -63,11 +63,11 @@ public:
     {
        /// Target data from data set and output data from neural network.
 
-       type correlation = 0.0;
+       type correlation = static_cast<type>(0.0);
 
-       type intercept = 0.0;
+       type intercept = static_cast<type>(0.0);
 
-       type slope = 0.0;
+       type slope = static_cast<type>(0.0);
 
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;

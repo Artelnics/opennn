@@ -1131,7 +1131,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         layers_error_gradient[i].setRandom();
     }
 
-    loss = 0.0;
+    loss = static_cast<type>(0.0);
 
     error_gradient = Tensor<type, 1>(parameters_number);
     regularization_gradient = Tensor<type, 1>(parameters_number);
@@ -1229,7 +1229,7 @@ check();
 
     const Index batches_number = training_batches.size();
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
 
@@ -1265,7 +1265,7 @@ check();
 
     const Index batches_number = training_batches.size();
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
 
@@ -1305,7 +1305,7 @@ check();
 
     const Index batches_number = selection_batches.size();
 
-    type selection_error = 0.0;
+    type selection_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : selection_error)
 

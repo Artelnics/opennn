@@ -220,8 +220,8 @@ void StochasticGradientDescent::set_default()
    // TRAINING OPERATORS
 
    initial_learning_rate = 0.01;
-   initial_decay = 0.0;
-   momentum = 0.0;
+   initial_decay = static_cast<type>(0.0);
+   momentum = static_cast<type>(0.0);
    nesterov = false;
 
    // TRAINING PARAMETERS
@@ -234,10 +234,10 @@ void StochasticGradientDescent::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 0.0;
-   minimum_loss_decrease = 0.0;
+   minimum_parameters_increment_norm = static_cast<type>(0.0);
+   minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = -999999;
-   gradient_norm_goal = 0.0;
+   gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number =1000;
@@ -266,7 +266,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_learning_rate < 0.0)
+   if(new_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -292,7 +292,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_dacay < 0.0)
+   if(new_dacay < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -319,7 +319,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 { 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_momentum < 0.0)
+   if(new_momentum < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -378,7 +378,7 @@ void StochasticGradientDescent::set_warning_parameters_norm(const type& new_warn
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -407,7 +407,7 @@ void StochasticGradientDescent::set_warning_gradient_norm(const type& new_warnin
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -434,7 +434,7 @@ void StochasticGradientDescent::set_error_parameters_norm(const type& new_error_
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -463,7 +463,7 @@ void StochasticGradientDescent::set_error_gradient_norm(const type& new_error_gr
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -491,7 +491,7 @@ void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maxi
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_epochs_number < 0.0)
+   if(new_maximum_epochs_number < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -519,7 +519,7 @@ void StochasticGradientDescent::set_minimum_parameters_increment_norm(const type
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -547,7 +547,7 @@ void StochasticGradientDescent::set_minimum_loss_increase(const type& new_minimu
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -586,7 +586,7 @@ void StochasticGradientDescent::set_gradient_norm_goal(const type& new_gradient_
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -632,7 +632,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -754,7 +754,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    Tensor<type, 1> parameters_increment(parameters_number);
    Tensor<type, 1> last_increment(parameters_number);
 
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -762,14 +762,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
-   type training_error = 0.0;
+   type training_error = static_cast<type>(0.0);
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
 
-   type loss = 0.0;
+   type loss = static_cast<type>(0.0);
 
-   type gradient_norm = 0.0;
+   type gradient_norm = static_cast<type>(0.0);
 
    // Optimization algorithm stuff
 
@@ -786,7 +786,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -818,7 +818,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-       loss = 0.0;
+       loss = static_cast<type>(0.0);
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {

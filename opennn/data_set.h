@@ -529,9 +529,13 @@ public:
 
    // Splitting methods
 
-   void split_instances_sequential(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
+   void split_instances_sequential(const type& training_ratio = static_cast<type>(0.6),
+                                   const type& selection_ratio = static_cast<type>(0.2),
+                                   const type& testing_ratio = static_cast<type>(0.2));
 
-   void split_instances_random(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
+   void split_instances_random(const type& training_ratio = static_cast<type>(0.6),
+                               const type& selection_ratio = static_cast<type>(0.2),
+                               const type& testing_ratio = static_cast<type>(0.2));
 
    // Unusing methods
 

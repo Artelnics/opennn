@@ -164,7 +164,7 @@ public:
                 {
                     for(Index output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
                     {
-                        type sum = 0.0;
+                        type sum = static_cast<type>(0.0);
 
                         for(Index channel_index = 0; channel_index < channels_number; channel_index++)
                         {

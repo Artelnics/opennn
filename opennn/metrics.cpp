@@ -36,7 +36,7 @@ type l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
 
   //vector.sum()
 
-  type norm = 0.0;
+  type norm = static_cast<type>(0.0);
 
   for(Index i = 0; i < x_size; i++) {
     norm += vector[i] *vector[i];
@@ -67,7 +67,7 @@ type l2_norm(const Tensor<type, 1>& vector)
 {
   const Index x_size = vector.size();
 
-  type norm = 0.0;
+  type norm = static_cast<type>(0.0);
 
   for(Index i = 0; i < x_size; i++) {
     norm += vector[i] *vector[i];
@@ -138,7 +138,7 @@ type lp_norm(const Tensor<type, 1>& vector, const type &p)
 
   const Index x_size = vector.size();
 
-  type norm = 0.0;
+  type norm = static_cast<type>(0.0);
 
   for(Index i = 0; i < x_size; i++) {
     norm += pow(abs(vector[i]), p);
@@ -511,7 +511,7 @@ type euclidean_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>& ve
 
 #endif
 
-    type distance = 0.0;
+    type distance = static_cast<type>(0.0);
     type error;
 
     for(Index i = 0; i < x_size; i++)
@@ -546,7 +546,7 @@ type euclidean_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
 
 #endif
 
-    type distance = 0.0;
+    type distance = static_cast<type>(0.0);
     type error;
 
     for(Index i = 0; i < x_size; i++) {
@@ -615,7 +615,7 @@ type manhattan_distance(const Tensor<type, 1>& vector, const Tensor<type, 1>&vec
 
 #endif
 
-    type distance = 0.0;
+    type distance = static_cast<type>(0.0);
     type error;
 
     for(Index i = 0; i < x_size; i++) {
@@ -649,7 +649,7 @@ type manhattan_weighted_distance(const Tensor<type, 1>& vector, const Tensor<typ
 
 #endif
 
-    type distance = 0.0;
+    type distance = static_cast<type>(0.0);
     type error;
 
     for(Index i = 0; i < x_size; i++)
@@ -722,7 +722,7 @@ type sum_squared_error(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-  type sum_squared_error = 0.0;
+  type sum_squared_error = static_cast<type>(0.0);
   type error;
 
   for(Index i = 0; i < x_size; i++)
@@ -785,7 +785,7 @@ type minkowski_error(const Tensor<type, 1>& vector,
 
 #endif
 
-  type minkowski_error = 0.0;
+  type minkowski_error = static_cast<type>(0.0);
 
   for(Index i = 0; i < x_size; i++)
   {
@@ -1119,7 +1119,7 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
     #endif
 
-    type cross_entropy_error = 0.0;
+    type cross_entropy_error = static_cast<type>(0.0);
 
     for(Index i = 0; i < x_rows_number; i++)
     {
@@ -1130,11 +1130,11 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
             if(y_value == 0.0 && x_value == 0.0)
             {
-                cross_entropy_error -= 0.0;
+                cross_entropy_error -= static_cast<type>(0.0);
             }
             else if(y_value == 1.0 && x_value == 1.0)
             {
-                cross_entropy_error -= 0.0;
+                cross_entropy_error -= static_cast<type>(0.0);
             }
             else if(x_value == 0.0)
             {
@@ -1196,12 +1196,12 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
 
     #endif
 
-    type minkowski_error = 0.0;
-    type row_minkowski_error = 0.0;
+    type minkowski_error = static_cast<type>(0.0);
+    type row_minkowski_error = static_cast<type>(0.0);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        row_minkowski_error = 0.0;
+        row_minkowski_error = static_cast<type>(0.0);
 
         for(Index j = 0; j < columns_number; j++)
         {
@@ -1250,9 +1250,9 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
 
     #endif
 
-    type weighted_sum_squared_error = 0.0;
+    type weighted_sum_squared_error = static_cast<type>(0.0);
 
-    type error = 0.0;
+    type error = static_cast<type>(0.0);
 /*
     for(Index i = 0; i < x.size(); i++)
     {
