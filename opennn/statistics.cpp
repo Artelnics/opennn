@@ -454,6 +454,68 @@ type maximum_missing_values(const Tensor<type, 1>& vector)
 }
 
 
+/// Returns the maximums values of given columns.
+/// The format is a vector of type values.
+/// The size of that vector is equal to the number of given columns.
+/// @param matrix Used matrix.
+/// @param rows_indices Indices of the rows for which the maximums are to be computed.
+/// @param columns_indices Indices of the columns for which the maximums are to be computed.
+
+Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    Tensor<Index, 1> used_columns_indices;
+
+    if(columns_indices.dimension(0) == 0)
+    {
+        used_columns_indices.resize(columns_number);
+    }
+    else
+    {
+        used_columns_indices = columns_indices;
+    }
+
+    Tensor<Index, 1> used_rows_indices;
+
+    if(rows_indices.dimension(0) == 0)
+    {
+        used_rows_indices.resize(rows_number);
+    }
+    else
+    {
+        used_rows_indices = rows_indices;
+    }
+
+    const Index rows_indices_size = used_rows_indices.size();
+    const Index columns_indices_size = used_columns_indices.size();
+
+    Tensor<type, 1> maximums(columns_indices_size);
+
+    Index row_index;
+    Index column_index;
+
+    Tensor<type, 1> column(rows_indices_size);
+
+    for(Index j = 0; j < columns_indices_size; j++)
+    {
+        column_index = used_columns_indices[j];
+
+        for(Index i = 0; i < rows_indices_size; i++)
+        {
+            row_index = used_rows_indices[j];
+
+            column[i] = matrix(i,j);
+        }
+
+        maximums[j] = maximum(column);
+    }
+
+    return maximums;
+}
+
+
 /// Returns the mean of the elements in the vector.
 /// @param vector
 
@@ -1845,41 +1907,58 @@ Tensor<type, 1> rows_means(const Tensor<type, 2>& matrix, const Tensor<Index, 1>
 /// The format is a vector of type values.
 /// The size of that vector is equal to the number of given columns.
 /// @param matrix Used matrix.
-/// @param columns_indices Indices of the columns for which the descriptives are to be computed.
+/// @param rows_indices Indices of the rows for which the minimums are to be computed.
+/// @param columns_indices Indices of the columns for which the minimums are to be computed.
 
-Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
+Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Index, 1> used_columns_indices;
 
-//    if(columns_indices.empty())
-    if(columns_indices.dimension(0) == 0 | columns_indices.dimension(1) == 0)
+    if(columns_indices.dimension(0) == 0)
     {
         used_columns_indices.resize(columns_number);
-//        used_columns_indices.initialize_sequential();
     }
     else
     {
         used_columns_indices = columns_indices;
     }
 
+    Tensor<Index, 1> used_rows_indices;
+
+    if(rows_indices.dimension(0) == 0)
+    {
+        used_rows_indices.resize(rows_number);
+    }
+    else
+    {
+        used_rows_indices = rows_indices;
+    }
+
+    const Index rows_indices_size = used_rows_indices.size();
     const Index columns_indices_size = used_columns_indices.size();
 
     Tensor<type, 1> minimums(columns_indices_size);
 
+    Index row_index;
     Index column_index;
-    Tensor<type, 1> column(rows_number);
 
-    for(Index i = 0; i < columns_indices_size; i++)
+    Tensor<type, 1> column(rows_indices_size);
+
+    for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = used_columns_indices[i];
+        column_index = used_columns_indices[j];
 
-//        column = matrix.get_column(index);
-        column = matrix.chip(column_index,1);
+        for(Index i = 0; i < rows_indices_size; i++)
+        {
+            row_index = used_rows_indices[j];
 
-        minimums[i] = minimum(column);
+            column[i] = matrix(i,j);
+        }
+
+        minimums[j] = minimum(column);
     }
 
     return minimums;
