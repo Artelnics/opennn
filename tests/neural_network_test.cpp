@@ -382,6 +382,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    outputs = neural_network.calculate_outputs(inputs);
 
+
+
+
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.size() == 3, LOG);
 //   assert_true(outputs == 0.0, LOG);
@@ -1664,18 +1667,93 @@ void NeuralNetworkTest::test_add_layer()
 
 }
 
-///@todo
+
 void NeuralNetworkTest::test_calculate_forward_propagation()
 {
-    NeuralNetwork neural_network;
+    int n = omp_get_max_threads();
 
-    ProbabilisticLayer* probl = new ProbabilisticLayer;
-    PerceptronLayer* perl = new PerceptronLayer;
-    ScalingLayer* scal = new ScalingLayer;
+    cout << "Threads: " << n << endl;
 
-    neural_network.add_layer(scal);
-    neural_network.add_layer(perl);
-    neural_network.add_layer(probl);
+    NonBlockingThreadPool simple_thread_pool(n);
+
+    ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
+
+    const Index inputs_number = 2;
+    const Index target_number = 1;
+
+    Tensor<Index, 1>architecture(2);
+
+    architecture.setValues({inputs_number,target_number});
+
+    Tensor<type,2> data(10, 3);
+
+    data.setConstant(1);
+
+    //dataset
+
+    DataSet dataset(data);
+
+    dataset.set_training();
+
+    dataset.set_batch_instances_number(5);
+
+    DataSet::Batch batch(&dataset);
+
+    Tensor<Index,2> batches_indices = dataset.get_training_batches(false);
+
+    Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
+
+    Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
+
+    batch.fill(batches_indices.chip(0,0), inputs_indices, targets_indices);
+
+    //neuralnetwork
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+
+    PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+
+    const Index neurons_number = perceptron_layer->get_neurons_number();
+
+    Tensor<type, 2> biases_perceptron(neurons_number, 1);
+
+    biases_perceptron.setConstant(1);
+
+    Tensor<type, 2> synaptic_weights_perceptron(inputs_number, neurons_number);
+
+    synaptic_weights_perceptron.setConstant(1);
+
+    perceptron_layer->set_biases(biases_perceptron);
+
+    perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
+
+    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_batch_instances_number(), &neural_network);
+
+    neural_network.calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+
+    Tensor<type,2> sol(5,1);
+
+    sol.setConstant(3);
+
+    cout<<forward_propagation.layers[0].combinations;
+
+
+
+//    assert_true(forward_propagation.layers[0].combinations = sol, LOG);
+
+//    cout<<forward_propagation.layers[0].combinations;
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 
@@ -1690,10 +1768,9 @@ void NeuralNetworkTest::run_test_case()
 
    test_destructor();
 
-/*
    // Assignment operators methods
 
-   test_assignment_operator();
+// test_assignment_operator();
 
    // Parameters methods
 
@@ -1706,9 +1783,11 @@ void NeuralNetworkTest::run_test_case()
    test_set_parameters_constant();
    test_set_parameters_random();
 
+   test_calculate_forward_propagation();
+/*
    // Parameters norm
 
-   test_calculate_parameters_norm();
+//   test_calculate_parameters_norm();
 
    // Output
 
@@ -1749,7 +1828,8 @@ void NeuralNetworkTest::run_test_case()
    test_save();
 
    test_load();
-*/
+   */
+
    cout << "End of neural network test case.\n";
 }
 

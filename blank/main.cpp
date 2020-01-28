@@ -58,25 +58,6 @@ using Eigen::Vector3d;
 
 
 
-void push_back(Tensor<Index, 1>& m, Index& value)
-{
-    cout<<"hello"<<endl;
-
-    cout<<m<<endl;
-
-    Index size = m.size();
-
-    m.resize(size + 1);
-
-    m[size + 1] = value;
-
-    cout<<"end"<<endl;
-
-    system("pause");
-
-
-}
-
 
 
 int main(void)
@@ -89,6 +70,8 @@ int main(void)
         b.setValues({1, 2, 3});
         Eigen::Tensor<int, 2> a(3,3);
         a.setValues({{1, 2, 3}, {1, 2, 3}, {1, 2, 3}});
+
+        cout << a << endl;
 
         Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) };
         Eigen::Tensor<int, 1> AB = a.contract(b, product_dims);

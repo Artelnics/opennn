@@ -1256,6 +1256,8 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if(layers_number == 0) return inputs;
 
+    cout<<inputs;
+
     Tensor<type, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
 
     for(Index i = 1; i < layers_number; i++)
