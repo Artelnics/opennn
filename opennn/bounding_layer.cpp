@@ -219,10 +219,10 @@ type BoundingLayer::get_upper_bound(const Index& i) const
 void BoundingLayer::set()
 {
    bounding_method = Bounding;
-/*
-   lower_bounds.set();
-   upper_bounds.set();
-*/
+
+   lower_bounds = Tensor<type, 1>();
+   upper_bounds = Tensor<type, 1>();
+
    set_default();
 }
 
@@ -244,10 +244,8 @@ void BoundingLayer::set(const Index& new_neurons_number)
 
 void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
 {
-/*
-    lower_bounds.set(new_inputs_number);
-    upper_bounds.set(new_inputs_number);
-*/
+    lower_bounds.resize(new_inputs_number);
+    upper_bounds.resize(new_inputs_number);
 }
 
 
@@ -256,10 +254,11 @@ void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
 
 void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 {
-/*
-    lower_bounds.set(new_neurons_number, -999999);
-    upper_bounds.set(new_neurons_number, 999999);
-*/
+    lower_bounds.resize(new_neurons_number);
+    upper_bounds.resize(new_neurons_number);
+
+    lower_bounds.setConstant(-999999);
+    upper_bounds.setConstant(999999);
 }
 
 
@@ -373,12 +372,13 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
    }
 
    #endif
-/*
+
    if(lower_bounds.size() != neurons_number)
    {
-      lower_bounds.set(neurons_number, -999999);
+       lower_bounds.resize(neurons_number);
+       lower_bounds.setConstant(-999999);
    }
-*/
+
    // Set lower bound of single neuron
 
    lower_bounds[index] = new_lower_bound;

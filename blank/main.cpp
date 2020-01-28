@@ -87,7 +87,6 @@ int main(void)
 
         cout << Tensor<type, 2>(2,2).setConstant(2) << endl;
 
-
         return 0;
     }
        catch(exception& e)
