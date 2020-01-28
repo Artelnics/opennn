@@ -155,13 +155,44 @@ public:
                                const Tensor<type, 2>& inputs,
                                Tensor<type, 2>& combinations) const
    {
-        const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+//        const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
-        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);        
+//        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
 
         const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
 
         combinations.device(thread_pool_device) += biases.broadcast(broadcast);
+
+        if(std::is_same<type, float>::value)
+        {
+            //cblassgemm()
+/*
+            void cblas_sgemm(const CBLAS_LAYOUT Layout,
+                             const CBLAS_TRANSPOSE CblasNoTrans,
+                             const CBLAS_TRANSPOSE CblasNoTrans,
+                             const MKL_INT inputs.dimension(0),
+                             const MKL_INT synaptic_weights.dimension(1),
+                             const MKL_INT inputs.dimension(1),
+                             const float 1,
+                             const float* inputs.data(),
+                             const MKL_INT lda,
+                             const float* synaptic_weights.data(),
+                             const MKL_INT ldb,
+                             const float beta,
+                             float* combinations.data(),
+                             const MKL_INT ldc);
+*/
+            //const int
+
+            const type* a = inputs.data();
+            const type* b = synaptic_weights.data();
+
+        }
+        else if(std::is_same<type, double>::value)
+        {
+            //cublasdgem()
+        }
+
    }
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
