@@ -54,7 +54,8 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-//        data_set.generate_Rosenbrock_data(1000, 4);
+
+//      data_set.generate_Rosenbrock_data(1000, 4);
 
         // Data set
 
@@ -71,7 +72,7 @@ int main(void)
 
         data_set.set_training();
 
-        data_set.set_batch_instances_number(2);
+        data_set.set_batch_instances_number(3);
 
 
         // Neural network

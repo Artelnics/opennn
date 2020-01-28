@@ -2945,7 +2945,7 @@ Tensor<type, 2> DataSet::get_training_data() const
 
    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-   return get_data_subtensor(training_indices, variables_indices);
+   return get_subtensor_data(training_indices, variables_indices);
    */
    return Tensor<type,2>();
 }
@@ -2964,7 +2964,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
    Tensor<Index, 1> variables_indices;
    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
-   return get_data_subtensor(selection_indices, variables_indices);
+   return get_subtensor_data(selection_indices, variables_indices);
 }
 
 
@@ -2981,7 +2981,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, variables_indices);
+   return get_subtensor_data(testing_indices, variables_indices);
 }
 
 
@@ -2998,7 +2998,7 @@ Tensor<type, 2> DataSet::get_input_data() const
 
    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_data_subtensor(indices, input_variables_indices);
+   return get_subtensor_data(indices, input_variables_indices);
 }
 
 
@@ -3015,7 +3015,7 @@ Tensor<type, 2> DataSet::get_target_data() const
 
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(indices, target_variables_indices);
+   return get_subtensor_data(indices, target_variables_indices);
 }
 
 
@@ -3027,7 +3027,7 @@ Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& instances_indice
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(instances_indices, input_variables_indices);
+    return get_subtensor_data(instances_indices, input_variables_indices);
 }
 
 
@@ -3039,7 +3039,7 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& instances_indic
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_data_subtensor(instances_indices, target_variables_indices);
+    return get_subtensor_data(instances_indices, target_variables_indices);
 
 }
 
@@ -3054,7 +3054,7 @@ Tensor<type, 2> DataSet::get_training_input_data() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(training_indices, input_variables_indices);
+    return get_subtensor_data(training_indices, input_variables_indices);
 }
 
 
@@ -3068,7 +3068,7 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 
    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(training_indices, target_variables_indices);
+   return get_subtensor_data(training_indices, target_variables_indices);
 }
 
 
@@ -3082,7 +3082,7 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
 
    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_data_subtensor(selection_indices, input_variables_indices);
+   return get_subtensor_data(selection_indices, input_variables_indices);
 }
 
 
@@ -3096,7 +3096,7 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(selection_indices, target_variables_indices);
+   return get_subtensor_data(selection_indices, target_variables_indices);
 }
 
 
@@ -3110,7 +3110,7 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, input_variables_indices);
+   return get_subtensor_data(testing_indices, input_variables_indices);
 }
 
 
@@ -3124,7 +3124,7 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, target_variables_indices);
+   return get_subtensor_data(testing_indices, target_variables_indices);
 }
 
 
@@ -3205,7 +3205,7 @@ Tensor<type, 2> DataSet::get_instance_input_data(const Index & instance_index) c
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(Tensor<Index, 1>({instance_index}), input_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>({instance_index}), input_variables_indices);
 }
 
 
@@ -3216,7 +3216,7 @@ Tensor<type, 2> DataSet::get_instance_target_data(const Index & instance_index) 
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_data_subtensor(Tensor<Index, 1>({instance_index}), target_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>({instance_index}), target_variables_indices);
 }
 
 
@@ -3525,7 +3525,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 }
 
 
-Tensor<type, 2> DataSet::get_data_subtensor(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
+Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
@@ -3541,7 +3541,7 @@ Tensor<type, 2> DataSet::get_data_subtensor(const Tensor<Index, 1> & rows_indice
 
         for(Index j = 0; j < columns_number; j++)
         {
-            column_index = columns_indices[i];
+            column_index = columns_indices[j];
 
             subtensor(i, j) = data(row_index, column_index);
         }

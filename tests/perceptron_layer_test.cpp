@@ -497,77 +497,6 @@ void PerceptronLayerTest::test_set_display()
 }
 
 
-void PerceptronLayerTest::test_grow_inputs()
-{
-   cout << "test_grow_inputs\n";
-
-     PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set();
-     perceptron_layer.grow_input();
-     assert_true(perceptron_layer.get_inputs_number() == 0, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 0, LOG);
-
-     // Test
-
-     perceptron_layer.set(2, 1);
-     perceptron_layer.grow_input();
-
-     assert_true(perceptron_layer.get_inputs_number() == 3, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
-}
-
-
-void PerceptronLayerTest::test_grow_perceptrons()
-{
-   cout << "test_grow_perceptrons\n";
-
-     PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set(1, 1);
-     perceptron_layer.grow_perceptrons(4);
-
-     assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 5, LOG);
-}
-
-
-void PerceptronLayerTest::test_prune_input()
-{
-   cout << "test_prune_input\n";
-
-    PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set(2, 1);
-     perceptron_layer.prune_input(0);
-
-     assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
-}
-
-
-void PerceptronLayerTest::test_prune_neuron()
-{
-   cout << "test_prune_neuron\n";
-
-    PerceptronLayer perceptron_layer;
-
-    // Test
-
-    perceptron_layer.set(1, 2);
-    perceptron_layer.prune_neuron(0);
-
-    assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-    assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
-}
-
-
 void PerceptronLayerTest::test_set_parameters_constant()
 {
    cout << "test_set_parameters_constant\n";
@@ -1310,16 +1239,6 @@ void PerceptronLayerTest::run_test_case()
    // Display messages
 
    test_set_display();
-
-   // Growing and pruning
-
-   test_grow_inputs();
-
-   test_grow_perceptrons();
-
-   test_prune_input();
-
-   test_prune_neuron();
 
    // Parameters initialization methods
 
