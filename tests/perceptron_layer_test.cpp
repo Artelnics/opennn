@@ -198,11 +198,13 @@ void PerceptronLayerTest::test_get_biases()
    // Test
 
    perceptron_layer.set(1, 1);
+   
    perceptron_layer.set_parameters_constant(0.0);
 
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
+
    assert_true(biases(0) == static_cast<type>(0.0), LOG);
 }
 

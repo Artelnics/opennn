@@ -835,20 +835,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //          Neural network
 
-
             neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
-
-
-//            forward_propagation.print();
-
-//            system("pause");
+          forward_propagation.print();
 /*
+
 //           Loss
 
            loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
 
-           first_order_loss.print(); system("pause");
+           first_order_loss.print();
 
            loss += first_order_loss.loss;
 
@@ -884,8 +880,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->set_parameters(parameters);
 
             learning_rate_iteration++;
-            */
 
+*/
 
        }
 

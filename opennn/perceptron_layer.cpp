@@ -152,11 +152,32 @@ Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 /// The format is a vector of real values. 
 /// The size is the number of parameters in the layer. 
 
-Tensor<type, 1> PerceptronLayer::get_parameters() const
+Tensor<type, 1> PerceptronLayer::   get_parameters() const
 {
-//    return synaptic_weights.to_vector().assemble(biases);
 
-    return Tensor<type, 1>();
+    Eigen::array<Index, 1> one_dim{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
+
+    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim);
+
+    Tensor<type, 1> parameters(synaptic_weights_vector.size() + biases.size());
+
+    Index index = 0;
+
+    for(Index i = 0; i<synaptic_weights_vector.dimension(0); i++)
+    {
+        parameters(i) = synaptic_weights_vector(i);
+
+        index++;
+    }
+
+    for(Index i=0; i<biases.dimension(0); i++)
+    {
+        parameters(i + index) = biases(i);
+    }
+
+    return parameters;
+
+
 }
 
 
@@ -614,11 +635,11 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
-/*
+
     biases.setConstant(value);
 
     synaptic_weights.setConstant(value);
-*/
+
 }
 
 
