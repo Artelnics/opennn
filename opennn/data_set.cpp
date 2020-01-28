@@ -5006,7 +5006,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     Tensor<type, 1> target_correlations(inputs_number);
 
     Tensor<string, 2> top_correlations(inputs_number, 2);
-
+/*
     map<type,string> top_correlation;
 
     for(Index i = 0 ; i < inputs_number; i++)
@@ -5022,7 +5022,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
     {
         cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }
+    }*/
 }
 
 
@@ -5157,7 +5157,7 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
     Tensor<string, 2> top_correlations(correlations_number, 3);
-
+/*
     map<type, string> top_correlation;
 
     for(Index i = 0; i < variables_number; i++)
@@ -5175,7 +5175,7 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
     for(it=top_correlation.begin(); it!=top_correlation.end(); it++)
     {
         cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }
+    }*/
 }
 
 

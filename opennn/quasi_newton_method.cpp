@@ -821,10 +821,15 @@ const Tensor<type, 2>& old_inverse_hessian) const
 
 Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<type, 1>& gradient, const Tensor<type, 2>& inverse_hessian_approximation) const
 {
+
+    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) }; // Normal product as matrix times tensor
+
+    Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, product_dims);
+
+    return normalized((-1.0)*hessian_dot_gradient);
 /*
    return normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
 */
-    return Tensor<type, 1>();
 }
 
 
@@ -956,8 +961,8 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
    
    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
    
- /*
-   if(absolute_value(parameters_difference) < 1.0e-99)
+/*
+   if(parameters_difference.abs() < 1.0e-99)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
@@ -967,10 +972,10 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
    }
 
    // Gradient difference Vector
-   
+ */
    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
-
-   if(absolute_value(gradient_difference) < 1.0e-50)
+/*
+   if(gradient_difference.abs() < 1.0e-50)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
@@ -986,11 +991,18 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
              << "Old inverse hessian matrix is zero.\n";
 
       throw logic_error(buffer.str());	  
-   }
+   }*/
 
-   const type parameters_dot_gradient = dot(parameters_difference, gradient_difference);
+   Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Normal product vector times vector
 
-   if(abs(parameters_dot_gradient) < 1.0e-50)
+   const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, product_dims);
+
+   const type parameters_dot_gradient =parameter_dot_gradient(0);
+
+//   const type parameters_dot_gradient = dot(parameters_difference, gradient_difference);
+
+/*
+   if(abs(parameters_dot_gradient) < static_cast<type>(1.0e-50))
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
