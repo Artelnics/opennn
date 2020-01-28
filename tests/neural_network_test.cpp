@@ -1689,7 +1689,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     data.setConstant(1);
 
-    //dataset
+    //DataSet
 
     DataSet dataset(data);
 
@@ -1707,7 +1707,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     batch.fill(batches_indices.chip(0,0), inputs_indices, targets_indices);
 
-    //neuralnetwork
+    //NeuralNetwork
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
@@ -1731,29 +1731,9 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     neural_network.calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
-    Tensor<type,2> sol(5,1);
+    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations;
 
-    sol.setConstant(3);
-
-    cout<<forward_propagation.layers[0].combinations;
-
-
-
-//    assert_true(forward_propagation.layers[0].combinations = sol, LOG);
-
-//    cout<<forward_propagation.layers[0].combinations;
-
-
-
-
-
-
-
-
-
-
-
-
+    assert_true(perceptron_combinations.size() == 5 && perceptron_combinations(0,0) == 3, LOG);
 
 }
 
