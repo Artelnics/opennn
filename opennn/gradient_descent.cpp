@@ -870,15 +870,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
 
-      const Tensor<type, 0> dot_training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
-
-      const type training_slope = dot_training_slope(0);
+      const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
 
 //      const type training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction
 
-      if(training_slope >= 0.0) throw logic_error("Training slope is equal or greater than zero");
+      if(training_slope(0) >= 0.0) throw logic_error("Training slope is equal or greater than zero");
 
       if(epoch == 0)
       {
@@ -897,7 +895,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       {
           cout << "Training rate is zero" << endl;
 
-          learning_rate = 1.0e-2;
+          learning_rate = static_cast<type>(1.0e-2);
           //throw logic_error("Training rate is zero");ç
       }
 
