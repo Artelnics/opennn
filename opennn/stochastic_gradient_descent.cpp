@@ -219,14 +219,11 @@ void StochasticGradientDescent::set_default()
 {
    // TRAINING OPERATORS
 
-   initial_learning_rate = 0.01;
-<<<<<<< HEAD
+   initial_learning_rate = static_cast<type>(0.01);
    initial_decay = 0;
    momentum = 0;
-=======
    initial_decay = static_cast<type>(0.0);
    momentum = static_cast<type>(0.0);
->>>>>>> e7926ac546de483def71713e780fae208742b921
    nesterov = false;
 
    // TRAINING PARAMETERS
