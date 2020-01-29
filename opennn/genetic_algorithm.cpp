@@ -1383,7 +1383,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector())
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1467,7 +1467,7 @@ void GeneticAlgorithm::perform_2point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector()) <= incest_prevention_distance)
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>()) <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
             random_loops++;
@@ -1558,7 +1558,7 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector())
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;

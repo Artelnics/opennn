@@ -659,7 +659,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Tensor<type, 2>& data = data_set_pointer->get_data();
+//   const Tensor<type, 2>& data = data_set_pointer->get_data();
 
    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
