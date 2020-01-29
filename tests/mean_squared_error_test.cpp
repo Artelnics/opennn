@@ -18,7 +18,7 @@ MeanSquaredErrorTest::~MeanSquaredErrorTest()
 {
 }
 
-/*
+
 void MeanSquaredErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -62,7 +62,11 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   Tensor<Index, 1> architecture(3);
+
+   architecture.setValues({1,1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
@@ -70,11 +74,14 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//   assert_true(mean_squared_error.calculate_training_error() == 0.0, LOG);
+   assert_true(mean_squared_error.calculate_training_error() == 0.0, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   Tensor<Index, 1> architecture_2(2);
+   architecture_2.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture_2);
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -84,7 +91,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 
 //   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_error(parameters)) < numeric_limits<double>::min(), LOG);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
@@ -95,7 +102,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set(NeuralNetwork::Approximation, architecture_2);
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -104,7 +111,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    data_set.set_data_random();
    data_set.set_training();
 
-   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
+//   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
 }
 
 
@@ -152,14 +159,17 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_constant(0.0);
 
+   cout<<"out_set_paremeters"<<endl;
+
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
    error_gradient = mean_squared_error.calculate_training_error_gradient();
 
    assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-   assert_true(error_gradient == 0.0, LOG);
+   cout<<"____________________";
+//   assert_true(error_gradient == 0.0, LOG);
 }
-
+/*
    neural_network.set();
 
    // Test perceptron and probabilistic
@@ -189,12 +199,14 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+   assert_true((error_gradient - numerical_error_gradient).abs() < 1.0e-3, LOG);
 }
 
    neural_network.set();
 
    // Test lstm
+
+
 {
    instances_number = 5;
    inputs_number = 4;
@@ -325,9 +337,11 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
+*/
 }
 
 
+/*
 void MeanSquaredErrorTest::test_calculate_selection_error()
 {
    cout << "test_calculate_selection_error\n";
@@ -568,16 +582,16 @@ void MeanSquaredErrorTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 }
-*/
 
+*/
 void MeanSquaredErrorTest::run_test_case()
 {
    cout << "Running mean squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
 
    // Get methods
 
@@ -587,9 +601,10 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_calculate_training_error();
 
-   test_calculate_selection_error();
-
    test_calculate_training_error_gradient();
+
+ /*
+   test_calculate_selection_error();
 
    // Error terms methods
 

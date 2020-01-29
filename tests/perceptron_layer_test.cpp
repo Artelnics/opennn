@@ -628,12 +628,12 @@ void PerceptronLayerTest::test_calculate_parameters_norm()
 
 void PerceptronLayerTest::test_calculate_combinations()
 {
-    /*
+
    cout << "test_calculate_combinations\n";
 
    PerceptronLayer perceptron_layer;
 
-   Tensor<type, 1> biases;
+   Tensor<type, 2> biases;
    Tensor<type, 2> synaptic_weights;
    Tensor<type, 1> parameters;
 
@@ -657,7 +657,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     assert_true(combinations.dimension(1) == 1, LOG);
     assert_true(combinations(0,0) == 7.0, LOG);
 
-   // Test
+    // Test
 
    perceptron_layer.set(2, 2);
    perceptron_layer.set_parameters_constant(1);
@@ -681,7 +681,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    synaptic_weights.setConstant(1.0);
 
-   biases.resize(4);
+   biases.resize(1,4);
 
    biases.setConstant(2.0);
 
@@ -705,7 +705,8 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.initialize_biases(1);
    synaptic_weights.resize(2,4);
    synaptic_weights.setConstant(1.0);
-   biases.resize(4);
+
+   biases.resize(1,4);
    biases.setConstant(1.0);
 
    perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -726,7 +727,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    perceptron_layer.set(3, 4);
 
-   biases.resize(4);
+   biases.resize(1,4);
 //   biases.initialize_sequential();
 
    synaptic_weights.resize(3,4);
@@ -745,13 +746,13 @@ void PerceptronLayerTest::test_calculate_combinations()
    assert_true(combinations.dimension(1) == 4, LOG);
 
    // Test
-
+/*
    perceptron_layer.set(1, 1);
 
    inputs.resize(2,1);
    inputs.setRandom();
 
-   biases.resize(1);
+   biases.resize(1,1);
 //   biases.initialize_sequential();
 
    synaptic_weights.resize(1,1);
@@ -762,7 +763,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    parameters = perceptron_layer.get_parameters();
 
-//   assert_true(perceptron_layer.calculate_combinations(inputs) == perceptron_layer.calculate_combinations(inputs, parameters), LOG);
+   assert_true(perceptron_layer.calculate_combinations(inputs) == perceptron_layer.calculate_combinations(inputs, parameters), LOG);
 */
 }
 

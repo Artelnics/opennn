@@ -219,9 +219,8 @@ void StochasticGradientDescent::set_default()
 {
    // TRAINING OPERATORS
 
+
    initial_learning_rate = static_cast<type>(0.01);
-   initial_decay = 0;
-   momentum = 0;
    initial_decay = static_cast<type>(0.0);
    momentum = static_cast<type>(0.0);
    nesterov = false;
@@ -741,6 +740,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
@@ -754,6 +754,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters_increment(parameters_number);
+
    Tensor<type, 1> last_increment(parameters_number);
 
    type parameters_norm = static_cast<type>(0.0);
@@ -792,15 +793,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
-
    Index current_iteration = 0;
+
    Index learning_rate_iteration = 1;
 
    bool is_forecasting = false;
 
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-   Index n = omp_get_max_threads();
+   int n = omp_get_max_threads();
 
    cout << "Threads: " << n << endl;
 
@@ -812,7 +813,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
    {
-       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(false);
+       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
 
        const Index batches_number = training_batches.dimension(0);
 
@@ -839,18 +840,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            loss += first_order_loss.loss;
 
-//           cout<<"gradient"<<endl;
-//           cout<<first_order_loss.gradient<<endl;
-
 //         Gradient
 
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
-
-           cout<<"gradient"<<endl;
-
-           cout<<first_order_loss.gradient<<endl;
-
-           system("pause");
 
            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
 
