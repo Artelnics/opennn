@@ -580,12 +580,12 @@ Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>& x)
 Tensor<type, 2> binary(const Tensor<type, 2>& x)
 {
     Tensor<type, 2> y(x.dimensions());
-/*
+
     for(Index i = 0; i < x.size(); i++)
     {
-        x(i) < 0.5 ? y(i) = false : y[i] = true;
+        x(i) < static_cast<type>(0.5) ? y(i) = false : y(i) = true;
     }
-*/
+
     return y;
 }
 
@@ -631,12 +631,12 @@ Tensor<type, 2> rectified_linear_derivatives(const Tensor<type, 2>& x)
      const Index n = x.size();
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+         x(i) < static_cast<type>(0.0) ? derivatives(i) = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(1.0);
      }
-*/
+
      return derivatives;
 }
 
@@ -649,7 +649,7 @@ Tensor<type, 1> rectified_linear_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+         x(i) < static_cast<type>(0.0) ? derivatives[i] = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(1.0);
      }
 
      return derivatives;
@@ -663,12 +663,12 @@ Tensor<type, 2> scaled_exponential_linear_derivatives(const Tensor<type, 2>& x)
      const type alpha = static_cast<type>(1.67326);
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
+         x(i) < static_cast<type>(0.0) ? derivatives(i) = lambda * alpha * exp(x(i)) : derivatives(i) = lambda;
      }
-*/
+
      return derivatives;
 }
 
@@ -683,7 +683,7 @@ Tensor<type, 1> scaled_exponential_linear_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
+         x(i) < static_cast<type>(0.0) ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
      }
 
      return derivatives;
@@ -695,12 +695,12 @@ Tensor<type, 2> soft_plus_derivatives(const Tensor<type, 2>& x)
      const Index n = x.size();
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         derivatives[i] = 1/(1 + exp(-x(i)));
+         derivatives(i) = 1/(1 + exp(-x(i)));
      }
-*/
+
      return derivatives;
 }
 
@@ -713,7 +713,7 @@ Tensor<type, 1> soft_plus_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         derivatives[i] = 1/(1 + exp(-x(i)));
+         derivatives(i) = 1/(1 + exp(-x(i)));
      }
 
      return derivatives;
@@ -724,13 +724,13 @@ Tensor<type, 2> soft_sign_derivatives(const Tensor<type, 2>& x)
 {
  const Index n = x.size();
 
- Tensor<type, 2> derivatives(x.dimensions());
-/*
+ Tensor<type, 2> derivatives(x.dimension(0),x.dimension(1));
+
  for(Index i = 0; i < n; i++)
  {
-    x(i) < 0.0 ? derivatives[i] = 1.0 / pow(1.0 - x(i), 2) : derivatives[i] = 1.0 / pow(1.0 + x(i), 2);
+    x(i) < static_cast<type>(0.0) ? derivatives(i) = static_cast<type>(1.0) / pow(1.0 - x(i), 2) : derivatives(i) = 1.0 / pow(1.0 + x(i), 2);
  }
-*/
+
  return derivatives;
 }
 
@@ -744,7 +744,6 @@ Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>& x)
  for(Index i = 0; i < n; i++)
  {
     x(i) < 0.0 ? derivatives[i] = 1 / pow((1 - x(i)), 2) : derivatives[i] = 1 / pow((1 + x(i)), 2);
-
  }
 
  return derivatives;
@@ -755,46 +754,46 @@ Tensor<type, 2> hard_sigmoid_derivatives(const Tensor<type, 2>& x)
 {
     const Index n = x.size();
 
-    Tensor<type, 2> derivatives(x.dimensions());
-/*
+    Tensor<type, 2> derivatives(x.dimension(0), x.dimension(1));
+
     for(Index i = 0; i < n; i++)
     {
-        x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
+        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? derivatives(i) = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(0.2);
     }
-*/
+
     return derivatives;
 }
 
 
 Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>& x)
 {
-const Index n = x.size();
+    const Index n = x.size();
 
     Tensor<type, 1> derivatives(n);
 
- for(Index i = 0; i < n; i++)
- {
-     x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
- }
+     for(Index i = 0; i < n; i++)
+     {
+         x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = static_cast<type>(0.0) : derivatives[i] = static_cast<type>(0.2);
+     }
 
- return derivatives;
+    return derivatives;
 }
 
 
 Tensor<type, 2> exponential_linear_derivatives(const Tensor<type, 2>& x)
 {
- const Index n = x.size();
+     const Index n = x.size();
 
- Tensor<type, 2> derivatives(x.dimensions());
+     Tensor<type, 2> derivatives(x.dimension(0), x.dimension(1));
 
- const type alpha = 1.0;
-/*
- for(Index i = 0; i < n; i++)
- {
-     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = 1.0;
- }
-*/
- return derivatives;
+     const type alpha = 1.0;
+
+     for(Index i = 0; i < n; i++)
+     {
+         x(i) < 0.0 ? derivatives(i) = alpha * exp(x(i)) : derivatives(i) = static_cast<type>(1.0);
+     }
+
+     return derivatives;
 }
 
 
@@ -808,7 +807,7 @@ Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>& x)
 
  for(Index i = 0; i < n; i++)
  {
-     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = 1.0;
+     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = static_cast<type>(1.0);
  }
 
  return derivatives;
