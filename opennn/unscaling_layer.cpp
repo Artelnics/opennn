@@ -651,7 +651,7 @@ Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<t
                           << "Those outputs won't be unscaled.\n";
             }
 
-            outputs(i,j) = 0.0;
+            outputs(i,j) = static_cast<type>(0.0);
         }
         else
         {
@@ -688,7 +688,7 @@ Tensor<type, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const 
                           << "Those outputs won't be unscaled.\n";
             }
 
-            outputs(i,j) = 0.0;
+            outputs(i,j) = static_cast<type>(0.0);
         }
         else
         {
@@ -726,7 +726,7 @@ Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type,
                           << "Those outputs won't be unscaled.\n";
             }
 
-            outputs(i,j) = 0.0;
+            outputs(i,j) = static_cast<type>(0.0);
         }
         else
         {

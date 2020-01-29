@@ -126,7 +126,7 @@ check();
 
     // Mean squared error
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
 
@@ -179,7 +179,7 @@ check();
 
     // Mean squared error
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
 
@@ -238,7 +238,7 @@ check();
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type selection_error = 0.0;
+    type selection_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : selection_error)
 

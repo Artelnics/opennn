@@ -439,7 +439,7 @@ Tensor<type, 2> softmax(const Tensor<type, 2>& x)
 
   for(Index j = 0; j < rows_number; j++)
   {
-      type sum = 0.0;
+      type sum = static_cast<type>(0.0);
 
       for(Index i = 0; i < columns_number; i++)
       {
@@ -1754,7 +1754,7 @@ void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
   for(Index j = 0; j < rows_number; j++)
   {
-      type sum = 0.0;
+      type sum = static_cast<type>(0.0);
 
       for(Index i = 0; i < columns_number; i++)
       {

@@ -1726,7 +1726,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 //    type previous_minimum_selection_error = 1e10;
 
     type optimum_selection_error = 1e10;
-    type optimum_training_error = 0.0;
+    type optimum_training_error = static_cast<type>(0.0);
 
     Tensor<bool, 1> optimal_inputs;
     Tensor<type, 1> optimal_parameters;
@@ -1740,7 +1740,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     Index index = 0;
 
     time_t beginning_time, current_time;
-    type elapsed_time = 0.0;
+    type elapsed_time = static_cast<type>(0.0);
 /*
     original_uses = data_set_pointer->get_columns_uses();
 

@@ -1030,17 +1030,14 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
-        {
-            continue;
-        }
-/*
-        const Tensor<type, 1> layer_parameters = new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1);
+        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
+
+        const Tensor<type, 1> layer_parameters /* = new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1)*/;
 
         trainable_layers_pointers[i]->set_parameters(layer_parameters);
 
         position += trainable_layers_parameters_number[i];
-*/
+
     }
 }
 

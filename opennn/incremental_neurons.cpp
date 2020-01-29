@@ -168,11 +168,11 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     Tensor<type, 1> optimal_parameters;
 
-    type optimum_training_loss = 0.0;
-    type optimum_selection_error = 0.0;
+    type optimum_training_loss = static_cast<type>(0.0);
+    type optimum_selection_error = static_cast<type>(0.0);
 
-    type current_training_loss = 0.0;
-    type current_selection_error = 0.0;
+    type current_training_loss = static_cast<type>(0.0);
+    type current_selection_error = static_cast<type>(0.0);
 
     Tensor<type, 1> current_parameters;
 
@@ -187,7 +187,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     bool end = false;
 
     time_t beginning_time, current_time;
-    type elapsed_time = 0.0;
+    type elapsed_time = static_cast<type>(0.0);
 
     time(&beginning_time);
 
