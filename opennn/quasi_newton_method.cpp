@@ -1233,7 +1233,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    // Eigen stuff
 
    const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(1, 0) };
 
    // Main loop 
 

@@ -828,6 +828,10 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
                                                        const Tensor<type, 2>& activations_derivatives,
                                                        const Tensor<type, 2>& next_layer_delta) const
 {
+    // Eigen stuff
+
+    const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(1, 0) };
+
     const Type layer_type = next_layer_pointer->get_type();
 
     Tensor<type, 2> synaptic_weights_transpose;
@@ -839,12 +843,15 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
     else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-    }        
+    }
+
+    const Tensor<type, 2> delta_dot_synaptic = next_layer_delta.contract(synaptic_weights_transpose, product_matrix_matrix);
+
+    return activations_derivatives*delta_dot_synaptic;
 
 /*
     return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
 */
-    return Tensor<type, 2>();
 }
 
 
