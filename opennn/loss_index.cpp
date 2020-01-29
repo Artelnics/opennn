@@ -1397,13 +1397,21 @@ check();
 
 Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
 {
+    cout<<"1";
     NumericalDifferentiation numerical_differentiation;
 
+    cout<<"2";
+
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+    cout<<"3";
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+    cout<<"4";
 
-    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error, parameters);
+    Tensor<type, 1> ndd = numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error, parameters);
+    cout<<"5";
+
+    return ndd;
 
 }
 
