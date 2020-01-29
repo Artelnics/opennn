@@ -276,7 +276,7 @@ void GeneticAlgorithm::set_default()
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
         maximum_epochs_number = static_cast<Index>(max(100.,inputs_number*5.));
 
-        mutation_rate = 1.0/inputs_number;
+        mutation_rate = static_cast<type>(1.0/inputs_number);
 
         population_size = 10*inputs_number;
 
