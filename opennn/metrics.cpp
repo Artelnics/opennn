@@ -29,6 +29,7 @@ type l2_norm(const ThreadPoolDevice& threadPoolDevice, const Tensor<type, 1>& x)
 
    y.device(threadPoolDevice) = x.square().sum(Eigen::array<Index, 1>({0}));
 
+
    return y(0);
 
  /*

@@ -19,7 +19,7 @@
 #include "config.h"
 #include "tinyxml2.h"
 
-//#include "../eigen/Eigen/Eigen"
+
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
@@ -1147,6 +1147,8 @@ public:
    Tensor<type, 1> calculate_central_differences_gradient(const T& t, type(T::*f)(const Tensor<Index, 1>&, const Tensor<type, 1>&) const, const Tensor<Index, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const Index n = x.size();
+
+      cout<<"HelloWorld"<<endl;
 
       type h;
       Tensor<type, 1> x_forward(x);

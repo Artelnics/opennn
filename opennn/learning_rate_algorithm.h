@@ -60,7 +60,7 @@ public:
 
    virtual ~LearningRateAlgorithm();
 
-   /// Defines a set of three points(A, U, B) for bracketing a directional minimum. 
+   /// Defines a set of three points (A, U, B) for bracketing a directional minimum.
 
    struct Triplet
    {
@@ -68,9 +68,9 @@ public:
 
        Triplet()
        {
-           A = make_pair(0.0, 0.0);
-           U = make_pair(0.0, 0.0);
-           B = make_pair(0.0, 0.0);
+           A = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
+           U = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
+           B = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
        }
 
        /// Destructor.
@@ -317,7 +317,7 @@ protected:
 
    bool display;
 
-   const type golden_ratio = 1.618;
+   const type golden_ratio = static_cast<type>(1.618);
 
 };
 

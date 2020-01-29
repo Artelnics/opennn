@@ -1764,7 +1764,11 @@ void NeuralNetworkTest::run_test_case()
    test_set_parameters_random();
 
    test_calculate_forward_propagation();
-/*
+
+
+
+   /*
+
    // Parameters norm
 
 //   test_calculate_parameters_norm();

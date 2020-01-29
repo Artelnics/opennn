@@ -17,7 +17,7 @@
 // Eigen includes
 
 #include "config.h"
-//#include "../eigen/Eigen/Eigen"
+
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
