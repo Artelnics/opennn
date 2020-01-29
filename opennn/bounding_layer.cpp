@@ -522,8 +522,8 @@ void BoundingLayer::prune_neuron(const Index& index)
     }
 
 
-//    lower_bounds.erase(lower_bounds.data() + static_cast<long>(index));
-//    upper_bounds.erase(upper_bounds.data() + static_cast<long>(index));
+//    lower_bounds.erase(lower_bounds.begin() + static_cast<long>(index));
+//    upper_bounds.erase(upper_bounds.begin() + static_cast<long>(index));
 
 }
 

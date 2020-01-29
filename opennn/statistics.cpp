@@ -1426,7 +1426,7 @@ Histogram histogram(const Tensor<Index, 1>& vector, const Index& bins_number)
     }
 
     Histogram histogram(centers_number);
-    histogram.centers = centers.to_type_vector();
+    histogram.centers = centers.cast<type>();
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
@@ -1541,9 +1541,9 @@ Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
 
   Histogram histogram(2);
 /*
-  histogram.centers = centers.to_type_vector();
-  histogram.minimums = minimums.to_type_vector();
-  histogram.maximums = maximums.to_type_vector();
+  histogram.centers = centers.cast<type>();
+  histogram.minimums = minimums.cast<type>();
+  histogram.maximums = maximums.cast<type>();
   histogram.frequencies = frequencies;
 */
   return histogram;
