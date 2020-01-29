@@ -86,15 +86,9 @@ string ConjugateGradient::write_training_direction_method() const
 {
    switch(training_direction_method)
    {
-      case PR:
-      {
-         return "PR";
-      }
+      case PR: return "PR";
 
-      case FR:
-      {
-         return "FR";
-      }
+      case FR: return "FR";
    }
 
    return string();
@@ -312,12 +306,8 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 
 void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
-
-   // Loss index
-
    reserve_training_error_history = new_reserve_all_training_history;
    reserve_selection_error_history = new_reserve_all_training_history;
-
 }
 
 
@@ -370,11 +360,11 @@ void ConjugateGradient::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 0.0;
+   minimum_parameters_increment_norm = static_cast<type>(0.0);
 
-   minimum_loss_decrease = 0.0;
+   minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = 999999*(-1.0);
-   gradient_norm_goal = 0.0;
+   gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
    maximum_epochs_number = 1000;
@@ -430,8 +420,6 @@ void ConjugateGradient::set_warning_parameters_norm(const type& new_warning_para
 
 void ConjugateGradient::set_warning_gradient_norm(const type& new_warning_gradient_norm)
 {
-   
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_gradient_norm < static_cast<type>(0.0))
@@ -459,8 +447,6 @@ void ConjugateGradient::set_warning_gradient_norm(const type& new_warning_gradie
 
 void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learning_rate)
 {
-   
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_learning_rate < static_cast<type>(0.0))
@@ -485,9 +471,7 @@ void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learni
 /// @param new_error_parameters_norm Error norm of parameters vector value. 
 
 void ConjugateGradient::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-   
-
+{ 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_parameters_norm < static_cast<type>(0.0))
@@ -514,9 +498,7 @@ void ConjugateGradient::set_error_parameters_norm(const type& new_error_paramete
 /// @param new_error_gradient_norm Error norm of gradient vector value. 
 
 void ConjugateGradient::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-   
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_gradient_norm < static_cast<type>(0.0))
@@ -543,9 +525,7 @@ void ConjugateGradient::set_error_gradient_norm(const type& new_error_gradient_n
 /// @param new_error_learning_rate Error training rate value.
 
 void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_rate)
-{
-   
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_learning_rate < static_cast<type>(0.0))
@@ -571,9 +551,7 @@ void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_r
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
 
 void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-   
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
@@ -599,9 +577,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
 void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
-{
-   
-
+{   
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_minimum_loss_increase < static_cast<type>(0.0))
@@ -638,9 +614,7 @@ void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
 /// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
 void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-   
-
+{ 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_gradient_norm_goal < static_cast<type>(0.0))
@@ -684,9 +658,7 @@ void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epoch
 /// @param new_maximum_time Maximum training time.
 
 void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
-{
-   
-
+{ 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_maximum_time < static_cast<type>(0.0))
@@ -751,8 +723,6 @@ void ConjugateGradient::set_reserve_selection_error_history(const bool& new_rese
 
 void ConjugateGradient::set_display_period(const Index& new_display_period)
 {
-   
-
    #ifdef __OPENNN_DEBUG__ 
      
    if(new_display_period <= 0)
@@ -845,7 +815,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     #endif
 
-   type FR_parameter = 0.0;
+   type FR_parameter = static_cast<type>(0.0);
 
    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) };
 
@@ -862,7 +832,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
    if(denominator == 0.0)
    {
-      FR_parameter = 0.0;
+      FR_parameter = static_cast<type>(0.0);
    }
    else
    {
@@ -871,8 +841,8 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
    // Bound the Fletcher-Reeves parameter between 0 and 1
 
-   if(FR_parameter < 0.0)
-      FR_parameter = 0.0;
+   if(FR_parameter < static_cast<type>(0.0))
+      FR_parameter = static_cast<type>(0.0);
 
    if(FR_parameter > 1.0)
       FR_parameter = 1.0;
@@ -929,7 +899,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     #endif
 
-   type PR_parameter = 0.0;
+   type PR_parameter = static_cast<type>(0.0);
 
    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product
 
@@ -946,7 +916,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
    if(denominator == 0.0)
    {
-      PR_parameter = 0.0;
+      PR_parameter = static_cast<type>(0.0);
    }
    else
    {
@@ -955,9 +925,9 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
    // Bound the Polak-Ribiere parameter between 0 and 1
 
-   if(PR_parameter < 0.0)
+   if(PR_parameter < static_cast<type>(0.0))
    {
-      PR_parameter = 0.0;
+      PR_parameter = static_cast<type>(0.0);
    }
 
    if(PR_parameter > 1.0)
@@ -1257,7 +1227,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    // Data set stuff
 
@@ -1272,19 +1242,19 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    // Loss index stuff
 
-   type training_loss = 0.0;
-   type old_training_loss = 0.0;
-   type training_loss_decrease = 0.0;
+   type training_loss = static_cast<type>(0.0);
+   type old_training_loss = static_cast<type>(0.0);
+   type training_loss_decrease = static_cast<type>(0.0);
       
    Tensor<type, 1> gradient(parameters_number);
-   type gradient_norm = 0.0;
+   type gradient_norm = static_cast<type>(0.0);
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
 
    string information;
 
@@ -1299,14 +1269,14 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    type training_slope;
 
-   type initial_learning_rate = 0.0;
-   type learning_rate = 0.0;
-   type old_learning_rate = 0.0;
+   type initial_learning_rate = static_cast<type>(0.0);
+   type learning_rate = static_cast<type>(0.0);
+   type old_learning_rate = static_cast<type>(0.0);
 
    pair<type,type> directional_point(2, 0.0);
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   type minimum_selection_error = 0.0;
+   type minimum_selection_error = static_cast<type>(0.0);
 
    bool stop_training = false;
 
@@ -1344,7 +1314,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       if(epoch == 0)
       {      
          training_loss = loss_index_pointer->calculate_training_loss();
-         training_loss_decrease = 0.0;
+         training_loss_decrease = static_cast<type>(0.0);
       }
       else
       {

@@ -242,11 +242,11 @@ void LevenbergMarquardtAlgorithm::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 1.0e-3;
+   minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
-   minimum_loss_decrease = 1.0e-9;
-   loss_goal = 1.0e-3;
-   gradient_norm_goal = 1.0e-3;
+   minimum_loss_decrease = static_cast<type>(1.0e-9);
+   loss_goal = static_cast<type>(1.0e-3);
+   gradient_norm_goal = static_cast<type>(1.0e-3);
    maximum_selection_error_decreases = 1000;
 
    maximum_epochs_number = 1000;
@@ -267,12 +267,12 @@ void LevenbergMarquardtAlgorithm::set_default()
 
    // Training parameters
 
-   damping_parameter = 1.0e-3;
+   damping_parameter = static_cast<type>(1.0e-3);
 
    damping_parameter_factor = 10.0;
 
-   minimum_damping_parameter = 1.0e-6;
-   maximum_damping_parameter = 1.0e6;
+   minimum_damping_parameter = static_cast<type>(1.0e-6);
+   maximum_damping_parameter = static_cast<type>(1.0e6);
 }
 
 
@@ -373,12 +373,10 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 /// @param new_warning_parameters_norm Warning norm of parameters vector value. 
 
 void LevenbergMarquardtAlgorithm::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-   
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -405,7 +403,7 @@ void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const type& new_warn
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -432,7 +430,7 @@ void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const type& new_erro
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -459,7 +457,7 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const type& new_error_
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -485,7 +483,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const ty
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -511,7 +509,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -548,7 +546,7 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -592,7 +590,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -752,20 +750,20 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    // Loss index stuff
 
-   type training_loss = 0.0;
-   type old_training_loss = 0.0;
-   type training_loss_decrease = 0.0;
+   type training_loss = static_cast<type>(0.0);
+   type old_training_loss = static_cast<type>(0.0);
+   type training_loss_decrease = static_cast<type>(0.0);
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
 
    Index selection_failures = 0;
 
-   type gradient_norm = 0.0;
+   type gradient_norm = static_cast<type>(0.0);
 
    // Training strategy stuff
 
@@ -773,16 +771,16 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    type parameters_increment_norm;
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   type minimum_selection_error = 0.0;
+   type minimum_selection_error = static_cast<type>(0.0);
 
    bool stop_training = false;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    // Main loop
-/*
+
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network
@@ -809,6 +807,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       do
       {        
+/*
          terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
 
          parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
@@ -832,13 +831,14 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
              terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
+*/
       }while(damping_parameter < maximum_damping_parameter);
 
       parameters_increment_norm = l2_norm(parameters_increment);
 
       if(epoch == 0)
       {
-         training_loss_decrease = 0.0;
+         training_loss_decrease = static_cast<type>(0.0);
       }
       else
       {
@@ -984,7 +984,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                        << "Gradient norm: " << gradient_norm << "\n"
                        << loss_index_pointer->write_information()
                        << "Damping parameter: " << damping_parameter << "\n"
-                       << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                       /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
 
              if(selection_instances_number > 0)
              {
@@ -1016,7 +1016,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
               << "Gradient norm: " << gradient_norm << "\n"
               << loss_index_pointer->write_information()
               << "Damping parameter: " << damping_parameter << "\n"
-              << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+              /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
 
          if(abs(selection_error - 0) < numeric_limits<type>::epsilon())
          {
@@ -1050,7 +1050,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
-*/
+
    return results;
 }
 

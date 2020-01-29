@@ -222,7 +222,7 @@ void AdaptiveMomentEstimation::set_default()
    // TRAINING OPERATORS
 
    initial_learning_rate = static_cast<type>(0.001);
-   initial_decay = 0.0;
+   initial_decay = static_cast<type>(0.0);
    beta_1 = static_cast<type>(0.9);
    beta_2 = static_cast<type>(0.999);
 
@@ -237,10 +237,10 @@ void AdaptiveMomentEstimation::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 0.0;
-   minimum_loss_decrease = 0.0;
+   minimum_parameters_increment_norm = static_cast<type>(0.0);
+   minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = -999999;
-   gradient_norm_goal = 0.0;
+   gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 10000;
@@ -434,7 +434,7 @@ void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maxim
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_epochs_number < 0.0)
+   if(new_maximum_epochs_number < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -682,7 +682,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -690,17 +690,17 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
-   type training_error = 0.0;
+   type training_error = static_cast<type>(0.0);
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
 
-   type loss = 0.0;
-   type gradient_norm = 0.0;
+   type loss = static_cast<type>(0.0);
+   type gradient_norm = static_cast<type>(0.0);
 
    // Optimization algorithm stuff
 
-   type learning_rate = 0.0;
+   type learning_rate = static_cast<type>(0.0);
 
    Index selection_failures = 0;
 
@@ -711,7 +711,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -739,7 +739,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-       loss = 0.0;
+       loss = static_cast<type>(0.0);
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {

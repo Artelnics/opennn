@@ -244,12 +244,12 @@ void GradientDescent::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 0.0;
+   minimum_parameters_increment_norm = static_cast<type>(0.0);
 
-   minimum_loss_decrease = 0.0;
+   minimum_loss_decrease = static_cast<type>(0.0);
 
    loss_goal = -999999;
-   gradient_norm_goal = 0.0;
+   gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
    maximum_epochs_number = 1000;
@@ -302,7 +302,7 @@ void GradientDescent::set_warning_parameters_norm(const type& new_warning_parame
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -331,7 +331,7 @@ void GradientDescent::set_warning_gradient_norm(const type& new_warning_gradient
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -360,7 +360,7 @@ void GradientDescent::set_warning_learning_rate(const type& new_warning_learning
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_learning_rate < 0.0)
+   if(new_warning_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -387,7 +387,7 @@ void GradientDescent::set_error_parameters_norm(const type& new_error_parameters
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -416,7 +416,7 @@ void GradientDescent::set_error_gradient_norm(const type& new_error_gradient_nor
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -445,7 +445,7 @@ void GradientDescent::set_error_learning_rate(const type& new_error_learning_rat
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_learning_rate < 0.0)
+   if(new_error_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -473,7 +473,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_epochs_number < 0.0)
+   if(new_maximum_epochs_number < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -501,7 +501,7 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -529,7 +529,7 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_inc
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -568,7 +568,7 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -605,7 +605,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -765,22 +765,22 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters(parameters_number);
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    Tensor<type, 1> parameters_increment(parameters_number);
-   type parameters_increment_norm = 0.0;
+   type parameters_increment_norm = static_cast<type>(0.0);
 
    // Loss index stuff
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
       
-   type training_loss = 0.0;
-   type old_training_loss = 0.0;
+   type training_loss = static_cast<type>(0.0);
+   type old_training_loss = static_cast<type>(0.0);
    type training_loss_decrease = -999999;
 
    Tensor<type, 1> gradient(parameters_number);
-   type gradient_norm = 0.0;
+   type gradient_norm = static_cast<type>(0.0);
 
    // Optimization algorithm stuff 
 
@@ -790,9 +790,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    const type first_learning_rate = 0.01;
 
-   type initial_learning_rate = 0.0;
-   type learning_rate = 0.0;
-   type old_learning_rate = 0.0;
+   type initial_learning_rate = static_cast<type>(0.0);
+   type learning_rate = static_cast<type>(0.0);
+   type old_learning_rate = static_cast<type>(0.0);
 
    pair<type,type> directional_point(2, 0.0);
 
@@ -803,7 +803,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    results.resize_training_history(maximum_epochs_number+1);
 

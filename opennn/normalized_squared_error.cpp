@@ -106,7 +106,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    type new_normalization_coefficient = 0.0;
+    type new_normalization_coefficient = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : new_normalization_coefficient)
 
@@ -158,7 +158,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    type new_selection_normalization_coefficient = 0.0;
+    type new_selection_normalization_coefficient = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : new_selection_normalization_coefficient)
 
@@ -260,7 +260,7 @@ check();
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
 
@@ -312,7 +312,7 @@ check();
     Tensor<type, 2> targets(batch_instances_number, targets_number);
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
-    type training_error = 0.0;
+    type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
 
@@ -360,7 +360,7 @@ check();
 
     const Index batches_number = selection_batches.size();
 
-    type selection_error = 0.0;
+    type selection_error = static_cast<type>(0.0);
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 

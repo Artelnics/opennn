@@ -224,16 +224,16 @@ void InputsSelection::set_default()
 
     // Stopping criteria
 
-    selection_error_goal = 0.0;
+    selection_error_goal = static_cast<type>(0.0);
 
     maximum_epochs_number = 1000;
 
     maximum_correlation = 1.0;
-    minimum_correlation = 0.0;
+    minimum_correlation = static_cast<type>(0.0);
 
     maximum_time = 10000.0;
 
-    tolerance = 0.0;
+    tolerance = static_cast<type>(0.0);
 }
 
 

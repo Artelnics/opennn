@@ -480,7 +480,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
         const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         const Index column_index = tensor_index%output_columns_number;
 
-        type sum = 0.0;
+        type sum = static_cast<type>(0.0);
 
         const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
         const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -558,7 +558,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                 const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                 const Index column_index = tensor_index%output_columns_number;
 
-                type sum = 0.0;
+                type sum = static_cast<type>(0.0);
 
                 const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                 const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -614,7 +614,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                 const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                 const Index column_index = tensor_index%output_columns_number;
 
-                type sum = 0.0;
+                type sum = static_cast<type>(0.0);
 
                 const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                 const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -707,7 +707,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_perceptron(Perceptron
         const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         const Index column_index = tensor_index%output_columns_number;
 
-        type sum = 0.0;
+        type sum = static_cast<type>(0.0);
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
@@ -762,7 +762,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabi
         const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
         const Index column_index = tensor_index%output_columns_number;
 
-        type sum = 0.0;
+        type sum = static_cast<type>(0.0);
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
@@ -836,7 +836,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
         Index row_index = (gradient_index/(filters_number*filters_channels_number))%filters_rows_number;
         Index column_index = (gradient_index/(filters_number*filters_channels_number*filters_rows_number))%filters_columns_number;
 
-        type sum = 0.0;
+        type sum = static_cast<type>(0.0);
 
         for(Index i = 0; i < images_number; i++)
         {
@@ -862,7 +862,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
     {
         Index bias_index = gradient_index - synaptic_weights_number;
 
-        type sum = 0.0;
+        type sum = static_cast<type>(0.0);
 
         for(Index i = 0; i < images_number; i++)
         {

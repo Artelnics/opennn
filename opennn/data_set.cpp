@@ -8140,7 +8140,7 @@ void DataSet::generate_constant_data(const Index& instances_number, const Index&
 
     for(Index i = 0; i < instances_number; i++)
     {
-        data(i, variables_number-1) = 0.0;
+        data(i, variables_number-1) = static_cast<type>(0.0);
     }
 
     scale_minimum_maximum(data);
@@ -8227,7 +8227,7 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
 
     for(Index i = 0; i < instances_number; i++)
     {
-        rosenbrock = 0.0;
+        rosenbrock = static_cast<type>(0.0);
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
