@@ -34,7 +34,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_poi
 }
 
 
-// XML CONSTRUCTOR
+
 
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
@@ -1476,7 +1476,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1495,7 +1495,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1514,7 +1514,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1533,7 +1533,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1588,7 +1588,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1607,7 +1607,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1626,7 +1626,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1645,7 +1645,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1702,7 +1702,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
           try
           {

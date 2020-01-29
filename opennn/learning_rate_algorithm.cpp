@@ -1000,7 +1000,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_tolerance = atof(element->GetText());
+          const type new_loss_tolerance = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1019,7 +1019,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_learning_rate = atof(element->GetText());
+          const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1038,7 +1038,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_learning_rate = atof(element->GetText());
+          const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {

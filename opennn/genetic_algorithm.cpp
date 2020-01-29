@@ -39,8 +39,6 @@ GeneticAlgorithm::GeneticAlgorithm(const string& file_name)
 }
 
 
-// XML CONSTRUCTOR
-
 /// XML constructor.
 /// @param genetic_algorithm_document Pointer to a TinyXML document containing the genetic algorithm data.
 
@@ -1052,11 +1050,12 @@ void GeneticAlgorithm::evaluate_population()
     Index index;
 
     Tensor<type, 1> errors(2);
-/*
-    loss.set(population_size,2);
+
+    loss.resize(population_size,2);
 
     for(Index i = 0; i < population_size; i++)
     {
+/*
         current_inputs = population[i];
 
         for(Index j = 0; j < current_inputs.size(); j++)
@@ -1084,10 +1083,11 @@ void GeneticAlgorithm::evaluate_population()
         errors = calculate_losses(population[i]);
 
         loss.set_row(i, errors);
+*/
     }
 
     calculate_fitness();
-*/
+
 }
 
 
@@ -1741,11 +1741,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     time_t beginning_time, current_time;
     type elapsed_time = static_cast<type>(0.0);
-/*
+
     original_uses = data_set_pointer->get_columns_uses();
 
     current_uses = original_uses;
-
+/*
     optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
 
     Tensor<type, 2>  test(100,4);
@@ -2831,7 +2831,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_incest_prevention_rate = atof(element->GetText());
+            const type new_incest_prevention_rate = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -2850,7 +2850,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_mutation_rate = atof(element->GetText());
+            const type new_mutation_rate = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -2926,7 +2926,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_selective_pressure = atof(element->GetText());
+            const type new_selective_pressure = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -3097,7 +3097,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_selection_error_goal = atof(element->GetText());
+            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -3135,7 +3135,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_correlation = atof(element->GetText());
+            const type new_maximum_correlation = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -3154,7 +3154,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_correlation = atof(element->GetText());
+            const type new_minimum_correlation = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -3192,7 +3192,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_tolerance = atof(element->GetText());
+            const type new_tolerance = static_cast<type>(atof(element->GetText()));
 
             try
             {

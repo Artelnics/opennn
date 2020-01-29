@@ -1384,7 +1384,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_selection_error_goal = atof(element->GetText());
+            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -1422,7 +1422,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_correlation = atof(element->GetText());
+            const type new_maximum_correlation = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -1441,7 +1441,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_correlation = atof(element->GetText());
+            const type new_minimum_correlation = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -1460,7 +1460,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = atof(element->GetText());
+            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
             try
             {
@@ -1479,7 +1479,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_tolerance = atof(element->GetText());
+            const type new_tolerance = static_cast<type>(atof(element->GetText()));
 
             try
             {

@@ -58,7 +58,7 @@ public:
 
    explicit AdaptiveMomentEstimation(LossIndex*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
 

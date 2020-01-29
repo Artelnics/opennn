@@ -591,7 +591,6 @@ check();
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     SecondOrderLoss terms_second_order_loss(parameters_number);
     return  terms_second_order_loss;
-
 }
 
 

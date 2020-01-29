@@ -54,7 +54,7 @@ public:
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit MeanSquaredError(const tinyxml2::XMLDocument&);
 

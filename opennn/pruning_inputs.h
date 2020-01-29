@@ -45,7 +45,7 @@ public:
 
     explicit PruningInputs(TrainingStrategy*);
 
-    // XML CONSTRUCTOR
+    
 
     explicit PruningInputs(const tinyxml2::XMLDocument&);
 

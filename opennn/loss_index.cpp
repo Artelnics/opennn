@@ -944,7 +944,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     if(element)
     {
-       const type new_regularization_weight = atof(element->GetText());
+       const type new_regularization_weight = static_cast<type>(atof(element->GetText()));
 
        try
        {
