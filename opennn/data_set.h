@@ -40,7 +40,7 @@
 
 // Eigen includes
 
-//#include "../eigen/Eigen/Eigen"
+
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #ifdef __OPENNN_CUDA__

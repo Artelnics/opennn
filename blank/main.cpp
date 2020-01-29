@@ -66,17 +66,18 @@ int main(void)
     {
         cout << "Hello Blank Application." << endl;
 
-        Eigen::Tensor<int, 1> b(3);
-        b.setValues({1, 2, 3});
-        Eigen::Tensor<int, 2> a(3,3);
-        a.setValues({{1, 2, 3}, {1, 2, 3}, {1, 2, 3}});
+        Eigen::Tensor<double,1> my_tensor(5);
 
-        cout << a << endl;
+        my_tensor.setRandom();
 
-        Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) };
-        Eigen::Tensor<int, 1> AB = a.contract(b, product_dims);
+        Eigen::array<Eigen::Index,1>off = {0};
+        Eigen::array<Eigen::Index,1>ext = {2};
 
-        cout << AB << endl;
+        Tensor<double, 1> slice = my_tensor.slice(off, ext);
+
+        cout<<my_tensor<<endl;
+        cout<<"-----"<<endl;
+        cout<<slice<<endl;
 
         return 0;
     }
