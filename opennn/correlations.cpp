@@ -308,7 +308,7 @@ type logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 
     const Index epochs_number = 50000;
-    const type learning_rate = 0.01;
+    const type learning_rate = static_cast<type>(0.01);
     const type momentum = 0.9;
 
     const type error_goal = 1.0e-8;
@@ -386,7 +386,7 @@ type logistic_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<
 
 
     const Index epochs_number = 50000;
-    const type learning_rate = 0.01;
+    const type learning_rate = static_cast<type>(0.01);
     const type momentum = 0.9;
 
     const type error_goal = 1.0e-8;
@@ -1485,7 +1485,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     Tensor<type, 1> coefficients({0.0, 0.0});
 
     const Index epochs_number = 100000;
-    type step_size = 0.01;
+    type step_size = static_cast<type>(0.01);
 
     const type error_goal = 1.0e-8;
     const type gradient_norm_goal = 1.0e-8;
@@ -1552,7 +1552,7 @@ RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, c
     Tensor<type, 1> coefficients({0.0, 0.0});
 
     const Index epochs_number = 100000;
-    type step_size = 0.01;
+    type step_size = static_cast<type>(0.01);
 
     const type error_goal = 1.0e-8;
     const type gradient_norm_goal = 1.0e-8;
@@ -2209,7 +2209,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
 
     const Index epochs_number = 50000;
-    const type learning_rate = 0.01;
+    const type learning_rate = static_cast<type>(0.01);
     const type momentum = 0.9;
 
     const type error_goal = 1.0e-8;
@@ -2292,7 +2292,7 @@ CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>& x
     Tensor<type, 1> coefficients({0.0, 0.0});
 
     const Index epochs_number = 100000;
-    type step_size = 0.01;
+    type step_size = static_cast<type>(0.01);
 
     const type error_goal = 1.0e-8;
     const type gradient_norm_goal = 1.0e-8;

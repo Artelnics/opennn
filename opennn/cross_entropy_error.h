@@ -50,7 +50,7 @@ public:
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit CrossEntropyError(const tinyxml2::XMLDocument&);
 

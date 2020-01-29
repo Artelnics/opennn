@@ -998,7 +998,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_selection_error_goal = atof(element->GetText());
+           const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
 
            try
            {
@@ -1055,7 +1055,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_tolerance = atof(element->GetText());
+           const type new_tolerance = static_cast<type>(atof(element->GetText()));
 
            try
            {

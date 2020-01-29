@@ -54,7 +54,7 @@ public:
 
    explicit NormalizedSquaredError();
 
-   // XML CONSTRUCTOR
+   
 
    explicit NormalizedSquaredError(const tinyxml2::XMLDocument&);
 

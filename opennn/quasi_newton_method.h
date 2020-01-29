@@ -62,7 +62,7 @@ public:
 
    explicit QuasiNewtonMethod(LossIndex*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit QuasiNewtonMethod(const tinyxml2::XMLDocument&);
 

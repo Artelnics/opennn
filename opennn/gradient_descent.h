@@ -53,7 +53,7 @@ public:
 
    explicit GradientDescent(LossIndex*);
 
-   // XML CONSTRUCTOR
+
 
    explicit GradientDescent(const tinyxml2::XMLDocument&); 
 

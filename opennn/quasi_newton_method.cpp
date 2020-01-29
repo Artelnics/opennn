@@ -1210,9 +1210,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    type training_slope;
 
-   const type first_learning_rate = 0.01;
+   const type first_learning_rate = static_cast<type>(0.01);
 
-   type initial_learning_rate = 0.01;
+   type initial_learning_rate = static_cast<type>(0.01);
    type learning_rate = static_cast<type>(0.0);
    type old_learning_rate = static_cast<type>(0.0);
 
@@ -2272,7 +2272,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2291,7 +2291,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2310,7 +2310,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_learning_rate = atof(element->GetText());
+          const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2329,7 +2329,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2348,7 +2348,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2367,7 +2367,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_learning_rate = atof(element->GetText());
+          const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2422,7 +2422,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2441,7 +2441,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2460,7 +2460,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2479,7 +2479,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2536,7 +2536,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
           try
           {

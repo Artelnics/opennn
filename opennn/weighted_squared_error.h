@@ -55,7 +55,7 @@ public:
    // DATA SET & NEURAL NETWORK CONSTRUCTOR
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit WeightedSquaredError(const tinyxml2::XMLDocument&);
 

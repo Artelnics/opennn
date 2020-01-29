@@ -60,7 +60,7 @@ public:
    explicit ConjugateGradient(LossIndex*);
 
 
-   // XML CONSTRUCTOR
+   
 
    explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
 

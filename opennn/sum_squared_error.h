@@ -55,7 +55,7 @@ public:
 
    explicit SumSquaredError(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
+   
 
    explicit SumSquaredError(const tinyxml2::XMLDocument&);
 
