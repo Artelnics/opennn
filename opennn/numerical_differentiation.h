@@ -1148,6 +1148,8 @@ public:
    {
       const Index n = x.size();
 
+      cout<<"HelloWorld"<<endl;
+
       type h;
       Tensor<type, 1> x_forward(x);
       Tensor<type, 1> x_backward(x);
