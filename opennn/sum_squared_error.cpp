@@ -157,6 +157,11 @@ check();
 
     const Index batches_number = training_batches.size();
 
+    // Eigen stuff
+/*
+    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
+
      #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)
@@ -165,7 +170,7 @@ check();
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
         const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-/*
+
         const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -176,28 +181,28 @@ check();
         const Tensor<type, 2> error_terms_Jacobian
                 = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const type loss = dot(error_terms, error_terms);
+        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);//dot(error_terms, error_terms);
 
-        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);//dot(error_terms_Jacobian_transpose, error_terms);
 
           #pragma omp critical
         {
-            first_order_loss.loss += loss;
+            first_order_loss.loss += loss(0);
             first_order_loss.gradient += gradient;
          }
-*/
+
     }
-/*
+
     first_order_loss.gradient *= 2.0;
-*/
+
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-
+*/
     return first_order_loss;
 }
 

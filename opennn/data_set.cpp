@@ -5402,9 +5402,13 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 
         for(Index j = 0; j < principal_components_number; j++)
         {
-/*
-            new_data(i,j) = dot(inputs.chip(instance_index, 0), principal_components.chip(j, 0));
-*/
+
+            Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+
+            Tensor<type, 0> dot = (inputs.chip(instance_index, 0)).contract(principal_components.chip(j,0),product_vector_vector);
+
+            new_data(i,j) = dot(0);
+//            new_data(i,j) = dot(inputs.chip(instance_index, 0), principal_components.chip(j, 0));
         }
     }
 /*
