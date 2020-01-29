@@ -154,7 +154,6 @@ Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer::   get_parameters() const
 {
-
     Eigen::array<Index, 1> one_dim{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
     Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim);
@@ -1102,7 +1101,16 @@ void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Parameters");
 
     buffer.str("");
-    buffer << get_parameters();
+
+    const Tensor<type, 1> parameters = get_parameters();
+    const Index parameters_size = parameters.size();
+
+    for(Index i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters(i);
+
+        if(i != (parameters_size-1)) buffer << " ";
+    }
 
     file_stream.PushText(buffer.str().c_str());
 
