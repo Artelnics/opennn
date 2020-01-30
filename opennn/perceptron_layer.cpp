@@ -165,7 +165,6 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer:: get_parameters() const
 {
-
     Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
     Eigen::array<Index, 1> one_dim_bias{biases.dimension(1)};
@@ -191,7 +190,6 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
     }
 
     return parameters;
-
 }
 
 
@@ -301,7 +299,7 @@ void PerceptronLayer::set()
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases = Tensor<type, 2>(new_neurons_number, 1);
+    biases = Tensor<type, 2>(1, new_neurons_number);
 
     biases.setRandom();
 
@@ -773,9 +771,9 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    Tensor<type, 2> outputs;// = calculate_combinations(inputs, synaptic_weights, biases);
+    Tensor<type, 2> outputs = calculate_combinations(inputs);
 
-//    calculate_activations()
+    calculate_activations()
 
     return outputs;
 }
