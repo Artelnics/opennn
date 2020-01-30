@@ -193,7 +193,6 @@ check();
         const type batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
-
     }
 
     return training_error/training_instances_number;

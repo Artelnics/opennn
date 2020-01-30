@@ -872,9 +872,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
-
-
-
        }
 
        gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);

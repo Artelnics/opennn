@@ -190,10 +190,10 @@ void PerceptronLayerTest::test_set_default()
 
 void PerceptronLayerTest::test_get_biases()
 {
- /*  cout << "test_get_biases\n";
+   cout << "test_get_biases\n";
 
    PerceptronLayer perceptron_layer;
-   Tensor<type, 1> biases;
+   Tensor<type, 2> biases;
 
    // Test
 
@@ -205,7 +205,43 @@ void PerceptronLayerTest::test_get_biases()
 
    assert_true(biases.size() == 1, LOG);
 
-   assert_true(biases(0) == static_cast<type>(0.0), LOG);*/
+   assert_true(biases(0) == static_cast<type>(0.0), LOG);
+
+   // Test
+
+   PerceptronLayer perceptron_layer_2;
+   Tensor<type, 2> biases_2;
+   Tensor<type, 2> synaptic_weights;
+   Tensor<type, 1> parameters;
+
+   perceptron_layer.set(2, 4);
+
+   biases.resize(1, 4);
+   synaptic_weights.resize(2, 4);
+
+   biases(0,0) = static_cast<type>(0.85);
+   biases(0,1) = -static_cast<type>(0.25);
+   biases(0,2) = static_cast<type>(0.29);
+   biases(0,3) = -static_cast<type>(0.77);
+
+   synaptic_weights(0,0) = -static_cast<type>(0.04);
+   synaptic_weights(1,0) = static_cast<type>(0.87);
+   synaptic_weights(0,1) = static_cast<type>(0.25);
+   synaptic_weights(1,1) = -static_cast<type>(0.27);
+   synaptic_weights(0,2) = -static_cast<type>(0.57);
+   synaptic_weights(1,2) = static_cast<type>(0.15);
+   synaptic_weights(0,3) = static_cast<type>(0.96);
+   synaptic_weights(1,3) = -static_cast<type>(0.48);
+
+   perceptron_layer.set_synaptic_weights(synaptic_weights);
+   perceptron_layer.set_biases(biases);
+
+   parameters = perceptron_layer.get_parameters();
+
+   biases = perceptron_layer.get_biases(parameters);
+
+
+
 }
 
 
@@ -233,11 +269,11 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 
 void PerceptronLayerTest::test_get_parameters()
 {
-    /*
+
    cout << "test_get_parameters\n";
 
    PerceptronLayer perceptron_layer;
-   Tensor<type, 1> biases;
+   Tensor<type, 2> biases;
    Tensor<type, 2> synaptic_weights;
    Tensor<type, 1> parameters;
 
@@ -248,45 +284,42 @@ void PerceptronLayerTest::test_get_parameters()
 
    parameters = perceptron_layer.get_parameters();
 
-   assert_true(parameters.size() ==2, LOG);
-//   assert_true(parameters == 1.0, LOG);
+   assert_true(parameters.size() == 2, LOG);
+   assert_true(parameters(0) == static_cast<type>(1.0), LOG);
 
    // Test
 
-     perceptron_layer.set(2, 4);
+    perceptron_layer.set(2, 4);
 
-    biases = Tensor<type, 1>(4);
-    biases[0] = 0.85;
-    biases[1] = -0.25;
-    biases[2] = 0.29;
-    biases[3] = -0.77;
+    biases.resize(1, 4);
+    synaptic_weights.resize(2, 4);
 
-    perceptron_layer.set_biases(biases);
+    biases(0,0) = static_cast<type>(0.85);
+    biases(0,1) = -static_cast<type>(0.25);
+    biases(0,2) = static_cast<type>(0.29);
+    biases(0,3) = -static_cast<type>(0.77);
 
-    synaptic_weights.resize(4, 2);
-
-    synaptic_weights(0,0) = -0.04;
-    synaptic_weights(0,1) = 0.87;
-
-    synaptic_weights(1,0) = 0.25;
-    synaptic_weights(1,1) = -0.27;
-
-    synaptic_weights(2,0) = -0.57;
-    synaptic_weights(2,1) = 0.15;
-
-    synaptic_weights(3,0) = 0.96;
-    synaptic_weights(3,1) = -0.48;
+    synaptic_weights(0,0) = -static_cast<type>(0.04);
+    synaptic_weights(1,0) = static_cast<type>(0.87);
+    synaptic_weights(0,1) = static_cast<type>(0.25);
+    synaptic_weights(1,1) = -static_cast<type>(0.27);
+    synaptic_weights(0,2) = -static_cast<type>(0.57);
+    synaptic_weights(1,2) = static_cast<type>(0.15);
+    synaptic_weights(0,3) = static_cast<type>(0.96);
+    synaptic_weights(1,3) = -static_cast<type>(0.48);
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
+    perceptron_layer.set_biases(biases);
 
     parameters = perceptron_layer.get_parameters();
 
     assert_true(parameters.size() == 12, LOG);
-//    assert_true(abs(biases[0] - 0.85) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(parameters[8] - 0.85) < numeric_limits<type>::epsilon(), LOG);
-    assert_true(abs(parameters[7] - -0.48) < numeric_limits<type>::epsilon(), LOG);
+    assert_true(abs(biases(0,0) - static_cast<type>(0.85)) < static_cast<type>(1e-4), LOG);
+    assert_true(abs(parameters(8) - static_cast<type>(0.85)) < static_cast<type>(1e-4), LOG);
+    assert_true(abs(parameters(7) - static_cast<type>(-0.48)) < static_cast<type>(1e-5), LOG);
 
-*/}
+
+    }
 
 
 void PerceptronLayerTest::test_get_perceptrons_parameters()
@@ -342,26 +375,28 @@ void PerceptronLayerTest::test_get_perceptrons_parameters()
 
 void PerceptronLayerTest::test_set_biases()
 {
-    /*
+
    cout << "test_set_biases\n";
 
     PerceptronLayer perceptron_layer;
 
-    Tensor<type, 1> biases;
+    Tensor<type, 2> biases;
 
     // Test
 
     perceptron_layer.set(1, 1);
 
-    biases.resize(1);
+    biases.resize(1,1);
 
     biases.setConstant(0.0);
 
     perceptron_layer.set_biases(biases);
 
-//    assert_true(perceptron_layer.get_biases() == biases, LOG);
 
-*/
+
+    assert_true(perceptron_layer.get_biases().size() == 1, LOG);
+
+
 }
 
 

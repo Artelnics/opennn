@@ -203,7 +203,8 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
 Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
-   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   cout<<"Hello"<<endl;
+   const type eta = static_cast<type>(pow(10.0,-1*static_cast<Index>(precision_digits)));
 
    const Index n = x.size();
 
@@ -211,10 +212,11 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
 
    Tensor<type, 2> h(dimensions);
 
+   Tensor<type, 2> y = x.abs();
+
    for(Index i = 0; i < n; i++)
    {
-      /// @todo
-      //h[i] = sqrt(eta)*(1.0 + abs(x[i]));
+      h(i) = sqrt(eta)*(1 + y(i));
    }
 
    return h;
