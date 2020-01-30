@@ -66,18 +66,18 @@ int main(void)
     {
         cout << "Hello Blank Application." << endl;
 
-        Eigen::Tensor<double,1> my_tensor(5);
+        Eigen::Tensor<int, 2> a(2, 3);
+        a.setValues({{1, 2, 3}, {6, 5, 4}});
+//        Eigen::array<int, 1> dims({1});
+//        Eigen::array<int, 2> dims({0, 1});
 
-        my_tensor.setRandom();
+        // Sum columns ({0}) or rows ({1})
 
-        Eigen::array<Eigen::Index,1>off = {0};
-        Eigen::array<Eigen::Index,1>ext = {2};
+        Eigen::array<int, 1> dims = {Eigen::array<int, 1>({1})};
+        Eigen::Tensor<int, 1> b = a.sum(dims);
 
-        Tensor<double, 1> slice = my_tensor.slice(off, ext);
-
-        cout<<my_tensor<<endl;
-        cout<<"-----"<<endl;
-        cout<<slice<<endl;
+        cout << a << "a+b = " << endl;
+        cout << b << endl;
 
         return 0;
     }

@@ -104,11 +104,8 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
-    return cross_entropy_error(outputs, targets);
-*/
-    return 0.0;
 
+    return cross_entropy_error(outputs, targets);
 }
 
 
@@ -126,10 +123,8 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
+
     return cross_entropy_error(outputs, targets);
-*/
-    return 0.0;
 }
 
 

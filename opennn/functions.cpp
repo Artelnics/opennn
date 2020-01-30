@@ -580,12 +580,12 @@ Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>& x)
 Tensor<type, 2> binary(const Tensor<type, 2>& x)
 {
     Tensor<type, 2> y(x.dimensions());
-/*
+
     for(Index i = 0; i < x.size(); i++)
     {
-        x(i) < 0.5 ? y(i) = false : y[i] = true;
+        x(i) < static_cast<type>(0.5) ? y(i) = false : y(i) = true;
     }
-*/
+
     return y;
 }
 
@@ -631,12 +631,12 @@ Tensor<type, 2> rectified_linear_derivatives(const Tensor<type, 2>& x)
      const Index n = x.size();
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+         x(i) < static_cast<type>(0.0) ? derivatives(i) = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(1.0);
      }
-*/
+
      return derivatives;
 }
 
@@ -649,7 +649,7 @@ Tensor<type, 1> rectified_linear_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+         x(i) < static_cast<type>(0.0) ? derivatives[i] = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(1.0);
      }
 
      return derivatives;
@@ -663,12 +663,12 @@ Tensor<type, 2> scaled_exponential_linear_derivatives(const Tensor<type, 2>& x)
      const type alpha = static_cast<type>(1.67326);
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
+         x(i) < static_cast<type>(0.0) ? derivatives(i) = lambda * alpha * exp(x(i)) : derivatives(i) = lambda;
      }
-*/
+
      return derivatives;
 }
 
@@ -683,7 +683,7 @@ Tensor<type, 1> scaled_exponential_linear_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
+         x(i) < static_cast<type>(0.0) ? derivatives[i] = lambda * alpha * exp(x(i)) : derivatives[i] = lambda;
      }
 
      return derivatives;
@@ -695,12 +695,12 @@ Tensor<type, 2> soft_plus_derivatives(const Tensor<type, 2>& x)
      const Index n = x.size();
 
      Tensor<type, 2> derivatives(x.dimensions());
-/*
+
      for(Index i = 0; i < n; i++)
      {
-         derivatives[i] = 1/(1 + exp(-x(i)));
+         derivatives(i) = 1/(1 + exp(-x(i)));
      }
-*/
+
      return derivatives;
 }
 
@@ -713,7 +713,7 @@ Tensor<type, 1> soft_plus_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         derivatives[i] = 1/(1 + exp(-x(i)));
+         derivatives(i) = 1/(1 + exp(-x(i)));
      }
 
      return derivatives;
@@ -724,13 +724,13 @@ Tensor<type, 2> soft_sign_derivatives(const Tensor<type, 2>& x)
 {
  const Index n = x.size();
 
- Tensor<type, 2> derivatives(x.dimensions());
-/*
+ Tensor<type, 2> derivatives(x.dimension(0),x.dimension(1));
+
  for(Index i = 0; i < n; i++)
  {
-    x(i) < 0.0 ? derivatives[i] = 1.0 / pow(1.0 - x(i), 2) : derivatives[i] = 1.0 / pow(1.0 + x(i), 2);
+    x(i) < static_cast<type>(0.0) ? derivatives(i) = static_cast<type>(1.0) / pow(1.0 - x(i), 2) : derivatives(i) = 1.0 / pow(1.0 + x(i), 2);
  }
-*/
+
  return derivatives;
 }
 
@@ -744,7 +744,6 @@ Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>& x)
  for(Index i = 0; i < n; i++)
  {
     x(i) < 0.0 ? derivatives[i] = 1 / pow((1 - x(i)), 2) : derivatives[i] = 1 / pow((1 + x(i)), 2);
-
  }
 
  return derivatives;
@@ -755,46 +754,46 @@ Tensor<type, 2> hard_sigmoid_derivatives(const Tensor<type, 2>& x)
 {
     const Index n = x.size();
 
-    Tensor<type, 2> derivatives(x.dimensions());
-/*
+    Tensor<type, 2> derivatives(x.dimension(0), x.dimension(1));
+
     for(Index i = 0; i < n; i++)
     {
-        x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
+        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? derivatives(i) = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(0.2);
     }
-*/
+
     return derivatives;
 }
 
 
 Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>& x)
 {
-const Index n = x.size();
+    const Index n = x.size();
 
     Tensor<type, 1> derivatives(n);
 
- for(Index i = 0; i < n; i++)
- {
-     x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
- }
+     for(Index i = 0; i < n; i++)
+     {
+         x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = static_cast<type>(0.0) : derivatives[i] = static_cast<type>(0.2);
+     }
 
- return derivatives;
+    return derivatives;
 }
 
 
 Tensor<type, 2> exponential_linear_derivatives(const Tensor<type, 2>& x)
 {
- const Index n = x.size();
+     const Index n = x.size();
 
- Tensor<type, 2> derivatives(x.dimensions());
+     Tensor<type, 2> derivatives(x.dimension(0), x.dimension(1));
 
- const type alpha = 1.0;
-/*
- for(Index i = 0; i < n; i++)
- {
-     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = 1.0;
- }
-*/
- return derivatives;
+     const type alpha = 1.0;
+
+     for(Index i = 0; i < n; i++)
+     {
+         x(i) < 0.0 ? derivatives(i) = alpha * exp(x(i)) : derivatives(i) = static_cast<type>(1.0);
+     }
+
+     return derivatives;
 }
 
 
@@ -808,7 +807,7 @@ Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>& x)
 
  for(Index i = 0; i < n; i++)
  {
-     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = 1.0;
+     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = static_cast<type>(1.0);
  }
 
  return derivatives;
@@ -1219,7 +1218,7 @@ Tensor<type, 2> lower_bounded(const Tensor<type, 2>& matrix, const type & lower_
     const Index this_size = matrix.size();
 
     Tensor<type, 2> bounded_matrix(matrix);
-/*
+
     for(Index i = 0; i < this_size; i++)
     {
       if(matrix(i) < lower_bound)
@@ -1227,8 +1226,8 @@ Tensor<type, 2> lower_bounded(const Tensor<type, 2>& matrix, const type & lower_
         bounded_matrix(i) = lower_bound;
       }
     }
-*/
-    return(bounded_matrix);
+
+    return bounded_matrix;
 }
 
 
@@ -1237,7 +1236,7 @@ Tensor<type, 2> upper_bounded(const Tensor<type, 2>& matrix, const type & upper_
     const Index this_size = matrix.size();
 
     Tensor<type, 2> bounded_matrix(matrix);
-/*
+
     for(Index i = 0; i < this_size; i++)
     {
       if(matrix(i) > upper_bound)
@@ -1245,8 +1244,7 @@ Tensor<type, 2> upper_bounded(const Tensor<type, 2>& matrix, const type & upper_
         bounded_matrix(i) = upper_bound;
       }
     }
-*/
-    return(bounded_matrix);
+    return bounded_matrix;
 }
 
 
@@ -1294,7 +1292,7 @@ Tensor<type, 1> sign(const Tensor<type, 1>& vector)
     }
   }
 
-  return(sign_vector);
+  return sign_vector;
 }
 
 
@@ -1718,14 +1716,14 @@ void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 void binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const Index n = x.size();
-/*
+
     #pragma omp parallel for
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.5 ? y(i) = false : y [i] = true;
+        x(i) < 0.5 ? y(i) = false : y (i) = true;
     }
-*/
+
 }
 
 
@@ -1769,3 +1767,21 @@ void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 }
+
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
