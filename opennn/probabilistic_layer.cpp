@@ -247,10 +247,31 @@ Index ProbabilisticLayer::get_parameters_number() const
 
 Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
+
+    const Index synaptic_weights_number = synaptic_weights.size();
+
+    const Index biases_number = biases.size();
+
+    Tensor<type, 1> parameters(synaptic_weights_number+biases_number);
+
+    for(Index i = 0; i < synaptic_weights_number-1; i++)
+    {
+        parameters(i) = synaptic_weights(i);
+    }
+
+    Index index = 0;
+
+    for(Index i = synaptic_weights_number; i < synaptic_weights_number+biases_number; i++)
+    {
+        parameters(i) = biases(index);
+
+        index++;
+    }
+
+    return parameters;
 /*
     return synaptic_weights.to_vector().assemble(biases);
 */
-    return Tensor<type, 1>();
 }
 
 
@@ -259,9 +280,7 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 
 void ProbabilisticLayer::set()
 {
-/*
-    biases.resize(0);
-*/
+
     biases.resize(0);
 
     synaptic_weights.resize(0,0);
@@ -366,13 +385,13 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
        synaptic_weights(i) = new_parameters(i);
    }
 
-   Index index = parameters_number-1;
+   Index index = 0;
 
-   for(Index j = 0; j < inputs_number*neurons_number; j++)
+   for(Index j = inputs_number*neurons_number ; j < parameters_number; j++)
    {
-       biases(j) = new_parameters(index);
+       biases(index) = new_parameters(j);
 
-       index--;
+       index++;
    }
 /*
    synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
@@ -559,6 +578,8 @@ void ProbabilisticLayer::prune_neuron(const Index& index)
     biases.resize(old_biases.size()-1);
     synaptic_weights.resize(old_synaptic_weights.dimension(0)-1,old_synaptic_weights.dimension(1));
 
+    // Biases
+
     Index bias_index = 0;
 
     for(Index i = 0; i < old_biases.size(); i++)
@@ -569,21 +590,23 @@ void ProbabilisticLayer::prune_neuron(const Index& index)
         bias_index++;
     }
 
-    for(Index i = 0; i < index; i++)
-       {
-          for(Index j = 0; j < old_synaptic_weights.dimension(1); j++)
-          {
-            synaptic_weights(i,j) = old_synaptic_weights(i,j);
-          }
-       }
+    // Synaptic Weights
 
-       for(Index i = index+1; i < old_synaptic_weights.dimension(0); i++)
-       {
-          for(Index j = 0; j < old_synaptic_weights.dimension(1); j++)
-          {
-             synaptic_weights(i-1,j) = old_synaptic_weights(i,j);
-          }
-       }
+    for(Index i = 0; i < old_synaptic_weights.dimension(0); i++)
+      {
+         for(Index j = 0; j < index; j++)
+         {
+           synaptic_weights(i,j) = old_synaptic_weights(i,j);
+         }
+      }
+
+      for(Index i = 0; i < old_synaptic_weights.dimension(0); i++)
+      {
+         for(Index j = index+1; j < synaptic_weights.dimension(1); j++)
+         {
+            synaptic_weights(i,j-1) = old_synaptic_weights(i,j);
+         }
+      }
 
 /*
     biases = biases.delete_index(index);
@@ -641,9 +664,22 @@ void ProbabilisticLayer::set_parameters_random()
 
 Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
+    const Index batch_size = inputs.dimension(0);
 
-    return Tensor<type, 2>();
-}
+    const  Index neurons_number = get_neurons_number();
+
+    Tensor<type, 2> combinations(batch_size,neurons_number);
+
+    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+    combinations = inputs.contract(synaptic_weights, product_dimensions);
+
+//    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+
+    combinations = combinations + biases;//.broadcast(broadcast);
+
+    return combinations;
+ }
 
 
 /// This method processes the input to the probabilistic layer in order to obtain a set of outputs which
@@ -653,12 +689,12 @@ Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-    const Index output_rows_number = inputs.dimension(0);
-    const Index output_columns_number = get_neurons_number();
+//    const Index output_rows_number = inputs.dimension(0);
+//    const Index output_columns_number = get_neurons_number();
 
     Tensor<type, 2> combinations = calculate_combinations(inputs);
 
-    const Index inputs_dimensions_number = inputs.rank();
+//    const Index inputs_dimensions_number = inputs.rank();
 
     switch(activation_function)
     {

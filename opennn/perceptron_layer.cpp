@@ -773,7 +773,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
     Tensor<type, 2> outputs = calculate_combinations(inputs);
 
-    calculate_activations()
+//    calculate_activations()
 
     return outputs;
 }
