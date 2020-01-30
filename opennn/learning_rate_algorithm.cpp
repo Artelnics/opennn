@@ -930,6 +930,8 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    // Learning rate algorithm
+
     file_stream.OpenElement("LearningRateAlgorithm");
 
     // Training rate method
@@ -951,6 +953,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Learning rate algorithm (end tag)
 
     file_stream.CloseElement();
 }

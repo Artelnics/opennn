@@ -214,7 +214,7 @@ void DataSet::Column::set_use(const string& new_column_use)
 
 void DataSet::Column::set_type(const string& new_column_type)
 {
-    if(new_column_type == "Numerical")
+    if(new_column_type == "Numeric")
     {
         type = Numeric;
     }
@@ -435,7 +435,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(type == Numeric)
     {
-        file_stream.PushText("Numerical");
+        file_stream.PushText("Numeric");
     }
     else if (type == Binary)
     {
