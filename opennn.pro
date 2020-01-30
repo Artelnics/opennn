@@ -10,7 +10,7 @@
 
 TEMPLATE = subdirs
 
-CONFIG += ordered
+CONFIG += ordereds
 
 CONFIG(release, debug|release) {
 DEFINES += NDEBUG
@@ -18,7 +18,6 @@ DEFINES += NDEBUG
 
 SUBDIRS += opennn
 
-#SUBDIRS += tests
-SUBDIRS += examples
-SUBDIRS += blank
-
+SUBDIRS += tests
+#SUBDIRS += examples
+#SUBDIRS += blank
