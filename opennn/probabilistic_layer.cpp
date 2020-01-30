@@ -190,10 +190,22 @@ const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 Tensor<type, 1> ProbabilisticLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
     const Index biases_number = biases.size();
+
+    Tensor<type, 1 > bias_tensor(biases_number);
+
+    Index index = parameters.size()-1;
+
+    for(Index i = 0; i < biases_number; i++)
+    {
+        bias_tensor(i) = parameters(index);
+
+        index--;
+    }
+
+    return bias_tensor;
 /*
     return parameters.get_last(biases_number);
 */
-    return Tensor<type, 1>();
 }
 
 
@@ -206,10 +218,18 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& 
     const Index neurons_number = get_neurons_number();
 
     const Index synaptic_weights_number = synaptic_weights.size();
+
+    Tensor<type, 2> synaptic_weights_tensor(inputs_number, neurons_number);
+
+    for(Index i = 0; i < synaptic_weights_number; i++)
+    {
+        synaptic_weights_tensor(i) = parameters(i);
+    }
+
+    return  synaptic_weights_tensor;
 /*
     return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
 */
-    return Tensor<type, 2>();
 }
 
 
@@ -242,6 +262,8 @@ void ProbabilisticLayer::set()
 /*
     biases.resize(0);
 */
+    biases.resize(0);
+
     synaptic_weights.resize(0,0);
 
     set_default();
@@ -257,9 +279,9 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
     biases.resize(new_neurons_number);
 
     biases.setRandom();
-/*
+
     synaptic_weights.resize(new_inputs_number, new_neurons_number);
-*/
+
     synaptic_weights.setRandom();
 
     set_default();
@@ -286,9 +308,8 @@ void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
     const Index neurons_number = get_neurons_number();
 
     biases.resize(neurons_number);
-/*
+
     synaptic_weights.resize(new_inputs_number, neurons_number);
-*/
 }
 
 
@@ -339,6 +360,20 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
    }
 
    #endif
+
+   for(Index i = 0; i < inputs_number*neurons_number-1; i++)
+   {
+       synaptic_weights(i) = new_parameters(i);
+   }
+
+   Index index = parameters_number-1;
+
+   for(Index j = 0; j < inputs_number*neurons_number; j++)
+   {
+       biases(j) = new_parameters(index);
+
+       index--;
+   }
 /*
    synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
 
@@ -518,6 +553,38 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 
 void ProbabilisticLayer::prune_neuron(const Index& index)
 {
+    const Tensor<type, 1> old_biases(biases);
+    const Tensor<type, 2> old_synaptic_weights(synaptic_weights);
+
+    biases.resize(old_biases.size()-1);
+    synaptic_weights.resize(old_synaptic_weights.dimension(0)-1,old_synaptic_weights.dimension(1));
+
+    Index bias_index = 0;
+
+    for(Index i = 0; i < old_biases.size(); i++)
+    {
+        if(i == index) continue;
+
+        biases(bias_index) = old_biases(i);
+        bias_index++;
+    }
+
+    for(Index i = 0; i < index; i++)
+       {
+          for(Index j = 0; j < old_synaptic_weights.dimension(1); j++)
+          {
+            synaptic_weights(i,j) = old_synaptic_weights(i,j);
+          }
+       }
+
+       for(Index i = index+1; i < old_synaptic_weights.dimension(0); i++)
+       {
+          for(Index j = 0; j < old_synaptic_weights.dimension(1); j++)
+          {
+             synaptic_weights(i-1,j) = old_synaptic_weights(i,j);
+          }
+       }
+
 /*
     biases = biases.delete_index(index);
 
@@ -776,6 +843,16 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> error_gradient(parameters_number);
+    error_gradient.setZero();
+
+    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(1, 1) };
+
+    Tensor<type, 2> inputs_dot_delta = layer_inputs.contract(layer_deltas, product_matrix_transpose_vector);
+
+    for(Index i = 0; i < inputs_dot_delta.size(); i++)
+    {
+        error_gradient(i) = inputs_dot_delta(i);
+    }
 
     // Synaptic weights
 /*

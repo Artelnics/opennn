@@ -76,9 +76,6 @@ int main(void)
         Eigen::array<int, 1> dims = {Eigen::array<int, 1>({1})};
         Eigen::Tensor<int, 1> b = a.sum(dims);
 
-        cout << a << "a+b = " << endl;
-        cout << b << endl;
-
         return 0;
     }
        catch(exception& e)
