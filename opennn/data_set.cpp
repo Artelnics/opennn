@@ -1210,19 +1210,19 @@ void DataSet::set_instances_uses(const Tensor<string, 1>& new_uses)
 
    for(Index i = 0; i < instances_number; i++)
    {      
-      if(new_uses(i).compare("Training") != 0 || new_uses(i).compare("0"))
+      if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
       {
          instances_uses(i) = Training;
       }
-      else if(new_uses(i).compare("Selection") || new_uses(i).compare("1"))
+      else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
       {
          instances_uses(i) = Selection;
       }
-      else if(new_uses(i).compare("Testing") || new_uses(i).compare("2"))
+      else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
       {
          instances_uses(i) = Testing;
       }
-      if(new_uses(i).compare("Unused") || new_uses(i).compare("3"))
+      else if(new_uses(i).compare("Unused") == 0 || new_uses(i).compare("3") == 0)
       {
          instances_uses(i) = UnusedInstance;
       }
