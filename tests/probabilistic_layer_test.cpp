@@ -115,50 +115,57 @@ void ProbabilisticLayerTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-/*
+
 void ProbabilisticLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
    ProbabilisticLayer probabilistic_layer;
 
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> outputs;
-   Tensor<type, 1> biases;
-   Tensor<double, 2> synaptic_weights;
+   Tensor<type, 2> inputs(0,0);
+   Tensor<type, 2> outputs(0,0);
+   Tensor<type, 1> biases(0);
+   Tensor<type, 2> synaptic_weights(0,0);
 
    // Test
 
-   synaptic_weights.resize(1,1,1.0);
-   probabilistic_layer.set_synaptic_weights(synaptic_weights);
+   synaptic_weights.resize(1,1);
+   synaptic_weights.setConstant(1.0);
 
-   biases.resize(1,1.0);
-   probabilistic_layer.set_synaptic_weights(synaptic_weights);
+
+   biases.resize(1);
+   biases.setConstant(1.0);
+
+//   probabilistic_layer.set_synaptic_weights(synaptic_weights);
 
    probabilistic_layer.set_neurons_number(1);
+   probabilistic_layer.set_synaptic_weights(synaptic_weights);
+   probabilistic_layer.set_biases(biases);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
 
-   inputs.resize({1,1}, 0.0);
+   inputs.resize(1,1);
+   inputs.setConstant(0.0);
 
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 1, LOG);
-   assert_true(outputs[0] == 0.0, LOG);
+//   assert_true(outputs(0) == 0.0, LOG);
 
    // Test
 
    probabilistic_layer.set_neurons_number(1);
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-   inputs.resize({1,1}, 0.0);
+   inputs.resize(1,1);
+   inputs.setConstant(0.0);
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
-   assert_true(outputs.size() == 1, LOG);
-   assert_true(outputs[0] >= 0.0, LOG);
+//   assert_true(outputs.size() == 1, LOG);
+//   assert_true(outputs(0) >= 0.0, LOG);
 }
 
-
+/*
 void ProbabilisticLayerTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -257,7 +264,7 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
 void ProbabilisticLayerTest::run_test_case()
 {
    cout << "Running probabilistic layer test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -294,14 +301,14 @@ void ProbabilisticLayerTest::run_test_case()
 
    // Serialization methods
 
-   test_to_XML();
+//   test_to_XML();
 
-   test_from_XML();
+//   test_from_XML();
 
    // Activation derivatives
 
-   test_calculate_activation_derivatives();
-*/
+//   test_calculate_activation_derivatives();
+
    cout << "End of probabilistic layer test case.\n";
 }
 

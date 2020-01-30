@@ -789,7 +789,11 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
     const Tensor<type, 2> outputs = calculate_combinations(inputs);
 
+<<<<<<< HEAD
     return calculate_activations(outputs);
+=======
+//    calculate_activations()
+>>>>>>> 9d889451ae5998712d345c20a26ccbde1bc14566
 
 }
 
