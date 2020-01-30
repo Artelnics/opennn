@@ -198,7 +198,7 @@ int main()
          tests_passed_count += bounding_layer_test.get_tests_passed_count();
          tests_failed_count += bounding_layer_test.get_tests_failed_count();
       }
-      else if(test == "probabilistic_layer" || test == "")
+      else if(test == "probabilistic_layer" || test == "pbl")
       {
          ProbabilisticLayerTest probabilistic_layer_test;
          probabilistic_layer_test.run_test_case();
