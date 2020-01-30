@@ -241,7 +241,7 @@ void StochasticGradientDescent::set_default()
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
-   maximum_epochs_number =1000;
+   maximum_epochs_number = 1000;
    return_minimum_selection_error_neural_network = false;
    apply_early_stopping = true;
 
@@ -262,18 +262,16 @@ void StochasticGradientDescent::set_default()
 /// @param new_initial_learning_rate initial learning rate value.
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
-{
-   
-
+{   
    #ifdef __OPENNN_DEBUG__
 
-   if(new_learning_rate < static_cast<type>(0.0))
+   if(new_learning_rate <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
              << "void set_initial_learning_rate(const type&) method.\n"
-             << "initial_learning_rate must be equal or greater than 0.\n";
+             << "initial_learning_rate must be greater than 0.\n";
 
       throw logic_error(buffer.str());
    }

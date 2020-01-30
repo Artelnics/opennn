@@ -1406,6 +1406,19 @@ void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor
 }
 
 
+void hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        y(i) = std::tanh(x(i));
+    }
+}
+
+
 void logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const Index n = x.size();

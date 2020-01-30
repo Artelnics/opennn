@@ -614,18 +614,34 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
 {
-/*
-//    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
-    const Tensor<type, 1> new_biases = get_biases(parameters);
 
-*/
-    return Tensor<type, 2>();
+    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
+
+    const Tensor<type, 2> new_biases = get_biases(parameters);
+
+    return calculate_combinations(inputs, new_biases, new_synaptic_weights);
+
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
+Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
-    return Tensor<type, 2>();
+
+    const Index batch_size = inputs.dimension(0);
+
+    const  Index neurons_number = get_neurons_number();
+
+    Tensor<type, 2> combinations(batch_size, neurons_number);
+
+    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+    combinations = inputs.contract(new_synaptic_weights, product_dimensions);
+
+    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+
+    combinations = combinations + new_biases.broadcast(broadcast);
+
+    return combinations;
 }
 
 
@@ -652,7 +668,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
 
     switch(activation_function)
     {
-/*
+
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -674,7 +690,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
-*/
+
     }
 
     return Tensor<type, 2>();
@@ -771,11 +787,10 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    Tensor<type, 2> outputs = calculate_combinations(inputs);
+    const Tensor<type, 2> outputs = calculate_combinations(inputs);
 
-    calculate_activations()
+    return calculate_activations(outputs);
 
-    return outputs;
 }
 
 

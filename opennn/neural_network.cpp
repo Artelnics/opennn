@@ -942,7 +942,6 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
         const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
 
-//        parameters.embed(position, layer_parameters);
         for(Index i = 0; i < layer_parameters.size(); i++)
         {
             parameters(i + position) = layer_parameters(i);
@@ -981,15 +980,22 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
     Tensor<Tensor<type, 1>, 1> trainable_layers_parameters(trainable_layers_number);
 
+
     Index index = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-/*
-        trainable_layers_parameters[i] = parameters.get_subvector(index, index + trainable_layers_parameters_number[i]-1);
+///@todo
+  //      trainable_layers_parameters[i] = parameters.get_subvector(index, index + trainable_layers_parameters_number[i]-1);
+
+        trainable_layers_parameters(i)= parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({index + trainable_layers_parameters_number(i)-1}));
+
+        cout<<trainable_layers_parameters(i);
+
+        system("pause");
 
         index += trainable_layers_parameters_number[i];
-*/
+
     }
 
     return trainable_layers_parameters;
