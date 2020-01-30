@@ -1899,7 +1899,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("QuasiNewtonMethod");
+//    file_stream.OpenElement("QuasiNewtonMethod");
 
     // Inverse hessian approximation method
 
@@ -1915,29 +1915,25 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Return minimum selection error neural network
 
-    {
-        file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
+    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
-        buffer.str("");
-        buffer << return_minimum_selection_error_neural_network;
+    buffer.str("");
+    buffer << return_minimum_selection_error_neural_network;
 
-        file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
+    file_stream.CloseElement();
 
-       // Apply early stopping
+    // Apply early stopping
 
-       {
-           file_stream.OpenElement("ApplyEarlyStopping");
+    file_stream.OpenElement("ApplyEarlyStopping");
 
-           buffer.str("");
-           buffer << apply_early_stopping;
+    buffer.str("");
+    buffer << apply_early_stopping;
 
-           file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-           file_stream.CloseElement();
-       }
+    file_stream.CloseElement();
 
     // Minimum parameters increment norm
 
@@ -1983,7 +1979,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
