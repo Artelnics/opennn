@@ -89,7 +89,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-//   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_error(parameters)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
@@ -111,7 +111,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
    data_set.set_data_random();
    data_set.set_training();
 
-//   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 }
 
 
@@ -161,13 +161,17 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    cout<<"out_set_paremeters"<<endl;
 
+   const Index parameters_number = neural_network.get_parameters_number();
+
+   numerical_error_gradient.resize(parameters_number);
+
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
-   error_gradient = mean_squared_error.calculate_training_error_gradient();
+//   error_gradient = mean_squared_error.calculate_training_error_gradient();
 
-   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-   cout<<"____________________";
-//   assert_true(error_gradient == 0.0, LOG);
+//   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
+
+//   assert_true(error_gradient.abs() < 1.0e-3, LOG);
 }
 /*
    neural_network.set();
@@ -599,11 +603,11 @@ void MeanSquaredErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+//   test_calculate_training_error();
 
    test_calculate_training_error_gradient();
+/*
 
- /*
    test_calculate_selection_error();
 
    // Error terms methods

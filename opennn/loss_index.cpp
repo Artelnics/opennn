@@ -609,11 +609,11 @@ type LossIndex::calculate_training_loss(const Tensor<type, 1>& parameters) const
 {
     if(regularization_method == NoRegularization)
     {
-        return calculate_training_error(parameters);
+        return calculate_training_error_parameters(parameters);
     }
     else
     {
-        return calculate_training_error(parameters) + regularization_weight*calculate_regularization(parameters);
+        return calculate_training_error_parameters(parameters) + regularization_weight*calculate_regularization(parameters);
     }
 }
 
@@ -1240,12 +1240,15 @@ check();
         training_error += batch_error;
     }
 
+    cout<<training_error;
+
     return training_error;
 }
 
 
-type LossIndex::calculate_training_error(const Tensor<type, 1>& parameters) const
+type LossIndex::calculate_training_error_parameters(const Tensor<type, 1>& parameters) const
 {
+    cout<<"calculate_training_error"<<endl;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1267,14 +1270,21 @@ check();
 
     type training_error = static_cast<type>(0.0);
 
-    #pragma omp parallel for reduction(+ : training_error)
+
+
+//    #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
     {
+        cout<<"batch"<<i;
+
         const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
 
         training_error += batch_error;
+
     }
+
+
 
     return training_error;
 }
@@ -1394,22 +1404,16 @@ check();
 }
 
 
-
 Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
 {
-    cout<<"1";
+
     NumericalDifferentiation numerical_differentiation;
 
-    cout<<"2";
-
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
-    cout<<"3";
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-    cout<<"4";
 
-    Tensor<type, 1> ndd = numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error, parameters);
-    cout<<"5";
+    Tensor<type, 1> ndd = numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
     return ndd;
 

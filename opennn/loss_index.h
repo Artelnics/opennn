@@ -242,7 +242,7 @@ public:
    // ERROR METHODS
 
    virtual type calculate_training_error() const;
-   virtual type calculate_training_error(const Tensor<type, 1>&) const;
+   virtual type calculate_training_error_parameters(const Tensor<type, 1>&) const;
 
    virtual type calculate_selection_error() const;
 
