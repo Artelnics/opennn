@@ -141,26 +141,26 @@ check();
 #endif
 
     // Data set
-/*
-    const Index batch_instances_number = batch.inputs.dimension(0);
+
+    const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
     // Neural network
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-*/
+
     // Loss index
 
     FirstOrderLoss first_order_loss(this);
-/*
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
 
-    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
+    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
+
+    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
+    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
 
-    first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets);
+    first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     first_order_loss.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
 
@@ -171,7 +171,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-*/
+
     return first_order_loss;
 }
 

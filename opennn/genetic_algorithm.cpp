@@ -60,7 +60,7 @@ GeneticAlgorithm::~GeneticAlgorithm()
 
 const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
 {
-    return(population);
+    return population;
 }
 
 
@@ -68,7 +68,7 @@ const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
 
 const Tensor<type, 2>& GeneticAlgorithm::get_loss() const
 {
-    return(loss);
+    return loss;
 }
 
 
@@ -76,7 +76,7 @@ const Tensor<type, 2>& GeneticAlgorithm::get_loss() const
 
 const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
 {
-    return(fitness);
+    return fitness;
 }
 
 
@@ -84,7 +84,7 @@ const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
 
 const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
 {
-    return(initialization_method);
+    return initialization_method;
 }
 
 
@@ -92,7 +92,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 const GeneticAlgorithm::CrossoverMethod& GeneticAlgorithm::get_crossover_method() const
 {
-    return(crossover_method);
+    return crossover_method;
 }
 
 
@@ -100,7 +100,7 @@ const GeneticAlgorithm::CrossoverMethod& GeneticAlgorithm::get_crossover_method(
 
 const GeneticAlgorithm::FitnessAssignment& GeneticAlgorithm::get_fitness_assignment_method() const
 {
-    return(fitness_assignment_method);
+    return fitness_assignment_method;
 }
 
 
@@ -108,7 +108,7 @@ const GeneticAlgorithm::FitnessAssignment& GeneticAlgorithm::get_fitness_assignm
 
 const Index& GeneticAlgorithm::get_population_size() const
 {
-    return(population_size);
+    return population_size;
 }
 
 
@@ -116,7 +116,7 @@ const Index& GeneticAlgorithm::get_population_size() const
 
 const type& GeneticAlgorithm::get_mutation_rate() const
 {
-    return(mutation_rate);
+    return mutation_rate;
 }
 
 
@@ -124,7 +124,7 @@ const type& GeneticAlgorithm::get_mutation_rate() const
 
 const Index& GeneticAlgorithm::get_elitism_size() const
 {
-    return(elitism_size);
+    return elitism_size;
 }
 
 
@@ -132,7 +132,7 @@ const Index& GeneticAlgorithm::get_elitism_size() const
 
 const Index& GeneticAlgorithm::get_crossover_first_point() const
 {
-    return(crossover_first_point);
+    return crossover_first_point;
 }
 
 
@@ -140,7 +140,7 @@ const Index& GeneticAlgorithm::get_crossover_first_point() const
 
 const Index& GeneticAlgorithm::get_crossover_second_point() const
 {
-    return(crossover_second_point);
+    return crossover_second_point;
 }
 
 
@@ -148,7 +148,7 @@ const Index& GeneticAlgorithm::get_crossover_second_point() const
 
 const type& GeneticAlgorithm::get_selective_pressure() const
 {
-    return(selective_pressure);
+    return selective_pressure;
 }
 
 
@@ -156,7 +156,7 @@ const type& GeneticAlgorithm::get_selective_pressure() const
 
 const type& GeneticAlgorithm::get_incest_prevention_distance() const
 {
-    return(incest_prevention_distance);
+    return incest_prevention_distance;
 }
 
 
@@ -164,7 +164,7 @@ const type& GeneticAlgorithm::get_incest_prevention_distance() const
 
 const bool& GeneticAlgorithm::get_reserve_generation_mean() const
 {
-    return(reserve_generation_mean);
+    return reserve_generation_mean;
 }
 
 
@@ -172,7 +172,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_mean() const
 
 const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation() const
 {
-    return(reserve_generation_standard_deviation);
+    return reserve_generation_standard_deviation;
 }
 
 
@@ -180,7 +180,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation() const
 
 const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection() const
 {
-    return(reserve_generation_minimum_selection);
+    return reserve_generation_minimum_selection;
 }
 
 
@@ -188,7 +188,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection() const
 
 const bool& GeneticAlgorithm::get_reserve_generation_optimum_loss() const
 {
-    return(reserve_generation_optimum_loss);
+    return reserve_generation_optimum_loss;
 }
 
 
@@ -283,13 +283,13 @@ void GeneticAlgorithm::set_default()
     }
 
     // Population stuff
-/*
-    population.set();
 
-    loss.set();
+    population.resize(0, 0);//set();
 
-    fitness.set();
-*/
+    loss.resize(0, 0);//set();
+
+    fitness.resize(0);//set();
+
     // Training operators
 
     initialization_method = Random;
@@ -365,20 +365,20 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         throw logic_error(buffer.str());
     }
-/*
+
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
-    if(new_population[0].size() != inputs_number)
+    if(new_population.dimension(1) != inputs_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population columns("<<new_population[0].size()<< ") must be equal to inputs number("<<inputs_number<<").\n";
+               << "Population columns("<<new_population.dimension(1)<< ") must be equal to inputs number("<<inputs_number<<").\n";
 
         throw logic_error(buffer.str());
     }
-*/
+
     if(new_population.size() != population_size)
     {
         ostringstream buffer;
@@ -391,9 +391,15 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
     }
 
 #endif
-/*
-    population.set(new_population);
-*/
+
+//    population.resize(0,0);
+
+//    population = new_population;
+
+    copy(new_population.data(), new_population.data() + new_population.size(), population.data());
+
+//    population.set(new_population);
+
 }
 
 
@@ -427,6 +433,11 @@ void GeneticAlgorithm::set_loss(const Tensor<type, 2>& new_loss)
     }
 
 #endif
+
+//    loss.resize(0, 0);
+
+//    loss = new_loss;
+    copy(new_loss.data(), new_loss.data() + new_loss.size(), loss.data());
 /*
     loss.set(new_loss);
 */
@@ -466,6 +477,12 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
     }
 
 #endif
+
+//    fitness.resize(0);
+
+//    fitness = new_fitness;
+
+    copy(new_fitness.data(), new_fitness.data() + new_fitness.size(), fitness.data());
 /*
     fitness.set(new_fitness);
 */
@@ -816,6 +833,9 @@ void GeneticAlgorithm::initialize_population()
     }
 
 #endif
+
+    population.resize(population_size, population.dimension(1));
+
 /*
     population.set(population_size);
 */
@@ -854,13 +874,13 @@ void GeneticAlgorithm::initialize_random_population()
     Tensor<bool, 1> inputs(inputs_number);
 
     inputs.setConstant(true);
-
+/*
     Index zero_ocurrences;
 
     Index random;
 
     Index random_loops = 0;
-/*
+
     for(Index i = 0; i < population_size; i++)
     {
         zero_ocurrences = 0;
@@ -895,7 +915,10 @@ void GeneticAlgorithm::initialize_random_population()
         }
         else
         {
-            population[i] = inputs;
+            for(Index k = 0; k < inputs.size(); i++)
+            {
+                population(i,k) = inputs(k);
+            }
 
             random_loops = 0;
         }
@@ -1130,14 +1153,15 @@ void GeneticAlgorithm::calculate_fitness()
 
 void GeneticAlgorithm::calculate_objetive_fitness()
 {
-/*
-    fitness.set(loss.dimension(0),0.);
+
+    fitness.resize(loss.dimension(0));
+    fitness.setConstant(0.);
 
     for(Index i = 0; i < fitness.size(); i++)
     {
-        fitness[i] = 1/(1 + loss(i,1));
+        fitness(i) = 1/(1 + loss(i,1));
     }
-*/
+
 }
 
 
@@ -1145,16 +1169,48 @@ void GeneticAlgorithm::calculate_objetive_fitness()
 
 void GeneticAlgorithm::calculate_rank_fitness()
 {
-/*
-    const Tensor<Index, 1> rank = loss.get_column(1).calculate_greater_rank();
 
-    fitness.set(loss.dimension(0),0.);
+    const Tensor<type, 1> column = loss.chip(1,1);
+//            calculate_greater_rank();
+
+    const Index column_size = column.size();
+
+    Tensor<Index, 1> rank(column_size);
+
+    Tensor<type, 1> sorted_vector(column);
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), greater<type>());
+
+    Tensor<Index, 1> previous_rank(column_size);
+
+    for(Index i = 0; i < column_size; i++)
+    {
+        for(Index j = 0; j < column_size; j++)
+        {
+//            if(previous_rank.contains(j)) continue;
+            for(Index k = 0; k < previous_rank.size(); k++)
+            {
+                if(previous_rank(k) == j) continue;
+            }
+
+            if(sorted_vector(i) == column(j))
+            {
+                rank(i) = j;
+
+                previous_rank(i) = j;
+
+                break;
+            }
+        }
+    }
+
+    fitness.resize(loss.dimension(0));
 
     for(Index i = 0; i < population_size; i++)
     {
         fitness[i] = selective_pressure*rank[i];
     }
-*/
+
 }
 
 
@@ -1174,20 +1230,22 @@ void GeneticAlgorithm::evolve_population()
     for(Index i = 0; i < population.size(); i++)
     {
         zero_ocurrences = 0;
-/*
-        for(Index j = 0; j < population[i].size(); j++)
+
+        const Tensor<bool, 1> population_column = population.chip(i,0);
+
+        for(Index j = 0; j < population_column.size(); j++)
         {
-            if(population[i][j] == false)
+            if(population(i,j) == false)
             {
                 zero_ocurrences++;
             }
         }
 
-        if(zero_ocurrences == population[i].size())
+        if(zero_ocurrences == population_column.size())
         {
-            population[i][static_cast<Index>(rand())%population[i].size()] = true;
+            population(i,static_cast<Index>(rand())%population_column.size()) = true;
         }
-*/
+
     }
 }
 
@@ -1208,8 +1266,8 @@ void GeneticAlgorithm::perform_selection()
 
         throw logic_error(buffer.str());
     }
-/*
-    if(fitness.empty())
+
+    if(fitness.dimension(0) == 0)
     {
         ostringstream buffer;
 
@@ -1219,9 +1277,9 @@ void GeneticAlgorithm::perform_selection()
 
         throw logic_error(buffer.str());
     }
-*/
-#endif
 
+#endif
+/*
     const Index selected_population_size = static_cast<Index>(population_size/2);
 
     Tensor<bool, 2> population_copy;
@@ -1233,8 +1291,8 @@ void GeneticAlgorithm::perform_selection()
     Index selected_index = 0;
 
     Tensor<type, 1> fitness_sum = cumulative(fitness);
-/*
-    type sum = fitness.sum();
+
+    const Tensor<type, 1> sum = fitness.sum();
 
     type random;
 
@@ -1242,7 +1300,7 @@ void GeneticAlgorithm::perform_selection()
 
     Tensor<type, 1> fitness_copy(fitness);
 
-    population_copy.set();
+    population_copy.resize(0,0);
 
     // Elitist selection
 
@@ -1252,7 +1310,11 @@ void GeneticAlgorithm::perform_selection()
 
         selected_population[selected_index] = true;
 
-        population_copy.push_back(population[selected_index]);
+//        population_copy.push_back(population[selected_index]);
+        for(Index i = 0; i < population.dimension(1); i++)
+        {
+            population_copy(0,i) = population(selected_index,i);
+        }
 
         fitness_copy[selected_index] = -1;
     }
@@ -1307,7 +1369,8 @@ void GeneticAlgorithm::perform_selection()
         }
     }
 
-    population.set(population_copy);
+//    population.set(population_copy);
+    copy(population_copy.data(), population_copy.data() + population_copy.size(), population);
 */
 }
 
