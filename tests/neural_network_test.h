@@ -44,6 +44,7 @@ public:
    void test_get_parameters();   
 
    void test_get_trainable_layers_parameters_number();
+   void test_get_trainable_layers_parameters();
 
    // Display messages
 

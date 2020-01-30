@@ -1270,13 +1270,11 @@ check();
 
     type training_error = static_cast<type>(0.0);
 
-
-
-//    #pragma omp parallel for reduction(+ : training_error)
+    #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
     {
-        cout<<"batch"<<i;
+        cout<<"batch"<<i<<endl;
 
         const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
 

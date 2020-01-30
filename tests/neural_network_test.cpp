@@ -199,6 +199,43 @@ void NeuralNetworkTest::test_get_parameters()
 //   assert_true(parameters == 0.0, LOG);
 }
 
+void NeuralNetworkTest::test_get_trainable_layers_parameters()
+{
+    NeuralNetwork neural_network;
+
+//    Tensor<Index, 1> layers_parameters_numbers;
+
+    Tensor<Index, 1> architecture(3);
+
+    architecture.setValues({1, 2, 3});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
+
+    PerceptronLayer* pl0 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+
+    pl0->initialize_biases(1);
+
+    pl0->initialize_synaptic_weights(0);
+
+    PerceptronLayer* pl1 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+
+    pl1->initialize_biases(3);
+
+    pl1->initialize_synaptic_weights(2);
+
+    Tensor<type, 1> parameters = neural_network.get_parameters();
+
+    cout<<"Hello"<<endl;
+
+    Tensor<Tensor<type, 1>, 1> training_parameters = neural_network.get_trainable_layers_parameters(parameters);
+
+    cout<<training_parameters(1);
+    cout<<"bye"<<endl;
+
+
+
+}
+
 
 void NeuralNetworkTest::test_get_trainable_layers_parameters_number()
 {
@@ -1764,6 +1801,7 @@ void NeuralNetworkTest::run_test_case()
    test_set_parameters_random();
 
    test_calculate_forward_propagation();
+   test_get_trainable_layers_parameters();
 
 
 

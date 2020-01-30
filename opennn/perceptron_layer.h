@@ -159,7 +159,7 @@ public:
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Perceptron layer activations
 

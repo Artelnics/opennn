@@ -243,6 +243,7 @@ namespace OpenNN
 
     void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&);
     void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
+    void hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&);
     void logistic(const Tensor<type, 2>&, Tensor<type, 2>&);
     void linear(const Tensor<type, 2>&, Tensor<type, 2>&);
     void threshold(const Tensor<type, 2>&, Tensor<type, 2>&);

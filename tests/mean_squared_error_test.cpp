@@ -123,6 +123,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    DataSet data_set;
 
+   data_set.generate_Rosenbrock_data(100,2);
+   data_set.set_training();
+
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    Tensor<type, 1> error_gradient;
@@ -149,10 +152,6 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    instances_number = 100;
    inputs_number = 1;
    outputs_number = 1;
-
-   data_set.set(instances_number, inputs_number, outputs_number);
-
-   data_set.initialize_data(0.0);
 
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);

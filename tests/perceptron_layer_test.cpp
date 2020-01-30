@@ -369,9 +369,9 @@ void PerceptronLayerTest::test_get_parameters()
 
 void PerceptronLayerTest::test_get_perceptrons_parameters()
 {
-    /*
-    cout << "test_get_perceptrons_parameters\n";
 
+    cout << "test_get_perceptrons_parameters\n";
+/*
      PerceptronLayer perceptron_layer;
      Tensor<type, 1> biases;
      Tensor<type, 2> synaptic_weights;
@@ -711,7 +711,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 {
 
    cout << "test_calculate_combinations\n";
-/*
+
    PerceptronLayer perceptron_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -809,23 +809,26 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set(3, 4);
 
    biases.resize(1,4);
-//   biases.initialize_sequential();
+
 
    synaptic_weights.resize(3,4);
-//   synaptic_weights.initialize_sequential();
+
 
    perceptron_layer.set_synaptic_weights(synaptic_weights);
    perceptron_layer.set_biases(biases);
 
    inputs.resize(2,3);
-//   inputs.initialize_sequential();
 
-   combinations = perceptron_layer.calculate_combinations(inputs);
+   combinations = perceptron_layer.calculate_combinations(inputs, synaptic_weights, biases);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 2, LOG);
    assert_true(combinations.dimension(1) == 4, LOG);
 
+
+
+
+/*
    // Test
 
    perceptron_layer.set(1, 1);
@@ -846,6 +849,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    assert_true(perceptron_layer.calculate_combinations(inputs) == perceptron_layer.calculate_combinations(inputs, parameters), LOG);
 */
+
 }
 
 
@@ -1196,17 +1200,18 @@ void PerceptronLayerTest::test_calculate_outputs()
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
+    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
 
+    Tensor<type,2>outputs = perceptron_layer.calculate_outputs(inputs);
 
-    cout<<perceptron_layer.calculate_outputs(inputs);
+    assert_true(outputs.rank() == 2, LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 4, LOG);
+    assert_true(outputs(0,0) == 7, LOG);
 
+/*
 
-
-
-
-
-
-    /*    biases(0,0) = static_cast<type>(0.85);
+    biases(0,0) = static_cast<type>(0.85);
     biases(0,1) = -static_cast<type>(0.25);
     biases(0,2) = static_cast<type>(0.29);
     biases(0,3) = -static_cast<type>(0.77)*/;
@@ -1353,7 +1358,7 @@ void PerceptronLayerTest::run_test_case()
 
    test_get_parameters();
 
-//   test_get_perceptrons_parameters();
+   test_get_perceptrons_parameters();
 
    // Activation functions
 
