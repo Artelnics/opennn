@@ -487,7 +487,12 @@ check();
     const Index batches_number = training_batches.size();
 
     FirstOrderLoss first_order_loss(this);
+
+    // Eigen stuff
 /*
+    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
+
      #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)
@@ -510,15 +515,19 @@ check();
         const Tensor<type, 2> error_terms_Jacobian
                 = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const type loss = dot(error_terms, error_terms);
+//        const type loss = dot(error_terms, error_terms);
 
-        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
+
+//        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+
+        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_vector);
 
           #pragma omp critical
         {
-            first_order_loss.loss += loss;
+            first_order_loss.loss += loss(0);
             first_order_loss.gradient += gradient;
          }
     }
@@ -729,7 +738,14 @@ check();
     const Index batches_number = training_batches.size();
 
     SecondOrderLoss terms_second_order_loss(parameters_number);
+
+    // Eigen stuff
 /*
+    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
+    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
+    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
+
+
      #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)
@@ -747,18 +763,22 @@ check();
 
         const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const type loss = dot(error_terms, error_terms);
+//        const type loss = dot(error_terms, error_terms);
 
-        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
 
-        Tensor<type, 2> hessian_approximation;
+//        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+
+        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_vector);
+
+        Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_matrix);
         //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
 
           #pragma omp critical
         {
-            terms_second_order_loss.loss += loss;
+            terms_second_order_loss.loss += loss(0);
             terms_second_order_loss.gradient += gradient;
             terms_second_order_loss.hessian += hessian_approximation;
          }

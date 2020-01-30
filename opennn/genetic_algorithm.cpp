@@ -1383,7 +1383,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector())
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1467,7 +1467,7 @@ void GeneticAlgorithm::perform_2point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector()) <= incest_prevention_distance)
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>()) <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
             random_loops++;
@@ -1558,7 +1558,7 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].to_type_vector(), population[parent2_index].to_type_vector())
+        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -3350,5 +3350,22 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
     return buffer.str();
 }
 }
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 

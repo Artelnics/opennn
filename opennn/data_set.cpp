@@ -4148,7 +4148,7 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const type& missing_rati
 /*
     const Tensor<Index, 1> columns_missing_values = data.count_nan_columns();
 
-    const Tensor<type, 1> columns_missing_ratios = columns_missing_values.to_type_vector()/(static_cast<type>(instances_number)-1.0);
+    const Tensor<type, 1> columns_missing_ratios = columns_missing_values.cast<type>()/(static_cast<type>(instances_number)-1.0);
 */
     Tensor<string, 1> unused_variables;
 /*
@@ -7708,7 +7708,7 @@ Tensor<Index, 1> DataSet::balance_binary_targets_distribution(const type& percen
 
     const Tensor<Index, 1> target_class_distribution = calculate_target_distribution();
 /*
-    const Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.to_type_vector(), 2);
+    const Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.cast<type>(), 2);
 
     const Index maximal_target_class_index = maximal_indices[0];
     const Index minimal_target_class_index = maximal_indices[1];
@@ -7766,7 +7766,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
     const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> targets_variables_indices = get_target_variables_indices();
 
-    const Tensor<Index, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.to_type_vector(), targets_number);
+    const Tensor<Index, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.cast<type>(), targets_number);
 
     const Index minimal_target_class_index = maximal_target_class_indices[targets_number - 1];
 
@@ -7808,7 +7808,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
         instances_number = instances_indices.size();
 
-        maximal_difference_index = maximal_index(target_class_differences.to_type_vector());
+        maximal_difference_index = maximal_index(target_class_differences.cast<type>());
 
         unbalanced_instances_number = static_cast<Index>(target_class_differences[maximal_difference_index]/10);
 
