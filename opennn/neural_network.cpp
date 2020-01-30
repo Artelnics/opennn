@@ -1523,7 +1523,7 @@ Tensor<string, 2> NeuralNetwork::get_information() const
 
 
 /// Serializes the neural network object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element. 
+/// See the OpenNN manual for more information about the format of this element.
 ///@todo
 
 tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
@@ -1830,7 +1830,7 @@ void NeuralNetwork::save_parameters(const string& file_name) const
 
 
 /// Loads from a XML file the members for this neural network object.
-/// Please mind about the file format, which is specified in the User's Guide. 
+/// Please mind about the file format, which is specified in the User's Guide.
 /// @param file_name Name of neural network XML file.
 
 void NeuralNetwork::load(const string& file_name)
@@ -1855,8 +1855,8 @@ void NeuralNetwork::load(const string& file_name)
 
 
 /// Loads the neural network parameters from a data file.
-/// The format of this file is just a sequence of numbers. 
-/// @param file_name Name of parameters data file. 
+/// The format of this file is just a sequence of numbers.
+/// @param file_name Name of parameters data file.
 
 void NeuralNetwork::load_parameters(const string& file_name)
 {
@@ -3257,7 +3257,7 @@ string NeuralNetwork::write_expression_R() const
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
-		
+
         string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
         outputs_names[i].erase(end_pos, outputs_names[i].end());
 
@@ -3436,7 +3436,7 @@ string NeuralNetwork::write_expression_R() const
 
 
 /// Saves the mathematical expression represented by the neural network to a text file.
-/// @param file_name Name of expression text file. 
+/// @param file_name Name of expression text file.
 
 void NeuralNetwork::save_expression(const string& file_name)
 {
@@ -3508,7 +3508,7 @@ void NeuralNetwork::save_expression_R(const string& file_name)
 
 
 /// Saves a set of input-output values from the neural network to a data file.
-/// @param file_name Name of data file. 
+/// @param file_name Name of data file.
 /// @todo
 void NeuralNetwork::save_data(const string& file_name) const
 {

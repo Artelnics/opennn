@@ -117,7 +117,7 @@ public:
 
       const type y_backward = (t.*f)(x-h);
      
-      const type d = (y_forward - y_backward)/(2.0*h);
+      const type d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
    }
@@ -204,7 +204,7 @@ public:
 
 	  const Tensor<type, 1> y = (t.*f)(x);
 /*
-      const Tensor<type, 1> d = (y_forward - y_backward)/(2.0*h);
+      const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
 */
@@ -225,7 +225,7 @@ public:
 
       const Tensor<type, 2> y = (t.*f)(x);
 
-      const Tensor<type, 2> d = (y_forward - y_backward)/(2.0*h);
+      const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
    }
@@ -319,7 +319,7 @@ public:
 	  const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
 	  const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
 
-      const Tensor<type, 1> d = (y_forward - y_backward)/(2.0*h);
+      const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
    }
@@ -362,7 +362,7 @@ public:
    {   
       const type h = calculate_h(x);
 
-      const type x_forward_2 = x + 2.0*h;
+      const type x_forward_2 = x + static_cast<type>(2.0)*h;
 
       const type y_forward_2 = (t.*f)(x_forward_2);
 
@@ -386,7 +386,7 @@ public:
    {
       const type h = calculate_h(x);
 
-      const type x_forward_2 = x + 2.0*h;
+      const type x_forward_2 = x + static_cast<type>(2.0)*h;
 
       const type y_forward_2 = (t.*f)(x_forward_2);
 
@@ -400,7 +400,7 @@ public:
 
       const type y_backward = (t.*f)(x_backward);
 
-      const type x_backward_2 = x - 2.0*h;
+      const type x_backward_2 = x - static_cast<type>(2.0)*h;
 
       const type y_backward_2 = (t.*f)(x_backward_2);
     
@@ -448,7 +448,7 @@ public:
       const Tensor<type, 1> h = calculate_h(x);
 
       const Tensor<type, 1> x_forward = x + h;
-      const Tensor<type, 1> x_forward_2 = x + 2.0*h;
+      const Tensor<type, 1> x_forward_2 = x + static_cast<type>(2.0)*h;
 
       const Tensor<type, 1> y_forward = (t.*f)(x_forward);
       const Tensor<type, 1> y_forward_2 = (t.*f)(x_forward_2);
@@ -522,7 +522,7 @@ public:
 
    template<class T>
    Tensor<type, 2> calculate_forward_differences_second_derivatives(const T& t, type(T::*f)(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const,
-                                                                  const Index& dummy_1, const Tensor<type, 1>& x1, const Index& dummy_2,const Tensor<type, 1>& x2) const
+                                                                    const Index& dummy_1, const Tensor<type, 1>& x1, const Index& dummy_2,const Tensor<type, 1>& x2) const
    {
        const Index n = x1.size();
        const Index m = x2.size();
@@ -543,19 +543,19 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-          h1 = calculate_h(x1[i]);
+          h1 = calculate_h(x1(i));
 
-          x1_forward[i] += h1;
+          x1_forward(i) += h1;
 
-          x1_forward_2[i] += 2.0*h1;
+          x1_forward_2(i) += static_cast<type>(2.0)*h1;
 
           for(Index j = 0; j < m; j++)
           {
-              h2 = calculate_h(x2[j]);
+              h2 = calculate_h(x2(j));
 
-              x2_forward[j] += h2;
+              x2_forward(j) += h2;
 
-              x2_forward_2[j] += 2.0*h2;
+              x2_forward_2(j) += static_cast<type>(2.0)*h2;
 
               y_forward = (t.*f)(dummy_1, x1_forward, dummy_2, x2_forward);
 
@@ -563,14 +563,14 @@ public:
 
               M(i,j) = (y_forward_2 - 2*y_forward + y)/(h1*h2);
 
-              x2_forward[j] -= h2;
+              x2_forward(j) -= h2;
 
-              x2_forward_2[j] -= 2.0*h2;
+              x2_forward_2(j) -= static_cast<type>(2.0)*h2;
         }
 
-      x1_forward[i] -= h1;
+      x1_forward(i) -= h1;
 
-      x1_forward_2[i] -= 2.0*h1;
+      x1_forward_2(i) -= static_cast<type>(2.0)*h1;
 
      }
 
@@ -684,13 +684,13 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
  
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         g[i] = (y_forward - y)/h; 
+         g(i) = (y_forward - y)/h;
       }
 
       return g;
@@ -704,8 +704,9 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<type, 1> calculate_central_differences_gradient(const T& t, type(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, type (T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
+      cout << "holaa" << endl;
       const Index n = x.size();
 
       type h;
@@ -720,17 +721,23 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         cout<<i<<endl;
 
-         x_forward[i] += h;
+         h = calculate_h(x(i));
+
+         x_forward(i) += h;
+
          y_forward = (t.*f)(x_forward);
-         x_forward[i] -= h;
 
-         x_backward[i] -= h;
+/*
+         x_forward(i) -= h;
+         x_backward(i) -= h;
+
          y_backward = (t.*f)(x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h); 
+         g(i) = (y_forward - y_backward)/(2.0*h);
+*/
       }
 
       return g;
@@ -772,6 +779,7 @@ public:
    template<class T> 
    Tensor<type, 1> calculate_forward_differences_gradient(const T& t, type(T::*f)(const Tensor<type, 1>&), const Tensor<type, 1>& x) const
    {
+
       const Index n = x.size();
 
       type h;
@@ -786,13 +794,13 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
- 
-         x_forward[i] += h;
-         y_forward = (t.*f)(x_forward);
-         x_forward[i] -= h;
+         h = calculate_h(x(i));
 
-         g[i] = (y_forward - y)/h; 
+         x_forward(i) += h;
+         y_forward = (t.*f)(x_forward);
+         x_forward(i) -= h;
+
+         g(i) = (y_forward - y)/h;
       }
 
       return g;
@@ -823,17 +831,17 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
 
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         x_backward[i] -= h;
+         x_backward(i) -= h;
          y_backward = (t.*f)(x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h); 
+         g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
       }
 
       return g;
@@ -891,13 +899,13 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
  
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         g[i] = (y_forward - y)/h; 
+         g(i) = (y_forward - y)/h;
       }
 
       return g;
@@ -929,17 +937,17 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
  
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         x_backward[i] -= h;
+         x_backward(i) -= h;
          y_backward = (t.*f)(dummy, x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h); 
+         g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
       }
 
       return g;
@@ -999,13 +1007,13 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
  
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         g[i] = (y_forward - y)/h; 
+         g(i) = (y_forward - y)/h;
       }
 
       return g;
@@ -1037,14 +1045,14 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
 
-         x_forward[i] += h;
+         x_forward(i) += h;
 
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         g[i] = (y_forward - y)/h;
+         g(i) = (y_forward - y)/h;
       }
 
       return g;
@@ -1076,17 +1084,17 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
  
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         x_backward[i] -= h;
+         x_backward(i) -= h;
          y_backward = (t.*f)(dummy, x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h); 
+         g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
       }
 
       return g;
@@ -1118,17 +1126,17 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
 
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         x_backward[i] -= h;
+         x_backward(i) -= h;
          y_backward = (t.*f)(dummy, x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h);
+         g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
       }
 
       return g;
@@ -1161,17 +1169,17 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h = calculate_h(x[i]);
+         h = calculate_h(x(i));
 
-         x_forward[i] += h;
+         x_forward(i) += h;
          y_forward = (t.*f)(dummy, x_forward);
-         x_forward[i] -= h;
+         x_forward(i) -= h;
 
-         x_backward[i] -= h;
+         x_backward(i) -= h;
          y_backward = (t.*f)(dummy, x_backward);
-         x_backward[i] += h;
+         x_backward(i) += h;
 
-         g[i] = (y_forward - y_backward)/(2.0*h);
+         g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
       }
 
       return g;
@@ -1256,14 +1264,14 @@ public:
              h = calculate_h(x(i,j));
 
              x_forward(i,j) += h;
-             y_forward = (t.*f)(integer, x_forward)[i];
+             y_forward = (t.*f)(integer, x_forward)(i);
              x_forward(i,j) -= h;
 
              x_backward(i,j) -= h;
-             y_backward = (t.*f)(integer, x_backward)[i];
+             y_backward = (t.*f)(integer, x_backward)(i);
              x_backward(i,j) += h;
 
-             gradient(i,j) = (y_forward - y_backward)/(2.0*h);
+             gradient(i,j) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
           }
       }
 
@@ -1301,31 +1309,31 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_forward_i[i] += h_i;       
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(x_forward_i);
-         x_forward_i[i] -= h_i;       
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_ij[i] += h_i; 
-            x_forward_ij[j] += h_j; 
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(x_forward_ij);   
-            x_forward_ij[i] -= h_i; 
-            x_forward_ij[j] -= h_j; 
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
             H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
@@ -1387,53 +1395,53 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_backward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
          y_backward_2i = (t.*f)(x_backward_2i);
-         x_backward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) += static_cast<type>(2.0)*h_i;
 
-         x_backward_i[i] -= h_i; 
+         x_backward_i(i) -= h_i;
          y_backward_i = (t.*f)(x_backward_i);
-         x_backward_i[i] += h_i; 
+         x_backward_i(i) += h_i;
 
-         x_forward_i[i] += h_i; 
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(x_forward_i);
-         x_forward_i[i] -= h_i; 
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_ij[i] -= h_i;  
-            x_backward_ij[j] -= h_j;  
+            x_backward_ij(i) -= h_i;
+            x_backward_ij(j) -= h_j;
             y_backward_ij = (t.*f)(x_backward_ij);   
-            x_backward_ij[i] += h_i;  
-            x_backward_ij[j] += h_j;  
+            x_backward_ij(i) += h_i;
+            x_backward_ij(j) += h_j;
 
-            x_forward_ij[i] += h_i;  
-            x_forward_ij[j] += h_j;  
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(x_forward_ij);   
-            x_forward_ij[i] -= h_i;  
-            x_forward_ij[j] -= h_j;  
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
-            x_backward_i_forward_j[i] -= h_i;
-            x_backward_i_forward_j[j] += h_j;
+            x_backward_i_forward_j(i) -= h_i;
+            x_backward_i_forward_j(j) += h_j;
             y_backward_i_forward_j = (t.*f)(x_backward_i_forward_j);   
-            x_backward_i_forward_j[i] += h_i;
-            x_backward_i_forward_j[j] -= h_j;
+            x_backward_i_forward_j(i) += h_i;
+            x_backward_i_forward_j(j) -= h_j;
 
-            x_forward_i_backward_j[i] += h_i;
-            x_forward_i_backward_j[j] -= h_j;
+            x_forward_i_backward_j(i) += h_i;
+            x_forward_i_backward_j(j) -= h_j;
             y_forward_i_backward_j = (t.*f)(x_forward_i_backward_j);   
-            x_forward_i_backward_j[i] -= h_i;
-            x_forward_i_backward_j[j] += h_j;
+            x_forward_i_backward_j(i) -= h_i;
+            x_forward_i_backward_j(j) += h_j;
  
             H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
@@ -1509,31 +1517,31 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_forward_i[i] += h_i;       
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(dummy, x_forward_i);
-         x_forward_i[i] -= h_i;       
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy, x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_ij[i] += h_i; 
-            x_forward_ij[j] += h_j; 
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(dummy, x_forward_ij);   
-            x_forward_ij[i] -= h_i; 
-            x_forward_ij[j] -= h_j; 
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
             H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
@@ -1597,53 +1605,53 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_backward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
          y_backward_2i = (t.*f)(dummy, x_backward_2i);
-         x_backward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) += static_cast<type>(2.0)*h_i;
 
-         x_backward_i[i] -= h_i; 
+         x_backward_i(i) -= h_i;
          y_backward_i = (t.*f)(dummy, x_backward_i);
-         x_backward_i[i] += h_i; 
+         x_backward_i(i) += h_i;
 
-         x_forward_i[i] += h_i; 
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(dummy, x_forward_i);
-         x_forward_i[i] -= h_i; 
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_ij[i] -= h_i;  
-            x_backward_ij[j] -= h_j;  
+            x_backward_ij(i) -= h_i;
+            x_backward_ij(j) -= h_j;
             y_backward_ij = (t.*f)(dummy, x_backward_ij);   
-            x_backward_ij[i] += h_i;  
-            x_backward_ij[j] += h_j;  
+            x_backward_ij(i) += h_i;
+            x_backward_ij(j) += h_j;
 
-            x_forward_ij[i] += h_i;  
-            x_forward_ij[j] += h_j;  
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(dummy, x_forward_ij);   
-            x_forward_ij[i] -= h_i;  
-            x_forward_ij[j] -= h_j;  
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
-            x_backward_i_forward_j[i] -= h_i;
-            x_backward_i_forward_j[j] += h_j;
+            x_backward_i_forward_j(i) -= h_i;
+            x_backward_i_forward_j(j) += h_j;
             y_backward_i_forward_j = (t.*f)(dummy, x_backward_i_forward_j);   
-            x_backward_i_forward_j[i] += h_i;
-            x_backward_i_forward_j[j] -= h_j;
+            x_backward_i_forward_j(i) += h_i;
+            x_backward_i_forward_j(j) -= h_j;
 
-            x_forward_i_backward_j[i] += h_i;
-            x_forward_i_backward_j[j] -= h_j;
+            x_forward_i_backward_j(i) += h_i;
+            x_forward_i_backward_j(j) -= h_j;
             y_forward_i_backward_j = (t.*f)(dummy, x_forward_i_backward_j);   
-            x_forward_i_backward_j[i] -= h_i;
-            x_forward_i_backward_j[j] += h_j;
+            x_forward_i_backward_j(i) -= h_i;
+            x_forward_i_backward_j(j) += h_j;
  
             H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
@@ -1721,31 +1729,31 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_forward_i[i] += h_i;       
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(dummy, x_forward_i);
-         x_forward_i[i] -= h_i;       
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy, x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_ij[i] += h_i; 
-            x_forward_ij[j] += h_j; 
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(dummy, x_forward_ij);   
-            x_forward_ij[i] -= h_i; 
-            x_forward_ij[j] -= h_j; 
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
             H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
@@ -1809,53 +1817,53 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         h_i = calculate_h(x[i]);
+         h_i = calculate_h(x(i));
 
-         x_backward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
          y_backward_2i = (t.*f)(dummy, x_backward_2i);
-         x_backward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_backward_2i(i) += static_cast<type>(2.0)*h_i;
 
-         x_backward_i[i] -= h_i; 
+         x_backward_i(i) -= h_i;
          y_backward_i = (t.*f)(dummy, x_backward_i);
-         x_backward_i[i] += h_i; 
+         x_backward_i(i) += h_i;
 
-         x_forward_i[i] += h_i; 
+         x_forward_i(i) += h_i;
          y_forward_i = (t.*f)(dummy, x_forward_i);
-         x_forward_i[i] -= h_i; 
+         x_forward_i(i) -= h_i;
 
-         x_forward_2i[i] += static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) += static_cast<type>(2.0)*h_i;
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
-         x_forward_2i[i] -= static_cast<type>(2.0)*h_i;
+         x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
          H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(Index j = i; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_ij[i] -= h_i;  
-            x_backward_ij[j] -= h_j;  
+            x_backward_ij(i) -= h_i;
+            x_backward_ij(j) -= h_j;
             y_backward_ij = (t.*f)(dummy, x_backward_ij);   
-            x_backward_ij[i] += h_i;  
-            x_backward_ij[j] += h_j;  
+            x_backward_ij(i) += h_i;
+            x_backward_ij(j) += h_j;
 
-            x_forward_ij[i] += h_i;  
-            x_forward_ij[j] += h_j;  
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
             y_forward_ij = (t.*f)(dummy, x_forward_ij);   
-            x_forward_ij[i] -= h_i;  
-            x_forward_ij[j] -= h_j;  
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
             
-            x_backward_i_forward_j[i] -= h_i;
-            x_backward_i_forward_j[j] += h_j;
+            x_backward_i_forward_j(i) -= h_i;
+            x_backward_i_forward_j(j) += h_j;
             y_backward_i_forward_j = (t.*f)(dummy, x_backward_i_forward_j);   
-            x_backward_i_forward_j[i] += h_i;
-            x_backward_i_forward_j[j] -= h_j;
+            x_backward_i_forward_j(i) += h_i;
+            x_backward_i_forward_j(j) -= h_j;
 
-			x_forward_i_backward_j[i] += h_i;
-			x_forward_i_backward_j[j] -= h_j;
+            x_forward_i_backward_j(i) += h_i;
+            x_forward_i_backward_j(j) -= h_j;
             y_forward_i_backward_j = (t.*f)(dummy, x_forward_i_backward_j);   
-			x_forward_i_backward_j[i] -= h_i;
-			x_forward_i_backward_j[j] += h_j;
+            x_forward_i_backward_j(i) -= h_i;
+            x_forward_i_backward_j(j) += h_j;
  
             H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
@@ -1924,15 +1932,15 @@ public:
 
       for(Index j = 0; j < n; j++)
 	   {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		  {
-		     J(i,j) = (y_forward[i] - y[i])/h;
+             J(i,j) = (y_forward(i) - y(i))/h;
 		  }
 	  }
 
@@ -1966,19 +1974,19 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_backward[j] -= h;
+         x_backward(j) -= h;
          y_backward = (t.*f)(x_backward);   
-         x_backward[j] += h;
+         x_backward(j) += h;
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
+            J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
 		 }
 	  }
 
@@ -2036,15 +2044,15 @@ public:
 
       for(Index j = 0; j < n; j++)
 	   {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		  {
-		     J(i,j) = (y_forward[i] - y[i])/h;
+             J(i,j) = (y_forward(i) - y(i))/h;
 		  }
 	  }
 
@@ -2079,19 +2087,19 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_backward[j] -= h;
+         x_backward(j) -= h;
          y_backward = (t.*f)(dummy, x_backward);   
-         x_backward[j] += h;
+         x_backward(j) += h;
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
+            J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
 		 }
 	  }
 
@@ -2151,15 +2159,15 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y[i])/h;
+            J(i,j) = (y_forward(i) - y(i))/h;
 		 }
 	  }
 
@@ -2195,19 +2203,19 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_backward[j] -= h;
+         x_backward(j) -= h;
          y_backward = (t.*f)(dummy, x_backward);   
-         x_backward[j] += h;
+         x_backward(j) += h;
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
+            J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
 		 }
 	  }
 
@@ -2270,15 +2278,15 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy_int, dummy_vector, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y[i])/h;
+            J(i,j) = (y_forward(i) - y(i))/h;
 		 }
 	  }
 
@@ -2316,19 +2324,19 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_backward[j] -= h;
+         x_backward(j) -= h;
          y_backward = (t.*f)(dummy_int, dummy_vector, x_backward);   
-         x_backward[j] += h;
+         x_backward(j) += h;
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy_int, dummy_vector, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
+            J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
 		 }
 	  }
 
@@ -2393,15 +2401,15 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy_int_1, dummy_int_2, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y[i])/h;
+            J(i,j) = (y_forward(i) - y(i))/h;
 		 }
 	  }
 
@@ -2439,19 +2447,19 @@ public:
 
       for(Index j = 0; j < n; j++)
 	  {
-         h = calculate_h(x[j]);
+         h = calculate_h(x(j));
 
-         x_backward[j] -= h;
+         x_backward(j) -= h;
          y_backward = (t.*f)(dummy_int_1, dummy_int_2, x_backward);   
-         x_backward[j] += h;
+         x_backward(j) += h;
 
-         x_forward[j] += h;
+         x_forward(j) += h;
          y_forward = (t.*f)(dummy_int_1, dummy_int_2, x_forward);   
-         x_forward[j] -= h;
+         x_forward(j) -= h;
          
 	     for(Index i = 0; i < m; i++)
 		 {
-		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
+            J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
 		 }
 	  }
 
@@ -2522,21 +2530,21 @@ public:
 
       for(Index i = 0; i < s; i++)
       {
-         H[i].resize(n,n);
+         H(i).resize(n,n);
 
          for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j;       
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j;       
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
 
             for(Index k = j; k < n; k++)
 			{
@@ -2546,13 +2554,13 @@ public:
                y_forward_k = (t.*f)(x_forward_k);
                x_forward_k[k] -= h_k;       
 
-               x_forward_jk[j] += h_j; 
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k; 
                y_forward_jk = (t.*f)(x_forward_jk);   
-               x_forward_jk[j] -= h_j; 
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j(i) - y_forward_k(i) + y(i))/(h_j*h_k);
 			}
 		 }
 
@@ -2560,7 +2568,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
       }
@@ -2614,59 +2622,59 @@ public:
 
       for(Index i = 0; i < s; i++)
 	  {
-         H[i].resize(n,n);
+         H(i).resize(n,n);
 
       	 for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_2j[j] -= 2.0*h_j; 
+            x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
             y_backward_2j = (t.*f)(x_backward_2j);
-            x_backward_2j[j] += 2.0*h_j; 
+            x_backward_2j(j) += static_cast<type>(2.0)*h_j;
 
-            x_backward_j[j] -= h_j; 
+            x_backward_j(j) -= h_j;
             y_backward_j = (t.*f)(x_backward_j);
-            x_backward_j[j] += h_j; 
+            x_backward_j(j) += h_j;
 
-            x_forward_j[j] += h_j; 
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(x_forward_j);
-            x_forward_j[j] -= h_j; 
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j; 
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j; 
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
 
             for(Index k = j; k < n; k++)
             {
                h_k = calculate_h(x[k]);
 
-               x_backward_jk[j] -= h_j;  
+               x_backward_jk(j) -= h_j;
                x_backward_jk[k] -= h_k;  
                y_backward_jk = (t.*f)(x_backward_jk);   
-               x_backward_jk[j] += h_j;  
+               x_backward_jk(j) += h_j;
                x_backward_jk[k] += h_k;  
 
-               x_forward_jk[j] += h_j;  
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k;  
                y_forward_jk = (t.*f)(x_forward_jk);   
-               x_forward_jk[j] -= h_j;  
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k;  
             
-               x_backward_j_forward_k[j] -= h_j;
+               x_backward_j_forward_k(j) -= h_j;
                x_backward_j_forward_k[k] += h_k;
                y_backward_j_forward_k = (t.*f)(x_backward_j_forward_k);   
-               x_backward_j_forward_k[j] += h_j;
+               x_backward_j_forward_k(j) += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
-			   x_forward_j_backward_k[j] += h_j;
+               x_forward_j_backward_k(j) += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
                y_forward_j_backward_k = (t.*f)(x_forward_j_backward_k);   
-			   x_forward_j_backward_k[j] -= h_j;
+               x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
             }
          }
 	  
@@ -2674,7 +2682,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
 	  }
@@ -2745,22 +2753,22 @@ public:
 
       for(Index i = 0; i < s; i++)
       {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
          for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy_vector, x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j;       
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j;       
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
 
 	        for(Index k = j; k < n; k++)
 		    {
@@ -2770,13 +2778,13 @@ public:
                y_forward_k = (t.*f)(dummy_vector, x_forward_k);
                x_forward_k[k] -= h_k;       
 
-               x_forward_jk[j] += h_j; 
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k; 
                y_forward_jk = (t.*f)(dummy_vector, x_forward_jk);   
-               x_forward_jk[j] -= h_j; 
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j(i) - y_forward_k(i) + y(i))/(h_j*h_k);
 			}
 		 }
 
@@ -2784,7 +2792,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
       }
@@ -2841,60 +2849,60 @@ public:
 
       for(Index i = 0; i < s; i++)
 	  {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
       	 for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_2j[j] -= 2.0*h_j; 
+            x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
             y_backward_2j = (t.*f)(dummy_vector, x_backward_2j);
-            x_backward_2j[j] += 2.0*h_j; 
+            x_backward_2j(j) += static_cast<type>(2.0)*h_j;
 
-            x_backward_j[j] -= h_j; 
+            x_backward_j(j) -= h_j;
             y_backward_j = (t.*f)(dummy_vector, x_backward_j);
-            x_backward_j[j] += h_j; 
+            x_backward_j(j) += h_j;
 
-            x_forward_j[j] += h_j; 
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy_vector, x_forward_j);
-            x_forward_j[j] -= h_j; 
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j; 
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j; 
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
 
             for(Index k = j; k < n; k++)
             {
                h_k = calculate_h(x[k]);
 
-               x_backward_jk[j] -= h_j;  
+               x_backward_jk(j) -= h_j;
                x_backward_jk[k] -= h_k;  
                y_backward_jk = (t.*f)(dummy_vector, x_backward_jk);   
-               x_backward_jk[j] += h_j;  
+               x_backward_jk(j) += h_j;
                x_backward_jk[k] += h_k;  
 
-               x_forward_jk[j] += h_j;  
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k;  
                y_forward_jk = (t.*f)(dummy_vector, x_forward_jk);   
-               x_forward_jk[j] -= h_j;  
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k;  
             
-               x_backward_j_forward_k[j] -= h_j;
+               x_backward_j_forward_k(j) -= h_j;
                x_backward_j_forward_k[k] += h_k;
                y_backward_j_forward_k = (t.*f)(dummy_vector, x_backward_j_forward_k);   
-               x_backward_j_forward_k[j] += h_j;
+               x_backward_j_forward_k(j) += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
-			   x_forward_j_backward_k[j] += h_j;
+               x_forward_j_backward_k(j) += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
                y_forward_j_backward_k = (t.*f)(dummy_vector, x_forward_j_backward_k);   
-			   x_forward_j_backward_k[j] -= h_j;
+               x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
             }
          }
 	  
@@ -2902,7 +2910,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
 	  }
@@ -2975,22 +2983,22 @@ public:
 
       for(Index i = 0; i < s; i++)
       {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
          for(Index j = 0; j < n; j++)
 		   {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy, x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j;       
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j;       
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
 
 	         for(Index k = j; k < n; k++)
 			   {
@@ -3000,13 +3008,13 @@ public:
                y_forward_k = (t.*f)(dummy, x_forward_k);
                x_forward_k[k] -= h_k;       
 
-               x_forward_jk[j] += h_j; 
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k; 
                y_forward_jk = (t.*f)(dummy, x_forward_jk);   
-               x_forward_jk[j] -= h_j; 
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j(i) - y_forward_k(i) + y(i))/(h_j*h_k);
             }
 		 }
 
@@ -3014,7 +3022,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
       }
@@ -3070,60 +3078,60 @@ public:
 
       for(Index i = 0; i < s; i++)
 	  {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
       	 for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_2j[j] -= 2.0*h_j; 
+            x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
             y_backward_2j = (t.*f)(dummy, x_backward_2j);
-            x_backward_2j[j] += 2.0*h_j; 
+            x_backward_2j(j) += static_cast<type>(2.0)*h_j;
 
-            x_backward_j[j] -= h_j; 
+            x_backward_j(j) -= h_j;
             y_backward_j = (t.*f)(dummy, x_backward_j);
-            x_backward_j[j] += h_j; 
+            x_backward_j(j) += h_j;
 
-            x_forward_j[j] += h_j; 
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy, x_forward_j);
-            x_forward_j[j] -= h_j; 
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j; 
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j; 
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
 
             for(Index k = j; k < n; k++)
             {
                h_k = calculate_h(x[k]);
 
-               x_backward_jk[j] -= h_j;  
+               x_backward_jk(j) -= h_j;
                x_backward_jk[k] -= h_k;  
                y_backward_jk = (t.*f)(dummy, x_backward_jk);   
-               x_backward_jk[j] += h_j;  
+               x_backward_jk(j) += h_j;
                x_backward_jk[k] += h_k;  
 
-               x_forward_jk[j] += h_j;  
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k;  
                y_forward_jk = (t.*f)(dummy, x_forward_jk);   
-               x_forward_jk[j] -= h_j;  
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k;  
             
-               x_backward_j_forward_k[j] -= h_j;
+               x_backward_j_forward_k(j) -= h_j;
                x_backward_j_forward_k[k] += h_k;
                y_backward_j_forward_k = (t.*f)(dummy, x_backward_j_forward_k);   
-               x_backward_j_forward_k[j] += h_j;
+               x_backward_j_forward_k(j) += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
-			   x_forward_j_backward_k[j] += h_j;
+               x_forward_j_backward_k(j) += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
                y_forward_j_backward_k = (t.*f)(dummy, x_forward_j_backward_k);   
-			   x_forward_j_backward_k[j] -= h_j;
+               x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
             }
          }
 	  
@@ -3131,7 +3139,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
 	  }
@@ -3205,22 +3213,22 @@ public:
 
       for(Index i = 0; i < s; i++)
       {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
          for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_forward_j[j] += h_j;       
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
-            x_forward_j[j] -= h_j;       
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j;       
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j;       
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
 
 	        for(Index k = j; k < n; k++)
 		    {
@@ -3230,13 +3238,13 @@ public:
                y_forward_k = (t.*f)(dummy_int, dummy_vector, x_forward_k);
                x_forward_k[k] -= h_k;       
 
-               x_forward_jk[j] += h_j; 
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k; 
                y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);   
-               x_forward_jk[j] -= h_j; 
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j(i) - y_forward_k(i) + y(i))/(h_j*h_k);
 			}
 		 }
 
@@ -3244,7 +3252,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
       }
@@ -3302,60 +3310,60 @@ public:
 
       for(Index i = 0; i < s; i++)
 	  {
-//         H[i].set(n,n);
+//         H(i).set(n,n);
           H(i).resize(n,n);
 
       	 for(Index j = 0; j < n; j++)
          {
-            h_j = calculate_h(x[j]);
+            h_j = calculate_h(x(j));
 
-            x_backward_2j[j] -= 2.0*h_j; 
+            x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
             y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
-            x_backward_2j[j] += 2.0*h_j; 
+            x_backward_2j(j) += static_cast<type>(2.0)*h_j;
 
-            x_backward_j[j] -= h_j; 
+            x_backward_j(j) -= h_j;
             y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
-            x_backward_j[j] += h_j; 
+            x_backward_j(j) += h_j;
 
-            x_forward_j[j] += h_j; 
+            x_forward_j(j) += h_j;
             y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
-            x_forward_j[j] -= h_j; 
+            x_forward_j(j) -= h_j;
 
-            x_forward_2j[j] += 2.0*h_j; 
+            x_forward_2j(j) += static_cast<type>(2.0)*h_j;
             y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-            x_forward_2j[j] -= 2.0*h_j; 
+            x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
 
             for(Index k = j; k < n; k++)
             {
                h_k = calculate_h(x[k]);
 
-               x_backward_jk[j] -= h_j;  
+               x_backward_jk(j) -= h_j;
                x_backward_jk[k] -= h_k;  
                y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);   
-               x_backward_jk[j] += h_j;  
+               x_backward_jk(j) += h_j;
                x_backward_jk[k] += h_k;  
 
-               x_forward_jk[j] += h_j;  
+               x_forward_jk(j) += h_j;
                x_forward_jk[k] += h_k;  
                y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);   
-               x_forward_jk[j] -= h_j;  
+               x_forward_jk(j) -= h_j;
                x_forward_jk[k] -= h_k;  
             
-               x_backward_j_forward_k[j] -= h_j;
+               x_backward_j_forward_k(j) -= h_j;
                x_backward_j_forward_k[k] += h_k;
                y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);   
-               x_backward_j_forward_k[j] += h_j;
+               x_backward_j_forward_k(j) += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
-			   x_forward_j_backward_k[j] += h_j;
+               x_forward_j_backward_k(j) += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
                y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);   
-			   x_forward_j_backward_k[j] -= h_j;
+               x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
             }
          }
 	  
@@ -3363,7 +3371,7 @@ public:
          {
             for(Index k = 0; k < j; k++)
             {
-               H[i](j,k) = H[i](k,j);
+               H(i)(j,k) = H(i)(k,j);
             }
          }
 	  }
@@ -3459,55 +3467,55 @@ public:
 
                for(Index j = 0; j < n; j++)
                {
-                   h_j = calculate_h(x[j]);
+                   h_j = calculate_h(x(j));
 
-                   x_backward_2j[j] -= 2.0*h_j;
+                   x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
                    y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
-                   x_backward_2j[j] += 2.0*h_j;
+                   x_backward_2j(j) += static_cast<type>(2.0)*h_j;
 
-                   x_backward_j[j] -= h_j;
+                   x_backward_j(j) -= h_j;
                    y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
-                   x_backward_j[j] += h_j;
+                   x_backward_j(j) += h_j;
 
-                   x_forward_j[j] += h_j;
+                   x_forward_j(j) += h_j;
                    y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
-                   x_forward_j[j] -= h_j;
+                   x_forward_j(j) -= h_j;
 
-                   x_forward_2j[j] += 2.0*h_j;
+                   x_forward_2j(j) += static_cast<type>(2.0)*h_j;
                    y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-                   x_forward_2j[j] -= 2.0*h_j;
+                   x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-                   H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+                   H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
 
                    for(Index k = j; k < s; k++)
                    {
                        h_k = calculate_h(x[k]);
 
-                       x_backward_jk[j] -= h_j;
+                       x_backward_jk(j) -= h_j;
                        x_backward_jk[k] -= h_k;
                        y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);
-                       x_backward_jk[j] += h_j;
+                       x_backward_jk(j) += h_j;
                        x_backward_jk[k] += h_k;
 
-                       x_forward_jk[j] += h_j;
+                       x_forward_jk(j) += h_j;
                        x_forward_jk[k] += h_k;
                        y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);
-                       x_forward_jk[j] -= h_j;
+                       x_forward_jk(j) -= h_j;
                        x_forward_jk[k] -= h_k;
 
-                       x_backward_j_forward_k[j] -= h_j;
+                       x_backward_j_forward_k(j) -= h_j;
                        x_backward_j_forward_k[k] += h_k;
                        y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);
-                       x_backward_j_forward_k[j] += h_j;
+                       x_backward_j_forward_k(j) += h_j;
                        x_backward_j_forward_k[k] -= h_k;
 
-                       x_forward_j_backward_k[j] += h_j;
+                       x_forward_j_backward_k(j) += h_j;
                        x_forward_j_backward_k[k] -= h_k;
                        y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);
-                       x_forward_j_backward_k[j] -= h_j;
+                       x_forward_j_backward_k(j) -= h_j;
                        x_forward_j_backward_k[k] += h_k;
 
-                       H(i,t)(j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+                       H(i,t)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
                    }
                }
 
@@ -3515,7 +3523,7 @@ public:
                {
                    for(Index k = 0; k < j; k++)
                    {
-                       H(i,t)(j,k) = H[i](k,j);
+                       H(i,t)(j,k) = H(i)(k,j);
                    }
                }
            }
