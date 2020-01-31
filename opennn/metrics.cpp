@@ -89,7 +89,7 @@ Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& vector)
 /*
   const type norm = l2_norm(vector);
 
-  if(norm == 0.0) {
+  if(norm) < numeric_limits<type>::min()) {
     gradient.setZero();
   } else {
     gradient = vector/ norm;
@@ -109,7 +109,7 @@ Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& vector)
 /*
   const type norm = l2_norm(vector);
 
-  if(norm == 0.0) {
+  if(norm) < numeric_limits<type>::min()) {
     hessian.setZero();
   } else {
     hessian = direct(vector, vector)/(norm * norm * norm);
@@ -176,7 +176,7 @@ Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>& vector, const type &p)
 
   const type p_norm = lp_norm(vector, p);
 
-  if(p_norm == 0.0)
+  if(abs(p_norm) < numeric_limits<type>::min())
   {
     gradient.setZero();
   }
@@ -468,7 +468,7 @@ Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>& matrix, const type& p)
 /*
       const Tensor<type, 1> p_norm = lp_norm(matrix, p);
 
-      if(p_norm == 0.0)
+      if(p_norm) < numeric_limits<type>::min())
       {
         gradient.setZero();
       }
@@ -1129,7 +1129,7 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
             const type y_value = y(i, static_cast<unsigned>(j));
             const type x_value = x(i,j);
 
-            if(y_value == 0.0 && x_value == 0.0)
+            if(y_value == 0.0 && abs(x_value) < numeric_limits<type>::min())
             {
                 cross_entropy_error -= static_cast<type>(0.0);
             }
@@ -1137,7 +1137,7 @@ type cross_entropy_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
             {
                 cross_entropy_error -= static_cast<type>(0.0);
             }
-            else if(x_value == 0.0)
+            else if(abs(x_value) < numeric_limits<type>::min())
             {
                 cross_entropy_error -= (1.0 - y_value)*log(1.0-x_value) + y_value*log(0.000000001);
             }

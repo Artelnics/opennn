@@ -212,7 +212,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   Tensor<double, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(instances_number,inputs_number);
 
    inputs.setRandom();
 
@@ -232,7 +232,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
         }
    }
 
-   const Tensor<double, 2> data = inputs.append_column(outputs);
+   const Tensor<type, 2> data = inputs.append_column(outputs);
 
    data_set.set_data(data);
 
@@ -266,7 +266,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   Tensor<double, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(instances_number,inputs_number);
 
    inputs.setRandom();
 
@@ -286,7 +286,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
         }
    }
 
-   const Tensor<double, 2> data = inputs.append_column(outputs);
+   const Tensor<type, 2> data = inputs.append_column(outputs);
 
    data_set.set_data(data);
 
@@ -318,7 +318,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   Tensor<double, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(instances_number,inputs_number);
 
    inputs.setRandom();
 
@@ -338,7 +338,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
         }
    }
 
-   const Tensor<double, 2> data = inputs.append_column(outputs);
+   const Tensor<type, 2> data = inputs.append_column(outputs);
 
    data_set.set_data(data);
 
@@ -367,7 +367,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   Tensor<double, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(instances_number,inputs_number);
    inputs.setRandom();
 
    Tensor<type, 1> outputs(instances_number, outputs_number);
@@ -384,18 +384,18 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
             outputs[i] = 1.0;
         }
    }
-   const Tensor<double, 2> data = inputs.append_column(outputs);
+   const Tensor<type, 2> data = inputs.append_column(outputs);
 
    data_set.set_data(data);
    data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
    data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_training();
 
-   const double parameters_minimum = -100.0;
-   const double parameters_maximum = 100.0;
+   const type parameters_minimum = -100.0;
+   const type parameters_maximum = 100.0;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<double, 2> filters_1({2,3,2,2}, 0);
+   Tensor<type, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Tensor<type, 1> biases_1(2, 0);
@@ -404,7 +404,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_2({2,2,2,2}, 0);
+   Tensor<type, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Tensor<type, 1> biases_2(2, 0);
@@ -415,7 +415,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_3({1,2,2,2}, 0);
+   Tensor<type, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
    Tensor<type, 1> biases_3(1, 0);
@@ -469,7 +469,7 @@ void WeightedSquaredErrorTest::test_calculate_selection_error()
 
    WeightedSquaredError wse(&neural_network, &data_set);
 
-   double selection_error = wse.calculate_selection_error();
+   type selection_error = wse.calculate_selection_error();
 
    assert_true(selection_error == 0.0, LOG);
 
@@ -488,7 +488,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
    
    WeightedSquaredError wse(&neural_network, &data_set);
 
-   double error;
+   type error;
 
    Tensor<type, 1> error_terms;
 
@@ -539,8 +539,8 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Tensor<type, 1> error_gradient;
 
    Tensor<type, 1> error_terms;
-   Tensor<double, 2> terms_Jacobian;
-   Tensor<double, 2> numerical_Jacobian_terms;
+   Tensor<type, 2> terms_Jacobian;
+   Tensor<type, 2> numerical_Jacobian_terms;
 
    // Test
 

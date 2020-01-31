@@ -37,7 +37,7 @@ void FunctionsTest::test_factorial()
 
     //Trivial case
 
-    double solution = 1;
+    type solution = 1;
 
     assert_true(abs(factorial(0) - solution) <= 10e-3, LOG);
 
@@ -168,13 +168,13 @@ void FunctionsTest::test_lower_bounded()
 
     //Matrix-number case
 
-    Tensor<double, 2> matrix(3,3);
+    Tensor<type, 2> matrix(3,3);
 
     matrix.set_column(0, {5, 7, 13});
     matrix.set_column(1, {4, 6, 21});
     matrix.set_column(2, {61, 2, -7});
 
-    Tensor<double, 2> sol(3,3);
+    Tensor<type, 2> sol(3,3);
 
     sol.set_column(0, {10, 10, 13});
     sol.set_column(1, {10, 10, 21});
@@ -204,13 +204,13 @@ void FunctionsTest::test_upper_bounded()
 
     //Matrix-number case
 
-    Tensor<double, 2> matrix(3,3);
+    Tensor<type, 2> matrix(3,3);
 
     matrix.set_column(0, {5, 7, 13});
     matrix.set_column(1, {4, 6, 21});
     matrix.set_column(2, {61, 2, -7});
 
-    Tensor<double, 2> sol(3,3);
+    Tensor<type, 2> sol(3,3);
 
     sol.set_column(0, {5, 7, 10});
     sol.set_column(1, {4, 6, 10});
@@ -241,13 +241,13 @@ void FunctionsTest::test_lower_upper_bounded()
 
     //Matrix case
 
-    Tensor<double, 2> matrix(3,3);
+    Tensor<type, 2> matrix(3,3);
 
     matrix.set_column(0, {5, 7, 13});
     matrix.set_column(1, {4, 6, 21});
     matrix.set_column(2, {61, 2, -7});
 
-    Tensor<double, 2> sol(3,3);
+    Tensor<type, 2> sol(3,3);
 
     sol.set_column(0, {5, 7, 10});
     sol.set_column(1, {4, 6, 10});
@@ -260,8 +260,8 @@ void FunctionsTest::test_lower_upper_bounded()
 void FunctionsTest::test_threshold()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(Tensor<Index, 1>({4,1}));
     tensor2.set(Tensor<Index, 1>({4,1}));
@@ -283,8 +283,8 @@ void FunctionsTest::test_threshold()
 void FunctionsTest::test_symmetric_threshold()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);
@@ -306,8 +306,8 @@ void FunctionsTest::test_symmetric_threshold()
 void FunctionsTest::test_threshold_second_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(2);
     tensor2.set(2);
@@ -325,8 +325,8 @@ void FunctionsTest::test_threshold_second_derivatives()
 void FunctionsTest::test_symmetric_threshold_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(2);
     tensor2.set(2);
@@ -345,8 +345,8 @@ void FunctionsTest::test_symmetric_threshold_derivatives()
 void FunctionsTest::test_logistic()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);
@@ -369,8 +369,8 @@ void FunctionsTest::test_logistic()
 void FunctionsTest::test_hyperbolic_tangent()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);
@@ -393,8 +393,8 @@ void FunctionsTest::test_hyperbolic_tangent()
 void FunctionsTest::test_hyperbolic_tangent_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(4);
     tensor2.set(4);
@@ -416,7 +416,7 @@ void FunctionsTest::test_hyperbolic_tangent_derivatives()
 void FunctionsTest::test_logistic_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
+    Tensor<type, 2> tensor1;
     Tensor<type, 1> tensor2;
 
     tensor1.set(4);
@@ -439,7 +439,7 @@ void FunctionsTest::test_logistic_derivatives()
 void FunctionsTest::test_logistic_second_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
+    Tensor<type, 2> tensor1;
     Tensor<type, 1> tensor2;
 
     tensor1.set(4);
@@ -462,8 +462,8 @@ void FunctionsTest::test_logistic_second_derivatives()
 void FunctionsTest::test_threshold_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(2);
     tensor2.set(2);
@@ -481,8 +481,8 @@ void FunctionsTest::test_threshold_derivatives()
 void FunctionsTest::test_symmetric_threshold_second_derivatives()
 {
 
-    Tensor<double, 2> tensor1;
-    Tensor<double, 2> tensor2;
+    Tensor<type, 2> tensor1;
+    Tensor<type, 2> tensor2;
 
     tensor1.set(2);
     tensor2.set(2);
