@@ -148,9 +148,11 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
     const Index parameters_size = parameters.size();
 
-    const Index start_bias = parameters_size - biases_number;
+    const Index start_bias = (parameters_size - biases_number);
 
-    Tensor<type,1> new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({start_bias}), Eigen::array<Eigen::Index, 1>({parameters_size}));
+    Tensor<type,1> new_biases(biases_number);
+
+    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({start_bias}), Eigen::array<Eigen::Index, 1>({biases_number}));
 
     Eigen::array<Index, 2> two_dim{{1 , biases.dimension(1)}};
 
@@ -401,8 +403,11 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
-
     const Index parameters_number = get_parameters_number();
+
+    Tensor<type,1>new_synaptic_weights(parameters_number-neurons_number);
+    Tensor<type,1>new_biases(neurons_number);
+
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -421,11 +426,21 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
    #endif
 
-/*
-   synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
+   new_synaptic_weights = new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({neurons_number*inputs_number}));
 
-   biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
-*/
+   new_biases = new_parameters.slice(Eigen::array<Eigen::Index, 1>({neurons_number*inputs_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
+
+   Eigen::array<Index, 2> dim_syn{{inputs_number , neurons_number}};
+
+   Eigen::array<Index, 2> dim_bias{{1 , neurons_number}};
+
+   Tensor<type,2> w = new_synaptic_weights.reshape(dim_syn);
+
+   Tensor<type,2> b = new_biases.reshape(dim_bias);
+
+   set_biases(b);
+
+   set_synaptic_weights(w);
 
 }
 
