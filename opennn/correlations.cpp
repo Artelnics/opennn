@@ -1199,7 +1199,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 /*
     exponential_regression.regression_type = Exponential;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
       exponential_regression.a = static_cast<type>(0.0);
 
@@ -1286,7 +1286,7 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 /*
     exponential_regression.regression_type = Exponential;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
       exponential_regression.a = static_cast<type>(0.0);
 
@@ -1363,7 +1363,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
 /*
     power_regression.regression_type = Power;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0) {
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy) < numeric_limits<type>::min()) {
       power_regression.a = static_cast<type>(0.0);
 
       power_regression.b = static_cast<type>(0.0);
@@ -1439,7 +1439,7 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
 /*
     power_regression.regression_type = Power;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0) {
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy) < numeric_limits<type>::min()) {
       power_regression.a = static_cast<type>(0.0);
 
       power_regression.b = static_cast<type>(0.0);
@@ -1801,7 +1801,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
      logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
-     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0) {
+     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy) < numeric_limits<type>::min()) {
 
        logarithmic_correlation.correlation = 1.0;
 
@@ -1883,7 +1883,7 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
 
      logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
-     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy) < numeric_limits<type>::min())
      {
 
        logarithmic_correlation.correlation = 1.0;
@@ -1948,7 +1948,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
         exponential_correlation.correlation = 1.0;
 
@@ -2030,7 +2030,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
     exponential_correlation.correlation_type = Exponential_correlation;
 /*
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
 
       exponential_correlation.correlation = 1.0;

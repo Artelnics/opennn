@@ -93,15 +93,15 @@ private:
 
    // Constant methods
 /*
-   double f1(const double&) const;
-   double f2(const Tensor<type, 1>&) const;
+   type f1(const type&) const;
+   type f2(const Tensor<type, 1>&) const;
    Tensor<type, 1> f3(const Tensor<type, 1>&) const;
-   double f7(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const;
+   type f7(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const;
 
    // Non constant methods
 
-   double f4(const double&);
-   double f5(const Tensor<type, 1>&);
+   type f4(const type&);
+   type f5(const Tensor<type, 1>&);
    Tensor<type, 1> f6(const Tensor<type, 1>&);
 
    Tensor<type, 1> f8(const Index&, const Index&, const Tensor<type, 1>&) const;

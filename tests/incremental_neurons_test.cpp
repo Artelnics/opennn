@@ -56,7 +56,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
     cout << "test_perform_neurons_selection\n";
 
     string str;
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     NeuralNetwork neural_network;
 

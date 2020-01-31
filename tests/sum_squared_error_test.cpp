@@ -63,11 +63,11 @@ void SumSquaredErrorTest::test_calculate_training_error()
    Tensor<type, 1> parameters;
 
    DataSet data_set;
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   double training_error;
+   type training_error;
 
    // Test
 
@@ -105,7 +105,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    data_set.set(10, 2, 2);
    data_set.set_data_random();
 
-   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters)) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -117,7 +117,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters*2.0)) > numeric_limits<double>::min(), LOG);
+   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters*2.0)) > numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -151,7 +151,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    training_error = sum_squared_error.calculate_training_error();
 
-   assert_true(abs(training_error) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(training_error) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -184,15 +184,15 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
     data_set.set(instances_number,inputs_number,outputs_number);
     data_set.set_data_random();
 
-    Tensor<double, 2> inputs = data_set.get_input_data(instances);
-    Tensor<double, 2> targets = data_set.get_target_data(instances);
+    Tensor<type, 2> inputs = data_set.get_input_data(instances);
+    Tensor<type, 2> targets = data_set.get_target_data(instances);
 
-    Tensor<double, 2> outputs = neural_network.calculate_outputs(inputs);
-    Tensor<double, 2> output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
+    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    Tensor<type, 2> output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
 
     Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
 
-    Tensor<Tensor<double, 2>, 1> layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+    Tensor<Tensor<type, 2>, 1> layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
     assert_true(layers_delta[0].dimension(0) == instances_number, LOG);
     assert_true(layers_delta[0].dimension(1) == hidden_neurons, LOG);
@@ -338,11 +338,11 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    data_set.set_data_random();
    data_set.set_training();
 
-   const double parameters_minimum = -100.0;
-   const double parameters_maximum = 100.0;
+   const type parameters_minimum = -100.0;
+   const type parameters_maximum = 100.0;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<double, 2> filters_1({2,3,2,2}, 0);
+   Tensor<type, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Tensor<type, 1> biases_1(2, 0);
@@ -351,7 +351,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_2({2,2,2,2}, 0);
+   Tensor<type, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Tensor<type, 1> biases_2(2, 0);
@@ -362,7 +362,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_3({1,2,2,2}, 0);
+   Tensor<type, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
    Tensor<type, 1> biases_3(1, 0);
@@ -423,22 +423,22 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    Tensor<type, 1> gradient;
 
    Tensor<type, 1> terms;
-   Tensor<double, 2> terms_Jacobian;
-   Tensor<double, 2> numerical_Jacobian_terms;
+   Tensor<type, 2> terms_Jacobian;
+   Tensor<type, 2> numerical_Jacobian_terms;
 
    Tensor<Index, 1> instances;
 
    Tensor<type, 2> inputs;
-   Tensor<double, 2> targets;
+   Tensor<type, 2> targets;
 
    Tensor<type, 2> outputs;
-   Tensor<double, 2> output_gradient;
+   Tensor<type, 2> output_gradient;
 
-   Tensor<Tensor<double, 2>, 1> layers_activations;
+   Tensor<Tensor<type, 2>, 1> layers_activations;
 
-   Tensor<Tensor<double, 2>, 1> layers_activations_derivatives;
+   Tensor<Tensor<type, 2>, 1> layers_activations_derivatives;
 
-   Tensor<Tensor<double, 2>, 1> layers_delta;
+   Tensor<Tensor<type, 2>, 1> layers_delta;
 
    // Test
 
@@ -557,7 +557,7 @@ void SumSquaredErrorTest::test_calculate_selection_error()
 //   DataSet data_set;
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//   double selection_error;
+//   type selection_error;
 
    // Test
 
@@ -587,7 +587,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    Tensor<type, 1> squared_errors;
 
-//   double error;
+//   type error;
 
    // Test 
 

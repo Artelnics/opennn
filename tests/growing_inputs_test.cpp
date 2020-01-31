@@ -62,7 +62,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     DataSet ds;
 
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     NeuralNetwork neural_network;
 

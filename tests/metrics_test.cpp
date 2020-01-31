@@ -42,7 +42,7 @@ void MetricsTest::test_l1_norm()
    vector[1]=2;
    vector[2]=3;
 
-   assert_true(abs(l1_norm(vector) - 6.0) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(l1_norm(vector) - 6.0) < numeric_limits<type>::min(), LOG);
 
 }
 
@@ -56,9 +56,9 @@ void MetricsTest::test_l1_norm_gradient()
    vector[1]=-2.3;
    vector[2]=3.3;
    gradient=l1_norm_gradient(vector);
-   assert_true(abs(gradient[0] - 1.0) < numeric_limits<double>::min(), LOG);
-   assert_true(abs(gradient[1] + 1.0) < numeric_limits<double>::min(), LOG);
-   assert_true(abs(gradient[2] - 1.0) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(gradient[0] - 1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(gradient[1] + 1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(gradient[2] - 1.0) < numeric_limits<type>::min(), LOG);
 
 }
 
@@ -67,7 +67,7 @@ void MetricsTest::test_l1_norm_hessian()
 {
    cout << "test_l1_norm_hessian\n";
    Tensor<type, 1> vector(3);
-   Tensor<double, 2> hessian(3,3);
+   Tensor<type, 2> hessian(3,3);
    vector[0]=1;
    vector[1]=-2.3;
    vector[2]=3.3;
@@ -85,7 +85,7 @@ void MetricsTest::test_l2_norm()
    vector[1]=4;
    vector[2]=5;
 
-   assert_true(abs(l2_norm(vector) - sqrt(50)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(l2_norm(vector) - sqrt(50)) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -102,9 +102,9 @@ void MetricsTest::test_l2_norm_gradient()
    gradient = l2_norm_gradient(vector);
 
    assert_true(gradient.size() == 3, LOG);
-   assert_true(abs(gradient[0] - 3/sqrt(50)) < numeric_limits<double>::min(), LOG);
-   assert_true(abs(gradient[1] - 4/sqrt(50)) < numeric_limits<double>::min(), LOG);
-   assert_true(abs(gradient[2] - 5/sqrt(50)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(gradient[0] - 3/sqrt(50)) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(gradient[1] - 4/sqrt(50)) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(gradient[2] - 5/sqrt(50)) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -126,7 +126,7 @@ void MetricsTest::test_Lp_norm()
    vector[2]=1;
    vector[3]=2;
 
-   assert_true(abs(lp_norm(vector,4) - pow(18,0.25)) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(lp_norm(vector,4) - pow(18,0.25)) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -138,13 +138,13 @@ void MetricsTest::test_Lp_norm_gradient()
 
    Tensor<type, 1> vector({1,2});
    Tensor<type, 1> gradient;
-   const double p = 8*pow(pow(17,0.75), -1.0);
+   const type p = 8*pow(pow(17,0.75), -1.0);
 
 //   gradient = lp_norm_gradient(vector,4);
 
    assert_true(gradient.size() == 3, LOG);
 
-   assert_true(abs(gradient[1] - p) < numeric_limits<double>::min(), LOG);
+   assert_true(abs(gradient[1] - p) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -152,11 +152,11 @@ void MetricsTest::test_determinant()
 {
     cout << "test_Ldeterminat\n";
 
-    Tensor<double, 2> matrix;
+    Tensor<type, 2> matrix;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
 
-    assert_true(abs(determinant(matrix) + 6) < numeric_limits<double>::min(), LOG);
+    assert_true(abs(determinant(matrix) + 6) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -164,16 +164,16 @@ void MetricsTest::test_cofactor()
 {
     cout << "test_cofactor\n";
 
-    Tensor<double, 2> matrix;
-    Tensor<double, 2> cofact;
+    Tensor<type, 2> matrix;
+    Tensor<type, 2> cofact;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
     cofact=cofactor(matrix);
 
-    assert_true(abs(cofact(0,1) - 6) < numeric_limits<double>::min(), LOG);
-    assert_true(abs(cofact(1,2) - 3) < numeric_limits<double>::min(), LOG);
-    assert_true(abs(cofact(2,2) - 0) < numeric_limits<double>::min(), LOG);
-    assert_true(abs(cofact(1,0) - 0) < numeric_limits<double>::min(), LOG);
+    assert_true(abs(cofact(0,1) - 6) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(cofact(1,2) - 3) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(cofact(2,2) - 0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(cofact(1,0) - 0) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -181,8 +181,8 @@ void MetricsTest::test_inverse()
 {
     cout << "test_inverse\n";
 
-    Tensor<double, 2> matrix;
-    Tensor<double, 2> inver;
+    Tensor<type, 2> matrix;
+    Tensor<type, 2> inver;
 
     matrix = {{1,2,3},{1,2,0},{2,2,0}};
     inver=inverse(matrix);
@@ -198,8 +198,8 @@ void MetricsTest::test_eigenvalues()
 {
     cout << "test_eigenvalues\n";
 
-    Tensor<double, 2> matrix;
-    Tensor<double, 2> eig;
+    Tensor<type, 2> matrix;
+    Tensor<type, 2> eig;
 
     matrix={{1,2},{1,2}};
     eig=eigenvalues(matrix);
@@ -211,8 +211,8 @@ void MetricsTest::test_eigenvectors()
 {
     cout << "test_eigenvectors\n";
 
-    Tensor<double, 2> matrix;
-    Tensor<double, 2> eig;
+    Tensor<type, 2> matrix;
+    Tensor<type, 2> eig;
 
     matrix = {{1,2},{1,2}};
 
@@ -226,9 +226,9 @@ void MetricsTest::test_direct()
 {
     cout << "test_direct\n";
 
-    Tensor<double, 2> matrix_1;
-    Tensor<double, 2> matrix_2;
-    Tensor<double, 2> result;
+    Tensor<type, 2> matrix_1;
+    Tensor<type, 2> matrix_2;
+    Tensor<type, 2> result;
 
     //Test
 
@@ -255,7 +255,7 @@ void MetricsTest::test_euclidean_weighted_distance()
 
      Tensor<type, 1> vector_1;
      Tensor<type, 1> vector_2;
-     double dis;
+     type dis;
 
      vector_1={{1,2,3}};
      vector_2={{2,3,4}};
@@ -273,7 +273,7 @@ void MetricsTest::test_euclidean_weighted_distance_vector()
 
      Tensor<type, 1> vector_1;
      Tensor<type, 1> vector_2;
-     double dis;
+     type dis;
 
      vector_1={{1,2,5}};
      vector_2={{2,3,4}};
@@ -289,10 +289,10 @@ void MetricsTest::test_manhattan_distance()
 {
      cout << "test_manhattan_distance\n";
 
-     Matrix <double> M;
-     double dis_1;
-     double dis_2;
-     double dis_3;
+     Matrix <type> M;
+     type dis_1;
+     type dis_2;
+     type dis_3;
 
      M = {{1,2,5},{2,3,4},{6,8,9}};
      dis_1 = manhattan_distance(M,0,1);
@@ -309,10 +309,10 @@ void MetricsTest::test_manhattan_weighted_distance()
 {
      cout << "test_manhattan__weighted_distance\n";
 
-     Matrix <double> M;
-     double dis_1;
-     double dis_2;
-     double dis_3;
+     Matrix <type> M;
+     type dis_1;
+     type dis_2;
+     type dis_3;
 
      M = {{1,2,5},{2,3,4},{6,8,9}};
      dis_1 = manhattan_distance(M,0,1);
