@@ -854,7 +854,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
         {
             for(Index j = 0; j < neurons_number; j++)
             {
-                if(abs(descriptives[j].minimum - descriptives[j].maximum) < 1.0e-99)
+                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
                 {
                     if(display)
                     {
@@ -931,7 +931,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 Index row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
                 Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
 
-                if(abs(descriptives[j].minimum - descriptives[j].maximum) < 1.0e-99)
+                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
                 {
                     if(display)
                     {
@@ -992,7 +992,7 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
 /*
     for(Index j = 0; j < neurons_number; j++)
     {
-        if(abs(descriptives[j].maximum-descriptives[j].minimum) < 1.0e-99)
+        if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
         {
             if(display)
             {
@@ -1026,7 +1026,7 @@ Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Te
 /*
     for(Index j = 0; j < neurons_number; j++)
     {
-        if(abs(descriptives[j].standard_deviation) < 1.0e-99)
+        if(abs(descriptives[j].standard_deviation) < numeric_limits<type>::min())
         {
             if(display)
             {

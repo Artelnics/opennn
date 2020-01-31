@@ -1263,7 +1263,7 @@ type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>&
         {
             weighted_sum_squared_error += positives_weight*error*error;
         }
-        else if(y[i] == 0.0)
+        else if(y[i]) < numeric_limits<type>::min())
         {
             weighted_sum_squared_error += negatives_weight*error*error;
         }

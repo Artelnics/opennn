@@ -222,7 +222,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
+        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
         {
             outputs[i] = 0.0;
         }
@@ -276,7 +276,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
+        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
         {
             outputs[i] = 0.0;
         }
@@ -328,7 +328,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
+        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
         {
             outputs[i] = 0.0;
         }
@@ -375,7 +375,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    outputs[1] = 0.0;
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2) == 0.0)
+        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
         {
             outputs[i] = 0.0;
         }

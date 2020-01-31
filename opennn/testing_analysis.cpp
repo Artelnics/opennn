@@ -449,7 +449,7 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
    }
 
    #endif
-/*
+
    const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
    const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
@@ -464,11 +464,11 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
 
    for(Index i = 0; i < outputs_number; i++)
    {
-       error_data[i].set(testing_instances_number, 3, 0.0);
+       error_data[i].resize(testing_instances_number, 3);
 
        // Absolute error
-
-       difference_absolute_value = absolute_value(targets - outputs);
+/*
+       difference_absolute_value = (targets - outputs).abs();
 
        error_data[i].set_column(0, difference_absolute_value, "");
 
@@ -479,11 +479,10 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
        // Percentage error
 
        error_data[i].set_column(2, difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]), "");
+*/
     }
 
    return error_data;
-*/
-    return Tensor<Tensor<type, 2>, 1>();
 }
 
 
@@ -1327,7 +1326,7 @@ type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            if(outputs_row[j] == 0.0)
+            if(outputs_row[j]) < numeric_limits<type>::min())
             {
                 outputs_row[j] = 1.0e-6;
             }
@@ -1400,7 +1399,7 @@ type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type
         {
             error = OpenNN::sum_squared_error(outputs.chip(i, 0)*positives_weight, targets.chip(i, 0));
         }
-        else if(targets(i,0) == 0.0)
+        else if(targets(i,0)) < numeric_limits<type>::min())
         {
             error = OpenNN::sum_squared_error(outputs.chip(i, 0)*negatives_weight, targets.chip(i, 0));
         }
@@ -1800,7 +1799,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
              {
                  positives++;
              }
-             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) == 0.0)
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0)) < numeric_limits<type>::min())
              {
                  negatives++;
              }
@@ -1864,11 +1863,11 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
 
     for(Index i = 0; i < testing_instances_number; i++)
     {
-        if(abs(targets(i,0) - 1.0) < 1.0e-99)
+        if(abs(targets(i,0) - 1.0) < numeric_limits<type>::min())
         {
             for(Index j = 0; j < testing_instances_number; j++)
             {
-                if(abs(targets(j,0)) < 1.0e-99)
+                if(abs(targets(j,0)) < numeric_limits<type>::min())
                 {
                    sum += calculate_Wilcoxon_parameter(outputs(i,0),outputs(j,0));
                 }
@@ -2304,7 +2303,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
         for(Index j = 0; j < maximum_index; j++)
         {
-            if(sorted_targets(j, 0) == 0.0)
+            if(sorted_targets(j, 0)) < numeric_limits<type>::min())
             {
                  negatives++;
             }
@@ -2667,7 +2666,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
      {
          for(Index i = 1; i < points_number - points_number_subtracted+1; i++)
          {
-             if(abs(calibration_plot(i, 0) + 1.0) < 1.0e-99)
+             if(abs(calibration_plot(i, 0) + 1.0) < numeric_limits<type>::min())
              {
                  calibration_plot = calibration_plot.delete_row(i);
 
@@ -3277,7 +3276,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
    type positive_likelihood;
 
-   if(classification_accuracy == 1.0)
+   if(abs(classification_accuracy - 1.0) < numeric_limits<type>::min())
    {
        positive_likelihood = 1.0;
    }

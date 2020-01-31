@@ -2914,7 +2914,7 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 
              for(Index j = 0; j < n; j++)
              {
-                 if(abs(vector[j] - unique) < 1.0e-99)
+                 if(abs(vector[j] - unique) < numeric_limits<type>::min())
                  {
                      indices.push_back(indices_this[j]);
                  }
@@ -2924,7 +2924,7 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 
              for(Index j = 0; j < n; j++)
              {
-                 if(abs(vector[j] - unique) < 1.0e-99)
+                 if(abs(vector[j] - unique) < numeric_limits<type>::min())
                  {
                      indices_this[j] = mean_index(0);
                  }

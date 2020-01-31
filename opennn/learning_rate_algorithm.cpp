@@ -561,7 +561,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
             triplet.U = V;
             //B = B;
          }
-         else if(abs(V.first - triplet.U.first) < 1.0e-99)
+         else if(abs(V.first - triplet.U.first) < numeric_limits<type>::min())
 		 {
             buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                    << "Tensor<type, 1> calculate_golden_section_directional_point(type, const Tensor<type, 1>, type) const method.\n"
@@ -786,7 +786,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
   + triplet.U.second*(triplet.B.first-triplet.A.first)
   + triplet.B.second*(triplet.A.first-triplet.U.first))/((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
 
-   if(abs(c) < 1.0e-99)
+   if(abs(c) < numeric_limits<type>::min())
    {
        ostringstream buffer;
 
