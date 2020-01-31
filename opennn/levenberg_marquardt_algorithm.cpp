@@ -303,7 +303,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_damping_parameter_factor <= 0.0)
+   if(new_damping_parameter_factor <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -327,7 +327,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_damping_parameter <= 0.0)
+   if(new_minimum_damping_parameter <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -351,7 +351,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_maximum_damping_parameter <= 0.0)
+   if(new_maximum_damping_parameter <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 

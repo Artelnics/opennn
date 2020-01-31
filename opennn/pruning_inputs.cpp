@@ -199,10 +199,10 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type optimum_training_error = 999999;
-    type optimum_selection_error = 999999;
+    type optimum_training_error = numeric_limits<type>::max();
+    type optimum_selection_error = numeric_limits<type>::max();
 
-    type previus_selection_error = 999999;
+    type previus_selection_error = numeric_limits<type>::max();
 
     // Data set
 
@@ -216,7 +216,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
 /*
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_type();
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 

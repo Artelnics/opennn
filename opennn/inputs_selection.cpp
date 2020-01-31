@@ -467,8 +467,8 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     OptimizationAlgorithm::Results results;
 
-    type optimum_selection_error = 999999;
-    type optimum_training_error = 999999;
+    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
 
     Tensor<type, 1> optimum_parameters;
 

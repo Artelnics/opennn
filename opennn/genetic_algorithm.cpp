@@ -748,7 +748,7 @@ void GeneticAlgorithm::set_selective_pressure(const type& new_selective_pressure
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_selective_pressure <= 0.0)
+    if(new_selective_pressure <= static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -874,7 +874,7 @@ void GeneticAlgorithm::initialize_random_population()
     Tensor<bool, 1> inputs(inputs_number);
 
     inputs.setConstant(true);
-/*
+
     Index zero_ocurrences;
 
     Index random;
@@ -905,13 +905,12 @@ void GeneticAlgorithm::initialize_random_population()
         {
             inputs[static_cast<Index>(rand())%inputs_number] = true;
         }
-
+/*
         if(population.contains(inputs) && random_loops <= 5)
         {
             random_loops++;
 
             i--;
-
         }
         else
         {
@@ -922,8 +921,9 @@ void GeneticAlgorithm::initialize_random_population()
 
             random_loops = 0;
         }
-    }
 */
+    }
+
 }
 
 
@@ -938,9 +938,9 @@ void GeneticAlgorithm::initialize_weighted_population()
     // Data set stuff
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-/*
-    Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_type();
 
+    Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
+/*
     Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
 
     // Neural network stuff

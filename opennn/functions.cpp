@@ -275,7 +275,7 @@ Tensor<type, 2> scaled_exponential_linear(const Tensor<type, 2>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
+        x(i) < 0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
     }
 
     return y;
@@ -293,7 +293,7 @@ Tensor<type, 1> scaled_exponential_linear(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
+        x(i) < 0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
     }
 
     return y;
@@ -344,7 +344,7 @@ Tensor<type, 2> soft_sign(const Tensor<type, 2>& x)
 
     for(Index i = 0; i < n; i++)
     {
-       x(i) < 0.0 ? y(i) = x(i) / (1 - x(i)) : y(i) = x(i) / (1 + x(i));
+       x(i) < 0 ? y(i) = x(i) / (1 - x(i)) : y(i) = x(i) / (1 + x(i));
     }
 
     return y;
@@ -359,7 +359,7 @@ Tensor<type, 1> soft_sign(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < n; i++)
     {
-       x(i) < 0.0 ? y(i) = x(i) / (1 - x(i)) : y(i) = x(i) / (1 + x(i));
+       x(i) < 0 ? y(i) = x(i) / (1 - x(i)) : y(i) = x(i) / (1 + x(i));
     }
 
     return y;
@@ -376,17 +376,17 @@ Tensor<type, 2> hard_sigmoid(const Tensor<type, 2>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        if(x(i) < -2.5)
+        if(x(i) < static_cast<type>(-2.5))
         {
            y(i) = 0;
         }
-        else if(x(i) > 2.5)
+        else if(x(i) > static_cast<type>(2.5))
         {
             y(i) = 1;
         }
         else
         {
-            y(i) = 0.2 * x(i) + 0.5;
+            y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
         }
     }
 
@@ -406,7 +406,7 @@ Tensor<type, 2> exponential_linear(const Tensor<type, 2>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = alpha * (exp(x(i))- 1) : y(i) = x(i);
+        x(i) < 0 ? y(i) = alpha * (exp(x(i))- 1) : y(i) = x(i);
     }
 
     return y;
@@ -423,7 +423,7 @@ Tensor<type, 1> exponential_linear(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = alpha * (exp(x(i))- 1) : y(i) = x(i);
+        x(i) < 0 ? y(i) = alpha * (exp(x(i))- 1) : y(i) = x(i);
     }
 
     return y;
@@ -470,17 +470,17 @@ Tensor<type, 1> hard_sigmoid(const Tensor<type, 1>& x)
 
  for(Index i = 0; i < n; i++)
  {
-     if(x(i) < -2.5)
+     if(x(i) < static_cast<type>(-2.5))
      {
         y(i) = 0;
      }
-     else if(x(i) > 2.5)
+     else if(x(i) > static_cast<type>(2.5))
      {
          y(i) = 1;
      }
      else
      {
-         y(i) = 0.2 * x(i) + 0.5;
+         y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
      }
  }
 
@@ -507,7 +507,7 @@ Tensor<type, 2> hyperbolic_tangent_derivatives(const Tensor<type, 2>& x)
     {
         const type hyperbolic_tangent = tanh(x(i));
 
-        y(i) = 1.0 - hyperbolic_tangent*hyperbolic_tangent;
+        y(i) = 1 - hyperbolic_tangent*hyperbolic_tangent;
     }
 
     return y;
@@ -522,7 +522,7 @@ Tensor<type, 1> linear_derivatives(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < n; i++)
     {
-        y(i) = 1.0;
+        y(i) = 1;
     }
 
     return y;
@@ -540,7 +540,7 @@ Tensor<type, 1> hyperbolic_tangent_derivatives(const Tensor<type, 1>& x)
     {
         const type hyperbolic_tangent = tanh(x(i));
 
-        y(i) = 1.0 - hyperbolic_tangent*hyperbolic_tangent;
+        y(i) = 1 - hyperbolic_tangent*hyperbolic_tangent;
     }
 
     return y;
@@ -555,7 +555,7 @@ Tensor<type, 2> logistic_derivatives(const Tensor<type, 2>& x)
     {
         const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
+        y(i) = exponential/((1 + exponential)*(static_cast<type>(1.0) + exponential));
     }
 
     return y;
@@ -570,7 +570,7 @@ Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>& x)
     {
         const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
+        y(i) = exponential/((1 + exponential)*(static_cast<type>(1.0) + exponential));
     }
 
     return y;
@@ -593,6 +593,7 @@ Tensor<type, 2> binary(const Tensor<type, 2>& x)
 Tensor<type, 2> threshold_derivatives(const Tensor<type, 2>& x)
 {
     Tensor<type, 2> y(x.dimensions());
+
     y.setZero();
 
   return y;
@@ -728,7 +729,9 @@ Tensor<type, 2> soft_sign_derivatives(const Tensor<type, 2>& x)
 
  for(Index i = 0; i < n; i++)
  {
-    x(i) < static_cast<type>(0.0) ? derivatives(i) = static_cast<type>(1.0) / pow(1.0 - x(i), 2) : derivatives(i) = 1.0 / pow(1.0 + x(i), 2);
+    x(i) < static_cast<type>(0.0)
+            ? derivatives(i) = static_cast<type>(1.0) / pow(1 - x(i), 2)
+            : derivatives(i) = static_cast<type>(1.0) / pow(1 + x(i), 2);
  }
 
  return derivatives;
@@ -743,7 +746,7 @@ Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>& x)
 
  for(Index i = 0; i < n; i++)
  {
-    x(i) < 0.0 ? derivatives[i] = 1 / pow((1 - x(i)), 2) : derivatives[i] = 1 / pow((1 + x(i)), 2);
+    x(i) < 0 ? derivatives[i] = 1 / pow((1 - x(i)), 2) : derivatives[i] = 1 / pow((1 + x(i)), 2);
  }
 
  return derivatives;
@@ -752,13 +755,19 @@ Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>& x)
 
 Tensor<type, 2> hard_sigmoid_derivatives(const Tensor<type, 2>& x)
 {
-    const Index n = x.size();
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
 
-    Tensor<type, 2> derivatives(x.dimension(0), x.dimension(1));
+    Tensor<type, 2> derivatives(rows_number, columns_number);
 
-    for(Index i = 0; i < n; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? derivatives(i) = static_cast<type>(0.0) : derivatives(i) = static_cast<type>(0.2);
+        for(Index j = 0; j < columns_number; j++)
+        {
+            x(i,j) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5)
+                    ? derivatives(i,j) = static_cast<type>(0.0)
+                    : derivatives(i,j) = static_cast<type>(0.2);
+        }
     }
 
     return derivatives;
@@ -773,7 +782,9 @@ Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < -2.5 || x(i) > 2.5 ? derivatives[i] = static_cast<type>(0.0) : derivatives[i] = static_cast<type>(0.2);
+         x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5)
+                 ? derivatives[i] = static_cast<type>(0.0)
+                 : derivatives[i] = static_cast<type>(0.2);
      }
 
     return derivatives;
@@ -790,7 +801,7 @@ Tensor<type, 2> exponential_linear_derivatives(const Tensor<type, 2>& x)
 
      for(Index i = 0; i < n; i++)
      {
-         x(i) < 0.0 ? derivatives(i) = alpha * exp(x(i)) : derivatives(i) = static_cast<type>(1.0);
+         x(i) < 0 ? derivatives(i) = alpha * exp(x(i)) : derivatives(i) = static_cast<type>(1.0);
      }
 
      return derivatives;
@@ -807,7 +818,7 @@ Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>& x)
 
  for(Index i = 0; i < n; i++)
  {
-     x(i) < 0.0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = static_cast<type>(1.0);
+     x(i) < 0 ? derivatives[i] = alpha * exp(x(i)) : derivatives[i] = static_cast<type>(1.0);
  }
 
  return derivatives;
@@ -916,14 +927,14 @@ Tensor<bool, 1> binary(const Tensor<type, 1>& vector)
   Tensor<bool, 1> result(this_size);
 
   for(Index i = 0; i < this_size; i++) {
-    if(result[i] < 0.5) {
+    if(result[i] < static_cast<type>(0.5)) {
       result[i] = false;
     } else {
       result[i] = true;
     }
   }
 
-  return(result);
+  return result;
 }
 
 
@@ -963,34 +974,6 @@ Tensor<type, 1> cumulative(const Tensor<type, 1>& vector)
   }
 
   return(cumulative);
-}
-
-
-/// Returns a random number chosen from a normal distribution.
-/// @param mean Mean value of normal distribution.
-/// @param standard_deviation Standard deviation value of normal distribution.
-
-type random_normal(const type &mean, const type &standard_deviation)
-{
-  const type pi = 4.0 * atan(1.0);
-
-  type random_uniform_1;
-
-  do {
-    random_uniform_1 = static_cast<type>(rand()) /(RAND_MAX + 1.0);
-
-  } while(random_uniform_1 == 0.0);
-
-  const type random_uniform_2 = static_cast<type>(rand()) /(RAND_MAX + 1.0);
-
-  // Box-Muller transformation
-
-  const type random_normal = mean +
-                          sqrt(-2.0 * log(random_uniform_1)) *
-                              sin(2.0 * pi * random_uniform_2) *
-                              standard_deviation;
-
-  return(random_normal);
 }
 
 
@@ -1383,17 +1366,17 @@ void hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
      for(Index i = 0; i < n; i++)
      {
-         if(x(i) < -2.5)
+         if(x(i) < static_cast<type>(-2.5))
          {
             y(i) = 0;
          }
-         else if(x(i) > 2.5)
+         else if(x(i) > static_cast<type>(2.5))
          {
              y(i) = 1;
          }
          else
          {
-             y(i) = 0.2 * x(i) + 0.5;
+             y(i) = 0.2 * x(i) + static_cast<type>(0.5);
          }
      }
 
@@ -1475,7 +1458,7 @@ void rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        y(i) = x(i) < 0.0 ? 0.0 : x(i);
+        y(i) = x(i) < 0 ? 0.0 : x(i);
     }
 
 }
@@ -1492,7 +1475,7 @@ void scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
+        x(i) < 0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
     }
 
 }
@@ -1520,7 +1503,7 @@ void soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-       x(i) < 0.0 ? y(i) = x(i) / (1.0 - x(i)) : y(i) = x(i) / (1.0 + x(i));
+       x(i) < 0 ? y(i) = x(i) / (1.0 - x(i)) : y(i) = x(i) / (1.0 + x(i));
     }
 
 }
@@ -1536,7 +1519,7 @@ void exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = alpha * (exp(x(i)) - 1) : y(i) = x(i);
+        x(i) < 0 ? y(i) = alpha * (exp(x(i)) - 1) : y(i) = x(i);
     }
 
 }
@@ -1591,7 +1574,7 @@ void rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = 0.0 : y(i) = 1.0;
+        x(i) < 0 ? y(i) = 0.0 : y(i) = 1.0;
     }
 
 }
@@ -1609,7 +1592,7 @@ void scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = lambda * alpha * exp(x(i)) : y(i) = lambda;
+        x(i) < 0 ? y(i) = lambda * alpha * exp(x(i)) : y(i) = lambda;
     }
 
 }
@@ -1639,7 +1622,7 @@ void soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-       x(i) < 0.0 ? y(i) = 1.0 / pow(1.0 - x(i), 2) : y(i) = 1.0 / pow(1.0 + x(i), 2);
+       x(i) < 0 ? y(i) = 1.0 / pow(1.0 - x(i), 2) : y(i) = 1.0 / pow(1.0 + x(i), 2);
     }
 
 }
@@ -1654,7 +1637,7 @@ void hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < -2.5 || x(i) > 2.5 ? y(i) = 0.0 : y(i) = 0.2;
+        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? y(i) = 0.0 : y(i) = 0.2;
     }
 
 }
@@ -1671,7 +1654,7 @@ void exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.0 ? y(i) = alpha * exp(x(i)) : y(i) = 1.0;
+        x(i) < 0 ? y(i) = alpha * exp(x(i)) : y(i) = 1.0;
     }
 
 }
@@ -1734,7 +1717,7 @@ void binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        x(i) < 0.5 ? y(i) = false : y (i) = true;
+        x(i) < static_cast<type>(0.5) ? y(i) = false : y (i) = true;
     }
 
 }
