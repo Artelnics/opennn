@@ -674,9 +674,16 @@ Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>
 
     combinations = inputs.contract(synaptic_weights, product_dimensions);
 
-//    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+    Tensor<type, 2 > new_biases(batch_size, neurons_number);
 
-    combinations = combinations + biases;//.broadcast(broadcast);
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        new_biases(i) = biases(i);
+    }
+
+    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+
+    combinations = combinations + new_biases.broadcast(broadcast);
 
     return combinations;
  }

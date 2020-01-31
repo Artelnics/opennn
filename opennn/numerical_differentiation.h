@@ -725,15 +725,12 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         cout<<i<<endl;
-
          h = calculate_h(x(i));
 
          x_forward(i) += h;
 
          y_forward = (t.*f)(x_forward);
 
-/*
          x_forward(i) -= h;
          x_backward(i) -= h;
 
@@ -741,7 +738,7 @@ public:
          x_backward(i) += h;
 
          g(i) = (y_forward - y_backward)/(2.0*h);
-*/
+
       }
 
       return g;
