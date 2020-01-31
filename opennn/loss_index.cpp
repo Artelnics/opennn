@@ -1375,7 +1375,7 @@ check();
 
     Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+    const Index batches_number = training_batches.dimension(0);
 
     // Loss index
 
@@ -1385,6 +1385,7 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
+
         const Tensor<type, 1> batch_gradient = calculate_batch_error_gradient(training_batches.chip(i,0));
 
         #pragma omp critical

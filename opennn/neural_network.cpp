@@ -1025,34 +1025,14 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    Tensor<Tensor<type, 1>, 1> layers_parameters = get_trainable_layers_parameters(new_parameters);
 
-    Index position = 0;
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
 
-
-//    for(Index i = 0; i < trainable_layers_number; i++)
-//    {
-
-
-//        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
-
-//        Eigen::array<Eigen::Index,1>start = {position};
-
-//        Eigen::array<Eigen::Index,1>end = {position + trainable_layers_parameters_number[i]};
-
-//        /* new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1) */;
-
-//        Tensor<type, 1> layer_parameters(trainable_layers_parameters_number[i]);
-
-//        cout<<"size"<<new_parameters.slice(start, end);
-
-//        layer_parameters = new_parameters.slice(start, end);
-
-//        trainable_layers_pointers[i]->set_parameters(layer_parameters);
-
-//        position += trainable_layers_parameters_number[i];
-
-//    }
+        trainable_layers_pointers(i)->set_parameters(layers_parameters(i));
+    }
 }
 
 

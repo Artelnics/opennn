@@ -149,22 +149,20 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_constant(0);
 
-   cout<<"out_set_paremeters"<<endl;
-
    const Index parameters_number = neural_network.get_parameters_number();
 
    numerical_error_gradient.resize(parameters_number);
 
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
-   cout<<numerical_error_gradient;
+   error_gradient = mean_squared_error.calculate_training_error_gradient();
 
-//   error_gradient = mean_squared_error.calculate_training_error_gradient();
+   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
 
-//   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-
-//   assert_true(error_gradient.abs() < 1.0e-3, LOG);
+   assert_true(abs(error_gradient(0)) < static_cast<type>(1e-4), LOG);
+   assert_true(abs(error_gradient(1)) < static_cast<type>(1e-4), LOG);
 }
+
 /*
    neural_network.set();
 

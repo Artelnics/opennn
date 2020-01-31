@@ -76,12 +76,11 @@ int main(void)
 
         data_set.set_batch_instances_number(10000);
 
-
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
 
-        const Index hidden_neurons_number = 1;
+        const Index hidden_neurons_number = 3;
 
         const Index outputs_number = data_set.get_target_variables_number();
 
@@ -101,7 +100,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(MeanSquaredError::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(100);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10000);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
