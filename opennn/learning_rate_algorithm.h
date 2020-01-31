@@ -125,7 +125,7 @@ public:
        inline bool has_length_zero() const
        {
            /*
-           if(abs(A.first - B.first) < 1.0e-99)
+           if(abs(A.first - B.first) < numeric_limits<type>::min())
            {
               return true;
            }
@@ -142,7 +142,7 @@ public:
 
        inline bool is_constant() const
        {
-           /*if(abs(A.second - B.second) < 1.0e-99)
+           /*if(abs(A.second - B.second) < numeric_limits<type>::min())
            {
               return true;
            }

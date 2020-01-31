@@ -177,7 +177,7 @@ void scale_standard_deviation(Tensor<type, 1>& vector, const Tensor<type, 1>&sta
   // Rescale data
 
   for(Index i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1.0e-99) {
+    if(standard_deviation[i] < numeric_limits<type>::min()) {
 //      cout << "OpenNN Warning: Vector class.\n"
 //                << "void scale_mean_standard_deviation(const Tensor<type, 1>&, const "
 //                   "Tensor<type, 1>&) method.\n"
@@ -235,7 +235,7 @@ void unscale_minimum_maximum(Tensor<type, 1>& vector, const Tensor<type, 1>&mini
 #endif
 
   for(Index i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < 1.0e-99) {
+    if(maximum[i] - minimum[i] < numeric_limits<type>::min()) {
       cout << "OpenNN Warning: Transformations.\n"
                 << "void unscale_minimum_maximum(const Tensor<type, 1>&, const "
                    "Tensor<type, 1>&) method.\n"
@@ -295,7 +295,7 @@ void unscale_mean_standard_deviation(Tensor<type, 1>& vector,
 #endif
 
   for(Index i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1.0e-99) {
+    if(standard_deviation[i] < numeric_limits<type>::min()) {
       cout << "OpenNN Warning: Transformations.\n"
                 << "void unscale_mean_standard_deviation(const Tensor<type, 1>&, "
                    "const Tensor<type, 1>&) method.\n"

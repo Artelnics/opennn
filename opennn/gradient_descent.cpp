@@ -850,7 +850,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      if(gradient(0) == 0.0) throw logic_error("Gradient is zero");
+      if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
       gradient_norm = l2_norm(gradient);
 
@@ -864,7 +864,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       training_direction = calculate_training_direction(gradient);
 
 //      if(training_direction == 0.0) throw logic_error("Training direction is zero");
-      if(training_direction(0) == 0.0) throw logic_error("Training direction is zero");
+      if(abs(training_direction(0)) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
 
       // Calculate loss training_slope
 
