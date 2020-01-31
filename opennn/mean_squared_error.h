@@ -110,8 +110,6 @@ public:
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
 
-           cout<<"Here?";
-
            first_order_loss.loss += regularization_weight*calculate_regularization();
 
            first_order_loss.regularization_gradient = calculate_regularization_gradient();
