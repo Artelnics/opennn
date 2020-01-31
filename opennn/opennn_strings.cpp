@@ -409,12 +409,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i = 1; i < 13; i++)
                 {
-                    if(month[i] != "") month_number = i;
+                    if(month[static_cast<size_t>(i)] != "") month_number = i;
                 }
             }
 
             time_structure.tm_year = stoi(matchs[29].str())-1900;
-            time_structure.tm_mon = month_number - 1;
+            time_structure.tm_mon = static_cast<size_t>(month_number) - 1;
             time_structure.tm_mday = stoi(matchs[31].str());
             time_structure.tm_hour = stoi(matchs[32].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[33].str());
@@ -442,12 +442,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = i;
+                    if(month[static_cast<size_t>(i)] != "") month_number = i;
                 }
             }
 
             time_structure.tm_year = stoi(matchs[35].str())-1900;
-            time_structure.tm_mon = month_number - 1;
+            time_structure.tm_mon = static_cast<int>(month_number) - 1;
             time_structure.tm_mday = stoi(matchs[37].str());
             time_structure.tm_hour = stoi(matchs[38].str())- static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[39].str());
@@ -475,12 +475,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[i] != "") month_number = i;
+                    if(month[static_cast<size_t>(i)] != "") month_number = i;
                 }
             }
 
             time_structure.tm_year = stoi(matchs[40].str())-1900;
-            time_structure.tm_mon = month_number - 1;
+            time_structure.tm_mon = static_cast<int>(month_number)-1;
             time_structure.tm_mday = stoi(matchs[42].str())- static_cast<int>(gmt);
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
@@ -509,12 +509,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             {
                 for(Index i =1 ; i<13  ; i++)
                 {
-                    if(month[static_cast<int>(i)] != "") month_number = i;
+                    if(month[static_cast<size_t>(i)] != "") month_number = i;
                 }
             }
 
             time_structure.tm_year = stoi(matchs[45].str())-1900;
-            time_structure.tm_mon = static_cast<int>(month_number) - 1;
+            time_structure.tm_mon = static_cast<int>(month_number)-1;
             time_structure.tm_mday = stoi(matchs[44].str());
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
