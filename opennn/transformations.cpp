@@ -30,11 +30,11 @@ void scale_minimum_maximum(Tensor<type, 1>& vector, const type& minimum, const t
     {
         if(maximum - minimum <= static_cast<type>(0.0))
         {
-            vector[i] = static_cast<type>(0.0);
+            vector(i) = static_cast<type>(0.0);
         }
         else
         {
-            vector[i] = (vector[i] - minimum)/(maximum - minimum);
+            vector(i) = (vector(i) - minimum)/(maximum - minimum);
         }
     }
 }
@@ -69,7 +69,7 @@ void scale_mean_standard_deviation(Tensor<type, 1>& vector, const type &mean, co
 
   for(Index i = 0; i < this_size; i++)
   {
-    vector[i] = (vector[i] - mean) / standard_deviation;
+    vector(i) = (vector(i) - mean) / standard_deviation;
   }
 }
 
@@ -115,7 +115,7 @@ void scale_standard_deviation(Tensor<type, 1>& vector, const type &standard_devi
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-   vector[i] = vector[i] / standard_deviation;
+   vector(i) = vector(i) / standard_deviation;
   }
 }
 
@@ -177,7 +177,7 @@ void scale_standard_deviation(Tensor<type, 1>& vector, const Tensor<type, 1>&sta
   // Rescale data
 
   for(Index i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<type>::min()) {
+    if(standard_deviation(i) < numeric_limits<type>::min()) {
 //      cout << "OpenNN Warning: Vector class.\n"
 //                << "void scale_mean_standard_deviation(const Tensor<type, 1>&, const "
 //                   "Tensor<type, 1>&) method.\n"
@@ -186,7 +186,7 @@ void scale_standard_deviation(Tensor<type, 1>& vector, const Tensor<type, 1>&sta
 
       // Do nothing
     } else {
-       vector[i] = vector[i] / standard_deviation[i];
+       vector(i) = vector(i) / standard_deviation(i);
     }
   }
 }
@@ -235,7 +235,7 @@ void unscale_minimum_maximum(Tensor<type, 1>& vector, const Tensor<type, 1>&mini
 #endif
 
   for(Index i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < numeric_limits<type>::min()) {
+    if(maximum(i) - minimum(i) < numeric_limits<type>::min()) {
       cout << "OpenNN Warning: Transformations.\n"
                 << "void unscale_minimum_maximum(const Tensor<type, 1>&, const "
                    "Tensor<type, 1>&) method.\n"
@@ -245,7 +245,7 @@ void unscale_minimum_maximum(Tensor<type, 1>& vector, const Tensor<type, 1>&mini
 
       // Do nothing
     } else {
-     vector[i] = 0.5 *(vector[i] + 1.0) *(maximum[i] - minimum[i]) + minimum[i];
+     vector(i) = 0.5 *(vector(i) + 1.0) *(maximum(i) - minimum(i)) + minimum(i);
     }
   }
 }
@@ -295,7 +295,7 @@ void unscale_mean_standard_deviation(Tensor<type, 1>& vector,
 #endif
 
   for(Index i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<type>::min()) {
+    if(standard_deviation(i) < numeric_limits<type>::min()) {
       cout << "OpenNN Warning: Transformations.\n"
                 << "void unscale_mean_standard_deviation(const Tensor<type, 1>&, "
                    "const Tensor<type, 1>&) method.\n"
@@ -304,7 +304,7 @@ void unscale_mean_standard_deviation(Tensor<type, 1>& vector,
 
       // Do nothing
     } else {
-     vector[i] = vector[i] * standard_deviation[i] + mean[i];
+     vector(i) = vector(i) * standard_deviation(i) + mean(i);
     }
   }
 }
@@ -342,7 +342,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<Descrip
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].standard_deviation < 1.0e-99)
+      if(descriptives(j).standard_deviation < 1.0e-99)
       {
          // Do nothing
       }
@@ -350,7 +350,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<Descrip
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = (matrix(i,j) - descriptives[j].mean)/descriptives[j].standard_deviation;
+           matrix(i,j) = (matrix(i,j) - descriptives(j).mean)/descriptives(j).standard_deviation;
          }
       }
    }
@@ -374,7 +374,7 @@ void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descript
 
     for(Index j = 0; j < columns_number; j++)
     {
-       if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+       if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
        {
           // Do nothing
        }
@@ -382,10 +382,10 @@ void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descript
        {
           for(Index i = 0; i < rows_number; i++)
           {
-              row_index = row_indices[i];
+              row_index = row_indices(i);
 
-            matrix(row_index,j) = 0.5*(matrix(row_index,j) + 1.0)*(descriptives[j].maximum-descriptives[j].minimum)
-             + descriptives[j].minimum;
+            matrix(row_index,j) = 0.5*(matrix(row_index,j) + 1.0)*(descriptives(j).maximum-descriptives(j).minimum)
+             + descriptives(j).minimum;
           }
        }
     }
@@ -428,14 +428,14 @@ void unscale_columns_minimum_maximum(Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_indices.size(); j++)
     {
-       const Index column_index = columns_indices[j];
+       const Index column_index = columns_indices(j);
 
-       if(descriptives[j].maximum - descriptives[j].minimum > 0.0)
+       if(descriptives(j).maximum - descriptives(j).minimum > 0.0)
        {
           for(Index i = 0; i < rows_number; i++)
           {
-            matrix(i,column_index) = 0.5*(matrix(i,column_index) + 1.0)*(descriptives[j].maximum-descriptives[j].minimum)
-                                     + descriptives[j].minimum;
+            matrix(i,column_index) = 0.5*(matrix(i,column_index) + 1.0)*(descriptives(j).maximum-descriptives(j).minimum)
+                                     + descriptives(j).minimum;
           }
        }
     }
@@ -471,7 +471,7 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1>&
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+      if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
       {
          cout << "OpenNN Warning: Transformations.\n"
                    << "void unscale_minimum_maximum(const Tensor<Descriptives, 1>&) const method.\n"
@@ -484,7 +484,7 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1>&
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = 0.5*(exp(matrix(i,j)))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+           matrix(i,j) = 0.5*(exp(matrix(i,j)))*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
          }
       }
    }
@@ -510,7 +510,7 @@ void unscale_rows_logarithmic(Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_number; j++)
     {
-       if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+       if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
        {
           // Do nothing
        }
@@ -518,10 +518,10 @@ void unscale_rows_logarithmic(Tensor<type, 2>& matrix,
        {
           for(Index i = 0; i < rows_number; i++)
           {
-              row_index = row_indices[i];
+              row_index = row_indices(i);
 
-            matrix(row_index,j) = 0.5*(exp(matrix(row_index,j)))*(descriptives[j].maximum-descriptives[j].minimum)
-             + descriptives[j].minimum;
+            matrix(row_index,j) = 0.5*(exp(matrix(row_index,j)))*(descriptives(j).maximum-descriptives(j).minimum)
+             + descriptives(j).minimum;
           }
        }
     }
@@ -563,7 +563,7 @@ void unscale_columns_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descripti
 
     for(Index j = 0; j < columns_indices.size(); j++)
     {
-        column_index = columns_indices[j];
+        column_index = columns_indices(j);
 
        if(descriptives[column_index].maximum - descriptives[column_index].minimum < 1.0e-99)
        {
@@ -630,7 +630,7 @@ void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_number; j++)
     {
-       if(descriptives[j].standard_deviation < 1.0e-99)
+       if(descriptives(j).standard_deviation < 1.0e-99)
        {
           // Do nothing
        }
@@ -638,9 +638,9 @@ void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
        {
           for(Index i = 0; i < row_indices.size(); i++)
           {
-             row_index = row_indices[i];
+             row_index = row_indices(i);
 
-            matrix(row_index,j) = (matrix(row_index,j) - descriptives[j].mean)/descriptives[j].standard_deviation;
+            matrix(row_index,j) = (matrix(row_index,j) - descriptives(j).mean)/descriptives(j).standard_deviation;
           }
        }
     }
@@ -685,17 +685,17 @@ void scale_columns_mean_standard_deviation(Tensor<type, 2>& matrix,
 
    for(Index j = 0; j < columns_indices_size; j++)
    {
-      if(descriptives[j].standard_deviation < 1.0e-99)
+      if(descriptives(j).standard_deviation < 1.0e-99)
       {
          // Do nothing
       }
       else
       {
-         column_index = columns_indices[j];
+         column_index = columns_indices(j);
 
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,column_index) = (matrix(i,column_index) - descriptives[j].mean)/descriptives[j].standard_deviation;
+           matrix(i,column_index) = (matrix(i,column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
          }
       }
    }
@@ -734,7 +734,7 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+      if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
       {
             // Do nothing
       }
@@ -742,7 +742,7 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = 2.0*(matrix(i,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum)-1.0;
+           matrix(i,j) = 2.0*(matrix(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum)-1.0;
          }
       }
    }
@@ -785,7 +785,7 @@ void scale_range(Tensor<type, 2>& matrix,
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+      if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
       {
           for(Index i = 0; i < rows_number; i++)
           {
@@ -796,7 +796,7 @@ void scale_range(Tensor<type, 2>& matrix,
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = (maximum-minimum)*(matrix(i,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum)+minimum;
+           matrix(i,j) = (maximum-minimum)*(matrix(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum)+minimum;
          }
       }
    }
@@ -869,7 +869,7 @@ void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptiv
 
     for(Index j = 0; j < columns_number; j++)
     {
-       if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+       if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
        {
           // Do nothing
        }
@@ -877,9 +877,9 @@ void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptiv
        {
           for(Index i = 0; i < row_indices_size; i++)
           {
-             row_index = row_indices[i];
+             row_index = row_indices(i);
 
-            matrix(row_index,j) = 2.0*(matrix(row_index,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum) - 1.0;
+            matrix(row_index,j) = 2.0*(matrix(row_index,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - 1.0;
           }
        }
     }
@@ -924,15 +924,15 @@ void scale_columns_minimum_maximum(Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-       column_index = columns_indices[j];
+       column_index = columns_indices(j);
 
-       if(descriptives[j].maximum - descriptives[j].minimum > 0.0)
+       if(descriptives(j).maximum - descriptives(j).minimum > 0.0)
        {
 
       for(Index i = 0; i < static_cast<Index>(rows_number); i++)
       {
         matrix(i,column_index) =
-                2.0*(matrix(i,column_index) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum) - 1.0;
+                2.0*(matrix(i,column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - 1.0;
       }
        }
     }
@@ -971,7 +971,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1>& d
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+      if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
       {
             // Do nothing
       }
@@ -979,7 +979,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 1>& d
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = log(1.0+ (2.0*(matrix(i,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum)));
+           matrix(i,j) = log(1.0+ (2.0*(matrix(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum)));
          }
       }
    }
@@ -1035,7 +1035,7 @@ void scale_rows_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 
 
     for(Index j = 0; j < columns_number; j++)
     {
-       if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+       if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
        {
           // Do nothing
        }
@@ -1043,9 +1043,9 @@ void scale_rows_logarithmic(Tensor<type, 2>& matrix, const Tensor<Descriptives, 
        {
           for(Index i = 0; i < row_indices_size; i++)
           {
-             row_index = row_indices[i];
+             row_index = row_indices(i);
 
-            matrix(row_index,j) = log(1.0+ (2.0*(matrix(row_index,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum)));
+            matrix(row_index,j) = log(1.0+ (2.0*(matrix(row_index,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum)));
           }
        }
     }
@@ -1091,9 +1091,9 @@ void scale_columns_logarithmic(Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-       column_index = columns_indices[j];
+       column_index = columns_indices(j);
 
-       if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+       if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
        {
           // Do nothing
        }
@@ -1103,7 +1103,7 @@ void scale_columns_logarithmic(Tensor<type, 2>& matrix,
 #pragma omp parallel for
           for(Index i = 0; i < static_cast<Index>(rows_number); i++)
           {
-            matrix(i,column_index) = log(1.0+ (2.0*(matrix(i,column_index) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum)));
+            matrix(i,column_index) = log(1.0+ (2.0*(matrix(i,column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum)));
           }
        }
     }
@@ -1140,7 +1140,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<Descr
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].standard_deviation < 1.0e-99)
+      if(descriptives(j).standard_deviation < 1.0e-99)
       {
          // Do nothing
       }
@@ -1148,7 +1148,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<Descr
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = matrix(i,j)*descriptives[j].standard_deviation + descriptives[j].mean;
+           matrix(i,j) = matrix(i,j)*descriptives(j).standard_deviation + descriptives(j).mean;
          }
       }
    }
@@ -1172,7 +1172,7 @@ void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<
 
     for(Index j = 0;  j < columns_number; j++)
     {
-       if(descriptives[j].standard_deviation < 1.0e-99)
+       if(descriptives(j).standard_deviation < 1.0e-99)
        {
           // Do nothing
        }
@@ -1180,9 +1180,9 @@ void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const Tensor<
        {
           for(Index i = 0; i < rows_number; i++)
           {
-             row_index = row_indices[i];
+             row_index = row_indices(i);
 
-            matrix(row_index,j) = matrix(row_index,j)*descriptives[j].standard_deviation + descriptives[j].mean;
+            matrix(row_index,j) = matrix(row_index,j)*descriptives(j).standard_deviation + descriptives(j).mean;
           }
        }
     }
@@ -1221,13 +1221,13 @@ void unscale_columns_mean_standard_deviation(Tensor<type, 2>& matrix, const Tens
 
    for(Index j = 0;  j < columns_indices.size(); j++)
    {
-      column_index = columns_indices[j];
+      column_index = columns_indices(j);
 
-      if(descriptives[j].standard_deviation > 1.0e-99)
+      if(descriptives(j).standard_deviation > 1.0e-99)
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,column_index) = matrix(i,column_index)*descriptives[j].standard_deviation + descriptives[j].mean;
+           matrix(i,column_index) = matrix(i,column_index)*descriptives(j).standard_deviation + descriptives(j).mean;
          }
       }
    }
@@ -1263,7 +1263,7 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptives,
 
    for(Index j = 0; j < columns_number; j++)
    {
-      if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+      if(descriptives(j).maximum - descriptives(j).minimum < 1.0e-99)
       {
          cout << "OpenNN Warning: Transformations.\n"
                    << "void unscale_minimum_maximum(const Tensor<Descriptives, 1>&) const method.\n"
@@ -1276,7 +1276,7 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix, const Tensor<Descriptives,
       {
          for(Index i = 0; i < rows_number; i++)
          {
-           matrix(i,j) = 0.5*(matrix(i,j) + 1.0)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+           matrix(i,j) = 0.5*(matrix(i,j) + 1.0)*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
          }
       }
    }
@@ -1306,8 +1306,8 @@ void apply_lower_bound(Tensor<type, 1>& vector, const type &lower_bound)
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] < lower_bound) {
-     vector[i] = lower_bound;
+    if(vector(i) < lower_bound) {
+     vector(i) = lower_bound;
     }
   }
 }
@@ -1323,8 +1323,8 @@ void apply_lower_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&lower_boun
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] < lower_bound[i]) {
-     vector[i] = lower_bound[i];
+    if(vector(i) < lower_bound(i)) {
+     vector(i) = lower_bound(i);
     }
   }
 }
@@ -1340,8 +1340,8 @@ void apply_upper_bound(Tensor<type, 1>& vector, const type&upper_bound)
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] > upper_bound) {
-     vector[i] = upper_bound;
+    if(vector(i) > upper_bound) {
+     vector(i) = upper_bound;
     }
   }
 }
@@ -1357,8 +1357,8 @@ void apply_upper_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&upper_boun
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] > upper_bound[i]) {
-     vector[i] = upper_bound[i];
+    if(vector(i) > upper_bound(i)) {
+     vector(i) = upper_bound(i);
     }
   }
 }
@@ -1377,10 +1377,10 @@ void apply_lower_upper_bounds(Tensor<type, 1>& vector, const type &lower_bound,
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] < lower_bound) {
-     vector[i] = lower_bound;
-    } else if(vector[i] > upper_bound) {
-     vector[i] = upper_bound;
+    if(vector(i) < lower_bound) {
+     vector(i) = lower_bound;
+    } else if(vector(i) > upper_bound) {
+     vector(i) = upper_bound;
     }
   }
 }
@@ -1399,10 +1399,10 @@ void apply_lower_upper_bounds(Tensor<type, 1>& vector, const Tensor<type, 1>&low
   const Index this_size = vector.size();
 
   for(Index i = 0; i < this_size; i++) {
-    if(vector[i] < lower_bound[i]) {
-     vector[i] = lower_bound[i];
-    } else if(vector[i] > upper_bound[i]) {
-     vector[i] = upper_bound[i];
+    if(vector(i) < lower_bound(i)) {
+     vector(i) = lower_bound(i);
+    } else if(vector(i) > upper_bound(i)) {
+     vector(i) = upper_bound(i);
     }
   }
 }
