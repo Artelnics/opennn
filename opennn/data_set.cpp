@@ -4919,9 +4919,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_type() const
+Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
 {
-
     Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
@@ -7658,7 +7657,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
       {
           if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
           {
-              if(data(static_cast<Index>(instance_index),target_index) < 0.5)
+              if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
               {
                   negatives++;
               }

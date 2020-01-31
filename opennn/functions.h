@@ -32,10 +32,6 @@ using namespace Eigen;
 
 namespace OpenNN
 {
-    type random_uniform(const type & = -1.0, const type & = 1.0);
-
-    type random_normal(const type & = 0.0, const type & = 1.0);
-
     Index factorial(const Index&);
 
     Tensor<type, 1> exponential(const Tensor<type, 1>&);

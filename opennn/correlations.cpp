@@ -854,7 +854,9 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
     linear_regression.regression_type = Linear;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
+            && abs(s_xy) < numeric_limits<type>::min())
     {
       linear_regression.a = static_cast<type>(0.0);
 
@@ -868,7 +870,7 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
       linear_regression.b = ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
 
-      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
+      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
       {
           linear_regression.correlation = 1.0;
       }
@@ -937,7 +939,8 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
 
     linear_regression.regression_type = Linear;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
     {
       linear_regression.a = static_cast<type>(0.0);
 
@@ -953,7 +956,7 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
       linear_regression.b =
          ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
 
-      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
+      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
       {
           linear_regression.correlation = 1.0;
       }
@@ -1039,14 +1042,16 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
 
      logarithmic_regression.regression_type = Logarithmic;
 
-     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+     if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+             && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
      {
        logarithmic_regression.a = static_cast<type>(0.0);
 
        logarithmic_regression.b = static_cast<type>(0.0);
 
        logarithmic_regression.correlation = 1.0;
-     } else
+     }
+     else
      {
        logarithmic_regression.b = s_xy/s_xx;
 
@@ -1123,7 +1128,10 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
      logarithmic_regression.regression_type = Logarithmic;
 
-     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0) {
+     if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+             && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
+             && abs(s_xy) < numeric_limits<type>::min())
+     {
        logarithmic_regression.a = static_cast<type>(0.0);
 
        logarithmic_regression.b = static_cast<type>(0.0);
@@ -1632,13 +1640,15 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
     linear_correlation.correlation_type = Linear_correlation;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0) {
-
+    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
+            && abs(s_xy) < numeric_limits<type>::min())
+    {
       linear_correlation.correlation = 1.0;
-
-    } else {
-
-      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
+    }
+    else
+    {
+      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
       {
           linear_correlation.correlation = 1.0;
       }
@@ -1707,13 +1717,15 @@ CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, 
 
      linear_correlations.correlation_type = Linear_correlation;
 
-     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+     if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+             && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
+             && abs(s_xy) < numeric_limits<type>::min())
      {
        linear_correlations.correlation = 1.0;
      }
      else
      {
-       if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
+       if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
        {
            linear_correlations.correlation = 1.0;
        }
@@ -1754,7 +1766,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
     }
 
   #endif
-/*
+
     type s_x = 0;
     type s_y = 0;
 
@@ -1775,14 +1787,14 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
       x1[i]= log(x[i]);
       y1 += y[i];
     }
-
+/*
      for(Index i = 0; i < n; i++)
      {
          s_xx += pow((x1[i] - x1.sum()/x.size()),2);
 
          s_yy += pow(y[i] - y1/y.size(),2);
 
-         s_xy += (x1[i] - x1.sum()/x.size())*(y[i] - y1/y.size());
+         s_xy += (x1(i) - x1.sum()/x.size())*(y(i) - y1/y.size());
      }
 
      CorrelationResults logarithmic_correlation;
@@ -1968,7 +1980,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
 CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    /*
+
    Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
@@ -2017,7 +2029,7 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
     CorrelationResults exponential_correlation;
 
     exponential_correlation.correlation_type = Exponential_correlation;
-
+/*
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy == 0.0)
     {
 
@@ -2052,7 +2064,6 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
 
 CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-
    const Index n = y.size();
 
   #ifdef __OPENNN_DEBUG__
@@ -2093,7 +2104,8 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 
     power_correlation.correlation_type = Power_correlation;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0)
+    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+            && abs(s_xx) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
     {
       power_correlation.correlation = 1.0;
 
@@ -2160,7 +2172,8 @@ CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, c
 
     power_correlation.correlation_type = Power_correlation;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy == 0.0)
+    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
+            && abs(s_xx) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
     {
             power_correlation.correlation = 1.0;
 
@@ -2196,7 +2209,6 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 /*
     Tensor<type, 1> scaled_x(x);
     scale_minimum_maximum(scaled_x);
-
 
     const Index epochs_number = 50000;
     const type learning_rate = static_cast<type>(0.01);
@@ -2400,7 +2412,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
 
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
 
-    karl_pearson.correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
+    karl_pearson.correlation = sqrt(k / (k - static_cast<type>(1.0))) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 
     return karl_pearson;
 }
