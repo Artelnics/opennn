@@ -28,6 +28,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 #include "tinyxml2.h"
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
@@ -171,6 +172,8 @@ public:
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
 protected:
+
+    Device device;
 
         /// Layer type object.
 
