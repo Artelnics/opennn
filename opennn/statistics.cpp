@@ -654,7 +654,7 @@ type variance(const Tensor<type, 1>& vector)
   const type numerator = squared_sum -(sum * sum) /static_cast<type>(size);
   const type denominator = size - 1.0;
 
-  if(denominator == 0.0)
+  if(abs(denominator) < numeric_limits<type>::min())
   {
       return 0.0;
   }
