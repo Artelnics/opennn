@@ -748,7 +748,7 @@ void GeneticAlgorithm::set_selective_pressure(const type& new_selective_pressure
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_selective_pressure <= 0.0)
+    if(new_selective_pressure <= static_cast<type>(0.0))
     {
         ostringstream buffer;
 

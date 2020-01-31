@@ -11,7 +11,6 @@
 namespace OpenNN
 {
 
-
 /// Calculates the linear correlation coefficient(Spearman method)(R-value) between two vectors.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
@@ -71,7 +70,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     const type radicand = (n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y);
 
-    if(radicand <= 0.0)
+    if(radicand <= static_cast<type>(0.0))
     {
       return 1;
     }
@@ -525,7 +524,7 @@ Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_num
       denominator += ((x[j] - mean(0)) *(x[j] - mean(0))) /static_cast<type>(this_size);
     }
 
-    if(denominator == 0.0)
+    if(abs(denominator) < numeric_limits<type>::min())
     {
      autocorrelation[i] = 1.0;
     }
@@ -592,7 +591,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
 
     denominator = sqrt(this_denominator * y_denominator);
 
-    if(denominator == 0.0) {
+    if(abs(denominator) < numeric_limits<type>::min()) {
       cross_correlation[i] = static_cast<type>(0.0);
     } else {
       cross_correlation[i] = numerator / denominator;
@@ -634,13 +633,11 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
     type sum_a = static_cast<type>(0.0);
     type sum_b = static_cast<type>(0.0);
 
-    type exponential;
-
     #pragma omp parallel for
 
     for(Index i = 0; i < n; i ++)
     {
-        exponential = exp(-a - b * x[i]);
+        const type exponential = exp(-a - b * x[i]);
 
         sum_a += (2 * exponential) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * y[i] / (1 + exponential)/(1 +exponential);
 
@@ -719,7 +716,7 @@ Tensor<type, 1> logistic_error_gradient_missing_values(const type& a, const type
 
 type logistic(const type& a, const type& b, const type& x)
 {   
-    return 1.0/(1.0+exp(-(a+b*x)));
+    return static_cast<type>(1.0)/(static_cast<type>(1.0) + exp(-(a+b*x)));
 }
 
 
@@ -857,18 +854,19 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
     linear_regression.regression_type = Linear;
 
-    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0) {
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0)
+    {
       linear_regression.a = static_cast<type>(0.0);
 
       linear_regression.b = static_cast<type>(0.0);
 
       linear_regression.correlation = 1.0;
-    } else {
-      linear_regression.a =
-         (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
+    }
+    else
+    {
+      linear_regression.a = (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
 
-      linear_regression.b =
-         ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
+      linear_regression.b = ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
 
       if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
       {

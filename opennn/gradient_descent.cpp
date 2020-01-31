@@ -876,7 +876,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Check for a descent direction
 
-      if(training_slope(0) >= 0.0) throw logic_error("Training slope is equal or greater than zero");
+      if(training_slope(0) >= static_cast<type>(0.0)) throw logic_error("Training slope is equal or greater than zero");
 
       if(epoch == 0)
       {

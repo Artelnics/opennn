@@ -28,7 +28,7 @@ void scale_minimum_maximum(Tensor<type, 1>& vector, const type& minimum, const t
 
     for(Index i = 0; i < size; i++)
     {
-        if(maximum - minimum <= 0.0)
+        if(maximum - minimum <= static_cast<type>(0.0))
         {
             vector[i] = static_cast<type>(0.0);
         }
