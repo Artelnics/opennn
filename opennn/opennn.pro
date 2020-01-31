@@ -37,7 +37,6 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
 #}
 
-
 # Eigen library
 
 #INCLUDEPATH += ../eigen
@@ -45,6 +44,7 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 HEADERS += \
     numerical_differentiation.h \
     config.h \
+    device.h \
     opennn_strings.h \
     functions.h \
     statistics.h \
@@ -156,9 +156,6 @@ SOURCES += \
 #DEFINES += __OPENNN_CUDA__
 
 #contains(DEFINES, __OPENNN_CUDA__){
-
-#    include(../../arte/opennn_cuda/cuda_config.pri)
-
-#    include(../../arte/opennn_cuda/cuda_path.pri)
-
+#    include(../../Artelnics/opennn_cuda/cuda_config.pri)
+#    include(../../Artelnics/opennn_cuda/cuda_path.pri)
 #}
