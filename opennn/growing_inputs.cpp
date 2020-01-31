@@ -195,9 +195,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type optimum_training_error = 999999;
-    type optimum_selection_error = 999999;
-    type previus_selection_error = 999999;
+    type optimum_training_error = numeric_limits<type>::max();
+    type optimum_selection_error = numeric_limits<type>::max();
+    type previus_selection_error = numeric_limits<type>::max();
 
     // Data set
 
@@ -265,8 +265,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         // Trial
 
-        type optimum_selection_error_trial = 999999;
-        type optimum_training_error_trial = 999999;
+        type optimum_selection_error_trial = numeric_limits<type>::max();
+        type optimum_training_error_trial = numeric_limits<type>::max();
         Tensor<type, 1> optimum_parameters_trial;
 
         for(Index i = 0; i < trials_number; i++)

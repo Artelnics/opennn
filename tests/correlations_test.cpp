@@ -457,7 +457,7 @@ void CorrelationsTest::test_exponential_correlation()
     }
 
     double correlation = exponential_correlation(x,y);
-    assert_true(correlation > 0.999999, LOG);
+    assert_true(correlation > 0.numeric_limits<type>::max(), LOG);
 }
 
 

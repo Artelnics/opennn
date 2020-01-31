@@ -199,10 +199,10 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type optimum_training_error = 999999;
-    type optimum_selection_error = 999999;
+    type optimum_training_error = numeric_limits<type>::max();
+    type optimum_selection_error = numeric_limits<type>::max();
 
-    type previus_selection_error = 999999;
+    type previus_selection_error = numeric_limits<type>::max();
 
     // Data set
 

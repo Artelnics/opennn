@@ -257,8 +257,8 @@ void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
     lower_bounds.resize(new_neurons_number);
     upper_bounds.resize(new_neurons_number);
 
-    lower_bounds.setConstant(-999999);
-    upper_bounds.setConstant(999999);
+    lower_bounds.setConstant(-numeric_limits<type>::max());
+    upper_bounds.setConstant(numeric_limits<type>::max());
 }
 
 
@@ -376,7 +376,7 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
    if(lower_bounds.size() != neurons_number)
    {
        lower_bounds.resize(neurons_number);
-       lower_bounds.setConstant(-999999);
+       lower_bounds.setConstant(-numeric_limits<type>::max());
    }
 
    // Set lower bound of single neuron
@@ -445,7 +445,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
    if(upper_bounds.size() != neurons_number)
    {
       upper_bounds.resize(neurons_number);
-      upper_bounds.setConstant(999999);
+      upper_bounds.setConstant(numeric_limits<type>::max());
    }
 
    upper_bounds[index] = new_upper_bound;

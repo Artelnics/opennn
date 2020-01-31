@@ -325,7 +325,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 /// Stopping criteria:
 /// <ul> 
-/// <li> Loss goal: -999999.
+/// <li> Loss goal: -numeric_limits<type>::max().
 /// <li> Gradient norm goal: 0.0.
 /// <li> Maximum training time: 1.0e6.
 /// <li> Maximum number of iterations: 100. 
@@ -363,7 +363,7 @@ void ConjugateGradient::set_default()
    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = 999999*(-1.0);
+   loss_goal = numeric_limits<type>::max()*(-1.0);
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
