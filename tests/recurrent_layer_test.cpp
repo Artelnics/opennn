@@ -27,8 +27,8 @@ void RecurrentLayerTest::test_constructor()
     Index inputs_number;
     Index neurons_number;
 
-    Tensor<double, 2> synaptic_weights;
-    Tensor<double, 2> recurrent_initializer;
+    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> recurrent_initializer;
     Tensor<type, 1> biases;
 
     // Test
@@ -161,7 +161,7 @@ void RecurrentLayerTest::test_get_weights()
 
    RecurrentLayer recurrent_layer;
 
-   Tensor<double, 2> weights;
+   Tensor<type, 2> weights;
 
    //Test
 
@@ -180,7 +180,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
    RecurrentLayer recurrent_layer;
 
-   Tensor<double, 2> recurrent_weights;
+   Tensor<type, 2> recurrent_weights;
 
    //Test
 
@@ -263,15 +263,15 @@ void RecurrentLayerTest::test_get_parameters()
 
    assert_true(parameters.size() == 28, LOG);
 
-   assert_true(abs(parameters[0] - 0.5) < numeric_limits<double>::epsilon(), LOG);
-   assert_true(abs(parameters[16] - -0.48) < numeric_limits<double>::epsilon(), LOG);
-   assert_true(abs(parameters[27] - 1.0) < numeric_limits<double>::epsilon(), LOG);
+   assert_true(abs(parameters[0] - 0.5) < numeric_limits<type>::epsilon(), LOG);
+   assert_true(abs(parameters[16] - -0.48) < numeric_limits<type>::epsilon(), LOG);
+   assert_true(abs(parameters[27] - 1.0) < numeric_limits<type>::epsilon(), LOG);
 
    //Test
 
    Tensor<type, 1> biases;
-   Tensor<double, 2> input_weights(3, 2);
-   Tensor<double, 2> recurrent_weights(2,2);
+   Tensor<type, 2> input_weights(3, 2);
+   Tensor<type, 2> recurrent_weights(2,2);
 
    recurrent_layer.set(3,  2);
    biases.resize(2);
@@ -304,9 +304,9 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    RecurrentLayer recurrent_layer;
    Tensor<type, 1> parameters;
    Tensor<type, 2> inputs;
-   Tensor<double, 2> combinations;
-   Tensor<double, 2> activations_derivatives;
-   Tensor<double, 2> numerical_activation_derivative;
+   Tensor<type, 2> combinations;
+   Tensor<type, 2> activations_derivatives;
+   Tensor<type, 2> numerical_activation_derivative;
 
     numerical_differentiation_tests = true;
 
@@ -452,8 +452,8 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    Index instances = 3;
 
-   Tensor<double, 2> new_weights;
-   Tensor<double, 2> new_recurrent_weights;
+   Tensor<type, 2> new_weights;
+   Tensor<type, 2> new_recurrent_weights;
    Tensor<type, 1> new_biases;
 
    //Test

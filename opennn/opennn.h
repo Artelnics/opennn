@@ -9,6 +9,9 @@
 #ifndef OPENNN_H
 #define OPENNN_H
 
+
+#include "config.h"
+
 #include "statistics.h"
 
 // Data set

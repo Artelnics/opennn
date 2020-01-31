@@ -61,7 +61,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     DataSet data_set;
 
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     NeuralNetwork neural_network;
 

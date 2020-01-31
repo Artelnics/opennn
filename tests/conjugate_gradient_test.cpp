@@ -110,7 +110,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
    neural_network.set_parameters_constant(1.0);
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_gradient();
 
-//   double PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
+//   type PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
 //   assert_true(PR_parameter >= 0.0, LOG);
 //   assert_true(PR_parameter <= 1.0, LOG);
@@ -137,7 +137,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
    neural_network.set_parameters_constant(1.0);
    Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   double FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
+   type FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
 
    assert_true(FR_parameter >= 0.0, LOG);
    assert_true(FR_parameter <= 1.0, LOG);
@@ -223,14 +223,14 @@ void ConjugateGradientTest::test_perform_training()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   double old_loss;
-   double loss;
+   type old_loss;
+   type loss;
 
-   double loss_goal;
+   type loss_goal;
 
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   double minimum_parameters_increment_norm;
+   type minimum_parameters_increment_norm;
 
    // Test
 
@@ -285,7 +285,7 @@ void ConjugateGradientTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double minimum_loss_increase = 0.1;
+   type minimum_loss_increase = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
    conjugate_gradient.set_loss_goal(0.0);
@@ -300,7 +300,7 @@ void ConjugateGradientTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double gradient_norm_goal = 0.1;
+   type gradient_norm_goal = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
    conjugate_gradient.set_loss_goal(0.0);
@@ -311,7 +311,7 @@ void ConjugateGradientTest::test_perform_training()
 
    conjugate_gradient.perform_training();
 
-//   double gradient_norm = sum_squared_error.calculate_gradient().calculate_norm();
+//   type gradient_norm = sum_squared_error.calculate_gradient().calculate_norm();
 
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
 

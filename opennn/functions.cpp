@@ -1289,7 +1289,7 @@ Tensor<type, 1> normalized(const Tensor<type, 1>& vector)
 /*
   const type norm = l2_norm(vector);
 
-  if(norm == 0.0) {
+  if(norm) < numeric_limits<type>::min()) {
     normalized.setZero();
   } else {
     normalized = vector / norm;

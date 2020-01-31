@@ -148,7 +148,7 @@ void DataSetTest::test_get_data()
 
    data_set.initialize_data(0.0);
 
-   const Tensor<double, 2>& data = data_set.get_data();
+   const Tensor<type, 2>& data = data_set.get_data();
 
    assert_true(data.dimension(0) == 1, LOG);
    assert_true(data.dimension(1) == 2, LOG);
@@ -160,7 +160,7 @@ void DataSetTest::test_get_training_data()
 {
    cout << "test_get_training_data\n";
 /*
-   Tensor<double, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
+   Tensor<type, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
 
    DataSet data_set;
 
@@ -172,8 +172,8 @@ void DataSetTest::test_get_training_data()
    data_set.set_testing();
    data_set.set_training(training_indices);
 
-   Tensor<double, 2> training_data = data_set.get_training_data();
-   Tensor<double, 2> solution({{1,4},{4,3},{7,8}});
+   Tensor<type, 2> training_data = data_set.get_training_data();
+   Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(training_data == solution, LOG);
 }
 
@@ -182,7 +182,7 @@ void DataSetTest::test_get_selection_data()
 {
    cout << "test_get_selection_data\n";
 
-   Tensor<double, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
+   Tensor<type, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
 
    DataSet data_set;
 
@@ -194,8 +194,8 @@ void DataSetTest::test_get_selection_data()
    data_set.set_testing();
    data_set.set_selection(selection_indices);
 
-   Tensor<double, 2> selection_data = data_set.get_selection_data();
-   Tensor<double, 2> solution({{1,4},{4,3},{7,8}});
+   Tensor<type, 2> selection_data = data_set.get_selection_data();
+   Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(selection_data == solution, LOG);
 }
 
@@ -204,7 +204,7 @@ void DataSetTest::test_get_testing_data()
 {
    cout << "test_get_testing_data\n";
 
-   Tensor<double, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
+   Tensor<type, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
 
    DataSet data_set;
 
@@ -216,8 +216,8 @@ void DataSetTest::test_get_testing_data()
    data_set.set_training();
    data_set.set_testing(testing_indices);
 
-   Tensor<double, 2> testing_data = data_set.get_testing_data();
-   Tensor<double, 2> solution({{1,4},{4,3},{7,8}});
+   Tensor<type, 2> testing_data = data_set.get_testing_data();
+   Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(testing_data == solution, LOG);
 }
 
@@ -231,7 +231,7 @@ void DataSetTest::test_get_inputs()
    Index instances_number = data_set.get_instances_number();
    Index inputs_number = data_set.get_input_variables_number();
 
-   Tensor<double, 2> inputs = data_set.get_input_data();
+   Tensor<type, 2> inputs = data_set.get_input_data();
 
    Index rows_number = inputs.dimension(0);
    Index columns_number = inputs.dimension(1);
@@ -250,7 +250,7 @@ void DataSetTest::test_get_targets()
    Index instances_number = data_set.get_instances_number();
    Index targets_number = data_set.get_target_variables_number();
 
-   Tensor<double, 2> targets = data_set.get_target_data();
+   Tensor<type, 2> targets = data_set.get_target_data();
 
    Index rows_number = targets.dimension(0);
    Index columns_number = targets.dimension(1);
@@ -296,7 +296,7 @@ void DataSetTest::test_set()
 
    DataSet data_set;
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    // Instances and inputs and target variables
 
@@ -349,11 +349,11 @@ void DataSetTest::test_set_data()
 
    DataSet data_set(1, 1, 1);
 
-   Tensor<double, 2> new_data(1, 2, 0.0);
+   Tensor<type, 2> new_data(1, 2, 0.0);
 
    data_set.set_data(new_data);
 
-   Tensor<double, 2> data = data_set.get_data();
+   Tensor<type, 2> data = data_set.get_data();
 
    assert_true(data == new_data, LOG);
 }
@@ -443,7 +443,7 @@ void DataSetTest::test_calculate_data_descriptives_missing_values()
 
     data_set.set_data_file_name(data_file_name);
 
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     string data_string;
 
@@ -528,7 +528,7 @@ void DataSetTest::test_calculate_inputs_descriptives()
 {
    cout << "test_calculate_inputs_descriptives\n";
 
-   Tensor<double, 2> matrix({{1.0,2.0,3.0},{1.0,2.0,3.0}});
+   Tensor<type, 2> matrix({{1.0,2.0,3.0},{1.0,2.0,3.0}});
 
    DataSet data_set;
    data_set.set_data(matrix);
@@ -557,7 +557,7 @@ void DataSetTest::test_calculate_autocorrelations()
 
     DataSet data_set;
 
-    Tensor<double, 2> autocorrelations;
+    Tensor<type, 2> autocorrelations;
 
     data_set.set(20, 1, 1);
 
@@ -593,7 +593,7 @@ void DataSetTest::test_calculate_data_histograms()
 {
    cout << "test_calculate_data_histograms\n";
 
-   Tensor<double, 2> matrix(3,3);
+   Tensor<type, 2> matrix(3,3);
    matrix(0,0) = 2.0;
    matrix(0,1) = 2.0;
    matrix(0,2) = 1.0;
@@ -632,7 +632,7 @@ void DataSetTest::test_filter_data()
    Tensor<type, 1> minimums;
    Tensor<type, 1> maximums;
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    // Test
 
@@ -743,8 +743,8 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    Tensor<Descriptives, 1> data_descriptives;
 
-   Tensor<double, 2> data;
-   Tensor<double, 2> scaled_data;
+   Tensor<type, 2> data;
+   Tensor<type, 2> scaled_data;
 
     // Test
 
@@ -771,8 +771,8 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    Tensor<Descriptives, 1> data_descriptives;
 
-   Tensor<double, 2> data;
-   Tensor<double, 2> scaled_data;
+   Tensor<type, 2> data;
+   Tensor<type, 2> scaled_data;
 
     // Test
 
@@ -795,7 +795,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
 {
    cout << "test_unscale_data_mean_standard_deviation\n";
 
-   Tensor<double, 2> matrix (3,1);
+   Tensor<type, 2> matrix (3,1);
    matrix(0,0) = 2.0;
    matrix(1,0) = 5.0;
    matrix(2,0) = 77.0;
@@ -811,13 +811,13 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
    descriptives.set_standard_deviation(2.0);
    descrriptives[0] = descriptives ;
 
-   Tensor<double, 2> unescale_matrix(3,1);
+   Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
    data.set_data(unescale_matrix);
 
    data.unscale_data_mean_standard_deviation(descrriptives);
 
-   Tensor<double, 2> matrix_solution (3,1);
+   Tensor<type, 2> matrix_solution (3,1);
    matrix_solution(0,0) = descriptives.mean;
    matrix_solution(1,0) = descriptives.mean;
    matrix_solution(2,0) = descriptives.mean;
@@ -830,7 +830,7 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 {
    cout << "test_unscale_data_minimum_maximum\n";
 
-   Tensor<double, 2> matrix (3,1);
+   Tensor<type, 2> matrix (3,1);
    matrix(0,0) = 2.0;
    matrix(1,0) = 5.0;
    matrix(2,0) = 77.0;
@@ -846,13 +846,13 @@ void DataSetTest::test_unscale_data_minimum_maximum()
    descriptives.set_standard_deviation(2.0);
    descrriptives[0] = descriptives ;
 
-   Tensor<double, 2> unescale_matrix(3,1);
+   Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
    data.set_data(unescale_matrix);
 
    data.unscale_data_minimum_maximum(descrriptives);
 
-   Tensor<double, 2> matrix_solution (3,1);
+   Tensor<type, 2> matrix_solution (3,1);
    matrix_solution(0,0) = 7.0;
    matrix_solution(1,0) = 7.0;
    matrix_solution(2,0) = 7.0;
@@ -874,13 +874,13 @@ void DataSetTest::test_unscale_inputs_mean_standard_deviation()
 
    // Test
 
-   Tensor<double, 2> inputs = data_set.get_input_data();
+   Tensor<type, 2> inputs = data_set.get_input_data();
 
    data_descriptives.set(4);
 
    data_set.unscale_inputs_mean_standard_deviation(data_descriptives);
 
-   Tensor<double, 2> new_inputs = data_set.get_input_data();
+   Tensor<type, 2> new_inputs = data_set.get_input_data();
 
    assert_true(new_inputs == inputs, LOG);
 }
@@ -895,13 +895,13 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    data_set.set_display(false);
 
-   Tensor<double, 2> targets = data_set.get_target_data();
+   Tensor<type, 2> targets = data_set.get_target_data();
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
    data_set.unscale_targets_mean_standard_deviation(data_descriptives);
 
-   Tensor<double, 2> new_targets = data_set.get_target_data();
+   Tensor<type, 2> new_targets = data_set.get_target_data();
 
    assert_true(new_targets == targets, LOG);
 }
@@ -920,13 +920,13 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    // Test
 
-   Tensor<double, 2> inputs = data_set.get_input_data();
+   Tensor<type, 2> inputs = data_set.get_input_data();
 
    data_descriptives.set(4);
 
    data_set.unscale_inputs_minimum_maximum(data_descriptives);
 
-   Tensor<double, 2> new_inputs = data_set.get_input_data();
+   Tensor<type, 2> new_inputs = data_set.get_input_data();
 
    assert_true(new_inputs == inputs, LOG);
 }
@@ -941,13 +941,13 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    data_set.set_display(false);
 
-   Tensor<double, 2> targets = data_set.get_target_data();
+   Tensor<type, 2> targets = data_set.get_target_data();
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
    data_set.unscale_targets_minimum_maximum(data_descriptives);
 
-   Tensor<double, 2> new_targets = data_set.get_target_data();
+   Tensor<type, 2> new_targets = data_set.get_target_data();
 
    assert_true(new_targets == targets, LOG);
 }
@@ -976,7 +976,7 @@ void DataSetTest::test_initialize_data()
 {
    cout << "test_initialize_data\n";
 
-   Tensor<double, 2> matrix(3,3);
+   Tensor<type, 2> matrix(3,3);
 
    DataSet data_set;
 
@@ -984,7 +984,7 @@ void DataSetTest::test_initialize_data()
 
    data_set.initialize_data(2);
 
-   Tensor<double, 2> solution({{2,2,2},{2,2,2},{2,2,2}});
+   Tensor<type, 2> solution({{2,2,2},{2,2,2},{2,2,2}});
 
    assert_true(data_set.get_data() == solution, LOG);
 }
@@ -998,7 +998,7 @@ void DataSetTest::test_calculate_target_columns_distribution()
 
     //Test two classes
 
-    Tensor<double, 2> matrix({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<double>(NAN),1,0,1}});
+    Tensor<type, 2> matrix({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
 
     Tensor<Index, 1> target_indices({3});
 
@@ -1019,7 +1019,7 @@ void DataSetTest::test_calculate_target_columns_distribution()
 
     // Test more two classes
 
-    Tensor<double, 2> matrix_1({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<double>(NAN),1,0,2,2},{static_cast<double>(NAN),static_cast<double>(NAN),1,0,0,2}});
+    Tensor<type, 2> matrix_1({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<type>(NAN),1,0,2,2},{static_cast<type>(NAN),static_cast<type>(NAN),1,0,0,2}});
 
     Tensor<Index, 1> target_indices_1({2,3});
 
@@ -1294,8 +1294,8 @@ void DataSetTest::test_balance_binary_targets_distribution()
     {
     DataSet ds2(9, 1, 99);
 
-    Tensor<double, 2> data1(9,10);
-    Tensor<double, 2> data2(90,10);
+    Tensor<type, 2> data1(9,10);
+    Tensor<type, 2> data2(90,10);
 
     data1.setRandom();
     data2.setRandom();
@@ -1303,7 +1303,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
     data1.set_column(9, 0.0);
     data2.set_column(9, 1.0);
 
-    Tensor<double, 2> data = data1.assemble_rows(data2);
+    Tensor<type, 2> data = data1.assemble_rows(data2);
 
     ds2.set(data);
 
@@ -1731,7 +1731,7 @@ void DataSetTest::test_read_csv()
 
    data_set.set_data_file_name(data_file_name);
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    string data_string;
 
@@ -2342,7 +2342,7 @@ void DataSetTest::test_convert_time_series()
 
    DataSet data_set;
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    // Test
 
@@ -2383,7 +2383,7 @@ void DataSetTest::test_convert_autoassociation()
 
    DataSet data_set;
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    // Test
 
@@ -2428,7 +2428,7 @@ void DataSetTest::test_scrub_missing_values()
 
     Instances instances;
 
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     string data_string;
 
@@ -2486,7 +2486,7 @@ void DataSetTest::test_empty()
 {
     cout << "test_emprty\n";
 
-    Tensor<double, 2> matrix(9,9);
+    Tensor<type, 2> matrix(9,9);
 
     DataSet data_set;
 
@@ -2500,7 +2500,7 @@ void DataSetTest::test_filter_variable()
 {
     cout << "test_filter_variable";
 
-    Tensor<double, 2> matrix({{1,2,3},{4,2,8},{7,8,6}});
+    Tensor<type, 2> matrix({{1,2,3},{4,2,8},{7,8,6}});
     Tensor<Index, 1> solution({0,1});
     Tensor<Index, 1> solution_1({0, 1, 2});
     Tensor<Index, 1> solution_2({});
@@ -2513,7 +2513,7 @@ void DataSetTest::test_filter_variable()
 
     //Test
     Tensor<string, 1> header({"a","b","c"});
-    Tensor<double, 2> matrix_1({{1,2,3},{4,2,8},{7,8,6}}, {"a","b","c"});
+    Tensor<type, 2> matrix_1({{1,2,3},{4,2,8},{7,8,6}}, {"a","b","c"});
     DataSet ds_1;
     ds_1.set_columns_names(true);
     ds_1.set_data(matrix_1);
@@ -2524,7 +2524,7 @@ void DataSetTest::test_calculate_variables_means()
 {
     cout << "test_calculate_variables_means\n";
 
-    Tensor<double, 2> matrix({{1, 2, 3, 4},{2, 2, 2, 2},{1, 1, 1, 1}});
+    Tensor<type, 2> matrix({{1, 2, 3, 4},{2, 2, 2, 2},{1, 1, 1, 1}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2542,7 +2542,7 @@ void DataSetTest::test_calculate_training_targets_mean()
 {
     cout << "test_calculate_training_targets_mean\n";
 
-    Tensor<double, 2> matrix({{1, static_cast<double>(NAN), 1, 1},{2, 2, 2, 2},{3, 3, static_cast<double>(NAN), 3}});
+    Tensor<type, 2> matrix({{1, static_cast<type>(NAN), 1, 1},{2, 2, 2, 2},{3, 3, static_cast<type>(NAN), 3}});
     Tensor<Index, 1> indices({0, 1, 2});
     Tensor<Index, 1> training_indexes({0, 1, 2});
     DataSet data_set;
@@ -2579,7 +2579,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 {
     cout << "test_calculate_selection_targets_mean\n";
 
-    Tensor<double, 2> matrix({{1, static_cast<double>(NAN), 6, 9},{1, 2, 5, 2},{3, 2, static_cast<double>(NAN), 4}});
+    Tensor<type, 2> matrix({{1, static_cast<type>(NAN), 6, 9},{1, 2, 5, 2},{3, 2, static_cast<type>(NAN), 4}});
     Tensor<Index, 1> indexes_targets({2});
     Tensor<Index, 1> selection_indexes({0, 1});
     DataSet data_set;
@@ -2607,7 +2607,7 @@ void DataSetTest::test_calculate_testing_targets_mean()
 {
     cout << "test_calculate_testing_targets_mean\n";
 
-    Tensor<double, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
+    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2631,7 +2631,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 {
     cout << "test_calculate_input_target_correlations\n";
 
-    Tensor<double, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
+    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2639,7 +2639,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     data_set.set_input_variables_indices(input_variables_indices);
 
-    Tensor<double, 2> correlations_targets = data_set.calculate_inputs_targets_correlations();
+    Tensor<type, 2> correlations_targets = data_set.calculate_inputs_targets_correlations();
 
     //Test linear correlation
     assert_true(correlations_targets - 1.0 < 1.0e-3, LOG);
@@ -2656,7 +2656,7 @@ void DataSetTest::test_calculate_total_input_correlations()
 {
     cout << "test_calculate_total_input_correlations\n";
 
-    Tensor<double, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
+    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2677,21 +2677,21 @@ void DataSetTest::test_unuse_repeated_instances()
 {
     cout << "test_unuse_repeated_instances\n";
 
-    Tensor<double, 2> matrix({{1,2,2},{1,2,2},{1,6,6}});
+    Tensor<type, 2> matrix({{1,2,2},{1,2,2},{1,6,6}});
     DataSet data_set;
     data_set.set_data(matrix);
     Tensor<Index, 1> indices({2});
 
     assert_true(data_set.unuse_repeated_instances() == indices, LOG);
 
-    Tensor<double, 2> matrix_1({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
+    Tensor<type, 2> matrix_1({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
     DataSet ds_1;
     ds_1.set_data(matrix_1);
     Tensor<Index, 1> indices_1({2, 3});
 
     assert_true(ds_1.unuse_repeated_instances() == indices_1, LOG);
 
-    Tensor<double, 2> matrix_2({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
+    Tensor<type, 2> matrix_2({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
     DataSet ds_2;
     ds_2.set_data(matrix_2);
     Tensor<Index, 1> indices_2({2,4});
@@ -2705,7 +2705,7 @@ void DataSetTest::test_unuse_non_significant_inputs()
 {
     cout << "test_unuse_non_significant_inputs\n";
 
-    Tensor<double, 2> matrix({{1,0,0},{1,0,0},{1,0,1}});
+    Tensor<type, 2> matrix({{1,0,0},{1,0,0},{1,0,1}});
     DataSet data_set;
 
     cout << "unuse: " << data_set.unuse_non_significant_inputs() << endl;
@@ -2718,7 +2718,7 @@ void DataSetTest::test_unuse_columns_missing_values()
 {
     cout << "test_unuse_variables_missing_values\n";
 
-    Tensor<double, 2> matrix({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
+    Tensor<type, 2> matrix({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
 //    matrix.set_header(Tensor<string, 1>({"var1","var2","var3","var4"}));
 
     DataSet data_set;
@@ -2736,14 +2736,14 @@ void DataSetTest::test_perform_principal_components_analysis()
 {
     cout << "test_perform_principal_components_analysis\n";
 
-    Tensor<double, 2> matrix({{1,1},{-1,-1},{1,1}});
+    Tensor<type, 2> matrix({{1,1},{-1,-1},{1,1}});
     DataSet data_set;
     data_set.set_data(matrix);
 
     Tensor<type, 1> solution({1,1});
 
     //data_set.perform_principal_components_analysis();
-    //Tensor<double, 2> PCA = data_set.get_data();
+    //Tensor<type, 2> PCA = data_set.get_data();
     //assert_true(PCA.get_column(2) == solution, LOG);
 }
 
@@ -2752,7 +2752,7 @@ void DataSetTest::test_calculate_training_negatives()
 {
     cout << "test_calculate_training_negatives\n";
 
-    Tensor<double, 2> matrix({{1,1,1},{-1,-1,-1},{0,1,1}});
+    Tensor<type, 2> matrix({{1,1,1},{-1,-1,-1},{0,1,1}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2769,7 +2769,7 @@ void DataSetTest::test_calculate_training_negatives()
 
     Index training_negatives = data_set.calculate_training_negatives(target_index);
 
-    Tensor<double, 2> data = data_set.get_data();
+    Tensor<type, 2> data = data_set.get_data();
 
     assert_true(training_negatives == 1, LOG);
 
@@ -2782,7 +2782,7 @@ void DataSetTest::test_calculate_selection_negatives()
 {
     cout << "test_calculate_selection_negatives\n";
 
-    Tensor<double, 2> matrix({{1,1,1},{-1,-1,-1},{0,1,1}});
+    Tensor<type, 2> matrix({{1,1,1},{-1,-1,-1},{0,1,1}});
 
     DataSet data_set;
     data_set.set_data(matrix);
@@ -2799,7 +2799,7 @@ void DataSetTest::test_calculate_selection_negatives()
 
     Index selection_negatives = data_set.calculate_training_negatives(target_index);
 
-    Tensor<double, 2> data = data_set.get_data();
+    Tensor<type, 2> data = data_set.get_data();
 
     assert_true(selection_negatives == 0, LOG);
 
@@ -2810,7 +2810,7 @@ void DataSetTest::test_is_binary_classification()
 {
     cout << "test_is_binary_classification\n";
 
-    Tensor<double, 2> matrix({{1,2,1},{1,1,0},{0,1,2}});
+    Tensor<type, 2> matrix({{1,2,1},{1,1,0},{0,1,2}});
     DataSet data_set;
     data_set.set_data(matrix);
     Tensor<Index, 1> input_indices({0,1});
@@ -2832,7 +2832,7 @@ void DataSetTest::test_is_multiple_classification()
 {
     cout << "test_is_multiple_classification\n";
 
-    Tensor<double, 2> matrix({{1,0,1},{1,0,1},{2,1,1}});
+    Tensor<type, 2> matrix({{1,0,1},{1,0,1},{2,1,1}});
     DataSet data_set;
     data_set.set_data(matrix);
     Tensor<Index, 1> input_indices({0,1});

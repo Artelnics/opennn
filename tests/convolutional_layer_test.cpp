@@ -55,7 +55,7 @@ void ConvolutionalLayerTest::test_get_parameters()
     cout << "test_get_parameters\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> new_synaptic_weights;
+    Tensor<type, 2> new_synaptic_weights;
     Tensor<type, 1> new_biases;
     Tensor<type, 1> new_parameters;
 
@@ -192,7 +192,7 @@ void ConvolutionalLayerTest::test_set_parameters()
     cout << "test_set_parameters\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> new_synaptic_weights;
+    Tensor<type, 2> new_synaptic_weights;
     Tensor<type, 1> new_biases;
 
     // Test
@@ -232,10 +232,10 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    ConvolutionalLayer convolutional_layer;
 
-   Tensor<double, 2> image;
-   Tensor<double, 2> filter;
-   Tensor<double, 2> convolutions;
-   Tensor<double, 2> result;
+   Tensor<type, 2> image;
+   Tensor<type, 2> filter;
+   Tensor<type, 2> convolutions;
+   Tensor<type, 2> result;
 
    // Test
 
@@ -457,11 +457,11 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> images;
-    Tensor<double, 2> filters;
-    Tensor<double, 2> convolutions;
-    Tensor<double, 2> alt_convolutions;
-    Tensor<double, 2> result;
+    Tensor<type, 2> images;
+    Tensor<type, 2> filters;
+    Tensor<type, 2> convolutions;
+    Tensor<type, 2> alt_convolutions;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -758,8 +758,8 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<type, 2> inputs;
-    Tensor<double, 2> activations;
-    Tensor<double, 2> result;
+    Tensor<type, 2> activations;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -1019,8 +1019,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<type, 2> inputs;
-    Tensor<double, 2> activations_derivatives;
-    Tensor<double, 2> result;
+    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -1248,8 +1248,8 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> images;
-    Tensor<double, 2> filters;
+    Tensor<type, 2> images;
+    Tensor<type, 2> filters;
     Tensor<type, 2> outputs;
 
     // Test
@@ -1536,8 +1536,8 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> image;
-    Tensor<double, 2> padded_image;
+    Tensor<type, 2> image;
+    Tensor<type, 2> padded_image;
 
     // Test
 

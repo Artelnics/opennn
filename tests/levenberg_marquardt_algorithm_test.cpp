@@ -105,7 +105,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 
     Tensor<type, 1> terms;
 
-    double loss;
+    type loss;
 
     LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
@@ -138,7 +138,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
    Tensor<type, 1> terms;
-   Tensor<double, 2> terms_Jacobian;
+   Tensor<type, 2> terms_Jacobian;
 
    Tensor<type, 1> gradient;
    Tensor<type, 1> mse_gradient;
@@ -152,13 +152,13 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    data_set.set(1, 1, 2);
    data_set.set_data_random();
 
-   Tensor<double, 2> inputs = data_set.get_training_input_data();
-   Tensor<double, 2> targets = data_set.get_training_target_data();
+   Tensor<type, 2> inputs = data_set.get_training_input_data();
+   Tensor<type, 2> targets = data_set.get_training_target_data();
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
    neural_network.set_parameters_random();
 
-   Tensor<double, 2> outputs = neural_network.calculate_outputs(inputs);
+   Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
    terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
@@ -224,10 +224,10 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Tensor<double, 2> terms_Jacobian;
-   Tensor<double, 2> hessian;
-   Tensor<double, 2> numerical_hessian;
-   Tensor<double, 2> hessian_approximation;
+   Tensor<type, 2> terms_Jacobian;
+   Tensor<type, 2> hessian;
+   Tensor<type, 2> numerical_hessian;
+   Tensor<type, 2> hessian_approximation;
 
    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
    
@@ -319,13 +319,13 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
    lma.set_display(false);
 
-   double old_loss;
-   double loss;
-   double minimum_parameters_increment_norm;
-   double loss_goal;
-   double minimum_loss_increase;
-   double gradient_norm_goal;
-   double gradient_norm;
+   type old_loss;
+   type loss;
+   type minimum_parameters_increment_norm;
+   type loss_goal;
+   type minimum_loss_increase;
+   type gradient_norm_goal;
+   type gradient_norm;
 
    // Test
 
@@ -460,10 +460,10 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
    LevenbergMarquardtAlgorithm lma;
 
-   Tensor<double, 2> a;
+   Tensor<type, 2> a;
    Tensor<type, 1> b;
 
-   Tensor<double, 2> inverse;
+   Tensor<type, 2> inverse;
 
    // Test
 

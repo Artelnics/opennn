@@ -32,7 +32,7 @@ void CrossEntropyErrorTest::test_calculate_training_error()
 
    CrossEntropyError cee(&neural_network, &data_set);
 
-   double cross_entropy_error;
+   type cross_entropy_error;
 
    // Test
 
@@ -46,7 +46,7 @@ void CrossEntropyErrorTest::test_calculate_training_error()
 
 //   data_set.set(10,1,1);
 
-//   Tensor<double, 2> data(10,2);
+//   Tensor<type, 2> data(10,2);
 //   data.initialize_identity();
 
 //   data_set.set_data(data);
@@ -81,7 +81,7 @@ void CrossEntropyErrorTest::test_calculate_selection_error()
    
    CrossEntropyError cee(&neural_network, &data_set);
 
-   double selection_error;
+   type selection_error;
 
    // Test
 
@@ -243,11 +243,11 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
    data_set.set_data_random();
    data_set.set_training();
 
-   const double parameters_minimum = -100.0;
-   const double parameters_maximum = 100.0;
+   const type parameters_minimum = -100.0;
+   const type parameters_maximum = 100.0;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<double, 2> filters_1({2,3,2,2}, 0);
+   Tensor<type, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Tensor<type, 1> biases_1(2, 0);
@@ -256,7 +256,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_2({2,2,2,2}, 0);
+   Tensor<type, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Tensor<type, 1> biases_2(2, 0);
@@ -267,7 +267,7 @@ void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 
    ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_3({1,2,2,2}, 0);
+   Tensor<type, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
    Tensor<type, 1> biases_3(1, 0);
