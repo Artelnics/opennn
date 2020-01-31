@@ -608,7 +608,7 @@ public:
    // Inputs-targets correlations
 
    Tensor<CorrelationResults, 2> calculate_input_target_columns_correlations() const;
-   Tensor<type, 2> calculate_input_target_columns_correlations_type() const;
+   Tensor<type, 2> calculate_input_target_columns_correlations_values() const;
 
    void print_input_target_columns_correlations() const;
 
