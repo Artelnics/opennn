@@ -93,12 +93,12 @@ Tensor<type, 1> Descriptives::to_vector() const
 
 bool Descriptives::has_minimum_minus_one_maximum_one()
 {
-  if(-1.000001 < minimum && minimum < -0.999999 && 0.999999 < maximum &&
-      maximum < 1.000001) {
+  if(abs(minimum + 1) < numeric_limits<type>::min() && abs(maximum - 1) < numeric_limits<type>::min())
+  {
     return true;
-  } else {
-    return false;
   }
+
+  return false;
 }
 
 
@@ -106,8 +106,8 @@ bool Descriptives::has_minimum_minus_one_maximum_one()
 /// and false otherwise.
 
 bool Descriptives::has_mean_zero_standard_deviation_one() {
-  if(-0.000001 < mean && mean < 0.000001 && 0.999999 < standard_deviation &&
-      standard_deviation < 1.000001) {
+    if(abs(mean) < numeric_limits<type>::min() && abs(standard_deviation - 1) < numeric_limits<type>::min())
+ {
     return true;
   } else {
     return false;
@@ -300,19 +300,13 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
   {
       if(maximum_frequency == frequencies(i))
       {
-          maximal_centers(index) = frequencies(i);
+          maximal_centers(index) = static_cast<type>(frequencies(i));
 
           index++;
       }
   }
 
   return maximal_centers;
-/*
-  const Tensor<Index, 1> maximal_indices = frequencies.get_indices_equal_to(maximum_frequency);
-
-  return(centers.get_subvector(maximal_indices));
-*/
-
 }
 
 
@@ -418,7 +412,7 @@ type minimum_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
-  type minimum = 999999;
+  type minimum = numeric_limits<type>::max();
 
   for(Index i = 0; i < size; i++)
   {
@@ -438,7 +432,7 @@ type maximum_missing_values(const Tensor<type, 1>& vector)
 {
   const Index size = vector.dimension(0);
 
-  type maximum = -999999;
+  type maximum = -numeric_limits<type>::max();
 
   for(Index i = 0; i < size; i++)
   {
@@ -652,7 +646,7 @@ type variance(const Tensor<type, 1>& vector)
   }
 
   const type numerator = squared_sum -(sum * sum) /static_cast<type>(size);
-  const type denominator = size - 1.0;
+  const type denominator = static_cast<type>(size - 1);
 
   if(abs(denominator) < numeric_limits<type>::min())
   {
@@ -706,7 +700,7 @@ type variance_missing_values(const Tensor<type, 1>& vector)
   }
 
   const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
-  const type denominator = count - 1.0;
+  const type denominator = static_cast<type>(count - 1);
 
   return numerator/denominator;
 }
@@ -1761,12 +1755,12 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     Index row_index, column_index;
 
     Tensor<type, 1> minimums(columns_indices_size);
-    minimums.setConstant(999999);
+    minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums;
 
     maximums.resize(columns_indices_size);
-    maximums.setConstant(-999999);
+    maximums.setConstant(-numeric_limits<type>::max());
 
     Tensor<type, 1> sums(columns_indices_size);
     Tensor<type, 1> squared_sums(columns_indices_size);
@@ -2139,13 +2133,13 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 #endif
 
   Descriptives descriptives;
-  type minimum = 999999;
+  type minimum = numeric_limits<type>::max();
   type maximum;
   type sum = 0;
   type squared_sum = 0;
   Index count = 0;
 
-  maximum = -1.0*999999;
+  maximum = -1.0*numeric_limits<type>::max();
 
   for(Index i = 0; i < size; i++)
   {
@@ -2216,14 +2210,14 @@ Descriptives descriptives_missing_values(const Tensor<type, 1>& vector)
 
   Descriptives descriptives;
 
-  type minimum = 999999;
+  type minimum = numeric_limits<type>::max();
   type maximum;
 
   type sum = 0;
   type squared_sum = 0;
   Index count = 0;
 
-  maximum = -999999;
+  maximum = -numeric_limits<type>::max();
 
   for(Index i = 0; i < size; i++) {
       if(!::isnan(vector[i]))
@@ -3749,7 +3743,7 @@ Tensor<Index, 1> minimal_indices_omit(const Tensor<type, 2>& matrix, const type&
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-   type minimum = 999999;
+   type minimum = numeric_limits<type>::max();
 
    Tensor<Index, 1> minimal_indices(2);
 

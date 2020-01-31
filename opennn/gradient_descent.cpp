@@ -248,7 +248,7 @@ void GradientDescent::set_default()
 
    minimum_loss_decrease = static_cast<type>(0.0);
 
-   loss_goal = -999999;
+   loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
@@ -777,7 +777,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       
    type training_loss = static_cast<type>(0.0);
    type old_training_loss = static_cast<type>(0.0);
-   type training_loss_decrease = -999999;
+   type training_loss_decrease = -numeric_limits<type>::max();
 
    Tensor<type, 1> gradient(parameters_number);
    type gradient_norm = static_cast<type>(0.0);
@@ -797,7 +797,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    pair<type,type> directional_point(2, 0.0);
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   type minimum_selection_error = 999999;
+   type minimum_selection_error = numeric_limits<type>::max();
 
    bool stop_training = false;
 
