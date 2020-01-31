@@ -17,21 +17,21 @@ CorrelationsTest::~CorrelationsTest()
 {
 }
 
-/*
+
 void CorrelationsTest::test_linear_correlation()
 {
     cout << "test_calculate_linear_correlation\n";
 
-    //Perfect case
+    // Perfect case
 
-    const Tensor<type, 1> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    const Tensor<type, 1> vector2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector2;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
     const type solution = 1;
 
     assert_true(linear_correlation(vector1, vector2) - solution <= 0.000001, LOG);
 
-    const Tensor<type, 1> vector3({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
+    const Tensor<type, 1> vector3;//({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
 
     assert_true(linear_correlation(vector1, vector3) + solution <= 0.000001, LOG);
 
@@ -39,7 +39,7 @@ void CorrelationsTest::test_linear_correlation()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     type correlation;
@@ -52,7 +52,7 @@ void CorrelationsTest::test_linear_correlation()
 
     assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
 
-    y = x*-1.0;
+    y = -1.0*x;
 
     correlation = linear_correlation(x,y);
     assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
@@ -66,7 +66,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
@@ -78,12 +78,12 @@ void CorrelationsTest::test_spearman_linear_correlation()
     assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
 
-    y = x*-1.0;
+    y = -1.0*x;
 
     assert_true(abs(rank_linear_correlation(x,y)) - 1.0 < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= 1.0, LOG);
 
-    y.initialize(0.1);
+    y.setConstant(0.1);
     correlation = rank_linear_correlation(x,y);
     assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= 1.0, LOG);
@@ -105,7 +105,7 @@ void CorrelationsTest::test_linear_correlation_missing_values()
     vector[4] = 5;
 
     Tensor<type, 1> target;
-    target.set(5);
+    target.resize(5);
     target[0] = 1;
     target[1] = 2;
     target[2] = 3;
@@ -124,7 +124,7 @@ void CorrelationsTest::test_rank_linear_correlation()
 
     Index size = 10;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     type correlation;
@@ -137,7 +137,7 @@ void CorrelationsTest::test_rank_linear_correlation()
 
     assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
 
-    y = x*-1.0;
+    y = -1.0*x;
 
     correlation = rank_linear_correlation(x,y);
     assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
@@ -151,19 +151,19 @@ void CorrelationsTest::test_logistic_correlation()
 
     const Index size = 100;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
 
     Tensor<type, 1> y(size);
     type correlation;
-    y.initialize(0.0);
+    y.setConstant(0.0);
 
     for(Index i= size - (size/2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_missing_values(x.to_column_matrix(), y);
+//    correlation = logistic_correlation_missing_values(x.to_column_matrix(), y);
 
 //    assert_true(correlation <= 0.95, LOG);
 
-//    y.initialize(1.0);
+//    y.setConstant(1.0);
 
 //    for(Index i= size - (size/2); i < size; i++) y[i] = 0;
 
@@ -173,7 +173,7 @@ void CorrelationsTest::test_logistic_correlation()
 
 //    assert_true(correlation >= -0.99, LOG);
 
-//    y.initialize(0.0);
+//    y.setConstant(0.0);
 
 //    correlation = logistic_correlation(x.to_column_matrix(), y);
 
@@ -187,23 +187,23 @@ void CorrelationsTest::test_rank_logistic_correlation()
 
     const Index size = 10;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
 
     Tensor<type, 1> y(size);
 
     type correlation;
 
-    y.initialize(0.0);
+    y.setConstant(0.0);
     for(Index i= size - (size/2); i < size; i++) y[i] = 1;
     correlation = rank_logistic_correlation(x,y);
     assert_true(correlation <= 1, LOG);
 
-    y.initialize(1.0);
+    y.setConstant(1.0);
     for(Index i= size - (size/2); i < size; i++) y[i] = 0;
     correlation = rank_logistic_correlation(x,y);
     assert_true(correlation >= -1, LOG);
 
-    y.initialize(0.0);
+    y.setConstant(0.0);
     correlation = rank_logistic_correlation(x,y);
     assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
 }
@@ -213,12 +213,14 @@ void CorrelationsTest::test_logistic_error_gradient()
 {
     cout << "test_logistic_error_gradient\n";
 
-    const Tensor<type, 1> solution = {0.09296,0.152088};
+    const Tensor<type, 1> solution(2);
 
-    const Tensor<type, 1> error_gradient = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
+//    solution.setValues({0.09296,0.152088});
 
-    assert_true( abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
-    assert_true( abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
+    const Tensor<type, 1> error_gradient;// = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
+
+    assert_true(abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
 }
 
 
@@ -226,12 +228,14 @@ void CorrelationsTest::test_logistic_error_gradient_missing_values()
 {
     cout << "test_logistic_error_gradient\n";
 
-    const Tensor<type, 1> solution = {0.09296,0.152088};
+    const Tensor<type, 1> solution(2);
 
-    const Tensor<type, 1> error_gradient = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
+    //solution.setValues({0.09296,0.152088});
 
-    assert_true( abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
-    assert_true( abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
+    const Tensor<type, 1> error_gradient;// = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
+
+    assert_true(abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
 }
 
 
@@ -245,19 +249,19 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     Tensor<type, 1> y(size);
     Tensor<Index, 1> z(0);
 
-    x.initialize_sequential();
-    z.setRandom(0, size);
+//    x.initialize_sequential();
+    z.setRandom();
 
     type correlation;
 
-    y = x*2.0;
+    y = 2.0*x;
 
     correlation = rank_linear_correlation_missing_values(x,y);
 
     assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= 1.0, LOG);
 
-    y = x*-1.0;
+    y = -1.0*x;
 
     correlation = rank_linear_correlation_missing_values(x, y);
     assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
@@ -273,7 +277,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     vector[4] = 5;
 
     Tensor<type, 1> target;
-    target.set(5);
+    target.resize(5);
     target[0] = 1;
     target[1] = 2;
     target[2] = 3;
@@ -286,7 +290,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     // Test with ties
     Tensor<type, 1> vector_ties;
-    vector_ties.set(5);
+    vector_ties.resize(5);
     vector_ties[0] = 1;
     vector_ties[1] = 1;
     vector_ties[2] = 3;
@@ -294,7 +298,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     vector_ties[4] = 5;
 
     Tensor<type, 1> target_ties;
-    target_ties.set(5);
+    target_ties.resize(5);
     target_ties[0] = 1;
     target_ties[1] = 1;
     target_ties[2] = 3;
@@ -323,16 +327,16 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     size = 100;
 
-    x.set(size);
-    x.initialize_sequential();
+    x.resize(size);
+//    x.initialize_sequential();
 
-    y.set(size);
+    y.resize(size);
 
     for(Index i = 0; i < size/2; i++) y[i] = 0;
 
     for(Index i = size - (size/2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
+//    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
     assert_true(correlation <= 0.95, LOG);
 
@@ -342,23 +346,23 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     for(Index i= size - (size/2); i < size; i++) y[i] = 0.0;
 
-    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
+//    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
     assert_true(correlation >= -0.95, LOG);
 
     // Test
 
-    y.initialize(0.0);
+    y.setConstant(0.0);
 
-    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
+//    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
     assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
 
     // Test
 
-    y.randomize_binary();
+//    y.randomize_binary();
 
-    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
+//    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
     assert_true(correlation < 0.3, LOG);
 }
@@ -370,7 +374,7 @@ void CorrelationsTest::test_autocorrelation()
 
     Index size = 1000;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
     Tensor<type, 1> correlations;
 
     correlations = autocorrelations(x, size/100);
@@ -386,14 +390,14 @@ void CorrelationsTest::test_cross_correlations()
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
 
-    x.initialize_sequential();
-    y.initialize_sequential();
+//    x.initialize_sequential();
+//    y.initialize_sequential();
 
     Tensor<type, 1> cros_correlations;
 
     cros_correlations = cross_correlations(x, y, 10);
-    assert_true(cros_correlations < 5.0, LOG);
-    assert_true(cros_correlations > 0.9, LOG);
+//    assert_true(cros_correlations < 5.0, LOG);
+//    assert_true(cros_correlations > 0.9, LOG);
 }
 
 
@@ -401,10 +405,10 @@ void CorrelationsTest::test_logarithmic_correlation()
 {
     cout << "test_calculate_logarithmic_correlation\n";
 
-    //Perfect case
+    // Perfect case
 
-    const Tensor<type, 1> vector1({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    const Tensor<type, 1> vector2({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
+    const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    const Tensor<type, 1> vector2;//({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
 
     const type solution = 1;
 
@@ -412,8 +416,8 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     assert_true(correl - solution <= 0.0001, LOG);
 
-    const Tensor<type, 1> vector_1({100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,});
-    const Tensor<type, 1> vector_2({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
+    const Tensor<type, 1> vector_1;//({100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,});
+    const Tensor<type, 1> vector_2;//({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
 
     assert_true(logarithmic_correlation(vector_1, vector_2) - solution <= 0.00001, LOG);
 }
@@ -448,7 +452,7 @@ void CorrelationsTest::test_exponential_correlation()
 
     const Index size = 100;
     Tensor<type, 1> x(size);
-    x.initialize_sequential();
+//    x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     for(Index i = 0; i < size; i++)
@@ -457,7 +461,7 @@ void CorrelationsTest::test_exponential_correlation()
     }
 
     type correlation = exponential_correlation(x,y);
-    assert_true(correlation > 0.numeric_limits<type>::max(), LOG);
+    assert_true(correlation > 0.999999, LOG);
 }
 
 
@@ -485,7 +489,7 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
        assert_true(abs(exponential_correlation - 1.0) < 1.0e-3, LOG );
 }
 
-
+/*
 void CorrelationsTest::test_linear_regression()
 {
     cout << "test_linear_regression\n";
@@ -658,7 +662,7 @@ void CorrelationsTest::test_logistic_regression()
 
     RegressionResults log = logistic_regression(x,y);
 
-    assert_true( abs(log.correlation - 0.95) <= 0.01, LOG);
+    assert_true(abs(log.correlation - 0.95) <= 0.01, LOG);
 }
 
 

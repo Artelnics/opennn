@@ -20,7 +20,7 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 {
 }
 
-/*
+
 void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -32,7 +32,7 @@ void ConvolutionalLayerTest::test_constructor()
     assert_true(convolutional_layer.is_empty() == true, LOG);
 
     // Test
-
+/*
     convolutional_layer = OpenNN::ConvolutionalLayer({3,32,64}, {1,2,3});
 
     assert_true(convolutional_layer.get_filters_channels_number() == 3 &&
@@ -41,6 +41,7 @@ void ConvolutionalLayerTest::test_constructor()
                 convolutional_layer.get_filters_number() == 1 &&
                 convolutional_layer.get_filters_rows_number() == 2 &&
                 convolutional_layer.get_filters_columns_number() == 3, LOG);
+*/
 }
 
 
@@ -49,7 +50,7 @@ void ConvolutionalLayerTest::test_destructor()
    cout << "test_destructor\n";
 }
 
-
+/*
 void ConvolutionalLayerTest::test_get_parameters()
 {
     cout << "test_get_parameters\n";
@@ -61,7 +62,7 @@ void ConvolutionalLayerTest::test_get_parameters()
 
     // Test
 
-    new_synaptic_weights.resize(({2,3,2,2}));
+    new_synaptic_weights.resize(2,3,2,2);
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
