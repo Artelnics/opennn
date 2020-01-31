@@ -301,7 +301,7 @@ void NeuralNetworkTest::test_set_parameters()
 
    assert_true(parameters.size() == parameters_number, LOG);
    assert_true(parameters[0] == 0.0, LOG);
-//   assert_true(parameters[parameters_number-1] - parameters_number - 1.0 < numeric_limits<double>::min(), LOG);
+//   assert_true(parameters[parameters_number-1] - parameters_number - 1.0 < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -366,7 +366,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
    cout << "test_calculate_parameters_norm\n";
 
    NeuralNetwork neural_network;
-   double parameters_norm;
+   type parameters_norm;
    Tensor<Index, 1> architecture;
 
    // Test 

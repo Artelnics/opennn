@@ -588,7 +588,6 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics() 
     Tensor<Descriptives, 1> descriptives = calculate_absolute_errors_statistics(targets,outputs);
 
     return descriptives;
-
 }
 
 
@@ -3280,7 +3279,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    {
        positive_likelihood = 1.0;
    }
-   else if(1.0 - specificity == 0.0)
+   else if(abs(1.0 - specificity) < numeric_limits<type>::min())
    {
        positive_likelihood = static_cast<type>(0.0);
    }
@@ -3297,7 +3296,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    {
        negative_likelihood = 1.0;
    }
-   else if(1.0 - sensitivity == 0.0)
+   else if(abs(1 - sensitivity) < numeric_limits<type>::min())
    {
        negative_likelihood = static_cast<type>(0.0);
    }
@@ -3386,7 +3385,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
    //Informedness
 
-   type informedness = sensitivity + specificity - 1.0;
+   type informedness = sensitivity + specificity - 1;
 
    //Markedness
 
@@ -3394,7 +3393,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
    if(true_negative + false_positive == 0)
    {
-       markedness = precision - 1.0;
+       markedness = precision - 1;
    }
    else
    {

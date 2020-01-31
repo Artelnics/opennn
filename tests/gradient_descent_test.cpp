@@ -74,14 +74,14 @@ void GradientDescentTest::test_perform_training()
 
    // Test
 
-   //double old_loss = sum_squared_error.calculate_error({0});
+   //type old_loss = sum_squared_error.calculate_error({0});
 
    gd.set_display(false);
    gd.set_maximum_epochs_number(1);
 
    gd.perform_training();
 
-   //double loss = sum_squared_error.calculate_error({0});
+   //type loss = sum_squared_error.calculate_error({0});
 
    //assert_true(loss < old_loss, LOG);
 
@@ -89,7 +89,7 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double minimum_parameters_increment_norm = 0.1;
+   type minimum_parameters_increment_norm = 0.1;
 
    gd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
    gd.set_loss_goal(0.0);
@@ -104,7 +104,7 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double loss_goal = 0.1;
+   type loss_goal = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
    gd.set_loss_goal(loss_goal);
@@ -121,7 +121,7 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double minimum_loss_increase = 0.1;
+   type minimum_loss_increase = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
    gd.set_loss_goal(0.0);
@@ -136,7 +136,7 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   double gradient_norm_goal = 0.1;
+   type gradient_norm_goal = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
    gd.set_loss_goal(0.0);
@@ -147,7 +147,7 @@ void GradientDescentTest::test_perform_training()
 
    gd.perform_training();
 
-//   double gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
+//   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
 
 }

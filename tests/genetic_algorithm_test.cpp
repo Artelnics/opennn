@@ -100,7 +100,7 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 
     GeneticAlgorithm ga(&ts);
 
-    Tensor<double, 2> loss(4,2);
+    Tensor<type, 2> loss(4,2);
 
     Tensor<type, 1> fitness;
 
@@ -154,7 +154,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     Tensor<type, 1> fitness(4);
 
-    Tensor<double, 2> loss(4,2);
+    Tensor<type, 2> loss(4,2);
 
     ga.set_population_size(4);
 
@@ -210,7 +210,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     Tensor<type, 1> fitness(4);
 
-    Tensor<double, 2> loss(4,2);
+    Tensor<type, 2> loss(4,2);
 
     individual[0] = true; individual[1] = true;
     population[0] = individual;
@@ -336,7 +336,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     DataSet data_set;
 
-    Tensor<double, 2> data;
+    Tensor<type, 2> data;
 
     NeuralNetwork neural_network;
 
@@ -351,9 +351,9 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     for(Index i = 0; i < 20; i++)
     {
-        data(i,0) = static_cast<double>(i);
+        data(i,0) = static_cast<type>(i);
         data(i,1) = 10.0;
-        data(i,2) = static_cast<double>(i);
+        data(i,2) = static_cast<type>(i);
     }
 
     data_set.set(data);
@@ -389,14 +389,14 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
 //    for(Index i = 0; i < 10; i++)
 //    {
-//        data(i,0) = (double)j;
+//        data(i,0) = (type)j;
 //        data(i,1) = rand();
 //        data(i,2) = 1.0;
 //        j+=1;
 //    }
 //    for(Index i = 10; i < 20; i++)
 //    {
-//        data(i,0) = (double)i;
+//        data(i,0) = (type)i;
 //        data(i,1) = rand();
 //        data(i,2) = 0.0;
 //    }

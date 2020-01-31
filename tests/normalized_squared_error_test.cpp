@@ -69,7 +69,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
    Index outputs_number;
    Index hidden_neurons;
 
-   Tensor<double, 2> new_data(2, 2);
+   Tensor<type, 2> new_data(2, 2);
    new_data(0,0) = -1.0;
    new_data(0,1) = -1.0;
    new_data(1,0) = 1.0;
@@ -267,11 +267,11 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    data_set.set_data_random();
    data_set.set_training();
 
-   const double parameters_minimum = -100.0;
-   const double parameters_maximum = 100.0;
+   const type parameters_minimum = -100.0;
+   const type parameters_maximum = 100.0;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<double, 2> filters_1({2,3,2,2}, 0);
+   Tensor<type, 2> filters_1({2,3,2,2}, 0);
    filters_1.setRandom(parameters_minimum,parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Tensor<type, 1> biases_1(2, 0);
@@ -280,7 +280,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_2({2,2,2,2}, 0);
+   Tensor<type, 2> filters_2({2,2,2,2}, 0);
    filters_2.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Tensor<type, 1> biases_2(2, 0);
@@ -291,7 +291,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<double, 2> filters_3({1,2,2,2}, 0);
+   Tensor<type, 2> filters_3({1,2,2,2}, 0);
    filters_3.setRandom(parameters_minimum, parameters_maximum);
    convolutional_layer_3->set_synaptic_weights(filters_3);
    Tensor<type, 1> biases_3(1, 0);
@@ -341,7 +341,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 
    NormalizedSquaredError nse(&neural_network, &data_set);
 
-//   double error;
+//   type error;
 
    Tensor<type, 1> error_terms;
 
@@ -389,8 +389,8 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
    Tensor<type, 1> error_gradient;
 
    Tensor<type, 1> error_terms;
-   Tensor<double, 2> terms_Jacobian;
-   Tensor<double, 2> numerical_Jacobian_terms;
+   Tensor<type, 2> terms_Jacobian;
+   Tensor<type, 2> numerical_Jacobian_terms;
 
    // Test
 

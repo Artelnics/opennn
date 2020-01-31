@@ -118,7 +118,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<Tensor<double, 2>, 1> error_data;
+    Tensor<Tensor<type, 2>, 1> error_data;
 
     // Test
 
@@ -300,7 +300,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
     DataSet data_set;
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor< Tensor<double, 2>, 1> error_data_statistics;
+    Tensor< Tensor<type, 2>, 1> error_data_statistics;
 
     // Test
 
@@ -382,7 +382,7 @@ void TestingAnalysisTest::test_linear_regression()
 
    DataSet data_set;
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    TestingAnalysis ta(&neural_network, &data_set);
 
@@ -512,8 +512,8 @@ void TestingAnalysisTest::test_calculate_confusion()
 
   // Instances* i;
 
-   Tensor<double, 2> actual;
-   Tensor<double, 2> predicted;
+   Tensor<type, 2> actual;
+   Tensor<type, 2> predicted;
 
    Matrix<Index> confusion;
 
@@ -570,22 +570,22 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    double wilcoxon_parameter;
+    type wilcoxon_parameter;
 
     // Test
 
-    double x = 1.5;
-    double y = 2.5;
+    type x = 1.5;
+    type y = 2.5;
 
     wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(x, y);
 
-    assert_true(abs(wilcoxon_parameter) <= numeric_limits<double>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter) <= numeric_limits<type>::min(), LOG);
 
     // Test
 
     wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(y ,x);
 
-    assert_true(abs(wilcoxon_parameter - 1) <= numeric_limits<double>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter - 1) <= numeric_limits<type>::min(), LOG);
 
     // Test
 
@@ -593,7 +593,7 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(x, y);
 
-    assert_true(abs(wilcoxon_parameter - 0.5) <= numeric_limits<double>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter - 0.5) <= numeric_limits<type>::min(), LOG);
 }
 
 
@@ -606,10 +606,10 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    Tensor<double, 2> roc_curve;
+    Tensor<type, 2> roc_curve;
 
     // Test
 
@@ -632,16 +632,16 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
 
-    assert_true(roc_curve(0, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(0, 1) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(1, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(1, 1) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(2, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(2, 1) - 1.0 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(3, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(3, 1) - 1.0 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<double>::min(), LOG);
+    assert_true(roc_curve(0, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(0, 1) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(1, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(1, 1) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(2, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(2, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(3, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(3, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
 
     // Test
 
@@ -664,16 +664,16 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
 
-    assert_true(roc_curve(0, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(0, 1) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(1, 0) <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(1, 1) - 0.5 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(2, 0) - 0.5 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(2, 1) - 0.5 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(3, 0) - 1.0 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(3, 1) - 0.5 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<double>::min(), LOG);
-    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<double>::min(), LOG);
+    assert_true(roc_curve(0, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(0, 1) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(1, 0) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(1, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(2, 0) - 0.5 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(2, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(3, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(3, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
 }
 
 
@@ -686,10 +686,10 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    double area_under_curve;
+    type area_under_curve;
 
     // Test
 
@@ -709,7 +709,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve - 1.0 <= numeric_limits<double>::min(), LOG);
+    assert_true(area_under_curve - 1.0 <= numeric_limits<type>::min(), LOG);
 
     // Test
 
@@ -769,7 +769,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve <= numeric_limits<double>::min(), LOG);
+    assert_true(area_under_curve <= numeric_limits<type>::min(), LOG);
 
 }
 
@@ -783,10 +783,10 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    double optimal_threshold;
+    type optimal_threshold;
 
     // Test
 
@@ -848,7 +848,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
-    assert_true(optimal_threshold - 0.62 <= numeric_limits<double>::min(), LOG);
+    assert_true(optimal_threshold - 0.62 <= numeric_limits<type>::min(), LOG);
 }
 
 
@@ -861,10 +861,10 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    Tensor<double, 2> cumulative_gain;
+    Tensor<type, 2> cumulative_gain;
 
     // Test
 
@@ -902,12 +902,12 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    Tensor<double, 2> cumulative_gain;
+    Tensor<type, 2> cumulative_gain;
 
-    Tensor<double, 2> lift_chart;
+    Tensor<type, 2> lift_chart;
 
     // Test
 
@@ -943,10 +943,10 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    Tensor<double, 2> calibration_plot;
+    Tensor<type, 2> calibration_plot;
 
     // Test
 
@@ -992,7 +992,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> true_positives_indices;
@@ -1014,7 +1014,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     outputs(3, 0) = 0.0;
 
     const Tensor<Index, 1> testing_indices(0, 1, 3);
-    const double threshold = 0.5;
+    const type threshold = 0.5;
 
     true_positives_indices = ta.calculate_true_positive_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
 
@@ -1076,7 +1076,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> false_positives_indices;
@@ -1098,7 +1098,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     outputs(3, 0) = 0.0;
 
     const Tensor<Index, 1> testing_indices(0, 1, 3);
-    const double threshold = 0.5;
+    const type threshold = 0.5;
 
     false_positives_indices = ta.calculate_false_positive_instances(targets.to_tensor(), outputs.to_tensor(),testing_indices, threshold);
 
@@ -1160,7 +1160,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> false_negatives_indices;
@@ -1182,7 +1182,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     outputs(3, 0) = 0.0;
 
     const Tensor<Index, 1> testing_indices(0, 1, 3);
-    const double threshold = 0.5;
+    const type threshold = 0.5;
 
     false_negatives_indices = ta.calculate_false_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
 
@@ -1244,7 +1244,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> true_negatives_indices;
@@ -1266,7 +1266,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     outputs(3, 0) = 0.0;
 
     const Tensor<Index, 1> testing_indices(0, 1, 3);
-    const double threshold = 0.5;
+    const type threshold = 0.5;
 
     true_negatives_indices = ta.calculate_true_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
 
@@ -1328,7 +1328,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     TestingAnalysis ta(&neural_network, &data_set);
 
-    Tensor<double, 2> targets;
+    Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
     // Test
