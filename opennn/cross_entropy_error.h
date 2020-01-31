@@ -96,7 +96,7 @@ public:
 
         calculate_error_gradient(thread_pool_device, batch, forward_propagation, first_order_loss);
 /*
-        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets);
+        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
         first_order_loss.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
 

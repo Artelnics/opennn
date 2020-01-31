@@ -1082,9 +1082,9 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index output_channels_number = layer_pointer->get_filters_number();
             const Index output_rows_number = layer_pointer->get_outputs_rows_number();
             const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-/*
-            layers_delta[i].resize(Tensor<Index, 1>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
-*/
+
+//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
+
         }
         else if(layer_type == Layer::Pooling)
         {
@@ -1093,9 +1093,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index output_channels_number = layer_pointer->get_inputs_channels_number();
             const Index output_rows_number = layer_pointer->get_outputs_rows_number();
             const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-/*
-            layers_delta[i].resize(Tensor<Index, 1>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
-*/
+
+//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
         }
         else if(layer_type == Layer::Perceptron)
         {
@@ -1104,6 +1103,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index neurons_number = layer_pointer->get_neurons_number();
 
             layers_delta[i] = Tensor<type, 2>(batch_instances_number, neurons_number);
+
             layers_delta[i].setRandom();
         }
         else if(layer_type == Layer::Recurrent)

@@ -61,7 +61,7 @@ void FunctionsTest::test_exponential()
     // Trivial case
 
     const Tensor<type, 1> exp = exponential({0});
-    assert_true( abs(exp[0] - 1) <= 10e-3, LOG);
+    assert_true(abs(exp[0] - 1) <= 10e-3, LOG);
 
     //Random numbers
 
@@ -80,7 +80,7 @@ void FunctionsTest::test_logarithm()
     // Trivial case
 
     const Tensor<type, 1> log = logarithm({0});
-    //assert_true( abs(log[0]) <= 10e-3, LOG);
+    //assert_true(abs(log[0]) <= 10e-3, LOG);
 
     //Random numbers
 
@@ -99,7 +99,7 @@ void FunctionsTest::test_power()
     // Trivial case
 
      Tensor<type, 1> pow = power({1},0);
-    assert_true( abs(pow[0] - 1) <= 10e-3, LOG);
+    assert_true(abs(pow[0] - 1) <= 10e-3, LOG);
 
     //Random numbers
 

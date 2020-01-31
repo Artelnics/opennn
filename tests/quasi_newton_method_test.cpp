@@ -143,11 +143,11 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
    // Test 
 
-   old_parameters.initialize(1.0e-3);
-   parameters.initialize(1.0e-6);
+   old_parameters.setConstant(1.0e-3);
+   parameters.setConstant(1.0e-6);
 
-   old_gradient.initialize(1.0e-3);
-   gradient.initialize(1.0e-6);
+   old_gradient.setConstant(1.0e-3);
+   gradient.setConstant(1.0e-6);
 
 //   old_inverse_hessian(0,0) = 0.75;
 //   old_inverse_hessian(0,1) = -0.25;
@@ -243,11 +243,11 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
    // Test 
 
-   old_parameters.initialize(1.0e-3);
-   parameters.initialize(1.0e-6);
+   old_parameters.setConstant(1.0e-3);
+   parameters.setConstant(1.0e-6);
 
-   old_gradient.initialize(1.0e-3);
-   gradient.initialize(1.0e-6);
+   old_gradient.setConstant(1.0e-3);
+   gradient.setConstant(1.0e-6);
 
 //   old_inverse_hessian(0,0) = 0.75;
 //   old_inverse_hessian(0,1) = -0.25;

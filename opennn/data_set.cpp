@@ -7531,7 +7531,7 @@ void DataSet::fill_time_series(const Index& period )
 
     Tensor<type, 2> new_data(rows, data.dimension(1));
 
-    new_data.initialize(static_cast<type>(NAN));
+    new_data.setConstant(static_cast<type>(NAN));
 
     Index j = 1;
 
