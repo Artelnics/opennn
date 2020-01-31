@@ -918,7 +918,7 @@ void StatisticsTest::test_calculate_norm()
    assert_true(l2_norm(vector) == 0.0, LOG);
 
    vector.resize(2);
-   vector.initialize(1);
+   vector.setConstant(1);
 
    assert_true(abs(l2_norm(vector) - sqrt(2.0)) < 1.0e-6, LOG);
 }

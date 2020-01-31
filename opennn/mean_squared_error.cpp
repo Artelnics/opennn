@@ -373,7 +373,7 @@ check();
     }
 
     first_order_loss.loss /= static_cast<type>(training_instances_number);
-    first_order_loss.gradient *= (2.0/static_cast<type>(training_instances_number));
+    first_order_loss.gradient = (2.0/static_cast<type>(training_instances_number))*first_order_loss.gradient;
 */
     return first_order_loss;
 }

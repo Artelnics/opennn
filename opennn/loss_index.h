@@ -321,6 +321,7 @@ public:
 
    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
 
+
    void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
                                  const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,

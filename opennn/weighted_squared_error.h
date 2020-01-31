@@ -40,28 +40,21 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit WeightedSquaredError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
    explicit WeightedSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
 
    explicit WeightedSquaredError(DataSet*);
 
-   // DATA SET & NEURAL NETWORK CONSTRUCTOR
-   explicit WeightedSquaredError(NeuralNetwork*, DataSet*);
-
-   
+   explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
 
    explicit WeightedSquaredError(const tinyxml2::XMLDocument&);
 
-   // COPY CONSTRUCTOR
-
    WeightedSquaredError(const WeightedSquaredError&);
+
+   // Destructor
 
    virtual ~WeightedSquaredError(); 
 
