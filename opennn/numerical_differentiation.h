@@ -13,12 +13,14 @@
 
 #include<iostream>
 #include<vector>
+#include<vector>
+#include<limits>
+#include<cstddef>
 
 // OpenNN includes
 
 #include "config.h"
 #include "tinyxml2.h"
-
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
@@ -69,6 +71,8 @@ public:
    void set_display(const bool&);
 
    void set_default();
+
+   type calculate_eta() const;
 
    type calculate_h(const type&) const;
 

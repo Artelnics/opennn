@@ -657,7 +657,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         }
 
         time(&current_time);
-        elapsed_time = difftime(current_time, beginning_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
 //        previous_selection_error = current_selection_error;
         iteration++;
@@ -757,7 +757,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     results->elapsed_time = elapsed_time;
 
     time(&current_time);
-    elapsed_time = difftime(current_time, beginning_time);
+    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
     // Set data set stuff
 

@@ -1378,7 +1378,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        time(&current_time);
 
-       elapsed_time = difftime(current_time, beginning_time);
+       elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
        // Training history
 

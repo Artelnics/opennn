@@ -1479,7 +1479,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(minimum_element->GetText())
         {
-            descriptives[i].minimum = atof(minimum_element->GetText());
+            descriptives[i].minimum = static_cast<type>(atof(minimum_element->GetText()));
         }
 
         // Maximum
@@ -1497,7 +1497,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(maximum_element->GetText())
         {
-            descriptives[i].maximum = atof(maximum_element->GetText());
+            descriptives[i].maximum = static_cast<type>(atof(maximum_element->GetText()));
         }
 
         // Mean
@@ -1515,7 +1515,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(mean_element->GetText())
         {
-            descriptives[i].mean = atof(mean_element->GetText());
+            descriptives[i].mean = static_cast<type>(atof(mean_element->GetText()));
         }
 
         // Standard deviation
@@ -1533,7 +1533,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(standard_deviation_element->GetText())
         {
-            descriptives[i].standard_deviation = atof(standard_deviation_element->GetText());
+            descriptives[i].standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
         }
 
         // Scaling method

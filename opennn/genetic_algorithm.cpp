@@ -1850,7 +1850,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         }
 
         time(&current_time);
-        elapsed_time = difftime(current_time, beginning_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(reserve_generation_mean)
         {
@@ -1998,7 +1998,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     neural_network_pointer->set_parameters(optimal_parameters);
 
     time(&current_time);
-    elapsed_time = difftime(current_time, beginning_time);
+    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
 
     if(display)

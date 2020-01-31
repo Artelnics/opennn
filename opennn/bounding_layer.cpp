@@ -922,7 +922,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             if(lower_bound_element->GetText())
             {
-                lower_bounds[index-1] = atof(lower_bound_element->GetText());
+                lower_bounds[index-1] = static_cast<type>(atof(lower_bound_element->GetText()));
             }
         }
 
@@ -934,7 +934,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             if(upper_bound_element->GetText())
             {
-                upper_bounds[index-1] = atof(upper_bound_element->GetText());
+                upper_bounds[index-1] = static_cast<type>(atof(upper_bound_element->GetText()));
             }
         }
     }
