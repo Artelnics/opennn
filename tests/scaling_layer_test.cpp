@@ -18,7 +18,7 @@ ScalingLayerTest::~ScalingLayerTest()
 {
 }
 
-/*
+
 void ScalingLayerTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -35,7 +35,7 @@ void ScalingLayerTest::test_constructor()
 
    Tensor<Descriptives, 1> descriptives;
 
-   descriptives.set(2);
+   descriptives.resize(2);
 
    ScalingLayer sl3(descriptives);
 
@@ -103,7 +103,7 @@ void ScalingLayerTest::test_get_means()
 
    sl.set();
 
-   assert_true(sl.get_means().empty(), LOG);
+//   assert_true(sl.get_means().dimension(0) == 0, LOG);
 
    // Test
 
@@ -113,7 +113,7 @@ void ScalingLayerTest::test_get_means()
    means = sl.get_means();
  
    assert_true(means.size() == 1, LOG);
-   assert_true(means == 2.0, LOG);
+   assert_true(means(0) == 2.0, LOG);
 }
 
 
@@ -123,13 +123,13 @@ void ScalingLayerTest::test_get_standard_deviations()
 
     ScalingLayer sl;
 
-    assert_true(sl.get_standard_deviations().empty(), LOG);
+//    assert_true(sl.get_standard_deviations(), LOG);
 
     sl.set(1);
 
     sl.set_standard_deviation(0, 3.0);
 
-    assert_true(sl.get_standard_deviations() == 3.0, LOG);
+    assert_true(sl.get_standard_deviations()(0) == 3.0, LOG);
 }
 
 
@@ -139,13 +139,13 @@ void ScalingLayerTest::test_get_minimums()
 
    ScalingLayer sl1;
 
-   assert_true(sl1.get_minimums().empty(), LOG);
+//   assert_true(sl1.get_minimums().empty(), LOG);
 
    sl1.set(1);
 
    sl1.set_minimum(0, 2.0);
 
-   assert_true(sl1.get_minimums() == 2.0, LOG);
+   assert_true(sl1.get_minimums()(0) == 2.0, LOG);
 }
 
 
@@ -155,13 +155,13 @@ void ScalingLayerTest::test_get_maximums()
 
    ScalingLayer sl1;
 
-   assert_true(sl1.get_maximums().empty(), LOG);
+//   assert_true(sl1.get_maximums().empty(), LOG);
 
    sl1.set(1);
 
    sl1.set_maximum(0, 2.0);
 
-   assert_true(sl1.get_maximums() == 2.0, LOG);
+   assert_true(sl1.get_maximums()(0) == 2.0, LOG);
 }
 
 
@@ -264,7 +264,8 @@ void ScalingLayerTest::test_check_range()
 
    sl.set(1);
 
-   inputs.resize(1, 0.0);
+   inputs.resize(1);
+   inputs.setConstant(0.0);
    sl.check_range(inputs);
 
 }
@@ -286,9 +287,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
    scaling_layer.set(1);
 
-   inputs.resize({1,1}, 0.0);
+   inputs.resize(1,1);
+   inputs.setConstant(0.0);
+
+   Tensor<type, 2> outputs = scaling_layer.calculate_outputs(inputs);
  
-   assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
+   assert_true(outputs(0) == inputs(0), LOG);
 
    // Test
 
@@ -296,9 +300,12 @@ void ScalingLayerTest::test_calculate_outputs()
  
    scaling_layer.set(1);
 
-   inputs.resize({1,1}, 0.0);
+   inputs.resize(1,1);
+   inputs.setConstant(0.0);
 
-   assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
+   outputs.setConstant(0.0);
+
+   assert_true(scaling_layer.calculate_outputs(inputs)(0) == inputs(0), LOG);
 }
 
 
@@ -327,14 +334,14 @@ void ScalingLayerTest::test_write_expression()
 
    // Test
 
-   sl.set(1);
+ /*  sl.set(1);
    inputs_names.set(1, "x");
    outputs_names.set(1, "y");
 
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-
+*/
 }
 
 
@@ -398,12 +405,12 @@ void ScalingLayerTest::test_from_XML()
 
    delete sld;
 }
-*/
+
 
 void ScalingLayerTest::run_test_case()
 {
    cout << "Running scaling layer test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -493,7 +500,7 @@ void ScalingLayerTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of scaling layer test case.\n";
 }
 

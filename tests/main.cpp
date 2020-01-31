@@ -174,7 +174,7 @@ int main()
          tests_passed_count += recurrent_layer_test.get_tests_passed_count();
          tests_failed_count += recurrent_layer_test.get_tests_failed_count();
       }
-      else if(test == "scaling_layer" || test == "")
+      else if(test == "scaling_layer" || test == "sl")
       {
          ScalingLayerTest scaling_layer_test;
          scaling_layer_test.run_test_case();
