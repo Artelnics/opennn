@@ -349,7 +349,7 @@ void QuasiNewtonMethod::set_default()
    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = -999999;
+   loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 

@@ -508,8 +508,8 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
     // Loss index stuff
 
-    type optimum_selection_error = 999999;
-    type optimum_training_error = 999999;
+    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
     Tensor<type, 1> optimum_parameters;
 
     // Optimization algorithm stuff
@@ -518,7 +518,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
     Tensor<type, 1> final_losses(2);
 
-    final_losses.setConstant(999999);
+    final_losses.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> current_loss(2);
 

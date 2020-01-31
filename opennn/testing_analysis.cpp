@@ -1333,7 +1333,7 @@ type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2
             }
             else if(outputs_row[j] == 1.0)
             {
-                outputs_row[j] = 0.999999;
+                outputs_row[j] = 0.numeric_limits<type>::max();
             }
 
             cross_entropy_error -= targets_row[j]*log(outputs_row[j]) + (1.0 - targets_row[j])*log(1.0 - outputs_row[j]);
@@ -2014,7 +2014,7 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     type threshold = static_cast<type>(0.0);
     type optimal_threshold = 0.5;
 
-    type minimun_distance = 999999;
+    type minimun_distance = numeric_limits<type>::max();
     type distance;
 
     Index current_index;
@@ -2081,7 +2081,7 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     type threshold = static_cast<type>(0.0);
     type optimal_threshold = 0.5;
 
-    type minimun_distance = 999999;
+    type minimun_distance = numeric_limits<type>::max();
     type distance;
 
     Index current_index;

@@ -325,7 +325,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 /// Stopping criteria:
 /// <ul> 
-/// <li> Loss goal: -999999.
+/// <li> Loss goal: -numeric_limits<type>::max().
 /// <li> Gradient norm goal: 0.0.
 /// <li> Maximum training time: 1.0e6.
 /// <li> Maximum number of iterations: 100. 
@@ -363,7 +363,7 @@ void ConjugateGradient::set_default()
    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = 999999*(-1.0);
+   loss_goal = numeric_limits<type>::max()*(-1.0);
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
@@ -830,7 +830,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
    // Prevent a possible division by 0
 
-   if(denominator == 0.0)
+   if(abs(denominator) < numeric_limits<type>::min())
    {
       FR_parameter = static_cast<type>(0.0);
    }
@@ -844,7 +844,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
    if(FR_parameter < static_cast<type>(0.0))
       FR_parameter = static_cast<type>(0.0);
 
-   if(FR_parameter > 1.0)
+   if(FR_parameter > static_cast<type>(1.0))
       FR_parameter = 1.0;
 
    return FR_parameter;
@@ -914,7 +914,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
    // Prevent a possible division by 0
 
-   if(denominator == 0.0)
+   if(abs(denominator) < numeric_limits<type>::min())
    {
       PR_parameter = static_cast<type>(0.0);
    }
@@ -930,7 +930,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
       PR_parameter = static_cast<type>(0.0);
    }
 
-   if(PR_parameter > 1.0)
+   if(PR_parameter > static_cast<type>(1.0))
    {
       PR_parameter = 1.0;
    }
@@ -1375,7 +1375,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       // Check for a descent direction 
 
-      if(training_slope(0) >= 0.0)
+      if(training_slope(0) >= static_cast<type>(0.0))
       {
          // Reset training direction
 
@@ -1399,8 +1399,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       learning_rate = directional_point.first;
 
-      if(epoch != 0
-      && abs(learning_rate) < 1.0e-99)
+      if(epoch != 0 && abs(learning_rate) < numeric_limits<type>::min())
       {
          // Reset training direction
 
