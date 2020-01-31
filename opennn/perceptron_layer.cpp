@@ -787,9 +787,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    const Tensor<type, 2> outputs = calculate_combinations(inputs);
-
-    return calculate_activations(outputs);
+    return calculate_activations(calculate_combinations(inputs));
 
 }
 
@@ -841,9 +839,8 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-   Tensor<type, 2> outputs;// = calculate_combinations(inputs, new_synaptic_weights, new_biases);
+   return calculate_activations(calculate_combinations(inputs, new_synaptic_weights, new_biases));
 
-   return outputs;
 }
 
 

@@ -134,18 +134,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    Index instances_number;
    Index inputs_number;
    Index outputs_number;
-   Index hidden_neurons;
-
-//   ScalingLayer* scaling_layer = new ScalingLayer();
-
-   RecurrentLayer* recurrent_layer = new RecurrentLayer();
-
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
    PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
-   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    // Test trivial
 {
@@ -156,7 +147,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(0);
 
    cout<<"out_set_paremeters"<<endl;
 
@@ -165,6 +156,8 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    numerical_error_gradient.resize(parameters_number);
 
    numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+
+   cout<<numerical_error_gradient;
 
 //   error_gradient = mean_squared_error.calculate_training_error_gradient();
 
