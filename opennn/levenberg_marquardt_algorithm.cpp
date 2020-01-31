@@ -867,7 +867,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
       // Elapsed time
 
       time(&current_time);
-      elapsed_time = difftime(current_time, beginning_time);
+      elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
       // Training history loss index
 
@@ -1646,7 +1646,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(damping_parameter_element)
     {
-       const type new_damping_parameter = atof(damping_parameter_element->GetText());
+       const type new_damping_parameter = static_cast<type>(atof(damping_parameter_element->GetText()));
 
        try
        {
@@ -1664,7 +1664,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(minimum_damping_parameter_element)
     {
-       const type new_minimum_damping_parameter = atof(minimum_damping_parameter_element->GetText());
+       const type new_minimum_damping_parameter = static_cast<type>(atof(minimum_damping_parameter_element->GetText()));
 
        try
        {
@@ -1682,7 +1682,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(maximum_damping_parameter_element)
     {
-       const type new_maximum_damping_parameter = atof(maximum_damping_parameter_element->GetText());
+       const type new_maximum_damping_parameter = static_cast<type>(atof(maximum_damping_parameter_element->GetText()));
 
        try
        {
@@ -1700,7 +1700,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(damping_parameter_factor_element)
     {
-       const type new_damping_parameter_factor = atof(damping_parameter_factor_element->GetText());
+       const type new_damping_parameter_factor = static_cast<type>(atof(damping_parameter_factor_element->GetText()));
 
        try
        {
@@ -1718,7 +1718,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(warning_parameters_norm_element)
    {
-      const type new_warning_parameters_norm = atof(warning_parameters_norm_element->GetText());
+      const type new_warning_parameters_norm = static_cast<type>(atof(warning_parameters_norm_element->GetText()));
 
       try
       {
@@ -1736,7 +1736,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(warning_gradient_norm_element)
    {
-      const type new_warning_gradient_norm = atof(warning_gradient_norm_element->GetText());
+      const type new_warning_gradient_norm = static_cast<type>(atof(warning_gradient_norm_element->GetText()));
 
       try
       {
@@ -1754,7 +1754,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(error_parameters_norm_element)
    {
-      const type new_error_parameters_norm = atof(error_parameters_norm_element->GetText());
+      const type new_error_parameters_norm = static_cast<type>(atof(error_parameters_norm_element->GetText()));
 
       try
       {
@@ -1772,7 +1772,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(error_gradient_norm_element)
    {
-      const type new_error_gradient_norm = atof(error_gradient_norm_element->GetText());
+      const type new_error_gradient_norm = static_cast<type>(atof(error_gradient_norm_element->GetText()));
 
       try
       {
@@ -1826,7 +1826,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(minimum_parameters_increment_norm_element)
    {
-      const type new_minimum_parameters_increment_norm = atof(minimum_parameters_increment_norm_element->GetText());
+      const type new_minimum_parameters_increment_norm = static_cast<type>(atof(minimum_parameters_increment_norm_element->GetText()));
 
       try
       {
@@ -1844,7 +1844,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(minimum_loss_increase_element)
    {
-      const type new_minimum_loss_increase = atof(minimum_loss_increase_element->GetText());
+      const type new_minimum_loss_increase = static_cast<type>(atof(minimum_loss_increase_element->GetText()));
 
       try
       {
@@ -1862,7 +1862,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(loss_goal_element)
    {
-      const type new_loss_goal = atof(loss_goal_element->GetText());
+      const type new_loss_goal = static_cast<type>(atof(loss_goal_element->GetText()));
 
       try
       {
@@ -1880,7 +1880,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(gradient_norm_goal_element)
    {
-      const type new_gradient_norm_goal = atof(gradient_norm_goal_element->GetText());
+      const type new_gradient_norm_goal = static_cast<type>(atof(gradient_norm_goal_element->GetText()));
 
       try
       {
@@ -1934,7 +1934,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(maximum_time_element)
    {
-      const type new_maximum_time = atof(maximum_time_element->GetText());
+      const type new_maximum_time = static_cast<type>(atof(maximum_time_element->GetText()));
 
       try
       {

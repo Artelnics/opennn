@@ -760,7 +760,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 /*@todo device*/
 //           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
-           learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
+           learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0) - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0) - pow(beta_1, static_cast<type>(iteration_count)));
 
            // Loss
 
@@ -811,7 +811,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        // Elapsed time
 
        time(&current_time);
-       elapsed_time = difftime(current_time, beginning_time);
+       elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
        // Training history loss index
 

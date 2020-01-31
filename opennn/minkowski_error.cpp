@@ -451,7 +451,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
      {
         const tinyxml2::XMLElement* parameter_element = error_element->FirstChildElement("MinkowskiParameter");
 
-        const type new_Minkowski_parameter = atof(parameter_element->GetText());
+        const type new_Minkowski_parameter = static_cast<type>(atof(parameter_element->GetText()));
 
         try
         {

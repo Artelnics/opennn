@@ -555,7 +555,7 @@ Tensor<type, 2> logistic_derivatives(const Tensor<type, 2>& x)
     {
         const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(1.0 + exponential));
+        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
     }
 
     return y;
@@ -570,7 +570,7 @@ Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>& x)
     {
         const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(1.0 + exponential));
+        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
     }
 
     return y;
@@ -1552,7 +1552,7 @@ void logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
     {
         const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(1.0 + exponential));
+        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
     }
 
 }

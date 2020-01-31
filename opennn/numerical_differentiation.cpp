@@ -167,14 +167,20 @@ void NumericalDifferentiation::set_default()
 }
 
 
+type NumericalDifferentiation::calculate_eta() const
+{
+    return pow(static_cast<type>(10.0), static_cast<type>(-1.0*precision_digits));
+}
+
+
 /// Calculates a proper step size for computing the derivatives, as a function of the inputs point value. 
 /// @param x Input value. 
 
 type NumericalDifferentiation::calculate_h(const type& x) const
 {
-   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   const type eta = calculate_eta();
 
-   return sqrt(eta)*(1.0 + abs(x));
+   return sqrt(eta)*(static_cast<type>(1.0) + abs(x));
 }
 
 
@@ -183,7 +189,7 @@ type NumericalDifferentiation::calculate_h(const type& x) const
 
 Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) const
 {
-   const type eta = pow(10.0,-1*static_cast<Index>(precision_digits));
+   const type eta = calculate_eta();
 
    const Index n = x.size();
 
@@ -191,7 +197,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
    for(Index i = 0; i < n; i++)
    {
-      h[i] = sqrt(eta)*(1.0 + abs(x[i]));
+      h[i] = sqrt(eta)*(static_cast<type>(1.0) + abs(x[i]));
    }
  
    return h;
@@ -203,8 +209,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
 Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
-   cout<<"Hello"<<endl;
-   const type eta = static_cast<type>(pow(10.0,-1*static_cast<Index>(precision_digits)));
+   const type eta = calculate_eta();
 
    const Index n = x.size();
 
@@ -254,7 +259,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
         const type numerator = y[i] - y[i-1];
         const type denominator = x[i] - x[i-1];
 
-        if(denominator != 0.0)
+        if(abs(denominator) < numeric_limits<float>::min())
         {
             derivatives[i] = numerator/denominator;
         }
