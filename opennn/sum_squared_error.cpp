@@ -194,9 +194,9 @@ check();
          }
 */
     }
-/*
-    first_order_loss.gradient *= 2.0;
-*/
+
+    first_order_loss.gradient = 2.0*first_order_loss.gradient;
+
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         first_order_loss.loss += regularization_weight*calculate_regularization();

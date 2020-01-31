@@ -225,7 +225,6 @@ check();
 }
 
 
-
 /// This method separates training instances and calculates batches from the dataset.
 /// It also calculates the outputs and the sum squared error from the targets and outputs.
 /// Returns a sum squared error of the training instances.
@@ -533,7 +532,7 @@ check();
     }
 
     first_order_loss.loss /= normalization_coefficient;
-    first_order_loss.gradient *= (2.0/normalization_coefficient);
+    first_order_loss.gradient = (2.0/normalization_coefficient)*first_order_loss.gradient;
 
     // Regularization
 
