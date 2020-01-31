@@ -4,7 +4,7 @@ typedef float type;
 
 #define NOMINMAX
 
-#define USE_INTEL_MKL
+//#define USE_INTEL_MKL
 
 
 //#define EIGEN_USE_MKL
