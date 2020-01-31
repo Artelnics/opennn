@@ -147,6 +147,74 @@ public:
                                Tensor<type, 2>& combinations) const
    {
 
+       switch (device.get_type())
+       {
+            case Device::EigenDefault:
+            {
+/*
+                DefaultDevice* default_device = device.get_eigen_default_device();
+
+                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+                combinations.device(default_device) = inputs.contract(synaptic_weights, product_dimensions);
+
+                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+
+                combinations.device(default_device) = combinations + biases.broadcast(broadcast);
+*/
+                break;
+            }
+
+            case Device::EigenThreadPool:
+            {
+                ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+/*
+                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+                combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+
+                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+
+                combinations.device(thread_pool_device) = combinations + biases.broadcast(broadcast);
+*/
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device.get_eigen_gpu_device();
+
+                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+                //combinations.device(gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+
+                break;
+           }
+
+
+            #ifdef USE_INTEL_MKL
+
+           case Device::IntelMkl:
+           {
+
+                break;
+           }
+
+            #endif
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                      << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device has not been found.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+
         const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
         combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);

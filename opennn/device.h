@@ -13,23 +13,35 @@ class Device
 {
     public:
 
-        enum device_type{SimpleThreadPoolType, NonBlockingThreadPoolType};
+        enum Type{EigenDefault, EigenThreadPool, EigenGpu, IntelMkl};
 
         explicit Device() {}
 
         virtual ~Device() {}
 
+        Type get_type() const {return type;}
+
+        DefaultDevice* get_eigen_default_device() const {return default_device;}
+
+        ThreadPoolDevice* get_eigen_thread_pool_device() const {return thread_pool_device;}
+
+        GpuDevice* get_eigen_gpu_device() const {return gpu_device;}
+
+
     private:
 
-        SimpleThreadPool* simple_thread_pool;
-        NonBlockingThreadPool* non_blocking_thread_pool;
+        Type type = EigenThreadPool;
 
-        ThreadPoolDevice* thread_pool_device;
-/*
-        static set_device(const string&)
-        {
-            non_blocking_thread_pool = new NonBlockingThreadPool(1);
-        }
-*/
+        DefaultDevice* default_device = nullptr;
+
+        SimpleThreadPool* simple_thread_pool = nullptr;
+        NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+
+        ThreadPoolDevice* thread_pool_device = nullptr;
+
+        GpuDevice* gpu_device = nullptr;
+
+
+
 };
 
