@@ -1248,7 +1248,6 @@ check();
 
 type LossIndex::calculate_training_error_parameters(const Tensor<type, 1>& parameters) const
 {
-    cout<<"calculate_training_error"<<endl;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1266,7 +1265,7 @@ check();
 
     Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+    const Index batches_number = training_batches.dimension(0);
 
     type training_error = static_cast<type>(0.0);
 
@@ -1274,15 +1273,11 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
-        cout<<"batch"<<i<<endl;
-
         const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
 
         training_error += batch_error;
 
     }
-
-
 
     return training_error;
 }
@@ -1398,7 +1393,6 @@ check();
     }
 
     return training_error_gradient;
-
 }
 
 
@@ -1411,9 +1405,7 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-    Tensor<type, 1> ndd = numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
-
-    return ndd;
+    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
 }
 

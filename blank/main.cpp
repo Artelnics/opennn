@@ -64,17 +64,7 @@ int main(void)
 {
     try
     {
-        cout << "Hello Blank Application." << endl;
 
-        Eigen::Tensor<int, 2> a(2, 3);
-        a.setValues({{1, 2, 3}, {6, 5, 4}});
-//        Eigen::array<int, 1> dims({1});
-//        Eigen::array<int, 2> dims({0, 1});
-
-        // Sum columns ({0}) or rows ({1})
-
-        Eigen::array<int, 1> dims = {Eigen::array<int, 1>({1})};
-        Eigen::Tensor<int, 1> b = a.sum(dims);
 
         return 0;
     }

@@ -150,7 +150,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 1, LOG);
-//   assert_true(outputs(0) == 0.0, LOG);
+   assert_true(outputs(0,0) == 0.0, LOG);
 
    // Test
 
@@ -161,8 +161,8 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    inputs.setConstant(0.0);
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
-//   assert_true(outputs.size() == 1, LOG);
-//   assert_true(outputs(0) >= 0.0, LOG);
+   assert_true(outputs.size() == 1, LOG);
+   assert_true(outputs(0) >= 0.0, LOG);
 }
 
 /*
@@ -214,7 +214,7 @@ void ProbabilisticLayerTest::test_from_XML()
 
    delete pld;
 }
-
+*/
 
 void ProbabilisticLayerTest::test_calculate_activation_derivatives()
 {
@@ -222,23 +222,24 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
 
     ProbabilisticLayer probabilistic_layer;
 
-    Tensor<double, 2> combinations;
-    Tensor<double, 2> derivatives;
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> derivatives;
 
     NumericalDifferentiation numerical_differentiation;
 
-    Tensor<double, 2> activations_derivatives;
-    Tensor<double, 2> numerical_activation_derivative;
+    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> numerical_activation_derivative;
 
     // Test
 
     probabilistic_layer.set(1,1);
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-    combinations.resize({1, 1}, 0.0);
+    combinations.resize(1, 1);
+    combinations.setConstant(0.0);
 
     derivatives = probabilistic_layer.calculate_activations_derivatives(combinations);
-    assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<double>::min(), LOG);
+    assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<type>::min(), LOG);
 
     // Test numerical differentiation
 
@@ -246,7 +247,8 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     {
        probabilistic_layer.set(2, 4);
 
-       combinations.resize({1,4}, 1.0);
+       combinations.resize(1,4);
+       combinations.setConstant(1.0);
 
        probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
@@ -256,10 +258,10 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
                                                        &ProbabilisticLayer::calculate_activations,
                                                        combinations);
 
-       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+//       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
     }
 }
-*/
+
 
 void ProbabilisticLayerTest::run_test_case()
 {
@@ -307,7 +309,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    // Activation derivatives
 
-//   test_calculate_activation_derivatives();
+   test_calculate_activation_derivatives();
 
    cout << "End of probabilistic layer test case.\n";
 }

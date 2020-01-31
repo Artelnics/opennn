@@ -980,21 +980,16 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
     Tensor<Tensor<type, 1>, 1> trainable_layers_parameters(trainable_layers_number);
 
-
     Index index = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-///@todo
-  //      trainable_layers_parameters[i] = parameters.get_subvector(index, index + trainable_layers_parameters_number[i]-1);
 
-        trainable_layers_parameters(i)= parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({index + trainable_layers_parameters_number(i)-1}));
+        trainable_layers_parameters(i).resize(trainable_layers_parameters_number(i));
 
-        cout<<trainable_layers_parameters(i);
+        trainable_layers_parameters(i) = parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({trainable_layers_parameters_number(i)}));
 
-        system("pause");
-
-        index += trainable_layers_parameters_number[i];
+        index += trainable_layers_parameters_number(i);
 
     }
 
@@ -1337,8 +1332,10 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
 
 Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
-                                                          const Tensor<type, 1>& parameters) const
+                                                           const Tensor<type, 1>& parameters) const
 {
+    const Index batch_size = inputs.dimension(0);
+
     const Index trainable_layers_number = get_trainable_layers_number();
 
     #ifdef __OPENNN_DEBUG__
@@ -1360,16 +1357,19 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
 
-    Tensor<type, 2> outputs;
+    Tensor<type, 2> outputs(batch_size, trainable_layers_pointers[0]->get_neurons_number());
 
     if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
     {
         outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
     }
+
     else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
+        outputs.resize(batch_size, trainable_layers_pointers[i]->get_neurons_number());
+
         if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
         {
             outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);

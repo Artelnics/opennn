@@ -203,8 +203,6 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 {
     NeuralNetwork neural_network;
 
-//    Tensor<Index, 1> layers_parameters_numbers;
-
     Tensor<Index, 1> architecture(3);
 
     architecture.setValues({1, 2, 3});
@@ -225,14 +223,14 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     Tensor<type, 1> parameters = neural_network.get_parameters();
 
-    cout<<"Hello"<<endl;
-
     Tensor<Tensor<type, 1>, 1> training_parameters = neural_network.get_trainable_layers_parameters(parameters);
 
-    cout<<training_parameters(1);
-    cout<<"bye"<<endl;
-
-
+    assert_true(training_parameters(0).size() == 4, LOG);
+    assert_true(training_parameters(1).size() == 9, LOG);
+    assert_true(training_parameters(0)(0) == 0, LOG);
+    assert_true(training_parameters(0)(2) == 1, LOG);
+    assert_true(training_parameters(1)(0) == 2, LOG);
+    assert_true(training_parameters(1)(6) == 3, LOG);
 
 }
 
