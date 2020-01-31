@@ -158,7 +158,7 @@ check();
     const Index batches_number = training_batches.size();
 
     // Eigen stuff
-/*
+
     Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
     Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
 
@@ -170,7 +170,7 @@ check();
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
         const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-
+/*
         const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -192,17 +192,17 @@ check();
             first_order_loss.loss += loss(0);
             first_order_loss.gradient += gradient;
          }
-
+*/
     }
 
-    first_order_loss.gradient *= 2.0;
+    first_order_loss.gradient = 2.0*first_order_loss.gradient;
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-*/
+
     return first_order_loss;
 }
 
@@ -224,18 +224,18 @@ check();
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
     FirstOrderLoss first_order_loss(this);
-/*
+
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation
-            = neural_network_pointer->calculate_forward_propagation(batch.inputs);
+            = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
 
     const Tensor<type, 2> output_gradient
-            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
+    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
 
-    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
+    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     first_order_loss.loss = batch_error;
     first_order_loss.gradient += batch_error_gradient;
@@ -245,7 +245,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-*/
+
     return first_order_loss;
 }
 

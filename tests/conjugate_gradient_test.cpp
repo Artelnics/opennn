@@ -99,7 +99,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
-
+/*
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);

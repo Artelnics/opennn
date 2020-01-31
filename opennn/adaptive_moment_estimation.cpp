@@ -749,8 +749,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
-//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
-//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
+//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs_2d);
+//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets_2d);
 
            // Neural network
 /*@todo device*/
