@@ -9,10 +9,6 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#ifndef EIGEN_USE_THREADS
-#define EIGEN_USE_THREADS
-#endif
-
 // System includes
 
 #include <cmath>
@@ -115,6 +111,8 @@ public:
 
     virtual void set_parameters(const Tensor<type, 1>&);
 
+    void set_device_pointer(Device*);
+
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
@@ -122,26 +120,24 @@ public:
 
     virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
-    virtual void calculate_error_gradient(const ThreadPoolDevice&, const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
 
     virtual ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-    virtual void calculate_forward_propagation(const ThreadPoolDevice&, const Tensor<type, 2>&, ForwardPropagation&) {}
+    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
     virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    virtual void calculate_output_delta(const ThreadPoolDevice& thread_pool_device,
-                                        const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const {}
+    virtual void calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const {}
 
     virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
                                                   const Tensor<type, 2>&,
                                                   const Tensor<type, 2>&,
                                                   const Tensor<type, 2>&) const;
 
-    virtual void calculate_hidden_delta(const ThreadPoolDevice& thread_pool_device,
-                                        Layer*,
+    virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,
                                         const Tensor<type, 2>&,
                                         const Tensor<type, 2>&,
@@ -173,15 +169,19 @@ public:
 
 protected:
 
-    Device device;
+    Device* device_pointer = nullptr;
 
-        /// Layer type object.
+    /// Layer type object.
 
-        Type layer_type = Perceptron;
+    Type layer_type = Perceptron;
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
+
+    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+
 };
 
 }

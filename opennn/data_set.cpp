@@ -3982,6 +3982,12 @@ void DataSet::set_time_index(const Index& new_time_index)
 }
 
 
+void DataSet::set_device_pointer(Device* new_device_pointer)
+{
+    device_pointer = new_device_pointer;
+}
+
+
 /// Sets a new number of instances in the data set.
 /// All instances are also set for training.
 /// The indices of the inputs and target variables do not change.
@@ -8119,7 +8125,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             }
         }
 
-        return_values[1][i] = variables_outliers;
+        return_values[1](i) = variables_outliers;
     }
 */
     return return_values;
@@ -8920,13 +8926,13 @@ void DataSet::read_csv_1()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if((is_date_time_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
-        || (is_date_time_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
+        if((is_date_time_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
+        || (is_date_time_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
         {
             columns[i].type = DateTime;
         }
-        else if((is_numeric_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
-             || (is_numeric_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
+        else if((is_numeric_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
+             || (is_numeric_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
         {
             columns[i].type = Numeric;
         }
@@ -9559,7 +9565,6 @@ Index DataSet::count_nan() const
 
     return nan_number;
 }
-
 
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const

@@ -137,7 +137,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
       }
       catch(const logic_error&)
       {
-         type_vector(i) = nan("");
+         type_vector(i) = static_cast<type>(nan(""));
       }
    }
 

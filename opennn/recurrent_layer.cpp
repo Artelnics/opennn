@@ -1237,11 +1237,11 @@ Tensor<type, 1> RecurrentLayer::calculate_input_weights_error_gradient(const Ten
     Index input_index = 0;
 
     Tensor<type, 1> input_weights_gradient(parameters_number);
-/*
+
     for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
-
+/*
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
         if(instance%timesteps == 0)
@@ -1272,15 +1272,16 @@ Tensor<type, 1> RecurrentLayer::calculate_input_weights_error_gradient(const Ten
         }
 
         input_weights_gradient += dot(combinations_weights_derivatives, current_layer_deltas).to_vector();
-    }
 */
+    }
+
     return input_weights_gradient;
 }
 
 
 Tensor<type, 1> RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<type, 2> &,
-                                                                          const Layer::ForwardPropagation& forward_propagation,
-                                                                          const Tensor<type, 2> & deltas)
+                                                                           const Layer::ForwardPropagation& forward_propagation,
+                                                                           const Tensor<type, 2> & deltas)
 {
     const Index instances_number = deltas.dimension(0);
     const Index neurons_number = get_neurons_number();
@@ -1423,14 +1424,14 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
        for(Index i = 0; i < inputs_names.size() - 1; i++)
        {
-           buffer << " (" << inputs_names[i] << "*" << input_weights.get_column(j)[i] << ")+";
+           buffer << " (" << inputs_names[i] << "*" << input_weights.get_column(j)(i) << ")+";
        }
 
        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << input_weights.get_column(j)[inputs_names.size() - 1] << "));\n";
 
        for(Index i = 0; i < outputs_names.size() - 1; i++)
        {
-           buffer << " (hidden_states_" << std::to_string(i+1) << "*" << recurrent_weights.get_column(j)[i] << ")+";
+           buffer << " (hidden_states_" << std::to_string(i+1) << "*" << recurrent_weights.get_column(j)(i) << ")+";
        }
 
        buffer << " (hidden_states_" << std::to_string(outputs_names.size()) << "*" << recurrent_weights.get_column(j)[outputs_names.size() - 1] << "));\n";

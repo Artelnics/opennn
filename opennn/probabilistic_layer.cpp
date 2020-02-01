@@ -670,7 +670,6 @@ Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>
 
     Tensor<type, 2> combinations(batch_size,neurons_number);
 
-    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
     combinations = inputs.contract(synaptic_weights, product_dimensions);
 

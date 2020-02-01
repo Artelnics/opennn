@@ -229,6 +229,12 @@ void LossIndex::set(const LossIndex& other_error_term)
 }
 
 
+void LossIndex::set_device_pointer(Device* new_device_pointer)
+{
+   device_pointer = new_device_pointer;
+}
+
+
 /// Sets a pointer to a neural network object which is to be associated to the error term.
 /// @param new_neural_network_pointer Pointer to a neural network object to be associated to the error term.
 

@@ -3522,7 +3522,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index i = 0; i < inputs_number; i++)
        {
-           buffer << inputs_names[i] << "*" << forget_weights.get_column(j)[i] << "+";
+           buffer << inputs_names[i] << "*" << forget_weights.get_column(j)(i) << "+";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -3541,7 +3541,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index i = 0; i < inputs_number; i++)
        {
-           buffer << inputs_names[i] << "*" << input_weights.get_column(j)[i] << "+";
+           buffer << inputs_names[i] << "*" << input_weights.get_column(j)(i) << "+";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -3560,7 +3560,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index i = 0; i < inputs_number; i++)
        {
-           buffer << inputs_names[i] << "*" << state_weights.get_column(j)[i] << "+";
+           buffer << inputs_names[i] << "*" << state_weights.get_column(j)(i) << "+";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)
@@ -3579,7 +3579,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
        for(Index i = 0; i < inputs_number; i++)
        {
-           buffer << inputs_names[i] << "*" << output_weights.get_column(j)[i] << "+";
+           buffer << inputs_names[i] << "*" << output_weights.get_column(j)(i) << "+";
        }
 
        for(Index k = 0; k < neurons_number-1; k++)

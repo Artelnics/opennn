@@ -145,6 +145,12 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 }
 
 
+void OptimizationAlgorithm::set_device_pointer(Device* new_device_pointer)
+{
+   device_pointer = new_device_pointer;
+}
+
+
 /// Sets a pointer to a loss index object to be associated to the optimization algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 

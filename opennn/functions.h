@@ -9,10 +9,6 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#ifndef EIGEN_USE_THREADS
-#define EIGEN_USE_THREADS
-#endif
-
 // System includes
 
 #include <math.h>
@@ -20,8 +16,6 @@
 
 // OpenNN includes
 
-//#include "statistics.h"
-//#include "metrics.h"
 #include "config.h"
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"

@@ -9,9 +9,6 @@
 #ifndef METRICS_H
 #define METRICS_H
 
-#ifndef EIGEN_USE_THREADS
-#define EIGEN_USE_THREADS
-#endif
 
 #include <math.h>
 

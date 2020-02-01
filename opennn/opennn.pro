@@ -159,3 +159,17 @@ SOURCES += \
 #    include(../../Artelnics/opennn_cuda/cuda_config.pri)
 #    include(../../Artelnics/opennn_cuda/cuda_path.pri)
 #}
+
+
+#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblasd
+#else:unix: LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
+
+#INCLUDEPATH += $$PWD/../../openblas/include
+#DEPENDPATH += $$PWD/../../openblas/include
+
+#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a
+#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblasd.a
+#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblas.lib
+#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblasd.lib
+#else:unix: PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a

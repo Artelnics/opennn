@@ -6,22 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef EIGEN_USE_THREADS
-#define EIGEN_USE_THREADS
-#endif
-
-//#define EIGEN_USE_BLAS
-
-//#define EIGEN_TEST_NO_LONGDOUBLE
-
-//#define EIGEN_TEST_NO_COMPLEX
-
-//#define EIGEN_TEST_FUNC cxx11_tensor_cuda
-
-//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE Index
-
-//#define EIGEN_USE_GPU
-
 // System includes
 
 #include <cstring>
@@ -39,48 +23,97 @@
 
 #include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
 
-
-#include "../opennn/config.h"
-//#include "../opennn/device.h"
-
 using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
 
 int main(void)
-{
-
+{          
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+//          Eigen::initParallel();
+
+        // Data set
+/*
+        Device device(Device::EigenSimpleThreadPool);
+
+        ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+
+        const Eigen::array<Eigen::IndexPair<Index>, 1> transposed_product_dimensions = { Eigen::IndexPair<Index>(0, 1) };
+
+        Tensor<type, 2> a(1000,1000);
+        a.setRandom();
+        Tensor<type, 2> b(1000,1000);
+        b.setRandom();
+        Tensor<type, 2> c(1000,1000);
+        c.setRandom();
+/*
+        MatrixXf a(10, 10);
+        a.setRandom();
+        MatrixXf b(10, 10);
+        b.setRandom();
+        MatrixXf c(10, 10);
+        c.setRandom();
+
+        time_t tstart, tend;
+        tstart = time(0);
+
+        Index rows;
+
+        for(int i = 0; i < 1000; i++)
+        {
+            //cout << i << endl;
+
+//            cout << (a*b.transpose()).rows() << endl;
+
+            c.device(*device.get_eigen_thread_pool_device()) = a.contract(b, transposed_product_dimensions);
+        }
+
+
+//        cout << a*b.transpose() << endl;
+
+//        cout << rows << endl;
+
+        tend = time(0);
+        cout << "Time: "<< difftime(tend, tstart) <<" seconds."<< endl;
+
+        cout << c.dimension(0) << endl;
+//        cout << c.dimension(1) << endl;
+
 //      data_set.generate_Rosenbrock_data(1000, 4);
+
+
+        // Device
+
+*/
+
+        Device device(Device::EigenSimpleThreadPool);
+
+        ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+/*
 
         // Data set
 
-        Tensor<type, 2> data(10000,3);
-
-//        data.setValues({{0,1,2},
-//                       {3,4,5},
-//                       {6,7,8},
-//                       {9,10,11},
-//                       {12,13,14},
-//                       {15,16,17}});
+        Tensor<type, 2> data(1000000,1001);
 
         data.setRandom();
 
         DataSet data_set(data);
 
+        data_set.set_device_pointer(&device);
+
         data_set.set_training();
 
-        data_set.set_batch_instances_number(10000);
+        data_set.set_batch_instances_number(1000);
 
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
 
-        const Index hidden_neurons_number = 3;
+        const Index hidden_neurons_number = 1000;
 
         const Index outputs_number = data_set.get_target_variables_number();
 
@@ -105,7 +138,7 @@ int main(void)
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
-
+*/
         cout << "End" << endl;
 
         return 0;

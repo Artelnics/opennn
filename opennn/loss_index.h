@@ -21,6 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 #include "data_set.h"
 #include "neural_network.h"
 #include "numerical_differentiation.h"
@@ -215,6 +216,8 @@ public:
 
    void set(const LossIndex&);
 
+   void set_device_pointer(Device*);
+
    void set_neural_network_pointer(NeuralNetwork*);
 
    void set_data_set_pointer(DataSet*);
@@ -268,7 +271,7 @@ public:
 
    virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
-   virtual void calculate_first_order_loss(const ThreadPoolDevice&, const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
+   virtual void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
@@ -287,7 +290,7 @@ public:
 
    Tensor<Tensor<type, 2>, 1> calculate_layers_delta(const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<type, 2>&) const;
 
-   void calculate_layers_delta(const ThreadPoolDevice& thread_pool_device, const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
+   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -298,8 +301,7 @@ public:
         // Output layer
 
         trainable_layers_pointers[trainable_layers_number-1]
-        ->calculate_output_delta(thread_pool_device,
-                                 forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
+        ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
                                  first_order_loss.output_gradient,
                                  first_order_loss.layers_delta[trainable_layers_number-1]);
 
@@ -310,8 +312,7 @@ public:
           Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
 
           trainable_layers_pointers[i]
-          ->calculate_hidden_delta(thread_pool_device,
-                                   previous_layer_pointer,
+          ->calculate_hidden_delta(previous_layer_pointer,
                                    forward_propagation.layers[i].activations,
                                    forward_propagation.layers[i].activations_derivatives,
                                    first_order_loss.layers_delta[static_cast<Index>(i+1)],
@@ -322,8 +323,7 @@ public:
    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
 
 
-   void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
-                                 const DataSet::Batch& batch,
+   void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  FirstOrderLoss& first_order_loss) const
    {
@@ -356,8 +356,7 @@ public:
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->calculate_error_gradient(thread_pool_device,
-                                                              batch.inputs_2d,
+       trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs_2d,
                                                               forward_propagation.layers[0],
                                                               first_order_loss.layers_delta[0],
                                                               first_order_loss.layers_error_gradient[0]);
@@ -371,7 +370,7 @@ public:
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
-           trainable_layers_pointers[i]->calculate_error_gradient(thread_pool_device,
+           trainable_layers_pointers[i]->calculate_error_gradient(
                    forward_propagation.layers[i-1].activations,
                    forward_propagation.layers[i-1],
                    first_order_loss.layers_delta[i],
@@ -413,6 +412,8 @@ public:
    void check() const;
 
 protected:
+
+   Device* device_pointer = nullptr;
 
    /// Pointer to a neural network object.
 
