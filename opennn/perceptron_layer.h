@@ -146,45 +146,35 @@ public:
                                const Tensor<type, 2>& inputs,
                                Tensor<type, 2>& combinations) const
    {
-
-       switch (device.get_type())
+       const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+/*
+       switch (device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
-/*
-                DefaultDevice* default_device = device.get_eigen_default_device();
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+                combinations.device(*default_device) = biases.broadcast(broadcast);
 
-                combinations.device(default_device) = inputs.contract(synaptic_weights, product_dimensions);
+//                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
 
-                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
-
-                combinations.device(default_device) = combinations + biases.broadcast(broadcast);
-*/
                 break;
             }
 
-            case Device::EigenThreadPool:
+            case Device::EigenSimpleThreadPool:
             {
-                ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
-/*
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+//               combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
 
-                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+//               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
-                combinations.device(thread_pool_device) = combinations + biases.broadcast(broadcast);
-*/
                 break;
             }
 
            case Device::EigenGpu:
            {
-                GpuDevice* gpu_device = device.get_eigen_gpu_device();
-
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 //combinations.device(gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 
@@ -213,16 +203,7 @@ public:
                throw logic_error(buffer.str());
            }
        }
-
-
-        const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
-
-        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
-
-        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
-
-        combinations.device(thread_pool_device) = combinations + biases.broadcast(broadcast);
-
+*/
    }
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
@@ -342,7 +323,6 @@ public:
                                       const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
-
        calculate_combinations(thread_pool_device, inputs, forward_propagation.combinations);
 
        calculate_activations(thread_pool_device, forward_propagation.combinations, forward_propagation.activations);
@@ -472,8 +452,6 @@ protected:
    /// Display messages to screen. 
 
    bool display;
-
-
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"

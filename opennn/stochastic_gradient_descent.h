@@ -3,9 +3,8 @@
 //
 //   S T O C H A S T I C   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R
 //
-//   Carlos Barranquero                                                    
 //   Artificial Intelligence Techniques SL
-//   carlosbarranquero@artelnics.com                                       
+//   artelnics@artelnics.com
 
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H

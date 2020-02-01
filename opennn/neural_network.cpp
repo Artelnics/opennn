@@ -798,6 +798,12 @@ void NeuralNetwork::set_default()
 }
 
 
+void NeuralNetwork::set_device_pointer(Device* new_device_pointer)
+{
+    device_pointer = new_device_pointer;
+}
+
+
 void NeuralNetwork::set_layers_pointers(Tensor<Layer*, 1>& new_layers_pointers)
 {
     layers_pointers = new_layers_pointers;

@@ -117,8 +117,7 @@ public:
 
    LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const ThreadPoolDevice& thread_pool_device,
-                                   const DataSet::Batch& batch,
+   void calculate_first_order_loss(const DataSet::Batch& batch,
                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    FirstOrderLoss& first_order_loss) const
    {
@@ -138,9 +137,9 @@ public:
 
     calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
-    calculate_layers_delta(thread_pool_device, forward_propagation, first_order_loss);
+    calculate_layers_delta(forward_propagation, first_order_loss);
 
-    calculate_error_gradient(thread_pool_device, batch, forward_propagation, first_order_loss);
+    calculate_error_gradient(batch, forward_propagation, first_order_loss);
 
     // Regularization
 

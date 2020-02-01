@@ -7,8 +7,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                             
 
-#ifndef PrincipalComponentsLayer_H
-#define PrincipalComponentsLayer_H
+#ifndef PRINCIPALCOMPONENTSLAYER_H
+#define PRINCIPALCOMPONENTSLAYER_H
 
 // System includes
 

@@ -71,6 +71,12 @@ string Layer::get_type_string() const
     return string();
 }
 
+void Layer::set_device_pointer(Device* new_device_pointer)
+{
+    device_pointer = new_device_pointer;
+}
+
+
 
 void Layer::set_parameters_constant(const type&)
 {

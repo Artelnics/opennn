@@ -145,7 +145,7 @@ type lp_norm(const Tensor<type, 1>& vector, const type &p)
     norm += pow(abs(vector[i]), p);
   }
 
-  norm = pow(norm, 1.0 / p);
+  norm = pow(norm, static_cast<type>(1.0)/p);
 
   return norm;
 }
@@ -1209,7 +1209,7 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
             row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
         }
 
-        minkowski_error += pow(row_minkowski_error, 1.0 / minkowski_parameter);
+        minkowski_error += pow(row_minkowski_error, static_cast<type>(1.0) / minkowski_parameter);
     }
 
     return minkowski_error;

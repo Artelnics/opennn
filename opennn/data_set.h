@@ -30,13 +30,13 @@
 
 // OpenNN includes
 
-//#include "metrics.h"
+#include "config.h"
+#include "device.h"
 #include "statistics.h"
 #include "transformations.h"
 #include "correlations.h"
 #include "opennn_strings.h"
 #include "tinyxml2.h"
-#include "config.h"
 
 // Eigen includes
 
@@ -222,6 +222,7 @@ public:
 
        void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
        {
+
            const Index rows_number = instances.dimension(0);
            const Index inputs_number = inputs.dimension(0);
            const Index targets_number = targets.dimension(0);
@@ -230,14 +231,18 @@ public:
 
            for(Index i = 0; i < rows_number; i++)
            {
+               const Index instance = instances(i);
+
+               #pragma omp parallel for
+
                for(Index j = 0; j < inputs_number; j++)
                {
-                   inputs_2d(i,j) = data(instances[i], inputs[j]);
+                   inputs_2d(i,j) = data(instance, inputs(j));
                }
 
                for(Index j = 0; j < targets_number; j++)
                {
-                   targets_2d(i,j) = data(instances[i], targets[j]);
+                   targets_2d(i,j) = data(instance, targets(j));
                }
            }
 
@@ -422,6 +427,8 @@ public:
    void set(const string&);
 
    void set_default();
+
+   void set_device_pointer(Device*);
 
    // Instances set methods
 
@@ -802,6 +809,8 @@ public:
    Tensor<Index, 2> split_instances(Tensor<Index, 1>&, const Index&) const;
 
 private:
+
+   Device* device_pointer = nullptr;
 
    /// Data file name.
 

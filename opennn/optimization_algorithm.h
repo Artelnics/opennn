@@ -161,6 +161,8 @@ public:
 
    virtual void set_default();
 
+   void set_device_pointer(Device*);
+
    virtual void set_loss_index_pointer(LossIndex*);
 
    virtual void set_display(const bool&);
@@ -196,6 +198,8 @@ public:
    void load(const string&);
 
 protected:
+
+   Device* device_pointer;
 
    /// Pointer to a loss index for a neural network object.
 

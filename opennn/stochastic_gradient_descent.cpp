@@ -799,14 +799,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-   int n = omp_get_max_threads();
-
-   cout << "Threads: " << n << endl;
-
-   NonBlockingThreadPool simple_thread_pool(n);
-
-   ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
-
    // Main loop
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
@@ -814,9 +806,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
 
        const Index batches_number = training_batches.dimension(0);
-
+/*
        parameters_norm = l2_norm(thread_pool_device, parameters);
-
+*/
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        loss = static_cast<type>(0.0);
@@ -826,16 +818,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //         Data set
 
-           batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+//           batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
 //         Neural network
 
-           neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
 //         Loss
 
-           loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
-
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+/*
            loss += first_order_loss.loss;
 
 //         Gradient
@@ -870,10 +862,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
+*/
        }
-
+/*
        gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);
-
+*/
        // Loss
 
        training_error = loss/static_cast<type>(batches_number);
@@ -1011,9 +1004,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-
+/*
        parameters_norm = l2_norm(thread_pool_device, parameters);
-
+*/
        neural_network_pointer->set_parameters(parameters);
 
        selection_error = minimum_selection_error;
