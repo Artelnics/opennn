@@ -75,7 +75,6 @@ public:
    type calculate_eta() const;
 
    type calculate_h(const type&) const;
-
    Tensor<type, 1> calculate_h(const Tensor<type, 1>&) const;
    Tensor<type, 2> calculate_h(const Tensor<type, 2>&) const;
 
