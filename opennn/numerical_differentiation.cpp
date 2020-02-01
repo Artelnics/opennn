@@ -197,7 +197,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
    for(Index i = 0; i < n; i++)
    {
-      h[i] = sqrt(eta)*(static_cast<type>(1.0) + abs(x[i]));
+      h(i) = sqrt(eta)*(static_cast<type>(1.0) + abs(x(i)));
    }
  
    return h;
@@ -256,12 +256,12 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 
     for(Index i = 1; i < size; i++)
     {
-        const type numerator = y[i] - y[i-1];
-        const type denominator = x[i] - x[i-1];
+        const type numerator = y(i) - y[i-1];
+        const type denominator = x(i) - x[i-1];
 
         if(abs(denominator) < numeric_limits<float>::min())
         {
-            derivatives[i] = numerator/denominator;
+            derivatives(i) = numerator/denominator;
         }
         else
         {
