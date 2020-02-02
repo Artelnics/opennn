@@ -1108,7 +1108,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            layers_delta[i] = Tensor<type, 2>(batch_instances_number, neurons_number);
+            layers_delta[i].resize(batch_instances_number, neurons_number);
 
             layers_delta[i].setRandom();
         }
@@ -1126,22 +1126,24 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
             const Index output_columns_number = layer_pointer->get_neurons_number();
 
-            layers_delta[i] = Tensor<type, 2>(batch_instances_number, output_columns_number);
+            layers_delta[i].resize(batch_instances_number, output_columns_number);
         }
         else
         {
             /// @todo add exception
         }
 
-        layers_error_gradient[i] = Tensor<type, 1>(trainable_layers_pointers[i]->get_parameters_number());
+        layers_error_gradient[i].resize(trainable_layers_pointers[i]->get_parameters_number());
         layers_error_gradient[i].setRandom();
     }
 
+    errors.resize(parameters_number);
+
     loss = static_cast<type>(0.0);
 
-    error_gradient = Tensor<type, 1>(parameters_number);
-    regularization_gradient = Tensor<type, 1>(parameters_number);
-    gradient = Tensor<type, 1>(parameters_number);
+    error_gradient.resize(parameters_number);
+    regularization_gradient.resize(parameters_number);
+    gradient.resize(parameters_number);
 
     error_gradient.setRandom();
     regularization_gradient.setRandom();

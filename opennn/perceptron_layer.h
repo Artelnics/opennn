@@ -243,7 +243,7 @@ public:
 
             case Logistic: logistic(combinations, activations); return;
 
-            //case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
+            case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
             case Threshold: threshold(combinations, activations); return;
 
@@ -291,7 +291,7 @@ public:
 
             case Logistic: logistic_derivatives(combinations, activations_derivatives); return;
 
-            //case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
+            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations_derivatives); return;
 
             case Threshold: threshold_derivatives(combinations, activations_derivatives); return;
 
@@ -394,8 +394,7 @@ public:
 
            case Device::EigenGpu:
            {
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
            }
@@ -420,25 +419,28 @@ public:
                                              const Tensor<type, 2>& next_layer_delta,
                                              Tensor<type, 2>& hidden_delta) const
    {
+//   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+//                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
                 break;
             }
 
             case Device::EigenSimpleThreadPool:
             {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+//               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 break;
             }
 
            case Device::EigenGpu:
            {
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
 
                 break;
@@ -455,17 +457,13 @@ public:
                throw logic_error(buffer.str());
            }
        }
-
-       //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
    }
 
    // Gradient methods
 
    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
-   void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
-                                 const Tensor<type, 2>& inputs,
+   void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
                                  const Tensor<type, 2>& deltas,
                                  Tensor<type, 1>& error_gradient)
@@ -475,29 +473,67 @@ public:
 
        // Synaptic weights
 
-       const Index synaptic_weights_number = get_synaptic_weights_number();
        const Index biases_number = get_biases_number();
 
-       Eigen::array<Index, 1> one_dim{{inputs_number*neurons_number}};
+       const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       Tensor<type, 1> synaptic_weights_derivatives(inputs_number*neurons_number);
+       Tensor<type, 1> biases_derivatives(biases_number);
 
-       synaptic_weights_derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions).reshape(one_dim);
+       Tensor<type, 1> synaptic_weights_derivatives(synaptic_weights_number);
 
-       for(Index i = 0; i < synaptic_weights_number; i++)
+       switch(device_pointer->get_type())
        {
-           error_gradient(i) = synaptic_weights_derivatives(i);
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                biases_derivatives.device(*default_device) = deltas.sum(Eigen::array<Index, 1>({0}));
+
+                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({inputs_number*neurons_number}));
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 1>({0}));
+
+                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({inputs_number*neurons_number}));
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
        }
 
        // Biases
 
-       Eigen::Tensor<type, 1> biases_derivatives(neurons_number);
-
-       biases_derivatives.device(thread_pool_device) = deltas.sum(Eigen::array<Index, 1>({0}));
-
        for(Index i = 0; i < biases_number; i++)
        {
            error_gradient(synaptic_weights_number + i) = biases_derivatives(i);
+       }
+
+       for(Index i = 0; i < synaptic_weights_number; i++)
+       {
+           error_gradient(i) = synaptic_weights_derivatives(i);
        }
    }
 

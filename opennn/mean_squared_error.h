@@ -94,7 +94,10 @@ public:
 
        // Loss index
 
-       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<type>(batch_instances_number);
+
+       //Eigen::Tensor<int, 0> AdoubleContractedA = a.contract(a, double_contraction);
+
+//       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<type>(batch_instances_number);
 
        calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
@@ -140,7 +143,46 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        first_order_loss.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d)*(static_cast<type>(2.0)/static_cast<type>(instances_number));
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 first_order_loss.output_gradient.device(*default_device) = (static_cast<type>(2.0)/static_cast<type>(instances_number))
+                         *(forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d);
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                first_order_loss.output_gradient.device(*thread_pool_device) = (static_cast<type>(2.0)/static_cast<type>(instances_number))
+                        *(forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d);
+
+                 return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+
+             default:
+             {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: Layer class.\n"
+                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                       << "Unknown device.\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
    }
 
 
