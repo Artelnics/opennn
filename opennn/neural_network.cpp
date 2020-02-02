@@ -1037,9 +1037,9 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     const Index trainable_layers_number = get_trainable_layers_number();
 
-    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    Tensor<Tensor<type, 1>, 1> layers_parameters = get_trainable_layers_parameters(new_parameters);
+    const Tensor<Tensor<type, 1>, 1> layers_parameters = get_trainable_layers_parameters(new_parameters);
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {

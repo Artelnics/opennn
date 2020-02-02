@@ -166,7 +166,7 @@ public:
 
                combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
 
-               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+//               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
             }
@@ -385,7 +385,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+//               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -479,7 +479,7 @@ public:
 
        Tensor<type, 1> biases_derivatives(biases_number);
 
-       Tensor<type, 1> synaptic_weights_derivatives(synaptic_weights_number);
+       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
 
        switch(device_pointer->get_type())
        {
@@ -489,7 +489,7 @@ public:
 
                 biases_derivatives.device(*default_device) = deltas.sum(Eigen::array<Index, 1>({0}));
 
-                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({synaptic_weights_number}));
+//                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions);
 
                 break;
             }
@@ -500,7 +500,7 @@ public:
 
                 biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 1>({0}));
 
-                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({synaptic_weights_number}));
+//                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions);
 
                 break;
             }
@@ -524,6 +524,18 @@ public:
            }
        }
 
+       Index index = 0;
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           for(Index j = 0; j < inputs_number; j++)
+           {
+               error_gradient(index) = synaptic_weights_derivatives(i, j);
+
+               index++;
+           }
+       }
+
        // Biases
 
        for(Index i = 0; i < biases_number; i++)
@@ -531,10 +543,6 @@ public:
            error_gradient(synaptic_weights_number + i) = biases_derivatives(i);
        }
 
-       for(Index i = 0; i < synaptic_weights_number; i++)
-       {
-           error_gradient(i) = synaptic_weights_derivatives(i);
-       }
    }
 
 

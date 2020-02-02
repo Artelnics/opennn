@@ -405,9 +405,8 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     const Index inputs_number = get_inputs_number();
     const Index parameters_number = get_parameters_number();
 
-    Tensor<type,1>new_synaptic_weights(parameters_number-neurons_number);
-    Tensor<type,1>new_biases(neurons_number);
-
+    Tensor<type,1> new_synaptic_weights(parameters_number-neurons_number);
+    Tensor<type,1> new_biases(neurons_number);
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -430,13 +429,13 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
    new_biases = new_parameters.slice(Eigen::array<Eigen::Index, 1>({neurons_number*inputs_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
 
-   Eigen::array<Index, 2> dim_syn{{inputs_number , neurons_number}};
+   const Eigen::array<Index, 2> dim_syn{{inputs_number, neurons_number}};
 
-   Eigen::array<Index, 2> dim_bias{{1 , neurons_number}};
+   const Eigen::array<Index, 2> dim_bias{{1, neurons_number}};
 
-   Tensor<type,2> w = new_synaptic_weights.reshape(dim_syn);
+   const Tensor<type,2> w = new_synaptic_weights.reshape(dim_syn);
 
-   Tensor<type,2> b = new_biases.reshape(dim_bias);
+   const Tensor<type,2> b = new_biases.reshape(dim_bias);
 
    set_biases(b);
 
