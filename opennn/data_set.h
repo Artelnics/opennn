@@ -22,11 +22,11 @@
 #include <ctime>
 #include <exception>
 #include <regex>
-//#include <math.h>
 #include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+
 
 // OpenNN includes
 
@@ -38,14 +38,13 @@
 #include "opennn_strings.h"
 #include "tinyxml2.h"
 
-// Eigen includes
-
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-
 #ifdef __OPENNN_CUDA__
     #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
 #endif
+
+// Eigen includes
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -220,7 +219,7 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+       void fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets);
 
        DataSet* data_set_pointer = nullptr;
 
@@ -366,6 +365,20 @@ public:
    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
+
+   static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
+   {
+       const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+       vector<Index> new_vector(static_cast<size_t>(size));
+
+       for(size_t i = 0; i < size; i++)
+       {
+           new_vector[i] = tensor(i);
+       }
+
+       return new_vector;
+   }
 
    // Members get methods
 
@@ -877,6 +890,9 @@ private:
    Index gmt = 0;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
+
+   Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"

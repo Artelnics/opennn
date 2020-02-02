@@ -15,7 +15,7 @@ type sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     const auto error = y - x;
 
-    const Eigen::array<Eigen::IndexPair<Index>, 2> product_dimensions = { Eigen::IndexPair<Index>(0, 0), Eigen::IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     const Tensor<type, 0> sse = error.contract(error, product_dimensions);
 

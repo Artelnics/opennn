@@ -868,8 +868,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Calculate loss training_slope
 
-      Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-
       const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
 
 //      const type training_slope = dot(gradient/gradient_norm, training_direction);

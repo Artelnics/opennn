@@ -817,7 +817,6 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
    type FR_parameter = static_cast<type>(0.0);
 
-   Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
 
    const Tensor<type, 0> dot_numerator = gradient.contract(gradient, product_vector_vector);
    const Tensor<type, 0> dot_denominator = old_gradient.contract(old_gradient, product_vector_vector);
@@ -900,8 +899,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     #endif
 
    type PR_parameter = static_cast<type>(0.0);
-
-   Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product
 
    const Tensor<type, 0> dot_numerator = (gradient-old_gradient).contract(gradient, product_vector_vector);
    const Tensor<type, 0> dot_denominator = old_gradient.contract(old_gradient, product_vector_vector);
@@ -1366,8 +1363,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
 
       // Calculate loss training_slope
-
-      Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
 
       training_slope = (gradient/gradient_norm).contract(training_direction, product_vector_vector);
 

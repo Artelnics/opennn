@@ -5431,9 +5431,6 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 
         for(Index j = 0; j < principal_components_number; j++)
         {
-
-            Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-
             Tensor<type, 0> dot = (inputs.chip(instance_index, 0)).contract(principal_components.chip(j,0),product_vector_vector);
 
             new_data(i,j) = dot(0);
@@ -9631,47 +9628,46 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
 }
 
 
-void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
+void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets)
 {
-    const Index rows_number = instances.dimension(0);
-    const Index inputs_number = inputs.dimension(0);
-    const Index targets_number = targets.dimension(0);
+    const Index rows_number = instances.size();
+    const Index inputs_number = inputs.size();
+    const Index targets_number = targets.size();
 
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
 
+
+    const Index* instances_pointer = instances.data();
+    const Index* inputs_pointer = inputs.data();
+    const Index* targets_pointer = targets.data();
+
     const type* data_pointer = data.data();
     type* inputs_2d_pointer = inputs_2d.data();
     type* targets_2d_pointer = targets_2d.data();
-
-    std::vector<Index> instances_std(1000, 12);
-    std::vector<Index> inputs_std(1000, 12);
-    std::vector<Index> targets_std(1000, 12);
 
     Index instance;
     Index variable;
 
     for(Index i = 0; i < rows_number; i++)
     {
-        instance = instances_std[i];
+        instance = instances[i];
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            variable = inputs_std[j];
+            variable = inputs[j];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
-/*
-        for(Index j = 0; j < targets_number; j++)
-        {
-            variable = targets(j);
 
-            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
-*/
+//        for(Index j = 0; j < targets_number; j++)
+//        {
+//            variable = targets_pointer[j];
+
+//            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+//        }
     }
-
 }
 
 

@@ -887,8 +887,6 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
     Tensor<type, 1> error_gradient(parameters_number);
     error_gradient.setZero();
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(1, 1) };
-
     Tensor<type, 2> inputs_dot_delta = layer_inputs.contract(layer_deltas, product_matrix_transpose_vector);
 
     for(Index i = 0; i < inputs_dot_delta.size(); i++)

@@ -738,8 +738,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+   const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
+   const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -813,56 +816,30 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        loss = static_cast<type>(0.0);
 
+       const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
+
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
 
 //         Data set
 
-           batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
-/*
+//           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+
 //         Neural network
 
-//           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
 //         Loss
 
-           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
-           loss += first_order_loss.loss;
+//           loss += first_order_loss.loss;
 
 //         Gradient
 
-           initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+//           update_parameters(first_order_loss);
 
-           parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
 
-           if(momentum > 0 && !nesterov)
-           {
-               parameters_increment.device(thread_pool_device) += last_increment*momentum;
-
-               last_increment = parameters_increment;
-
-               parameters.device(thread_pool_device) += parameters_increment;
-           }
-           else if(momentum > 0 && nesterov)
-           {
-               parameters_increment.device(thread_pool_device) += last_increment*momentum;
-
-               last_increment = parameters_increment;
-
-               nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
-
-               parameters.device(thread_pool_device) += nesterov_increment;
-           }
-           else
-           {
-               parameters.device(thread_pool_device) = parameters + parameters_increment;
-           }
-
-           neural_network_pointer->set_parameters(parameters);
-
-           learning_rate_iteration++;
-*/
        }
 /*
        gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);

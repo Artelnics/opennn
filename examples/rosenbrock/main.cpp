@@ -36,13 +36,15 @@ int main(void)
 
 //          Eigen::initParallel();
 
+//        Eigen::array<Index, 10> a;
+
         // Data set
 /*
         Device device(Device::EigenSimpleThreadPool);
 
         ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
 
-        const Eigen::array<Eigen::IndexPair<Index>, 1> transposed_product_dimensions = { Eigen::IndexPair<Index>(0, 1) };
+        const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(0, 1)};
 
         Tensor<type, 2> a(1000,1000);
         a.setRandom();
@@ -50,7 +52,7 @@ int main(void)
         b.setRandom();
         Tensor<type, 2> c(1000,1000);
         c.setRandom();
-/*
+
         MatrixXf a(10, 10);
         a.setRandom();
         MatrixXf b(10, 10);
@@ -91,8 +93,6 @@ int main(void)
 */
 
         Device device(Device::EigenSimpleThreadPool);
-
-        ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
 
         // Data set
 
