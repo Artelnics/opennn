@@ -276,7 +276,6 @@ void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-
              break;
         }
 
@@ -316,14 +315,13 @@ void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
-    y = x.tanh();
-
     switch(device_pointer->get_type())
     {
          case Device::EigenDefault:
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             y.device(*default_device) = x.tanh();
 
              break;
          }
@@ -332,13 +330,16 @@ void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            y.device(*thread_pool_device) = x.tanh();
+
              break;
          }
 
         case Device::EigenGpu:
         {
-             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+             //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
+             //y.device(gpu_device) = x.tanh();
 
              break;
         }
@@ -933,22 +934,20 @@ void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
     {
          case Device::EigenDefault:
          {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+             y.setConstant(1.0);
 
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+            y.setConstant(1.0);
 
              break;
          }
 
         case Device::EigenGpu:
         {
-             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -964,8 +963,6 @@ void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
             throw logic_error(buffer.str());
         }
     }
-
-    y.setConstant(1.0);
 }
 
 
@@ -977,6 +974,8 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.device(*default_device) = x.constant(1.0) - x.tanh().square();
+
              break;
          }
 
@@ -984,13 +983,16 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            y.device(*thread_pool_device) = x.constant(1.0) - x.tanh().square();
+
+            break;
          }
 
         case Device::EigenGpu:
         {
-             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+             //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
+             //y.device(*gpu_device) = x.constant(1.0) - x.tanh().square();
 
              break;
         }
@@ -1006,8 +1008,6 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
             throw logic_error(buffer.str());
         }
     }
-
-    y = x.constant(1.0) - x.tanh()*x.tanh();
 }
 
 

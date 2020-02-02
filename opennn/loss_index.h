@@ -120,6 +120,7 @@ public:
 
        type loss;
 
+       Tensor<type, 1> errors;
        Tensor<type, 1> error_gradient;
        Tensor<type, 1> regularization_gradient;
        Tensor<type, 1> gradient;
@@ -360,12 +361,12 @@ public:
                                                               forward_propagation.layers[0],
                                                               first_order_loss.layers_delta[0],
                                                               first_order_loss.layers_error_gradient[0]);
-
+/*
        for(Index i = 0; i < trainable_layers_parameters_number[0]; i++)
        {
             first_order_loss.error_gradient[i] = first_order_loss.layers_error_gradient[0](i);
        }
-
+*/
        index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
@@ -375,12 +376,12 @@ public:
                    forward_propagation.layers[i-1],
                    first_order_loss.layers_delta[i],
                    first_order_loss.layers_error_gradient[i]);
-
+/*
            for(Index j = 0; j < trainable_layers_parameters_number[i]; j++)
            {
                 first_order_loss.error_gradient[index + j] = first_order_loss.layers_error_gradient[i](j);
            }
-
+*/
            index += trainable_layers_parameters_number[i];
        }
    }
@@ -437,6 +438,8 @@ protected:
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
    Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(0, 0)}; // Matrix times vector, (0,0) matrix is transpose
+
+   Eigen::array<IndexPair<Index>, 2> double_contraction = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
 };
 

@@ -3076,7 +3076,7 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 
     Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
     Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
-//    Eigen::Tensor<int, 1> b = a.sum(dims);
+//    Tensor<int, 1> b = a.sum(dims);
 
     const Tensor<type, 1> sum_columns = matrix.sum(columns);//.calculate_columns_sum();
     const Tensor<type, 1> sum_rows = matrix.sum(rows);//.calculate_rows_sum();

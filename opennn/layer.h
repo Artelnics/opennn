@@ -129,16 +129,88 @@ public:
 
     virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
     {
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 break;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                 break;
+             }
+
+            case Device::EigenGpu:
+            {
+                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+
+             default:
+             {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: Layer class.\n"
+                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                       << "Unknown device.\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
+
+
         return activations_derivatives*output_gradient;
     }
-
 
 
     void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
                                 const Tensor<type, 2>& output_gradient,
                                 Tensor<type, 2>& output_delta) const
     {
- //       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 output_delta.device(*default_device) = activations_derivatives*output_gradient;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+
+             default:
+             {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: Layer class.\n"
+                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                       << "Unknown device.\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
     }
 
 
