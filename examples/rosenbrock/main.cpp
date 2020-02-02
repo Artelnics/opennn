@@ -93,7 +93,6 @@ int main(void)
         Device device(Device::EigenSimpleThreadPool);
 
         ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
-/*
 
         // Data set
 
@@ -122,6 +121,7 @@ int main(void)
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+        neural_network.set_device_pointer(&device);
 
         // Training strategy
 
@@ -133,12 +133,14 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(MeanSquaredError::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10000);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
+        training_strategy.set_device_pointer(&device);
+
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
-*/
+
         cout << "End" << endl;
 
         return 0;

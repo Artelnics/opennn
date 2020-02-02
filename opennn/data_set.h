@@ -220,33 +220,7 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
-       {
-
-           const Index rows_number = instances.dimension(0);
-           const Index inputs_number = inputs.dimension(0);
-           const Index targets_number = targets.dimension(0);
-
-           const Tensor<type, 2>& data = data_set_pointer->get_data();
-
-           for(Index i = 0; i < rows_number; i++)
-           {
-               const Index instance = instances(i);
-
-               #pragma omp parallel for
-
-               for(Index j = 0; j < inputs_number; j++)
-               {
-                   inputs_2d(i,j) = data(instance, inputs(j));
-               }
-
-               for(Index j = 0; j < targets_number; j++)
-               {
-                   targets_2d(i,j) = data(instance, targets(j));
-               }
-           }
-
-       }
+       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
        DataSet* data_set_pointer = nullptr;
 
@@ -332,6 +306,10 @@ public:
    Tensor<Index, 1> get_unused_variables_indices() const;
    Tensor<Index, 1> get_input_variables_indices() const;
    Tensor<Index, 1> get_target_variables_indices() const;
+
+   vector<Index> get_input_variables_indices_stl() const;
+   vector<Index> get_target_variables_indices_stl() const;
+
 
    VariableUse get_variable_use(const Index&) const;
    Tensor<VariableUse, 1> get_variables_uses() const;
