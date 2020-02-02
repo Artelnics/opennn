@@ -2161,12 +2161,6 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_output_delta(const Tensor<type, 2> &, const Tensor<type, 2> & output_gradient) const
-{
-    return output_gradient;
-}
-
-
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                                 const Tensor<type, 2>&,
                                                                 const Tensor<type, 2>&,

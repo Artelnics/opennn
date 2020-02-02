@@ -1135,12 +1135,6 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 }
 
 
-Tensor<type, 2> RecurrentLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-{
-    return activations_derivatives*output_gradient;
-}
-
-
 Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                       const Tensor<type, 2>&,
                                                       const Tensor<type, 2>& activations_derivatives,

@@ -827,11 +827,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //         Neural network
 
-           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+//           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
 //         Loss
 
-//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
 //           loss += first_order_loss.loss;
 

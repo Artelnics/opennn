@@ -127,9 +127,20 @@ public:
 
     // Deltas
 
-    virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+    virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
+    {
+        return activations_derivatives*output_gradient;
+    }
 
-    virtual void calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const {}
+
+
+    void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+                                const Tensor<type, 2>& output_gradient,
+                                Tensor<type, 2>& output_delta) const
+    {
+ //       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
+    }
+
 
     virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
                                                   const Tensor<type, 2>&,
