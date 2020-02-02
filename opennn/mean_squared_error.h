@@ -108,15 +108,12 @@ public:
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
-
            first_order_loss.loss += regularization_weight*calculate_regularization();
 
            first_order_loss.regularization_gradient = calculate_regularization_gradient();
 
            first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
-
        }
-
    }
 
    // Error terms methods

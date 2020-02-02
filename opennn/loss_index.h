@@ -294,9 +294,9 @@ public:
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
         if(trainable_layers_number == 0) return;
+
+        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
         // Output layer
 

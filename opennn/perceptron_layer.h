@@ -331,16 +331,6 @@ public:
 
    // Delta methods
 
-   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                               const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const
-   {      
-//       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
-   }
-
-
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
@@ -351,26 +341,124 @@ public:
    {
        const Type next_layer_type = next_layer_pointer->get_type();
 
-       if(next_layer_type == Perceptron)
+       switch (next_layer_type)
        {
-           const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+            case Perceptron:
 
+            calculate_hidden_delta_perceptron(next_layer_pointer, activations_derivatives, next_layer_delta, hidden_delta);
 
-           const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
+            break;
 
-//           hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
-//           hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
-       }
-       else if(next_layer_type == Probabilistic)
-       {
-        //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-       }
-       else
-       {
-           /// @todo Throw exception.
+            case Probabilistic:
+
+           break;
+
+       default:
+
+           break;
        }
    }
 
+   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
+                                          const Tensor<type, 2>& activations_derivatives,
+                                          const Tensor<type, 2>& next_layer_delta,
+                                          Tensor<type, 2>& hidden_delta) const
+   {
+       const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+
+       const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+
+                hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+
+               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+   }
+
+
+   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
+                                             const Tensor<type, 2>&,
+                                             const Tensor<type, 2>& activations_derivatives,
+                                             const Tensor<type, 2>& next_layer_delta,
+                                             Tensor<type, 2>& hidden_delta) const
+   {
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+   }
 
    // Gradient methods
 

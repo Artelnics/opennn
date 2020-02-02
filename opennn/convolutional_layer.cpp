@@ -332,12 +332,6 @@ Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(cons
 }
 
 
-Tensor<type, 2> ConvolutionalLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-{
-    return activations_derivatives*output_gradient;
-}
-
-
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                           const Tensor<type, 2>& activations,
                                                           const Tensor<type, 2>& activations_derivatives,

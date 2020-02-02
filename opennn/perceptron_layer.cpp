@@ -868,12 +868,6 @@ Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const T
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-{
-    return activations_derivatives*output_gradient;
-}
-
-
 Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                        const Tensor<type, 2>&,
                                                        const Tensor<type, 2>& activations_derivatives,

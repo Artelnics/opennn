@@ -288,12 +288,6 @@ Tensor<type, 2> PoolingLayer::calculate_max_pooling_activations_derivatives(cons
 }
 
 
-Tensor<type, 2> PoolingLayer::calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>& output_gradient) const
-{
-    return output_gradient;
-}
-
-
 Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                     const Tensor<type, 2>& activations,
                                                     const Tensor<type, 2>& activations_derivatives,

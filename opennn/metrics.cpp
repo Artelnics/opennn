@@ -1307,7 +1307,4 @@ Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& vector)
   return hessian;
 }
 
-
 }
-
-

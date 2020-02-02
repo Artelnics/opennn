@@ -180,8 +180,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    Layer::ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>& inputs);

@@ -167,18 +167,6 @@ Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type
  }
 
 
-Tensor<type, 2> Layer::calculate_output_delta(const Tensor<type, 2> &, const Tensor<type, 2> &) const
- {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_output_delta(const Tensor<type, 2> &, const Tensor<type, 2> &) const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-
 Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
                                              const Tensor<type, 2> &,
                                              const Tensor<type, 2> &,
