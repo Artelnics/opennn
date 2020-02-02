@@ -129,45 +129,9 @@ public:
 
     virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
     {
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                 break;
-             }
-
-             case Device::EigenSimpleThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                 break;
-             }
-
-            case Device::EigenGpu:
-            {
-                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 break;
-            }
-
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: Layer class.\n"
-                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
-        }
-
 
         return activations_derivatives*output_gradient;
     }
-
 
     void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
                                 const Tensor<type, 2>& output_gradient,
@@ -195,7 +159,7 @@ public:
 
             case Device::EigenGpu:
             {
-                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                  break;
             }

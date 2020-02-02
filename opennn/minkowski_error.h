@@ -79,11 +79,6 @@ public:
 
    FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const {return FirstOrderLoss();}
 
-   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
-   {
-
-   }
-
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,

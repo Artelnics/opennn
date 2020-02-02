@@ -272,7 +272,37 @@ public:
 
    virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
-   virtual void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
+   virtual void calculate_error(FirstOrderLoss&) const {}
+
+   void calculate_first_order_loss(const DataSet::Batch& batch,
+                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                   FirstOrderLoss& first_order_loss) const
+   {
+       // Loss index
+
+       calculate_errors(batch, forward_propagation, first_order_loss);
+
+       calculate_error(first_order_loss);
+
+       calculate_output_gradient(batch, forward_propagation, first_order_loss);
+
+       calculate_layers_delta(forward_propagation, first_order_loss);
+
+       calculate_error_gradient(batch, forward_propagation, first_order_loss);
+
+       first_order_loss.gradient = first_order_loss.error_gradient;
+
+       // Regularization
+
+       if(regularization_method != RegularizationMethod::NoRegularization)
+       {
+           first_order_loss.loss += regularization_weight*calculate_regularization();
+
+           first_order_loss.regularization_gradient = calculate_regularization_gradient();
+
+           first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
+       }
+   }
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
@@ -322,6 +352,58 @@ public:
    }
 
    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
+
+   virtual void calculate_errors(const DataSet::Batch& batch,
+                         const NeuralNetwork::ForwardPropagation& forward_propagation,
+                         FirstOrderLoss& first_order_loss) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 first_order_loss.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                first_order_loss.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+
+                 return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+
+             default:
+             {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: MeanSquaredError class.\n"
+                       << "void calculate_errors() const method.\n"
+                       << "Unknown device.\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
+   }
 
 
    void calculate_error_gradient(const DataSet::Batch& batch,
@@ -436,11 +518,10 @@ protected:
 
    bool display = true;
 
-   Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-   Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(0, 0)}; // Matrix times vector, (0,0) matrix is transpose
+   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+   const Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(0, 0)}; // Matrix times vector, (0,0) matrix is transpose
 
-   Eigen::array<IndexPair<Index>, 2> double_contraction = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
-
+   const Eigen::array<IndexPair<int>, 2> double_contraction = {IndexPair<int>(0, 0), IndexPair<int>(1, 1)};
 };
 
 }

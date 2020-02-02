@@ -69,46 +69,6 @@ public:
 
    FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch& batch,
-                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                   FirstOrderLoss& first_order_loss) const
-   {
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-        // Data set
-
-        const Index batch_instances_number = batch.inputs_2d.dimension(0);
-
-        // Neural network
-
-        const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-        // Loss index
-
-        calculate_output_gradient(batch, forward_propagation, first_order_loss);
-
-        calculate_layers_delta(forward_propagation, first_order_loss);
-
-        calculate_error_gradient(batch, forward_propagation, first_order_loss);
-/*
-        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-        first_order_loss.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
-
-        // Regularization
-
-        if(regularization_method != RegularizationMethod::NoRegularization)
-        {
-            first_order_loss.loss += regularization_weight*calculate_regularization();
-            first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
-        }
-*/
-   }
-
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,

@@ -80,45 +80,6 @@ public:
 
    FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch& batch,
-                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                   FirstOrderLoss& first_order_loss) const
-   {
-       // Data set
-
-       const Index batch_instances_number = batch.inputs_2d.dimension(0);
-
-       // Neural network
-
-       const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-       // Loss index
-
-
-       //Eigen::Tensor<int, 0> AdoubleContractedA = a.contract(a, double_contraction);
-
-//       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets_2d)/ static_cast<type>(batch_instances_number);
-
-       calculate_output_gradient(batch, forward_propagation, first_order_loss);
-
-       calculate_layers_delta(forward_propagation, first_order_loss);
-
-       calculate_error_gradient(batch, forward_propagation, first_order_loss);
-
-       first_order_loss.gradient = first_order_loss.error_gradient;
-
-       // Regularization
-
-       if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           first_order_loss.loss += regularization_weight*calculate_regularization();
-
-           first_order_loss.regularization_gradient = calculate_regularization_gradient();
-
-           first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
-       }
-   }
-
    // Error terms methods
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -128,6 +89,57 @@ public:
    string get_error_type_text() const;
 
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
+   void calculate_error(FirstOrderLoss& first_order_loss) const
+   {
+       const Index batch_instances_number = first_order_loss.errors.dimension(0);
+
+       Tensor<type, 0> sum_squared_error;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+//                sum_squared_error.device(*default_device) = first_order_loss.errors.contract(first_order_loss.errors, double_contraction);
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+//               sum_squared_error.device(*thread_pool_device) = first_order_loss.errors.contract(first_order_loss.errors, double_contraction);
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+
+//       first_order_loss.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+   }
+
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -141,7 +153,7 @@ public:
 
         const Index instances_number = data_set_pointer->get_training_instances_number();
 
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const type coefficient = static_cast<type>(2.0)/static_cast<type>(instances_number);
 
         switch(device_pointer->get_type())
         {
@@ -149,8 +161,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 first_order_loss.output_gradient.device(*default_device) = (static_cast<type>(2.0)/static_cast<type>(instances_number))
-                         *(forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d);
+                 first_order_loss.output_gradient.device(*default_device) = coefficient*first_order_loss.errors;
 
                  return;
              }
@@ -159,10 +170,9 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                first_order_loss.output_gradient.device(*thread_pool_device) = (static_cast<type>(2.0)/static_cast<type>(instances_number))
-                        *(forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d);
+                first_order_loss.output_gradient.device(*thread_pool_device) = coefficient*first_order_loss.errors;
 
-                 return;
+                return;
              }
 
             case Device::EigenGpu:
