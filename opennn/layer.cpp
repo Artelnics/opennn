@@ -26,46 +26,25 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-        case PrincipalComponents:
-        {
-            return "PrincipalComponents";
-        }
-        case Convolutional:
-        {
-            return "Convolutional";
-        }
-        case Perceptron:
-        {
-            return "Perceptron";
-        }
-        case Bounding:
-        {
-            return "Bounding";
-        }
-        case Pooling:
-        {
-            return "Pooling";
-        }
-        case Probabilistic:
-        {
-            return "Probabilistic";
-        }
-        case LongShortTermMemory:
-        {
-            return "LongShortTermMemory";
-        }
-        case Recurrent:
-        {
-            return "Recurrent";
-        }
-        case Scaling:
-        {
-            return "Scaling";
-        }
-        case Unscaling:
-        {
-            return "Unscaling";
-        }
+        case PrincipalComponents: return "PrincipalComponents";
+
+        case Convolutional: return "Convolutional";
+
+        case Perceptron: return "Perceptron";
+
+        case Bounding: return "Bounding";
+
+        case Pooling: return "Pooling";
+
+        case Probabilistic: return "Probabilistic";
+
+        case LongShortTermMemory: return "LongShortTermMemory";
+
+        case Recurrent: return "Recurrent";
+
+        case Scaling: return "Scaling";
+
+        case Unscaling: return "Unscaling";
     }
 
     return string();
@@ -287,8 +266,44 @@ string Layer::object_to_string() const
 }
 
 
-void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -311,14 +326,86 @@ void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+
     y = x.tanh();
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 }
 
 
-void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 
     const Index n = x.size();
 
@@ -332,14 +419,86 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y = x;
 }
 
 
-void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -351,8 +510,44 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -364,8 +559,44 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -377,8 +608,44 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     const type lambda = static_cast<type>(1.0507);
@@ -393,14 +660,86 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
 }
 
 
-void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y = (x.constant(1) + x.exp()).log();
 }
 
 
-void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -413,8 +752,44 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     const type alpha = 1.0;
@@ -428,8 +803,44 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -444,32 +855,212 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y.setZero();
 }
 
 
-void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y.setZero();
 }
 
 
-void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y.setConstant(1.0);
 }
 
 
-void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     y = x.constant(1.0) - x.tanh()*x.tanh();
 }
 
 
-void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -482,8 +1073,43 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 
 }
 
 
-void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 
     const Index n = x.size();
 
@@ -500,8 +1126,43 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
 }
 
 
-void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 
     const Index n = x.size();
 
@@ -515,8 +1176,44 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -528,8 +1225,43 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 
     const Index n = x.size();
 
@@ -543,8 +1275,43 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& 
 }
 
 
-void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
 
     const Index n = x.size();
 
@@ -561,8 +1328,44 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 
 /// @todo Fails
 
-void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
 #ifdef __OPENNN_DEBUG__
 
     if(x.dimension(0) != y.dimension(0))
@@ -608,8 +1411,44 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index n = x.size();
 
     #pragma omp parallel for
@@ -621,8 +1460,44 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index rows_number = x.dimension(0);
 /*
     #pragma omp parallel for
@@ -637,8 +1512,44 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 }
 
 
-void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
     const Index rows_number = x.dimension(0);
     const Index columns_number = x.dimension(1);
 

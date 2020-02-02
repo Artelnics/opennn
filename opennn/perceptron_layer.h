@@ -147,7 +147,7 @@ public:
    {
        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
 
-       switch (device_pointer->get_type())
+       switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
@@ -199,7 +199,7 @@ public:
 
                buffer << "OpenNN Exception: PerceptronLayer class.\n"
                       << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device has not been found.\n";
+                      << "Unknown device.\n";
 
                throw logic_error(buffer.str());
            }

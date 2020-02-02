@@ -53,6 +53,8 @@ class Device
 
                 case EigenGpu:
 
+                    //gpu_device = new GpuDevice();
+
                 break;
 
                 default:
@@ -79,6 +81,8 @@ class Device
         NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
 
         ThreadPoolDevice* thread_pool_device = nullptr;
+
+        //CudaStreamDevice cuda_stream_device;
 
         GpuDevice* gpu_device = nullptr;
 

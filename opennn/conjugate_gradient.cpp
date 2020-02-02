@@ -1147,15 +1147,9 @@ Tensor<type, 1> ConjugateGradient::calculate_training_direction
 
    switch(training_direction_method)
    {
-      case FR:
-      {
-         return(calculate_FR_training_direction(old_gradient, gradient, old_training_direction));
-      }    
+      case FR: return calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
 
-      case PR:
-      {
-         return(calculate_PR_training_direction(old_gradient, gradient, old_training_direction));
-      }            
+      case PR: return calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
    }
 
    // Never reach here
@@ -1201,8 +1195,10 @@ Tensor<type, 1> ConjugateGradient::calculate_gradient_descent_training_direction
     }
 
     #endif
-
-    return normalized(gradient)*static_cast<type>(-1.0);
+/*
+    return static_cast<type>(-1.0)*normalized(gradient);
+*/
+    return Tensor<type, 1>();
 }
 
 

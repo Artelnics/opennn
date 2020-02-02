@@ -725,8 +725,10 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
     }
 
     #endif
-
-   return normalized(gradient)*static_cast<type>(-1.0);
+/*
+   return static_cast<type>(-1.0)*normalized(gradient);
+   */
+    return Tensor<type, 1>();
 }
 
 
