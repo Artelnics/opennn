@@ -285,4 +285,379 @@ string Layer::object_to_string() const
 
     throw logic_error(buffer.str());
 }
+
+
+void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+     for(Index i = 0; i < n; i++)
+     {
+         if(x(i) < static_cast<type>(-2.5))
+         {
+            y(i) = 0;
+         }
+         else if(x(i) > static_cast<type>(2.5))
+         {
+             y(i) = 1;
+         }
+         else
+         {
+             y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
+         }
+     }
+}
+
+
+void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    y = x.tanh();
+}
+
+
+void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        y(i) = 1.0 / (1.0 + exp(-x(i)));
+    }
+
+}
+
+
+void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    y = x;
+}
+
+
+void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+         y(i) = x(i) < 0 ? -1 : 1;
+    }
+}
+
+
+void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+     for(Index i = 0; i < n; i++)
+     {
+         y(i) = x(i) < 0 ? -1 : 1;
+     }
+}
+
+
+void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        y(i) = x(i) < 0 ? 0.0 : x(i);
+    }
+}
+
+
+void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    const type lambda = static_cast<type>(1.0507);
+    const type alpha = static_cast<type>(1.67326);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < 0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
+    }
+}
+
+
+void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    y = (x.constant(1) + x.exp()).log();
+}
+
+
+void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+       x(i) < 0 ? y(i) = x(i) / (1.0 - x(i)) : y(i) = x(i) / (1.0 + x(i));
+    }
+
+}
+
+
+void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    const type alpha = 1.0;
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < 0 ? y(i) = alpha * (exp(x(i)) - 1) : y(i) = x(i);
+    }
+}
+
+
+void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        const type exponential = exp(-x(i));
+
+        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
+    }
+
+}
+
+
+void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+{
+    y.setZero();
+}
+
+
+void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+{
+    y.setZero();
+}
+
+
+void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
+{
+    y.setConstant(1.0);
+}
+
+
+void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    y = x.constant(1.0) - x.tanh()*x.tanh();
+}
+
+
+void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < 0 ? y(i) = 0.0 : y(i) = 1.0;
+    }
+
+}
+
+
+void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+
+    const Index n = x.size();
+
+    const type lambda = static_cast<type>(1.0507);
+    const type alpha = static_cast<type>(1.67326);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < 0 ? y(i) = lambda * alpha * exp(x(i)) : y(i) = lambda;
+    }
+
+}
+
+
+void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        y(i) = 1.0/(1.0 + exp(-x(i)));
+    }
+
+}
+
+
+void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+       x(i) < 0 ? y(i) = static_cast<type>(1.0) / pow(1 - x(i), 2) : y(i) = static_cast<type>(1.0) / pow(1 + x(i), 2);
+    }
+}
+
+
+void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? y(i) = 0.0 : y(i) = static_cast<type>(0.2);
+    }
+
+}
+
+
+void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+
+    const Index n = x.size();
+
+    const type alpha = 1.0;
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < 0 ? y(i) = alpha * exp(x(i)) : y(i) = 1.0;
+    }
+}
+
+
+/// @todo Fails
+
+void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(x.dimension(0) != y.dimension(0))
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Functions.\n"
+              << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
+              << "Number of rows in x must be equal to number of rows in d.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const Index n = x.dimension(0);
+
+    const Index columns_number = x.dimension(1);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i ++)
+    {
+/*
+        const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).chip(i, 0));
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < columns_number; k++)
+            {
+                if(j == k)
+                {
+                    y(j,k,i) = softmax_values[j]*(1.0 - softmax_values[j]);
+                }
+                else
+                {
+                    y(j,k,i) = -softmax_values[j] * softmax_values[k];
+                }
+            }
+        }
+*/
+    }
+}
+
+
+void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        x(i) < static_cast<type>(0.5) ? y(i) = false : y (i) = true;
+    }
+}
+
+
+void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index rows_number = x.dimension(0);
+/*
+    #pragma omp parallel for
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        const Index maximal_index = OpenNN::maximal_index(x.get_matrix(0).chip(i, 0));
+
+        y(i, maximal_index) = 1;
+    }
+*/
+}
+
+
+void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    #pragma omp parallel for
+
+  for(Index j = 0; j < rows_number; j++)
+  {
+      type sum = static_cast<type>(0.0);
+
+      for(Index i = 0; i < columns_number; i++)
+      {
+        sum += exp(x(j,i));
+      }
+
+      for(Index i = 0; i < columns_number; i++)
+      {
+        y(j,i) = exp(x(j,i)) / sum;
+      }
+  }
+}
+
 }

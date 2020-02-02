@@ -174,9 +174,33 @@ protected:
 
     Type layer_type = Perceptron;
 
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
-#endif
+    static void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void logistic(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void softmax(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void binary(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void competitive(const Tensor<type, 2>&, Tensor<type, 2>&);
+
+    static void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    static void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
 
     const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
     const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(1, 1)};
@@ -185,6 +209,11 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> product_matrix_transpose_matrix = {IndexPair<Index>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
     const Eigen::array<IndexPair<Index>, 1> product_matrix_matrix = {IndexPair<Index>(1, 0)};
     const Eigen::array<IndexPair<Index>, 1> dimensions = {IndexPair<Index>(0, 0)};
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+#endif
+
 
 };
 

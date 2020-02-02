@@ -230,35 +230,6 @@ namespace OpenNN
     Tensor<type, 1> normalized(const Tensor<type, 1>&);
 
     Tensor<type, 2> normalized_columns(const Tensor<type, 2>&);
-
-    void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
-    void hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void logistic(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void linear(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void softmax(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void binary(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void competitive(const Tensor<type, 2>&, Tensor<type, 2>&);
-
-    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void hyperbolic_tangent_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
-    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
-    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
 }
 
 #endif // FUNCTIONS_H

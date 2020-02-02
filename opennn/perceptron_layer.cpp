@@ -678,7 +678,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
 
     switch(activation_function)
     {
-
+/*
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -700,7 +700,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
-
+*/
     }
 
     return Tensor<type, 2>();
