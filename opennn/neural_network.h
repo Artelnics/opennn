@@ -391,8 +391,6 @@ public:
 
 protected:
 
-   Device* device_pointer = nullptr;
-
    /// Names of inputs
 
    Tensor<string, 1> inputs_names;

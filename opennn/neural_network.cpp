@@ -799,8 +799,13 @@ void NeuralNetwork::set_default()
 
 
 void NeuralNetwork::set_device_pointer(Device* new_device_pointer)
-{
-    device_pointer = new_device_pointer;
+{  
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        layers_pointers[i]->set_device_pointer(new_device_pointer);
+    }
 }
 
 

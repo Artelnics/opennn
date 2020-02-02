@@ -891,6 +891,14 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 }
 
 
+void TrainingStrategy::set_device_pointer(Device* new_device_pointer)
+{
+    get_loss_index_pointer()->set_device_pointer(new_device_pointer);
+
+    get_optimization_algorithm_pointer()->set_device_pointer(new_device_pointer);
+}
+
+
 /// Sets a pointer to a loss index object to be associated to the training strategy.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
