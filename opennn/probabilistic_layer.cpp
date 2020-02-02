@@ -704,25 +704,15 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
     switch(activation_function)
     {
-        case Binary:
-        {
-            return binary(combinations);
-        }
+/*
+        case Binary: return binary(combinations);
 
-        case Logistic:
-        {
-            return logistic(combinations);
-        }
+        case Logistic: return logistic(combinations);
 
-        case Competitive:
-        {
-            return competitive(combinations);
-        }
+        case Competitive: return competitive(combinations);
 
-        case Softmax:
-        {
-            return softmax(combinations);
-        }
+        case Softmax: return softmax(combinations);
+*/
     }
 
     ostringstream buffer;
@@ -955,6 +945,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
 
     switch(activation_function)
     {
+/*
         case Binary: return binary(combinations);
 
         case Logistic: return logistic(combinations);
@@ -962,6 +953,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
         case Competitive: return competitive(combinations);
 
         case Softmax: return softmax(combinations);
+*/
     }
 
     ostringstream buffer;
@@ -1010,6 +1002,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tens
 
     switch(activation_function)
     {
+/*
         case Binary:
         {
              ostringstream buffer;
@@ -1039,6 +1032,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tens
         {
             return softmax_derivatives(combinations);
         }
+*/
     }
 
     ostringstream buffer;

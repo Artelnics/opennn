@@ -146,7 +146,7 @@ public:
                                Tensor<type, 2>& combinations) const
    {
        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
-/*
+
        switch (device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -155,7 +155,7 @@ public:
 
                 combinations.device(*default_device) = biases.broadcast(broadcast);
 
-//                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
             }
@@ -164,22 +164,24 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
+               combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
 
-//               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
             }
 
            case Device::EigenGpu:
            {
+/*
                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                //combinations.device(gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*gpu_device) = biases.broadcast(broadcast);
 
+                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+*/
                 break;
            }
-
 
             #ifdef USE_INTEL_MKL
 
@@ -202,7 +204,6 @@ public:
                throw logic_error(buffer.str());
            }
        }
-*/
    }
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;

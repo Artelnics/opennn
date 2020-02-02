@@ -1606,6 +1606,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
     switch(activation_function)
     {
+/*
         case Linear: return linear_derivatives(combination);
 
         case Logistic: return logistic_derivatives(combination);
@@ -1627,6 +1628,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
         case HardSigmoid: return hard_sigmoid_derivatives(combination);
 
         case ExponentialLinear: return exponential_linear_derivatives(combination);
+*/
     }
 
     return Tensor<type, 1>();
@@ -1655,6 +1657,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
 
     switch(recurrent_activation_function)
     {
+/*
         case Linear: return linear_derivatives(combination);
 
         case Logistic: return logistic_derivatives(combination);
@@ -1676,6 +1679,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
         case HardSigmoid: return hard_sigmoid_derivatives(combination);
 
         case ExponentialLinear: return exponential_linear_derivatives(combination);
+*/
     }
 
     return Tensor<type, 1>();

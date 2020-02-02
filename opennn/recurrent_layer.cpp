@@ -812,6 +812,7 @@ Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& com
 
     switch(activation_function)
     {
+/*
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -833,6 +834,7 @@ Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& com
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
+*/
     }
 
     return Tensor<type, 1>();
@@ -843,6 +845,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations(const Tensor<type, 2>& com
 {
     switch(activation_function)
     {
+/*
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -864,6 +867,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations(const Tensor<type, 2>& com
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
+*/
     }
 
     return Tensor<type, 2>();
@@ -893,6 +897,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
 
     switch(activation_function)
     {
+/*
         case Linear: return linear_derivatives(combinations);
 
         case Logistic: return logistic_derivatives(combinations);
@@ -914,6 +919,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
         case HardSigmoid: return hard_sigmoid_derivatives(combinations);
 
         case ExponentialLinear: return exponential_linear_derivatives(combinations);
+*/
     }
 
     return Tensor<type, 2> ();

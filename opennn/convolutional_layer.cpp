@@ -56,65 +56,32 @@ bool ConvolutionalLayer::is_empty() const
 
 Tensor<type, 2> ConvolutionalLayer::calculate_activations(const Tensor<type, 2>& convolutions) const
 {
-
+/*
    switch(activation_function)
    {
-       case ConvolutionalLayer::Linear:
-       {
-            return linear(convolutions);
-       }
+       case ConvolutionalLayer::Linear: return linear(convolutions);
 
-       case ConvolutionalLayer::Logistic:
-       {
-            return logistic(convolutions);
-       }
+       case ConvolutionalLayer::Logistic: return logistic(convolutions);
 
-       case ConvolutionalLayer::HyperbolicTangent:
-       {
-            return hyperbolic_tangent(convolutions);
-       }
+       case ConvolutionalLayer::HyperbolicTangent: return hyperbolic_tangent(convolutions);
 
-       case ConvolutionalLayer::Threshold:
-       {
-            return threshold(convolutions);
-       }
+       case ConvolutionalLayer::Threshold: return threshold(convolutions);
 
-       case ConvolutionalLayer::SymmetricThreshold:
-       {
-            return symmetric_threshold(convolutions);
-       }
+       case ConvolutionalLayer::SymmetricThreshold: return symmetric_threshold(convolutions);
 
-       case ConvolutionalLayer::RectifiedLinear:
-       {
-            return rectified_linear(convolutions);
-       }
+       case ConvolutionalLayer::RectifiedLinear: return rectified_linear(convolutions);
 
-       case ConvolutionalLayer::ScaledExponentialLinear:
-       {
-            return scaled_exponential_linear(convolutions);
-       }
+       case ConvolutionalLayer::ScaledExponentialLinear: return scaled_exponential_linear(convolutions);
 
-       case ConvolutionalLayer::SoftPlus:
-       {
-            return soft_plus(convolutions);
-       }
+       case ConvolutionalLayer::SoftPlus: return soft_plus(convolutions);
 
-       case ConvolutionalLayer::SoftSign:
-       {
-            return soft_sign(convolutions);
-       }
+       case ConvolutionalLayer::SoftSign: return soft_sign(convolutions);
 
-       case ConvolutionalLayer::HardSigmoid:
-       {
-            return hard_sigmoid(convolutions);
-       }
+       case ConvolutionalLayer::HardSigmoid: return hard_sigmoid(convolutions);
 
-       case ConvolutionalLayer::ExponentialLinear:
-       {
-            return exponential_linear(convolutions);
-       }
+       case ConvolutionalLayer::ExponentialLinear: return exponential_linear(convolutions);
    }
-
+*/
     return Tensor<type, 2>();
 }
 
