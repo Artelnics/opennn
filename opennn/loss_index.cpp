@@ -1137,7 +1137,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         layers_error_gradient[i].setRandom();
     }
 
-    errors.resize(parameters_number);
+    errors.resize(batch_instances_number);
 
     loss = static_cast<type>(0.0);
 

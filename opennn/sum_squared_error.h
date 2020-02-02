@@ -76,11 +76,6 @@ public:
 
    LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
-   {
-
-   }
-
    // Terms methods
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;

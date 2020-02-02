@@ -489,7 +489,7 @@ public:
 
                 biases_derivatives.device(*default_device) = deltas.sum(Eigen::array<Index, 1>({0}));
 
-                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({inputs_number*neurons_number}));
+                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({synaptic_weights_number}));
 
                 break;
             }
@@ -500,7 +500,7 @@ public:
 
                 biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 1>({0}));
 
-                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({inputs_number*neurons_number}));
+                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions).reshape(Eigen::array<Index, 1>({synaptic_weights_number}));
 
                 break;
             }
