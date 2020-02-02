@@ -26,6 +26,8 @@ using namespace Eigen;
 
 namespace OpenNN
 {
+
+/*
     Index factorial(const Index&);
 
     Tensor<type, 1> exponential(const Tensor<type, 1>&);
@@ -62,51 +64,6 @@ namespace OpenNN
 
     Tensor<type, 1> logistic_function(const Tensor<type, 1>&, const type&, const type&);
 
-    Tensor<type, 1> hard_sigmoid(const Tensor<type, 1>&);
-
-    Tensor<type, 1> hyperbolic_tangent(const Tensor<type, 1>&);
-
-    Tensor<type, 1> logistic(const Tensor<type, 1>&);
-
-    Tensor<type, 1> linear(const Tensor<type, 1>&);
-
-    Tensor<type, 1> threshold(const Tensor<type, 1>&);
-
-    Tensor<type, 1> symmetric_threshold(const Tensor<type, 1>&);
-
-    Tensor<type, 1> rectified_linear(const Tensor<type, 1>&);
-
-    Tensor<type, 1> scaled_exponential_linear(const Tensor<type, 1>&);
-
-    Tensor<type, 1> soft_plus(const Tensor<type, 1>&);
-
-    Tensor<type, 1> soft_sign(const Tensor<type, 1>&);
-
-    Tensor<type, 1> exponential_linear(const Tensor<type, 1>&);
-
-    Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> threshold_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> symmetric_threshold_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> linear_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> hyperbolic_tangent_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> rectified_linear_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> scaled_exponential_linear_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> soft_plus_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>&);
-
-    Tensor<type, 1> softmax_derivatives(const Tensor<type, 1>&);
 
     // SINE FUNCTIONS
 
@@ -230,6 +187,7 @@ namespace OpenNN
     Tensor<type, 1> normalized(const Tensor<type, 1>&);
 
     Tensor<type, 2> normalized_columns(const Tensor<type, 2>&);
+*/
 }
 
 #endif // FUNCTIONS_H

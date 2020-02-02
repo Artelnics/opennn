@@ -972,7 +972,7 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 
      // Regularization method
 
-     switch (regularization_method)
+     switch(regularization_method)
      {
         case L1:
         {

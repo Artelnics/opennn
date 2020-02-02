@@ -481,35 +481,17 @@ string TrainingStrategy::write_loss_method() const
 {
     switch(loss_method)
     {
-       case SUM_SQUARED_ERROR:
-       {
-          return "SUM_SQUARED_ERROR";
-       }
+       case SUM_SQUARED_ERROR: return "SUM_SQUARED_ERROR";
 
-       case MEAN_SQUARED_ERROR:
-       {
-        return "MEAN_SQUARED_ERROR";
-       }
+       case MEAN_SQUARED_ERROR: return "MEAN_SQUARED_ERROR";
 
-       case NORMALIZED_SQUARED_ERROR:
-       {
-        return "NORMALIZED_SQUARED_ERROR";
-       }
+       case NORMALIZED_SQUARED_ERROR: return "NORMALIZED_SQUARED_ERROR";
 
-       case MINKOWSKI_ERROR:
-       {
-        return "MINKOWSKI_ERROR";
-       }
+       case MINKOWSKI_ERROR: return "MINKOWSKI_ERROR";
 
-       case WEIGHTED_SQUARED_ERROR:
-       {
-        return "WEIGHTED_SQUARED_ERROR";
-       }
+       case WEIGHTED_SQUARED_ERROR: return "WEIGHTED_SQUARED_ERROR";
 
-         case CROSS_ENTROPY_ERROR:
-         {
-        return "CROSS_ENTROPY_ERROR";
-         }
+       case CROSS_ENTROPY_ERROR: return "CROSS_ENTROPY_ERROR";
     }
 
     return string();

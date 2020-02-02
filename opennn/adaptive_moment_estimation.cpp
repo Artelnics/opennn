@@ -778,7 +778,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Update parameters
 
-           parameters -= gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon);
+           parameters -= gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
 
            neural_network_pointer->set_parameters(parameters);
         }

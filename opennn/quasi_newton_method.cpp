@@ -772,8 +772,11 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<typ
 //  normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
 
     const Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, product_dims);
-
+/*
     return normalized((-1.0)*hessian_dot_gradient);
+*/
+    return Tensor<type, 1>();
+
 }
 
 
@@ -810,8 +813,10 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction
     }
 
     #endif
-
-    return normalized(gradient)*static_cast<type>(-1.0);
+/*
+    return static_cast<type>(-1.0)*normalized(gradient);
+*/
+    return Tensor<type, 1>();
 }
 
 

@@ -272,60 +272,27 @@ Tensor<type, 2> ConvolutionalLayer::calculate_activations_derivatives(const Tens
 /*
     switch(activation_function)
     {
-        case Linear:
-        {
-            return linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
 
-        case Logistic:
-        {
-            return logistic_derivatives(combinations);
-        }
+        case Logistic: return logistic_derivatives(combinations);
 
-        case HyperbolicTangent:
-        {
-            return hyperbolic_tangent_derivatives(combinations);
-        }
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
 
-        case Threshold:
-        {
-            return threshold_derivatives(combinations);
-        }
+        case Threshold: return threshold_derivatives(combinations);
 
-        case SymmetricThreshold:
-        {
-            return symmetric_threshold_derivatives(combinations);
-        }
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
 
-        case RectifiedLinear:
-        {
-            return rectified_linear_derivatives(combinations);
-        }
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
 
-        case ScaledExponentialLinear:
-        {
-            return scaled_exponential_linear_derivatives(combinations);
-        }
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
 
-        case SoftPlus:
-        {
-            return soft_plus_derivatives(combinations);
-        }
+        case SoftPlus: return soft_plus_derivatives(combinations);
 
-        case SoftSign:
-        {
-            return soft_sign_derivatives(combinations);
-        }
+        case SoftSign: return soft_sign_derivatives(combinations);
 
-        case HardSigmoid:
-        {
-            return hard_sigmoid_derivatives(combinations);
-        }
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
 
-        case ExponentialLinear:
-        {
-            return exponential_linear_derivatives(combinations);
-        }
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 */
     return Tensor<type, 2>();
@@ -757,7 +724,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 /*
     Tensor<type, 2> layers_inputs;
 
-    switch (get_padding_option()) {
+    switch(get_padding_option()) {
 
         case OpenNN::ConvolutionalLayer::PaddingOption::NoPadding:
         {

@@ -564,20 +564,14 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     }
 
    #endif
-
+/*
    switch(bounding_method)
    {
-      case NoBounding:
-      {
-         return inputs;
-      }
+      case NoBounding: return inputs;
 
-      case Bounding:
-      {
-        return lower_upper_bounded(inputs, lower_bounds, upper_bounds);
-      }
+      case Bounding: return lower_upper_bounded(inputs, lower_bounds, upper_bounds);
    }
-
+*/
    return Tensor<type, 2>();
 }  
 
