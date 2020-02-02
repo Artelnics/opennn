@@ -159,9 +159,6 @@ check();
 
     // Eigen stuff
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
-
      #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)

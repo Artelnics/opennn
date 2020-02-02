@@ -334,8 +334,6 @@ check();
 
     // Eigen stuff
 /*
-    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
 
      #pragma omp parallel for
 
@@ -533,10 +531,6 @@ check();
 
     // Eigen stuff
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_matrix = { Eigen::IndexPair<int>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
-
      #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)
@@ -577,8 +571,8 @@ check();
     }
 
     terms_second_order_loss.loss /= static_cast<type>(training_instances_number);
-    terms_second_order_loss.gradient *= (2.0/static_cast<type>(training_instances_number));
-    terms_second_order_loss.hessian *= (2.0/static_cast<type>(training_instances_number));
+    terms_second_order_loss.gradient *= (static_cast<type>(2.0)/static_cast<type>(training_instances_number));
+    terms_second_order_loss.hessian *= (static_cast<type>(2.0)/static_cast<type>(training_instances_number));
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {

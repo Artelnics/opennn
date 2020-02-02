@@ -87,7 +87,6 @@ public:
 
     };
 
-
     // Constructor
 
     explicit Layer()
@@ -180,7 +179,12 @@ protected:
 #endif
 
     const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
-
+    const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(1, 1)};
+    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+    const Eigen::array<IndexPair<Index>, 1> product_matrix_transpose_vector = {IndexPair<Index>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
+    const Eigen::array<IndexPair<Index>, 1> product_matrix_transpose_matrix = {IndexPair<Index>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
+    const Eigen::array<IndexPair<Index>, 1> product_matrix_matrix = {IndexPair<Index>(1, 0)};
+    const Eigen::array<IndexPair<Index>, 1> dimensions = {IndexPair<Index>(0, 0)};
 
 };
 

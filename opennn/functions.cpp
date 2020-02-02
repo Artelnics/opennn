@@ -1376,7 +1376,7 @@ void hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
          }
          else
          {
-             y(i) = 0.2 * x(i) + static_cast<type>(0.5);
+             y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
          }
      }
 
@@ -1621,7 +1621,7 @@ void soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
     for(Index i = 0; i < n; i++)
     {
-       x(i) < 0 ? y(i) = 1.0 / pow(1.0 - x(i), 2) : y(i) = 1.0 / pow(1.0 + x(i), 2);
+       x(i) < 0 ? y(i) = static_cast<type>(1.0) / pow(1 - x(i), 2) : y(i) = static_cast<type>(1.0) / pow(1 + x(i), 2);
     }
 }
 

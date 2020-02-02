@@ -881,8 +881,6 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
 {
     // Eigen stuff
 
-    const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(1, 0) };
-
     const Type layer_type = next_layer_pointer->get_type();
 
     Tensor<type, 2> synaptic_weights_transpose;

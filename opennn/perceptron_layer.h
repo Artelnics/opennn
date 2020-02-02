@@ -142,8 +142,7 @@ public:
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
 
-   void calculate_combinations(const ThreadPoolDevice& thread_pool_device,
-                               const Tensor<type, 2>& inputs,
+   void calculate_combinations(const Tensor<type, 2>& inputs,
                                Tensor<type, 2>& combinations) const
    {
        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
@@ -216,7 +215,7 @@ public:
 
    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-   void calculate_activations(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
+   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -243,7 +242,7 @@ public:
 
             case Logistic: logistic(combinations, activations); return;
 
-            case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
+            //case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
 
             case Threshold: threshold(combinations, activations); return;
 
@@ -264,7 +263,7 @@ public:
    }
 
 
-   void calculate_activations_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -291,7 +290,7 @@ public:
 
             case Logistic: logistic_derivatives(combinations, activations_derivatives); return;
 
-            case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
+            //case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
 
             case Threshold: threshold_derivatives(combinations, activations_derivatives); return;
 
@@ -319,34 +318,31 @@ public:
 
    ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-   void calculate_forward_propagation(const ThreadPoolDevice& thread_pool_device,
-                                      const Tensor<type, 2>& inputs,
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(thread_pool_device, inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-       calculate_activations(thread_pool_device, forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(thread_pool_device, forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
 
    Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_output_delta(const ThreadPoolDevice& thread_pool_device,
-                               const Tensor<type, 2>& activations_derivatives,
+   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
-   {
-       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
+   {      
+//       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
    }
 
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta(const ThreadPoolDevice& thread_pool_device,
-                               Layer* next_layer_pointer,
+   void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>& activations_derivatives,
                                const Tensor<type, 2>& next_layer_delta,
@@ -358,12 +354,11 @@ public:
        {
            const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-           const Eigen::array<Eigen::IndexPair<Index>, 1> transposed_product_dimensions = { Eigen::IndexPair<Index>(1, 1) };
 
            const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-           hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
-           hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
+//           hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
+//           hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
        }
        else if(next_layer_type == Probabilistic)
        {
@@ -395,8 +390,6 @@ public:
        const Index biases_number = get_biases_number();
 
        Eigen::array<Index, 1> one_dim{{inputs_number*neurons_number}};
-
-       const Eigen::array<IndexPair<Index>, 1> dimensions = {IndexPair<Index>(0, 0)};
 
        Tensor<type, 1> synaptic_weights_derivatives(inputs_number*neurons_number);
 

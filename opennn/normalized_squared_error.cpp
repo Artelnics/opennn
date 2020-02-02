@@ -488,9 +488,6 @@ check();
     FirstOrderLoss first_order_loss(this);
 
     // Eigen stuff
-/*
-    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
 
      #pragma omp parallel for
 
@@ -505,7 +502,7 @@ check();
 
         const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
+/*
         const Tensor<type, 2> output_gradient
                 = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
@@ -529,6 +526,7 @@ check();
             first_order_loss.loss += loss(0);
             first_order_loss.gradient += gradient;
          }
+*/
     }
 
     first_order_loss.loss /= normalization_coefficient;
@@ -541,7 +539,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-*/
+
     return first_order_loss;
 }
 
@@ -739,11 +737,6 @@ check();
     SecondOrderLoss terms_second_order_loss(parameters_number);
 
     // Eigen stuff
-/*
-    Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
-
 
      #pragma omp parallel for
 
@@ -755,7 +748,7 @@ check();
         const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
+/*
         const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
         const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
@@ -781,11 +774,12 @@ check();
             terms_second_order_loss.gradient += gradient;
             terms_second_order_loss.hessian += hessian_approximation;
          }
+*/
     }
 
     terms_second_order_loss.loss /= normalization_coefficient;
-    terms_second_order_loss.gradient *= (2.0/normalization_coefficient);
-    terms_second_order_loss.hessian *= (2.0/normalization_coefficient);
+    terms_second_order_loss.gradient = (static_cast<type>(2.0)/normalization_coefficient)*terms_second_order_loss.gradient;
+    terms_second_order_loss.hessian = (static_cast<type>(2.0)/normalization_coefficient)*terms_second_order_loss.hessian;
 
     if(regularization_method == RegularizationMethod::NoRegularization)
     {
@@ -793,7 +787,7 @@ check();
         terms_second_order_loss.gradient += calculate_regularization_gradient();
         terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-*/
+
     return terms_second_order_loss;
 }
 
