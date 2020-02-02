@@ -803,6 +803,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
    // Main loop
+   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
    {
@@ -831,14 +832,42 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //         Loss
 
-           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
 //           loss += first_order_loss.loss;
 
 //         Gradient
 
-//           update_parameters(first_order_loss);
+           initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
+           parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*first_order_loss.gradient;
+
+           if(momentum > 0 && !nesterov)
+           {
+               parameters_increment.device(*thread_pool_device) += last_increment*momentum;
+
+               last_increment = parameters_increment;
+
+               parameters.device(*thread_pool_device) += parameters_increment;
+           }
+           else if(momentum > 0 && nesterov)
+           {
+               parameters_increment.device(*thread_pool_device) += last_increment*momentum;
+
+               last_increment = parameters_increment;
+
+               nesterov_increment.device(*thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+
+               parameters.device(*thread_pool_device) += nesterov_increment;
+           }
+           else
+           {
+               parameters.device(*thread_pool_device) = parameters + parameters_increment;
+           }
+
+           neural_network_pointer->set_parameters(parameters);
+
+           learning_rate_iteration++;
 
        }
 /*

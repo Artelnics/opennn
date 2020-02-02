@@ -293,7 +293,7 @@ public:
        first_order_loss.gradient = first_order_loss.error_gradient;
 
        // Regularization
-
+/*
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
            first_order_loss.loss += regularization_weight*calculate_regularization();
@@ -302,6 +302,7 @@ public:
 
            first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
        }
+*/
    }
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
@@ -443,12 +444,12 @@ public:
                                                               forward_propagation.layers[0],
                                                               first_order_loss.layers_delta[0],
                                                               first_order_loss.layers_error_gradient[0]);
-/*
+
        for(Index i = 0; i < trainable_layers_parameters_number[0]; i++)
        {
             first_order_loss.error_gradient[i] = first_order_loss.layers_error_gradient[0](i);
        }
-*/
+
        index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
@@ -458,12 +459,12 @@ public:
                    forward_propagation.layers[i-1],
                    first_order_loss.layers_delta[i],
                    first_order_loss.layers_error_gradient[i]);
-/*
+
            for(Index j = 0; j < trainable_layers_parameters_number[i]; j++)
            {
                 first_order_loss.error_gradient[index + j] = first_order_loss.layers_error_gradient[i](j);
            }
-*/
+
            index += trainable_layers_parameters_number[i];
        }
    }

@@ -147,7 +147,13 @@ public:
 
    void update_parameters(const LossIndex::FirstOrderLoss& first_order_loss)
    {
-/*
+       /*
+       NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();
+
+       type learning_rate_iteration
+
+       type learning_rate;
+
        initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
        parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
