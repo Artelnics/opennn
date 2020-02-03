@@ -188,7 +188,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 #endif
 
     GrowingInputsResults* results = new GrowingInputsResults();
-/*
+
     if(display) cout << "Performing growing inputs selection..." << endl;
 
     // Loss index Stuff
@@ -222,6 +222,19 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Tensor<type, 1> correlations_descending(total_correlations);
 
     sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<int>());
+
+    Tensor<Index, 1> correlations_descending_indices(total_correlations.size());
+
+    for(Index i = 0; i < total_correlations.size(); i++)
+    {
+        for(Index j = 0; j < correlations_descending.size(); j++)
+        {
+            if(total_correlations(i) == correlations_descending(j))
+            {
+                correlations_descending_indices(i) = j;
+            }
+        }
+    }
 
     data_set_pointer->set_input_columns_unused();
 
@@ -263,7 +276,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         data_set_pointer->set_column_use(column_name, DataSet::Input);
 
-        current_columns_indices.push_back(column_index);
+//        current_columns_indices.push_back(column_index);
+
+        current_columns_indices = insert_result(column_index, current_columns_indices);
 
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
@@ -380,11 +395,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             if(end_algorithm == false) cout << "Add input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
-            cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().vector_to_string() << endl;
+            cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
             cout << "Training loss: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
         }
@@ -424,13 +439,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     if(display)
     {
-        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().vector_to_string() << endl;
+        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal number of inputs: " << optimal_columns_indices.size() << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-*/
+
     return results;
 
 
