@@ -203,8 +203,6 @@ public:
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Layer::ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>& inputs);
-
    void calculate_forward_propagation(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation)
    {
 /*

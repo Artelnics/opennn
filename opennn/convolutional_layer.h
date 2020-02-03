@@ -238,8 +238,6 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-
    void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
    {
 /*

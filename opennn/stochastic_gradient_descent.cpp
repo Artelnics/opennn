@@ -761,7 +761,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Loss index stuff
 
-   LossIndex::BackPropagation first_order_loss(loss_index_pointer);
+   LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
    type training_error = static_cast<type>(0.0);
 
@@ -829,15 +829,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //         Loss
 
-           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
-//           loss += first_order_loss.loss;
+//           loss += back_propagation.loss;
 
 //         Gradient
 /*
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-           parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*first_order_loss.gradient;
+           parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*back_propagation.gradient;
 
            if(momentum > 0 && !nesterov)
            {
@@ -853,7 +853,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                last_increment = parameters_increment;
 
-               nesterov_increment.device(*thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+               nesterov_increment.device(*thread_pool_device) = parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
                parameters.device(*thread_pool_device) += nesterov_increment;
            }
@@ -868,7 +868,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 */
        }
 /*
-       gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);
+       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);
 */
        // Loss
 

@@ -132,7 +132,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::BackPropagation CrossEntropyError::calculate_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::BackPropagation CrossEntropyError::calculate_back_propagation(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -150,7 +150,7 @@ check();
 
     // Loss index
 
-    BackPropagation first_order_loss(this);
+    BackPropagation back_propagation(this);
 /*
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
 
@@ -160,19 +160,19 @@ check();
 
     const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
 
-    first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
+    back_propagation.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
-    first_order_loss.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
+    back_propagation.gradient = batch_error_gradient/static_cast<type>(batch_instances_number);
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += regularization_weight*calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+        back_propagation.loss += regularization_weight*calculate_regularization();
+        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 */
-    return first_order_loss;
+    return back_propagation;
 }
 
 

@@ -688,7 +688,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    // Loss index stuff
 
-   LossIndex::BackPropagation first_order_loss(loss_index_pointer);
+   LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
    type training_error = static_cast<type>(0.0);
 
@@ -758,21 +758,21 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Loss index
 /*@todo device*/
-//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+//           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
            learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0) - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0) - pow(beta_1, static_cast<type>(iteration_count)));
 
            // Loss
 
-           loss += first_order_loss.loss;
+           loss += back_propagation.loss;
 
            // Gradient
 
-           gradient_exponential_decay = last_gradient_exponential_decay*beta_1 + first_order_loss.gradient*(1 - beta_1);
+           gradient_exponential_decay = last_gradient_exponential_decay*beta_1 + back_propagation.gradient*(1 - beta_1);
 
            last_gradient_exponential_decay = gradient_exponential_decay;
 
-           square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2 + first_order_loss.gradient*first_order_loss.gradient*(1 - beta_2);
+           square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2 + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
 
            last_square_gradient_exponential_decay = square_gradient_exponential_decay;
 
@@ -785,7 +785,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        // Gradient
 
-       gradient_norm = l2_norm(first_order_loss.gradient);
+       gradient_norm = l2_norm(back_propagation.gradient);
 
         // Loss
 

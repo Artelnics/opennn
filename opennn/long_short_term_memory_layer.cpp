@@ -2067,10 +2067,10 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
         return Tensor<type, 2>();
 }
 
+/*
 
 Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
-    /*
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
@@ -2156,10 +2156,10 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
     layers.activations_derivatives = activations_derivatives;
 
     return layers;
-    */
+
     return Layer::ForwardPropagation();
 }
-
+*/
 
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                                 const Tensor<type, 2>&,

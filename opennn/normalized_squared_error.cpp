@@ -463,7 +463,7 @@ check();
 /// It is used for optimization of parameters during training.
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 
-LossIndex::BackPropagation NormalizedSquaredError::calculate_first_order_loss() const
+LossIndex::BackPropagation NormalizedSquaredError::calculate_back_propagation() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -485,7 +485,7 @@ check();
 
     const Index batches_number = training_batches.size();
 
-    BackPropagation first_order_loss(this);
+    BackPropagation back_propagation(this);
 
     // Eigen stuff
 
@@ -496,10 +496,10 @@ check();
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
 
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
+/*
         const Tensor<Layer::ForwardPropagation, 1> forward_propagation
                 = neural_network_pointer->calculate_forward_propagation(inputs);
-/*
+
         const Tensor<type, 1> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -523,24 +523,24 @@ check();
 
           #pragma omp critical
         {
-            first_order_loss.loss += loss(0);
-            first_order_loss.gradient += gradient;
+            back_propagation.loss += loss(0);
+            back_propagation.gradient += gradient;
          }
 */
     }
 
-    first_order_loss.loss /= normalization_coefficient;
-    first_order_loss.gradient = (2.0/normalization_coefficient)*first_order_loss.gradient;
+    back_propagation.loss /= normalization_coefficient;
+    back_propagation.gradient = (2.0/normalization_coefficient)*back_propagation.gradient;
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += regularization_weight*calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+        back_propagation.loss += regularization_weight*calculate_regularization();
+        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 
-    return first_order_loss;
+    return back_propagation;
 }
 
 
@@ -548,7 +548,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::BackPropagation NormalizedSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::BackPropagation NormalizedSquaredError::calculate_back_propagation(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -560,7 +560,7 @@ check();
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    BackPropagation first_order_loss(this);
+    BackPropagation back_propagation(this);
 /*
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
 
@@ -572,18 +572,18 @@ check();
 
     const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
-    first_order_loss.loss = batch_error / normalization_coefficient;
-    first_order_loss.gradient += batch_gradient;
+    back_propagation.loss = batch_error / normalization_coefficient;
+    back_propagation.gradient += batch_gradient;
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += regularization_weight*calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+        back_propagation.loss += regularization_weight*calculate_regularization();
+        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 */
-    return first_order_loss;
+    return back_propagation;
 }
 
 

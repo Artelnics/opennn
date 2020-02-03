@@ -70,13 +70,15 @@ public:
 
         virtual ~ForwardPropagation() {}
 
-        virtual void allocate() {}
+        virtual void allocate() = 0;
 
         virtual void print() const {}
 
         Index batch_instances_number = 0;
 
         Layer* layer_pointer;
+
+        Tensor<type, 2> activations;
     };
 
 
@@ -91,12 +93,15 @@ public:
         explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
             batch_instances_number = new_batch_instances_number;
+
             layer_pointer = new_layer_pointer;
+
+//            allocate();
         }
 
         virtual ~BackPropagation() {}
 
-        virtual void allocate() {}
+        virtual void allocate() = 0;
 
         void print() const
         {
@@ -141,62 +146,15 @@ public:
     virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
-/*
-    virtual ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-*/
-    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
+
+    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation*) {}
 
     // Deltas
 
-    virtual Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-    {
+    void calculate_output_delta(const Tensor<type, 2>&,
+                                const Tensor<type, 2>&,
+                                Tensor<type, 2>&) const {}
 
-        return activations_derivatives*output_gradient;
-    }
-
-    void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                                const Tensor<type, 2>& output_gradient,
-                                Tensor<type, 2>& output_delta) const
-    {
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                 output_delta.device(*default_device) = activations_derivatives*output_gradient;
-
-                 return;
-             }
-
-             case Device::EigenSimpleThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
-
-                return;
-             }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 break;
-            }
-
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: Layer class.\n"
-                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
-        }
-    }
 
 
     virtual Tensor<type, 2> calculate_hidden_delta(Layer*,

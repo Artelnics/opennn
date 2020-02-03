@@ -56,15 +56,11 @@ using namespace chrono;
 using Eigen::MatrixXd;
 using Eigen::Vector3d;
 
-
-
-
-
 int main(void)
 {
     try
     {
-
+        cout << "Blank application" << endl;
 
         return 0;
     }

@@ -171,9 +171,9 @@ public:
     Tensor<type, 2> calculate_max_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
     // First order activations
-
+/*
     ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-
+*/
     void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
     {
 /*
