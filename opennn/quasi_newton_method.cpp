@@ -2215,27 +2215,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Inverse hessian approximation method
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("InverseHessianApproximationMethod");
-
-       if(element)
-       {
-          const string new_inverse_hessian_approximation_method = element->GetText();
-
-          try
-          {
-             set_inverse_hessian_approximation_method(new_inverse_hessian_approximation_method);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-
-   // Training rate algorithm
+   // Learning rate algorithm
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateAlgorithm");
 
@@ -2251,7 +2231,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
            learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
        }
    }
-
+/*
    // Warning parameters norm
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
@@ -2365,7 +2345,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
           }
        }
    }
-
+*/
    // Return minimum selection error neural network
 
    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
@@ -2478,17 +2458,17 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
        if(element)
        {
-          const Index new_maximum_selection_error_decreases = static_cast<Index>(atoi(element->GetText()));
+          const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
-             set_maximum_selection_error_increases(new_maximum_selection_error_decreases);
+             set_maximum_selection_error_increases(new_maximum_selection_error_increases);
           }
           catch(const logic_error& e)
           {
@@ -2497,7 +2477,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum iterations number 
+   // Maximum epochs number
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
 
@@ -2573,27 +2553,8 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve selection error history
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-       if(element)
-       {
-          const string new_reserve_selection_error_history = element->GetText();
-
-          try
-          {
-             set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
    // Display period
-   {
+   /*{
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
 
        if(element)
@@ -2667,6 +2628,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
           }
        }
    }
+*/
 }
 
 }
