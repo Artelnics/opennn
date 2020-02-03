@@ -128,9 +128,9 @@ string LearningRateAlgorithm::write_learning_rate_method() const
 }
 
 
-const type& LearningRateAlgorithm::get_loss_tolerance() const
+const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
 {
-   return loss_tolerance;
+   return learning_rate_tolerance;
 }
 
 
@@ -193,7 +193,7 @@ void LearningRateAlgorithm::set_default()
 
    // TRAINING PARAMETERS
 
-   loss_tolerance = static_cast<type>(1.0e-3);
+   learning_rate_tolerance = static_cast<type>(1.0e-3);
 
    warning_learning_rate = 1.0e6;
 
@@ -254,18 +254,18 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
 
 
 /// Sets a new tolerance value to be used in line minimization.
-/// @param new_loss_tolerance Tolerance value in line minimization.
+/// @param new_learning_rate_tolerance Tolerance value in line minimization.
 
-void LearningRateAlgorithm::set_loss_tolerance(const type& new_loss_tolerance)
+void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
 {  
    #ifdef __OPENNN_DEBUG__ 
                                       
-   if(new_loss_tolerance <= static_cast<type>(0.0))
+   if(new_learning_rate_tolerance <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-             << "void set_loss_tolerance(const type&) method.\n"
+             << "void set_learning_rate_tolerance(const type&) method.\n"
              << "Tolerance must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -275,7 +275,7 @@ void LearningRateAlgorithm::set_loss_tolerance(const type& new_loss_tolerance)
 
    // Set loss tolerance
 
-   loss_tolerance = new_loss_tolerance;
+   learning_rate_tolerance = new_learning_rate_tolerance;
 }
 
 
@@ -588,7 +588,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
          triplet.check();
 
-      }while(triplet.B.second - triplet.A.second > loss_tolerance);
+      }while(triplet.B.second - triplet.A.second > learning_rate_tolerance);
 
       return(triplet.U);
    }
@@ -640,7 +640,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       // Reduce the interval
 
-      while(abs(triplet.B.second - triplet.A.second) > loss_tolerance)
+      while(abs(triplet.B.second - triplet.A.second) > learning_rate_tolerance)
       {
           try
 	      {
@@ -869,13 +869,13 @@ tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Loss tolerance
+   // Learning rate tolerance
    {
-   element = document->NewElement("LossTolerance");
+   element = document->NewElement("LearningRateTolerance");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << loss_tolerance;
+   buffer << learning_rate_tolerance;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -947,7 +947,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("LearningRateTolerance");
 
     buffer.str("");
-    buffer << loss_tolerance;
+    buffer << learning_rate_tolerance;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -973,12 +973,12 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Training rate algorithm element is nullptr.\n";
+              << "Learning rate algorithm element is nullptr.\n";
 
        throw logic_error(buffer.str());
    }
 
-   // Training rate method
+   // Learning rate method
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateMethod");
 
@@ -997,17 +997,17 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Loss tolerance
+   // Learning rate tolerance
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossTolerance");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateTolerance");
 
        if(element)
        {
-          const type new_loss_tolerance = static_cast<type>(atof(element->GetText()));
+          const type new_learning_rate_tolerance = static_cast<type>(atof(element->GetText()));
 
           try
           {
-             set_loss_tolerance(new_loss_tolerance);
+             set_learning_rate_tolerance(new_learning_rate_tolerance);
           }
           catch(const logic_error& e)
           {

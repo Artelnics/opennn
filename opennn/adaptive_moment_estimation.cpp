@@ -159,11 +159,11 @@ const type& AdaptiveMomentEstimation::get_gradient_norm_goal() const
 }
 
 
-/// Returns the maximum number of selection failures during the training process.
+/// Returns the maximum number of selection error increases during the training process.
 
-const Index& AdaptiveMomentEstimation::get_maximum_selection_failures() const
+const Index& AdaptiveMomentEstimation::get_maximum_selection_error_increases() const
 {
-   return maximum_selection_failures;
+   return maximum_selection_error_increases;
 }
 
 
@@ -241,7 +241,7 @@ void AdaptiveMomentEstimation::set_default()
    minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
-   maximum_selection_failures = 1000000;
+   maximum_selection_error_increases = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 10000;
    return_minimum_selection_error_neural_network = false;
@@ -542,12 +542,12 @@ void AdaptiveMomentEstimation::set_gradient_norm_goal(const type& new_gradient_n
 }
 
 
-/// Sets a new maximum number of selection failures.
-/// @param new_maximum_selection_failures Maximum number of iterations in which the selection evalutation decreases.
+/// Sets a new maximum number of selection error increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation decreases.
 
-void AdaptiveMomentEstimation::set_maximum_selection_error_increases(const Index& new_maximum_selection_failures)
+void AdaptiveMomentEstimation::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
-   maximum_selection_failures = new_maximum_selection_failures;
+   maximum_selection_error_increases = new_maximum_selection_error_increases;
 }
 
 
@@ -702,7 +702,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    type learning_rate = static_cast<type>(0.0);
 
-   Index selection_failures = 0;
+   Index selection_error_increases = 0;
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    type minimum_selection_error = numeric_limits<type>::max();
@@ -800,7 +800,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
-          selection_failures++;
+          selection_error_increases++;
        }
        else if(selection_error <= minimum_selection_error)
        {
@@ -821,12 +821,12 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        // Stopping Criteria
 
-        if(selection_failures >= maximum_selection_failures && apply_early_stopping)
+        if(selection_error_increases >= maximum_selection_error_increases && apply_early_stopping)
         {
            if(display)
            {
-              cout << "Epoch " << epoch << ", iteration " << epoch << ": Maximum selection failures reached.\n"
-                   << "Selection failures: " << selection_failures << endl;
+              cout << "Epoch " << epoch << ", iteration " << epoch << ": Maximum selection error increases reached.\n"
+                   << "Selection error increases: " << selection_error_increases << endl;
            }
 
            stop_training = true;
@@ -1012,7 +1012,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
    labels.push_back("Maximum selection error increases");
 
    buffer.str("");
-   buffer << maximum_selection_failures;
+   buffer << maximum_selection_error_increases;
 
    values.push_back(buffer.str());
 
@@ -1216,7 +1216,7 @@ tinyxml2::XMLDocument* AdaptiveMomentEstimation::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_failures;
+   buffer << maximum_selection_error_increases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1328,10 +1328,18 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("AdaptiveMomentEstimation");
+    // Batch size
+
+    file_stream.OpenElement("BatchSize");
+
+    buffer.str("");
+    buffer << loss_index_pointer->get_data_set_pointer()->get_batch_instances_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     // Return minimum selection error neural network
-
 
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
@@ -1341,7 +1349,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
 
     // Apply early stopping
 
@@ -1398,12 +1405,12 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.CloseElement();
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_failures;
+    buffer << maximum_selection_error_increases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1465,86 +1472,28 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Gradient descent element is nullptr.\n";
+               << "Adaptative moment estimation element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-   // Warning parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
+    // Batch size
 
-       if(element)
-       {
-          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
+    const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
 
-          try
-          {
-             set_warning_parameters_norm(new_warning_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
+    if(batch_size_element)
+    {
+        string new_batch_size = batch_size_element->GetText();
 
-   // Warning gradient norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
-
-       if(element)
-       {
-          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_gradient_norm(new_warning_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorParametersNorm");
-
-       if(element)
-       {
-          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-              set_error_parameters_norm(new_error_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error gradient norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
-
-       if(element)
-       {
-          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_error_gradient_norm(new_error_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
+        try
+        {
+           loss_index_pointer->get_data_set_pointer()->set_batch_instances_number(new_batch_size != "0");
+        }
+        catch(const logic_error& e)
+        {
+           cerr << e.what() << endl;
+        }
+    }
 
     // Return minimum selection error neural network
 
@@ -1658,17 +1607,17 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
        if(element)
        {
-          const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+          const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
-             set_maximum_selection_error_increases(new_maximum_selection_failures);
+             set_maximum_selection_error_increases(new_maximum_selection_error_increases);
           }
           catch(const logic_error& e)
           {
@@ -1677,7 +1626,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum iterations number
+   // Maximum eochs number
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
 
@@ -1752,82 +1701,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
            }
         }
     }
-
-   // Display period
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
-
-       if(element)
-       {
-          const Index new_display_period = static_cast<Index>(atoi(element->GetText()));
-
-          try
-          {
-             set_display_period(new_display_period);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-    // Save period
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
-
-        if(element)
-        {
-           const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
-
-           try
-           {
-              set_save_period(new_save_period);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Neural network file name
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
-
-        if(element)
-        {
-           const string new_neural_network_file_name = element->GetText();
-
-           try
-           {
-              set_neural_network_file_name(new_neural_network_file_name);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-   // Display
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-       if(element)
-       {
-          const string new_display = element->GetText();
-
-          try
-          {
-             set_display(new_display != "0");
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
 }
 
 }

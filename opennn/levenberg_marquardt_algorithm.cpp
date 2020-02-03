@@ -127,9 +127,9 @@ const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() const
+const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_increases() const
 {
-   return(maximum_selection_error_decreases);
+   return(maximum_selection_error_increases);
 }
 
 
@@ -247,7 +247,7 @@ void LevenbergMarquardtAlgorithm::set_default()
    minimum_loss_decrease = static_cast<type>(1.0e-9);
    loss_goal = static_cast<type>(1.0e-3);
    gradient_norm_goal = static_cast<type>(1.0e-3);
-   maximum_selection_error_decreases = 1000;
+   maximum_selection_error_increases = 1000;
 
    maximum_epochs_number = 1000;
    maximum_time = 1000.0;
@@ -565,12 +565,12 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 }
 
 
-/// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// Sets a new maximum number of selection error increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_decreases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
-   maximum_selection_error_decreases = new_maximum_selection_error_decreases;
+   maximum_selection_error_increases = new_maximum_selection_error_increases;
 }
 
 
@@ -933,7 +933,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          results.stopping_condition = GradientNormGoal;
       }
 
-      else if(selection_failures >= maximum_selection_error_decreases && apply_early_stopping)
+      else if(selection_failures >= maximum_selection_error_increases && apply_early_stopping)
       {
          if(display)
          {
@@ -1133,7 +1133,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
    labels.push_back("Maximum selection error increases");
 
    buffer.str("");
-   buffer << maximum_selection_error_decreases;
+   buffer << maximum_selection_error_increases;
 
    values.push_back(buffer.str());
 
@@ -1378,7 +1378,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_error_decreases;
+   buffer << maximum_selection_error_increases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1481,8 +1481,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("LevenbergMarquardtAlgorithm");
-
     // Damping paramterer factor.
 
     file_stream.OpenElement("DampingParameterFactor");
@@ -1569,7 +1567,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_error_decreases;
+    buffer << maximum_selection_error_increases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1640,60 +1638,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         throw logic_error(buffer.str());
     }
 
-    // Damping parameter
-
-    const tinyxml2::XMLElement* damping_parameter_element = root_element->FirstChildElement("DampingParameter");
-
-    if(damping_parameter_element)
-    {
-       const type new_damping_parameter = static_cast<type>(atof(damping_parameter_element->GetText()));
-
-       try
-       {
-          set_damping_parameter(new_damping_parameter);
-       }
-       catch(const logic_error& e)
-       {
-          cerr << e.what() << endl;
-       }
-    }
-
-    // Minimum damping parameter
-
-    const tinyxml2::XMLElement* minimum_damping_parameter_element = root_element->FirstChildElement("MinimumDampingParameter");
-
-    if(minimum_damping_parameter_element)
-    {
-       const type new_minimum_damping_parameter = static_cast<type>(atof(minimum_damping_parameter_element->GetText()));
-
-       try
-       {
-          set_minimum_damping_parameter(new_minimum_damping_parameter);
-       }
-       catch(const logic_error& e)
-       {
-          cerr << e.what() << endl;
-       }
-    }
-
-    // Maximum damping parameter
-
-    const tinyxml2::XMLElement* maximum_damping_parameter_element = root_element->FirstChildElement("MaximumDampingParameter");
-
-    if(maximum_damping_parameter_element)
-    {
-       const type new_maximum_damping_parameter = static_cast<type>(atof(maximum_damping_parameter_element->GetText()));
-
-       try
-       {
-          set_maximum_damping_parameter(new_maximum_damping_parameter);
-       }
-       catch(const logic_error& e)
-       {
-          cerr << e.what() << endl;
-       }
-    }
-
     // Damping parameter factor
 
     const tinyxml2::XMLElement* damping_parameter_factor_element = root_element->FirstChildElement("DampingParameterFactor");
@@ -1711,78 +1655,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
           cerr << e.what() << endl;
        }
     }
-
-   // Warning parameters norm
-
-   const tinyxml2::XMLElement* warning_parameters_norm_element = root_element->FirstChildElement("WarningParametersNorm");
-
-   if(warning_parameters_norm_element)
-   {
-      const type new_warning_parameters_norm = static_cast<type>(atof(warning_parameters_norm_element->GetText()));
-
-      try
-      {
-         set_warning_parameters_norm(new_warning_parameters_norm);
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Warning gradient norm 
-
-   const tinyxml2::XMLElement* warning_gradient_norm_element = root_element->FirstChildElement("WarningGradientNorm");
-
-   if(warning_gradient_norm_element)
-   {
-      const type new_warning_gradient_norm = static_cast<type>(atof(warning_gradient_norm_element->GetText()));
-
-      try
-      {
-         set_warning_gradient_norm(new_warning_gradient_norm);
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Error parameters norm
-
-   const tinyxml2::XMLElement* error_parameters_norm_element = root_element->FirstChildElement("ErrorParametersNorm");
-
-   if(error_parameters_norm_element)
-   {
-      const type new_error_parameters_norm = static_cast<type>(atof(error_parameters_norm_element->GetText()));
-
-      try
-      {
-          set_error_parameters_norm(new_error_parameters_norm);
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Error gradient norm 
-
-   const tinyxml2::XMLElement* error_gradient_norm_element = root_element->FirstChildElement("ErrorGradientNorm");
-
-   if(error_gradient_norm_element)
-   {
-      const type new_error_gradient_norm = static_cast<type>(atof(error_gradient_norm_element->GetText()));
-
-      try
-      {
-         set_error_gradient_norm(new_error_gradient_norm);
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
 
    // Return minimum selection error neural network
 
@@ -1892,17 +1764,17 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
 
-   const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+   const tinyxml2::XMLElement* maximum_selection_error_increases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
-   if(maximum_selection_error_decreases_element)
+   if(maximum_selection_error_increases_element)
    {
-      const Index new_maximum_selection_error_decreases = static_cast<Index>(atoi(maximum_selection_error_decreases_element->GetText()));
+      const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
 
       try
       {
-         set_maximum_selection_error_increases(new_maximum_selection_error_decreases);
+         set_maximum_selection_error_increases(new_maximum_selection_error_increases);
       }
       catch(const logic_error& e)
       {
@@ -1910,7 +1782,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Maximum iterations number 
+   // Maximum epochs number
 
    const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
@@ -1979,80 +1851,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       catch(const logic_error& e)
       {
          cerr << e.what() << endl;
-      }
-   }
-
-   // Display period
-
-   const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
-
-   if(display_period_element)
-   {
-      const Index new_display_period = static_cast<Index>(atoi(display_period_element->GetText()));
-
-      try
-      {
-         set_display_period(new_display_period);
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Save period
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
-
-       if(element)
-       {
-          const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
-
-          try
-          {
-             set_save_period(new_save_period);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Neural network file name
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
-
-       if(element)
-       {
-          const string new_neural_network_file_name = element->GetText();
-
-          try
-          {
-             set_neural_network_file_name(new_neural_network_file_name);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Display
-
-   const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-   if(display_element)
-   {
-      const string new_display = display_element->GetText();
-
-      try
-      {
-         set_display(new_display != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
       }
    }
 }

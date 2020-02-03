@@ -57,10 +57,7 @@ public:
 
    explicit ConjugateGradient(); 
 
-   explicit ConjugateGradient(LossIndex*);
-
-
-   
+   explicit ConjugateGradient(LossIndex*);   
 
    explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
 
@@ -239,7 +236,7 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_decreases;
+   Index maximum_selection_error_increases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 

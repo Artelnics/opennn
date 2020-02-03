@@ -56,9 +56,7 @@ public:
 
    // LOSS INDEX CONSTRUCTOR
 
-   explicit AdaptiveMomentEstimation(LossIndex*);
-
-   
+   explicit AdaptiveMomentEstimation(LossIndex*);   
 
    explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
 
@@ -98,7 +96,7 @@ public:
    const type& get_maximum_time() const;
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
-   const Index& get_maximum_selection_failures() const;
+   const Index& get_maximum_selection_error_increases() const;
 
    // Reserve training history
 
@@ -233,7 +231,7 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_failures;
+   Index maximum_selection_error_increases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 

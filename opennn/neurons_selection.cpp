@@ -584,6 +584,14 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
     final_losses[0] = optimum_training_error;
     final_losses[1] = optimum_selection_error;
+
+    order_history = insert_result(neurons_number, order_history.cast<type>()).cast<Index>();
+
+    training_loss_history = insert_result(final_losses(0), training_loss_history);
+
+    selection_error_history = insert_result(final_losses(1), selection_error_history);
+
+    parameters_history = insert_result(optimum_parameters, parameters_history);
 /*
     order_history.push_back(neurons_number);
 
@@ -596,6 +604,38 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     return final_losses;
 }
 
+Tensor<type, 1> NeuronsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor<type, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
+
+
+Tensor< Tensor<type, 1>, 1> NeuronsSelection::insert_result(const Tensor<type, 1>& value, const Tensor< Tensor<type, 1>, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor< Tensor<type, 1>, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
 
 /// Return final training loss and final selection error depending on the training method.
 /// @param results Results of the perform_training method.
@@ -680,9 +720,9 @@ string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithm::R
 
 void NeuronsSelection::delete_selection_history()
 {
-/*
-    selection_error_history.set();
-*/
+
+    selection_error_history.resize(0);
+
 }
 
 
@@ -690,9 +730,9 @@ void NeuronsSelection::delete_selection_history()
 
 void NeuronsSelection::delete_training_loss_history()
 {
-/*
-    training_loss_history.set();
-*/
+
+    training_loss_history.resize(0);
+
 }
 
 
