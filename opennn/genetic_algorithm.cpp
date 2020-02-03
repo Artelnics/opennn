@@ -1688,11 +1688,11 @@ void GeneticAlgorithm::perform_mutation()
     }
 
 #endif
-
+/*
     const Index selected_population_size = population_size - elitism_size;
 
     type random;
-/*
+
     for(Index i = selected_population_size; i < population.size(); i++)
     {
         for(Index j = 0; j < population[i].size(); j++)
@@ -1755,7 +1755,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 #endif
 
     GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
-
+/*
     if(display)
     {
         cout << "Performing genetic inputs selection..." << endl;
@@ -1783,7 +1783,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     Tensor<bool, 1> current_inputs;
     Tensor<DataSet::VariableUse, 1> current_uses;
-    type current_mean;
+    Tensor<type, 0> current_mean;
     type current_standard_deviation;
 
 //    type previous_minimum_selection_error = 1e10;
@@ -1808,7 +1808,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     original_uses = data_set_pointer->get_columns_uses();
 
     current_uses = original_uses;
-/*
+
     optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
 
     Tensor<type, 2>  test(100,4);
@@ -1828,9 +1828,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         minimal_index = get_optimal_individual_index();
 
-        current_mean = mean(loss.get_column(1));
+        current_mean = loss.chip(1,1).mean();
 
-        current_standard_deviation = standard_deviation(loss.get_column(1));
+        current_standard_deviation = standard_deviation(loss.chip(1,1));
 
         current_inputs = population[minimal_index];
 
@@ -1929,12 +1929,12 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(display)
         {
             cout << "Generation: " << epoch << endl;
-            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().vector_to_string() << " " << endl;
-            cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
+            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << " " << endl;
+//            cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
             cout << "Generation optimum selection error: " << current_selection_error << endl;
             cout << "Corresponding training loss: " << current_training_error << endl;
-            cout << "Generation selection mean = " << mean(loss.get_column(1)) << endl;
-            cout << "Generation selection standard deviation = " << standard_deviation(loss.get_column(1)) << endl;
+            cout << "Generation selection mean = " << mean(loss.chip(1,1)) << endl;
+            cout << "Generation selection standard deviation = " << standard_deviation(loss.chip(1,1)) << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
