@@ -219,7 +219,6 @@ void StochasticGradientDescent::set_default()
 {
    // TRAINING OPERATORS
 
-
    initial_learning_rate = static_cast<type>(0.01);
    initial_decay = static_cast<type>(0.0);
    momentum = static_cast<type>(0.0);
@@ -402,8 +401,6 @@ void StochasticGradientDescent::set_warning_parameters_norm(const type& new_warn
 
 void StochasticGradientDescent::set_warning_gradient_norm(const type& new_warning_gradient_norm)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_warning_gradient_norm < static_cast<type>(0.0))
@@ -832,12 +829,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //         Loss
 
-//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
 //           loss += first_order_loss.loss;
 
 //         Gradient
-
+/*
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
            parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*first_order_loss.gradient;
@@ -868,7 +865,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
-
+*/
        }
 /*
        gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);
