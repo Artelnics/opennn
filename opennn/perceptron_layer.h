@@ -58,11 +58,67 @@ public:
 
         explicit PerceptronLayerForwardPropagation() : ForwardPropagation(){}
 
+        explicit PerceptronLayerForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+            : ForwardPropagation(new_batch_instances_number, new_layer_pointer)
+        {
+
+        }
+
         virtual ~PerceptronLayerForwardPropagation() {}
 
-        void allocate() {}
+        void allocate()
+        {
+            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
+
+            const Index neurons_number = perceptron_layer->get_neurons_number();
+
+            combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+            activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+            activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+
+            combinations.setRandom();
+            activations.setRandom();
+            activations_derivatives.setRandom();
+
+        }
+
+        Tensor<type, 2> combinations;
+
+        Tensor<type, 2> activations;
+
+        Tensor<type, 2> activations_derivatives;
+    };
+
+
+    struct PerceptronLayerBackPropagation : BackPropagation
+    {
+        /// Default constructor.
+
+        explicit PerceptronLayerBackPropagation() : BackPropagation(){}
+
+        virtual ~PerceptronLayerBackPropagation() {}
+
+        void allocate()
+        {
+/*
+            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
+
+            const Index neurons_number = perceptron_layer->get_neurons_number();
+
+            layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+            layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+            layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+
+            layers[i].combinations.setRandom();
+            layers[i].activations.setRandom();
+            layers[i].activations_derivatives.setRandom();
+*/
+        }
+
+
 
     };
+
 
 
    // Constructors
@@ -330,10 +386,10 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
+   PerceptronLayer::PerceptronLayerForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
    void calculate_forward_propagation(const Tensor<type, 2>& inputs,
-                                      ForwardPropagation& forward_propagation)
+                                      PerceptronLayerForwardPropagation& forward_propagation)
    {
        calculate_combinations(inputs, forward_propagation.combinations);
 

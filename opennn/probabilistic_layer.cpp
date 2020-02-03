@@ -823,7 +823,7 @@ if(inputs_columns_number != inputs_number)
     return Tensor<type, 2>();
 }
 
-
+/*
 Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation forward_propagation;
@@ -835,7 +835,7 @@ Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(cons
 
     return forward_propagation;
 }
-
+*/
 
 Tensor<type, 2> ProbabilisticLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
                                                            const Tensor<type, 2>& output_gradient) const

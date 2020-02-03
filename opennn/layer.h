@@ -57,39 +57,54 @@ public:
     {
         /// Default constructor.
 
-        explicit ForwardPropagation() {}
+        explicit ForwardPropagation()
+        {
+        }
+
+        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
+            batch_instances_number = new_batch_instances_number;
+
+            layer_pointer = new_layer_pointer;
+        }
 
         virtual ~ForwardPropagation() {}
 
         virtual void allocate() {}
 
+        virtual void print() const {}
 
-        void print() const
-        {
-            cout << "Combinations:" << endl;
-            cout << combinations << endl;
+        Index batch_instances_number = 0;
 
-            cout << "Activations:" << endl;
-            cout << activations << endl;
-
-            cout << "Activation derivatives:" << endl;
-            cout << activations_derivatives << endl;
-        }
-
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 2> activations;
-
-        Tensor<type, 2> activations_derivatives;
-
-        Tensor<type, 3> activations_derivatives_3d;
-
+        Layer* layer_pointer;
     };
 
 
     struct BackPropagation
     {
+        /// Default constructor.
 
+        explicit BackPropagation()
+        {
+        }
+
+        explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
+            batch_instances_number = new_batch_instances_number;
+            layer_pointer = new_layer_pointer;
+        }
+
+        virtual ~BackPropagation() {}
+
+        virtual void allocate() {}
+
+        void print() const
+        {
+        }
+
+        Index batch_instances_number = 0;
+
+        Layer* layer_pointer = nullptr;
     };
 
 
@@ -126,9 +141,9 @@ public:
     virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
-
+/*
     virtual ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-
+*/
     virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas

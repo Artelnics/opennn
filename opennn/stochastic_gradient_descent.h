@@ -145,7 +145,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_parameters(const LossIndex::FirstOrderLoss& first_order_loss)
+   void update_parameters(const LossIndex::BackPropagation& first_order_loss)
    {
        /*
        NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();

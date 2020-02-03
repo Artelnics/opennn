@@ -49,6 +49,32 @@ public:
 
     enum PoolingMethod {NoPooling, MaxPooling, AveragePooling};
 
+    struct PoolingLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit PoolingLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~PoolingLayerForwardPropagation() {}
+
+        void allocate()
+        {
+/*
+            const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
+
+            const Index outputs_channels_number = pooling_layer->get_inputs_channels_number();
+            const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+            const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
+
+            layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+*/
+        }
+
+    };
+
+
     // Constructors
 
     explicit PoolingLayer();

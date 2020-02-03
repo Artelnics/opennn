@@ -132,7 +132,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss CrossEntropyError::calculate_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::BackPropagation CrossEntropyError::calculate_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -150,8 +150,8 @@ check();
 
     // Loss index
 
-    FirstOrderLoss first_order_loss(this);
-
+    BackPropagation first_order_loss(this);
+/*
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
 
     const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
@@ -171,7 +171,7 @@ check();
         first_order_loss.loss += regularization_weight*calculate_regularization();
         first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
-
+*/
     return first_order_loss;
 }
 

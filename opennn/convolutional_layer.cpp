@@ -317,7 +317,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inp
     return calculate_activations(calculate_combinations(inputs, parameters));
 }
 
-
+/*
 Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
@@ -330,7 +330,7 @@ Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(cons
 
     return layers;
 }
-
+*/
 
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                           const Tensor<type, 2>& activations,
