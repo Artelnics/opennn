@@ -167,6 +167,11 @@ public:
     void delete_training_loss_history();
     void check() const;
 
+    // Utilities
+
+    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
+    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
+
     /// Performs the order selection for a neural network.
 
     virtual Results* perform_neurons_selection() = 0;
@@ -188,6 +193,8 @@ protected:
     /// Performance of all the neural networks trained.
 
     Tensor<type, 1> training_loss_history;
+
+    /// Parameters of all the neural networks trained.
 
     Tensor<Tensor<type, 1>, 1> parameters_history;
 

@@ -3604,6 +3604,8 @@ void DataSet::set(const Tensor<type, 2>& new_data)
    if(get_header_line()) set_variables_names(data.get_header());
 */
    display = true;
+
+   set_default_columns_uses();
 }
 
 

@@ -60,7 +60,7 @@ GrowingInputs::~GrowingInputs()
 
 const Index& GrowingInputs::get_maximum_inputs_number() const
 {
-    return(maximum_inputs_number);
+    return maximum_inputs_number;
 }
 
 
@@ -68,7 +68,7 @@ const Index& GrowingInputs::get_maximum_inputs_number() const
 
 const Index& GrowingInputs::get_minimum_inputs_number() const
 {
-    return(minimum_inputs_number);
+    return minimum_inputs_number;
 }
 
 
@@ -76,7 +76,7 @@ const Index& GrowingInputs::get_minimum_inputs_number() const
 
 const Index& GrowingInputs::get_maximum_selection_failures() const
 {
-    return(maximum_selection_failures);
+    return maximum_selection_failures;
 }
 
 
@@ -188,7 +188,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 #endif
 
     GrowingInputsResults* results = new GrowingInputsResults();
-
+/*
     if(display) cout << "Performing growing inputs selection..." << endl;
 
     // Loss index Stuff
@@ -208,12 +208,20 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-/*
+
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
-    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
+//    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+
+    const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
+
+//    const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
+
+    Tensor<type, 1> correlations_descending(total_correlations);
+
+    sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<int>());
 
     data_set_pointer->set_input_columns_unused();
 
