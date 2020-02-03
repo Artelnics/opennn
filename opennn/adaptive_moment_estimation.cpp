@@ -1328,7 +1328,16 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("AdaptiveMomentEstimation");
+    // Batch size
+
+    file_stream.OpenElement("BatchSize");
+
+    buffer.str("");
+    buffer << loss_index_pointer->get_data_set_pointer()->get_batch_instances_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     // Return minimum selection error neural network
 
@@ -1340,7 +1349,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
 
     // Apply early stopping
 
@@ -1397,7 +1405,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.CloseElement();
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
@@ -1468,83 +1476,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-/*
-   // Warning parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
 
-       if(element)
-       {
-          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_parameters_norm(new_warning_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Warning gradient norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
-
-       if(element)
-       {
-          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_gradient_norm(new_warning_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorParametersNorm");
-
-       if(element)
-       {
-          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-              set_error_parameters_norm(new_error_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error gradient norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
-
-       if(element)
-       {
-          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_error_gradient_norm(new_error_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-*/
     // Batch size
 
     const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
@@ -1769,64 +1701,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
            }
         }
     }
-/*
-   // Display period
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
-
-       if(element)
-       {
-          const Index new_display_period = static_cast<Index>(atoi(element->GetText()));
-
-          try
-          {
-             set_display_period(new_display_period);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-    // Save period
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
-
-        if(element)
-        {
-           const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
-
-           try
-           {
-              set_save_period(new_save_period);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-   // Display
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-       if(element)
-       {
-          const string new_display = element->GetText();
-
-          try
-          {
-             set_display(new_display != "0");
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-*/
 }
 
 }
