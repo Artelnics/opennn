@@ -244,7 +244,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         if(reserve_error_data)
         {
-            const Tensor<type, 1> old_training_loss_history(training_loss_history);
+ /*           const Tensor<type, 1> old_training_loss_history(training_loss_history);
 
             const Index size = training_loss_history.size();
 
@@ -255,14 +255,16 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                 training_loss_history(i) = old_training_loss_history(i);
             }
 
-            training_loss_history(size+1) = current_training_loss;
+            training_loss_history(size) = current_training_loss;
+*/
+            training_loss_history = insert_result(current_training_loss, training_loss_history);
 
 //            results->training_loss_data.push_back(current_training_loss);
         }
 
         if(reserve_selection_error_data)
         {
-            const Tensor<type, 1> old_selection_error_history(selection_error_history);
+/*            const Tensor<type, 1> old_selection_error_history(selection_error_history);
 
             const Index size = selection_error_history.size();
 
@@ -273,7 +275,9 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                 selection_error_history(i) = old_selection_error_history(i);
             }
 
-            selection_error_history(size+1) = current_selection_error;
+            selection_error_history(size) = current_selection_error;
+*/
+            selection_error_history = insert_result(current_selection_error, selection_error_history);
 //            results->selection_error_data.push_back(current_selection_error);
         }
 
