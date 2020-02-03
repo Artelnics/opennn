@@ -192,7 +192,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     time(&beginning_time);
 
     // Main loop
-/*
+
     for(Index i = 0; i < maximum_order; i++)
     {
         // Calculate losses
@@ -240,16 +240,45 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        results->neurons_data.push_back(neurons_number);
+//        results->neurons_data.push_back(neurons_number);
 
         if(reserve_error_data)
         {
-            results->training_loss_data.push_back(current_training_loss);
+ /*           const Tensor<type, 1> old_training_loss_history(training_loss_history);
+
+            const Index size = training_loss_history.size();
+
+            training_loss_history.resize(size+1);
+
+            for(Index i = 0; i < size; i++)
+            {
+                training_loss_history(i) = old_training_loss_history(i);
+            }
+
+            training_loss_history(size) = current_training_loss;
+*/
+            training_loss_history = insert_result(current_training_loss, training_loss_history);
+
+//            results->training_loss_data.push_back(current_training_loss);
         }
 
         if(reserve_selection_error_data)
         {
-            results->selection_error_data.push_back(current_selection_error);
+/*            const Tensor<type, 1> old_selection_error_history(selection_error_history);
+
+            const Index size = selection_error_history.size();
+
+            selection_error_history.resize(size+1);
+
+            for(Index i = 0; i < size; i++)
+            {
+                selection_error_history(i) = old_selection_error_history(i);
+            }
+
+            selection_error_history(size) = current_selection_error;
+*/
+            selection_error_history = insert_result(current_selection_error, selection_error_history);
+//            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(iterations == 0
@@ -317,8 +346,8 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
             cout << "Iteration: " << iterations << endl
                  << "Hidden neurons number: " << neurons_number << endl
                  << "Training loss: " << current_training_loss << endl
-                 << "Selection error: " << current_selection_error << endl
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl << endl;
+                 << "Selection error: " << current_selection_error << endl;
+//                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl << endl;
         }
 
         if(end) break;
@@ -356,7 +385,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     results->final_training_loss = optimum_training_loss;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
-*/
+
     return results;
 }
 

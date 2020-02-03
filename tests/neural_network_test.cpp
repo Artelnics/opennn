@@ -1740,7 +1740,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
 
-    batch.fill(batches_indices.chip(0,0), inputs_indices, targets_indices);
+//    batch.fill(batches_indices.chip(0,0), inputs_indices, targets_indices);
 
     //NeuralNetwork
 
@@ -1764,7 +1764,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_batch_instances_number(), &neural_network);
 
-    neural_network.calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+//    neural_network.calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
     Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations;
 

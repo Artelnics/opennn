@@ -1528,14 +1528,11 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("GradientDescent");
-
     // Training rate algorithm
 
     learning_rate_algorithm.write_XML(file_stream);
 
     // Return minimum selection error neural network
-
 
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
@@ -1545,7 +1542,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
 
     // Apply early stopping
 
@@ -1613,7 +1609,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
 
