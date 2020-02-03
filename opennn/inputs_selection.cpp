@@ -612,6 +612,43 @@ Tensor<type, 1> InputsSelection::insert_result(const type& value, const Tensor<t
     return new_tensor;
 }
 
+Tensor<Index, 1> InputsSelection::insert_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor<Index, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
+
+Tensor<Index, 1> InputsSelection::delete_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor<Index, 1> new_tensor(size-1);
+
+    Index index = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(old_tensor(i) != value)
+        {
+            new_tensor(index) = old_tensor(i);
+
+            index++;
+        }
+    }
+
+    return new_tensor;
+}
+
 
 Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value, const Tensor< Tensor<type, 1>, 1>& old_tensor) const
 {

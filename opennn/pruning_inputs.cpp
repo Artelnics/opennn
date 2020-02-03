@@ -68,7 +68,7 @@ const Index& PruningInputs::get_minimum_inputs_number() const
 
 const Index& PruningInputs::get_maximum_inputs_number() const
 {
-    return(maximum_inputs_number);
+    return maximum_inputs_number;
 }
 
 
@@ -76,7 +76,7 @@ const Index& PruningInputs::get_maximum_inputs_number() const
 
 const Index& PruningInputs::get_maximum_selection_failures() const
 {
-    return(maximum_selection_failures);
+    return maximum_selection_failures;
 }
 
 
@@ -215,12 +215,34 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-/*
+
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
-    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
+    const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
+
+//    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+
+//    const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
+
+    Tensor<type, 1> correlations_ascending(total_correlations.size());
+
+    sort(correlations_ascending.data(), correlations_ascending.data() +  correlations_ascending.size(), less<int>());
+
+    Tensor<Index, 1> correlations_ascending_indices(total_correlations.size());
+
+    for(Index i = 0; i < total_correlations.size(); i++)
+    {
+        for(Index j = 0; j < correlations_ascending.size(); j++)
+        {
+            if(total_correlations(i) == correlations_ascending(j))
+            {
+                correlations_ascending_indices(i) = j;
+            }
+        }
+    }
+
 
 //    data_set_pointer->set_input_columns_unused();
 
@@ -276,7 +298,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             data_set_pointer->set_column_use(column_name, DataSet::UnusedVariable);
 
-            current_columns_indices = current_columns_indices.delete_value(column_index);
+            current_columns_indices = delete_result(column_index, current_columns_indices);
 
 //            current_columns_indices.push_back(column_index);
 
@@ -379,11 +401,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             if(end_algorithm == false && epoch != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
-            cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().vector_to_string() << endl;
+            cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
             cout << "Training loss: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
         }
@@ -423,13 +445,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     if(display)
     {
-        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().vector_to_string() << endl;
+        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal number of inputs: " << optimal_columns_indices.size() << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-*/
+
     return results;
 }
 
