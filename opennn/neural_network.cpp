@@ -3577,29 +3577,6 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 
-Tensor<Layer::ForwardPropagation, 1> NeuralNetwork::calculate_forward_propagation(const Tensor<type, 2>& inputs) const
-{
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Tensor<Layer::ForwardPropagation, 1> forward_propagation(trainable_layers_number);
-/*
-    // First layer
-
-    forward_propagation[0] = trainable_layers_pointers[0]->calculate_forward_propagation(inputs);
-
-    // Rest of layers
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        forward_propagation[i] = trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation[i-1].activations);
-    }
-*/
-    return forward_propagation;
-}
-
-
 Layer* NeuralNetwork::get_output_layer_pointer() const
 {
     if(layers_pointers.dimension(0) == 0)

@@ -76,9 +76,9 @@ public:
 
    // Gradient methods
 
-   BackPropagation calculate_first_order_loss() const;
+   BackPropagation calculate_back_propagation() const;
 
-   BackPropagation calculate_first_order_loss(const DataSet::Batch&) const;
+   BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
 
    // Error terms methods
 
@@ -90,9 +90,9 @@ public:
 
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_error(BackPropagation& first_order_loss) const
+   void calculate_error(BackPropagation& back_propagation) const
    {
-       const Index batch_instances_number = first_order_loss.errors.dimension(0);
+       const Index batch_instances_number = back_propagation.errors.dimension(0);
 
        Tensor<type, 0> sum_squared_error;
 
@@ -102,7 +102,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-//                sum_squared_error.device(*default_device) = first_order_loss.errors.contract(first_order_loss.errors, double_contraction);
+//                sum_squared_error.device(*default_device) = back_propagation.errors.contract(back_propagation.errors, double_contraction);
 
                 break;
             }
@@ -111,7 +111,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               sum_squared_error.device(*thread_pool_device) = first_order_loss.errors.contract(first_order_loss.errors, double_contraction);
+//               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, double_contraction);
 
                 break;
             }
@@ -135,13 +135,13 @@ public:
            }
        }
 
-//       first_order_loss.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+//       back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
    }
 
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& first_order_loss) const
+                                  BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -159,7 +159,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 first_order_loss.output_gradient.device(*default_device) = coefficient*first_order_loss.errors;
+                 back_propagation.output_gradient.device(*default_device) = coefficient*back_propagation.errors;
 
                  return;
              }
@@ -168,7 +168,7 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                first_order_loss.output_gradient.device(*thread_pool_device) = coefficient*first_order_loss.errors;
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
 
                 return;
              }

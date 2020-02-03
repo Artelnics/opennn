@@ -85,6 +85,7 @@ public:
        ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
            batch_instances_number = new_batch_instances_number;
+
            neural_network_pointer = new_neural_network_pointer;
 
            allocate();
@@ -104,7 +105,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers[i].allocate();
+               layers[i]->allocate();
            }
        }
 
@@ -118,14 +119,14 @@ public:
            {
                cout << "Layer " << i+1 << endl;
 
-               layers[i].print();
+               layers[i]->print();
            }
        }
 
        Index batch_instances_number = 0;
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<Layer::ForwardPropagation, 1> layers;
+       Tensor<Layer::ForwardPropagation*, 1> layers;
    };
 
    struct BackPropagation
@@ -135,6 +136,7 @@ public:
        BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
            batch_instances_number = new_batch_instances_number;
+
            neural_network_pointer = new_neural_network_pointer;
 
            allocate();
@@ -150,7 +152,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers[i].allocate();
+               layers[i]->allocate();
            }
        }
 
@@ -164,14 +166,15 @@ public:
            {
                cout << "Layer " << i+1 << endl;
 
-               layers[i].print();
+               layers[i]->print();
            }
        }
 
        Index batch_instances_number = 0;
+
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<Layer::ForwardPropagation, 1> layers;
+       Tensor<Layer::BackPropagation*, 1> layers;
 
    };
 
@@ -337,27 +340,21 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   Tensor<Layer::ForwardPropagation, 1> calculate_forward_propagation(const Tensor<type, 2>&) const;
-
    void calculate_forward_propagation(const DataSet::Batch& batch,
                                       ForwardPropagation& forward_propagation) const
    {
        const Index trainable_layers_number = get_trainable_layers_number();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-/*
-       // First layer
 
-       trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs_2d, forward_propagation.layers[0]);
-
-       // Rest of layers
+       trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs_2d,
+                                                                   forward_propagation.layers[0]);
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
-            trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1].activations,
+            trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1]->activations,
                                                                         forward_propagation.layers[i]);
        }
-*/
    }
 
 protected:

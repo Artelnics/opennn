@@ -46,25 +46,23 @@ class PerceptronLayer : public Layer
 
 public:
 
-    // Enumerations
-
     /// Enumeration of available activation functions for the perceptron neuron model.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-    struct PerceptronLayerForwardPropagation : ForwardPropagation
+    struct ForwardPropagation : Layer::ForwardPropagation
     {
         /// Default constructor.
 
-        explicit PerceptronLayerForwardPropagation() : ForwardPropagation(){}
+        explicit ForwardPropagation() : Layer::ForwardPropagation(){}
 
-        explicit PerceptronLayerForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
-            : ForwardPropagation(new_batch_instances_number, new_layer_pointer)
+        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+            : Layer::ForwardPropagation(new_batch_instances_number, new_layer_pointer)
         {
 
         }
 
-        virtual ~PerceptronLayerForwardPropagation() {}
+        virtual ~ForwardPropagation() {}
 
         void allocate()
         {
@@ -72,51 +70,42 @@ public:
 
             const Index neurons_number = perceptron_layer->get_neurons_number();
 
-            combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-            activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-            activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+            combinations.resize(batch_instances_number, neurons_number);
 
-            combinations.setRandom();
-            activations.setRandom();
-            activations_derivatives.setRandom();
+            activations.resize(batch_instances_number, neurons_number);
 
+            activations_derivatives.resize(batch_instances_number, neurons_number);
         }
 
         Tensor<type, 2> combinations;
-
-        Tensor<type, 2> activations;
 
         Tensor<type, 2> activations_derivatives;
     };
 
 
-    struct PerceptronLayerBackPropagation : BackPropagation
+    struct BackPropagation : Layer::BackPropagation
     {
         /// Default constructor.
 
-        explicit PerceptronLayerBackPropagation() : BackPropagation(){}
+        explicit BackPropagation() : Layer::BackPropagation(){}
 
-        virtual ~PerceptronLayerBackPropagation() {}
+        virtual ~BackPropagation() {}
 
         void allocate()
         {
-/*
-            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
+            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
 
             const Index neurons_number = perceptron_layer->get_neurons_number();
+            const Index inputs_number = perceptron_layer->get_inputs_number();
 
-            layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-            layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-            layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+            biases_derivatives.resize(neurons_number);
 
-            layers[i].combinations.setRandom();
-            layers[i].activations.setRandom();
-            layers[i].activations_derivatives.setRandom();
-*/
+            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
         }
 
+        Tensor<type, 1> biases_derivatives;
 
-
+        Tensor<type, 2> synaptic_weights_derivatives;
     };
 
 
@@ -386,19 +375,60 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   PerceptronLayer::PerceptronLayerForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
-                                      PerceptronLayerForwardPropagation& forward_propagation)
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation->combinations);
 
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(forward_propagation->combinations, forward_propagation->activations);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation->combinations, forward_propagation->activations_derivatives);
    }
 
    // Delta methods
+
+   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+                               const Tensor<type, 2>& output_gradient,
+                               Tensor<type, 2>& output_delta) const
+   {
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                output_delta.device(*default_device) = activations_derivatives*output_gradient;
+
+                return;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+               return;
+            }
+
+           case Device::EigenGpu:
+           {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+   }
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -489,7 +519,6 @@ public:
                                              Tensor<type, 2>& hidden_delta) const
    {
 //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
 
        switch(device_pointer->get_type())
        {

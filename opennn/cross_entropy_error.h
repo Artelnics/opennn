@@ -67,13 +67,13 @@ public:
 
    // Gradient methods
 
-   BackPropagation calculate_first_order_loss(const DataSet::Batch&) const;
+   BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
 
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& first_order_loss) const
+                                  BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -83,7 +83,7 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 /*
-        first_order_loss.output_gradient = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
+        back_propagation.output_gradient = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
                 + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations*static_cast<type>(-1.0) + static_cast<type>(1.0));
 */
    }

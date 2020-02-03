@@ -306,7 +306,7 @@ check();
 /// It is used for optimization of parameters during training.
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 
-LossIndex::BackPropagation MeanSquaredError::calculate_first_order_loss() const
+LossIndex::BackPropagation MeanSquaredError::calculate_back_propagation() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -330,7 +330,7 @@ check();
 
     const Index batches_number = training_batches.size();
 
-    BackPropagation first_order_loss(this);
+    BackPropagation back_propagation(this);
 
     // Eigen stuff
 /*
@@ -365,15 +365,15 @@ check();
 
           #pragma omp critical
         {
-            first_order_loss.loss += loss(0);
-            first_order_loss.gradient += gradient;
+            back_propagation.loss += loss(0);
+            back_propagation.gradient += gradient;
          }
     }
 
-    first_order_loss.loss /= static_cast<type>(training_instances_number);
-    first_order_loss.gradient = (2.0/static_cast<type>(training_instances_number))*first_order_loss.gradient;
+    back_propagation.loss /= static_cast<type>(training_instances_number);
+    back_propagation.gradient = (2.0/static_cast<type>(training_instances_number))*back_propagation.gradient;
 */
-    return first_order_loss;
+    return back_propagation;
 }
 
 
@@ -381,7 +381,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::BackPropagation MeanSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::BackPropagation MeanSquaredError::calculate_back_propagation(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -399,10 +399,10 @@ check();
 
     // Loss index
 
-    BackPropagation first_order_loss(this);
-
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
+    BackPropagation back_propagation(this);
 /*
+    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
+
     const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation,
@@ -412,18 +412,18 @@ check();
 
     const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
-    first_order_loss.loss = batch_error / static_cast<type>(batch_instances_number);
-    first_order_loss.gradient = batch_error_gradient;
+    back_propagation.loss = batch_error / static_cast<type>(batch_instances_number);
+    back_propagation.gradient = batch_error_gradient;
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += regularization_weight*calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+        back_propagation.loss += regularization_weight*calculate_regularization();
+        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 */
-    return first_order_loss;
+    return back_propagation;
 }
 
 
