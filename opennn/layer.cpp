@@ -366,6 +366,8 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.device(*default_device) = (1 + x.exp().inverse()).inverse();
+
              break;
          }
 
@@ -373,13 +375,14 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            y.device(*thread_pool_device) = (1 + x.exp().inverse()).inverse();
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -395,16 +398,6 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        y(i) = 1.0 / (1.0 + exp(-x(i)));
-    }
-
 }
 
 
@@ -416,6 +409,8 @@ void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.device(*default_device) = x;
+
              break;
          }
 
@@ -423,13 +418,14 @@ void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            y.device(*thread_pool_device) = x;
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -446,7 +442,6 @@ void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         }
     }
 
-    y = x;
 }
 
 
@@ -458,6 +453,18 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x > x.constant(0);
+
+             Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+             ones.setConstant(1);
+
+             zeros.setConstant(0);
+
+             y.device(*default_device) = if_sentence.select(ones, zeros);
+
              break;
          }
 
@@ -465,13 +472,24 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            const Tensor<bool, 2> if_sentence = x > x.constant(0);
+
+            Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+            ones.setConstant(1);
+
+            zeros.setConstant(0);
+
+            y.device(*thread_pool_device) = if_sentence.select(ones, zeros);
+
+            break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -486,15 +504,6 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
             throw logic_error(buffer.str());
         }
-    }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-         y(i) = x(i) < 0 ? -1 : 1;
     }
 }
 
@@ -507,12 +516,28 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x > x.constant(0);
+
+             Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+             ones.setConstant(1);
+
+             y.device(*default_device) = if_sentence.select(ones, -ones);
+
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            const Tensor<bool, 2> if_sentence = x > x.constant(0);
+
+            Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+            ones.setConstant(1);
+
+            y.device(*thread_pool_device) = if_sentence.select(ones, -ones);
 
              break;
          }
@@ -536,15 +561,6 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-     for(Index i = 0; i < n; i++)
-     {
-         y(i) = x(i) < 0 ? -1 : 1;
-     }
 }
 
 
@@ -556,6 +572,14 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+             zeros.setConstant(0);
+
+             y.device(*default_device) = if_sentence.select(zeros, x);
+
              break;
          }
 
@@ -563,13 +587,20 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+            zeros.setConstant(0);
+
+            y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -584,15 +615,6 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
             throw logic_error(buffer.str());
         }
-    }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        y(i) = x(i) < 0 ? 0.0 : x(i);
     }
 }
 
@@ -605,12 +627,44 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const type lambda = static_cast<type>(1.0507);
+
+             const type alpha = static_cast<type>(1.67326);
+
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             f_1 = lambda*alpha*(x.exp()-static_cast<type>(1.0));
+
+             f_2 = lambda*x;
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            const type lambda = static_cast<type>(1.0507);
+
+            const type alpha = static_cast<type>(1.67326);
+
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            f_1 = lambda*alpha*(x.exp() - static_cast<type>(1.0));
+
+            f_2 = lambda*x;
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
              break;
          }
@@ -634,18 +688,6 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    const type lambda = static_cast<type>(1.0507);
-    const type alpha = static_cast<type>(1.67326);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < 0 ? y(i) = lambda * alpha * (exp(x(i)) - 1) : y(i) = lambda * x(i);
-    }
 }
 
 
@@ -655,22 +697,25 @@ void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
          case Device::EigenDefault:
          {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-             break;
+            y.device(*default_device) = (x.constant(1) + x.exp()).log();
+
+            break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            y.device(*thread_pool_device) = (x.constant(1) + x.exp()).log();
+
+            break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -699,12 +744,36 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             f_1 = x / (static_cast<type>(1) - x);
+
+             f_2 = x / (static_cast<type>(1) + x);
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            f_1 = x / (static_cast<type>(1) - x);
+
+            f_2 = x / (static_cast<type>(1) + x);
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
              break;
          }
@@ -728,16 +797,6 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-       x(i) < 0 ? y(i) = x(i) / (1.0 - x(i)) : y(i) = x(i) / (1.0 + x(i));
-    }
-
 }
 
 
@@ -749,6 +808,20 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             const type alpha = static_cast<type>(1.0);
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             f_1 = alpha*(x.exp() - static_cast<type>(1));
+
+             f_2 = x;
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
@@ -756,13 +829,26 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            const type alpha = static_cast<type>(1.0);
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            f_1 = alpha*(x.exp() - static_cast<type>(1));
+
+            f_2 = x;
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -777,17 +863,6 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
 
             throw logic_error(buffer.str());
         }
-    }
-
-    const Index n = x.size();
-
-    const type alpha = 1.0;
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < 0 ? y(i) = alpha * (exp(x(i)) - 1) : y(i) = x(i);
     }
 }
 
@@ -800,12 +875,16 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.device(*default_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
+
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            y.device(*thread_pool_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
 
              break;
          }
@@ -830,16 +909,16 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
         }
     }
 
-    const Index n = x.size();
+//    const Index n = x.size();
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
-    for(Index i = 0; i < n; i++)
-    {
-        const type exponential = exp(-x(i));
+//    for(Index i = 0; i < n; i++)
+//    {
+//        const type exponential = exp(-x(i));
 
-        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
-    }
+//        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
+//    }
 
 }
 
@@ -852,6 +931,8 @@ void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) co
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.setZero();
+
              break;
          }
 
@@ -859,13 +940,14 @@ void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) co
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            y.setZero();
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -882,7 +964,7 @@ void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) co
         }
     }
 
-    y.setZero();
+//    y.setZero();
 }
 
 
@@ -894,12 +976,16 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type,
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.setZero();
+
              break;
          }
 
          case Device::EigenSimpleThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            y.setZero();
 
              break;
          }
@@ -924,7 +1010,7 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type,
         }
     }
 
-    y.setZero();
+//    y.setZero();
 }
 
 
@@ -989,11 +1075,7 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
          }
 
         case Device::EigenGpu:
-        {
-             //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-             //y.device(*gpu_device) = x.constant(1.0) - x.tanh().square();
-
+        {             
              break;
         }
 
@@ -1019,6 +1101,18 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+             ones.setConstant(1);
+
+             zeros.setConstant(0);
+
+             y.device(*default_device) = if_sentence.select(zeros, ones);
+
              break;
          }
 
@@ -1026,13 +1120,24 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
+
+            ones.setConstant(1);
+
+            zeros.setConstant(0);
+
+            y.device(*thread_pool_device) = if_sentence.select(zeros, ones);
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -1048,16 +1153,6 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < 0 ? y(i) = 0.0 : y(i) = 1.0;
-    }
-
 }
 
 
@@ -1069,6 +1164,26 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const type lambda = static_cast<type>(1.0507);
+
+             const type alpha = static_cast<type>(1.67326);
+
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type,2> ones(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             ones.setConstant(1);
+
+             f_1 = lambda*alpha*x.exp();
+
+             f_2 = ones*lambda;
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
@@ -1076,13 +1191,32 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            const type lambda = static_cast<type>(1.0507);
+
+            const type alpha = static_cast<type>(1.67326);
+
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type,2> ones(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            ones.setConstant(1);
+
+            f_1 = lambda*alpha*x.exp();
+
+            f_2 = ones*lambda;
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
+            break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -1098,19 +1232,6 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    const type lambda = static_cast<type>(1.0507);
-    const type alpha = static_cast<type>(1.67326);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < 0 ? y(i) = lambda * alpha * exp(x(i)) : y(i) = lambda;
-    }
-
 }
 
 
@@ -1122,6 +1243,8 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             y.device(*default_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + x.exp().inverse());
+
              break;
          }
 
@@ -1129,13 +1252,14 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            y.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + x.exp().inverse());
+
+            break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -1151,16 +1275,6 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
             throw logic_error(buffer.str());
         }
     }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        y(i) = 1.0/(1.0 + exp(-x(i)));
-    }
-
 }
 
 
@@ -1172,6 +1286,18 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - x).pow(2);
+
+             f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + x).pow(2);
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
@@ -1179,13 +1305,24 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - x).pow(2);
+
+            f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + x).pow(2);
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
         case Device::EigenGpu:
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
 
              break;
         }
@@ -1200,15 +1337,6 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
 
             throw logic_error(buffer.str());
         }
-    }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-       x(i) < 0 ? y(i) = static_cast<type>(1.0) / pow(1 - x(i), 2) : y(i) = static_cast<type>(1.0) / pow(1 + x(i), 2);
     }
 }
 
@@ -1271,6 +1399,24 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
          {
              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
+             const type alpha = 1.0;
+
+             const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+             Tensor<type, 2> ones (x.dimension(0), x.dimension(1));
+
+             ones.setConstant(1);
+
+             Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+             Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+             f_1 = alpha * x.exp();
+
+             f_2 = ones;
+
+             y.device(*default_device) = if_sentence.select(f_1, f_2);
+
              break;
          }
 
@@ -1278,7 +1424,25 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-             break;
+            const type alpha = 1.0;
+
+            const Tensor<bool, 2> if_sentence = x < x.constant(0);
+
+            Tensor<type, 2> ones (x.dimension(0), x.dimension(1));
+
+            ones.setConstant(1);
+
+            Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+            Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+            f_1 = alpha * x.exp();
+
+            f_2 = ones;
+
+            y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
+            break;
          }
 
         case Device::EigenGpu:
@@ -1299,17 +1463,6 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 
             throw logic_error(buffer.str());
         }
-    }
-
-    const Index n = x.size();
-
-    const type alpha = 1.0;
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < 0 ? y(i) = alpha * exp(x(i)) : y(i) = 1.0;
     }
 }
 
