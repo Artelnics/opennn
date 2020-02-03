@@ -154,7 +154,7 @@ Tensor<type, 1> Layer::calculate_error_gradient(const Tensor<type, 2>&,
     throw logic_error(buffer.str());
 }
 
-
+/*
 Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type, 2>&)
  {
     ostringstream buffer;
@@ -165,7 +165,7 @@ Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type
 
     throw logic_error(buffer.str());
  }
-
+*/
 
 Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
                                              const Tensor<type, 2> &,

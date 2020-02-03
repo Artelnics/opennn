@@ -836,16 +836,17 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
-Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
+PerceptronLayer::PerceptronLayerForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
-    ForwardPropagation forward_propagation;
 
+    PerceptronLayerForwardPropagation forward_propagation;
+/*
     forward_propagation.combinations = calculate_combinations(inputs);
 
     forward_propagation.activations = calculate_activations(forward_propagation.combinations);
 
     forward_propagation.activations_derivatives = calculate_activations_derivatives(forward_propagation.combinations);
-
+*/
     return forward_propagation;
 }
 

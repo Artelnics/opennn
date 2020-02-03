@@ -77,13 +77,13 @@ public:
 
    /// @todo Virtual method not implemented.
 
-   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const {return FirstOrderLoss();}
+   BackPropagation calculate_first_order_loss(const DataSet::Batch&) const {return BackPropagation();}
 
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  FirstOrderLoss& first_order_loss) const
+                                  BackPropagation& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 

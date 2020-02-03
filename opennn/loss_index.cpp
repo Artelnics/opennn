@@ -454,7 +454,7 @@ Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& input
     }
 
     index += trainable_layers_parameters_number[0];
-
+/*
     for(Index i = 1; i < trainable_layers_number; i++)
     {
 
@@ -467,7 +467,7 @@ Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& input
 
       index += trainable_layers_parameters_number[i];
     }
-
+*/
     return error_gradient;
 }
 
@@ -528,7 +528,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
    }
 
    index += layers_parameters_number[0];
-
+/*
    for(Index i = 1; i < layers_number; i++)
    {
 
@@ -540,7 +540,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
 
       index += layers_parameters_number[i];
    }
-
+*/
    return error_Jacobian;
 }
 
@@ -1049,7 +1049,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 /// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
+LossIndex::BackPropagation::BackPropagation(const LossIndex* loss_index_pointer)
 {
     // Data set
 
@@ -1153,7 +1153,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
 /// Destructor.
 
-LossIndex::FirstOrderLoss::~FirstOrderLoss()
+LossIndex::BackPropagation::~BackPropagation()
 {
 }
 
@@ -1191,7 +1191,7 @@ Tensor<Tensor<type, 2>, 1> LossIndex::calculate_layers_delta(const Tensor<Layer:
    if(forward_propagation_size == 0) return layers_delta;
 
    // Output layer
-
+/*
    layers_delta[forward_propagation_size-1] = trainable_layers_pointers[forward_propagation_size-1]
            ->calculate_output_delta(forward_propagation[forward_propagation_size-1].activations_derivatives, output_gradient);
 
@@ -1207,7 +1207,7 @@ Tensor<Tensor<type, 2>, 1> LossIndex::calculate_layers_delta(const Tensor<Layer:
                                         forward_propagation[i].activations_derivatives,
                                         layers_delta[static_cast<Index>(i+1)]);
    }
-
+*/
    return layers_delta;
 }
 
@@ -1350,12 +1350,14 @@ Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<Index, 1>
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
     const Index size = forward_propagation.size();
-
+/*
     const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[size-1].activations, targets);
 
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
     return calculate_error_gradient(inputs, forward_propagation, layers_delta);
+*/
+    return Tensor<type, 1>();
 }
 
 

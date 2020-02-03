@@ -761,7 +761,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Loss index stuff
 
-   LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
+   LossIndex::BackPropagation first_order_loss(loss_index_pointer);
 
    type training_error = static_cast<type>(0.0);
 

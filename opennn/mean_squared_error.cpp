@@ -306,7 +306,7 @@ check();
 /// It is used for optimization of parameters during training.
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 
-LossIndex::FirstOrderLoss MeanSquaredError::calculate_first_order_loss() const
+LossIndex::BackPropagation MeanSquaredError::calculate_first_order_loss() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -330,7 +330,7 @@ check();
 
     const Index batches_number = training_batches.size();
 
-    FirstOrderLoss first_order_loss(this);
+    BackPropagation first_order_loss(this);
 
     // Eigen stuff
 /*
@@ -381,7 +381,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss MeanSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::BackPropagation MeanSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -399,17 +399,17 @@ check();
 
     // Loss index
 
-    FirstOrderLoss first_order_loss(this);
+    BackPropagation first_order_loss(this);
 
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
-
+/*
     const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation,
                                                                        output_gradient);
 
     const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
-/*
+
     const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
 
     first_order_loss.loss = batch_error / static_cast<type>(batch_instances_number);

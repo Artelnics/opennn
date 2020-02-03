@@ -76,9 +76,9 @@ public:
 
    // Gradient methods
 
-   FirstOrderLoss calculate_first_order_loss() const;
+   BackPropagation calculate_first_order_loss() const;
 
-   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+   BackPropagation calculate_first_order_loss(const DataSet::Batch&) const;
 
    // Error terms methods
 
@@ -90,7 +90,7 @@ public:
 
    Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_error(FirstOrderLoss& first_order_loss) const
+   void calculate_error(BackPropagation& first_order_loss) const
    {
        const Index batch_instances_number = first_order_loss.errors.dimension(0);
 
@@ -141,7 +141,7 @@ public:
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  FirstOrderLoss& first_order_loss) const
+                                  BackPropagation& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 

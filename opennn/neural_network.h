@@ -104,84 +104,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               if(trainable_layers_pointers[i]->get_type() == Layer::Convolutional)
-               {
-                   const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
-
-                   const Index outputs_channels_number = convolutional_layer->get_filters_number();
-                   const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-                   const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-/*
-                   layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-*/
-
-               }
-               else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
-               {
-                   const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
-
-                   const Index outputs_channels_number = pooling_layer->get_inputs_channels_number();
-                   const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
-                   const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
-/*
-                   layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-*/
-               }
-               else if(trainable_layers_pointers[i]->get_type() == Layer::Recurrent)
-               {
-                   const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
-
-                   const Index neurons_number = recurrent_layer->get_neurons_number();
-
-                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
-
-               }
-               else if(trainable_layers_pointers[i]->get_type() == Layer::LongShortTermMemory)
-               {
-                   const LongShortTermMemoryLayer* long_short_term_memory_layer = dynamic_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers[i]);
-
-                   const Index neurons_number = long_short_term_memory_layer->get_neurons_number();
-
-                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
-               }
-               else if(trainable_layers_pointers[i]->get_type() == Layer::Perceptron)
-               {
-                   const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
-
-                   const Index neurons_number = perceptron_layer->get_neurons_number();
-
-                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
-
-                   layers[i].combinations.setRandom();
-                   layers[i].activations.setRandom();
-                   layers[i].activations_derivatives.setRandom();
-               }
-               else if(trainable_layers_pointers[i]->get_type() == Layer::Probabilistic)
-               {
-                   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
-
-                   const Index neurons_number = probabilistic_layer->get_neurons_number();
-
-                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
-                   /*
-                   layers[i].activations_derivatives_3d = Tensor<type, 3>(batch_instances_number, neurons_number, neurons_number);
-                   */
-               }
-               else
-               {
-                   /// @todo throw exception.
-               }
+               layers[i].allocate();
            }
        }
 
@@ -203,6 +126,53 @@ public:
        NeuralNetwork* neural_network_pointer = nullptr;
 
        Tensor<Layer::ForwardPropagation, 1> layers;
+   };
+
+   struct BackPropagation
+   {
+       BackPropagation() {}
+
+       BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       {
+           batch_instances_number = new_batch_instances_number;
+           neural_network_pointer = new_neural_network_pointer;
+
+           allocate();
+       }
+
+       void allocate()
+       {
+           const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           layers.resize(trainable_layers_number);
+
+           for(Index i = 0; i < trainable_layers_number; i++)
+           {
+               layers[i].allocate();
+           }
+       }
+
+       void print()
+       {
+           const Index layers_number = layers.size();
+
+           cout << "Layers number: " << layers_number << endl;
+
+           for(Index i = 0; i < layers_number; i++)
+           {
+               cout << "Layer " << i+1 << endl;
+
+               layers[i].print();
+           }
+       }
+
+       Index batch_instances_number = 0;
+       NeuralNetwork* neural_network_pointer = nullptr;
+
+       Tensor<Layer::ForwardPropagation, 1> layers;
+
    };
 
 
@@ -375,7 +345,7 @@ public:
        const Index trainable_layers_number = get_trainable_layers_number();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
+/*
        // First layer
 
        trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs_2d, forward_propagation.layers[0]);
@@ -387,6 +357,7 @@ public:
             trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1].activations,
                                                                         forward_propagation.layers[i]);
        }
+*/
    }
 
 protected:

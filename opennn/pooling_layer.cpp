@@ -217,7 +217,7 @@ Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2
 
 }
 
-
+/*
 Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
@@ -228,7 +228,7 @@ Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tens
 
     return layers;
 }
-
+*/
 
 /// Returns the result of applying the derivative of the previously set activation method to a batch of images.
 /// @param inputs The batch of images.

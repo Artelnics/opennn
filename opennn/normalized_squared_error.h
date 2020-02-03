@@ -94,7 +94,7 @@ public:
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  FirstOrderLoss& first_order_loss) const
+                                  BackPropagation& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -103,19 +103,19 @@ public:
         #endif
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
+/*
         first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
 
         first_order_loss.output_gradient -= batch.targets_2d;
-/*
+
         first_order_loss.output_gradient *= 2.0 / normalization_coefficient;
 */
    }
 
 
-   LossIndex::FirstOrderLoss calculate_first_order_loss() const;
+   LossIndex::BackPropagation calculate_first_order_loss() const;
 
-   LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+   LossIndex::BackPropagation calculate_first_order_loss(const DataSet::Batch&) const;
 
    // Error terms methods
 

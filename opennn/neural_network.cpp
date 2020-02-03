@@ -3584,7 +3584,7 @@ Tensor<Layer::ForwardPropagation, 1> NeuralNetwork::calculate_forward_propagatio
     Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     Tensor<Layer::ForwardPropagation, 1> forward_propagation(trainable_layers_number);
-
+/*
     // First layer
 
     forward_propagation[0] = trainable_layers_pointers[0]->calculate_forward_propagation(inputs);
@@ -3595,7 +3595,7 @@ Tensor<Layer::ForwardPropagation, 1> NeuralNetwork::calculate_forward_propagatio
     {
         forward_propagation[i] = trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation[i-1].activations);
     }
-
+*/
     return forward_propagation;
 }
 

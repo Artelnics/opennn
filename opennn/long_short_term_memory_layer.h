@@ -37,11 +37,32 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
-    // Enumerations
-
     /// Enumeration of available activation functions for the long-short term memory layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+
+    struct LongShortTermMemoryLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit LongShortTermMemoryLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~LongShortTermMemoryLayerForwardPropagation() {}
+
+        void allocate()
+        {
+/*
+           const LongShortTermMemoryLayer* long_short_term_memory_layer = dynamic_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers[i]);
+
+           const Index neurons_number = long_short_term_memory_layer->get_neurons_number();
+
+           layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+*/
+        }
+    };
+
 
    // Constructors
 

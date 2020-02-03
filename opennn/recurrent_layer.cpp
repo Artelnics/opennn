@@ -1164,7 +1164,7 @@ Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer
 }
 
 
-
+/*
 Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
@@ -1177,7 +1177,7 @@ Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Te
 
     return layers;
 }
-
+*/
 
 Tensor<type, 1> RecurrentLayer::calculate_error_gradient(const Tensor<type, 2> & inputs,
                                                         const Layer::ForwardPropagation& layers,
