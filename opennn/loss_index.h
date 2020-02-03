@@ -290,7 +290,7 @@ public:
 
        calculate_error_gradient(batch, forward_propagation, first_order_loss);
 
-       first_order_loss.gradient = first_order_loss.error_gradient;
+//       first_order_loss.gradient = first_order_loss.error_gradient;
 
        // Regularization
 /*
@@ -445,12 +445,7 @@ public:
                                                               first_order_loss.layers_delta[0],
                                                               first_order_loss.layers_error_gradient[0]);
 
-       for(Index i = 0; i < trainable_layers_parameters_number[0]; i++)
-       {
-            first_order_loss.error_gradient[i] = first_order_loss.layers_error_gradient[0](i);
-       }
-
-       index += trainable_layers_parameters_number[0];
+       memcpy(first_order_loss.error_gradient.data(), first_order_loss.layers_error_gradient[0].data(), static_cast<size_t>(trainable_layers_parameters_number[0])*sizeof(type));
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
@@ -460,12 +455,7 @@ public:
                    first_order_loss.layers_delta[i],
                    first_order_loss.layers_error_gradient[i]);
 
-           for(Index j = 0; j < trainable_layers_parameters_number[i]; j++)
-           {
-                first_order_loss.error_gradient[index + j] = first_order_loss.layers_error_gradient[i](j);
-           }
-
-           index += trainable_layers_parameters_number[i];
+           memcpy(first_order_loss.error_gradient.data(), first_order_loss.layers_error_gradient[i].data(), static_cast<size_t>(trainable_layers_parameters_number[i])*sizeof(type));
        }
    }
 

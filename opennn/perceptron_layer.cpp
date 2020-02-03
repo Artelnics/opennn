@@ -401,46 +401,29 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
-    const Index parameters_number = get_parameters_number();
+    #ifdef __OPENNN_DEBUG__
 
-    Tensor<type,1> new_synaptic_weights(parameters_number-neurons_number);
-    Tensor<type,1> new_biases(neurons_number);
+     const Index new_parameters_size = new_parameters.size();
+     const Index parameters_number = get_parameters_number();
 
-   #ifdef __OPENNN_DEBUG__ 
+    if(new_parameters_size != parameters_number)
+    {
+       ostringstream buffer;
 
-    const Index new_parameters_size = new_parameters.size();
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void set_parameters(const Tensor<type, 1>&) method.\n"
+              << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
-   if(new_parameters_size != parameters_number)
-   {
-      ostringstream buffer;
+       throw logic_error(buffer.str());
+    }
 
-      buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "void set_parameters(const Tensor<type, 1>&) method.\n"
-             << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+    #endif
 
-	  throw logic_error(buffer.str());
-   }
+    const Index biases_number = get_biases_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-   #endif
-
-   new_synaptic_weights = new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({neurons_number*inputs_number}));
-
-   new_biases = new_parameters.slice(Eigen::array<Eigen::Index, 1>({neurons_number*inputs_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
-
-   const Eigen::array<Index, 2> dim_syn{{inputs_number, neurons_number}};
-
-   const Eigen::array<Index, 2> dim_bias{{1, neurons_number}};
-
-   const Tensor<type,2> w = new_synaptic_weights.reshape(dim_syn);
-
-   const Tensor<type,2> b = new_biases.reshape(dim_bias);
-
-   set_biases(b);
-
-   set_synaptic_weights(w);
-
+    memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 

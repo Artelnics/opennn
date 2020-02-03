@@ -57,13 +57,12 @@ public:
     {
         /// Default constructor.
 
-        explicit ForwardPropagation()
-        {
-        }
+        explicit ForwardPropagation() {}
 
-        virtual ~ForwardPropagation()
-        {
-        }
+        virtual ~ForwardPropagation() {}
+
+        virtual void allocate() {}
+
 
         void print() const
         {
@@ -86,6 +85,13 @@ public:
         Tensor<type, 3> activations_derivatives_3d;
 
     };
+
+
+    struct BackPropagation
+    {
+
+    };
+
 
     // Constructor
 

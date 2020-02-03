@@ -52,6 +52,19 @@ public:
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
+    struct PerceptronLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit PerceptronLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~PerceptronLayerForwardPropagation() {}
+
+        void allocate() {}
+
+    };
+
+
    // Constructors
 
    explicit PerceptronLayer();
@@ -479,7 +492,7 @@ public:
 
        Tensor<type, 1> biases_derivatives(biases_number);
 
-       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
+//       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
 
        switch(device_pointer->get_type())
        {
@@ -524,25 +537,8 @@ public:
            }
        }
 
-       Index index = 0;
-
-       for(Index i = 0; i < neurons_number; i++)
-       {
-           for(Index j = 0; j < inputs_number; j++)
-           {
-               error_gradient(index) = synaptic_weights_derivatives(i, j);
-
-               index++;
-           }
-       }
-
-       // Biases
-
-       for(Index i = 0; i < biases_number; i++)
-       {
-           error_gradient(synaptic_weights_number + i) = biases_derivatives(i);
-       }
-
+       memcpy(error_gradient.data(), biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+//       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
 

@@ -135,9 +135,7 @@ public:
            }
        }
 
-
 //       first_order_loss.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
-
    }
 
 
@@ -194,7 +192,6 @@ public:
             }
         }
    }
-
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 

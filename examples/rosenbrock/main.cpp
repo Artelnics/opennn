@@ -74,7 +74,6 @@ int main(void)
             c.device(*device.get_eigen_thread_pool_device()) = a.contract(b, transposed_product_dimensions);
         }
 
-
 //        cout << a*b.transpose() << endl;
 
 //        cout << rows << endl;
@@ -87,11 +86,8 @@ int main(void)
 
 //      data_set.generate_Rosenbrock_data(1000, 4);
 
-
         // Device
-
 */
-
         Device device(Device::EigenSimpleThreadPool);
 
         // Data set
