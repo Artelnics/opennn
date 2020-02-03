@@ -179,11 +179,11 @@ const type& ConjugateGradient::get_gradient_norm_goal() const
 }
 
 
-/// Returns the maximum number of selection failures during the training process. 
+/// Returns the maximum number of selection error increases during the training process.
 
 const Index& ConjugateGradient::get_maximum_selection_error_increases() const
 {
-   return maximum_selection_error_decreases;
+   return maximum_selection_error_increases;
 }
 
 
@@ -365,7 +365,7 @@ void ConjugateGradient::set_default()
    minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = numeric_limits<type>::max()*(-1.0);
    gradient_norm_goal = static_cast<type>(0.0);
-   maximum_selection_error_decreases = 1000000;
+   maximum_selection_error_increases = 1000000;
 
    maximum_epochs_number = 1000;
    maximum_time = 1000.0;
@@ -636,12 +636,12 @@ void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goa
 }
 
 
-/// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// Sets a new maximum number of selection error increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
 
 void ConjugateGradient::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
-   maximum_selection_error_decreases = new_maximum_selection_error_increases;
+   maximum_selection_error_increases = new_maximum_selection_error_increases;
 }
 
 
@@ -1273,7 +1273,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    bool stop_training = false;
 
-   Index selection_failures = 0;
+   Index selection_error_increases = 0;
    
    type first_learning_rate = static_cast<type>(0.01);
 
@@ -1334,7 +1334,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
       else if(epoch != 0 && selection_error > old_selection_error)
       {
-         selection_failures++;
+          selection_error_increases++;
       }
       else if(selection_error <= minimum_selection_error)
       {
@@ -1473,12 +1473,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.stopping_condition = GradientNormGoal;
       }
 
-      else if(selection_failures > maximum_selection_error_decreases && apply_early_stopping)
+      else if(selection_error_increases > maximum_selection_error_increases && apply_early_stopping)
       {
          if(display)
          {
-            cout << "Epoch " << epoch << ": Maximum selection failures reached.\n"
-                      << "Selection failures: " << selection_failures << endl;
+            cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                      << "Selection error increases: " << selection_error_increases << endl;
          }
 
          stop_training = true;
@@ -1702,7 +1702,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
    labels.push_back("Maximum selection error increases");
 
    buffer.str("");
-   buffer << maximum_selection_error_decreases;
+   buffer << maximum_selection_error_increases;
 
    values.push_back(buffer.str());
 
@@ -1955,13 +1955,13 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       element->LinkEndChild(text);
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
    {
       element = document->NewElement("MaximumSelectionErrorIncreases");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << maximum_selection_error_decreases;
+      buffer << maximum_selection_error_increases;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2165,13 +2165,13 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
 
    {
        file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
        buffer.str("");
-       buffer << maximum_selection_error_decreases;
+       buffer << maximum_selection_error_increases;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2287,7 +2287,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
          learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
      }
   }
-
+/*
   // Warning parameters norm
   {
      const tinyxml2::XMLElement* warning_parameters_norm_element = root_element->FirstChildElement("WarningParametersNorm");
@@ -2401,7 +2401,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         }
      }
   }
-
+*/
     // Return minimum selection error neural network
 
     const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
@@ -2514,17 +2514,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Maximum selection error decreases
+  // Maximum selection error increases
   {
-     const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+     const tinyxml2::XMLElement* maximum_selection_error_increases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
-     if(maximum_selection_error_decreases_element)
+     if(maximum_selection_error_increases_element)
      {
-        const Index new_maximum_selection_error_decreases = static_cast<Index>(atoi(maximum_selection_error_decreases_element->GetText()));
+        const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
 
         try
         {
-           set_maximum_selection_error_increases(new_maximum_selection_error_decreases);
+           set_maximum_selection_error_increases(new_maximum_selection_error_increases);
         }
         catch(const logic_error& e)
         {
@@ -2533,7 +2533,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Maximum iterations number
+  // Maximum epochs number
   {
      const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
@@ -2628,7 +2628,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         }
      }
   }
-
+/*
   // Display period
   {
      const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
@@ -2704,6 +2704,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         }
      }
   }
+    */
 }
 }
 
