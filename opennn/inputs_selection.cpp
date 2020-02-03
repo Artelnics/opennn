@@ -432,10 +432,17 @@ void InputsSelection::set_tolerance(const type& new_tolerance)
 
 Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs)
 {
-/*
+
 #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_equal_to(true) <= 0)
+    Index count = 0;
+
+    for(Index i = 0; i < inputs.size(); i++)
+    {
+        if(inputs(i) == true) count++;
+    }
+
+    if(count <= 0)
     {
         ostringstream buffer;
 
@@ -481,20 +488,39 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     for(Index i = 0; i < inputs_history.size(); i++)
     {
-        if(inputs_history[i] == inputs)
+        const Tensor<bool, 1> inputs_rows = inputs_history.chip(i,0);
+
+        for(Index j = 0; j < inputs_rows.size(); j++)
         {
+            if(inputs_rows(j) != inputs(j)) break;
+
             optimum_losses[0] = training_error_history[i];
             flag_loss = true;
         }
+        /*if(inputs_history(i) == inputs)
+        {
+            optimum_losses[0] = training_error_history[i];
+            flag_loss = true;
+        }*/
     }
 
     for(Index i = 0; i < inputs_history.size(); i++)
     {
+        const Tensor<bool, 1> inputs_rows = inputs_history.chip(i,0);
+
+        for(Index j = 0; j < inputs_rows.size(); j++)
+        {
+            if(inputs_rows(j) != inputs(j)) break;
+
+            optimum_losses(0) = selection_error_history(i);
+            flag_selection = true;
+        }
+/*
         if(inputs_history[i] == inputs)
         {
             optimum_losses[1] = selection_error_history[i];
             flag_selection = true;
-        }
+        }*/
     }
 
     if(flag_loss && flag_selection)
@@ -545,6 +571,14 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
         cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
     }
 
+//    inputs_history = insert_result(inputs, inputs_history);
+
+    training_error_history = insert_result(optimum_training_error, training_error_history);
+
+    selection_error_history = insert_result(optimum_selection_error, selection_error_history);
+
+    parameters_history = insert_result(optimum_parameters, parameters_history);
+/*
     inputs_history.push_back(inputs);
 
     training_error_history.push_back(optimum_training_error);
@@ -552,15 +586,48 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
     selection_error_history.push_back(optimum_selection_error);
 
     parameters_history.push_back(optimum_parameters);
-
+*/
     optimum_losses[0] = optimum_training_error;
     optimum_losses[1] = optimum_selection_error;
 
     return optimum_losses;
-*/
-    return Tensor<type, 1>();
+
+//    return Tensor<type, 1>();
 }
 
+
+Tensor<type, 1> InputsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor<type, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
+
+
+Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value, const Tensor< Tensor<type, 1>, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor< Tensor<type, 1>, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
 
 /// Returns the mean of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
