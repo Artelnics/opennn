@@ -69,7 +69,7 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 
     #endif
 
-   return(loss_index_pointer);
+   return loss_index_pointer;
 }
 
 
@@ -102,7 +102,7 @@ const bool& OptimizationAlgorithm::get_display() const
 
 const Index& OptimizationAlgorithm::get_display_period() const
 {
-   return(display_period);
+   return display_period;
 }
 
 
@@ -110,7 +110,7 @@ const Index& OptimizationAlgorithm::get_display_period() const
 
 const Index& OptimizationAlgorithm::get_save_period() const
 {
-   return(save_period);
+   return save_period;
 }
 
 
@@ -118,7 +118,7 @@ const Index& OptimizationAlgorithm::get_save_period() const
 
 const string& OptimizationAlgorithm::get_neural_network_file_name() const
 {
-   return(neural_network_file_name);
+   return neural_network_file_name;
 }
 
 

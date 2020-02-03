@@ -71,7 +71,7 @@ public:
    const type& get_minimum_loss_increase() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
-   const Index& get_maximum_selection_error_decreases() const;
+   const Index& get_maximum_selection_error_increases() const;
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
@@ -221,7 +221,7 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_decreases;
+   Index maximum_selection_error_increases;
 
    /// Maximum number of epoch to perform_training. It is used as a stopping criterion.
 

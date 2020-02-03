@@ -60,7 +60,7 @@ PruningInputs::~PruningInputs()
 
 const Index& PruningInputs::get_minimum_inputs_number() const
 {
-    return(minimum_inputs_number);
+    return minimum_inputs_number;
 }
 
 

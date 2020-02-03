@@ -18,12 +18,15 @@ NeuronsSelectionTest::~NeuronsSelectionTest()
 {
 }
 
-/*
+
 void NeuronsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    TrainingStrategy training_strategy;
+    NeuralNetwork nn;
+    DataSet ds;
+
+    TrainingStrategy training_strategy(&nn, &ds);
 
     IncrementalNeurons io1(&training_strategy);
 
@@ -103,14 +106,14 @@ void NeuronsSelectionTest::test_get_parameters_order()
     cout << "test_get_parameters_order\n";
 
 }
-*/
+
 
 // Unit testing methods
 
 void NeuronsSelectionTest::run_test_case()
 {
     cout << "Running neurons selection algorithm test case...\n";
-/*
+
     // Constructor and destructor methods
 
     test_constructor();
@@ -131,7 +134,7 @@ void NeuronsSelectionTest::run_test_case()
     test_calculate_losses();
 
     test_get_parameters_order();
-*/
+
     cout << "End of neurons selection algorithm test case.\n";
 }
 

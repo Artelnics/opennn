@@ -43,7 +43,7 @@ class Device
 
                 case EigenSimpleThreadPool:
 
-                    //cint n = omp_get_max_threads();
+//                    cint n = omp_get_max_threads();
 
                     simple_thread_pool = new SimpleThreadPool(16);
 

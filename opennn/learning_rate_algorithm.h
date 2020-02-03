@@ -229,7 +229,7 @@ public:
 
    // Training parameters
 
-   const type& get_loss_tolerance() const;
+   const type& get_learning_rate_tolerance() const;
 
    const type& get_warning_learning_rate() const;
 
@@ -253,7 +253,7 @@ public:
 
    // Training parameters
 
-   void set_loss_tolerance(const type&);
+   void set_learning_rate_tolerance(const type&);
 
    void set_warning_learning_rate(const type&);
 
@@ -301,7 +301,7 @@ protected:
 
    /// Maximum interval length for the training rate.
 
-   type loss_tolerance;
+   type learning_rate_tolerance;
 
    /// Big training rate value at which the algorithm displays a warning. 
 

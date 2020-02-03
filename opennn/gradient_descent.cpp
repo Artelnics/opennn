@@ -162,11 +162,11 @@ const type& GradientDescent::get_gradient_norm_goal() const
 }
 
 
-/// Returns the maximum number of selection failures during the training process. 
+/// Returns the maximum number of selection error increases during the training process.
 
-const Index& GradientDescent::get_maximum_selection_error_decreases() const
+const Index& GradientDescent::get_maximum_selection_error_increases() const
 {
-   return maximum_selection_error_decreases;
+   return maximum_selection_error_increases;
 }
 
 
@@ -250,7 +250,7 @@ void GradientDescent::set_default()
 
    loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
-   maximum_selection_error_decreases = 1000000;
+   maximum_selection_error_increases = 1000000;
 
    maximum_epochs_number = 1000;
    maximum_time = 1000.0;
@@ -587,12 +587,12 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 }
 
 
-/// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// Sets a new maximum number of selection error increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
 
-void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_decreases)
+void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
-   maximum_selection_error_decreases = new_maximum_selection_error_decreases;
+   maximum_selection_error_increases = new_maximum_selection_error_increases;
 }
 
 
@@ -786,7 +786,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    // Optimization algorithm stuff 
 
-   Index selection_failures = 0;
+   Index selection_error_increases = 0;
 
    Tensor<type, 1> training_direction(parameters_number);
 
@@ -842,7 +842,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       }
       else if(epoch != 0 && selection_error > old_selection_error)
       {
-         selection_failures++;
+         selection_error_increases++;
       }
       else if(selection_error <= minimum_selection_error)
       {
@@ -959,12 +959,12 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          results.stopping_condition = LossGoal;
       }
 
-      else if(selection_failures >= maximum_selection_error_decreases && apply_early_stopping)
+      else if(selection_error_increases >= maximum_selection_error_increases && apply_early_stopping)
       {
          if(display)
          {
-            cout << "Epoch " << epoch << ": Maximum selection failures reached.\n"
-                 << "Selection failures: " << selection_failures << endl;
+            cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                 << "Selection error increases: " << selection_error_increases << endl;
          }
 
          stop_training = true;
@@ -1185,7 +1185,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
    labels.push_back("Maximum selection error increases");
 
    buffer.str("");
-   buffer << maximum_selection_error_decreases;
+   buffer << maximum_selection_error_increases;
 
    values.push_back(buffer.str());
 
@@ -1421,13 +1421,13 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
 
    element = document->NewElement("MaximumSelectionErrorIncreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_error_decreases;
+   buffer << maximum_selection_error_increases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1528,14 +1528,11 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("GradientDescent");
-
     // Training rate algorithm
 
     learning_rate_algorithm.write_XML(file_stream);
 
     // Return minimum selection error neural network
-
 
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
@@ -1545,7 +1542,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
 
     // Apply early stopping
 
@@ -1602,18 +1598,18 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_error_decreases;
+    buffer << maximum_selection_error_increases;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Maximum iterations number
+    // Maximum epochs number
 
     file_stream.OpenElement("MaximumEpochsNumber");
 
@@ -1674,7 +1670,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Training rate algorithm
+    // Learning rate algorithm
     {
        const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
@@ -1690,120 +1686,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
            learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
        }
     }
-
-   // Warning parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
-
-       if(element)
-       {
-          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_parameters_norm(new_warning_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Warning gradient norm 
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
-
-       if(element)
-       {
-          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_gradient_norm(new_warning_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Warning training rate 
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningLearningRate");
-
-       if(element)
-       {
-          const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_warning_learning_rate(new_warning_learning_rate);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error parameters norm
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorParametersNorm");
-
-       if(element)
-       {
-          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-              set_error_parameters_norm(new_error_parameters_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error gradient norm 
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
-
-       if(element)
-       {
-          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_error_gradient_norm(new_error_gradient_norm);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Error training rate
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorLearningRate");
-
-       if(element)
-       {
-          const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
-
-          try
-          {
-             set_error_learning_rate(new_error_learning_rate);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
 
     // Return minimum selection error neural network
 
@@ -1917,17 +1799,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection error decreases
+   // Maximum selection error increases
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
        if(element)
        {
-          const Index new_maximum_selection_error_decreases = static_cast<Index>(atoi(element->GetText()));
+          const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(element->GetText()));
 
           try
           {
-             set_maximum_selection_error_increases(new_maximum_selection_error_decreases);
+             set_maximum_selection_error_increases(new_maximum_selection_error_increases);
           }
           catch(const logic_error& e)
           {
@@ -1936,7 +1818,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum iterations number
+   // Maximum epochs number
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
 
@@ -2011,101 +1893,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
            }
         }
     }
-
-   // Reserve selection error history
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-       if(element)
-       {
-          const string new_reserve_selection_error_history = element->GetText();
-
-          try
-          {
-             set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-   // Display period
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
-
-       if(element)
-       {
-          const Index new_display_period = static_cast<Index>(atoi(element->GetText()));
-
-          try
-          {
-             set_display_period(new_display_period);
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
-
-    // Save period
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
-
-        if(element)
-        {
-           const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
-
-           try
-           {
-              set_save_period(new_save_period);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Neural network file name
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
-
-        if(element)
-        {
-           const string new_neural_network_file_name = element->GetText();
-
-           try
-           {
-              set_neural_network_file_name(new_neural_network_file_name);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-   // Display
-   {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-       if(element)
-       {
-          const string new_display = element->GetText();
-
-          try
-          {
-             set_display(new_display != "0");
-          }
-          catch(const logic_error& e)
-          {
-             cerr << e.what() << endl;
-          }
-       }
-   }
 }
 
 }
