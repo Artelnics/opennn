@@ -1332,7 +1332,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Return minimum selection error neural network
 
-
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
     buffer.str("");
