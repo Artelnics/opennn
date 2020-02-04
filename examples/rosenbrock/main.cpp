@@ -85,14 +85,14 @@ int main(void)
 //        cout << c.dimension(1) << endl;
 
 //      data_set.generate_Rosenbrock_data(1000, 4);
-
-        // Device
 */
+        // Device
+
         Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 
-        Tensor<type, 2> data(1000000,1001);
+        Tensor<type, 2> data(10000, 1001);
 
         data.setRandom();
 

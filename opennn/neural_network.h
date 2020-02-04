@@ -88,6 +88,18 @@ public:
 
            neural_network_pointer = new_neural_network_pointer;
 
+           const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           layers.resize(trainable_layers_number);
+
+           for(Index i = 0; i < trainable_layers_number; i++)
+           {
+//               layers[i].
+           }
+
+
            allocate();
        }
 
@@ -105,7 +117,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers[i].allocate();
+//               layers[i].allocate();
            }
        }
 
@@ -124,6 +136,7 @@ public:
        }
 
        Index batch_instances_number = 0;
+
        NeuralNetwork* neural_network_pointer = nullptr;
 
        Tensor<Layer::ForwardPropagation, 1> layers;
@@ -175,7 +188,6 @@ public:
        NeuralNetwork* neural_network_pointer = nullptr;
 
        Tensor<Layer::BackPropagation*, 1> layers;
-
    };
 
 
