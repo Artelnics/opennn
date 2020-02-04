@@ -851,38 +851,6 @@ PerceptronLayer::PerceptronLayerForwardPropagation PerceptronLayer::calculate_fo
 }
 */
 
-/// Calculates the gradient error from the layer.
-/// Returns the gradient of the objective, according to the objective type.
-/// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
-/// The size is thus the number of parameters.
-/// @param layer_deltas Tensor with layers delta.
-/// @param inputs Tensor with layers inputs.
-
-Tensor<type, 1> PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                         const Layer::ForwardPropagation& ,
-                                                         const Tensor<type, 2>& deltas)
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    const Index parameters_number = get_parameters_number();
-
-    const Index synaptic_weights_number = neurons_number*inputs_number;
-
-    Tensor<type, 1> layer_error_gradient(parameters_number);
-
-    // Synaptic weights
-/*
-    layer_error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
-
-    // Biases
-
-    layer_error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
-*/
-    return layer_error_gradient;
-
-}
-
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
 /// @param inputs_names vector of strings with the name of the layer inputs. 

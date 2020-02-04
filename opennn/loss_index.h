@@ -108,8 +108,6 @@ public:
 
            const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
            // First order loss
 
            errors.resize(batch_instances_number);
@@ -316,10 +314,8 @@ public:
        calculate_output_gradient(batch, forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
-/*
-       calculate_error_gradient(batch, forward_propagation, back_propagation);
 
-//       back_propagation.gradient = back_propagation.error_gradient;
+       calculate_error_gradient(batch, forward_propagation, back_propagation);
 
        // Regularization
 
@@ -327,11 +323,8 @@ public:
        {
            back_propagation.loss += regularization_weight*calculate_regularization();
 
-           back_propagation.regularization_gradient = calculate_regularization_gradient();
-
-           back_propagation.gradient += back_propagation.regularization_gradient*regularization_weight;
+           back_propagation.gradient += regularization_weight*calculate_regularization_gradient();
        }
-*/
    }
 
    virtual BackPropagation calculate_back_propagation() const {return BackPropagation();}
@@ -371,14 +364,14 @@ public:
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
       {
           Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
-/*
+
           trainable_layers_pointers[i]
           ->calculate_hidden_delta(previous_layer_pointer,
                                    forward_propagation.layers[i].activations,
                                    forward_propagation.layers[i].activations_derivatives,
-                                   back_propagation.neural_network[static_cast<Index>(i+1)],
-                                   back_propagation.neural_network[i]);
-*/
+                                   back_propagation.neural_network.layers[i+1].delta,
+                                   back_propagation.neural_network.layers[i].delta);
+
       }
    }
 
@@ -461,31 +454,32 @@ public:
        }
 
        #endif
-/*
+
        const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-       Index index = 0;
-
        trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs_2d,
                                                               forward_propagation.layers[0],
-                                                              back_propagation.layers_delta[0],
-                                                              back_propagation.layers_error_gradient[0]);
+                                                              back_propagation.neural_network.layers[0]);
 
-       memcpy(back_propagation.error_gradient.data(), back_propagation.layers_error_gradient[0].data(), static_cast<size_t>(trainable_layers_parameters_number[0])*sizeof(type));
+       Index index = 0;
+
+       trainable_layers_pointers[0]->insert_derivatives(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+
+       index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(
                    forward_propagation.layers[i-1].activations,
                    forward_propagation.layers[i-1],
-                   back_propagation.layers_delta[i],
-                   back_propagation.layers_error_gradient[i]);
+                   back_propagation.neural_network.layers[i]);
 
-           memcpy(back_propagation.error_gradient.data(), back_propagation.layers_error_gradient[i].data(), static_cast<size_t>(trainable_layers_parameters_number[i])*sizeof(type));
+//           trainable_layers_pointers[i]->insert_derivatives(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+
+           index += trainable_layers_parameters_number[i];
        }
-*/
    }
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;

@@ -143,15 +143,19 @@ public:
    void calculate_combinations(const Tensor<type, 2>& inputs,
                                Tensor<type, 2>& combinations) const
    {
-       const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+       const Index batch_instances_number = inputs.dimension(0);
+       const Index biases_number = get_biases_number();
+
+       for(Index i = 0; i < biases_number; i++)
+       {
+           fill_n(combinations.data(), batch_instances_number, biases(i));
+       }
 
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                combinations.device(*default_device) = biases.broadcast(broadcast);
 
                 combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
 
@@ -162,8 +166,6 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
-
 //               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
@@ -172,8 +174,6 @@ public:
            case Device::EigenGpu:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-//                combinations.device(*gpu_device) = biases.broadcast(broadcast);
 
 //                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 
@@ -496,35 +496,19 @@ public:
 
    // Gradient methods
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 const Tensor<type, 2>& deltas,
-                                 Tensor<type, 1>& error_gradient)
+                                 Layer::BackPropagation& back_propagation)
    {
-       const Index inputs_number = get_inputs_number();
-       const Index neurons_number = get_neurons_number();
-
-       // Synaptic weights
-
-       const Index biases_number = get_biases_number();
-
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       Tensor<type, 1> biases_derivatives(biases_number);
-
-//       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
-
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                biases_derivatives.device(*default_device) = deltas.sum(Eigen::array<Index, 1>({0}));
+                back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-//                synaptic_weights_derivatives.device(*default_device) = inputs.contract(deltas, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, dimensions);
 
                 break;
             }
@@ -533,9 +517,9 @@ public:
             {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 1>({0}));
+                back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-//                synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, dimensions);
 
                 break;
             }
@@ -559,8 +543,17 @@ public:
            }
        }
 
-       memcpy(error_gradient.data(), biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+//       memcpy(error_gradient.data(), biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
 //       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+   }
+
+   void insert_derivatives(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
+   {
+       const type biases_number = get_biases_number();
+       const type synaptic_weights_number = get_synaptic_weights_number();
+
+       memcpy(gradient.data(), back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data(), back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
 
