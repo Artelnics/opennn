@@ -155,10 +155,10 @@ public:
 
     Tensor<type, 2> calculate_image_convolution(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
-    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+    Tensor<type, 4> calculate_combinations(const Tensor<type, 4>&) const;
+    Tensor<type, 4> calculate_combinations(const Tensor<type, 4>&, const Tensor<type, 1>&) const;
 
-    void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& convolutions) const
+    void calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
     {
 /*
         // Inputs
@@ -219,26 +219,26 @@ public:
 
     // Activation
 
-    Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
+    Tensor<type, 4> calculate_activations(const Tensor<type, 4>&) const;
 
-    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
+    Tensor<type, 4> calculate_activations_derivatives(const Tensor<type, 4>&) const;
 
-    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
     {
 
     }
 
-    void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const
     {
 
     }
 
    // Outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
+   void calculate_forward_propagation(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation)
    {
 /*
        calculate_combinations(inputs, forward_propagation.combinations);

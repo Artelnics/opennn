@@ -50,66 +50,6 @@ public:
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-    struct ForwardPropagation : Layer::ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ForwardPropagation() : Layer::ForwardPropagation(){}
-
-        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
-            : Layer::ForwardPropagation(new_batch_instances_number, new_layer_pointer)
-        {
-
-        }
-
-        virtual ~ForwardPropagation() {}
-
-        void allocate()
-        {
-            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
-
-            const Index neurons_number = perceptron_layer->get_neurons_number();
-
-            combinations.resize(batch_instances_number, neurons_number);
-
-            activations.resize(batch_instances_number, neurons_number);
-
-            activations_derivatives.resize(batch_instances_number, neurons_number);
-        }
-
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 2> activations_derivatives;
-    };
-
-
-    struct BackPropagation : Layer::BackPropagation
-    {
-        /// Default constructor.
-
-        explicit BackPropagation() : Layer::BackPropagation(){}
-
-        virtual ~BackPropagation() {}
-
-        void allocate()
-        {
-            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
-
-            const Index neurons_number = perceptron_layer->get_neurons_number();
-            const Index inputs_number = perceptron_layer->get_inputs_number();
-
-            biases_derivatives.resize(neurons_number);
-
-            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
-        }
-
-        Tensor<type, 1> biases_derivatives;
-
-        Tensor<type, 2> synaptic_weights_derivatives;
-    };
-
-
-
    // Constructors
 
    explicit PerceptronLayer();

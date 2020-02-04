@@ -66,11 +66,23 @@ public:
             batch_instances_number = new_batch_instances_number;
 
             layer_pointer = new_layer_pointer;
+
+
+
         }
 
         virtual ~ForwardPropagation() {}
 
-        virtual void allocate() = 0;
+        virtual void allocate()
+        {
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            combinations.resize(batch_instances_number, neurons_number);
+
+            activations.resize(batch_instances_number, neurons_number);
+
+            activations_derivatives.resize(batch_instances_number, neurons_number);
+        }
 
         virtual void print() const {}
 
@@ -79,6 +91,11 @@ public:
         Layer* layer_pointer;
 
         Tensor<type, 2> activations;
+
+        Tensor<type, 2> combinations;
+
+        Tensor<type, 2> activations_derivatives;
+
     };
 
 
@@ -96,12 +113,20 @@ public:
 
             layer_pointer = new_layer_pointer;
 
-//            allocate();
+            allocate();
         }
 
         virtual ~BackPropagation() {}
 
-        virtual void allocate() = 0;
+        void allocate()
+        {
+            const Index neurons_number = layer_pointer->get_neurons_number();
+            const Index inputs_number = layer_pointer->get_inputs_number();
+
+            biases_derivatives.resize(neurons_number);
+
+            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+        }
 
         void print() const
         {
@@ -110,6 +135,11 @@ public:
         Index batch_instances_number = 0;
 
         Layer* layer_pointer = nullptr;
+
+        Tensor<type, 1> biases_derivatives;
+
+        Tensor<type, 2> synaptic_weights_derivatives;
+
     };
 
 
@@ -142,6 +172,9 @@ public:
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
+    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
+    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
     virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
