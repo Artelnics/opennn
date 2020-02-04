@@ -171,13 +171,12 @@ public:
 
            case Device::EigenGpu:
            {
-/*
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                combinations.device(*gpu_device) = biases.broadcast(broadcast);
+//                combinations.device(*gpu_device) = biases.broadcast(broadcast);
 
-                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
-*/
+//                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+
                 break;
            }
 
@@ -315,13 +314,13 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation->combinations);
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-       calculate_activations(forward_propagation->combinations, forward_propagation->activations);
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(forward_propagation->combinations, forward_propagation->activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
@@ -369,8 +368,6 @@ public:
            }
        }
    }
-
-   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,

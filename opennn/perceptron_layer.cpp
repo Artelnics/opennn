@@ -851,36 +851,6 @@ PerceptronLayer::PerceptronLayerForwardPropagation PerceptronLayer::calculate_fo
 }
 */
 
-Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                       const Tensor<type, 2>&,
-                                                       const Tensor<type, 2>& activations_derivatives,
-                                                       const Tensor<type, 2>& next_layer_delta) const
-{
-    // Eigen stuff
-
-    const Type layer_type = next_layer_pointer->get_type();
-
-    Tensor<type, 2> synaptic_weights_transpose;
-
-    if(layer_type == Perceptron)
-    {
-        const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-    }
-    else if(layer_type == Probabilistic)
-    {
-        const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-    }
-
-    const Tensor<type, 2> delta_dot_synaptic = next_layer_delta.contract(synaptic_weights_transpose, product_matrix_matrix);
-
-    return activations_derivatives*delta_dot_synaptic;
-
-/*
-    return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
-*/
-}
-
-
 /// Calculates the gradient error from the layer.
 /// Returns the gradient of the objective, according to the objective type.
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.

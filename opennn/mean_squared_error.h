@@ -92,8 +92,6 @@ public:
 
    void calculate_error(BackPropagation& back_propagation) const
    {
-       const Index batch_instances_number = back_propagation.errors.dimension(0);
-
        Tensor<type, 0> sum_squared_error;
 
        switch(device_pointer->get_type())
@@ -102,7 +100,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-//                sum_squared_error.device(*default_device) = back_propagation.errors.contract(back_propagation.errors, double_contraction);
+                sum_squared_error.device(*default_device) = back_propagation.errors.square().sum();
 
                 break;
             }
@@ -134,6 +132,8 @@ public:
                throw logic_error(buffer.str());
            }
        }
+
+       const Index batch_instances_number = back_propagation.errors.dimension(0);
 
 //       back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
    }
