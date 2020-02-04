@@ -34,7 +34,7 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-//          Eigen::initParallel();
+//      Eigen::initParallel();
 
 //        Eigen::array<Index, 10> a;
 
