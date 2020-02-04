@@ -1909,7 +1909,8 @@ void GeneticAlgorithm::perform_mutation()
         for(Index j = 0; j < population.dimension(1); j++)
         {
 //            random = calculate_random_uniform(0.,1.);
-            random = 1.0*static_cast<type>(rand() /(RAND_MAX + 1.0));
+
+            random = static_cast<type>(1.0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
             if(random <= mutation_rate)
             {
@@ -1966,7 +1967,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 #endif
 
     GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
-/*
+
     if(display)
     {
         cout << "Performing genetic inputs selection..." << endl;
@@ -2020,7 +2021,17 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     current_uses = original_uses;
 
-    optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
+    Index count = 0;
+
+    for(Index i = 0; i < original_uses.size(); i++)
+    {
+        if(original_uses(i) == DataSet::Input) count++;
+    }
+
+//    optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
+
+    optimal_inputs.resize(count);
+    optimal_inputs.setConstant(0);
 
     Tensor<type, 2>  test(100,4);
 
@@ -2043,16 +2054,29 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         current_standard_deviation = standard_deviation(loss.chip(1,1));
 
-        current_inputs = population[minimal_index];
+        current_inputs = population.chip(minimal_index,0);
 
         current_selection_error = loss(minimal_index,1);
 
         current_training_error = loss(minimal_index,0);
 
-        if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
+        Index count_optimal = 0;
+        Index count_inputs = 0;
+
+        for(Index k = 0; k < optimal_inputs.size(); k++)
+        {
+            if(optimal_inputs(k) == true) count_optimal++;
+            if(current_inputs(k) == true) count_inputs++;
+        }
+
+        /*if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
              optimum_selection_error > current_selection_error) ||
                (abs(optimum_selection_error - current_selection_error) < tolerance &&
-                 optimal_inputs.count_equal_to(true) < current_inputs.count_equal_to(true)))
+                 optimal_inputs.count_equal_to(true) < current_inputs.count_equal_to(true)))*/
+        if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
+                     optimum_selection_error > current_selection_error) ||
+                       (abs(optimum_selection_error - current_selection_error) < tolerance &&
+                         count_optimal < count_inputs))
         {
             optimal_inputs = current_inputs;
             optimum_training_error = current_training_error;
@@ -2062,7 +2086,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
+/*
         if(reserve_generation_mean)
         {
             results->generation_mean_history.push_back(current_mean);
@@ -2082,7 +2106,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             results->generation_optimum_loss_history.push_back(current_training_error);
         }
-
+*/
         // Stopping criteria
 
         if(elapsed_time >= maximum_time)
@@ -2144,9 +2168,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 //            cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
             cout << "Generation optimum selection error: " << current_selection_error << endl;
             cout << "Corresponding training loss: " << current_training_error << endl;
-            cout << "Generation selection mean = " << mean(loss.chip(1,1)) << endl;
+//            cout << "Generation selection mean = " << mean(loss.chip(1,1)) << endl;
             cout << "Generation selection standard deviation = " << standard_deviation(loss.chip(1,1)) << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
         }
@@ -2155,7 +2179,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     }
 
     // Save results
-
+/*
     results->inputs_data.set(inputs_history);
 
     if(reserve_error_data)
@@ -2174,7 +2198,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     {
         results->minimal_parameters = optimal_parameters;
     }
-
+*/
     results->optimal_inputs = optimal_inputs;
     results->final_selection_error = optimum_selection_error;
     results->final_training_error = optimum_training_error;
@@ -2214,14 +2238,14 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     if(display)
     {
-        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().vector_to_string() << endl;
+        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal generation: " << optimal_generation << endl;
-        cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
+//        cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-*/
+
     return results;
 }
 
