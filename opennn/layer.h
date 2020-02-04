@@ -141,12 +141,6 @@ public:
 
             layer_pointer = new_layer_pointer;
 
-            allocate();
-        }
-
-
-        void allocate()
-        {
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
@@ -156,7 +150,6 @@ public:
 
             delta.resize(batch_instances_number, neurons_number);
         }
-
 
         void print() const
         {
@@ -199,6 +192,8 @@ public:
 
     void set_device_pointer(Device*);
 
+    virtual void insert_derivatives(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
@@ -207,9 +202,7 @@ public:
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Layer::BackPropagation&) {}
 
     virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
@@ -218,12 +211,6 @@ public:
     void calculate_output_delta(const Tensor<type, 2>&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
-
-
-    virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
-                                                  const Tensor<type, 2>&,
-                                                  const Tensor<type, 2>&,
-                                                  const Tensor<type, 2>&) const;
 
     virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,
