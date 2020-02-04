@@ -209,62 +209,29 @@ const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_funct
 
 string PerceptronLayer::write_activation_function() const
 {
-   switch(activation_function)
+   switch(activation_function)      
    {
-      case Logistic:
-      {
-         return "Logistic";
-      }
+       case Logistic: return "Logistic";
 
-      case HyperbolicTangent:
-      {
-         return "HyperbolicTangent";
-      }
+       case HyperbolicTangent: return "HyperbolicTangent";
 
-      case Threshold:
-      {
-         return "Threshold";
-      }
+       case Threshold: return "Threshold";
 
-      case SymmetricThreshold:
-      {
-         return "SymmetricThreshold";
-      }
+       case SymmetricThreshold:return "SymmetricThreshold";
 
-      case Linear:
-      {
-         return "Linear";
-      }
+       case Linear: return "Linear";
 
-      case RectifiedLinear:
-      {
-         return "RectifiedLinear";
-      }
+       case RectifiedLinear: return "RectifiedLinear";
 
-      case ScaledExponentialLinear:
-      {
-         return "ScaledExponentialLinear";
-      }
+       case ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-      case SoftPlus:
-      {
-         return "SoftPlus";
-      }
+       case SoftPlus: return "SoftPlus";
 
-      case SoftSign:
-      {
-         return "SoftSign";
-      }
+       case SoftSign: return "SoftSign";
 
-      case HardSigmoid:
-      {
-         return "HardSigmoid";
-      }
+       case HardSigmoid: return "HardSigmoid";
 
-      case ExponentialLinear:
-      {
-         return "ExponentialLinear";
-      }
+       case ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
