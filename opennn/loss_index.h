@@ -431,8 +431,8 @@ public:
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
-   {
-/*       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+   {/*
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        #ifdef __OPENNN_DEBUG__
 
@@ -480,6 +480,7 @@ public:
 
            index += trainable_layers_parameters_number[i];
        }
+       */
    }
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
