@@ -92,7 +92,7 @@ int main(void)
 
         // Data set
 
-        Tensor<type, 2> data(10000, 1001);
+        Tensor<type, 2> data(1000000, 1001);
 
         data.setRandom();
 

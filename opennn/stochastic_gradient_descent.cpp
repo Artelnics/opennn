@@ -818,21 +818,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
             // Data set
-
+/*
 //           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
            // Neural network
 
-//           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
             // Loss
 
            loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
 //           loss += back_propagation.loss;
-
+*/
 //         Gradient
-/*
+
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
            parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*back_propagation.gradient;
@@ -863,7 +863,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
-*/
        }
 
 //       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);

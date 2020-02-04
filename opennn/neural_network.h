@@ -151,7 +151,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-//               layers[i].set();
+               layers[i].set(batch_instances_number, trainable_layers_pointers[i]);
            }
        }
 

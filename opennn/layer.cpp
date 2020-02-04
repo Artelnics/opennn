@@ -140,20 +140,6 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<t
     throw logic_error(buffer.str());
 }
 
-
-Tensor<type, 1> Layer::calculate_error_gradient(const Tensor<type, 2>&,
-                                               const Layer::ForwardPropagation&,
-                                               const Tensor<type, 2>&)
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
 /*
 Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type, 2>&)
  {
@@ -166,21 +152,6 @@ Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type
     throw logic_error(buffer.str());
  }
 */
-
-Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
-                                             const Tensor<type, 2> &,
-                                             const Tensor<type, 2> &,
-                                             const Tensor<type, 2> &) const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_hidden_delta(Layer *, const Tensor<type, 2> &, const Tensor<type, 2> &, const Tensor<type, 2> &) const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
 
 Tensor<Index, 1> Layer::get_input_variables_dimensions() const
 {
