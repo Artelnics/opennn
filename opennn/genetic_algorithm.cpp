@@ -1663,7 +1663,11 @@ void GeneticAlgorithm::perform_2point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>()) <= incest_prevention_distance)
+        const Tensor<type, 1 > parent_1 = population.chip(parent1_index,1).cast<type>();
+        const Tensor<type, 1 > parent_2 = population.chip(parent2_index,1).cast<type>();
+
+        while(euclidean_distance(parent1, parent2)
+              <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
             random_loops++;
@@ -1680,8 +1684,8 @@ void GeneticAlgorithm::perform_2point_crossover()
             }
         }
 
-        parent1 = population[parent1_index];
-        parent2 = population[parent2_index];
+        parent1 = population.chip(parent1_index,1);
+        parent2 = population.chip(parent2_index,1);
 
         if(crossover_first_point == 0)
         {
@@ -1712,14 +1716,50 @@ void GeneticAlgorithm::perform_2point_crossover()
             }
         }
 
-        new_population.push_back(offspring1);
+//        new_population.push_back(offspring1);
+        const Index new_population_inputs =  new_population.dimension(1);
+        const Index new_population_size = new_population.dimension(0);
+
+        const Tensor<bool, 2> old_population(new_population);
+
+        new_population.resize(new_population_size, new_population_inputs+1);
+
+        for(Index i = 0; i < new_population_inputs; i++)
+        {
+            for(Index j = 0; j < new_population_size; j++)
+            {
+                new_population(j,i) = old_population(j,i);
+            }
+        }
+
+        for(Index i = 0; i < new_population_size; i++)
+        {
+            new_population(i, new_population_inputs) = offspring1(i);
+        }
+
         if(new_population.size() < population_size)
         {
-            new_population.push_back(offspring2);
+//            new_population.push_back(offspring2);
+
+            const Tensor<bool, 2> old_population(new_population);
+
+            new_population.resize(new_population_size, new_population_inputs+1);
+
+            for(Index i = 0; i < new_population_inputs; i++)
+            {
+                for(Index j = 0; j < new_population_size; j++)
+                {
+                    new_population(j,i) = old_population(j,i);
+                }
+            }
+
+            for(Index i = 0; i < new_population_size; i++)
+            {
+                new_population(i, new_population_inputs) = offspring2(i);
+            }
         }
     }
 
-    cout << new_population.size() << endl;
     set_population(new_population);
 */
 }
@@ -1730,7 +1770,7 @@ void GeneticAlgorithm::perform_2point_crossover()
 void GeneticAlgorithm::perform_uniform_crossover()
 {
 /*
-    const Index inputs_number = population[0].size();
+    const Index inputs_number = population.dimension(0);
     const Index selected_population = population.size();
 
     Index parent1_index;
@@ -1777,7 +1817,8 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
         for(Index i = 0; i < inputs_number; i++)
         {
-            random_uniform = calculate_random_uniform(0.,1.);
+//            random_uniform = calculate_random_uniform(0.,1.);
+            random_uniform = 1.0*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
             if(random_uniform > 0.5)
             {
@@ -1791,10 +1832,47 @@ void GeneticAlgorithm::perform_uniform_crossover()
             }
         }
 
-        new_population.push_back(offspring1);
-        if(new_population.size() != population_size)
+//        new_population.push_back(offspring1);
+        const Index new_population_inputs =  new_population.dimension(1);
+        const Index new_population_size = new_population.dimension(0);
+
+        const Tensor<bool, 2> old_population(new_population);
+
+        new_population.resize(new_population_size, new_population_inputs+1);
+
+        for(Index i = 0; i < new_population_inputs; i++)
         {
-            new_population.push_back(offspring2);
+            for(Index j = 0; j < new_population_size; j++)
+            {
+                new_population(j,i) = old_population(j,i);
+            }
+        }
+
+        for(Index i = 0; i < new_population_size; i++)
+        {
+            new_population(i, new_population_inputs) = offspring1(i);
+        }
+
+        if(new_population.size() < population_size)
+        {
+//            new_population.push_back(offspring2);
+
+            const Tensor<bool, 2> old_population(new_population);
+
+            new_population.resize(new_population_size, new_population_inputs+1);
+
+            for(Index i = 0; i < new_population_inputs; i++)
+            {
+                for(Index j = 0; j < new_population_size; j++)
+                {
+                    new_population(j,i) = old_population(j,i);
+                }
+            }
+
+            for(Index i = 0; i < new_population_size; i++)
+            {
+                new_population(i, new_population_inputs) = offspring2(i);
+            }
         }
     }
 
@@ -1821,24 +1899,24 @@ void GeneticAlgorithm::perform_mutation()
     }
 
 #endif
-/*
+
     const Index selected_population_size = population_size - elitism_size;
 
     type random;
 
     for(Index i = selected_population_size; i < population.size(); i++)
     {
-        for(Index j = 0; j < population[i].size(); j++)
+        for(Index j = 0; j < population.dimension(1); j++)
         {
-            random = calculate_random_uniform(0.,1.);
+//            random = calculate_random_uniform(0.,1.);
+            random = 1.0*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
             if(random <= mutation_rate)
             {
-                population[i][j] = !population[i][j];
+                population(i,j) = !population(i,j);
             }
        }
     }
-*/
 }
 
 
