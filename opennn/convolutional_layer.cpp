@@ -54,7 +54,7 @@ bool ConvolutionalLayer::is_empty() const
 /// Returns the result of applying the previously set activation function to a batch of images.
 /// @param convolutions The batch of images.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_activations(const Tensor<type, 2>& convolutions) const
+Tensor<type, 4> ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& convolutions) const
 {
 /*
    switch(activation_function)
@@ -82,14 +82,14 @@ Tensor<type, 2> ConvolutionalLayer::calculate_activations(const Tensor<type, 2>&
        case ConvolutionalLayer::ExponentialLinear: return exponential_linear(convolutions);
    }
 */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
 /// Returns the result of applying the convolutional layer's filters and biases to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
+Tensor<type, 4> ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -159,7 +159,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 
     return convolutions;
 */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
@@ -167,7 +167,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 /// @param inputs The batch of images.
 /// @param parameters The parameters.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
+Tensor<type, 4> ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, const Tensor<type, 1>& parameters) const
 {
 /*
     #ifdef __OPENNN_DEBUG__
@@ -244,14 +244,14 @@ Tensor<type, 2> ConvolutionalLayer::calculate_combinations(const Tensor<type, 2>
 
     return convolutions;
 */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
 /// Returns the result of applying the derivative of the previously set activation function to a batch of images.
 /// @param convolutions The batch of images.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
+Tensor<type, 4> ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -262,7 +262,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_activations_derivatives(const Tens
            ostringstream buffer;
 
            buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-                  << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) method.\n"
+                  << "Tensor<type, 4> calculate_activations_derivatives(const Tensor<type, 4>&) method.\n"
                   << "Number of combinations dimensions (" << combinations_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
 
            throw logic_error(buffer.str());
@@ -295,14 +295,14 @@ Tensor<type, 2> ConvolutionalLayer::calculate_activations_derivatives(const Tens
         case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
 /// Returns the output of the convolutional layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inputs)
+Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     return calculate_activations(calculate_combinations(inputs));
 }
@@ -312,7 +312,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inp
 /// @param inputs The batch of images.
 /// @param parameters The parameters.
 
-Tensor<type, 2> ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
+Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, const Tensor<type, 1>& parameters)
 {
     return calculate_activations(calculate_combinations(inputs, parameters));
 }
