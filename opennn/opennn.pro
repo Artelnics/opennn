@@ -46,7 +46,6 @@ HEADERS += \
     config.h \
     device.h \
     opennn_strings.h \
-    functions.h \
     statistics.h \
     correlations.h \
     transformations.h \
@@ -101,7 +100,6 @@ HEADERS += \
 SOURCES += \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
-    functions.cpp \
     statistics.cpp \
     correlations.cpp \
     transformations.cpp \
