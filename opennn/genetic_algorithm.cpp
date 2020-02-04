@@ -905,8 +905,20 @@ void GeneticAlgorithm::initialize_random_population()
         {
             inputs[static_cast<Index>(rand())%inputs_number] = true;
         }
-/*
-        if(population.contains(inputs) && random_loops <= 5)
+
+        bool contains = true;
+
+        for(Index k = 0; k < population.dimension(1); k++)
+        {
+            for(Index l = 0; l < inputs.size(); l++)
+            {
+                if(population(l,k) != inputs(l)) contains = false;
+
+                contains = true;
+            }
+        }
+
+        if(contains && random_loops <= 5)
         {
             random_loops++;
 
@@ -921,7 +933,6 @@ void GeneticAlgorithm::initialize_random_population()
 
             random_loops = 0;
         }
-*/
     }
 
 }
@@ -940,8 +951,12 @@ void GeneticAlgorithm::initialize_weighted_population()
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
-/*
-    Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
+
+//    Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
+
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    Tensor<type, 1> final_correlations = correlations.sum(rows_sum).abs();
 
     // Neural network stuff
 
@@ -951,9 +966,10 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     // Optimization algortihm stuff
 
-    Tensor<bool, 1> inputs(inputs_number, false);
+    Tensor<bool, 1> inputs(inputs_number);
+    inputs.setConstant(false);
 
-    type sum;
+    Tensor<type, 0> sum;
 
     Tensor<type, 1> correlations_sum;
 
@@ -961,29 +977,34 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     type random;
 
+    type random_uniform;
+
     Index random_loops = 0;
 
     for(Index i = 0; i < final_correlations.size(); i++)
     {
-        if(final_correlations[i] < 1.0/population_size)
+        if(final_correlations(i) < 1.0/population_size)
         {
-            final_correlations[i] = 1.0/population_size;
+            final_correlations(i) = 1.0/population_size;
         }
     }
 
     sum = final_correlations.sum();
 
-    correlations_sum = cumulative(final_correlations);
+    correlations_sum = final_correlations.cumsum(0);//cumulative(final_correlations);
 
     for(Index i = 0; i < population_size; i++)
     {
         zero_ocurrences = 0;
 
-        inputs.resize(inputs_number,false);
+        inputs.resize(inputs_number);
+        inputs.setConstant(false);
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            random = calculate_random_uniform(0.,sum);
+            random = sum(0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
+
+//            random = calculate_random_uniform(0.,sum);
 
             for(Index k = 0; k < correlations_sum.size(); k++)
             {
@@ -1012,21 +1033,36 @@ void GeneticAlgorithm::initialize_weighted_population()
             inputs[static_cast<Index>(rand())%inputs_number] = true;
         }
 
-        if(population.contains(inputs) && random_loops <= 5)
+        bool contains = true;
+
+        for(Index k = 0; k < population.dimension(1); k++)
+        {
+            for(Index l = 0; l < inputs.size(); l++)
+            {
+                if(population(l,k) != inputs(l)) contains = false;
+
+                contains = true;
+            }
+        }
+
+        if(contains && random_loops <= 5)
         {
             random_loops++;
 
             i--;
-
         }
         else
         {
-            population[i] = inputs;
+//            population[i] = inputs;
+
+            for(Index k = 0; k < population.dimension(0); k++)
+            {
+                population(k,i) = inputs(k);
+            }
 
             random_loops = 0;
         }
     }
-*/
 }
 
 
@@ -1078,8 +1114,7 @@ void GeneticAlgorithm::evaluate_population()
 
     for(Index i = 0; i < population_size; i++)
     {
-/*
-        current_inputs = population[i];
+        current_inputs = population.chip(i,1);
 
         for(Index j = 0; j < current_inputs.size(); j++)
         {
@@ -1099,14 +1134,19 @@ void GeneticAlgorithm::evaluate_population()
 
 //        data_set_pointer->set_variables_uses(current_uses);
 
-        neural_network_pointer->set_inputs_number(current_inputs.count_equal_to(true));
+        neural_network_pointer->set_inputs_number(current_inputs);
 
         // Training Neural networks
 
-        errors = calculate_losses(population[i]);
+        errors = calculate_losses(population.chip(i,1));
 
-        loss.set_row(i, errors);
-*/
+//        loss.set_row(i, errors);
+
+        for(Index k = 0; k < loss.dimension(1); k++)
+           {
+             loss(i,k) = errors(k);
+           }
+
     }
 
     calculate_fitness();
@@ -1279,7 +1319,7 @@ void GeneticAlgorithm::perform_selection()
     }
 
 #endif
-/*
+
     const Index selected_population_size = static_cast<Index>(population_size/2);
 
     Tensor<bool, 2> population_copy;
@@ -1290,7 +1330,7 @@ void GeneticAlgorithm::perform_selection()
 
     Index selected_index = 0;
 
-    Tensor<type, 1> fitness_sum = cumulative(fitness);
+    Tensor<type, 1> fitness_sum = fitness.cumsum(0);
 
     const Tensor<type, 1> sum = fitness.sum();
 
@@ -1325,11 +1365,47 @@ void GeneticAlgorithm::perform_selection()
     {
         selected_index = maximal_index(fitness_copy);
 
-        if(!population_copy.contains(population[selected_index]))
-        {
-            selected_population[selected_index] = true;
+        const Tensor<bool, 1> selected_population_column = population.chip(selected_index,1);
 
-            population_copy.push_back(population[selected_index]);
+        bool contains = true;
+
+        for(Index k = 0; k < population_copy.dimension(1); k++)
+        {
+            for(Index l = 0; l < selected_population_column.size(); l++)
+            {
+                if(population_copy(l,k) != selected_population_column(l)) contains = true;
+
+                contains = false;
+            }
+        }
+
+        //        if(!population_copy.contains(population[selected_index]))
+        //        {
+        //            selected_population[selected_index] = true;
+
+        //            population_copy.push_back(population[selected_index]);
+        //        }
+
+        if(contains)
+        {
+            selected_population(selected_index) = true;
+
+            const Tensor<bool, 2> old_population(population_copy);
+
+            population_copy.resize(old_population.dimension(0),old_population.dimension(1)+1);
+
+            for(Index k = 0; k < old_population.dimension(0); k++)
+            {
+                for(Index l = 0; l < old_population.dimension(1);l++)
+                {
+                    population_copy(k,l) = old_population(k,l);
+                }
+            }
+
+            for(Index k = 0; k < old_population.dimension(0); k++)
+            {
+                population_copy(k,old_population.dimension(1)) = population(k, selected_index);
+            }
         }
 
         fitness_copy[selected_index] = -1;
@@ -1339,7 +1415,8 @@ void GeneticAlgorithm::perform_selection()
 
     while(population_copy.size() != selected_population_size)
     {
-        random = calculate_random_uniform(0.,sum);
+        random = sum(0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
+//        random = calculate_random_uniform(0.,sum);
 
         for(Index k = 0; k < fitness_sum.size(); k++)
         {
@@ -1359,7 +1436,24 @@ void GeneticAlgorithm::perform_selection()
         {
             selected_population[selected_index] = true;
 
-            population_copy.push_back(population[selected_index]);
+//            population_copy.push_back(population[selected_index]);
+
+            const Tensor<bool, 2> old_population(population_copy);
+
+            population_copy.resize(old_population.dimension(0),old_population.dimension(1)+1);
+
+            for(Index k = 0; k < old_population.dimension(0); k++)
+            {
+                for(Index l = 0; l < old_population.dimension(1);l++)
+                {
+                    population_copy(k,l) = old_population(k,l);
+                }
+            }
+
+            for(Index k = 0; k < old_population.dimension(0); k++)
+            {
+                population_copy(k,old_population.dimension(1)) = population(k, selected_index);
+            }
 
             random_loops = 0;
         }
@@ -1370,8 +1464,9 @@ void GeneticAlgorithm::perform_selection()
     }
 
 //    population.set(population_copy);
-    copy(population_copy.data(), population_copy.data() + population_copy.size(), population);
-*/
+//    copy(population_copy.data(), population_copy.data() + population_copy.size(), population.data());
+
+    set_population(population_copy);
 }
 
 
@@ -1420,7 +1515,7 @@ void GeneticAlgorithm::perform_crossover()
 void GeneticAlgorithm::perform_1point_crossover()
 {
 /*
-    const Index inputs_number = population[0].size();
+    const Index inputs_number = population.dimension(1);
     const Index selected_population = population.size();
 
     Index parent1_index;
@@ -1446,7 +1541,10 @@ void GeneticAlgorithm::perform_1point_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
+        const Tensor<type, 1 > parent_1 = population.chip(parent1_index,1).cast<type>();
+        const Tensor<type, 1 > parent_2 = population.chip(parent2_index,1).cast<type>();
+
+        while(euclidean_distance(parent1, parent2)
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1465,8 +1563,8 @@ void GeneticAlgorithm::perform_1point_crossover()
             }
         }
 
-        parent1 = population[parent1_index];
-        parent2 = population[parent2_index];
+        parent1 = population.chip(parent1_index,1);
+        parent2 = population.chip(parent2_index,1);
 
         if(crossover_first_point == 0)
         {
@@ -1487,11 +1585,46 @@ void GeneticAlgorithm::perform_1point_crossover()
             }
         }
 
-        new_population.push_back(offspring1);
+//        new_population.push_back(offspring1);
+        const Index new_population_inputs =  new_population.dimension(1);
+        const Index new_population_size = new_population.dimension(0);
+
+        const Tensor<bool, 2> old_population(new_population);
+
+        new_population.resize(new_population_size, new_population_inputs+1);
+
+        for(Index i = 0; i < new_population_inputs; i++)
+        {
+            for(Index j = 0; j < new_population_size; j++)
+            {
+                new_population(j,i) = old_population(j,i);
+            }
+        }
+
+        for(Index i = 0; i < new_population_size; i++)
+        {
+            new_population(i, new_population_inputs) = offspring1(i);
+        }
 
         if(new_population.size() != population_size)
         {
-            new_population.push_back(offspring2);
+//            new_population.push_back(offspring2);
+            const Tensor<bool, 2> old_population(new_population);
+
+            new_population.resize(new_population_size, new_population_inputs+1);
+
+            for(Index i = 0; i < new_population_inputs; i++)
+            {
+                for(Index j = 0; j < new_population_size; j++)
+                {
+                    new_population(j,i) = old_population(j,i);
+                }
+            }
+
+            for(Index i = 0; i < new_population_size; i++)
+            {
+                new_population(i, new_population_inputs) = offspring2(i);
+            }
         }
     }
 
@@ -1505,7 +1638,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 void GeneticAlgorithm::perform_2point_crossover()
 {
 /*
-    const Index inputs_number = population[0].size();
+    const Index inputs_number = population.dimension(1);
     const Index selected_population = population.size();
 
     Index parent1_index;

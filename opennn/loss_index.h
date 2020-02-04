@@ -439,7 +439,7 @@ public:
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
    {
-       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+/*       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        #ifdef __OPENNN_DEBUG__
 
@@ -461,7 +461,7 @@ public:
        }
 
        #endif
-/*
+
        const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();

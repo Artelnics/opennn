@@ -119,7 +119,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
     ts.set_display(false);
 
     io.set_trials_number(1);
-    io.set_maximum_order(7);
+//    io.set_maximum_order(7);
     io.set_selection_error_goal(1.0e-3);
     io.set_display(false);
 
@@ -170,7 +170,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
     ts.set_display(false);
 
     io.set_trials_number(1);
-    io.set_maximum_order(7);
+//    io.set_maximum_order(7);
     io.set_selection_error_goal(0.0);
     io.set_maximum_selection_failures(1);
     io.set_display(false);
