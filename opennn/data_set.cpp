@@ -5773,7 +5773,7 @@ void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    scale_columns_minimum_maximum(data, inputs_descriptives, input_variables_indices);
+//    scale_columns_minimum_maximum(data, inputs_descriptives, input_variables_indices);
 }
 
 
@@ -6040,7 +6040,7 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
+//    scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
 }
 
 
@@ -7499,11 +7499,11 @@ void DataSet::transform_time_series()
 
     if(has_time_variables())
     {
-        OpenNN::transform_time_series(data, lags_number, steps_ahead, time_index);
+//        OpenNN::transform_time_series(data, lags_number, steps_ahead, time_index);
     }
     else
     {
-        OpenNN::transform_time_series(data, lags_number, steps_ahead);
+//        OpenNN::transform_time_series(data, lags_number, steps_ahead);
     }
 
     transform_columns_time_series();
@@ -8388,7 +8388,7 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
         data(i, inputs_number) = rosenbrock;
     }
 
-    scale_range(data, -1.0, 1.0);
+//    scale_range(data, -1.0, 1.0);
 
     set_default_columns_uses();
 }
@@ -9639,7 +9639,6 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
-
 
     const Index* instances_pointer = instances.data();
     const Index* inputs_pointer = inputs.data();

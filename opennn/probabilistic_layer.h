@@ -21,9 +21,9 @@
 // OpenNN includes
 
 #include "config.h"
-#include "functions.h"
+
 #include "layer.h"
-#include "metrics.h"
+
 #include "tinyxml2.h"
 
 namespace OpenNN

@@ -27,7 +27,6 @@
 #include "statistics.h"
 #include "tinyxml2.h"
 
-#include "functions.h"
 #include "perceptron_layer.h"
 //#include "probabilistic_layer.h"
 #include "convolutional_layer.h"

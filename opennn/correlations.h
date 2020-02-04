@@ -25,8 +25,8 @@
 // OpenNN includes
 
 //#include "statistics.h"
-//#include "transformations.h"
-//#include "functions.h"
+//
+//
 #include "config.h"
 
 

@@ -19,7 +19,6 @@
 #include "numerical_differentiation_test.h"
 #include "statistics_test.h"
 #include "metrics_test.h"
-#include "functions_test.h"
 
 #include "data_set_test.h"
 

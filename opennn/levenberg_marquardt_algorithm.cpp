@@ -785,7 +785,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    {
       // Neural network
 
-      parameters_norm = l2_norm(parameters);
+//      parameters_norm = l2_norm(parameters);
 
       if(display && parameters_norm >= warning_parameters_norm)
       {
@@ -798,7 +798,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       training_loss = terms_second_order_loss.loss;
 
-      gradient_norm = l2_norm(terms_second_order_loss.gradient);
+//      gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
       if(display && gradient_norm >= warning_gradient_norm)
       {
@@ -832,9 +832,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
 */
-      }while(damping_parameter < maximum_damping_parameter);
+      }
+      while(damping_parameter < maximum_damping_parameter);
 
-      parameters_increment_norm = l2_norm(parameters_increment);
+//      parameters_increment_norm = l2_norm(parameters_increment);
 
       if(epoch == 0)
       {
@@ -1033,7 +1034,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 

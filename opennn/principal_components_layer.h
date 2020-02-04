@@ -22,7 +22,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "metrics.h"
+
 #include "layer.h"
 
 #include "tinyxml2.h"

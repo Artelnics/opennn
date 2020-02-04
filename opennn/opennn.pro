@@ -48,9 +48,6 @@ HEADERS += \
     opennn_strings.h \
     statistics.h \
     correlations.h \
-    transformations.h \
-    metrics.h \
-    k_means.h \
     tinyxml2.h \
     data_set.h \
     layer.h \
@@ -102,9 +99,6 @@ SOURCES += \
     opennn_strings.cpp \
     statistics.cpp \
     correlations.cpp \
-    transformations.cpp \
-    metrics.cpp \
-    k_means.cpp \
     tinyxml2.cpp \
     data_set.cpp \
     layer.cpp \

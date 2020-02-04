@@ -1004,9 +1004,10 @@ Tensor<type, 1> ConjugateGradient::calculate_PR_training_direction
 
    const Tensor<type, 1> PR_training_direction = gradient_descent_term + conjugate_direction_term;
 
-   const type PR_training_direction_norm = l2_norm(PR_training_direction);
+   /*const type PR_training_direction_norm = l2_norm(PR_training_direction);
 
-   return(PR_training_direction/PR_training_direction_norm);
+   return(PR_training_direction/PR_training_direction_norm);*/
+   return Tensor<type, 1>();
 
 }
 
@@ -1077,11 +1078,12 @@ Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
    const Tensor<type, 1> conjugate_direction_term = old_training_direction*FR_parameter;
 
    const Tensor<type, 1> FR_training_direction = gradient_descent_term + conjugate_direction_term;
-
+/*
    const type FR_training_direction_norm = l2_norm(FR_training_direction);
 
    return(FR_training_direction/FR_training_direction_norm);
-
+*/
+   return Tensor<type, 1 >();
 }
 
 
@@ -1285,7 +1287,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       parameters = neural_network_pointer->get_parameters();
 
-      parameters_norm = l2_norm(parameters);
+//      parameters_norm = l2_norm(parameters);
 
       if(parameters_norm >= error_parameters_norm)
       {
@@ -1317,7 +1319,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      gradient_norm = l2_norm(gradient);
+//      gradient_norm = l2_norm(gradient);
 
       if(display && gradient_norm >= warning_gradient_norm)
       {
@@ -1402,7 +1404,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
 
       parameters_increment = training_direction*learning_rate;
-      parameters_increment_norm = l2_norm(parameters_increment);
+//      parameters_increment_norm = l2_norm(parameters_increment);
       
       // Elapsed time
 
@@ -1588,7 +1590,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 

@@ -975,11 +975,11 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
 
    const Tensor<type, 0> gradient_dot_gradient = gradient_difference.contract(hessian_dot_gradient_difference, product_vector_vector);
 
-   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
-
+//   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
+/*
    inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
             /(gradient_dot_gradient(0)); //dot(gradient_difference, hessian_dot_gradient_difference);
-
+*/
    return inverse_hessian_approximation;
 }
 
@@ -1124,14 +1124,14 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
    // Calculate inverse hessian approximation
 
    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-
+/*
    inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
 
    inverse_hessian_approximation -= direct(hessian_dot_gradient, hessian_dot_gradient)
    /gradient_dot_hessian_dot_gradient(0);
 
    inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
-
+*/
    return inverse_hessian_approximation;
 }
 
@@ -1232,7 +1232,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        parameters = neural_network_pointer->get_parameters();
 
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm)
        {
@@ -1281,7 +1281,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-       gradient_norm = l2_norm(gradient);
+//       gradient_norm = l2_norm(gradient);
 
        if(display && gradient_norm >= warning_gradient_norm)
        {
@@ -1360,7 +1360,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        parameters_increment = training_direction*learning_rate;
 
-       parameters_increment_norm = l2_norm(parameters_increment);
+//       parameters_increment_norm = l2_norm(parameters_increment);
 
        // Elapsed time
 
@@ -1537,7 +1537,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 

@@ -129,7 +129,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
-
+/*
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -143,6 +143,8 @@ check();
     }
 
     return training_error/training_instances_number;
+    */
+    return 0;
 }
 
 
@@ -182,7 +184,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
-
+/*
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -196,6 +198,8 @@ check();
     }
 
     return training_error/training_instances_number;
+*/
+    return 0;
 }
 
 
@@ -240,7 +244,7 @@ check();
     type selection_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : selection_error)
-
+/*
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(selection_batches.chip(i,0));
@@ -254,7 +258,8 @@ check();
     }
 
     return selection_error/selection_instances_number;
-
+*/
+    return 0;
 }
 
 
@@ -277,7 +282,8 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-    return sum_squared_error(outputs, targets);
+//    return sum_squared_error(outputs, targets);
+    return 0;
 }
 
 
@@ -298,7 +304,8 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    return sum_squared_error(outputs, targets);
+//    return sum_squared_error(outputs, targets);
+    return 0;
 }
 
 

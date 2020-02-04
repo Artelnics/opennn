@@ -20,7 +20,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "metrics.h"
+
 #include "correlations.h"
 #include "data_set.h"
 #include "neural_network.h"
