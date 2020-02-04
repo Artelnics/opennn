@@ -107,15 +107,6 @@ int main()
          tests_failed_count += data_set_test.get_tests_failed_count();
       }
 
-      else if(test == "linear_algebra" || test == "")
-      {
-         MetricsTest test;
-         test.run_test_case();
-         tests_count += test.get_tests_count();
-         tests_passed_count += test.get_tests_passed_count();
-         tests_failed_count += test.get_tests_failed_count();
-      }
-
       else if(test == "numerical_differentiation" || test == "")
       {
          NumericalDifferentiationTest test_numerical_differentiation;

@@ -33,7 +33,6 @@
 #include "config.h"
 #include "device.h"
 #include "statistics.h"
-#include "transformations.h"
 #include "correlations.h"
 #include "opennn_strings.h"
 #include "tinyxml2.h"

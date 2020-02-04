@@ -66,15 +66,11 @@
 
 // Utilities
 
-#include "math.h"
 #include "numerical_differentiation.h"
 #include "tinyxml2.h"
 #include "correlations.h"
-#include "functions.h"
-#include "metrics.h"
 #include "response_optimization.h"
 #include "statistics.h"
-#include "k_means.h"
 #include "opennn_strings.h"
 
 #endif

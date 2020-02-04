@@ -105,7 +105,8 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-    return cross_entropy_error(outputs, targets);
+//    return cross_entropy_error(outputs, targets);
+    return 0;
 }
 
 
@@ -124,7 +125,8 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    return cross_entropy_error(outputs, targets);
+//    return cross_entropy_error(outputs, targets);
+    return 0;
 }
 
 

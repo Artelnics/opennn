@@ -817,7 +817,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       parameters = neural_network_pointer->get_parameters();
 
-      parameters_norm = l2_norm(parameters);
+//      parameters_norm = l2_norm(parameters);
 
       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
@@ -854,7 +854,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
-      gradient_norm = l2_norm(gradient);
+//      gradient_norm = l2_norm(gradient);
 
       if(display && gradient_norm >= warning_gradient_norm)
       {
@@ -900,7 +900,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       }
 
       parameters_increment = training_direction*learning_rate;
-      parameters_increment_norm = l2_norm(parameters_increment);
+//      parameters_increment_norm = l2_norm(parameters_increment);
 
       // Elapsed time
 
@@ -1084,7 +1084,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 

@@ -22,8 +22,8 @@
 
 #include "config.h"
 #include "layer.h"
-#include "functions.h"
-#include "metrics.h"
+
+
 #include "perceptron_layer.h"
 
 namespace OpenNN

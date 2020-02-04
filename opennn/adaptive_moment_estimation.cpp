@@ -735,7 +735,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
@@ -785,7 +785,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        // Gradient
 
-       gradient_norm = l2_norm(back_propagation.gradient);
+//       gradient_norm = l2_norm(back_propagation.gradient);
 
         // Loss
 
@@ -929,7 +929,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = l2_norm(parameters);
+//       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 

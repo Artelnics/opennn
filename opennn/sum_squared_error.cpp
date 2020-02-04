@@ -105,7 +105,10 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-    return sum_squared_error(outputs, targets);
+//    return sum_squared_error(outputs, targets);
+
+    return 0;
+
 }
 
 
@@ -125,7 +128,9 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    return sum_squared_error(outputs, targets);
+//    return sum_squared_error(outputs, targets);
+
+    return 0;
 }
 
 

@@ -20,7 +20,7 @@
 // OpenNN includes
 
 #include "config.h"
-//#include "functions.h"
+//
 
 // Eigen includes
 

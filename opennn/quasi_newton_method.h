@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "metrics.h"
+
 #include "loss_index.h"
 
 #include "optimization_algorithm.h"
