@@ -753,12 +753,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    type parameters_norm = static_cast<type>(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
-/*
+
+//   forward_propagation.print();
+
    // Loss index stuff
 
    LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
-   type training_error = static_cast<type>(0.0);
+
+   type training_error = 0;
 
    type selection_error = static_cast<type>(0.0);
    type old_selection_error = static_cast<type>(0.0);
@@ -814,23 +817,22 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
-
-//         Data set
+            // Data set
 
 //           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
-//         Neural network
+           // Neural network
 
 //           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
-//         Loss
+            // Loss
 
-//           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
 //           loss += back_propagation.loss;
 
 //         Gradient
-
+/*
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
            parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*back_propagation.gradient;
@@ -861,6 +863,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
+*/
        }
 
 //       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);
@@ -1019,7 +1022,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
-*/
+
    return results;
 }
 

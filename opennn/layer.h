@@ -63,15 +63,22 @@ public:
 
         explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
+            set(new_batch_instances_number, new_layer_pointer);
+        }
+
+
+        virtual ~ForwardPropagation() {}
+
+
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
             batch_instances_number = new_batch_instances_number;
 
             layer_pointer = new_layer_pointer;
 
-
-
+            allocate();
         }
 
-        virtual ~ForwardPropagation() {}
 
         virtual void allocate()
         {
@@ -84,15 +91,26 @@ public:
             activations_derivatives.resize(batch_instances_number, neurons_number);
         }
 
-        virtual void print() const {}
+
+        void print() const
+        {
+            cout << "Combinations: " << endl;
+            cout << combinations << endl;
+
+            cout << "Activations: " << endl;
+            cout << activations << endl;
+
+            cout << "Activations derivatives: " << endl;
+            cout << activations_derivatives << endl;
+        }
 
         Index batch_instances_number = 0;
 
         Layer* layer_pointer;
 
-        Tensor<type, 2> activations;
-
         Tensor<type, 2> combinations;
+
+        Tensor<type, 2> activations;
 
         Tensor<type, 2> activations_derivatives;
 
@@ -107,7 +125,17 @@ public:
         {
         }
 
+
         explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
+            set(new_batch_instances_number, new_layer_pointer);
+        }
+
+
+        virtual ~BackPropagation() {}
+
+
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
             batch_instances_number = new_batch_instances_number;
 
@@ -116,7 +144,6 @@ public:
             allocate();
         }
 
-        virtual ~BackPropagation() {}
 
         void allocate()
         {
@@ -126,7 +153,10 @@ public:
             biases_derivatives.resize(neurons_number);
 
             synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+
+            delta.resize(batch_instances_number, neurons_number);
         }
+
 
         void print() const
         {
@@ -136,10 +166,11 @@ public:
 
         Layer* layer_pointer = nullptr;
 
+        Tensor<type, 2> delta;
+
         Tensor<type, 1> biases_derivatives;
 
         Tensor<type, 2> synaptic_weights_derivatives;
-
     };
 
 
@@ -180,14 +211,13 @@ public:
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
 
-    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation*) {}
+    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
     void calculate_output_delta(const Tensor<type, 2>&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
-
 
 
     virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
