@@ -60,7 +60,7 @@ public:
 
     // Structures
 
-    /// This structure contains the results from the order selection.
+    /// This structure contains the results from the neurons selection.
 
     struct Results
     {
@@ -72,7 +72,7 @@ public:
 
        string object_to_string() const;
 
-       /// Order of the diferent neural networks.
+       /// Neurons of the diferent neural networks.
 
        Tensor<Index, 1> neurons_data;
 
@@ -96,11 +96,11 @@ public:
 
        type final_training_loss;
 
-       /// Order of the neural network with minimum selection error.
+       /// Neurons of the neural network with minimum selection error.
 
        Index optimal_neurons_number;
 
-       /// Number of iterations to perform the order selection.
+       /// Number of iterations to perform the neurons selection.
 
        Index iterations_number;
 
@@ -119,18 +119,18 @@ public:
 
     bool has_training_strategy() const;
 
-    const Index& get_maximum_order() const;
-    const Index& get_minimum_order() const;
+    const Index& get_maximum_neurons() const;
+    const Index& get_minimum_neurons() const;
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_error_data() const;
+    const bool& get_reserve_training_error_data() const;
     const bool& get_reserve_selection_error_data() const;
     const bool& get_reserve_minimal_parameters() const;
 
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
-    const Index& get_maximum_iterations_number() const;
+    const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
     const type& get_tolerance() const;
 
@@ -140,18 +140,18 @@ public:
 
     void set_default();
 
-    void set_maximum_order(const Index&);
-    void set_minimum_order(const Index&);
+    void set_maximum_neurons(const Index&);
+    void set_minimum_neurons(const Index&);
     void set_trials_number(const Index&);
 
-    void set_reserve_error_data(const bool&);
+    void set_reserve_training_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
     void set_selection_error_goal(const type&);
-    void set_maximum_iterations_number(const Index&);
+    void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
     void set_tolerance(const type&);
 
@@ -161,7 +161,7 @@ public:
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
-    // order order selection methods
+    // Neuron selection methods
 
     void delete_selection_history();
     void delete_training_loss_history();
@@ -172,7 +172,7 @@ public:
     Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
     Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
 
-    /// Performs the order selection for a neural network.
+    /// Performs the neurons selection for a neural network.
 
     virtual Results* perform_neurons_selection() = 0;
 
@@ -182,9 +182,9 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Order of all the neural networks trained.
+    /// Neurons of all the neural networks trained.
 
-    Tensor<Index, 1> order_history;
+    Tensor<Index, 1> neurons_history;
 
     /// Selection loss of all the neural networks trained.
 
@@ -200,21 +200,21 @@ protected:
 
     /// Minimum number of hidden neurons.
 
-    Index minimum_order;
+    Index minimum_neurons;
 
     /// Maximum number of hidden neurons.
 
-    Index maximum_order;
+    Index maximum_neurons;
 
     /// Number of trials for each neural network.
 
     Index trials_number;
 
-    // Order selection results
+    // Neurons selection results
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_error_data;
+    bool reserve_training_error_data;
 
     /// True if the selection error of all neural networks are to be reserved.
 
@@ -234,7 +234,7 @@ protected:
 
     /// Maximum number of iterations to perform_neurons_selection. It is used as a stopping criterion.
 
-    Index maximum_iterations_number;
+    Index maximum_epochs_number;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 

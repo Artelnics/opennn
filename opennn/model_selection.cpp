@@ -779,16 +779,16 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         neurons_selection_element->SetAttribute("Type", "INCREMENTAL_NEURONS");
 
-        const tinyxml2::XMLDocument* incremental_order_document = incremental_neurons_pointer->to_XML();
+        const tinyxml2::XMLDocument* incremental_neurons_document = incremental_neurons_pointer->to_XML();
 
-        const tinyxml2::XMLElement* incremental_order_element = incremental_order_document->FirstChildElement("IncrementalNeurons");
+        const tinyxml2::XMLElement* incremental_neurons_element = incremental_neurons_document->FirstChildElement("IncrementalNeurons");
 
-        for(const tinyxml2::XMLNode* nodeFor=incremental_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+        for(const tinyxml2::XMLNode* nodeFor=incremental_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             neurons_selection_element->InsertEndChild(copy );
         }
 
-        delete incremental_order_document;
+        delete incremental_neurons_document;
     }
         break;
     }
