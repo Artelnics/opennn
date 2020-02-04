@@ -58,7 +58,6 @@ SOURCES += \
     metrics_test.cpp \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
-    functions_test.cpp \
     transformations_test.cpp \
     main.cpp
 
@@ -100,7 +99,6 @@ HEADERS += \
     statistics_test.h \
     metrics_test.h \
     convolutional_layer_test.h \
-    functions_test.h \
     transformations_test.h \
     pooling_layer_test.h
 

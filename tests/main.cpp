@@ -28,7 +28,6 @@ int main()
    "cross_entropy_error\n"
    "descriptives\n"
    "evolutionary_algorithm\n"
-   "functions\n"
    "genetic_algorithm\n"
    "golden_section_order\n"
    "gradient_descent\n"
@@ -142,15 +141,6 @@ int main()
          tests_count += matrix_test.get_tests_count();
          tests_passed_count += matrix_test.get_tests_passed_count();
          tests_failed_count += matrix_test.get_tests_failed_count();
-      }
-
-      else if(test == "functions" || test == "f")
-      {
-         FunctionsTest functions_test;
-         functions_test.run_test_case();
-         tests_count += functions_test.get_tests_count();
-         tests_passed_count += functions_test.get_tests_passed_count();
-         tests_failed_count += functions_test.get_tests_failed_count();
       }
 
       else if(test == "long_short_term_memory_layer" || test == "lstml")
@@ -286,14 +276,7 @@ int main()
         tests_passed_count += statistics_test.get_tests_passed_count();
         tests_failed_count += statistics_test.get_tests_failed_count();
       }
-//      else if(test == "functions" || test == "")
-//      {
-//        FunctionsTest functions_test;
-//        functions_test.run_test_case();
-//        tests_count += functions_test.get_tests_count();
-//        tests_passed_count += functions_test.get_tests_passed_count();
-//        tests_failed_count += functions_test.get_tests_failed_count();
-//      }
+
       else if(test == "learning_rate_algorithm" || test == "")
       {
         LearningRateAlgorithmTest learning_rate_algorithm_test;
@@ -425,14 +408,6 @@ int main()
 
       else if(test == "suite" || test == "")
       {
-          //functions
-
-          FunctionsTest functions_test;
-          functions_test.run_test_case();
-          tests_count += functions_test.get_tests_count();
-          tests_passed_count += functions_test.get_tests_passed_count();
-          tests_failed_count += functions_test.get_tests_failed_count();
-
           // numerical differentiation
 
           NumericalDifferentiationTest test_numerical_differentiation;
