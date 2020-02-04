@@ -31,12 +31,12 @@ IncrementalNeurons::IncrementalNeurons(TrainingStrategy* new_training_strategy_p
 
 
 /// XML constructor.
-/// @param incremental_order_document Pointer to a TinyXML document containing the incremental order data.
+/// @param incremental_neurons_document Pointer to a TinyXML document containing the incremental order data.
 
-IncrementalNeurons::IncrementalNeurons(const tinyxml2::XMLDocument& incremental_order_document)
-    : NeuronsSelection(incremental_order_document)
+IncrementalNeurons::IncrementalNeurons(const tinyxml2::XMLDocument& incremental_neurons_document)
+    : NeuronsSelection(incremental_neurons_document)
 {
-    from_XML(incremental_order_document);
+    from_XML(incremental_neurons_document);
 }
 
 
@@ -180,7 +180,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     Index optimal_neurons_number = 0;
 
-    Index neurons_number = minimum_order;
+    Index neurons_number = minimum_neurons;
     Index iterations = 0;
     Index selection_failures = 0;
 
@@ -193,7 +193,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     // Main loop
 
-    for(Index i = 0; i < maximum_order; i++)
+    for(Index i = 0; i < maximum_neurons; i++)
     {
         // Calculate losses
 
@@ -242,7 +242,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
 //        results->neurons_data.push_back(neurons_number);
 
-        if(reserve_error_data)
+        if(reserve_training_error_data)
         {
  /*           const Tensor<type, 1> old_training_loss_history(training_loss_history);
 
@@ -316,7 +316,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             results->stopping_condition = IncrementalNeurons::SelectionErrorGoal;
         }
-        else if(iterations >= maximum_iterations_number)
+        else if(iterations >= maximum_epochs_number)
         {
             end = true;
 
@@ -332,7 +332,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             results->stopping_condition = IncrementalNeurons::MaximumSelectionFailures;
         }
-        else if(neurons_number == maximum_order)
+        else if(neurons_number == maximum_neurons)
         {
             end = true;
 
@@ -487,7 +487,7 @@ Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
 
    buffer.str("");
 
-   if(reserve_error_data)
+   if(reserve_training_error_data)
    {
        buffer << "true";
    }
@@ -550,11 +550,11 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 
    // Minimum order
    {
-   element = document->NewElement("MinimumOrder");
+   element = document->NewElement("MinimumNeurons");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << minimum_order;
+   buffer << minimum_neurons;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -562,11 +562,11 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 
    // Maximum order
    {
-   element = document->NewElement("MaximumOrder");
+   element = document->NewElement("MaximumNeurons");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_order;
+   buffer << maximum_neurons;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -686,7 +686,7 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_error_data;
+   buffer << reserve_training_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -719,10 +719,10 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Minimum order
 
-    file_stream.OpenElement("MinimumOrder");
+    file_stream.OpenElement("MinimumNeurons");
 
     buffer.str("");
-    buffer << minimum_order;
+    buffer << minimum_neurons;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -730,10 +730,10 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Maximum order
 
-    file_stream.OpenElement("MaximumOrder");
+    file_stream.OpenElement("MaximumNeurons");
 
     buffer.str("");
-    buffer << maximum_order;
+    buffer << maximum_neurons;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -750,7 +750,7 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Parameters assays number
+    // Trials number
 
     file_stream.OpenElement("TrialsNumber");
 
@@ -772,7 +772,7 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // selection error goal
+    // Selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
 
@@ -805,12 +805,12 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve loss data
+    // Reserve training erro history
 
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_error_data;
+    buffer << reserve_training_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -850,17 +850,17 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Minimum order
+    // Minimum neurons
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumOrder");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumNeurons");
 
         if(element)
         {
-           const Index new_minimum_order = static_cast<Index>(atoi(element->GetText()));
+           const Index new_minimum_neurons = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
-              minimum_order = new_minimum_order;
+              minimum_neurons = new_minimum_neurons;
            }
            catch(const logic_error& e)
            {
@@ -869,17 +869,17 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum order
+    // Maximum neurons
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumOrder");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumNeurons");
 
         if(element)
         {
-           const Index new_maximum_order = static_cast<Index>(atoi(element->GetText()));
+           const Index new_maximum_neurons = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
-              maximum_order = new_maximum_order;
+              maximum_neurons = new_maximum_neurons;
            }
            catch(const logic_error& e)
            {
@@ -907,7 +907,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Parameters assays number
+    // Trials number
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrialsNumber");
 
@@ -926,17 +926,17 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Performance calculation method
+    // Tolerance
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Tolerance");
 
         if(element)
         {
-           const string new_loss_calculation_method = element->GetText();
+           const Index new_tolerance = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
-//              set_loss_calculation_method(new_loss_calculation_method);
+              set_tolerance(new_tolerance);
            }
            catch(const logic_error& e)
            {
@@ -945,83 +945,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve loss data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-           const string new_reserve_error_data = element->GetText();
-
-           try
-           {
-              set_reserve_error_data(new_reserve_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Reserve selection error data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-           const string new_reserve_selection_error_data = element->GetText();
-
-           try
-           {
-              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Reserve minimal parameters
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveMinimalParameters");
-
-        if(element)
-        {
-           const string new_reserve_minimal_parameters = element->GetText();
-
-           try
-           {
-              set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-        if(element)
-        {
-           const string new_display = element->GetText();
-
-           try
-           {
-              set_display(new_display != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // selection error goal
+    // Selection error goal
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
@@ -1040,17 +964,17 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum iterations number
+    // Maximum selection failures
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
         if(element)
         {
-           const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
+           const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
            try
            {
-              set_maximum_iterations_number(new_maximum_iterations_number);
+              set_maximum_selection_failures(new_maximum_selection_failures);
            }
            catch(const logic_error& e)
            {
@@ -1078,17 +1002,18 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Tolerance
+
+    // Reserve training error history
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Tolerance");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
 
         if(element)
         {
-           const type new_tolerance = static_cast<type>(atof(element->GetText()));
+           const string new_reserve_training_error_data = element->GetText();
 
            try
            {
-              set_tolerance(new_tolerance);
+              set_reserve_training_error_data(new_reserve_training_error_data != "0");
            }
            catch(const logic_error& e)
            {
@@ -1097,17 +1022,17 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum selection failures
+    // Reserve selection error history
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
         if(element)
         {
-           const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+           const string new_reserve_selection_error_data = element->GetText();
 
            try
            {
-              set_maximum_selection_failures(new_maximum_selection_failures);
+              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
            }
            catch(const logic_error& e)
            {
@@ -1115,6 +1040,7 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
            }
         }
     }
+
 }
 
 
