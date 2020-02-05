@@ -252,23 +252,6 @@ check();
 }
 
 
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> SumSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    return (outputs-targets)*static_cast<type>(2.0);
-}
-
-
 /// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
 
 Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const

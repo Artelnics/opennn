@@ -386,7 +386,6 @@ public:
             break;
 
             case Probabilistic:
-
            break;
 
        default:
@@ -498,7 +497,7 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation)
+                                 Layer::BackPropagation& back_propagation) const
    {
        switch(device_pointer->get_type())
        {
@@ -565,7 +564,6 @@ public:
        memcpy(gradient.data(), back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(gradient.data(), back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
-
 
 
    // Expression methods

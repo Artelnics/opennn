@@ -282,9 +282,7 @@ public:
 
    // GRADIENT METHODS
 
-   virtual Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const = 0;
-
-   virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
+   virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
 
    virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<Index, 1>&) const;
 
@@ -311,7 +309,7 @@ public:
 
        calculate_error(back_propagation);
 
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
+       calculate_output_gradient(forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
 

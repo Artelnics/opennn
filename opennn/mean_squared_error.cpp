@@ -434,25 +434,6 @@ check();
 }
 
 
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> MeanSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    const Index instances_number = data_set_pointer->get_training_instances_number();
-
-    return (outputs-targets)*static_cast<type>(2.0)/static_cast<type>(instances_number);
-}
-
-
 /// Returns loss vector of the error terms function for the mean squared error.
 /// It uses the error back-propagation method.
 /// @param outputs Tensor with the values of the outputs.
