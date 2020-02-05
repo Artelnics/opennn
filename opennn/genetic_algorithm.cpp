@@ -1514,7 +1514,7 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_1point_crossover()
 {
-/*
+
     const Index inputs_number = population.dimension(1);
     const Index selected_population = population.size();
 
@@ -1544,7 +1544,7 @@ void GeneticAlgorithm::perform_1point_crossover()
         const Tensor<type, 1 > parent_1 = population.chip(parent1_index,1).cast<type>();
         const Tensor<type, 1 > parent_2 = population.chip(parent2_index,1).cast<type>();
 
-        while(euclidean_distance(parent1, parent2)
+        while(euclidean_distance(parent_1, parent_2)
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1629,7 +1629,6 @@ void GeneticAlgorithm::perform_1point_crossover()
     }
 
     set_population(new_population);
-*/
 }
 
 
@@ -1637,7 +1636,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 
 void GeneticAlgorithm::perform_2point_crossover()
 {
-/*
+
     const Index inputs_number = population.dimension(1);
     const Index selected_population = population.size();
 
@@ -1666,7 +1665,7 @@ void GeneticAlgorithm::perform_2point_crossover()
         const Tensor<type, 1 > parent_1 = population.chip(parent1_index,1).cast<type>();
         const Tensor<type, 1 > parent_2 = population.chip(parent2_index,1).cast<type>();
 
-        while(euclidean_distance(parent1, parent2)
+        while(euclidean_distance(parent_1, parent_2)
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1761,7 +1760,7 @@ void GeneticAlgorithm::perform_2point_crossover()
     }
 
     set_population(new_population);
-*/
+
 }
 
 
@@ -1769,7 +1768,7 @@ void GeneticAlgorithm::perform_2point_crossover()
 
 void GeneticAlgorithm::perform_uniform_crossover()
 {
-/*
+
     const Index inputs_number = population.dimension(0);
     const Index selected_population = population.size();
 
@@ -1794,7 +1793,10 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
         random_loops = 0;
 
-        while(euclidean_distance(population[parent1_index].cast<type>(), population[parent2_index].cast<type>())
+        const Tensor<type, 1 > parent_1 = population.chip(parent1_index,1).cast<type>();
+        const Tensor<type, 1 > parent_2 = population.chip(parent2_index,1).cast<type>();
+
+        while(euclidean_distance(parent_1, parent_2)
               <= incest_prevention_distance)
         {
             parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1812,15 +1814,15 @@ void GeneticAlgorithm::perform_uniform_crossover()
             }
         }
 
-        parent1 = population[parent1_index];
-        parent2 = population[parent2_index];
+        parent1 = population.chip(parent1_index,1);
+        parent2 = population.chip(parent2_index,1);
 
         for(Index i = 0; i < inputs_number; i++)
         {
 //            random_uniform = calculate_random_uniform(0.,1.);
-            random_uniform = 1.0*static_cast<type>(rand() /(RAND_MAX + 1.0));
+            random_uniform = static_cast<type>(1.0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
-            if(random_uniform > 0.5)
+            if(random_uniform > static_cast<type>(0.5))
             {
                 offspring1[i] = parent1[i];
                 offspring2[i] = parent2[i];
@@ -1877,7 +1879,6 @@ void GeneticAlgorithm::perform_uniform_crossover()
     }
 
     set_population(new_population);
-*/
 }
 
 
@@ -1926,8 +1927,8 @@ void GeneticAlgorithm::perform_mutation()
 Index GeneticAlgorithm::get_optimal_individual_index() const
 {
     Index index = 0;
-/*
-    Tensor<bool, 1> optimal_inputs = population[0];
+
+    Tensor<bool, 1> optimal_inputs = population.chip(0,0);
 
     type optimum_error = loss(0,1);
 
@@ -1937,11 +1938,20 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
 
     for(Index i = 1; i < population_size; i++)
     {
-        current_inputs = population[i];
+        current_inputs = population.chip(i,0);
         current_error = loss(i,1);
 
+        Index count_inputs = 0;
+        Index count_optimal = 0;
+
+        for(Index j = 0; j < optimal_inputs.size(); j++)
+        {
+            if(current_inputs(i) == true) count_inputs++;
+            if(optimal_inputs(i) == true) count_optimal++;
+        }
+
         if((abs(optimum_error-current_error) < tolerance &&
-             current_inputs.count_equal_to(true) > optimal_inputs.count_equal_to(true)) ||
+            count_inputs > count_optimal) ||
            (abs(optimum_error-current_error) >= tolerance &&
              current_error < optimum_error)  )
         {
@@ -1951,7 +1961,7 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
             index = i;
         }
     }
-*/
+
     return index;
 }
 
@@ -3646,6 +3656,40 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
            << write_elapsed_time(elapsed_time) << "\n";
 */
     return buffer.str();
+}
+
+type GeneticAlgorithm::euclidean_distance(const Tensor<type, 1>& tensor, const Tensor<type, 1>& other_tensor)
+{
+    const Index x_size = tensor.size();
+
+#ifdef __OPENNN_DEBUG__
+
+  const Index y_size = other_tensor.size();
+
+  if(y_size != x_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Metrics functions.\n"
+           << "double euclidean_distance(const Vector<double>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    type distance = 0.0;
+    type error;
+
+    for(Index i = 0; i < x_size; i++)
+    {
+        error = tensor(i) - other_tensor(i);
+
+        distance += error * error;
+    }
+
+    return sqrt(distance);
 }
 }
 
