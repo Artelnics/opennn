@@ -760,7 +760,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
-
    type training_error = 0;
 
    type selection_error = static_cast<type>(0.0);
@@ -798,6 +797,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
    // Main loop
+
    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
@@ -808,6 +808,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        const Index batches_number = training_batches.dimension(0);
 
 //       parameters_norm = l2_norm(thread_pool_device, parameters);
+
+       const Index parameters_number = parameters.size();
+
+       type norm = 0.0;
+
+       for(Index i = 0; i < parameters_number; i++) {
+         norm += parameters(i) *parameters(i);
+       }
+
+       parameters_norm = sqrt(norm);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
@@ -953,7 +963,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                         << "Gradient norm: " << gradient_norm << "\n"
                         << loss_index_pointer->write_information()
                         << "Learning rate: " << learning_rate << "\n"
-                           //                        << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+//                        << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                         << "Elapsed time: " << elapsed_time <<"\n"
                         << "Selection error: " << selection_error << endl;
            }
@@ -986,7 +996,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()
                 << "Learning rate: " << learning_rate<< "\n"
-                   //                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+//                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                 << "Elapsed time: " << elapsed_time<<"\n"
                 << "Selection error: " << selection_error << endl;
 
