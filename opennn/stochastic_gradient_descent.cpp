@@ -813,8 +813,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        type norm = 0.0;
 
-       for(Index i = 0; i < parameters_number; i++) {
-         norm += parameters(i) *parameters(i);
+       for(Index k = 0; k < parameters_number; k++) {
+         norm += parameters(k) *parameters(k);
        }
 
        parameters_norm = sqrt(norm);
