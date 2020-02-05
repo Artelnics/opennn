@@ -336,7 +336,6 @@ type logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
         if(l2_norm(gradient) < gradient_norm_goal) break;
 
         last_increment = increment;
-
     }
 
     RegressionResults regression_results;
@@ -1245,7 +1244,8 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 
     ostringstream buffer;
 
-    if(x_size != n) {
+    if(x_size != n)
+    {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
                 "exponential_regression(const Tensor<type, 1>&) const "
@@ -1400,7 +1400,8 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
 
     ostringstream buffer;
 
-    if(x_size != n) {
+    if(x_size != n)
+    {
       buffer << "OpenNN Exception: Vector Template.\n"
              << "RegressionResults "
                 "power_regression(const Tensor<type, 1>&) const "

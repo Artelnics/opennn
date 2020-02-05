@@ -100,6 +100,8 @@ public:
    string get_error_type() const;
    string get_error_type_text() const;
 
+   type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
+
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;   
