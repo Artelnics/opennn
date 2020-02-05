@@ -76,12 +76,6 @@ public:
 
             layer_pointer = new_layer_pointer;
 
-            allocate();
-        }
-
-
-        virtual void allocate()
-        {
             const Index neurons_number = layer_pointer->get_neurons_number();
 
             combinations.resize(batch_instances_number, neurons_number);
@@ -153,7 +147,7 @@ public:
 
         void print() const
         {
-        }
+        }       
 
         Index batch_instances_number = 0;
 
@@ -192,7 +186,9 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_derivatives(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+    virtual void insert_parameters(const Index&, const Tensor<type, 1>&) {}
+
+    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
 
     // Outputs
 
@@ -202,13 +198,13 @@ public:
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Layer::BackPropagation&) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
-    void calculate_output_delta(const Tensor<type, 2>&,
+    virtual void calculate_output_delta(const Tensor<type, 2>&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
 
