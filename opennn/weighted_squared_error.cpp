@@ -492,23 +492,6 @@ check();
 }
 
 
-/// Calculates the loss output gradient by means of the back-propagation algorithm,
-/// and returns it in a single vector of size the number of neural network parameters.
-/// @param outputs Tensor    of the outputs of the model.
-/// @param targets Tensor of targets of the data set.
-
-Tensor<type, 2> WeightedSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    return (outputs-targets)*((targets-static_cast<type>(1.0))*static_cast<type>(-1.0)*negatives_weight + targets*positives_weight);
-}
-
-
 /// Returns loss vector of the error terms function for the weighted squared error.
 /// It uses the error back-propagation method.
 /// @param outputs Output data.

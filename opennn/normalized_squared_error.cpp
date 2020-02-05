@@ -442,23 +442,6 @@ check();
 }
 
 
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> NormalizedSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-     return (outputs-targets)*static_cast<type>(2.0) / normalization_coefficient;
-}
-
-
 /// This method calculates the first order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.

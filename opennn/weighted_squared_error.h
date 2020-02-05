@@ -93,10 +93,7 @@ public:
    LossIndex::BackPropagation calculate_back_propagation() const;
    LossIndex::BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
 
-   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__

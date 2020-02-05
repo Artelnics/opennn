@@ -178,23 +178,6 @@ check();
 }
 
 
-/// Returns the cross-entropy error function output gradient of a neural network on a data set.
-/// It uses the error back-propagation method.
-/// @param outputs Tensor of outputs of the neural network.
-/// @param targets Tensor of targets of the data set.
-
-Tensor<type, 2> CrossEntropyError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    return (targets/outputs)*static_cast<type>(-1.0) + (targets*static_cast<type>(-1.0) + static_cast<type>(1.0))/(outputs*static_cast<type>(-1.0) + static_cast<type>(1.0));
-}
-
-
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
 string CrossEntropyError::get_error_type() const
