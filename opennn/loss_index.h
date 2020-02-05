@@ -282,9 +282,7 @@ public:
 
    // GRADIENT METHODS
 
-   virtual Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const = 0;
-
-   virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
+   virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
 
    virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<Index, 1>&) const;
 
@@ -311,7 +309,7 @@ public:
 
        calculate_error(back_propagation);
 
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
+       calculate_output_gradient(forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -465,7 +463,7 @@ public:
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->insert_derivatives(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
 
        index += trainable_layers_parameters_number[0];
 
@@ -476,7 +474,7 @@ public:
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
-//           trainable_layers_pointers[i]->insert_derivatives(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+//           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
        }

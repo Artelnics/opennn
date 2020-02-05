@@ -307,28 +307,6 @@ check();
 }
 
 
-/// Returns the Minkowski error function output gradient of a neural network on a data set.
-/// It uses the error back-propagation method.
-/// Returns gradient for training instances.
-/// @param outputs Tensor with outputs.
-/// @param targets Tensor with targets.
-
-Tensor<type, 2> MinkowskiError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-/*
-    return lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<type>(training_instances_number);
-*/
-    return Tensor<type, 2>();
-}
-
-
 /// Returns a string with the name of the Minkowski error loss type, "MINKOWSKI_ERROR".
 
 string MinkowskiError::get_error_type() const
