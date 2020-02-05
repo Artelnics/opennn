@@ -465,7 +465,7 @@ public:
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->insert_derivatives(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
 
        index += trainable_layers_parameters_number[0];
 
@@ -476,7 +476,7 @@ public:
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
-//           trainable_layers_pointers[i]->insert_derivatives(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+//           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
        }
