@@ -116,6 +116,8 @@ public:
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
+   type sum_squared_error(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+
 private:
 
    // Squared errors methods

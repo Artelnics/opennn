@@ -105,10 +105,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-//    return sum_squared_error(outputs, targets);
-
-    return 0;
-
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -128,9 +125,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-//    return sum_squared_error(outputs, targets);
-
-    return 0;
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -539,6 +534,17 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
+
+type SumSquaredError::sum_squared_error(const Tensor<type, 2>& outputs ,const Tensor<type, 2>& targets) const
+{
+    const auto error = targets - outputs;
+
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+
+    return sse(0);
+}
 }
 
 // OpenNN: Open Neural Networks Library.
