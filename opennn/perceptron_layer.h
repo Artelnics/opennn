@@ -551,8 +551,8 @@ public:
        const type biases_number = get_biases_number();
        const type synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(biases.data(), parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(synaptic_weights.data(), parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(biases.data(), parameters.data() + synaptic_weights.size(), static_cast<size_t>(biases_number)*sizeof(type));
    }
 
 
@@ -561,8 +561,9 @@ public:
        const type biases_number = get_biases_number();
        const type synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data(), back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(gradient.data(), back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(gradient.data() + index, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(gradient.data() + back_propagation.synaptic_weights_derivatives.size() + index,
+              back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
    }
 
 

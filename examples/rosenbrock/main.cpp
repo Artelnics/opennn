@@ -92,9 +92,11 @@ int main(void)
 
         // Data set
 
-        Tensor<type, 2> data(1000000, 1001);
+//        Tensor<type, 2> data(1000000, 1001);
+        Tensor<type, 2> data(4, 4);
 
         data.setRandom();
+//        data.setConstant(1);
 
         DataSet data_set(data);
 
@@ -102,7 +104,7 @@ int main(void)
 
         data_set.set_training();
 
-        data_set.set_batch_instances_number(1000);
+        data_set.set_batch_instances_number(1);
 
         // Neural network
 
