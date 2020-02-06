@@ -823,14 +823,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        loss = static_cast<type>(0.0);
 
-       const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
-
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
-            // Data set
+            // Data set           
 
-//           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+           const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
 
+           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+
+/*
            // Neural network
 
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
@@ -873,6 +874,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
+*/
        }
 
 //       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);
