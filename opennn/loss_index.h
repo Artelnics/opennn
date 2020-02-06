@@ -429,7 +429,7 @@ public:
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
-   {/*
+   {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        #ifdef __OPENNN_DEBUG__
@@ -438,7 +438,7 @@ public:
 
        // Hidden errors size
 
-       const Index layers_delta_size = back_propagation.layers_delta.size();
+       /*const Index layers_delta_size = back_propagation.layers_delta.size();
 
        if(layers_delta_size != trainable_layers_number)
        {
@@ -449,7 +449,7 @@ public:
                 << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
 
          throw logic_error(buffer.str());
-       }
+       }*/
 
        #endif
 
@@ -474,11 +474,10 @@ public:
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
-//           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
        }
-       */
    }
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;

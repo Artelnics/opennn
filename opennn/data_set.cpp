@@ -9653,21 +9653,22 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 
     for(Index i = 0; i < rows_number; i++)
     {
-        instance = instances[i];
+        instance = instances[static_cast<size_t>(i)];
 
         for(Index j = 0; j < inputs_number; j++)
         {
-            variable = inputs[j];
+            variable = inputs[static_cast<size_t>(j)];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
 
-//        for(Index j = 0; j < targets_number; j++)
-//        {
+        for(Index j = 0; j < targets_number; j++)
+        {
 //            variable = targets_pointer[j];
+            variable = targets[static_cast<size_t>(j)];
 
-//            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-//        }
+            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+        }
     }
 }
 

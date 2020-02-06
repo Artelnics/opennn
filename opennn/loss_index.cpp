@@ -658,6 +658,17 @@ type LossIndex::calculate_regularization() const
        }
        case L2:
        {
+            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+            const Index parameters_number = parameters.size();
+
+            type l2_norm = 0.0;
+
+            for(Index k = 0; k < parameters_number; k++) {
+              l2_norm += parameters(k) *parameters(k);
+            }
+
+            return l2_norm;
 //            return l2_norm(neural_network_pointer->get_parameters());
        }
        case NoRegularization:

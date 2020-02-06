@@ -1049,7 +1049,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
         trainable_layers_pointers(i)->insert_parameters(index, new_parameters);
 
-        index += 0;
+        index += 0; //@todo, no valid index
     }
 }
 

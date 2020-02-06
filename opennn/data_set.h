@@ -373,7 +373,7 @@ public:
 
        for(size_t i = 0; i < size; i++)
        {
-           new_vector[i] = tensor(i);
+           new_vector[i] = tensor(static_cast<Index>(i));
        }
 
        return new_vector;
