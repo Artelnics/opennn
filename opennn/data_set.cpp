@@ -9648,16 +9648,16 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
     type* inputs_2d_pointer = inputs_2d.data();
     type* targets_2d_pointer = targets_2d.data();
 
-    Index instance;
-    Index variable;
+    Index instance = 0;
+    Index variable = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index j = 0; j < inputs_number; j++)
     {
-        instance = instances[i];
+        variable = inputs[j];
 
-        for(Index j = 0; j < inputs_number; j++)
+        for(Index i = 0; i < rows_number; i++)
         {
-            variable = inputs[j];
+            instance = instances[i];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
