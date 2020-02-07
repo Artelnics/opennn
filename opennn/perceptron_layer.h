@@ -171,14 +171,18 @@ public:
                 break;
             }
 
+           #ifdef EIGEN_USE_GPU
+
            case Device::EigenGpu:
            {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-//                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+                //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
            }
+
+           #endif
 
             #ifdef USE_INTEL_MKL
 
