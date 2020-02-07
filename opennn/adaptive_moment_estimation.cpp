@@ -682,7 +682,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -735,9 +735,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
-       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       if(display && parameters_norm(0) >= warning_parameters_norm)
+           cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
 
        loss = static_cast<type>(0.0);
 
@@ -892,7 +893,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm;
+           results.final_parameters_norm = parameters_norm(0);
 
            results.final_training_error = training_error;
 
@@ -929,7 +930,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -937,7 +938,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
    results.final_training_error = training_error;
    results.final_selection_error = selection_error;
    results.final_gradient_norm = gradient_norm;

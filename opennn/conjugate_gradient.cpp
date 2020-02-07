@@ -1197,10 +1197,10 @@ Tensor<type, 1> ConjugateGradient::calculate_gradient_descent_training_direction
     }
 
     #endif
-/*
-    return static_cast<type>(-1.0)*normalized(gradient);
-*/
-    return Tensor<type, 1>();
+
+    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+
+    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
 }
 
 
@@ -1237,7 +1237,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    // Loss index stuff
 
@@ -1287,9 +1287,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       parameters = neural_network_pointer->get_parameters();
 
-//      parameters_norm = l2_norm(parameters);
+      parameters_norm = parameters.square().sum().sqrt();
 
-      if(parameters_norm >= error_parameters_norm)
+      if(parameters_norm(0) >= error_parameters_norm)
       {
          ostringstream buffer;
 
@@ -1299,9 +1299,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
  
          throw logic_error(buffer.str());
       }
-      else if(display && parameters_norm >= warning_parameters_norm)
+      else if(display && parameters_norm(0) >= warning_parameters_norm)
       {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
+         cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
       }
 
       // Loss index stuff
@@ -1539,7 +1539,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.resize_training_history(1+epoch);
 
          results.final_parameters = parameters;
-         results.final_parameters_norm = parameters_norm;
+         results.final_parameters_norm = parameters_norm(0);
 
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
@@ -1590,7 +1590,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1599,7 +1599,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
