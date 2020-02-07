@@ -1281,7 +1281,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 cout << "hiho" << endl;
        gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-//       gradient_norm = l2_norm(gradient);
+//       gradient_norm = gradient.square().sum().sqrt();
 
        if(display && gradient_norm >= warning_gradient_norm)
        {

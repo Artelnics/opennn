@@ -696,7 +696,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    type old_selection_error = static_cast<type>(0.0);
 
    type loss = static_cast<type>(0.0);
-   type gradient_norm = static_cast<type>(0.0);
+   Tensor<type, 0> gradient_norm;
 
    // Optimization algorithm stuff
 
@@ -899,7 +899,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm;
+           results.final_gradient_norm = gradient_norm(0);
 
            results.elapsed_time = elapsed_time;
 
@@ -941,7 +941,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    results.final_parameters_norm = parameters_norm(0);
    results.final_training_error = training_error;
    results.final_selection_error = selection_error;
-   results.final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm(0);
    results.elapsed_time = elapsed_time;
 
    return results;

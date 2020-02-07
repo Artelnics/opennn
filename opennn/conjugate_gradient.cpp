@@ -1246,7 +1246,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type training_loss_decrease = static_cast<type>(0.0);
       
    Tensor<type, 1> gradient(parameters_number);
-   type gradient_norm = static_cast<type>(0.0);
+   Tensor<type, 0> gradient_norm;
 
    type selection_error = static_cast<type>(0.0);
    type old_selection_error = static_cast<type>(0.0);
@@ -1319,9 +1319,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-//      gradient_norm = l2_norm(gradient);
+      gradient_norm = gradient.square().sum().sqrt();
 
-      if(display && gradient_norm >= warning_gradient_norm)
+      if(display && gradient_norm(0) >= warning_gradient_norm)
       {
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
@@ -1463,7 +1463,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.stopping_condition = LossGoal;
       }
 
-      else if(gradient_norm <= gradient_norm_goal)
+      else if(gradient_norm(0) <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1544,7 +1544,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm;
+         results.final_gradient_norm = gradient_norm(0);
 
          results.elapsed_time = elapsed_time;
 
@@ -1604,12 +1604,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm(0);
 
    results.elapsed_time = elapsed_time;
 
    return results;
-
 }
 
 

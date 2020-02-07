@@ -763,7 +763,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Index selection_failures = 0;
 
-   type gradient_norm = static_cast<type>(0.0);
+   Tensor<type, 0> gradient_norm;
 
    // Training strategy stuff
 
@@ -800,7 +800,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
 //      gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
-      if(display && gradient_norm >= warning_gradient_norm)
+      if(display && gradient_norm(0) >= warning_gradient_norm)
       {
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << endl;
       }
@@ -922,7 +922,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          results.stopping_condition = MinimumLossDecrease;
       }
 
-      else if(gradient_norm <= gradient_norm_goal)
+      else if(gradient_norm(0) <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1001,7 +1001,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm;
+         results.final_gradient_norm = gradient_norm(0);
    
          results.elapsed_time = elapsed_time;
 
@@ -1048,7 +1048,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm(0);
 
    results.elapsed_time = elapsed_time;
 
