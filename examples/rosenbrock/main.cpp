@@ -96,7 +96,7 @@ int main(void)
 
 
 
-        gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
+//        gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
 
 /*
 

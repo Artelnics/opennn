@@ -693,9 +693,7 @@ void GradientDescent::set_display_period(const Index& new_display_period)
 /// @param gradient Performance function gradient.
 
 Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient) const
-{
-    
-
+{   
     #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -725,10 +723,10 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
     }
 
     #endif
-/*
-   return static_cast<type>(-1.0)*normalized(gradient);
-   */
-    return Tensor<type, 1>();
+
+    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+
+    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
 }
 
 
@@ -767,7 +765,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters(parameters_number);
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm = static_cast<type>(0.0);
@@ -817,9 +815,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       parameters = neural_network_pointer->get_parameters();
 
-//      parameters_norm = l2_norm(parameters);
+      parameters_norm = parameters.square().sum().sqrt();
 
-      if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+      if(display && parameters_norm(0) >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
       // Loss index stuff
 
@@ -1035,7 +1033,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
          results.final_parameters = parameters;
 
-         results.final_parameters_norm = parameters_norm;
+         results.final_parameters_norm = parameters_norm(0);
 
          results.final_training_error = training_loss;
 
@@ -1084,7 +1082,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1092,7 +1090,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;

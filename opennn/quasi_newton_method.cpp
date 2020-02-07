@@ -813,10 +813,10 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction
     }
 
     #endif
-/*
-    return static_cast<type>(-1.0)*normalized(gradient);
-*/
-    return Tensor<type, 1>();
+
+    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+
+    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
 }
 
 
@@ -1173,7 +1173,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    Tensor<type, 1> parameters(parameters_number);
    Tensor<type, 1> old_parameters(parameters_number);
-   type parameters_norm;
+   Tensor<type, 0> parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm;
@@ -1232,11 +1232,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        parameters = neural_network_pointer->get_parameters();
 
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
-       if(display && parameters_norm >= warning_parameters_norm)
+       if(display && parameters_norm(0) >= warning_parameters_norm)
        {
-           cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+           cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
        }
 
        // Loss index stuff
@@ -1465,7 +1465,7 @@ cout << "hiho" << endl;
        if(stop_training)
        {
            results.final_parameters = parameters;
-           results.final_parameters_norm = parameters_norm;
+           results.final_parameters_norm = parameters_norm(0);
 
            results.final_training_error = training_error;
            results.final_selection_error = selection_error;
@@ -1537,7 +1537,7 @@ cout << "hiho" << endl;
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 

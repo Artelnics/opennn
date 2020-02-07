@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    // Loss index stuff
 
@@ -785,11 +785,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    {
       // Neural network
 
-//      parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
-      if(display && parameters_norm >= warning_parameters_norm)
+      if(display && parameters_norm(0) >= warning_parameters_norm)
       {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << "." << endl;          
+         cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << "." << endl;
       }
 
       // Loss index 
@@ -996,7 +996,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           results.resize_training_history(1+epoch);
 
          results.final_parameters = parameters;
-         results.final_parameters_norm = parameters_norm;
+         results.final_parameters_norm = parameters_norm(0);
 
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
@@ -1034,7 +1034,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1043,7 +1043,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
