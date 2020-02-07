@@ -8818,11 +8818,7 @@ void DataSet::scrub_missing_values()
 
 void DataSet::read_csv()
 {
-    cout << "read_csv()" << endl;
-
     read_csv_1();
-
-    cout << "read_csv_1()" << endl;
 
     if(!has_time_variables() && !has_categorical_variables())
     {
@@ -8833,10 +8829,8 @@ void DataSet::read_csv()
     else
     {
         read_csv_2_complete();
-        cout << "read_csv_2_complete()" << endl;
 
         read_csv_3_complete();
-        cout << "read_csv_3_complete()" << endl;
     }
 
 /*
@@ -9185,8 +9179,6 @@ void DataSet::read_csv_2_complete()
     Index tokens_count;
 
     const Index columns_number = columns.size();
-
-    cout << "Columns number: " << columns_number << endl;
 
     for(unsigned j = 0; j < columns_number; j++)
     {
