@@ -167,6 +167,8 @@ public:
 
        void set_type(const string&);
 
+       void add_category(const string&);
+
        void set_categories_uses(const Tensor<string, 1>&);
 
        bool is_used();

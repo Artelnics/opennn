@@ -62,6 +62,7 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+
         Tensor<type, 1> a(6);
         Tensor<type, 1> b(3);
 //        a.setValues({1,2,3,4,5,6});
@@ -102,9 +103,6 @@ int main(void)
         vector = matrix.sum(Eigen::array<Index, 1>({0}));
 
         cout << matrix << endl << "." << endl << vector << endl;
-
-
-
 
         return 0;
     }
