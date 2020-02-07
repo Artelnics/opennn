@@ -702,7 +702,9 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 /// @param biases Set of biases of the probabilistic layer
 /// @param synaptic_weights Set of synaptic weights of the probabilistic layer
 
-Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& biases, const Tensor<type, 2>& synaptic_weights) const
+Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs,
+                                                      const Tensor<type, 1>& biases,
+                                                      const Tensor<type, 2>& synaptic_weights) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -775,78 +777,6 @@ if(inputs_columns_number != inputs_number)
     throw logic_error(buffer.str());
 */
     return Tensor<type, 2>();
-}
-
-/*
-Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
-{
-    ForwardPropagation forward_propagation;
-
-    const Tensor<type, 2> combinations = calculate_combinations(inputs);
-
-    forward_propagation.activations = calculate_activations(combinations);
-    forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
-
-    return forward_propagation;
-}
-*/
-
-Tensor<type, 2> ProbabilisticLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                                                           const Tensor<type, 2>& output_gradient) const
-{
-    const Index neurons_number = get_neurons_number();
-/*
-    if(neurons_number == 1)
-    {
-        return activations_derivatives*output_gradient;
-    }
-    else
-    {
-        return dot_2d_3d(output_gradient, activations_derivatives);
-    }
-    */
-    return Tensor<type, 2>();
-}
-
-
-/// Calculates the gradient error from the layer.
-/// Returns the gradient of the objective, according to the objective type.
-/// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
-/// The size is thus the number of parameters.
-/// @param layer_deltas Tensor with layers delta.
-/// @param layer_inputs Tensor with layers inputs.
-
-Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& layer_inputs,
-                                                            const Layer::ForwardPropagation&,
-                                                            const Tensor<type, 2>& layer_deltas)
-{
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = neurons_number*inputs_number;
-
-    const Index parameters_number = get_parameters_number();
-
-    Tensor<type, 1> error_gradient(parameters_number);
-    error_gradient.setZero();
-
-    Tensor<type, 2> inputs_dot_delta = layer_inputs.contract(layer_deltas, product_matrix_transpose_vector);
-
-    for(Index i = 0; i < inputs_dot_delta.size(); i++)
-    {
-        error_gradient(i) = inputs_dot_delta(i);
-    }
-
-    // Synaptic weights
-/*
-    error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
-
-    // Biases
-
-    error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
-*/
-    return error_gradient;
 }
 
 
@@ -1237,7 +1167,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(decision_threshold_element->GetText())
     {
-        set_decision_threshold(atof(decision_threshold_element->GetText()));
+        set_decision_threshold(static_cast<type>(atof(decision_threshold_element->GetText())));
     }
 
     // Display
@@ -1246,7 +1176,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(display_element)
     {
-        string new_display_string = display_element->GetText();
+        const string new_display_string = display_element->GetText();
 
         try
         {
@@ -1280,7 +1210,8 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names,
+                                                        const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1322,7 +1253,8 @@ string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inp
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names,
+                                                             const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1341,26 +1273,13 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
 {
     switch(activation_function)
     {
-        case Binary:
-        {
-            return write_binary_expression(inputs_names, outputs_names);
-        }
+        case Binary: return write_binary_expression(inputs_names, outputs_names);
 
-        case Logistic:
-        {
-            return(write_probability_expression(inputs_names, outputs_names));
-        }
+        case Logistic: return write_probability_expression(inputs_names, outputs_names);
 
-        case Competitive:
-        {
-            return(write_competitive_expression(inputs_names, outputs_names));
-        }
+        case Competitive: return write_competitive_expression(inputs_names, outputs_names);
 
-        case Softmax:
-        {
-            return(write_softmax_expression(inputs_names, outputs_names));
-        }
-
+        case Softmax: return write_softmax_expression(inputs_names, outputs_names);
     }// end switch
 
     // Default

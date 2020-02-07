@@ -141,17 +141,8 @@ public:
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_3d);
    }
-
-
-   // Deltas
-
-   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   // Gradient methods
-
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
    // Activations
 
@@ -213,7 +204,7 @@ public:
 
    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 3>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -240,7 +231,9 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
+                  << "Number of combinations columns ("
+                  << combinations_columns_number << ") must be equal to number of neurons ("
+                  << neurons_number << ").\n";
 
            throw logic_error(buffer.str());
         }
@@ -332,7 +325,6 @@ protected:
    /// Display messages to screen.
 
    bool display;
-
 };
 
 }
