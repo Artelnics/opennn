@@ -244,6 +244,32 @@ void DataSet::Column::set_type(const string& new_column_type)
 }
 
 
+/// Adds a category to the categories vector of this column.
+/// It also adds a default use for the category
+/// @param new_category String that contains the name of the new category
+
+void DataSet::Column::add_category(const string & new_category)
+{
+    const Index old_categories_number = categories.size();
+
+    Tensor<string, 1> old_categories = categories;
+    Tensor<VariableUse, 1> old_categories_uses = categories_uses;
+
+    categories.resize(old_categories_number+1);
+    categories_uses.resize(old_categories_number+1);
+
+    for(Index category_index = 0; category_index < old_categories_number; category_index++)
+    {
+        categories(category_index) = old_categories(category_index);
+        categories_uses(category_index) = column_use;
+    }
+
+    categories(old_categories_number) = new_category;
+    categories_uses(old_categories_number) = column_use;
+}
+
+
+
 /// Sets the categories uses in the data set.
 /// @param new_categories_uses String vector that contains the new categories of the data set.
 
@@ -1698,23 +1724,22 @@ Tensor<string, 1> DataSet::get_variables_names() const
 
     Tensor<string, 1> variables_names(variables_number);
 
-    Index index = 0;
+    Index variable_index = 0;
 
-    for(Index i = 0; i < columns.size(); i++)
+    for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
-        if(columns[i].type == Categorical)
+        if(columns(column_index).type == Categorical)
         {
-//            variables_names.embed(index, columns[i].categories);
-            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
+            for(Index category_index = 0; category_index < columns(column_index).categories.size(); category_index++)
             {
-                variables_names(i + index) = (columns[i].categories_uses)(i);
+                variables_names(variable_index) = (columns(column_index).categories)(category_index);
+                variable_index++;
             }
-            index += columns[i].categories.size();
         }
         else
         {
-            variables_names[index] = columns[i].name;
-            index++;
+            variables_names(variable_index) = columns(column_index).name;
+            variable_index++;
         }
     }
 
@@ -8793,7 +8818,11 @@ void DataSet::scrub_missing_values()
 
 void DataSet::read_csv()
 {
+    cout << "read_csv()" << endl;
+
     read_csv_1();
+
+    cout << "read_csv_1()" << endl;
 
     if(!has_time_variables() && !has_categorical_variables())
     {
@@ -8804,7 +8833,10 @@ void DataSet::read_csv()
     else
     {
         read_csv_2_complete();
+        cout << "read_csv_2_complete()" << endl;
+
         read_csv_3_complete();
+        cout << "read_csv_3_complete()" << endl;
     }
 
 /*
@@ -9154,6 +9186,8 @@ void DataSet::read_csv_2_complete()
 
     const Index columns_number = columns.size();
 
+    cout << "Columns number: " << columns_number << endl;
+
     for(unsigned j = 0; j < columns_number; j++)
     {
         if(columns[j].type != Categorical)
@@ -9204,19 +9238,17 @@ void DataSet::read_csv_2_complete()
 
         for(unsigned j = 0; j < columns_number; j++)
         {
-            trim(tokens[j]);
-/*
-            if(columns[j].type == Categorical)
-            {
-                if(find(columns[j].categories.begin(), columns[j].categories.end(), tokens[j]) == columns[j].categories.end())
-                {
-                    if(tokens[j] == missing_values_label) continue;
+            trim(tokens(j));
 
-                    columns[j].categories.push_back(tokens[j]);
-                    columns[j].categories_uses.push_back(Input);
+            if(columns(j).type == Categorical)
+            {
+                if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                {
+                    if(tokens(j) == missing_values_label) continue;
+
+                    columns(j).add_category(tokens(j));
                 }
             }
-*/
         }
 
         lines_count++;
@@ -9224,13 +9256,13 @@ void DataSet::read_csv_2_complete()
 
     for(unsigned j = 0; j < columns_number; j++)
     {
-         if(columns[j].type == Categorical)
+         if(columns(j).type == Categorical)
          {
-             if(columns[j].categories.size() == 2)
+             if(columns(j).categories.size() == 2)
              {
-                 columns[j].type = Binary;
-                 columns[j].categories.resize(0);
-                 columns[j].categories_uses.resize(0);
+                 columns(j).type = Binary;
+                 columns(j).categories.resize(0);
+                 columns(j).categories_uses.resize(0);
              }
          }
     }
@@ -9242,6 +9274,7 @@ void DataSet::read_csv_2_complete()
     const Index variables_number = get_variables_number();
 
     data.resize(static_cast<Index>(instances_number), variables_number);
+    data.setZero();
 
     set_default_columns_uses();
 
@@ -9308,13 +9341,13 @@ void DataSet::read_csv_3_complete()
 
           for(Index j = 0; j < columns_number; j++)
           {
-              trim(tokens[j]);
+              trim(tokens(j));
 
               erase(line, '"');
 
-                if(columns[j].type == Numeric)
+                if(columns(j).type == Numeric)
                 {
-                    if(tokens[j] == missing_values_label || tokens[j].empty())
+                    if(tokens(j) == missing_values_label || tokens(j).empty())
                     {
                         data(instance_index, j) = static_cast<type>(NAN);
                     }
@@ -9322,7 +9355,7 @@ void DataSet::read_csv_3_complete()
                     {
                         try
                         {
-                            data(instance_index, j) = stod(tokens[j]);
+                            data(instance_index, j) = stod(tokens(j));
                         }
                         catch (invalid_argument)
                         {
@@ -9336,44 +9369,44 @@ void DataSet::read_csv_3_complete()
                         }
                     }
                 }
-                else if(columns[j].type == DateTime)
+                else if(columns(j).type == DateTime)
                 {
-                    if(tokens[j] == missing_values_label || tokens[j].empty())
+                    if(tokens(j) == missing_values_label || tokens(j).empty())
                     {
                         data(instance_index, j) = static_cast<type>(NAN);
                     }
                     else
                     {
-                        data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens[j], gmt));
+                        data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
                     }
                 }
-                else if(columns[j].type == Categorical)
+                else if(columns(j).type == Categorical)
                 {
                     const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
                     for(Index k = 0; k < variable_indices.size(); k++)
                     {
-                        if(tokens[j] == missing_values_label)
+                        if(tokens(j) == missing_values_label)
                         {
-                            data(instance_index, variable_indices[k]) = static_cast<type>(NAN);
+                            data(instance_index, variable_indices(k)) = static_cast<type>(NAN);
                         }
-                        else if(tokens[j] == columns[j].categories[k])
+                        else if(tokens(j) == columns(j).categories(k))
                         {
-                            data(instance_index, variable_indices[k]) = 1.0;
+                            data(instance_index, variable_indices(k)) = 1.0;
                         }
                     }
                 }
-                else if(columns[j].type == Binary)
+                else if(columns(j).type == Binary)
                 {
                     const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
-                    if(tokens[j] == missing_values_label)
+                    if(tokens(j) == missing_values_label)
                     {
-                        data(instance_index, variable_indices[0]) = static_cast<type>(NAN);
+                        data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
                     }
-                    else if(tokens[j] == columns[j].name)
+                    else if(tokens(j) == columns(j).name)
                     {
-                        data(instance_index, variable_indices[0]) = 1.0;
+                        data(instance_index, variable_indices(0)) = 1.0;
                     }
                 }
           }
