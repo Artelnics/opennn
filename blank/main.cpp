@@ -62,41 +62,6 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-        Tensor<type, 1> a(6);
-        Tensor<type, 1> b(3);
-//        a.setValues({1,2,3,4,5,6});
-//        b.setConstant(9);
-
-        Tensor<type, 1> copy(9);
-        copy.setValues({1,2,3,4,5,6,7,8,9});
-
-        // split vector in two vectors.
-
-        memcpy(a.data(), copy.data(), static_cast<size_t>(a.size())*sizeof (type));
-        memcpy(b.data(), copy.data() + a.size(), static_cast<size_t>(b.size())*sizeof (type));
-
-        cout << a << endl;
-        cout << "." << endl << b << endl;
-
-        cout << "---" << endl;
-
-        // fill vector with two vectors.
-
-        Tensor<type, 1> a1(6);
-        Tensor<type, 1> b1(3);
-        a1.setValues({1,2,3,4,5,6});
-        b1.setConstant(9);
-
-        Tensor<type, 1> copy1(9);
-//        copy.setValues({1,2,3,4,5,6,7,8,9});
-
-        memcpy(copy1.data(), a1.data(),static_cast<size_t>(a1.size())*sizeof (type));
-        memcpy(copy1.data() + a1.size(), b1.data(),static_cast<size_t>(b1.size())*sizeof (type));
-
-        cout << copy1 << endl;
-
-
-
         return 0;
     }
        catch(exception& e)
