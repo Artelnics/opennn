@@ -128,12 +128,6 @@ public:
 
    void set_display(const bool&);
 
-   // Pruning and growing
-
-   void grow_neuron(const Descriptives& new_descriptives = Descriptives());
-
-   void prune_neuron(const Index&);
-
    // Check methods
 
    bool is_empty() const;

@@ -442,134 +442,6 @@ check();
 }
 
 
-/// This method calculates the first order loss.
-/// It is used for optimization of parameters during training.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-
-LossIndex::BackPropagation NormalizedSquaredError::calculate_back_propagation() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    BackPropagation back_propagation(this);
-
-    // Eigen stuff
-
-     #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-/*
-        const Tensor<Layer::ForwardPropagation, 1> forward_propagation
-                = neural_network_pointer->calculate_forward_propagation(inputs);
-
-        const Tensor<type, 1> error_terms
-                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
-        const Tensor<type, 2> output_gradient
-                = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
-
-        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-        const Tensor<type, 2> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
-
-//        const type loss = dot(error_terms, error_terms);
-
-        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
-
-//        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
-
-        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_vector);
-
-          #pragma omp critical
-        {
-            back_propagation.loss += loss(0);
-            back_propagation.gradient += gradient;
-         }
-*/
-    }
-
-    back_propagation.loss /= normalization_coefficient;
-    back_propagation.gradient = (2.0/normalization_coefficient)*back_propagation.gradient;
-
-    // Regularization
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        back_propagation.loss += regularization_weight*calculate_regularization();
-        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
-    }
-
-    return back_propagation;
-}
-
-
-/// This method calculates the first order loss for the selected batch.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-LossIndex::BackPropagation NormalizedSquaredError::calculate_back_propagation(const DataSet::Batch& batch) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    BackPropagation back_propagation(this);
-/*
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
-
-    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-    const Tensor<type, 1> batch_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
-
-    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    back_propagation.loss = batch_error / normalization_coefficient;
-    back_propagation.gradient += batch_gradient;
-
-    // Regularization
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        back_propagation.loss += regularization_weight*calculate_regularization();
-        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
-    }
-*/
-    return back_propagation;
-}
-
-
 /// Returns loss vector of the error terms function for the normalized squared error.
 /// It uses the error back-propagation method.
 
@@ -641,7 +513,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
    Tensor<type, 1> squared_errors(training_instances_number);
 
    // Main loop
-/*
+
     #pragma omp parallel for
 
    for(Index i = 0; i < static_cast<Index>(training_instances_number); i++)
@@ -654,9 +526,9 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 
       const Tensor<type, 2> targets = data_set_pointer->get_instance_target_data(training_index);
 
-      squared_errors[i] = sum_squared_error(outputs, targets);
+//      squared_errors[i] = sum_squared_error(outputs, targets);
    }
-*/
+
    return squared_errors;
 }
 

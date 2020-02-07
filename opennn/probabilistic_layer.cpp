@@ -373,7 +373,9 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
       buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
              << "void set_parameters(const Tensor<type, 1>&) method.\n"
-             << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+             << "Size of new parameters ("
+             << new_parameters_size << ") must be equal to number of parameters ("
+             << parameters_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -387,7 +389,7 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
    Index index = 0;
 
-   for(Index j = inputs_number*neurons_number ; j < parameters_number; j++)
+   for(Index j = inputs_number*neurons_number; j < parameters_number; j++)
    {
        biases(index) = new_parameters(j);
 
@@ -565,54 +567,6 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
 void ProbabilisticLayer::set_display(const bool& new_display)
 {
     display = new_display;
-}
-
-
-/// Removes a probabilistic neuron from the probabilistic layer.
-
-void ProbabilisticLayer::prune_neuron(const Index& index)
-{
-    const Tensor<type, 1> old_biases(biases);
-    const Tensor<type, 2> old_synaptic_weights(synaptic_weights);
-
-    biases.resize(old_biases.size()-1);
-    synaptic_weights.resize(old_synaptic_weights.dimension(0)-1,old_synaptic_weights.dimension(1));
-
-    // Biases
-
-    Index bias_index = 0;
-
-    for(Index i = 0; i < old_biases.size(); i++)
-    {
-        if(i == index) continue;
-
-        biases(bias_index) = old_biases(i);
-        bias_index++;
-    }
-
-    // Synaptic Weights
-
-    for(Index i = 0; i < old_synaptic_weights.dimension(0); i++)
-      {
-         for(Index j = 0; j < index; j++)
-         {
-           synaptic_weights(i,j) = old_synaptic_weights(i,j);
-         }
-      }
-
-      for(Index i = 0; i < old_synaptic_weights.dimension(0); i++)
-      {
-         for(Index j = index+1; j < synaptic_weights.dimension(1); j++)
-         {
-            synaptic_weights(i,j-1) = old_synaptic_weights(i,j);
-         }
-      }
-
-/*
-    biases = biases.delete_index(index);
-
-    synaptic_weights = synaptic_weights.delete_column(index);
-*/
 }
 
 
@@ -942,10 +896,9 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
     }
 
     #endif
-
+/*
     switch(activation_function)
     {
-/*
         case Binary: return binary(combinations);
 
         case Logistic: return logistic(combinations);
@@ -953,9 +906,8 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
         case Competitive: return competitive(combinations);
 
         case Softmax: return softmax(combinations);
-*/
     }
-
+*/
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"

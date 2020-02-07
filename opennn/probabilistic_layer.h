@@ -41,23 +41,6 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    struct ForwardPropagation : Layer::ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ForwardPropagation() : Layer::ForwardPropagation(){}
-
-        virtual ~ForwardPropagation() {}
-
-        void allocate()
-        {
-        }
-
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 3> activations_derivatives;
-    };
-
    // Constructors
 
    explicit ProbabilisticLayer();
@@ -127,10 +110,6 @@ public:
 
    void set_display(const bool&);
 
-   // Pruning and growing
-
-   void prune_neuron(const Index&);
-
    // Parameters initialization methods
 
    void initialize_biases(const type&);
@@ -154,9 +133,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
-/*
-   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-*/
+
    void calculate_forward_propagation(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
@@ -164,7 +141,7 @@ public:
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-//       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
    }
 
 
