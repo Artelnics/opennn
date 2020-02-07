@@ -108,20 +108,11 @@ string LearningRateAlgorithm::write_learning_rate_method() const
 {
    switch(learning_rate_method)
    {
-      case Fixed:
-      {
-         return "Fixed";
-	   }
+      case Fixed: return "Fixed";
 
-      case GoldenSection:
-      {
-         return "GoldenSection";
-	   }
+      case GoldenSection: return "GoldenSection";
 
-      case BrentMethod:
-      {
-         return "BrentMethod";
-	   }
+      case BrentMethod: return "BrentMethod";
    }
 
    return string();
@@ -383,20 +374,11 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(const type& l
    
    switch(learning_rate_method)
    {
-      case Fixed:
-      {
-         return calculate_fixed_directional_point(loss, training_direction, initial_learning_rate);
-      }
+      case Fixed: return calculate_fixed_directional_point(loss, training_direction, initial_learning_rate);
 
-      case GoldenSection:
-      {
-         return calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
-      }
+      case GoldenSection: return calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
 
-      case BrentMethod:
-      {
-         return calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
-      }
+      case BrentMethod: return calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
    }
 
    return pair<type,type>();
@@ -415,12 +397,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         const type& initial_learning_rate) const
 {    
     Triplet triplet;
-/*
+
     // Left point
 
     triplet.A.first = static_cast<type>(0.0);
     triplet.A.second = loss;
-
+/*
    if(training_direction == 0.0 || initial_learning_rate) < numeric_limits<type>::min())
    {
        triplet.U = triplet.A;
@@ -428,7 +410,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
        return triplet;
    }
-
+*/
    Index count = 0;
 
    // Right point
@@ -458,7 +440,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
    }
    else if(triplet.A.second < triplet.B.second)
    {
-       triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*0.382;
+       triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
        triplet.U.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.U.first);
        count++;
 
@@ -466,7 +448,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
        {
           triplet.B = triplet.U;
 
-          triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*0.382;
+          triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
           triplet.U.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.U.first);
 
           if(triplet.U.first - triplet.A.first <= loss_tolerance)
@@ -481,7 +463,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
    }
 
    triplet.check();
-*/
+
    return triplet;
 }
 
@@ -520,10 +502,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
    {
       Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-      if(triplet.has_length_zero())
-	  {
-         return(triplet.A);
-	  }
+      if(triplet.has_length_zero()) return(triplet.A);
 
       pair<type,type> V;
 
@@ -631,10 +610,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       Index count = 0;
 
-      if(triplet.A == triplet.B)
-      {
-         return(triplet.A);
-	  }
+      if(triplet.A == triplet.B) return(triplet.A);
 
       pair<type, type> V;
 
@@ -738,13 +714,13 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 {
     type learning_rate;
 
-   if(triplet.U.first < triplet.A.first + 0.5*(triplet.B.first - triplet.A.first))
+   if(triplet.U.first < triplet.A.first + static_cast<type>(0.5)*(triplet.B.first - triplet.A.first))
    {
-      learning_rate = triplet.A.first + 0.618*(triplet.B.first - triplet.A.first);
+      learning_rate = triplet.A.first + static_cast<type>(0.618)*(triplet.B.first - triplet.A.first);
    }
    else
    {
-      learning_rate = triplet.A.first + 0.382*(triplet.B.first - triplet.A.first);
+      learning_rate = triplet.A.first + static_cast<type>(0.382)*(triplet.B.first - triplet.A.first);
    }
 
     #ifdef __OPENNN_DEBUG__
@@ -773,7 +749,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
     #endif
 
-    return(learning_rate);
+    return learning_rate;
 }
 
 
@@ -811,7 +787,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
    + triplet.U.second*(triplet.B.first*triplet.B.first-triplet.A.first*triplet.A.first)
    + triplet.B.second*(triplet.A.first*triplet.A.first-triplet.U.first*triplet.U.first))/((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
 
-   const type Brent_method_learning_rate = -b/(2.0*c);
+   const type Brent_method_learning_rate = -b/(static_cast<type>(2.0)*c);
 
    if(Brent_method_learning_rate < triplet.A.first || Brent_method_learning_rate > triplet.B.first)
    {

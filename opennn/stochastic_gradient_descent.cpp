@@ -175,9 +175,9 @@ const type& StochasticGradientDescent::get_maximum_time() const
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
-const bool& StochasticGradientDescent::get_return_minimum_selection_error_neural_network() const
+const bool& StochasticGradientDescent::get_choose_best_selection() const
 {
-    return(return_minimum_selection_error_neural_network);
+    return(choose_best_selection);
 }
 
 
@@ -241,7 +241,7 @@ void StochasticGradientDescent::set_default()
    maximum_selection_error_increases = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 1000;
-   return_minimum_selection_error_neural_network = false;
+   choose_best_selection = false;
    apply_early_stopping = true;
 
    // TRAINING HISTORY
@@ -644,11 +644,11 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-void StochasticGradientDescent::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+void StochasticGradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
 {
-   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+   choose_best_selection = new_choose_best_selection;
 }
 
 
@@ -750,11 +750,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    Tensor<type, 1> last_increment(parameters_number);
 
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
-
-//   forward_propagation.print();
 
    // Loss index stuff
 
@@ -802,24 +800,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
    {
-
        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
 
        const Index batches_number = training_batches.dimension(0);
 
-//       parameters_norm = l2_norm(thread_pool_device, parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
-       const Index parameters_number = parameters.size();
-
-       type norm = 0.0;
-
-       for(Index k = 0; k < parameters_number; k++) {
-         norm += parameters(k) *parameters(k);
-       }
-
-       parameters_norm = sqrt(norm);
-
-       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       if(display && parameters_norm(0) >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        loss = static_cast<type>(0.0);
 
@@ -831,7 +818,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
-/*
            // Neural network
 
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
@@ -840,11 +826,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
-//           loss += back_propagation.loss;
+           loss += back_propagation.loss;
 
-//         Gradient
+            // Optimization algorithm
 
-           initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+           initial_decay > 0
+                   ? learning_rate = initial_learning_rate * (static_cast<type>(1.0) / (static_cast<type>(1.0) + learning_rate_iteration*initial_decay))
+                   : initial_learning_rate ;
 
            parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*back_propagation.gradient;
 
@@ -874,10 +862,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->set_parameters(parameters);
 
            learning_rate_iteration++;
-*/
        }
 
-//       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);
+       gradient_norm = back_propagation.gradient.square().sum().sqrt();
 
        // Loss
 
@@ -974,7 +961,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm;
+           results.final_parameters_norm = parameters_norm(0);
 
            results.final_training_error = training_error;
 
@@ -1013,9 +1000,10 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        if(stop_training) break;
    }
 
-   if(return_minimum_selection_error_neural_network)
+   if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
+
 
 //       parameters_norm = l2_norm(thread_pool_device, parameters);
 
@@ -1025,7 +1013,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
 
    results.final_training_error= training_error;
    results.final_selection_error = selection_error;
@@ -1195,7 +1183,7 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << return_minimum_selection_error_neural_network;
+   buffer << choose_best_selection;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1444,7 +1432,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
     buffer.str("");
-    buffer << return_minimum_selection_error_neural_network;
+    buffer << choose_best_selection;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1455,7 +1443,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
     buffer.str("");
-    buffer << return_minimum_selection_error_neural_network;
+    buffer << choose_best_selection;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1633,15 +1621,15 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
-    if(return_minimum_selection_error_neural_network_element)
+    if(choose_best_selection_element)
     {
-        string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
+        string new_choose_best_selection = choose_best_selection_element->GetText();
 
         try
         {
-           set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+           set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {

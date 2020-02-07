@@ -78,18 +78,11 @@ Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     switch(pooling_method)
     {
-        case NoPooling:
-        {
-            return calculate_no_pooling_outputs(inputs);
-        }
-        case MaxPooling:
-        {
-            return calculate_max_pooling_outputs(inputs);
-        }
-        case AveragePooling:
-        {
-            return calculate_average_pooling_outputs(inputs);
-        }
+        case NoPooling: return calculate_no_pooling_outputs(inputs);
+
+        case MaxPooling: return calculate_max_pooling_outputs(inputs);
+
+        case AveragePooling: return calculate_average_pooling_outputs(inputs);
     }
 
     return Tensor<type, 2>();
@@ -205,7 +198,6 @@ Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2
 
                         }
                     }
-
                 }
             }
         }

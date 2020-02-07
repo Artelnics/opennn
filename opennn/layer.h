@@ -82,7 +82,7 @@ public:
 
             activations.resize(batch_instances_number, neurons_number);
 
-            activations_derivatives.resize(batch_instances_number, neurons_number);
+            activations_derivatives_2d.resize(batch_instances_number, neurons_number);
         }
 
 
@@ -95,7 +95,7 @@ public:
             cout << activations << endl;
 
             cout << "Activations derivatives: " << endl;
-            cout << activations_derivatives << endl;
+            cout << activations_derivatives_2d << endl;
         }
 
         Index batch_instances_number = 0;
@@ -106,7 +106,7 @@ public:
 
         Tensor<type, 2> activations;
 
-        Tensor<type, 2> activations_derivatives;
+        Tensor<type, 2> activations_derivatives_2d;
 
     };
 
