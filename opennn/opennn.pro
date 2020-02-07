@@ -145,12 +145,12 @@ SOURCES += \
 
 #Add-ons available under Commercial Licenses
 
-#DEFINES += __OPENNN_CUDA__
+DEFINES += __OPENNN_CUDA__
 
-#contains(DEFINES, __OPENNN_CUDA__){
-#    include(../../Artelnics/opennn_cuda/cuda_config.pri)
-#    include(../../Artelnics/opennn_cuda/cuda_path.pri)
-#}
+contains(DEFINES, __OPENNN_CUDA__){
+    include(../../Artelnics/opennn_cuda/cuda_config.pri)
+    include(../../Artelnics/opennn_cuda/cuda_path.pri)
+}
 
 
 #win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
