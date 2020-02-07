@@ -20,7 +20,7 @@ ConjugateGradientTest::~ConjugateGradientTest()
 {
 }
 
-/*
+
 void ConjugateGradientTest::test_constructor()
 {
    cout << "test_constructor\n"; 
@@ -114,7 +114,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
 //   assert_true(PR_parameter >= 0.0, LOG);
 //   assert_true(PR_parameter <= 1.0, LOG);
-
+*/
 }
 
 
@@ -127,7 +127,10 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   Tensor<Index, 1 > architecture(2);
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
@@ -154,7 +157,10 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   Tensor<Index, 1 > architecture(2);
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
@@ -184,7 +190,10 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   Tensor<Index, 1 > architecture(2);
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
@@ -219,7 +228,10 @@ void ConjugateGradientTest::test_perform_training()
    DataSet data_set(1, 1, 1);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   Tensor<Index, 1 > architecture(3);
+   architecture.setValues({1,1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -349,12 +361,12 @@ void ConjugateGradientTest::test_from_XML()
    delete document;
 
 }
-*/
+
 
 void ConjugateGradientTest::run_test_case()
 {
    cout << "Running conjugate gradient test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -389,7 +401,7 @@ void ConjugateGradientTest::run_test_case()
 
    test_to_XML();   
    test_from_XML();
-*/
+
    cout << "End of conjugate gradient test case.\n";
 }
 

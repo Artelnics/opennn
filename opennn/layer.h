@@ -140,7 +140,7 @@ public:
 
             biases_derivatives.resize(neurons_number);
 
-            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
             delta.resize(batch_instances_number, neurons_number);
         }
