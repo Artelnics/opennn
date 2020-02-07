@@ -95,6 +95,15 @@ int main(void)
 
         cout << copy1 << endl;
 
+        Tensor<type, 2> matrix(4,6);
+        matrix.setConstant(1);
+
+        Tensor<type, 1> vector(6);
+        vector = matrix.sum(Eigen::array<Index, 1>({0}));
+
+        cout << matrix << endl << "." << endl << vector << endl;
+
+
 
 
         return 0;

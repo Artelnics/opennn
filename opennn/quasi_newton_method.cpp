@@ -1244,7 +1244,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        regularization = loss_index_pointer->calculate_regularization();
 
        if(epoch == 0)
-       {
+       {cout << "hih" << endl;
            training_error = loss_index_pointer->calculate_training_error();
 
            training_loss = training_error + regularization_weight*regularization;
@@ -1277,8 +1277,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
            minimum_selection_error_parameters = neural_network_pointer->get_parameters();
        }
-// Does not work in linux
 
+cout << "hiho" << endl;
        gradient = loss_index_pointer->calculate_training_loss_gradient();
 
 //       gradient_norm = l2_norm(gradient);

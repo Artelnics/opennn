@@ -110,7 +110,7 @@ public:
 
            // First order loss
 
-           errors.resize(batch_instances_number);
+           errors.resize(batch_instances_number, 1);
 
            loss = 0;
 
@@ -148,7 +148,7 @@ public:
 
        type loss;
 
-       Tensor<type, 1> errors;
+       Tensor<type, 2> errors;
 
        Tensor<type, 1> gradient;
    };

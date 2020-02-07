@@ -730,6 +730,23 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
        case L2:
        {
 //            return l2_norm_gradient(neural_network_pointer->get_parameters());
+
+            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+            const Index parameters_number = parameters.size();
+
+            Tensor<type, 1> gradient(parameters_number);
+
+    //          const type norm = l2_norm(vector);
+            Tensor<type, 0> norm = parameters.square().sum();
+
+              if(norm(0) < numeric_limits<type>::min()) {
+                gradient.setZero();
+              } else {
+                gradient = parameters/ norm(0);
+              }
+
+              return gradient;
        }
        case NoRegularization:
        {
