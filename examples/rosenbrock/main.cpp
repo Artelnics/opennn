@@ -249,15 +249,18 @@ int main(void)
 
         // Data set
 
-        Tensor<type, 2> data(1000000, 1001);
+//        Tensor<type, 2> data(1000000, 1001);
+        Tensor<type, 2> data(100000, 51);
 
         data.setRandom();
+//        data.setConstant(1);
 
         DataSet data_set(data);
 
         data_set.set_device_pointer(&device);
 
         data_set.set_training();
+//        data_set.split_instances_random();
 
         data_set.set_batch_instances_number(1000);
 
@@ -282,17 +285,18 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
+//        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(20);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
+//        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.set_device_pointer(&device);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
+//        training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
+        training_strategy.get_quasi_Newton_method_pointer()->perform_training();
 
         cout << "End" << endl;
 

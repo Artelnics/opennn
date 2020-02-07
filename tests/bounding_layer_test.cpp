@@ -245,7 +245,7 @@ void BoundingLayerTest::test_write_expression()
 void BoundingLayerTest::run_test_case()
 {
    cout << "Running bounding layer test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -308,7 +308,7 @@ void BoundingLayerTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of bounding layer test case.\n";
 }
 
