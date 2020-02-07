@@ -809,15 +809,18 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //       parameters_norm = l2_norm(thread_pool_device, parameters);
 
-       const Index parameters_number = parameters.size();
+//       const Index parameters_number = parameters.size();
 
-       type norm = 0.0;
+//       type norm = 0.0;
 
-       for(Index k = 0; k < parameters_number; k++) {
-         norm += parameters(k) *parameters(k);
-       }
+       Tensor<type, 0> norm = parameters.square().sum();
 
-       parameters_norm = sqrt(norm);
+//       for(Index k = 0; k < parameters_number; k++) {
+//         norm += parameters(k)*parameters(k);
+//       }
+
+//       parameters_norm = sqrt(norm);
+       parameters_norm = sqrt(norm(0));
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
@@ -837,11 +840,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
-            // Loss, not Ok
+            // Loss
 
            loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
-//           loss += back_propagation.loss;
+           loss += back_propagation.loss;
 
 //         Gradient
 
@@ -879,6 +882,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        }
 
 //       gradient_norm = l2_norm(thread_pool_device, back_propagation.gradient);
+       Tensor<type, 0> gradient_norm_l2 = back_propagation.gradient.square().sum();
+       gradient_norm = sqrt(gradient_norm_l2(0));
 
        // Loss
 
