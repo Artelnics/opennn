@@ -22,8 +22,6 @@
 
 #include "config.h"
 #include "layer.h"
-
-
 #include "probabilistic_layer.h"
 
 #ifdef __OPENNN_CUDA__
