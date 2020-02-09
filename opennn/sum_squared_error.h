@@ -72,9 +72,7 @@ public:
 
    // Gradient methods
 
-   LossIndex::BackPropagation calculate_back_propagation() const;
 
-   LossIndex::BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
 
    // Terms methods
 
@@ -91,10 +89,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -115,6 +110,8 @@ public:
 
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+
+   type sum_squared_error(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
 
 private:
 

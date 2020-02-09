@@ -167,6 +167,8 @@ public:
 
        void set_type(const string&);
 
+       void add_category(const string&);
+
        void set_categories_uses(const Tensor<string, 1>&);
 
        bool is_used();
@@ -305,10 +307,6 @@ public:
    Tensor<Index, 1> get_input_variables_indices() const;
    Tensor<Index, 1> get_target_variables_indices() const;
 
-   vector<Index> get_input_variables_indices_stl() const;
-   vector<Index> get_target_variables_indices_stl() const;
-
-
    VariableUse get_variable_use(const Index&) const;
    Tensor<VariableUse, 1> get_variables_uses() const;
 
@@ -373,7 +371,7 @@ public:
 
        for(size_t i = 0; i < size; i++)
        {
-           new_vector[i] = tensor(i);
+           new_vector[i] = tensor(static_cast<Index>(i));
        }
 
        return new_vector;
@@ -785,8 +783,6 @@ public:
    void scrub_missing_values();
 
    Tensor<string, 1> unuse_columns_missing_values(const type&);
-
-   void get_tensor_2_d(const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
 
    Tensor<Index, 1> count_nan_columns() const;
    Index count_rows_with_nan() const;

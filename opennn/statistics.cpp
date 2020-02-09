@@ -10,6 +10,8 @@
 
 namespace OpenNN {
 
+/// Default constructor.
+
 Descriptives::Descriptives()
 {
   name = "Descriptives";

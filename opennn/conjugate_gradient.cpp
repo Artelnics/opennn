@@ -205,9 +205,9 @@ const type& ConjugateGradient::get_maximum_time() const
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
-const bool& ConjugateGradient::get_return_minimum_selection_error_neural_network() const
+const bool& ConjugateGradient::get_choose_best_selection() const
 {
-    return return_minimum_selection_error_neural_network;
+    return choose_best_selection;
 }
 
 
@@ -370,7 +370,7 @@ void ConjugateGradient::set_default()
    maximum_epochs_number = 1000;
    maximum_time = 1000.0;
 
-   return_minimum_selection_error_neural_network = false;
+   choose_best_selection = false;
    apply_early_stopping = true;
 
    // TRAINING HISTORY
@@ -681,11 +681,11 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-void ConjugateGradient::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+void ConjugateGradient::set_choose_best_selection(const bool& new_choose_best_selection)
 {
-   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+   choose_best_selection = new_choose_best_selection;
 }
 
 
@@ -1197,10 +1197,10 @@ Tensor<type, 1> ConjugateGradient::calculate_gradient_descent_training_direction
     }
 
     #endif
-/*
-    return static_cast<type>(-1.0)*normalized(gradient);
-*/
-    return Tensor<type, 1>();
+
+    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+
+    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
 }
 
 
@@ -1237,7 +1237,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    // Loss index stuff
 
@@ -1246,7 +1246,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type training_loss_decrease = static_cast<type>(0.0);
       
    Tensor<type, 1> gradient(parameters_number);
-   type gradient_norm = static_cast<type>(0.0);
+   Tensor<type, 0> gradient_norm;
 
    type selection_error = static_cast<type>(0.0);
    type old_selection_error = static_cast<type>(0.0);
@@ -1287,9 +1287,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       parameters = neural_network_pointer->get_parameters();
 
-//      parameters_norm = l2_norm(parameters);
+      parameters_norm = parameters.square().sum().sqrt();
 
-      if(parameters_norm >= error_parameters_norm)
+      if(parameters_norm(0) >= error_parameters_norm)
       {
          ostringstream buffer;
 
@@ -1299,9 +1299,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
  
          throw logic_error(buffer.str());
       }
-      else if(display && parameters_norm >= warning_parameters_norm)
+      else if(display && parameters_norm(0) >= warning_parameters_norm)
       {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
+         cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
       }
 
       // Loss index stuff
@@ -1319,9 +1319,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-//      gradient_norm = l2_norm(gradient);
+      gradient_norm = gradient.square().sum().sqrt();
 
-      if(display && gradient_norm >= warning_gradient_norm)
+      if(display && gradient_norm(0) >= warning_gradient_norm)
       {
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
@@ -1463,7 +1463,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.stopping_condition = LossGoal;
       }
 
-      else if(gradient_norm <= gradient_norm_goal)
+      else if(gradient_norm(0) <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1539,12 +1539,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.resize_training_history(1+epoch);
 
          results.final_parameters = parameters;
-         results.final_parameters_norm = parameters_norm;
+         results.final_parameters_norm = parameters_norm(0);
 
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm;
+         results.final_gradient_norm = gradient_norm(0);
 
          results.elapsed_time = elapsed_time;
 
@@ -1587,10 +1587,10 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       old_learning_rate = learning_rate;
    } 
 
-   if(return_minimum_selection_error_neural_network)
+   if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1599,17 +1599,16 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm(0);
 
    results.elapsed_time = elapsed_time;
 
    return results;
-
 }
 
 
@@ -1821,7 +1820,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << return_minimum_selection_error_neural_network;
+   buffer << choose_best_selection;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2095,7 +2094,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
        buffer.str("");
-       buffer << return_minimum_selection_error_neural_network;
+       buffer << choose_best_selection;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2406,15 +2405,15 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 */
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
-    if(return_minimum_selection_error_neural_network_element)
+    if(choose_best_selection_element)
     {
-        string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
+        string new_choose_best_selection = choose_best_selection_element->GetText();
 
         try
         {
-            set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+            set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {

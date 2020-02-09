@@ -658,6 +658,17 @@ type LossIndex::calculate_regularization() const
        }
        case L2:
        {
+            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+            const Index parameters_number = parameters.size();
+
+            type l2_norm = 0.0;
+
+            for(Index k = 0; k < parameters_number; k++) {
+              l2_norm += parameters(k) *parameters(k);
+            }
+
+            return l2_norm;
 //            return l2_norm(neural_network_pointer->get_parameters());
        }
        case NoRegularization:
@@ -685,7 +696,10 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
        }
        case L2:
        {
-//            return l2_norm(parameters);
+            const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
+
+            return parameters_norm(0);
+;
        }
        case NoRegularization:
        {
@@ -719,6 +733,23 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
        case L2:
        {
 //            return l2_norm_gradient(neural_network_pointer->get_parameters());
+
+            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+            const Index parameters_number = parameters.size();
+
+            Tensor<type, 1> gradient(parameters_number);
+
+    //          const type norm = l2_norm(vector);
+            Tensor<type, 0> norm = parameters.square().sum();
+
+              if(norm(0) < numeric_limits<type>::min()) {
+                gradient.setZero();
+              } else {
+                gradient = parameters/ norm(0);
+              }
+
+              return gradient;
        }
        case NoRegularization:
        {
@@ -988,7 +1019,6 @@ LossIndex::BackPropagation::~BackPropagation()
 
 type LossIndex::calculate_training_error() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -997,7 +1027,7 @@ check();
 
     //Neural network
 
-     bool is_forecasting = false;
+    bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 

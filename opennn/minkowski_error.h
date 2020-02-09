@@ -79,10 +79,7 @@ public:
 
    BackPropagation calculate_back_propagation(const DataSet::Batch&) const {return BackPropagation();}
 
-   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -102,6 +99,8 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
+
+   type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
 
    // Serialization methods
 

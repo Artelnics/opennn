@@ -118,11 +118,7 @@ public:
 
    // Display messages
 
-   void set_display(const bool&);
-
-   // Pruning and growing
-
-   void prune_neuron(const Index&);
+   void set_display(const bool&); 
 
    // Check methods
 

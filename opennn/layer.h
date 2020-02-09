@@ -76,19 +76,13 @@ public:
 
             layer_pointer = new_layer_pointer;
 
-            allocate();
-        }
-
-
-        virtual void allocate()
-        {
             const Index neurons_number = layer_pointer->get_neurons_number();
 
             combinations.resize(batch_instances_number, neurons_number);
 
             activations.resize(batch_instances_number, neurons_number);
 
-            activations_derivatives.resize(batch_instances_number, neurons_number);
+            activations_derivatives_2d.resize(batch_instances_number, neurons_number);
         }
 
 
@@ -101,7 +95,7 @@ public:
             cout << activations << endl;
 
             cout << "Activations derivatives: " << endl;
-            cout << activations_derivatives << endl;
+            cout << activations_derivatives_2d << endl;
         }
 
         Index batch_instances_number = 0;
@@ -112,7 +106,8 @@ public:
 
         Tensor<type, 2> activations;
 
-        Tensor<type, 2> activations_derivatives;
+        Tensor<type, 2> activations_derivatives_2d;
+        Tensor<type, 3> activations_derivatives_3d;
 
     };
 
@@ -146,14 +141,14 @@ public:
 
             biases_derivatives.resize(neurons_number);
 
-            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
             delta.resize(batch_instances_number, neurons_number);
         }
 
         void print() const
         {
-        }
+        }       
 
         Index batch_instances_number = 0;
 
@@ -192,7 +187,9 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_derivatives(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+    virtual void insert_parameters(const Index&, const Tensor<type, 1>&) {}
+
+    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
 
     // Outputs
 
@@ -202,13 +199,13 @@ public:
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Layer::BackPropagation&) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
-    void calculate_output_delta(const Tensor<type, 2>&,
+    virtual void calculate_output_delta(const Tensor<type, 2>&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
 
@@ -276,7 +273,9 @@ protected:
     void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
+    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
     const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(1, 1)};

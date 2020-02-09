@@ -479,55 +479,6 @@ void BoundingLayer::set_default()
 }
 
 
-/// Removes a given bounding neuron from the bounding layer.
-/// @param index Index of neuron to be pruned.
-
-void BoundingLayer::prune_neuron(const Index& index)
-{   
-    const Index neurons_number = get_neurons_number();
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(index >= neurons_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: BoundingLayer class.\n"
-              << "void prune_neuron(const Index&) method.\n"
-              << "Index of bounding neuron is equal or greater than number of bounding neurons.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    const Index new_neurons_number = neurons_number - 1;
-
-    Tensor<type, 1> old_lower_bounds(lower_bounds);
-    Tensor<type, 1> old_upper_bounds(upper_bounds);
-
-    lower_bounds.resize(new_neurons_number);
-    upper_bounds.resize(new_neurons_number);
-
-    Index old_index = 0;
-
-    for(Index i = 0; i < new_neurons_number; i++)
-    {
-        if(i == index) old_index++;
-
-        lower_bounds(i) = old_lower_bounds(old_index);
-        upper_bounds(i) = old_upper_bounds(old_index);
-
-        old_index++;
-    }
-
-
-//    lower_bounds.erase(lower_bounds.begin() + static_cast<long>(index));
-//    upper_bounds.erase(upper_bounds.begin() + static_cast<long>(index));
-
-}
-
-
 /// Calculates the outputs from the bounding layer for a set of inputs to that layer.
 /// @param inputs Set of inputs to the bounding layer.
 
@@ -558,7 +509,9 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
        buffer << "OpenNN Exception: BoundingLayer class.\n"
               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-              << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
+              << "Number of columns ("
+              << inputs_columns_number << ") must be equal to number of inputs ("
+              << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
     }

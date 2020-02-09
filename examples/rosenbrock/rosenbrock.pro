@@ -67,6 +67,12 @@ mac{
 #LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
 
+#DEFINES += __OPENNN_CUDA__
+
+#contains(DEFINES, __OPENNN_CUDA__){
+#    include(../../../Artelnics/opennn_cuda/cuda_config.pri)
+#    include(../../../Artelnics/opennn_cuda/cuda_path.pri)
+#}
 
 
 #win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../openblas/lib/ -llibopenblas

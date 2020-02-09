@@ -335,12 +335,15 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 }
 
 
-/*
+
 void MeanSquaredErrorTest::test_calculate_selection_error()
 {
    cout << "test_calculate_selection_error\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   Tensor<Index, 1> arquitecture(3);
+   arquitecture.setValues({1,1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -377,7 +380,10 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    data_set.set(1, 1, 1);
@@ -391,7 +397,11 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
 
    //error_terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
-   assert_true(abs(dot(error_terms, error_terms) - error) < 1.0e-3, LOG);
+//  Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
+
+//   const Tensor<type, 0> product_result = error_terms.contract(error_terms, vector_times_vector);
+
+//   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
 }
 
 
@@ -424,7 +434,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -435,7 +447,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    inputs = data_set.get_training_input_data();
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
-
+/*
    Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
@@ -563,6 +575,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
 
 //   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
+*/
 }
 
 
@@ -577,7 +590,7 @@ void MeanSquaredErrorTest::test_from_XML()
    cout << "test_from_XML\n";
 }
 
-*/
+
 void MeanSquaredErrorTest::run_test_case()
 {
    cout << "Running mean squared error test case...\n";
