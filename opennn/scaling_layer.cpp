@@ -718,44 +718,6 @@ void ScalingLayer::set_display(const bool& new_display)
 }
 
 
-/// Add a scaling neuron from the scaling layer and asociate new descriptives.
-/// @param new_descriptives Value of the descriptives of the new neuron added. The default value is an empty vector.
-
-void ScalingLayer::grow_neuron(const Descriptives& new_descriptives)
-{
-/*
-    descriptives.push_back(new_descriptives);
-*/
-}
-
-
-/// Removes a given scaling neuron from the scaling layer.
-/// @param index Index of neuron to be removed.
-
-void ScalingLayer::prune_neuron(const Index& index)
-{
-#ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    if(index >= neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void prune_neuron(const Index&) method.\n"
-               << "Index of scaling neuron is equal or greater than number of scaling neurons.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-/*
-    descriptives.erase(descriptives.begin() + static_cast<long long>(index));
-*/
-}
-
-
 /// Returns true if the number of scaling neurons is zero, and false otherwise. 
 
 bool ScalingLayer::is_empty() const
@@ -860,7 +822,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
         {
             for(Index j = 0; j < neurons_number; j++)
             {
-//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < 1.0e-99)
+//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
                 if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
 
                 {
@@ -940,7 +902,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 Index row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
                 Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
 
-//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < 1.0e-99)
+//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
 
                 if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
                 {
@@ -1003,7 +965,7 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
 
     for(Index j = 0; j < neurons_number; j++)
     {
-//        if(abs(descriptives(j).maximum-descriptives(j).minimum) < 1.0e-99)
+//        if(abs(descriptives(j).maximum-descriptives(j).minimum) < numeric_limits<type>::min())
 
         if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
         {
@@ -1039,7 +1001,7 @@ Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Te
 
     for(Index j = 0; j < neurons_number; j++)
     {
-//        if(abs(descriptives(j).standard_deviation) < 1.0e-99)
+//        if(abs(descriptives(j).standard_deviation) < numeric_limits<type>::min())
 
         if(abs(descriptives[j].standard_deviation) < numeric_limits<type>::min())
         {

@@ -129,7 +129,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -143,14 +143,11 @@ check();
     }
 
     return training_error/training_instances_number;
-    */
-    return 0;
 }
 
 
 type MeanSquaredError::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -184,7 +181,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -198,8 +195,6 @@ check();
     }
 
     return training_error/training_instances_number;
-*/
-    return 0;
 }
 
 
@@ -244,7 +239,7 @@ check();
     type selection_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : selection_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(selection_batches.chip(i,0));
@@ -258,8 +253,6 @@ check();
     }
 
     return selection_error/selection_instances_number;
-*/
-    return 0;
 }
 
 
@@ -282,8 +275,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-//    return sum_squared_error(outputs, targets);
-    return 0;
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -304,8 +296,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-//    return sum_squared_error(outputs, targets);
-    return 0;
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -381,75 +372,6 @@ check();
     back_propagation.gradient = (2.0/static_cast<type>(training_instances_number))*back_propagation.gradient;
 */
     return back_propagation;
-}
-
-
-/// This method calculates the first order loss for the selected batch.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-LossIndex::BackPropagation MeanSquaredError::calculate_back_propagation(const DataSet::Batch& batch) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Index batch_instances_number = batch.inputs_2d.dimension(0);
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    // Loss index
-
-    BackPropagation back_propagation(this);
-/*
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
-
-    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation,
-                                                                       output_gradient);
-
-    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
-
-    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    back_propagation.loss = batch_error / static_cast<type>(batch_instances_number);
-    back_propagation.gradient = batch_error_gradient;
-
-    // Regularization
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        back_propagation.loss += regularization_weight*calculate_regularization();
-        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
-    }
-*/
-    return back_propagation;
-}
-
-
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> MeanSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    const Index instances_number = data_set_pointer->get_training_instances_number();
-
-    return (outputs-targets)*static_cast<type>(2.0)/static_cast<type>(instances_number);
 }
 
 
@@ -659,6 +581,18 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Regularization
 
     write_regularization_XML(file_stream);
+}
+
+
+type MeanSquaredError::sum_squared_error(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
+{
+    const auto error = targets - outputs;
+
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+
+    return sse(0);
 }
 
 }

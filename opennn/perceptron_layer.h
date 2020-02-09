@@ -164,19 +164,23 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
             }
 
+           #ifdef EIGEN_USE_GPU
+
            case Device::EigenGpu:
            {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-//                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+                //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 
                 break;
            }
+
+           #endif
 
             #ifdef USE_INTEL_MKL
 
@@ -318,7 +322,7 @@ public:
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
    }
 
    // Delta methods
@@ -384,7 +388,6 @@ public:
             break;
 
             case Probabilistic:
-
            break;
 
        default:
@@ -419,7 +422,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -496,7 +499,7 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation)
+                                 Layer::BackPropagation& back_propagation) const
    {
        switch(device_pointer->get_type())
        {
@@ -545,13 +548,24 @@ public:
 //       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
-   void insert_derivatives(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
+   void insert_parameters(const Index& index, const Tensor<type, 1>& parameters)
    {
-       const type biases_number = get_biases_number();
-       const type synaptic_weights_number = get_synaptic_weights_number();
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data(), back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(gradient.data(), back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data() + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(biases.data(), parameters.data() + synaptic_weights.size() + index, static_cast<size_t>(biases_number)*sizeof(type));
+   }
+
+
+   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
+   {
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
+
+       memcpy(gradient.data() + index, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(gradient.data() + back_propagation.synaptic_weights_derivatives.size() + index,
+              back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
    }
 
 

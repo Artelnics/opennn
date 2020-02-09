@@ -78,7 +78,7 @@ public:
 
    BackPropagation calculate_back_propagation() const;
 
-   BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
+
 
    // Error terms methods
 
@@ -88,7 +88,6 @@ public:
    string get_error_type() const;
    string get_error_type_text() const;
 
-   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_error(BackPropagation& back_propagation) const
    {
@@ -109,14 +108,14 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, double_contraction);
+               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
 
                 break;
             }
 
            case Device::EigenGpu:
            {
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
            }
@@ -135,12 +134,11 @@ public:
 
        const Index batch_instances_number = back_propagation.errors.dimension(0);
 
-//       back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+       back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
    }
 
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -194,6 +192,8 @@ public:
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+
+   type sum_squared_error(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
 
    // Serialization methods
 

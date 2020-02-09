@@ -105,10 +105,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-//    return sum_squared_error(outputs, targets);
-
-    return 0;
-
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -128,144 +125,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-//    return sum_squared_error(outputs, targets);
-
-    return 0;
-}
-
-
-/// This method calculates the first order loss.
-/// It is used for optimization of parameters during training.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-
-LossIndex::BackPropagation SumSquaredError::calculate_back_propagation() const
-{
-    BackPropagation back_propagation(this);
-
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    // Eigen stuff
-
-     #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-/*
-        const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-
-        const Tensor<type, 1> error_terms
-                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
-        const Tensor<type, 2> output_gradient = (forward_propagation[trainable_layers_number-1].activations - targets).divide(error_terms, 0);
-
-        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-        const Tensor<type, 2> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
-
-        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);//dot(error_terms, error_terms);
-
-        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);//dot(error_terms_Jacobian_transpose, error_terms);
-
-          #pragma omp critical
-        {
-            back_propagation.loss += loss(0);
-            back_propagation.gradient += gradient;
-         }
-*/
-    }
-
-    back_propagation.gradient = 2.0*back_propagation.gradient;
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        back_propagation.loss += regularization_weight*calculate_regularization();
-        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
-    }
-
-    return back_propagation;
-}
-
-
-/// This method calculates the first order loss for the selected batch.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-LossIndex::BackPropagation SumSquaredError::calculate_back_propagation(const DataSet::Batch& batch) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    BackPropagation back_propagation(this);
-/*
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation
-            = neural_network_pointer->calculate_forward_propagation(batch.inputs_2d);
-
-    const Tensor<type, 2> output_gradient
-            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs_2d, forward_propagation, layers_delta);
-
-    const type batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets_2d);
-
-    back_propagation.loss = batch_error;
-    back_propagation.gradient += batch_error_gradient;
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        back_propagation.loss += regularization_weight*calculate_regularization();
-        back_propagation.gradient += calculate_regularization_gradient()*regularization_weight;
-    }
-*/
-    return back_propagation;
-}
-
-
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> SumSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    return (outputs-targets)*static_cast<type>(2.0);
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -539,6 +399,17 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
+
+type SumSquaredError::sum_squared_error(const Tensor<type, 2>& outputs ,const Tensor<type, 2>& targets) const
+{
+    const auto error = targets - outputs;
+
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+
+    return sse(0);
+}
 }
 
 // OpenNN: Open Neural Networks Library.

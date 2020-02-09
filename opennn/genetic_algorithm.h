@@ -227,11 +227,15 @@ public:
 
     void perform_mutation();
 
-    // Order selection methods
+    // Inputs selection methods
 
     Index get_optimal_individual_index() const;
 
     GeneticAlgorithmResults* perform_inputs_selection();
+
+    // Utilities
+
+    type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Serialization methods
 

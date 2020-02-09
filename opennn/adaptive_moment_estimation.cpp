@@ -177,9 +177,9 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
-const bool& AdaptiveMomentEstimation::get_return_minimum_selection_error_neural_network() const
+const bool& AdaptiveMomentEstimation::get_choose_best_selection() const
 {
-    return return_minimum_selection_error_neural_network;
+    return choose_best_selection;
 }
 
 
@@ -244,7 +244,7 @@ void AdaptiveMomentEstimation::set_default()
    maximum_selection_error_increases = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 10000;
-   return_minimum_selection_error_neural_network = false;
+   choose_best_selection = false;
    apply_early_stopping = true;
 
    // TRAINING HISTORY
@@ -377,8 +377,6 @@ void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning
 
 void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_parameters_norm)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_error_parameters_norm < static_cast<type>(0.0))
@@ -499,8 +497,6 @@ void AdaptiveMomentEstimation::set_minimum_loss_increase(const type& new_minimum
 
    #endif
 
-   // Set minimum loss improvement
-
    minimum_loss_decrease = new_minimum_loss_increase;
 }
 
@@ -535,8 +531,6 @@ void AdaptiveMomentEstimation::set_gradient_norm_goal(const type& new_gradient_n
    }
 
    #endif
-
-   // Set gradient norm goal
 
    gradient_norm_goal = new_gradient_norm_goal;
 }
@@ -578,16 +572,18 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error,
+/// false otherwise.
 
-void AdaptiveMomentEstimation::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+void AdaptiveMomentEstimation::set_choose_best_selection(const bool& new_choose_best_selection)
 {
-   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+   choose_best_selection = new_choose_best_selection;
 }
 
 
 /// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
+/// false otherwise.
 
 void AdaptiveMomentEstimation::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -619,8 +615,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 /// Number of iterations between the training showing progress.
 
 void AdaptiveMomentEstimation::set_display_period(const Index& new_display_period)
-{
-   
+{   
    #ifdef __OPENNN_DEBUG__
 
    if(new_display_period <= 0)
@@ -682,7 +677,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   type parameters_norm = static_cast<type>(0.0);
+   Tensor<type, 0> parameters_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -696,7 +691,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    type old_selection_error = static_cast<type>(0.0);
 
    type loss = static_cast<type>(0.0);
-   type gradient_norm = static_cast<type>(0.0);
+   Tensor<type, 0> gradient_norm;
 
    // Optimization algorithm stuff
 
@@ -735,9 +730,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
-       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       if(display && parameters_norm(0) >= warning_parameters_norm)
+           cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
 
        loss = static_cast<type>(0.0);
 
@@ -749,18 +745,18 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
-//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs_2d);
-//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets_2d);
 
            // Neural network
-/*@todo device*/
-//           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
            // Loss index
-/*@todo device*/
-//           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
-           learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0) - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0) - pow(beta_1, static_cast<type>(iteration_count)));
+           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+
+           learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
+                         - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0)
+                         - pow(beta_1, static_cast<type>(iteration_count)));
 
            // Loss
 
@@ -772,7 +768,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            last_gradient_exponential_decay = gradient_exponential_decay;
 
-           square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2 + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
+           square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2
+                                             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
 
            last_square_gradient_exponential_decay = square_gradient_exponential_decay;
 
@@ -892,13 +889,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm;
+           results.final_parameters_norm = parameters_norm(0);
 
            results.final_training_error = training_error;
 
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm;
+           results.final_gradient_norm = gradient_norm(0);
 
            results.elapsed_time = elapsed_time;
 
@@ -926,10 +923,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        if(stop_training) break;
    }
 
-   if(return_minimum_selection_error_neural_network)
+   if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-//       parameters_norm = l2_norm(parameters);
+       parameters_norm = parameters.square().sum().sqrt();
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -937,10 +934,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm;
+   results.final_parameters_norm = parameters_norm(0);
    results.final_training_error = training_error;
    results.final_selection_error = selection_error;
-   results.final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm(0);
    results.elapsed_time = elapsed_time;
 
    return results;
@@ -1106,7 +1103,7 @@ tinyxml2::XMLDocument* AdaptiveMomentEstimation::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << return_minimum_selection_error_neural_network;
+   buffer << choose_best_selection;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1344,7 +1341,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
     buffer.str("");
-    buffer << return_minimum_selection_error_neural_network;
+    buffer << choose_best_selection;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1497,15 +1494,17 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element
+            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
-    if(return_minimum_selection_error_neural_network_element)
+    if(choose_best_selection_element)
     {
-        string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
+        const string new_choose_best_selection
+                = choose_best_selection_element->GetText();
 
         try
         {
-           set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+           set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {

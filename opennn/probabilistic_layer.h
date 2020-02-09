@@ -41,23 +41,6 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    struct ForwardPropagation : Layer::ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ForwardPropagation() : Layer::ForwardPropagation(){}
-
-        virtual ~ForwardPropagation() {}
-
-        void allocate()
-        {
-        }
-
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 3> activations_derivatives;
-    };
-
    // Constructors
 
    explicit ProbabilisticLayer();
@@ -127,10 +110,6 @@ public:
 
    void set_display(const bool&);
 
-   // Pruning and growing
-
-   void prune_neuron(const Index&);
-
    // Parameters initialization methods
 
    void initialize_biases(const type&);
@@ -154,9 +133,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
-/*
-   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-*/
+
    void calculate_forward_propagation(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
@@ -164,17 +141,8 @@ public:
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-//       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_3d);
    }
-
-
-   // Deltas
-
-   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   // Gradient methods
-
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
    // Activations
 
@@ -236,7 +204,7 @@ public:
 
    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 3>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -263,7 +231,9 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
+                  << "Number of combinations columns ("
+                  << combinations_columns_number << ") must be equal to number of neurons ("
+                  << neurons_number << ").\n";
 
            throw logic_error(buffer.str());
         }
@@ -355,7 +325,6 @@ protected:
    /// Display messages to screen.
 
    bool display;
-
 };
 
 }

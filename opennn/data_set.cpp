@@ -707,14 +707,19 @@ Tensor<type, 1> DataSet::get_instances_uses_percentages() const
     const Index testing_instances_number = get_testing_instances_number();
     const Index unused_instances_number = get_unused_instances_number();
 
-    const type training_instances_percentage = static_cast<type>(training_instances_number)*100.0/static_cast<type>(instances_number);
-    const type selection_instances_percentage = static_cast<type>(selection_instances_number)*100.0/static_cast<type>(instances_number);
-    const type testing_instances_percentage = static_cast<type>(testing_instances_number)*100.0/static_cast<type>(instances_number);
-    const type unused_instances_percentage = static_cast<type>(unused_instances_number)*100.0/static_cast<type>(instances_number);
-/*
-    return Tensor<type, 1>({training_instances_percentage, selection_instances_percentage, testing_instances_percentage, unused_instances_percentage});
-*/
-    return Tensor<type, 1>();
+    const type training_instances_percentage = training_instances_number*100/static_cast<type>(instances_number);
+    const type selection_instances_percentage = selection_instances_number*100/static_cast<type>(instances_number);
+    const type testing_instances_percentage = testing_instances_number*100/static_cast<type>(instances_number);
+    const type unused_instances_percentage = unused_instances_number*100/static_cast<type>(instances_number);
+
+    Tensor<type, 1> instances_uses_percentage(4);
+
+    instances_uses_percentage.setValues({training_instances_percentage,
+                                         selection_instances_percentage,
+                                         testing_instances_percentage,
+                                         unused_instances_percentage});
+
+    return instances_uses_percentage;
 }
 
 
@@ -2223,9 +2228,8 @@ Index DataSet::get_unused_variables_number() const
 
 Index DataSet::get_variable_index(const string& name) const
 {
-/*
     const Tensor<string, 1> names = get_variables_names();
-
+/*
     const Index index = names.get_first_index(name);
 
     return index;
@@ -2368,31 +2372,6 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 }
 
 
-vector<Index> DataSet::get_input_variables_indices_stl() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index input_variables_number = input_variables_indices.size();
-
-    vector<Index> input_variables_indices_stl(input_variables_number);
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        input_variables_indices_stl[i] = input_variables_indices[i];
-    }
-
-    return input_variables_indices_stl;
-}
-
-
-vector<Index> DataSet::get_target_variables_indices_stl() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    return vector<Index>();
-}
-
-
 /// Sets the uses of the data set columns.
 /// @param new_columns_uses String vector that contains the new uses to be set,
 /// note that this vector needs to be the size of the number of columns in the data set.
@@ -2407,7 +2386,9 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 
         buffer << "OpenNN Exception DataSet class.\n"
                << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
+               << "Size of columns uses ("
+               << new_columns_uses_size << ") must be equal to columns size ("
+               << columns.size() << "). \n";
 
         throw logic_error(buffer.str());
     }
@@ -2416,10 +2397,12 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-/*
-    input_variables_dimensions.resize(1, get_input_variables_number());
-    target_variables_dimensions.resize(1, get_target_variables_number());
-*/
+
+    input_variables_dimensions.resize(1);
+    input_variables_dimensions.setConstant(get_input_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -2446,10 +2429,12 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-/*
-    input_variables_dimensions.resize(1, get_input_variables_number());
-    target_variables_dimensions.resize(1, get_target_variables_number());
-*/
+
+    input_variables_dimensions.resize(1);
+    input_variables_dimensions.setConstant(get_input_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -3064,7 +3049,6 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& instances_indic
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     return get_subtensor_data(instances_indices, target_variables_indices);
-
 }
 
 
@@ -6152,29 +6136,13 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
    {
-    case NoUnscaling:
-    {
-        // Do nothing
-    }
-    break;
+    case NoUnscaling: break;
 
-    case MinimumMaximum:
-    {
-        scale_targets_minimum_maximum(targets_descriptives);
-    }
-        break;
+    case MinimumMaximum: scale_targets_minimum_maximum(targets_descriptives); break;
 
-    case MeanStandardDeviation:
-    {
-        scale_targets_mean_standard_deviation(targets_descriptives);
-    }
-        break;
+    case MeanStandardDeviation: scale_targets_mean_standard_deviation(targets_descriptives); break;
 
-    case Logarithmic:
-    {
-        scale_targets_logarithmic(targets_descriptives);
-    }
-        break;
+    case Logarithmic: scale_targets_logarithmic(targets_descriptives); break;
 
     default:
     {
@@ -7349,7 +7317,6 @@ void DataSet::save(const string& file_name) const
 /// </ul>
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param file_name Name of data set XML-type file.
-
 
 void DataSet::load(const string& file_name)
 {
@@ -9030,7 +8997,9 @@ void DataSet::read_csv_2_simple()
 
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void read_csv() method.\n"
-                   << "Line " << line_number << ": Size of tokens(" << tokens_count << ") is not equal to number of columns(" << columns_number << ").\n";
+                   << "Line " << line_number << ": Size of tokens("
+                   << tokens_count << ") is not equal to number of columns("
+                   << columns_number << ").\n";
 
             throw logic_error(buffer.str());
         }
@@ -9113,7 +9082,7 @@ void DataSet::read_csv_3_simple()
             }
             else
             {
-                data(instance_index, j) = stod(tokens[j]);
+                data(instance_index, j) = static_cast<type>(stod(tokens[j]));
             }
         }
 
@@ -9322,7 +9291,7 @@ void DataSet::read_csv_3_complete()
                     {
                         try
                         {
-                            data(instance_index, j) = stod(tokens[j]);
+                            data(instance_index, j) = static_cast<type>(stod(tokens[j]));
                         }
                         catch (invalid_argument)
                         {
@@ -9507,12 +9476,6 @@ bool DataSet::has_time_variables() const
 }
 
 
-void DataSet::get_tensor_2_d(const Tensor<Index, 1>& instances_indices, const Tensor<Index, 1>& variables_indices, Tensor<type, 2>& data)
-{
-
-}
-
-
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
     const Index columns_number = get_columns_number();
@@ -9590,7 +9553,8 @@ Index DataSet::count_nan() const
 }
 
 
-void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const
+void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
+                                                const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
 
@@ -9648,16 +9612,16 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
     type* inputs_2d_pointer = inputs_2d.data();
     type* targets_2d_pointer = targets_2d.data();
 
-    Index instance;
-    Index variable;
+    Index instance = 0;
+    Index variable = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index j = 0; j < inputs_number; j++)
     {
-        instance = instances[i];
+        variable = inputs[j];
 
-        for(Index j = 0; j < inputs_number; j++)
+        for(Index i = 0; i < rows_number; i++)
         {
-            variable = inputs[j];
+            instance = instances[i];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }

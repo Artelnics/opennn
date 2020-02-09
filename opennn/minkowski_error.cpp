@@ -84,7 +84,7 @@ MinkowskiError::~MinkowskiError()
 
 type MinkowskiError::get_Minkowski_parameter() const
 {
-   return(minkowski_parameter);
+   return minkowski_parameter;
 }
 
 
@@ -153,7 +153,7 @@ type MinkowskiError::calculate_training_error() const
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     type training_error = static_cast<type>(0.0);
-/*
+
      #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
@@ -167,7 +167,7 @@ type MinkowskiError::calculate_training_error() const
 
         training_error += batch_error;
     }
-*/
+
     return training_error / static_cast<type>(training_instances_number);
 }
 
@@ -198,7 +198,7 @@ type MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameters)
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     type training_error = static_cast<type>(0.0);
-/*
+
      #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
@@ -212,7 +212,7 @@ type MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameters)
 
         training_error += batch_error;
     }
-*/
+
     return training_error / static_cast<type>(training_instances_number);
 }
 
@@ -245,7 +245,7 @@ type MinkowskiError::calculate_selection_error() const
     Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     type training_error = static_cast<type>(0.0);
-/*
+
      #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
@@ -259,7 +259,7 @@ type MinkowskiError::calculate_selection_error() const
 
         training_error += batch_error;
     }
-*/
+
     return training_error / static_cast<type>(selection_instances_number);
 }
 
@@ -282,10 +282,8 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
+
     return minkowski_error(outputs, targets, minkowski_parameter);
-*/
-    return 0.0;
 }
 
 
@@ -303,32 +301,9 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
+
     return minkowski_error(outputs, targets, minkowski_parameter);
-*/
-    return 0.0;
-}
 
-
-/// Returns the Minkowski error function output gradient of a neural network on a data set.
-/// It uses the error back-propagation method.
-/// Returns gradient for training instances.
-/// @param outputs Tensor with outputs.
-/// @param targets Tensor with targets.
-
-Tensor<type, 2> MinkowskiError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-/*
-    return lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<type>(training_instances_number);
-*/
-    return Tensor<type, 2>();
 }
 
 
@@ -496,6 +471,63 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 //  }
 }
 
+type MinkowskiError::minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const type& minkowski_parameter) const
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+#ifdef __OPENNN_DEBUG__
+
+    const Index other_rows_number = y.dimension(0);
+
+    if(other_rows_number != rows_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Metrics functions.\n"
+              << "type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) method.\n"
+              << "Other number of rows " << other_rows_number << " must be equal to this number of rows " << rows_number << ".\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    const Index other_columns_number = y.dimension(1);
+
+    if(other_columns_number != columns_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Metrics functions.\n"
+              << "type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) method.\n"
+              << "Other number of columns (" << other_columns_number << ") must be equal to this number of columns (" << columns_number << ").\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+/*
+    type minkowski_error = static_cast<type>(0.0);
+    type row_minkowski_error = static_cast<type>(0.0);
+*/
+    Tensor<type, 0> error = (((x - y).abs().pow(minkowski_parameter)).sum()).pow(static_cast<type>(1.0)/ minkowski_parameter);
+
+    return error(0);
+/*
+    for(Index i = 0; i < rows_number; i++)
+    {
+        row_minkowski_error = static_cast<type>(0.0);
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
+        }
+
+        minkowski_error += pow(row_minkowski_error, static_cast<type>(1.0) / minkowski_parameter);
+    }
+
+    return minkowski_error;
+*/
+}
 }
 
 
