@@ -1161,7 +1161,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    results.resize_training_history(1+maximum_epochs_number);
 
-   // Data set
+   // Data set stuff
+
+   DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+   const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+   const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+   const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
+   const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+
+   DataSet::Batch batch(data_set_pointer);
 
    const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
@@ -1178,7 +1190,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm;
 
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
+
    // Loss index stuff
+
+   LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
    type training_loss = static_cast<type>(0.0);
    type training_error = static_cast<type>(0.0);
@@ -1202,7 +1218,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    Tensor<type, 1> training_direction(parameters_number);
 
-   type training_slope;
+//   type training_slope;
 
    const type first_learning_rate = static_cast<type>(0.01);
 
@@ -1218,6 +1234,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    bool stop_training = false;
 
+   bool is_forecasting = false;
+
    Index selection_failures = 0;
 
    time_t beginning_time, current_time;
@@ -1228,6 +1246,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
+       // Batch
+
+       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
+
+       const Index batches_number = training_batches.dimension(0);
+
        // Neural network
 
        parameters = neural_network_pointer->get_parameters();
@@ -1239,8 +1263,31 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
        }
 
+       training_loss = static_cast<type>(0.0);
+
+       for(Index iteration = 0; iteration < batches_number; iteration++)
+       {
+           // Data set
+
+          const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
+
+          batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+
+          // Neural network
+
+          neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+           // Loss
+
+          loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+
+          training_loss += back_propagation.loss;
+       }
+
        // Loss index stuff
 
+       training_error = training_loss/static_cast<type>(batches_number);
+/*
        regularization = loss_index_pointer->calculate_regularization();
 
        if(epoch == 0)
@@ -1257,7 +1304,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
            training_error = training_loss - regularization_weight*regularization;
        }
-
+*/
 
        if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
 
@@ -1278,7 +1325,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            minimum_selection_error_parameters = neural_network_pointer->get_parameters();
        }
 
-cout << "hiho" << endl;
+
        gradient = loss_index_pointer->calculate_training_loss_gradient();
 
 //       gradient_norm = gradient.square().sum().sqrt();
@@ -1317,7 +1364,7 @@ cout << "hiho" << endl;
            old_gradient.resize(0);
 
        }
-
+cout << "here" << endl;
        // Optimization algorithm
 
        training_direction = calculate_training_direction(gradient, inverse_hessian);
@@ -1325,8 +1372,6 @@ cout << "hiho" << endl;
        // Calculate loss training slope
 
        const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_vector_vector);
-
-//       training_slope = dot(gradient/gradient_norm, training_direction);
 
        // Check for a descent direction
 
