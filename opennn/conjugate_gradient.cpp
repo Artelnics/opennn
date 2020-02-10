@@ -363,7 +363,7 @@ void ConjugateGradient::set_default()
    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = numeric_limits<type>::max()*(-1.0);
+   loss_goal = numeric_limits<type>::max()*(static_cast<type>(-1.0));
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_increases = 1000000;
 
@@ -1424,6 +1424,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
 
       // Stopping Criteria
+
+      parameters_increment_norm = static_cast<int>(0.0);
 
       if(parameters_increment_norm <= minimum_parameters_increment_norm)
       {

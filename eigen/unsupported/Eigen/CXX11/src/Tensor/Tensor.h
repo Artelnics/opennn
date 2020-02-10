@@ -73,7 +73,7 @@ class Tensor : public TensorBase<Tensor<Scalar_, NumIndices_, Options_, IndexTyp
     typedef typename Base::CoeffReturnType CoeffReturnType;
 
     enum {
-      IsAligned = bool(EIGEN_MAX_ALIGN_BYTES>0) & !(Options_&DontAlign),
+      IsAligned = bool((EIGEN_MAX_ALIGN_BYTES>0) & !(Options_&DontAlign)),
       Layout = Options_ & RowMajor ? RowMajor : ColMajor,
       CoordAccess = true,
       RawAccess = true
