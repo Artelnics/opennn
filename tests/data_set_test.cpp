@@ -17,7 +17,7 @@ DataSetTest::~DataSetTest()
 {
 }
 
-/*
+
 void DataSetTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -45,7 +45,7 @@ void DataSetTest::test_constructor()
    assert_true(ds3.get_instances_number() == 1, LOG);
 
    // XML constructor
-
+/*
    tinyxml2::XMLDocument* document = ds3.to_XML();
 
    DataSet ds4(*document);
@@ -61,7 +61,7 @@ void DataSetTest::test_constructor()
    assert_true(ds5.get_instances_number() == 1, LOG);
 
    delete document;
-
+*/
    // Copy constructor
 
    DataSet ds6(ds1);
@@ -80,7 +80,7 @@ void DataSetTest::test_destructor()
    delete dsp;
 }
 
-
+/*
 void DataSetTest::test_assignment_operator()
 {
    cout << "test_assignment_operator\n";
@@ -2850,10 +2850,10 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-/*
+
    // Constructor and destructor methods
    test_constructor();
-   test_destructor();
+/*   test_destructor();
 
    // Assignment operators methods
    test_assignment_operator();
@@ -2863,7 +2863,7 @@ void DataSetTest::run_test_case()
    test_get_variables_number();
    test_get_variables();
    test_get_display();
-   test_is_binary_variable();
+//   test_is_binary_variable();
    test_is_binary_classification();
    test_is_multiple_classification();
 

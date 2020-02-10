@@ -1244,7 +1244,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        regularization = loss_index_pointer->calculate_regularization();
 
        if(epoch == 0)
-       {cout << "hih" << endl;
+       {
            training_error = loss_index_pointer->calculate_training_error();
 
            training_loss = training_error + regularization_weight*regularization;

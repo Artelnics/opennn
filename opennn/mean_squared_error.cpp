@@ -138,7 +138,7 @@ check();
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
         const type batch_error = sum_squared_error(outputs, targets);
-
+cout << "guille" << endl;
         training_error += batch_error;
     }
 
@@ -637,12 +637,16 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 type MeanSquaredError::sum_squared_error(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
-    const auto error = targets - outputs;
-
+    cout << outputs << endl;
+    const Tensor<type, 2> error = targets - outputs;
+/*
     const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+*/
 
+    const Tensor<type, 0> sse = error.square().sum();
+cout << sse << endl;
     return sse(0);
 }
 

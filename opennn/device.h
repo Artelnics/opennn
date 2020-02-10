@@ -42,13 +42,13 @@ class Device
                 break;
 
                 case EigenSimpleThreadPool:
+                {
+                    const int n = omp_get_max_threads();
 
-//                    cint n = omp_get_max_threads();
+                    simple_thread_pool = new SimpleThreadPool(n);
 
-                    simple_thread_pool = new SimpleThreadPool(16);
-
-                    thread_pool_device = new ThreadPoolDevice(simple_thread_pool, 16);
-
+                    thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
+                }
                 break;
 
                 case EigenGpu:
