@@ -726,7 +726,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    inputs.setConstant(3.0);
 
-   combinations = perceptron_layer.calculate_combinations(inputs);
+//   combinations = perceptron_layer.calculate_combinations(inputs);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
@@ -742,7 +742,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    inputs.setConstant(1.0);
 
-   combinations = perceptron_layer.calculate_combinations(inputs);
+//   combinations = perceptron_layer.calculate_combinations(inputs);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
@@ -768,7 +768,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set_synaptic_weights(synaptic_weights);
    perceptron_layer.set_biases(biases);
 
-   combinations=perceptron_layer.calculate_combinations(inputs);
+//   combinations=perceptron_layer.calculate_combinations(inputs);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 2, LOG);
@@ -792,7 +792,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    inputs(0,0) = 0.5;
    inputs(0,1) = 0.5;
 
-   combinations = perceptron_layer.calculate_combinations(inputs);
+//   combinations = perceptron_layer.calculate_combinations(inputs);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
@@ -810,7 +810,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs_3(10,1);
    inputs_3.setConstant(1);
 
-   combinations_3 = perceptron_layer.calculate_combinations(inputs_3, perceptron_layer_3.get_synaptic_weights(), perceptron_layer_3.get_biases());
+//   combinations_3 = perceptron_layer.calculate_combinations(inputs_3, perceptron_layer_3.get_synaptic_weights(), perceptron_layer_3.get_biases());
 
 //   synaptic_weights.setConstant(1.0);
 

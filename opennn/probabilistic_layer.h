@@ -83,7 +83,7 @@ public:
    void set_inputs_number(const Index&);
    void set_neurons_number(const Index&);
 
-   void set_biases(const Tensor<type, 1>&);
+   void set_biases(const Tensor<type, 2>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&);
@@ -97,10 +97,10 @@ public:
 
    // Parameters
 
-   const Tensor<type, 1>& get_biases() const;
+   const Tensor<type, 2>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
    Index get_parameters_number() const;
@@ -122,22 +122,85 @@ public:
 
    // Combinations
 
-   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
-
-   void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations) const
+   void calculate_combinations(const Tensor<type, 2>& inputs,
+                               const Tensor<type, 2>& biases,
+                               const Tensor<type, 2>& synaptic_weights,
+                               Tensor<type, 2>& combinations) const
    {
+       const Index batch_instances_number = inputs.dimension(0);
+       const Index biases_number = get_neurons_number();
+
+       for(Index i = 0; i < biases_number; i++)
+       {
+           fill_n(combinations.data(), batch_instances_number, biases(i));
+       }
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+
+                break;
+            }
+
+           #ifdef EIGEN_USE_GPU
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+
+                break;
+           }
+
+           #endif
+
+            #ifdef USE_INTEL_MKL
+
+           case Device::IntelMkl:
+           {
+
+                break;
+           }
+
+            #endif
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                      << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
    }
 
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_forward_propagation(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
@@ -145,8 +208,6 @@ public:
    }
 
    // Activations
-
-   Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
 
    void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
@@ -201,8 +262,6 @@ public:
 
         throw logic_error(buffer.str());
    }
-
-   Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
    void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 3>& activations_derivatives) const
    {
@@ -305,12 +364,10 @@ public:
    
 protected:
 
-   // MEMBERS
-
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 1> biases;
+   Tensor<type, 2> biases;
 
    /// This matrix containing conection strengths from a layer's inputs to its neurons.
 
