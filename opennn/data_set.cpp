@@ -2305,6 +2305,49 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 }
 
 
+/// Returns the indices of the used variables.
+
+Tensor<Index, 1> DataSet::get_used_variables_indices() const
+{
+    const Index used_number = get_used_variables_number();
+
+    const Tensor<Index, 1> unused_columns_indices = get_used_columns_indices();
+
+    Tensor<Index, 1> used_indices(used_number);
+
+    Index used_index = 0;
+    Index used_variable_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        const Index current_categories_number = columns[i].get_categories_number();
+
+        if(current_categories_number == 0 && columns[i].column_use != UnusedVariable)
+        {
+            used_indices[used_index] = i;
+            used_index++;
+            used_variable_index++;
+        }
+        else
+        {
+            for(Index j = 0; j < current_categories_number; j++)
+            {
+                if(columns[i].categories_uses[j] != UnusedVariable)
+                {
+                    used_indices[used_index] = used_variable_index;
+                    used_index++;
+                }
+
+                used_variable_index++;
+            }
+        }
+    }
+
+    return used_indices;
+}
+
+
+
 /// Returns the indices of the input variables.
 
 Tensor<Index, 1> DataSet::get_input_variables_indices() const
@@ -2796,7 +2839,7 @@ bool DataSet::is_empty() const
 
 
 /// Returns a reference to the data matrix in the data set.
-/// The number of rows is equal to the number of
+/// The number of rows is equal to the number of instances.
 /// The number of columns is equal to the number of variables.
 
 const Tensor<type, 2>& DataSet::get_data() const
@@ -4423,34 +4466,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives() const
 {
-    return descriptives_missing_values(data);
-}
-
-
-/// Returns all the variables descriptives from a single matrix.
-/// The number of rows is the number of used variables.
-/// The number of columns is five(minimum, maximum, mean and standard deviation).
-
-Tensor<type, 2> DataSet::calculate_columns_descriptives_matrix() const
-{
-    const Index variables_number = get_used_variables_number();
-
-    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
-
-    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-
-    const Tensor<Descriptives, 1> data_statistics_vector = descriptives_missing_values(data, used_instances_indices, used_variables_indices);
-
-    Tensor<type, 2> data_statistics_matrix(variables_number, 4);
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-/*
-        data_statistics_matrix.set_row(i, data_statistics_vector[i].to_vector());
-*/
-    }
-
-    return data_statistics_matrix;
+    return descriptives(data);
 }
 
 
@@ -4662,7 +4678,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_training_instanc
 
    const Tensor<Index, 1> used_indices = get_used_columns_indices();
 
-   return descriptives_missing_values(data, training_indices, used_indices);
+   return descriptives(data, training_indices, used_indices);
 }
 
 
@@ -4681,7 +4697,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_selection_instan
 
     const Tensor<Index, 1> used_indices = get_used_columns_indices();
 
-    return descriptives_missing_values(data, selection_indices, used_indices);
+    return descriptives(data, selection_indices, used_indices);
 }
 
 
@@ -4707,6 +4723,36 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_testing_instance
 }
 
 
+/// Returns all the variables descriptives from a single matrix.
+/// The number of rows is the number of used variables.
+/// The number of columns is four(minimum, maximum, mean and standard deviation).
+
+Tensor<type, 2> DataSet::calculate_variables_descriptives_matrix() const
+{
+    const Index variables_number = get_used_variables_number();
+
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+
+    const Tensor<Descriptives, 1> data_statistics_vector = descriptives(data, used_instances_indices, used_variables_indices);
+
+    Tensor<type, 2> data_statistics_matrix(variables_number, 4);
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+
+
+
+/*
+        data_statistics_matrix.set_row(i, data_statistics_vector[i].to_vector());
+*/
+    }
+
+    return data_statistics_matrix;
+}
+
+
 /// Returns a vector of Descriptives structures with some basic statistics of the input variables on the used
 /// This includes the minimum, maximum, mean and standard deviation.
 /// The size of this vector is the number of inputs.
@@ -4717,7 +4763,7 @@ Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return descriptives_missing_values(data, used_indices, input_variables_indices);
+    return descriptives(data, used_indices, input_variables_indices);
 }
 
 
@@ -4736,7 +4782,7 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return descriptives_missing_values(data, used_indices, target_variables_indices);
+   return descriptives(data, used_indices, target_variables_indices);
 }
 
 
@@ -4815,8 +4861,7 @@ Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return mean_missing_values(data, training_indices, target_variables_indices);
-
+    return mean(data, training_indices, target_variables_indices);
 }
 
 
