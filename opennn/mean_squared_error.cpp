@@ -270,9 +270,9 @@ check();
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        terms_second_order_loss.loss += calculate_regularization();
-        terms_second_order_loss.gradient += calculate_regularization_gradient();
-        terms_second_order_loss.hessian += calculate_regularization_hessian();
+//        terms_second_order_loss.loss += calculate_regularization();
+//        terms_second_order_loss.gradient += calculate_regularization_gradient();
+//        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
 
     return terms_second_order_loss;

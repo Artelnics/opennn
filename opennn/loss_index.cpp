@@ -573,48 +573,6 @@ string LossIndex::write_regularization_method() const
 }
 
 
-/// It calculate the regularization term using different methods.
-/// Returns the regularization evaluation, according to the respective regularization type used in the loss index expression.
-
-type LossIndex::calculate_regularization() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-            const Index parameters_number = parameters.size();
-
-            type l2_norm = 0.0;
-
-            for(Index k = 0; k < parameters_number; k++) {
-              l2_norm += parameters(k) *parameters(k);
-            }
-
-            return l2_norm;
-//            return l2_norm(neural_network_pointer->get_parameters());
-       }
-       case NoRegularization:
-       {
-            return 0.0;
-       }
-    }
-
-    return 0.0;
-}
-
-
 /// It calculates the regularization term using through the use of parameters.
 /// Returns the regularization evaluation, according to the respective regularization type used in the loss index expression.
 /// @param parameters vector with the parameters to get the regularization term.
@@ -648,56 +606,6 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 /// It calculate the regularization term using the gradient method.
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
-/// The size is thus the number of parameters.
-
-Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm_gradient(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-//            return l2_norm_gradient(neural_network_pointer->get_parameters());
-
-            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-            const Index parameters_number = parameters.size();
-
-            Tensor<type, 1> gradient(parameters_number);
-
-    //          const type norm = l2_norm(vector);
-            Tensor<type, 0> norm = parameters.square().sum();
-
-              if(norm(0) < numeric_limits<type>::min()) {
-                gradient.setZero();
-              } else {
-                gradient = parameters/ norm(0);
-              }
-
-              return gradient;
-       }
-       case NoRegularization:
-       {
-            return Tensor<type, 1>(neural_network_pointer->get_parameters_number()).setConstant(0.0);
-       }
-    }
-
-    return Tensor<type, 1>();
-}
-
-
-/// It calculate the regularization term using the gradient method.
-/// Returns the gradient of the regularization, according to the regularization type.
-/// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters
 /// @param parameters vector with the parameters to get the regularization term.
 
@@ -724,41 +632,6 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
 
 
 /// It calculate the regularization term using the <i>Hessian</i>.
-/// Returns the <i>Hessian</i> of the regularization, according to the regularization type.
-/// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
-/// That matrix is symmetric, with size the number of parameters.
-
-Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm_hessian(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-//            return l2_norm_hessian(neural_network_pointer->get_parameters());
-       }
-       case NoRegularization:
-       {
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
-       }
-    }
-
-    return Tensor<type, 2>();
-}
-
-
-/// It calculate the regularization term using the <i>Hessian</i>.
 /// Returns the Hessian of the regularization, according to the regularization type.
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
@@ -766,7 +639,6 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
 
 Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters) const
 {
-
     switch(regularization_method)
     {
        case L1:

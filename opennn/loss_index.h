@@ -294,20 +294,18 @@ public:
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           back_propagation.loss += regularization_weight*calculate_regularization();
+       {      
+           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           back_propagation.gradient += regularization_weight*calculate_regularization_gradient();
+           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
+
+           back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
    }
 
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
 
    // Regularization methods
-
-   type calculate_regularization() const;
-   Tensor<type, 1> calculate_regularization_gradient() const;
-   Tensor<type, 2> calculate_regularization_hessian() const;
 
    type calculate_regularization(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
