@@ -300,7 +300,7 @@ public:
    Tensor<string, 1> get_input_variables_names() const;
    Tensor<string, 1> get_target_variables_names() const;
 
-   Index get_variable_index(const string&) const;
+   Index get_variable_index(const string&name) const;
 
    Tensor<Index, 1> get_variable_indices(const Index&) const;
    Tensor<Index, 1> get_unused_variables_indices() const;
