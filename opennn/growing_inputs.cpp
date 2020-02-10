@@ -229,7 +229,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     {
         for(Index j = 0; j < correlations_descending.size(); j++)
         {
-            if(total_correlations(i) == correlations_descending(j))
+            if(static_cast<Index>(total_correlations(i)) == static_cast<Index>(correlations_descending(j)))
             {
                 correlations_descending_indices(i) = j;
             }

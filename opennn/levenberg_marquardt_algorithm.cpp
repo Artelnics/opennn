@@ -884,6 +884,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
 	  // Stopping Criteria
 
+      parameters_increment_norm = static_cast<type>(0.0);
+
       if(parameters_increment_norm <= minimum_parameters_increment_norm)
       {
          if(display)
