@@ -272,7 +272,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
   {
       if(minimum_frequency == frequencies(i))
       {
-          minimal_centers(index) = frequencies(i);
+          minimal_centers(index) = static_cast<Index>(frequencies(i));
 
           index++;
       }
@@ -3485,7 +3485,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    type significance_level = 0.05;
+    type significance_level = static_cast<type>(0.05);
 
     type A_significance_level;
     type B_significance_level;
@@ -3549,7 +3549,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = 0.5 * erfc((mean_value - sorted_vector[i])/(standard_deviation*sqrt(2.0)));
+        normal_distribution = static_cast<type>(0.5) * erfc((mean_value - static_cast<Index>(sorted_vector[i]))/(static_cast<Index>(standard_deviation)*static_cast<type>(sqrt(2.0))));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -3573,8 +3573,8 @@ type normality_parameter(const Tensor<type, 1>& vector)
         }
         else
         {
-            normal_area += 0.5*(sorted_vector[i]-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
-            empirical_area += 0.5*(sorted_vector[i]-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
+            normal_area += static_cast<type>(0.5)*static_cast<Index>((sorted_vector[i]-sorted_vector[i-1]))*(normal_distribution+previous_normal_distribution);
+            empirical_area += static_cast<type>(0.5)*static_cast<Index>((sorted_vector[i]-sorted_vector[i-1]))*(empirical_distribution+previous_empirical_distribution);
 
             previous_normal_distribution = normal_distribution;
             previous_empirical_distribution = empirical_distribution;
@@ -3597,7 +3597,7 @@ Tensor<type, 1> variation_percentage(const Tensor<type, 1>& vector)
     {
         if(abs(vector[i-1]) < numeric_limits<type>::min())
         {
-            new_vector[i] = (vector[i] - vector[i-1])*100.0/vector[i-1];
+            new_vector[i] = static_cast<Index>((vector[i] - vector[i-1]))* static_cast<type>(100.0)/static_cast<Index>(vector[i-1]);
         }
     }
 
@@ -3844,7 +3844,7 @@ type strongest(const Tensor<type, 1>& vector)
 /// to each of the given integers. The matrix must have 2 columns, the first
 /// one containing the integers and the second one the corresponding values.
 
-Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
+Tensor<type, 1> means_by_categories(const Tensor<type, 2>/*& matrix*/)
 {
 /*
     const Index integers_number = matrix.size();
@@ -3909,7 +3909,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 /// one containing the integers and the second one the corresponding values.
 /// Both columns can contain NAN.
 
-Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix)
+Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>/*& matrix*/)
 {
 /*
     const Index integers_number = matrix.size();
