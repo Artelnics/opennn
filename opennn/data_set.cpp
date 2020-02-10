@@ -4464,9 +4464,27 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 /// <li> Standard deviation.
 /// </ul>
 
-Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives() const
 {
     return descriptives(data);
+}
+
+
+/// Returns a vector of vectors containing some basic descriptives of the used variables and instances
+/// The size of this vector is four. The subvectors are:
+/// <ul>
+/// <li> Minimum.
+/// <li> Maximum.
+/// <li> Mean.
+/// <li> Standard deviation.
+/// </ul>
+
+Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
+{
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+
+    return descriptives(data, used_instances_indices, used_variables_indices);
 }
 
 
@@ -5550,7 +5568,7 @@ void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& 
 
 Tensor<Descriptives, 1> DataSet::scale_data_minimum_maximum()
 {
-    const Tensor<Descriptives, 1> data_descriptives = calculate_columns_descriptives();
+    const Tensor<Descriptives, 1> data_descriptives = calculate_variables_descriptives();
 
     scale_data_minimum_maximum(data_descriptives);
 
@@ -5564,7 +5582,7 @@ Tensor<Descriptives, 1> DataSet::scale_data_minimum_maximum()
 
 Tensor<Descriptives, 1> DataSet::scale_data_mean_standard_deviation()
 {
-    const Tensor<Descriptives, 1> data_descriptives = calculate_columns_descriptives();
+    const Tensor<Descriptives, 1> data_descriptives = calculate_variables_descriptives();
 
     scale_data_mean_standard_deviation(data_descriptives);
 
