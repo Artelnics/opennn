@@ -45,7 +45,7 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-
+/*
         Tensor<float, 1> in1(2);
 
         Tensor<float, 1> in2(2);
@@ -94,7 +94,7 @@ int main(void)
 
         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(d_out, 2);
 
-
+*/
 
 //        gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
 
