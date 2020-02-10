@@ -60,10 +60,11 @@ UnscalingLayer::~UnscalingLayer()
 
 Tensor<Index, 1> UnscalingLayer::get_input_variables_dimensions() const
 {
-/*
-    return Tensor<Index, 1>(1, descriptives.size());
-*/
-    return Tensor<Index, 1>();
+    Tensor<Index, 1> input_variables_dimensions(1);
+
+    input_variables_dimensions.setConstant(descriptives.size());
+
+    return input_variables_dimensions;
 }
 
 
@@ -105,13 +106,13 @@ Tensor<type, 2> UnscalingLayer::get_descriptives_matrix() const
     const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> statistics_matrix(neurons_number, 4);
-/*
+
     for(Index i = 0; i < neurons_number; i++)
     {
-        statistics_matrix.set_row(i, descriptives[i].to_vector());
+//        statistics_matrix.set_row(i, descriptives[i].to_vector());
     }
-*/
-    return(statistics_matrix);
+
+    return statistics_matrix;
 }
 
 
@@ -480,33 +481,6 @@ void UnscalingLayer::set_display(const bool& new_display)
 }
 
 
-/// Removes a single unscaling neuron from the unscaling layer.
-/// @param index Index of neuron to be removed.
-
-void UnscalingLayer::prune_neuron(const Index& index)
-{
-#ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    if(index >= neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void prune_neuron(const Index&) method.\n"
-               << "Index of unscaling neuron is equal or greater than number of unscaling neurons.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-/*
-    descriptives.erase(descriptives.begin() + static_cast<long long>(index));
-*/
-}
-
-
 /// Checks whether the outptus from the unscaling layer are inside the range defined by the minimums and maximum values. 
 /// It displays a warning message if they are outside.
 /// @param outputs Set of outptus from the unscaling layer.
@@ -641,7 +615,7 @@ Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<t
     {
     for(Index j = 0; j < neurons_number; j++)
     {
-        if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+        if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<type>::min())
         {
             if(display)
             {
@@ -655,7 +629,7 @@ Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<t
         }
         else
         {
-            outputs(i,j) = 0.5*(inputs(i,j) + 1.0)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+            outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
         }
     }
     }
@@ -673,30 +647,30 @@ Tensor<type, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const 
     const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> outputs(points_number, neurons_number);
-/*
+
     for(Index i = 0; i < points_number; i++)
     {
     for(Index j = 0; j < neurons_number; j++)
     {
-        if(descriptives[j].standard_deviation < 1.0e-99)
+        if(descriptives[j].standard_deviation < numeric_limits<type>::min())
         {
             if(display)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
-                          << "Standard deviation of output variable " << j << " is zero.\n"
-                          << "Those outputs won't be unscaled.\n";
+                     << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
+                     << "Standard deviation of output variable " << j << " is zero.\n"
+                     << "Those outputs won't be unscaled.\n";
             }
 
             outputs(i,j) = static_cast<type>(0.0);
         }
         else
         {
-            outputs(i,j) = inputs[j]*descriptives[j].standard_deviation + descriptives[j].mean;
+//            outputs(i,j) = inputs[j]*descriptives[j].standard_deviation + descriptives[j].mean;
         }
     }
     }
-*/
+
     return outputs;
 }
 
@@ -716,7 +690,7 @@ Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type,
     {
     for(Index j = 0; j < neurons_number; j++)
     {
-        if(descriptives[j].maximum - descriptives[j].minimum < 1.0e-99)
+        if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<type>::min())
         {
             if(display)
             {
@@ -730,7 +704,7 @@ Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type,
         }
         else
         {
-            outputs(i,j) = 0.5*(exp(inputs(i,j)-1.0))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+            outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j)-1))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
         }
     }
     }

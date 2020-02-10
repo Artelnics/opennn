@@ -82,7 +82,7 @@ public:
 
             activations.resize(batch_instances_number, neurons_number);
 
-            activations_derivatives.resize(batch_instances_number, neurons_number);
+            activations_derivatives_2d.resize(batch_instances_number, neurons_number);
         }
 
 
@@ -95,7 +95,7 @@ public:
             cout << activations << endl;
 
             cout << "Activations derivatives: " << endl;
-            cout << activations_derivatives << endl;
+            cout << activations_derivatives_2d << endl;
         }
 
         Index batch_instances_number = 0;
@@ -106,7 +106,8 @@ public:
 
         Tensor<type, 2> activations;
 
-        Tensor<type, 2> activations_derivatives;
+        Tensor<type, 2> activations_derivatives_2d;
+        Tensor<type, 3> activations_derivatives_3d;
 
     };
 
@@ -272,7 +273,9 @@ protected:
     void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
+    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
     const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(1, 1)};

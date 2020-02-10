@@ -295,8 +295,6 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
-   virtual BackPropagation calculate_back_propagation(const DataSet::Batch&) const = 0;
-
    virtual void calculate_error(BackPropagation&) const {}
 
    void calculate_back_propagation(const DataSet::Batch& batch,
@@ -353,7 +351,7 @@ public:
         // Output layer
 
         trainable_layers_pointers[trainable_layers_number-1]
-        ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
+        ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives_2d,
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers[trainable_layers_number-1].delta);
 
@@ -366,10 +364,9 @@ public:
           trainable_layers_pointers[i]
           ->calculate_hidden_delta(previous_layer_pointer,
                                    forward_propagation.layers[i].activations,
-                                   forward_propagation.layers[i].activations_derivatives,
+                                   forward_propagation.layers[i].activations_derivatives_2d,
                                    back_propagation.neural_network.layers[i+1].delta,
                                    back_propagation.neural_network.layers[i].delta);
-
       }
    }
 

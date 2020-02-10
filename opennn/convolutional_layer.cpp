@@ -24,12 +24,14 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 
 
 /// Inputs' dimensions modifier constructor.
-/// After setting new dimensions for the inputs, it creates and initializes a ConvolutionalLayer object with a number of filters of a given size.
+/// After setting new dimensions for the inputs, it creates and initializes a ConvolutionalLayer object
+/// with a number of filters of a given size.
 /// The initialization values are random values from a normal distribution.
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
 /// @param filters_dimensions A vector containing the number of filters, their rows and columns.
 
-ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions, const Tensor<Index, 1>& new_filters_dimensions) : Layer()
+ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
+                                       const Tensor<Index, 1>& new_filters_dimensions) : Layer()
 {
     layer_type = Layer::Convolutional;
 

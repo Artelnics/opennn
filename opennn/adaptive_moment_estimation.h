@@ -94,7 +94,7 @@ public:
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
    const type& get_maximum_time() const;
-   const bool& get_return_minimum_selection_error_neural_network() const;
+   const bool& get_choose_best_selection() const;
    const bool& get_apply_early_stopping() const;
    const Index& get_maximum_selection_error_increases() const;
 
@@ -134,7 +134,7 @@ public:
    void set_gradient_norm_goal(const type&);
    void set_maximum_selection_error_increases(const Index&);
    void set_maximum_time(const type&);
-   void set_return_minimum_selection_error_neural_network(const bool&);
+   void set_choose_best_selection(const bool&);
    void set_apply_early_stopping(const bool&);
 
    // Reserve training history
@@ -255,7 +255,7 @@ private:
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-   bool return_minimum_selection_error_neural_network;
+   bool choose_best_selection;
 
    /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 

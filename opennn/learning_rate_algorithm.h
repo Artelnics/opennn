@@ -303,6 +303,8 @@ protected:
 
    type learning_rate_tolerance;
 
+   type loss_tolerance = 1.0e-3;
+
    /// Big training rate value at which the algorithm displays a warning. 
 
    type warning_learning_rate;
