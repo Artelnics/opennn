@@ -128,18 +128,18 @@ check();
 
     type training_error = static_cast<type>(0.0);
 
-    #pragma omp parallel for reduction(+ : training_error)
+//    #pragma omp parallel for reduction(+ : training_error)
 
     for(Index i = 0; i < batches_number; i++)
     {
-        inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
+        inputs = data_set_pointer->get_input_data(training_batches.chip(i, 0));
+        targets = data_set_pointer->get_target_data(training_batches.chip(i, 0));
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        const type batch_error = sum_squared_error(outputs, targets);
+        const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, double_contraction);
 
-        training_error += batch_error;
+        training_error += batch_error(0);
     }
 
     return training_error/training_instances_number;
@@ -188,10 +188,11 @@ check();
         targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
+/*
         const type batch_error = sum_squared_error(outputs, targets);
 
         training_error += batch_error;
+*/
     }
 
     return training_error/training_instances_number;
@@ -247,9 +248,9 @@ check();
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        const type batch_error = sum_squared_error(outputs, targets);
+//        const type batch_error = sum_squared_error(outputs, targets);
 
-        selection_error += batch_error;
+//        selection_error += batch_error;
     }
 
     return selection_error/selection_instances_number;
@@ -275,7 +276,9 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-    return sum_squared_error(outputs, targets);
+//    return sum_squared_error(outputs, targets);
+
+    return 0.0;
 }
 
 
@@ -296,82 +299,9 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    return sum_squared_error(outputs, targets);
-}
+//    return sum_squared_error(outputs, targets);
 
-
-/// This method calculates the first order loss.
-/// It is used for optimization of parameters during training.
-/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
-
-LossIndex::BackPropagation MeanSquaredError::calculate_back_propagation() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-
-    const Index batches_number = training_batches.size();
-
-    BackPropagation back_propagation(this);
-
-    // Eigen stuff
-/*
-
-     #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
-        const Tensor<Layer::ForwardPropagation, 1> forward_propagation
-                = neural_network_pointer->calculate_forward_propagation(inputs);
-
-        const Tensor<type, 1> error_terms
-                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
-//        const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
-
-        const Tensor<Tensor<type, 2>, 1> layers_delta
-                = calculate_layers_delta(forward_propagation,
-                                         output_gradient);
-
-        const Tensor<type, 2> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
-
-        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);//dot(error_terms, error_terms);
-
-        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms,product_matrix_vector);//dot(error_terms_Jacobian_transpose, error_terms);
-
-          #pragma omp critical
-        {
-            back_propagation.loss += loss(0);
-            back_propagation.gradient += gradient;
-         }
-    }
-
-    back_propagation.loss /= static_cast<type>(training_instances_number);
-    back_propagation.gradient = (2.0/static_cast<type>(training_instances_number))*back_propagation.gradient;
-*/
-    return back_propagation;
+    return 0.0;
 }
 
 
@@ -576,24 +506,6 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Regularization
 
     write_regularization_XML(file_stream);
-}
-
-
-type MeanSquaredError::sum_squared_error(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-    cout << outputs << endl;
-    const Tensor<type, 2> error = targets - outputs;
-
-    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-
-    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
-/*
-
-    const Tensor<type, 0> sse = error.square().sum();
-cout << sse << endl;
-    return sse(0);
-*/
-    return sse(0);
 }
 
 }

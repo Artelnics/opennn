@@ -77,8 +77,6 @@ public:
 
    /// @todo Virtual method not implemented.
 
-   BackPropagation calculate_back_propagation(const DataSet::Batch&) const {return BackPropagation();}
-
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {

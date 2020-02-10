@@ -35,11 +35,13 @@
 namespace OpenNN
 {
 
-///Class of optimization algorithm based on Newton's method. An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
+/// Class of optimization algorithm based on Newton's method.
+/// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
 
 /// This concrete class represents a quasi-Newton training algorithm[1], used to minimize loss function.
 ///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
+/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 
 class QuasiNewtonMethod : public OptimizationAlgorithm
@@ -53,16 +55,11 @@ public:
 
    enum InverseHessianApproximationMethod{DFP, BFGS};
 
-
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit QuasiNewtonMethod();
 
-   // LOSS INDEX CONSTRUCTOR
-
    explicit QuasiNewtonMethod(LossIndex*);
-
-   
 
    explicit QuasiNewtonMethod(const tinyxml2::XMLDocument&);
 
@@ -104,7 +101,6 @@ public:
    const bool& get_apply_early_stopping() const;
 
    // Reserve training history
-
 
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
@@ -158,18 +154,33 @@ public:
 
    Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_DFP_inverse_hessian
-  (const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&,
+                                                 const Tensor<type, 1>&,
+                                                 const Tensor<type, 1>&,
+                                                 const Tensor<type, 1>&,
+                                                 const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_BFGS_inverse_hessian
-  (const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&,
+                                                  const Tensor<type, 1>&,
+                                                  const Tensor<type, 1>&,
+                                                  const Tensor<type, 1>&,
+                                                  const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
-   void update_inverse_hessian_approximation(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   Tensor<type, 2> calculate_inverse_hessian_approximation(const Tensor<type, 1>&,
+                                                           const Tensor<type, 1>&,
+                                                           const Tensor<type, 1>&,
+                                                           const Tensor<type, 1>&,
+                                                           const Tensor<type, 2>&) const;
+
+   void update_inverse_hessian_approximation(const Tensor<type, 1>&,
+                                             const Tensor<type, 1>&,
+                                             const Tensor<type, 1>&,
+                                             const Tensor<type, 1>&) const;
 
    Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
    Results perform_training();
+
    void perform_training_void();
 
    // Training history methods
@@ -222,7 +233,6 @@ private:
    /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
    type error_learning_rate;
-
 
    // Stopping criteria
 

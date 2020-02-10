@@ -53,9 +53,7 @@ public:
 
    explicit SumSquaredError(DataSet*);
 
-   explicit SumSquaredError(NeuralNetwork*, DataSet*);
-
-   
+   explicit SumSquaredError(NeuralNetwork*, DataSet*);   
 
    explicit SumSquaredError(const tinyxml2::XMLDocument&);
 
@@ -71,10 +69,6 @@ public:
    type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
-
-
-
-   // Terms methods
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -108,10 +102,7 @@ public:
 */
    }
 
-
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
-
-   type sum_squared_error(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
 
 private:
 

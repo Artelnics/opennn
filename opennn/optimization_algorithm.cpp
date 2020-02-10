@@ -455,34 +455,19 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case MinimumParametersIncrementNorm:
-    {
-        return "Minimum parameters increment norm";
-    }
-    case MinimumLossDecrease:
-    {
-        return "Minimum loss decrease";
-    }
-    case LossGoal:
-    {
-        return "Loss goal";
-    }
-    case GradientNormGoal:
-    {
-        return "Gradient norm goal";
-    }
-    case MaximumSelectionErrorIncreases:
-    {
-        return "Maximum selection error increases";
-    }
-    case MaximumEpochsNumber:
-    {
-        return "Maximum number of iterations";
-    }
-    case MaximumTime:
-    {
-        return "Maximum training time";
-    }
+        case MinimumParametersIncrementNorm: return "Minimum parameters increment norm";
+
+        case MinimumLossDecrease: return "Minimum loss decrease";
+
+        case LossGoal: return "Loss goal";
+
+        case GradientNormGoal: return "Gradient norm goal";
+
+        case MaximumSelectionErrorIncreases: return "Maximum selection error increases";
+
+        case MaximumEpochsNumber: return "Maximum number of iterations";
+
+        case MaximumTime: return "Maximum training time";
     }
 
     return string();
