@@ -1264,7 +1264,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        training_error = training_loss/static_cast<type>(batches_number);      
 
-       regularization = loss_index_pointer->calculate_regularization();
+       regularization = loss_index_pointer->calculate_regularization(parameters);
 
        if(epoch == 0)
        {
