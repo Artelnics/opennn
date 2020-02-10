@@ -137,7 +137,7 @@ check();
 
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, double_contraction);
+        const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
 
         training_error += batch_error(0);
     }
@@ -283,7 +283,7 @@ check();
 
 
 type MeanSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices,
-                                               const Tensor<type, 1>& parameters) const
+                                             const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 

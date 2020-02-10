@@ -526,7 +526,7 @@ protected:
 
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
 
-   const Eigen::array<IndexPair<Index>, 2> double_contraction = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
+   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }

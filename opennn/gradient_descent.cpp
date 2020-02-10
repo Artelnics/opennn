@@ -753,10 +753,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+   const Index training_instances_number = data_set_pointer->get_training_instances_number();
+   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+
    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
-
-   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
    // Neural network stuff
 

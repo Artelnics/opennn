@@ -807,10 +807,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       do
       {        
-/*
-         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
+//         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
 
-         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
+//         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
 
          const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 
@@ -828,10 +827,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          }
          else
          {
-             terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
+//             terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
+
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
-*/
       }
       while(damping_parameter < maximum_damping_parameter);
 
@@ -951,10 +950,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       else if(epoch == maximum_epochs_number)
       {
-         if(display)
-         {
-            cout << "Epoch " << epoch << ": Maximum number of iterations reached." << endl;
-         }
+         if(display) cout << "Epoch " << epoch << ": Maximum number of iterations reached." << endl;
 
          stop_training = true;
 
@@ -1861,18 +1857,21 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
-Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b) const
+Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A,
+                                                                                  const Tensor<type, 1>& b) const
 {
     const Index n = A.dimension(0);
 
     Tensor<type, 1> x(n);
-/*
-    const Map<Tensor<type, 2>> A_eigen((type*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
-    const Map<VectorXd> b_eigen((type*)b.data(), static_cast<Index>(n));
-    Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
 
-    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-*/
+//    const Map<Tensor<type, 2>> A_eigen((type*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
+
+//    const Map<VectorXd> b_eigen(b.data(), n);
+
+//    Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
+
+//    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
+
     return x;
 }
 

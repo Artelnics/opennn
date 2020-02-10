@@ -587,17 +587,6 @@ void RecurrentLayer::set_parameters_random()
 }
 
 
-/// Calculates the norm of a layer parameters vector.
-
-type RecurrentLayer::calculate_parameters_norm() const
-{
-/*
-    return l2_norm(get_parameters());
-*/
-    return 0.0;
-}
-
-
 Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs) const
 {
     #ifdef __OPENNN_DEBUG__

@@ -45,19 +45,15 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit GradientDescent(); 
 
-   // LOSS INDEX CONSTRUCTOR
-
    explicit GradientDescent(LossIndex*);
-
-
 
    explicit GradientDescent(const tinyxml2::XMLDocument&); 
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~GradientDescent();   
 

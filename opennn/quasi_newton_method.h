@@ -172,11 +172,6 @@ public:
                                                            const Tensor<type, 1>&,
                                                            const Tensor<type, 2>&) const;
 
-   void update_inverse_hessian_approximation(const Tensor<type, 1>&,
-                                             const Tensor<type, 1>&,
-                                             const Tensor<type, 1>&,
-                                             const Tensor<type, 1>&) const;
-
    Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
    Results perform_training();
