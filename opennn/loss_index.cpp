@@ -656,7 +656,7 @@ type LossIndex::calculate_regularization() const
        {
 //            return l1_norm(neural_network_pointer->get_parameters());
        }
-       case L2:
+       break; case L2:
        {
             Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -694,7 +694,7 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
        {
 //            return l1_norm(parameters);
        }
-       case L2:
+       break; case L2:
        {
             const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
 
@@ -730,7 +730,7 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
        {
 //            return l1_norm_gradient(neural_network_pointer->get_parameters());
        }
-       case L2:
+       break; case L2:
        {
 //            return l2_norm_gradient(neural_network_pointer->get_parameters());
 
