@@ -67,8 +67,6 @@ public:
 
    // Gradient methods
 
-   
-
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
@@ -79,10 +77,10 @@ public:
         #endif
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
-                + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations*static_cast<type>(-1.0) + static_cast<type>(1.0));
-*/
+
+//        back_propagation.output_gradient
+//                = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
+//                + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations*static_cast<type>(-1.0) + static_cast<type>(1.0));
    }
 
 

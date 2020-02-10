@@ -545,10 +545,13 @@ type LossIndex::calculate_training_loss(const Tensor<type, 1>& parameters) const
 {
     switch(regularization_method)
     {
-        case NoRegularization: return calculate_training_error_parameters(parameters);
+        case NoRegularization:
 
-        default: return calculate_training_error_parameters(parameters)
-                + regularization_weight*calculate_regularization(parameters);
+            return calculate_training_error_parameters(parameters);
+
+        default:
+
+            return calculate_training_error_parameters(parameters) + regularization_weight*calculate_regularization(parameters);
     }
 }
 
@@ -620,18 +623,11 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-       case L1:
-       {
-            return "L1_NORM";
-       }
-       case L2:
-       {
-            return "L2_NORM";
-       }
-       case NoRegularization:
-       {
-            return "NO_REGULARIZATION";
-       }
+       case L1: return "L1_NORM";
+
+       case L2: return "L2_NORM";
+
+       case NoRegularization: return "NO_REGULARIZATION";
     }
 
     return string();
@@ -768,7 +764,6 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
 
 Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters) const
 {
-
     switch(regularization_method)
     {
        case L1:
@@ -1191,7 +1186,6 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
-
         const Tensor<type, 1> batch_gradient = calculate_batch_error_gradient(training_batches.chip(i,0));
 
         #pragma omp critical

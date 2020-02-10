@@ -198,10 +198,6 @@ public:
 
    void set_parameters_random();
 
-   // Parameters norm 
-
-   type calculate_parameters_norm() const;
-
    // Long short term memory layer combinations
 
    Tensor<type, 1> calculate_forget_combinations(const Tensor<type, 1>&) const;

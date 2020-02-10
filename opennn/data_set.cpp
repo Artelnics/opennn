@@ -8396,18 +8396,18 @@ void DataSet::generate_paraboloid_data(const Index& instances_number, const Inde
     const Index inputs_number = variables_number-1;
 
     set(instances_number, variables_number);
-/*
-    data.setRandom(-5.12, 5.12);
+
+    data.setRandom();
 
     for(Index i = 0; i < instances_number; i++)
     {
-        const type norm = l2_norm(data.chip(i, 0).delete_last(1));
+//        const type norm = l2_norm(data.chip(i, 0).delete_last(1));
 
-        data(i, inputs_number) = norm*norm;
+//        data(i, inputs_number) = norm*norm;
     }
 
-    scale_minimum_maximum(data);
-*/
+//    scale_minimum_maximum(data);
+
 }
 
 

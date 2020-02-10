@@ -58,12 +58,12 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 /// XML constructor. 
 /// It creates a cross entropy error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from a TinyXML document->
-/// @param sum_squared_error_document XML document with the class members. 
+/// @param cross_entropy_error_document XML document with the class members.
 
-CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& sum_squared_error_document)
- : LossIndex(sum_squared_error_document)
+CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& cross_entropy_error_document)
+ : LossIndex(cross_entropy_error_document)
 {
-    from_XML(sum_squared_error_document);
+    from_XML(cross_entropy_error_document);
 }
 
 

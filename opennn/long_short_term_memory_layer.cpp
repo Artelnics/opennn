@@ -1150,20 +1150,8 @@ void LongShortTermMemoryLayer::set_parameters_random()
 }
 
 
-/// Calculates the norm of a layer parameters vector. 
-
-type LongShortTermMemoryLayer::calculate_parameters_norm() const
-{
-/*
-    return(l2_norm(get_parameters()));
-*/
-    return 0.0;
-}
-
-
 Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 1>& inputs) const
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = get_inputs_number();

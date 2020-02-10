@@ -342,8 +342,8 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// @param initial_learning_rate Initial training rate to start the algorithm. 
 
 pair<type,type> LearningRateAlgorithm::calculate_directional_point(const type& loss,
-                                                                  const Tensor<type, 1>& training_direction,
-                                                                  const type& initial_learning_rate) const
+                                                                   const Tensor<type, 1>& training_direction,
+                                                                   const type& initial_learning_rate) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -479,9 +479,10 @@ pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(const t
    pair<type,type> directional_point;
 
    directional_point.first = initial_learning_rate;
+
    directional_point.second = loss_index_pointer->calculate_training_loss(training_direction, initial_learning_rate);
 
-   return(directional_point);
+   return directional_point;
 }
 
 
