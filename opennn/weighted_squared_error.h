@@ -90,8 +90,7 @@ public:
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 
-   LossIndex::BackPropagation calculate_back_propagation() const;
-   LossIndex::BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
+
 
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const

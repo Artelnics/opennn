@@ -244,32 +244,6 @@ void DataSet::Column::set_type(const string& new_column_type)
 }
 
 
-/// Adds a category to the categories vector of this column.
-/// It also adds a default use for the category
-/// @param new_category String that contains the name of the new category
-
-void DataSet::Column::add_category(const string & new_category)
-{
-    const Index old_categories_number = categories.size();
-
-    Tensor<string, 1> old_categories = categories;
-    Tensor<VariableUse, 1> old_categories_uses = categories_uses;
-
-    categories.resize(old_categories_number+1);
-    categories_uses.resize(old_categories_number+1);
-
-    for(Index category_index = 0; category_index < old_categories_number; category_index++)
-    {
-        categories(category_index) = old_categories(category_index);
-        categories_uses(category_index) = column_use;
-    }
-
-    categories(old_categories_number) = new_category;
-    categories_uses(old_categories_number) = column_use;
-}
-
-
-
 /// Sets the categories uses in the data set.
 /// @param new_categories_uses String vector that contains the new categories of the data set.
 
@@ -733,14 +707,19 @@ Tensor<type, 1> DataSet::get_instances_uses_percentages() const
     const Index testing_instances_number = get_testing_instances_number();
     const Index unused_instances_number = get_unused_instances_number();
 
-    const type training_instances_percentage = static_cast<type>(training_instances_number)*100.0/static_cast<type>(instances_number);
-    const type selection_instances_percentage = static_cast<type>(selection_instances_number)*100.0/static_cast<type>(instances_number);
-    const type testing_instances_percentage = static_cast<type>(testing_instances_number)*100.0/static_cast<type>(instances_number);
-    const type unused_instances_percentage = static_cast<type>(unused_instances_number)*100.0/static_cast<type>(instances_number);
-/*
-    return Tensor<type, 1>({training_instances_percentage, selection_instances_percentage, testing_instances_percentage, unused_instances_percentage});
-*/
-    return Tensor<type, 1>();
+    const type training_instances_percentage = training_instances_number*100/static_cast<type>(instances_number);
+    const type selection_instances_percentage = selection_instances_number*100/static_cast<type>(instances_number);
+    const type testing_instances_percentage = testing_instances_number*100/static_cast<type>(instances_number);
+    const type unused_instances_percentage = unused_instances_number*100/static_cast<type>(instances_number);
+
+    Tensor<type, 1> instances_uses_percentage(4);
+
+    instances_uses_percentage.setValues({training_instances_percentage,
+                                         selection_instances_percentage,
+                                         testing_instances_percentage,
+                                         unused_instances_percentage});
+
+    return instances_uses_percentage;
 }
 
 
@@ -1724,22 +1703,23 @@ Tensor<string, 1> DataSet::get_variables_names() const
 
     Tensor<string, 1> variables_names(variables_number);
 
-    Index variable_index = 0;
+    Index index = 0;
 
-    for(Index column_index = 0; column_index < columns.size(); column_index++)
+    for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(column_index).type == Categorical)
+        if(columns[i].type == Categorical)
         {
-            for(Index category_index = 0; category_index < columns(column_index).categories.size(); category_index++)
+//            variables_names.embed(index, columns[i].categories);
+            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
             {
-                variables_names(variable_index) = (columns(column_index).categories)(category_index);
-                variable_index++;
+                variables_names(i + index) = (columns[i].categories_uses)(i);
             }
+            index += columns[i].categories.size();
         }
         else
         {
-            variables_names(variable_index) = columns(column_index).name;
-            variable_index++;
+            variables_names[index] = columns[i].name;
+            index++;
         }
     }
 
@@ -2248,9 +2228,8 @@ Index DataSet::get_unused_variables_number() const
 
 Index DataSet::get_variable_index(const string& name) const
 {
-/*
     const Tensor<string, 1> names = get_variables_names();
-
+/*
     const Index index = names.get_first_index(name);
 
     return index;
@@ -2393,31 +2372,6 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 }
 
 
-vector<Index> DataSet::get_input_variables_indices_stl() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index input_variables_number = input_variables_indices.size();
-
-    vector<Index> input_variables_indices_stl(input_variables_number);
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        input_variables_indices_stl[i] = input_variables_indices[i];
-    }
-
-    return input_variables_indices_stl;
-}
-
-
-vector<Index> DataSet::get_target_variables_indices_stl() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    return vector<Index>();
-}
-
-
 /// Sets the uses of the data set columns.
 /// @param new_columns_uses String vector that contains the new uses to be set,
 /// note that this vector needs to be the size of the number of columns in the data set.
@@ -2432,7 +2386,9 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 
         buffer << "OpenNN Exception DataSet class.\n"
                << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
-               << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
+               << "Size of columns uses ("
+               << new_columns_uses_size << ") must be equal to columns size ("
+               << columns.size() << "). \n";
 
         throw logic_error(buffer.str());
     }
@@ -2441,10 +2397,12 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-/*
-    input_variables_dimensions.resize(1, get_input_variables_number());
-    target_variables_dimensions.resize(1, get_target_variables_number());
-*/
+
+    input_variables_dimensions.resize(1);
+    input_variables_dimensions.setConstant(get_input_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -2471,10 +2429,12 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
     {
         columns[i].set_use(new_columns_uses[i]);
     }
-/*
-    input_variables_dimensions.resize(1, get_input_variables_number());
-    target_variables_dimensions.resize(1, get_target_variables_number());
-*/
+
+    input_variables_dimensions.resize(1);
+    input_variables_dimensions.setConstant(get_input_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -3089,7 +3049,6 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& instances_indic
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     return get_subtensor_data(instances_indices, target_variables_indices);
-
 }
 
 
@@ -6177,29 +6136,13 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
    {
-    case NoUnscaling:
-    {
-        // Do nothing
-    }
-    break;
+    case NoUnscaling: break;
 
-    case MinimumMaximum:
-    {
-        scale_targets_minimum_maximum(targets_descriptives);
-    }
-        break;
+    case MinimumMaximum: scale_targets_minimum_maximum(targets_descriptives); break;
 
-    case MeanStandardDeviation:
-    {
-        scale_targets_mean_standard_deviation(targets_descriptives);
-    }
-        break;
+    case MeanStandardDeviation: scale_targets_mean_standard_deviation(targets_descriptives); break;
 
-    case Logarithmic:
-    {
-        scale_targets_logarithmic(targets_descriptives);
-    }
-        break;
+    case Logarithmic: scale_targets_logarithmic(targets_descriptives); break;
 
     default:
     {
@@ -7374,7 +7317,6 @@ void DataSet::save(const string& file_name) const
 /// </ul>
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param file_name Name of data set XML-type file.
-
 
 void DataSet::load(const string& file_name)
 {
@@ -8829,7 +8771,6 @@ void DataSet::read_csv()
     else
     {
         read_csv_2_complete();
-
         read_csv_3_complete();
     }
 
@@ -9056,7 +8997,9 @@ void DataSet::read_csv_2_simple()
 
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void read_csv() method.\n"
-                   << "Line " << line_number << ": Size of tokens(" << tokens_count << ") is not equal to number of columns(" << columns_number << ").\n";
+                   << "Line " << line_number << ": Size of tokens("
+                   << tokens_count << ") is not equal to number of columns("
+                   << columns_number << ").\n";
 
             throw logic_error(buffer.str());
         }
@@ -9139,7 +9082,7 @@ void DataSet::read_csv_3_simple()
             }
             else
             {
-                data(instance_index, j) = stod(tokens[j]);
+                data(instance_index, j) = static_cast<type>(stod(tokens[j]));
             }
         }
 
@@ -9158,121 +9101,121 @@ void DataSet::read_csv_2_complete()
 {
     ifstream file(data_file_name.c_str());
 
-    if(!file.is_open())
-    {
-       ostringstream buffer;
+     if(!file.is_open())
+     {
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
-    }
+        throw logic_error(buffer.str());
+     }
 
-    const char separator_char = get_separator_char();
+     const char separator_char = get_separator_char();
 
-    string line;
+     string line;
 
-    Tensor<string, 1> tokens;
+     Tensor<string, 1> tokens;
 
-    Index lines_count = 0;
-    Index tokens_count;
+     Index lines_count = 0;
+     Index tokens_count;
 
-    const Index columns_number = columns.size();
+     const Index columns_number = columns.size();
 
-    for(unsigned j = 0; j < columns_number; j++)
-    {
-        if(columns[j].type != Categorical)
-        {
-            columns[j].column_use = Input;
-        }
-    }
-
-    // Skip header
-
-    if(has_columns_names)
-    {
-        while(file.good())
-        {
-            getline(file, line);
-
-            trim(line);
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
-
-    // Read data
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        trim(line);
-
-        if(line.empty()) continue;
-
-        tokens = get_tokens(line, separator_char);
-
-        tokens_count = tokens.size();
-
-        if(static_cast<unsigned>(tokens_count) != columns_number)
-        {
-            const string message =
-//                    "Instance " + to_string(lines_count+1) + " error:\n"
-//                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
-                    "Please check the format of the data file.";
-
-            throw logic_error(message);
-        }
-
-        for(unsigned j = 0; j < columns_number; j++)
-        {
-            trim(tokens(j));
-
-            if(columns(j).type == Categorical)
-            {
-                if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
-                {
-                    if(tokens(j) == missing_values_label) continue;
-
-                    columns(j).add_category(tokens(j));
-                }
-            }
-        }
-
-        lines_count++;
-    }
-
-    for(unsigned j = 0; j < columns_number; j++)
-    {
-         if(columns(j).type == Categorical)
+     for(unsigned j = 0; j < columns_number; j++)
+     {
+         if(columns[j].type != Categorical)
          {
-             if(columns(j).categories.size() == 2)
+             columns[j].column_use = Input;
+         }
+     }
+
+     // Skip header
+
+     if(has_columns_names)
+     {
+         while(file.good())
+         {
+             getline(file, line);
+
+             trim(line);
+
+             if(line.empty()) continue;
+
+             break;
+         }
+     }
+
+     // Read data
+
+     while(file.good())
+     {
+         getline(file, line);
+
+         trim(line);
+
+         if(line.empty()) continue;
+
+         tokens = get_tokens(line, separator_char);
+
+         tokens_count = tokens.size();
+
+         if(static_cast<unsigned>(tokens_count) != columns_number)
+         {
+             const string message =
+ //                    "Instance " + to_string(lines_count+1) + " error:\n"
+ //                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
+                     "Please check the format of the data file.";
+
+             throw logic_error(message);
+         }
+
+         for(unsigned j = 0; j < columns_number; j++)
+         {
+             trim(tokens(j));
+
+             if(columns(j).type == Categorical)
              {
-                 columns(j).type = Binary;
-                 columns(j).categories.resize(0);
-                 columns(j).categories_uses.resize(0);
+                 if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                 {
+                     if(tokens(j) == missing_values_label) continue;
+
+                     columns(j).add_category(tokens(j));
+                 }
              }
          }
-    }
 
-    file.close();
+         lines_count++;
+     }
 
-    const Index instances_number = static_cast<unsigned>(lines_count);
+     for(unsigned j = 0; j < columns_number; j++)
+     {
+          if(columns(j).type == Categorical)
+          {
+              if(columns(j).categories.size() == 2)
+              {
+                  columns(j).type = Binary;
+                  columns(j).categories.resize(0);
+                  columns(j).categories_uses.resize(0);
+              }
+          }
+     }
 
-    const Index variables_number = get_variables_number();
+     file.close();
 
-    data.resize(static_cast<Index>(instances_number), variables_number);
-    data.setZero();
+     const Index instances_number = static_cast<unsigned>(lines_count);
 
-    set_default_columns_uses();
+     const Index variables_number = get_variables_number();
 
-    instances_uses.resize(static_cast<Index>(instances_number));
+     data.resize(static_cast<Index>(instances_number), variables_number);
+     data.setZero();
 
-    split_instances_random();
+     set_default_columns_uses();
+
+     instances_uses.resize(static_cast<Index>(instances_number));
+
+     split_instances_random();
 }
 
 
@@ -9532,12 +9475,6 @@ bool DataSet::has_time_variables() const
 }
 
 
-void DataSet::get_tensor_2_d(const Tensor<Index, 1>& instances_indices, const Tensor<Index, 1>& variables_indices, Tensor<type, 2>& data)
-{
-
-}
-
-
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
     const Index columns_number = get_columns_number();
@@ -9615,7 +9552,8 @@ Index DataSet::count_nan() const
 }
 
 
-void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const
+void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
+                                                const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
 
@@ -9673,27 +9611,26 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
     type* inputs_2d_pointer = inputs_2d.data();
     type* targets_2d_pointer = targets_2d.data();
 
-    Index instance;
-    Index variable;
+    Index instance = 0;
+    Index variable = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index j = 0; j < inputs_number; j++)
     {
-        instance = instances[static_cast<size_t>(i)];
+        variable = inputs[j];
 
-        for(Index j = 0; j < inputs_number; j++)
+        for(Index i = 0; i < rows_number; i++)
         {
-            variable = inputs[static_cast<size_t>(j)];
+            instance = instances[i];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
 
-        for(Index j = 0; j < targets_number; j++)
-        {
+//        for(Index j = 0; j < targets_number; j++)
+//        {
 //            variable = targets_pointer[j];
-            variable = targets[static_cast<size_t>(j)];
 
-            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
+//            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+//        }
     }
 }
 

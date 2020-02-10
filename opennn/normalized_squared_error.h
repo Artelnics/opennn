@@ -110,9 +110,6 @@ public:
    }
 
 
-   LossIndex::BackPropagation calculate_back_propagation() const;
-
-   LossIndex::BackPropagation calculate_back_propagation(const DataSet::Batch&) const;
 
    // Error terms methods
 

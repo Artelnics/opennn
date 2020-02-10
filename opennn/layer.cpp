@@ -517,7 +517,6 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-
              break;
         }
 
@@ -864,7 +863,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
         {
              GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-
              break;
         }
 
@@ -879,18 +877,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
             throw logic_error(buffer.str());
         }
     }
-
-//    const Index n = x.size();
-
-//    #pragma omp parallel for
-
-//    for(Index i = 0; i < n; i++)
-//    {
-//        const type exponential = exp(-x(i));
-
-//        y(i) = exponential/((1.0 + exponential)*(static_cast<type>(1.0) + exponential));
-//    }
-
 }
 
 
@@ -1438,9 +1424,52 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 }
 
 
+void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
+{
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             y.device(*default_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
+
+             break;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            y.device(*thread_pool_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
+
+             break;
+         }
+
+        case Device::EigenGpu:
+        {
+             GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+             break;
+        }
+
+         default:
+         {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   << "Unknown device.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+}
+
+
 /// @todo Fails
 
-void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
+void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
 {
     switch(device_pointer->get_type())
     {

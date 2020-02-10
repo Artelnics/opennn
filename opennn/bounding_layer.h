@@ -101,9 +101,9 @@ public:
 
    void set_default();
 
-   // Pruning and growing
+   
 
-   void prune_neuron(const Index&);
+   
 
    // Lower and upper bounds
 

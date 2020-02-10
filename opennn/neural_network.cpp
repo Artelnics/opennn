@@ -1147,12 +1147,10 @@ void NeuralNetwork::set_parameters_random()
 type NeuralNetwork::calculate_parameters_norm() const
 {
     const Tensor<type, 1> parameters = get_parameters();
-/*
-    const type parameters_norm = l2_norm(parameters);
 
-    return parameters_norm;
-*/
-    return 0;
+    const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
+
+    return parameters_norm(0);
 }
 
 

@@ -696,7 +696,10 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
        }
        case L2:
        {
-//            return l2_norm(parameters);
+            const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
+
+            return parameters_norm(0);
+;
        }
        case NoRegularization:
        {
@@ -1016,7 +1019,6 @@ LossIndex::BackPropagation::~BackPropagation()
 
 type LossIndex::calculate_training_error() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1025,7 +1027,7 @@ check();
 
     //Neural network
 
-     bool is_forecasting = false;
+    bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
