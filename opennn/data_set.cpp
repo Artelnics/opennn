@@ -9101,122 +9101,121 @@ void DataSet::read_csv_2_complete()
 {
     ifstream file(data_file_name.c_str());
 
-    if(!file.is_open())
-    {
-       ostringstream buffer;
+     if(!file.is_open())
+     {
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
-    }
+        throw logic_error(buffer.str());
+     }
 
-    const char separator_char = get_separator_char();
+     const char separator_char = get_separator_char();
 
-    string line;
+     string line;
 
-    Tensor<string, 1> tokens;
+     Tensor<string, 1> tokens;
 
-    Index lines_count = 0;
-    Index tokens_count;
+     Index lines_count = 0;
+     Index tokens_count;
 
-    const Index columns_number = columns.size();
+     const Index columns_number = columns.size();
 
-    for(unsigned j = 0; j < columns_number; j++)
-    {
-        if(columns[j].type != Categorical)
-        {
-            columns[j].column_use = Input;
-        }
-    }
-
-    // Skip header
-
-    if(has_columns_names)
-    {
-        while(file.good())
-        {
-            getline(file, line);
-
-            trim(line);
-
-            if(line.empty()) continue;
-
-            break;
-        }
-    }
-
-    // Read data
-
-    while(file.good())
-    {
-        getline(file, line);
-
-        trim(line);
-
-        if(line.empty()) continue;
-
-        tokens = get_tokens(line, separator_char);
-
-        tokens_count = tokens.size();
-
-        if(static_cast<unsigned>(tokens_count) != columns_number)
-        {
-            const string message =
-//                    "Instance " + to_string(lines_count+1) + " error:\n"
-//                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
-                    "Please check the format of the data file.";
-
-            throw logic_error(message);
-        }
-
-        for(unsigned j = 0; j < columns_number; j++)
-        {
-            trim(tokens[j]);
-/*
-            if(columns[j].type == Categorical)
-            {
-                if(find(columns[j].categories.begin(), columns[j].categories.end(), tokens[j]) == columns[j].categories.end())
-                {
-                    if(tokens[j] == missing_values_label) continue;
-
-                    columns[j].categories.push_back(tokens[j]);
-                    columns[j].categories_uses.push_back(Input);
-                }
-            }
-*/
-        }
-
-        lines_count++;
-    }
-
-    for(unsigned j = 0; j < columns_number; j++)
-    {
-         if(columns[j].type == Categorical)
+     for(unsigned j = 0; j < columns_number; j++)
+     {
+         if(columns[j].type != Categorical)
          {
-             if(columns[j].categories.size() == 2)
+             columns[j].column_use = Input;
+         }
+     }
+
+     // Skip header
+
+     if(has_columns_names)
+     {
+         while(file.good())
+         {
+             getline(file, line);
+
+             trim(line);
+
+             if(line.empty()) continue;
+
+             break;
+         }
+     }
+
+     // Read data
+
+     while(file.good())
+     {
+         getline(file, line);
+
+         trim(line);
+
+         if(line.empty()) continue;
+
+         tokens = get_tokens(line, separator_char);
+
+         tokens_count = tokens.size();
+
+         if(static_cast<unsigned>(tokens_count) != columns_number)
+         {
+             const string message =
+ //                    "Instance " + to_string(lines_count+1) + " error:\n"
+ //                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
+                     "Please check the format of the data file.";
+
+             throw logic_error(message);
+         }
+
+         for(unsigned j = 0; j < columns_number; j++)
+         {
+             trim(tokens(j));
+
+             if(columns(j).type == Categorical)
              {
-                 columns[j].type = Binary;
-                 columns[j].categories.resize(0);
-                 columns[j].categories_uses.resize(0);
+                 if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                 {
+                     if(tokens(j) == missing_values_label) continue;
+
+                     columns(j).add_category(tokens(j));
+                 }
              }
          }
-    }
 
-    file.close();
+         lines_count++;
+     }
 
-    const Index instances_number = static_cast<unsigned>(lines_count);
+     for(unsigned j = 0; j < columns_number; j++)
+     {
+          if(columns(j).type == Categorical)
+          {
+              if(columns(j).categories.size() == 2)
+              {
+                  columns(j).type = Binary;
+                  columns(j).categories.resize(0);
+                  columns(j).categories_uses.resize(0);
+              }
+          }
+     }
 
-    const Index variables_number = get_variables_number();
+     file.close();
 
-    data.resize(static_cast<Index>(instances_number), variables_number);
+     const Index instances_number = static_cast<unsigned>(lines_count);
 
-    set_default_columns_uses();
+     const Index variables_number = get_variables_number();
 
-    instances_uses.resize(static_cast<Index>(instances_number));
+     data.resize(static_cast<Index>(instances_number), variables_number);
+     data.setZero();
 
-    split_instances_random();
+     set_default_columns_uses();
+
+     instances_uses.resize(static_cast<Index>(instances_number));
+
+     split_instances_random();
 }
 
 
@@ -9277,13 +9276,13 @@ void DataSet::read_csv_3_complete()
 
           for(Index j = 0; j < columns_number; j++)
           {
-              trim(tokens[j]);
+              trim(tokens(j));
 
               erase(line, '"');
 
-                if(columns[j].type == Numeric)
+                if(columns(j).type == Numeric)
                 {
-                    if(tokens[j] == missing_values_label || tokens[j].empty())
+                    if(tokens(j) == missing_values_label || tokens(j).empty())
                     {
                         data(instance_index, j) = static_cast<type>(NAN);
                     }
@@ -9291,7 +9290,7 @@ void DataSet::read_csv_3_complete()
                     {
                         try
                         {
-                            data(instance_index, j) = static_cast<type>(stod(tokens[j]));
+                            data(instance_index, j) = stod(tokens(j));
                         }
                         catch (invalid_argument)
                         {
@@ -9305,44 +9304,44 @@ void DataSet::read_csv_3_complete()
                         }
                     }
                 }
-                else if(columns[j].type == DateTime)
+                else if(columns(j).type == DateTime)
                 {
-                    if(tokens[j] == missing_values_label || tokens[j].empty())
+                    if(tokens(j) == missing_values_label || tokens(j).empty())
                     {
                         data(instance_index, j) = static_cast<type>(NAN);
                     }
                     else
                     {
-                        data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens[j], gmt));
+                        data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
                     }
                 }
-                else if(columns[j].type == Categorical)
+                else if(columns(j).type == Categorical)
                 {
                     const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
                     for(Index k = 0; k < variable_indices.size(); k++)
                     {
-                        if(tokens[j] == missing_values_label)
+                        if(tokens(j) == missing_values_label)
                         {
-                            data(instance_index, variable_indices[k]) = static_cast<type>(NAN);
+                            data(instance_index, variable_indices(k)) = static_cast<type>(NAN);
                         }
-                        else if(tokens[j] == columns[j].categories[k])
+                        else if(tokens(j) == columns(j).categories(k))
                         {
-                            data(instance_index, variable_indices[k]) = 1.0;
+                            data(instance_index, variable_indices(k)) = 1.0;
                         }
                     }
                 }
-                else if(columns[j].type == Binary)
+                else if(columns(j).type == Binary)
                 {
                     const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
-                    if(tokens[j] == missing_values_label)
+                    if(tokens(j) == missing_values_label)
                     {
-                        data(instance_index, variable_indices[0]) = static_cast<type>(NAN);
+                        data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
                     }
-                    else if(tokens[j] == columns[j].name)
+                    else if(tokens(j) == columns(j).name)
                     {
-                        data(instance_index, variable_indices[0]) = 1.0;
+                        data(instance_index, variable_indices(0)) = 1.0;
                     }
                 }
           }
