@@ -543,13 +543,12 @@ type LossIndex::calculate_training_loss() const
 
 type LossIndex::calculate_training_loss(const Tensor<type, 1>& parameters) const
 {
-    if(regularization_method == NoRegularization)
+    switch(regularization_method)
     {
-        return calculate_training_error_parameters(parameters);
-    }
-    else
-    {
-        return calculate_training_error_parameters(parameters) + regularization_weight*calculate_regularization(parameters);
+        case NoRegularization: return calculate_training_error_parameters(parameters);
+
+        default: return calculate_training_error_parameters(parameters)
+                + regularization_weight*calculate_regularization(parameters);
     }
 }
 
@@ -1033,7 +1032,7 @@ check();
 
     // Data set
 
-    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const Index batches_number = training_batches.size();
 
@@ -1048,15 +1047,12 @@ check();
         training_error += batch_error;
     }
 
-    cout<<training_error;
-
     return training_error;
 }
 
 
 type LossIndex::calculate_training_error_parameters(const Tensor<type, 1>& parameters) const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1071,7 +1067,7 @@ check();
 
     // Data set
 
-    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const Index batches_number = training_batches.dimension(0);
 
