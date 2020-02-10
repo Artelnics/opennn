@@ -2904,7 +2904,7 @@ const string& DataSet::get_missing_values_label() const
 
 const Index& DataSet::get_lags_number() const
 {
-    return lags_number;
+    return(lags_number);
 }
 
 
@@ -2912,7 +2912,7 @@ const Index& DataSet::get_lags_number() const
 
 const Index& DataSet::get_steps_ahead() const
 {
-    return (steps_ahead);
+    return(steps_ahead);
 }
 
 

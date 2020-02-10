@@ -1387,7 +1387,7 @@ Histogram histogram(const Tensor<bool, 1>& vector)
 /// The second subvector contains the center of the bins.
 /// @param vector
 /// @param bins_number
-Histogram histogram(const Tensor<Index, 1>/*& vector*/, const Index/*& bins_number*/)
+Histogram histogram(const Tensor<Index, 1>/*& vector*/, const Index& bins_number)
 {
 
     #ifdef __OPENNN_DEBUG__
@@ -2025,7 +2025,7 @@ type range(const Tensor<type, 1>& vector)
 /// @todo
 
 
-Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>/*& rows_indices*/, const Tensor<Index, 1>& columns_indices)
+Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
 {
     const Index columns_number = columns_indices.size();
 
@@ -2425,11 +2425,13 @@ Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1
 Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
 {
 
-//    const Index rows_number = matrix.dimension(0);
+
 
     const Index columns_number = matrix.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
+
+        const Index rows_number = matrix.dimension(0);
 
 if(rows_number == 0)
 {
@@ -2545,7 +2547,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
 
    const Index row_indices_size = row_indices.size();
@@ -2659,9 +2661,11 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+
 
    #ifdef __OPENNN_DEBUG__
+
+    const Index columns_number = matrix.dimension(1);
 
    if(rows_number == 0)
    {
@@ -2885,10 +2889,10 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 type median(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+
 
    #ifdef __OPENNN_DEBUG__
-
+    const Index columns_number = matrix.dimension(1);
    if(rows_number == 0)
    {
       ostringstream buffer;
@@ -2980,13 +2984,15 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
-//    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+
 
    const Index row_indices_size = row_indices.size();
    const Index columns_indices_size = columns_indices.size();
 
    #ifdef __OPENNN_DEBUG__
+
+   const Index rows_number = matrix.dimension(0);
+   const Index columns_number = matrix.dimension(1);
 
    // Rows check
 
@@ -3155,13 +3161,14 @@ Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
                                      const Tensor<Index, 1>& row_indices,
                                      const Tensor<Index, 1>& columns_indices)
 {
-//    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+
     const Index columns_indices_size = columns_indices.size();
     const Index row_indices_size = row_indices.size();
 
    #ifdef __OPENNN_DEBUG__
 
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
    // Rows check
 
