@@ -1302,11 +1302,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
       }
 
-      // Loss index stuff
+      // Loss index
 
       if(epoch == 0)
       {      
-         training_loss = loss_index_pointer->calculate_training_loss();
+         //training_loss = loss_index_pointer->calculate_training_loss();
          training_loss_decrease = static_cast<type>(0.0);
       }
       else
@@ -1315,7 +1315,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      gradient = loss_index_pointer->calculate_training_loss_gradient();
+      //gradient = loss_index_pointer->calculate_training_loss_gradient();
 
       gradient_norm = gradient.square().sum().sqrt();
 
@@ -1324,7 +1324,14 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
 
-      if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+      if(selection_instances_number > 0)
+      {
+//          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+
+//          selection_error = loss_index_pointer->calculate_error(
+//                      selection_forward_propagation.layers[trainable_layers_number].activations,
+//                      selection_batch.targets_2d);
+      }
 
       if(epoch == 0)
       {
@@ -1592,7 +1599,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-       training_loss = loss_index_pointer->calculate_training_loss();
+//       training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
 

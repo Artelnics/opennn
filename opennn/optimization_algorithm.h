@@ -230,6 +230,12 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
+   type norm(const Tensor<type, 1>&) const
+   {
+       return 0;
+   }
+
 };
 
 }

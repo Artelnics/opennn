@@ -1170,8 +1170,15 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
         training_strategy_pointer->perform_training();
 
         data_set_pointer->set_testing_to_selection_instances();
-
+/*
         const type current_error = loss_index_pointer->calculate_selection_error();
+
+          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+
+          const type selection_error = loss_index_pointer->calculate_error(
+                      selection_forward_propagation.layers[trainable_layers_number].activations,
+                      selection_batch.targets_2d);
+
 
         if(i == 0 || current_error < minimum_error)
         {
@@ -1187,6 +1194,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
             cout << "Iteration: " << i << "/" << k << endl;
             cout << "Current error: " << current_error << endl;
         }
+ */
     }
 
     if(display)
@@ -1275,7 +1283,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
         training_strategy_pointer->perform_training();
 
         data_set_pointer->set_testing_to_selection_instances();
-
+/*
         const type current_error = loss_index_pointer->calculate_selection_error();
 
         if(i == 0 || current_error < minimum_error)
@@ -1292,6 +1300,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
             cout << "Iteration: " << i << "/" << k << endl;
             cout << "Current error: " << current_error << endl;
         }
+*/
     }
 
     if(display)

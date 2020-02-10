@@ -1268,7 +1268,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        if(epoch == 0)
        {
-           training_error = loss_index_pointer->calculate_training_error();
+           //training_error = loss_index_pointer->calculate_training_error();
 
            training_loss = training_error + regularization_weight*regularization;
            training_loss_decrease = static_cast<type>(0.0);
@@ -1281,7 +1281,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            training_error = training_loss - regularization_weight*regularization;
        }
 
-       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+       if(selection_instances_number > 0)
+       {
+//           selection_error = loss_index_pointer->calculate_selection_error();
+       }
 
        if(epoch == 0)
        {
@@ -1298,7 +1301,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            minimum_selection_error_parameters = parameters;
        }
 
-       gradient = loss_index_pointer->calculate_training_loss_gradient();
+       //gradient = loss_index_pointer->calculate_training_loss_gradient();
 
        gradient_norm = gradient.square().sum().sqrt();
 
@@ -1532,7 +1535,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-       training_loss = loss_index_pointer->calculate_training_loss();
+//       training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
 
