@@ -553,7 +553,8 @@ public:
 
    // Descriptives methods
 
-   Tensor<Descriptives, 1> calculate_columns_descriptives() const;
+   Tensor<Descriptives, 1> calculate_variables_descriptives() const;
+   Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
    Tensor<Descriptives, 1> calculate_columns_descriptives_positive_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_negative_instances() const;
