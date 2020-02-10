@@ -1226,7 +1226,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
        throw logic_error(buffer.str());
     }
 
-    if(selection_ratio <= 0.0 || selection_ratio >= 1.0)
+    if(selection_ratio <= static_cast<type>(0.0) || selection_ratio >= static_cast<type>(1.0))
     {
        buffer << "OpenNN Exception: ModelSelection class.\n"
               << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"

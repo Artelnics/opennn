@@ -319,7 +319,7 @@ Index NeuralNetwork::get_input_index(const string& name) const
         if(inputs_names(i) == name)
         {
             return i;
-            break;
+//            break;
         }
     }
     return 0;
@@ -354,7 +354,7 @@ Index NeuralNetwork::get_output_index(const string& name) const
         if(outputs_names(i) == name)
         {
             return i;
-            break;
+//            break;
         }
     }
 
@@ -2229,9 +2229,11 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "(";
         replace = "_";
 
-        while((position = inputs_names[i].find(search, position)) != string::npos)
+        while((position = static_cast<Index>(inputs_names[i].find(search, position))) != static_cast<Index>(string::npos))
         {
-            inputs_names[i].replace(position, search.length(), replace);
+
+            inputs_names[i].replace(position, search.length(), replace)
+                    ;
             position += replace.length();
         }
 
@@ -2243,7 +2245,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "-";
         replace = "_";
 
-        while((position = inputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(inputs_names[i].find(search, position))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2254,7 +2256,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "/";
         replace = "_";
 
-        while((position = inputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(inputs_names[i].find(search, position))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2265,7 +2267,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = ")";
         replace = "_";
 
-        while((position = inputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(inputs_names[i].find(search, position))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2279,7 +2281,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "(";
         replace = "_";
 
-        while((position = outputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(outputs_names[i].find(search, position))) !=  static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2293,7 +2295,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "-";
         replace = "_";
 
-        while((position = outputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(outputs_names[i].find(search, position))) !=  static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2304,7 +2306,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = "/";
         replace = "_";
 
-        while((position = outputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(outputs_names[i].find(search, position))) !=  static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2315,7 +2317,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
         search = ")";
         replace = "_";
 
-        while((position = outputs_names[i].find(search, position)) != string::npos)
+        while((position =  static_cast<Index>(outputs_names[i].find(search, position))) !=  static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(position, search.length(), replace);
             position += replace.length();
@@ -2393,7 +2395,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     search = "--";
     replace = "+";
 
-    while((position = expression.find(search, position)) != string::npos)
+    while((position =  static_cast<Index>(expression.find(search, position))) !=  static_cast<Index>(string::npos))
     {
         expression.replace(position, search.length(), replace);
         position += replace.length();
@@ -2404,7 +2406,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     search = "+-";
     replace = "-";
 
-    while((position = expression.find(search, position)) != string::npos)
+     while((position =  static_cast<Index>(expression.find(search, position))) !=  static_cast<Index>(string::npos))
     {
         expression.replace(position, search.length(), replace);
         position += replace.length();
@@ -2415,7 +2417,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     search = "\n-";
     replace = "-";
 
-    while((position = expression.find(search, position)) != string::npos)
+    while((position =  static_cast<Index>(expression.find(search, position))) !=  static_cast<Index>(string::npos))
     {
         expression.replace(position, search.length(), replace);
         position += replace.length();
@@ -2426,7 +2428,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     search = "\n+";
     replace = "+";
 
-    while((position = expression.find(search, position)) != string::npos)
+    while((position =  static_cast<Index>(expression.find(search, position))) !=  static_cast<Index>(string::npos))
     {
         expression.replace(position, search.length(), replace);
         position += replace.length();
@@ -2437,7 +2439,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     search = "\"";
     replace = "";
 
-    while((position = expression.find(search, position)) != string::npos)
+    while((position =  static_cast<Index>(expression.find(search, position))) !=  static_cast<Index>(string::npos))
     {
         expression.replace(position, search.length(), replace);
         position += replace.length();
@@ -2474,7 +2476,7 @@ string NeuralNetwork::write_expression_python() const
         search = "-";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2485,7 +2487,7 @@ string NeuralNetwork::write_expression_python() const
         search = "(";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2496,7 +2498,7 @@ string NeuralNetwork::write_expression_python() const
         search = ")";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2507,7 +2509,7 @@ string NeuralNetwork::write_expression_python() const
         search = "+";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2518,7 +2520,7 @@ string NeuralNetwork::write_expression_python() const
         search = "*";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2529,7 +2531,7 @@ string NeuralNetwork::write_expression_python() const
         search = "/";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos =  static_cast<Index>(inputs_names[i].find(search, pos))) !=  static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2546,7 +2548,7 @@ string NeuralNetwork::write_expression_python() const
         search = "-";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2557,7 +2559,7 @@ string NeuralNetwork::write_expression_python() const
         search = "(";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2568,7 +2570,7 @@ string NeuralNetwork::write_expression_python() const
         search = ")";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2579,7 +2581,7 @@ string NeuralNetwork::write_expression_python() const
         search = "+";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2590,7 +2592,7 @@ string NeuralNetwork::write_expression_python() const
         search = "*";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2601,7 +2603,7 @@ string NeuralNetwork::write_expression_python() const
         search = "/";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2762,7 +2764,7 @@ string NeuralNetwork::write_expression_python() const
     search = "\n";
     replace = "\n    ";
 
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(neural_network_expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         neural_network_expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -2788,7 +2790,7 @@ string NeuralNetwork::write_expression_python() const
     search = "\"";
     replace = "";
 
-    while((pos = expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -2799,7 +2801,7 @@ string NeuralNetwork::write_expression_python() const
     search = ";";
     replace = "";
 
-    while((pos = expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -2838,7 +2840,7 @@ string NeuralNetwork::write_expression_php() const
         search = "-";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2849,7 +2851,7 @@ string NeuralNetwork::write_expression_php() const
         search = "(";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2860,7 +2862,7 @@ string NeuralNetwork::write_expression_php() const
         search = ")";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2871,7 +2873,7 @@ string NeuralNetwork::write_expression_php() const
         search = "+";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2883,7 +2885,7 @@ string NeuralNetwork::write_expression_php() const
         replace = "_";
 
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2894,7 +2896,7 @@ string NeuralNetwork::write_expression_php() const
         search = "*";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2905,7 +2907,7 @@ string NeuralNetwork::write_expression_php() const
         search = "/";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2922,7 +2924,7 @@ string NeuralNetwork::write_expression_php() const
         search = "-";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2933,7 +2935,7 @@ string NeuralNetwork::write_expression_php() const
         search = "(";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2944,7 +2946,7 @@ string NeuralNetwork::write_expression_php() const
         search = ")";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2955,7 +2957,7 @@ string NeuralNetwork::write_expression_php() const
         search = ":";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2966,7 +2968,7 @@ string NeuralNetwork::write_expression_php() const
         search = "+";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2977,7 +2979,7 @@ string NeuralNetwork::write_expression_php() const
         search = "*";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -2988,7 +2990,7 @@ string NeuralNetwork::write_expression_php() const
         search = "/";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3077,7 +3079,7 @@ string NeuralNetwork::write_expression_php() const
     search = "\n";
     replace = "\n    ";
 
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(neural_network_expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         neural_network_expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -3107,7 +3109,7 @@ string NeuralNetwork::write_expression_php() const
     search = "\"";
     replace = "";
 
-    while((pos = expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -3153,7 +3155,7 @@ string NeuralNetwork::write_expression_R() const
         search = "-";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3167,7 +3169,7 @@ string NeuralNetwork::write_expression_R() const
         search = "(";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3178,7 +3180,7 @@ string NeuralNetwork::write_expression_R() const
         search = ":";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3189,7 +3191,7 @@ string NeuralNetwork::write_expression_R() const
         search = ")";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3200,7 +3202,7 @@ string NeuralNetwork::write_expression_R() const
         search = "+";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3211,7 +3213,7 @@ string NeuralNetwork::write_expression_R() const
         search = "*";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3222,7 +3224,7 @@ string NeuralNetwork::write_expression_R() const
         search = "/";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3233,7 +3235,7 @@ string NeuralNetwork::write_expression_R() const
         search = ":";
         replace = "_";
 
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(inputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             inputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3248,7 +3250,7 @@ string NeuralNetwork::write_expression_R() const
         search = "-";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3262,7 +3264,7 @@ string NeuralNetwork::write_expression_R() const
         search = "(";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3273,7 +3275,7 @@ string NeuralNetwork::write_expression_R() const
         search = ")";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3284,7 +3286,7 @@ string NeuralNetwork::write_expression_R() const
         search = "+";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3295,7 +3297,7 @@ string NeuralNetwork::write_expression_R() const
         search = "*";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3306,7 +3308,7 @@ string NeuralNetwork::write_expression_R() const
         search = "/";
         replace = "_";
 
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
+        while((pos = static_cast<Index>(outputs_names[i].find(search, pos))) != static_cast<Index>(string::npos))
         {
             outputs_names[i].replace(pos, search.length(), replace);
             pos += replace.length();
@@ -3366,7 +3368,7 @@ string NeuralNetwork::write_expression_R() const
     search = "\n";
     replace = "\n    ";
 
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(neural_network_expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         neural_network_expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -3377,7 +3379,7 @@ string NeuralNetwork::write_expression_R() const
     search = ";";
     replace = "";
 
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(neural_network_expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         neural_network_expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -3388,7 +3390,7 @@ string NeuralNetwork::write_expression_R() const
     search = "=";
     replace = "<-";
 
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(neural_network_expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         neural_network_expression.replace(pos, search.length(), replace);
         pos += replace.length();
@@ -3421,7 +3423,7 @@ string NeuralNetwork::write_expression_R() const
     search = "\"";
     replace = "";
 
-    while((pos = expression.find(search, pos)) != string::npos)
+    while((pos = static_cast<Index>(expression.find(search, pos))) != static_cast<Index>(string::npos))
     {
         expression.replace(pos, search.length(), replace);
         pos += replace.length();

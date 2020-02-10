@@ -534,7 +534,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
         return optimum_losses;
     }
 
-    neural_network->perturbate_parameters(0.001);
+    neural_network->perturbate_parameters(static_cast<type>(0.001));
 
     neural_network->set_inputs_number(inputs);
 
