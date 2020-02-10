@@ -62,7 +62,6 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-
         Tensor<type, 1> a(6);
         Tensor<type, 1> b(3);
 //        a.setValues({1,2,3,4,5,6});
