@@ -254,62 +254,6 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-/// This method calculates the error term gradient for batch instances.
-/// It is used for optimization of parameters during training.
-/// Returns the value of the error term gradient.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-type WeightedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-        check();
-
-    #endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
-    const type batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
-
-    return batch_error / training_normalization_coefficient;
-*/
-
-    return 0.0;
-}
-
-
-type WeightedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices,
-                                                   const Tensor<type, 1>& parameters) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-        check();
-
-    #endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
-    const type batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
-
-    return batch_error / training_normalization_coefficient;
-*/
-    return 0.0;
-
-}
-
-
 /// This method calculates the error term gradient for training instances.
 /// It is used for optimization of parameters during training.
 /// Returns the value of the error term gradient.

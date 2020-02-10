@@ -85,54 +85,6 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-/// This method calculates the sum squared error of the given batch.
-/// Returns the sum squared error of this batch.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset
-
-type SumSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-
-    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
-
-    return batch_error(0);
-}
-
-
-type SumSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices, const Tensor<type, 1>& parameters) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
-    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
-
-    return batch_error(0);
-}
-
-
 /// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
 
 Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const

@@ -85,12 +85,7 @@ public:
    void set_training_normalization_coefficient();
    void set_selection_normalization_coefficient();
 
-   type calculate_batch_error(const Tensor<Index, 1>&) const;
-   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
-
    Tensor<type, 1> calculate_training_error_gradient() const;
-
-
 
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const

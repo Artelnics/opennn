@@ -66,13 +66,13 @@ public:
 
    // Error methods
 
-   type calculate_training_error() const;
+   
    type calculate_training_error(const Tensor<type, 1>&) const;
 
-   type calculate_selection_error() const;
+   
 
-   type calculate_batch_error(const Tensor<Index, 1>&) const;
-   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
+   
+   
 
    // Error terms methods
 

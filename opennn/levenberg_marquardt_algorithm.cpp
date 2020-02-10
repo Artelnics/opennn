@@ -811,8 +811,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
 //         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
 
-         const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
-
+//         const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
+/*
          if(new_loss <= training_loss) // succesfull step
          {
              set_damping_parameter(damping_parameter/damping_parameter_factor);
@@ -831,6 +831,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
+*/
       }
       while(damping_parameter < maximum_damping_parameter);
 
@@ -845,7 +846,14 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+      if(selection_instances_number > 0)
+      {
+//          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+
+//          selection_error = loss_index_pointer->calculate_error(
+//                      selection_forward_propagation.layers[trainable_layers_number].activations,
+//                      selection_batch.targets_2d);
+      }
 
       if(epoch == 0)
       {
@@ -1036,7 +1044,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-       training_loss = loss_index_pointer->calculate_training_loss();
+//       training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
 

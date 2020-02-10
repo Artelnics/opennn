@@ -737,7 +737,7 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
 
 OptimizationAlgorithm::Results GradientDescent::perform_training()
 {
-    Results results; // = new GradientDescentResults(this);
+    Results results;
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -759,17 +759,24 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
+   DataSet::Batch training_batch(data_set_pointer);
+   DataSet::Batch selection_batch(data_set_pointer);
+
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
+   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 0> parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm = static_cast<type>(0.0);
+
+   NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -822,7 +829,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       if(epoch == 0)
       {
-         training_loss = loss_index_pointer->calculate_training_loss();
+//         training_loss = loss_index_pointer->calculate_training_loss();
+
+         neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+
+         training_loss = loss_index_pointer->calculate_error(
+                     selection_forward_propagation.layers[trainable_layers_number].activations,
+                     selection_batch.targets_2d);
       }
       else
       {
@@ -830,7 +843,25 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+      //gradient = loss_index_pointer->calculate_training_loss_gradient();
+
+      if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
+
+      gradient_norm = gradient.square().sum().sqrt();
+
+      if(display && gradient_norm(0) >= warning_gradient_norm)
+      {
+          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+      }
+
+      if(selection_instances_number > 0)
+      {
+          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+
+          selection_error = loss_index_pointer->calculate_error(
+                      selection_forward_propagation.layers[trainable_layers_number].activations,
+                      selection_batch.targets_2d);
+      }
 
       if(epoch == 0)
       {
@@ -846,33 +877,21 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
           minimum_selection_error_parameters = parameters;
       }
 
-      gradient = loss_index_pointer->calculate_training_loss_gradient();
-
-      if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
-
-      gradient_norm = gradient.square().sum().sqrt();
-
-      if(display && gradient_norm(0) >= warning_gradient_norm)
-      {
-          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-      }
-
       // Optimization algorithm
 
       training_direction = calculate_training_direction(gradient);
 
-//      if(training_direction) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
-      if(abs(training_direction(0)) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
+      if(norm(training_direction) < numeric_limits<type>::min())
+          throw logic_error("Training direction is zero");
 
-      // Calculate loss training_slope
+      // Calculate slope
 
       const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, AT_B);
 
-//      const type training_slope = dot(gradient/gradient_norm, training_direction);
-
       // Check for a descent direction
 
-      if(training_slope(0) >= static_cast<type>(0.0)) throw logic_error("Training slope is equal or greater than zero");
+      if(training_slope(0) >= static_cast<type>(0.0))
+          throw logic_error("Training slope is equal or greater than zero");
 
       if(epoch == 0)
       {
@@ -883,7 +902,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          initial_learning_rate = old_learning_rate;
       }
 
-      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_learning_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss,
+                                                                              training_direction,
+                                                                              initial_learning_rate);
 
       learning_rate = directional_point.first;
 

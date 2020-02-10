@@ -260,33 +260,9 @@ public:
 
    bool has_selection() const;
 
-   // Loss methods
-
-   type calculate_training_loss() const;
-   type calculate_training_loss(const Tensor<type, 1>&) const;
-   type calculate_training_loss(const Tensor<type, 1>&, const type&) const;
-
-   // Loss gradient methods
-
-   Tensor<type, 1> calculate_training_loss_gradient() const;
-
-   // ERROR METHODS
-
-   virtual type calculate_training_error() const;
-   virtual type calculate_training_error_parameters(const Tensor<type, 1>&) const;
-
-   virtual type calculate_selection_error() const;
-
-   virtual type calculate_batch_error(const Tensor<Index, 1>&) const = 0;
-   virtual type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const = 0;
-
    // GRADIENT METHODS
 
    virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
-
-   virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<Index, 1>&) const;
-
-   Tensor<type, 1> calculate_training_error_gradient() const;
 
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
@@ -295,7 +271,7 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
-//   virtual void calculate_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const {}
+   virtual type calculate_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const {return 0;}
 
    virtual void calculate_error(BackPropagation&) const {}
 
