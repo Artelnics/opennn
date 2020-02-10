@@ -1188,7 +1188,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<type, 1> parameters(parameters_number);
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> old_parameters(parameters_number);
    Tensor<type, 0> parameters_norm;
 
@@ -1233,7 +1233,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    pair<type,type> directional_point(2, 0.0);
 
-   Tensor<type, 1> minimum_selection_error_parameters;
+   Tensor<type, 1> minimum_selection_error_parameters = parameters;
 
    type minimum_selection_error = static_cast<type>(0.0);
 
@@ -1250,8 +1250,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
        // Neural network
-
-       parameters = neural_network_pointer->get_parameters();
 
        parameters_norm = parameters.square().sum().sqrt();
 
@@ -1288,8 +1286,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        if(epoch == 0)
        {
            minimum_selection_error = selection_error;
-
-           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -1299,7 +1295,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        {
            minimum_selection_error = selection_error;
 
-           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+           minimum_selection_error_parameters = parameters;
        }
 
        gradient = loss_index_pointer->calculate_training_loss_gradient();
@@ -1318,7 +1314,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             inverse_hessian.setZero();
 
             for(Index i = 0; i < parameters_number; i++) inverse_hessian(i,i) = 1;
-
        }
        else
        {
@@ -1326,11 +1321,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                                                                      old_gradient,
                                                                      gradient,
                                                                      old_inverse_hessian);
-
-//           old_parameters.resize(0);
-//           old_gradient.resize(0);
        }
-cout << "here" << endl;
+
        // Optimization algorithm
 
        training_direction = calculate_training_direction(gradient, inverse_hessian);
@@ -1413,10 +1405,7 @@ cout << "here" << endl;
        }
        else if(training_loss <= loss_goal)
        {
-           if(display)
-           {
-               cout << "Epoch " << epoch << ": Loss goal reached.\n";
-           }
+           if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
            stop_training = true;
 
@@ -1424,10 +1413,7 @@ cout << "here" << endl;
        }
        else if(gradient_norm(0) <= gradient_norm_goal)
        {
-           if(display)
-           {
-               cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
-           }
+           if(display) cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
 
            stop_training = true;
 
@@ -1447,10 +1433,7 @@ cout << "here" << endl;
        }
        else if(epoch == maximum_epochs_number)
        {
-           if(display)
-           {
-               cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
-           }
+           if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
 
            stop_training = true;
 
@@ -1458,10 +1441,7 @@ cout << "here" << endl;
        }
        else if(elapsed_time >= maximum_time)
        {
-           if(display)
-           {
-               cout << "Epoch " << epoch << ": Maximum training time reached.\n";
-           }
+           if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
 
            stop_training = true;
 
@@ -2658,4 +2638,3 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

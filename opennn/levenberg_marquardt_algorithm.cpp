@@ -1492,7 +1492,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.CloseElement();
 
     // Return minimum selection error neural network
-
     {
         file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
@@ -1661,7 +1660,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(choose_best_selection_element)
    {
-       string new_choose_best_selection = choose_best_selection_element->GetText();
+       const string new_choose_best_selection = choose_best_selection_element->GetText();
 
        try
        {

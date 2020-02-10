@@ -769,6 +769,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Optimization algorithm stuff
 
+   OptimizationParameters optimization_parameters(this);
+
    type learning_rate = initial_learning_rate;
 
    Index selection_failures = 0;

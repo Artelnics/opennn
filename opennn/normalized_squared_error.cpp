@@ -410,12 +410,10 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
-    const type batch_error = sum_squared_error(outputs, targets);
 
-    return batch_error;
-*/
-    return 0.0;
+    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
+
+    return batch_error(0);
 }
 
 
@@ -433,12 +431,10 @@ check();
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
-    const type batch_error = sum_squared_error(outputs, targets);
 
-    return batch_error;
-*/
-    return 0.0;
+    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
+
+    return batch_error(0);
 }
 
 

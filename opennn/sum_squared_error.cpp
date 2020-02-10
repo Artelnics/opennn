@@ -105,9 +105,9 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-//    return sum_squared_error(outputs, targets);
+    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
 
-    return 0.0;
+    return batch_error(0);
 }
 
 
@@ -127,9 +127,9 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-//    return sum_squared_error(outputs, targets);
+    const Eigen::Tensor<type, 0> batch_error = outputs.contract(targets, SSE);
 
-    return 0.0;
+    return batch_error(0);
 }
 
 

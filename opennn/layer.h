@@ -279,7 +279,6 @@ protected:
     #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 
-
 };
 
 }
