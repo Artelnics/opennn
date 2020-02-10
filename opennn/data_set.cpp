@@ -244,6 +244,31 @@ void DataSet::Column::set_type(const string& new_column_type)
 }
 
 
+/// Adds a category to the categories vector of this column.
+/// It also adds a default use for the category
+/// @param new_category String that contains the name of the new category
+
+void DataSet::Column::add_category(const string & new_category)
+{
+    const Index old_categories_number = categories.size();
+
+    Tensor<string, 1> old_categories = categories;
+    Tensor<VariableUse, 1> old_categories_uses = categories_uses;
+
+    categories.resize(old_categories_number+1);
+    categories_uses.resize(old_categories_number+1);
+
+    for(Index category_index = 0; category_index < old_categories_number; category_index++)
+    {
+        categories(category_index) = old_categories(category_index);
+        categories_uses(category_index) = column_use;
+    }
+
+    categories(old_categories_number) = new_category;
+    categories_uses(old_categories_number) = column_use;
+}
+
+
 /// Sets the categories uses in the data set.
 /// @param new_categories_uses String vector that contains the new categories of the data set.
 
