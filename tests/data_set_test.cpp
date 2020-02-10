@@ -17,7 +17,7 @@ DataSetTest::~DataSetTest()
 {
 }
 
-
+/*
 void DataSetTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -45,7 +45,7 @@ void DataSetTest::test_constructor()
    assert_true(ds3.get_instances_number() == 1, LOG);
 
    // XML constructor
-/*
+
    tinyxml2::XMLDocument* document = ds3.to_XML();
 
    DataSet ds4(*document);
@@ -61,7 +61,7 @@ void DataSetTest::test_constructor()
    assert_true(ds5.get_instances_number() == 1, LOG);
 
    delete document;
-*/
+
    // Copy constructor
 
    DataSet ds6(ds1);
