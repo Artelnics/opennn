@@ -375,7 +375,7 @@ check();
 /// @param outputs Output data.
 /// @param targets Target data.
 
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
+Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& /*outputs*/, const Tensor<type, 2>& /*targets*/) const
 {
     // Control sentence
 
@@ -649,7 +649,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
       try
       {
-         set_positives_weight(atof(string.c_str()));
+         set_positives_weight(static_cast<type>(atof(string.c_str())));
       }
       catch(const logic_error& e)
       {
@@ -667,7 +667,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
       try
       {
-         set_negatives_weight(atof(string.c_str()));
+         set_negatives_weight(static_cast<type>(atof(string.c_str())));
       }
       catch(const logic_error& e)
       {
