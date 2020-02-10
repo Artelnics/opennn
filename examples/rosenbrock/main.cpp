@@ -94,7 +94,9 @@ int main(void)
 
         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(d_out, 2);
 
+<<<<<<< Updated upstream
 */
+
 
 //        gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
 

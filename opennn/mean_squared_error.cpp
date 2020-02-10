@@ -138,7 +138,7 @@ check();
         outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
         const type batch_error = sum_squared_error(outputs, targets);
-cout << "guille" << endl;
+
         training_error += batch_error;
     }
 
