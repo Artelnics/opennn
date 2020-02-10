@@ -1316,6 +1316,8 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
 
+    cout << outputs.size() << endl;
+
     for(Index i = 1; i < trainable_layers_number; i++)
     {
         outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
