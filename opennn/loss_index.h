@@ -323,7 +323,6 @@ public:
        }
    }
 
-   virtual BackPropagation calculate_back_propagation() const {return BackPropagation();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
 
    // Regularization methods
@@ -338,9 +337,8 @@ public:
 
    // Delta methods
 
-   Tensor<Tensor<type, 2>, 1> calculate_layers_delta(const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<type, 2>&) const;
-
-   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -421,7 +419,6 @@ public:
             }
         }
    }
-
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,

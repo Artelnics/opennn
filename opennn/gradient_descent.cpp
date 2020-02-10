@@ -868,7 +868,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Calculate loss training_slope
 
-      const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
+      const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, AT_B);
 
 //      const type training_slope = dot(gradient/gradient_norm, training_direction);
 
