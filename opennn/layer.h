@@ -116,10 +116,7 @@ public:
     {
         /// Default constructor.
 
-        explicit BackPropagation()
-        {
-        }
-
+        explicit BackPropagation() {}
 
         explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
@@ -146,9 +143,7 @@ public:
             delta.resize(batch_instances_number, neurons_number);
         }
 
-        void print() const
-        {
-        }       
+        virtual void print() const {}
 
         Index batch_instances_number = 0;
 

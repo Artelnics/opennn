@@ -535,176 +535,9 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 
 void PerceptronLayer::set_parameters_random()
 {
-/*
-   biases.setRandom(-1.0, 1.0);
+   biases.setRandom();
 
-   synaptic_weights.setRandom(-1.0, 1.0);
-*/
-}
-
-
-/// Calculates the norm of a layer parameters vector. 
-
-type PerceptronLayer::calculate_parameters_norm() const
-{
-/*
-   return l2_norm(get_parameters());
-*/
-    return 0.0;
-}
-
-
-Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
-{
-
-    const Index batch_size = inputs.dimension(0);
-
-    const  Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> combinations(batch_size,neurons_number);
-
-    combinations = inputs.contract(synaptic_weights, product_dimensions);
-
-    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
-
-    combinations = combinations + biases.broadcast(broadcast);
-
-    return combinations;
-
-}
-
-
-Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
-{
-
-    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
-
-    const Tensor<type, 2> new_biases = get_biases(parameters);
-
-    return calculate_combinations(inputs, new_biases, new_synaptic_weights);
-
-}
-
-
-Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
-{
-    const Index batch_size = inputs.dimension(0);
-
-    const  Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> combinations(batch_size, neurons_number);
-
-    combinations = inputs.contract(new_synaptic_weights, product_dimensions);
-
-    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
-
-    combinations = combinations + new_biases.broadcast(broadcast);
-
-    return combinations;
-}
-
-
-Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index combinations_columns_number = combinations.dimension(1);
-
-    if(combinations_columns_number != neurons_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
-              << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    switch(activation_function)
-    {
-/*
-        case Linear: return linear(combinations);
-
-        case Logistic: return logistic(combinations);
-
-        case HyperbolicTangent: return hyperbolic_tangent(combinations);
-
-        case Threshold: return threshold(combinations);
-
-        case SymmetricThreshold: return symmetric_threshold(combinations);
-
-        case RectifiedLinear: return rectified_linear(combinations);
-
-        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
-
-        case SoftPlus: return soft_plus(combinations);
-
-        case SoftSign: return soft_sign(combinations);
-
-        case HardSigmoid: return hard_sigmoid(combinations);
-
-        case ExponentialLinear: return exponential_linear(combinations);
-*/
-    }
-
-    return Tensor<type, 2>();
-}
-
-
-Tensor<type, 2> PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index combinations_columns_number = combinations.dimension(1);
-
-    if(combinations_columns_number != neurons_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-              << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    switch(activation_function)
-    {
-/*
-        case Linear: return linear_derivatives(combinations);
-
-        case Logistic: return logistic_derivatives(combinations);
-
-        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
-
-        case Threshold: return threshold_derivatives(combinations);
-
-        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
-
-        case RectifiedLinear: return rectified_linear_derivatives(combinations);
-
-        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
-
-        case SoftPlus: return soft_plus_derivatives(combinations);
-
-        case SoftSign: return soft_sign_derivatives(combinations);
-
-        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
-
-        case ExponentialLinear: return exponential_linear_derivatives(combinations);
-*/
-    }
-
-    return Tensor<type, 2>();
+   synaptic_weights.setRandom();
 }
 
 
@@ -714,20 +547,16 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
     #ifdef __OPENNN_DEBUG__
 
-    if(inputs_dimensions_number > 4)
+    if(inputs_dimensions_number != 2)
     {
-    ostringstream buffer;
+        ostringstream buffer;
 
-    buffer << "OpenNN Exception: PerceptronLayer class.\n"
-           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-           << "Number of dimensions (" << inputs_dimensions_number << ") must be less than or equal to 4.\n";
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+               << "Number of dimensions (" << inputs_dimensions_number << ") must be equal to 2.\n";
 
-    throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
-
-    #endif
-
-   #ifdef __OPENNN_DEBUG__
 
    const Index inputs_number = get_inputs_number();
 
@@ -746,8 +575,16 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    return calculate_activations(calculate_combinations(inputs));
+    const Index batch_size = inputs.dimension(0);
+    const Index outputs_number = get_neurons_number();
 
+    Tensor<type, 2> outputs(batch_size, outputs_number);
+
+    calculate_combinations(inputs, biases, synaptic_weights, outputs);
+
+    calculate_activations(outputs, outputs);
+
+    return outputs;
 }
 
 
@@ -760,7 +597,9 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
+Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs,
+                                                   const Tensor<type, 2>& new_biases,
+                                                   const Tensor<type, 2>& new_synaptic_weights) const
 {
     const Index inputs_dimensions_number = inputs.rank();
 
@@ -798,25 +637,17 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-   return calculate_activations(calculate_combinations(inputs, new_synaptic_weights, new_biases));
+   const Index batch_size = inputs.dimension(0);
+   const Index outputs_number = get_neurons_number();
 
+   Tensor<type, 2> outputs(batch_size, outputs_number);
+
+   calculate_combinations(inputs, new_biases, new_synaptic_weights, outputs);
+
+   calculate_activations(outputs, outputs);
+
+   return outputs;
 }
-
-/*
-PerceptronLayer::PerceptronLayerForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
-{
-
-    PerceptronLayerForwardPropagation forward_propagation;
-
-    forward_propagation.combinations = calculate_combinations(inputs);
-
-    forward_propagation.activations = calculate_activations(forward_propagation.combinations);
-
-    forward_propagation.activations_derivatives = calculate_activations_derivatives(forward_propagation.combinations);
-
-    return forward_propagation;
-}
-*/
 
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
@@ -1058,18 +889,11 @@ string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-        case HyperbolicTangent:
-        {
-            return "tanh";
-        }
-        case Linear:
-        {
-            return "";
-        }
-        default:
-        {
-            return write_activation_function();
-        }
+        case HyperbolicTangent: return "tanh";
+
+        case Linear: return "";
+
+        default: return write_activation_function();
     }
 }
 
