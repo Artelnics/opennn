@@ -1771,10 +1771,10 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
     type s_x = 0;
     type s_y = 0;
 
-    type s_xx = 0;
-    type s_yy = 0;
+//Unused_d    type s_xx = 0;
+//Unused_d    type s_yy = 0;
 
-    type s_xy = 0;
+//Unused_d    type s_xy = 0;
 
     Tensor<type, 1> x1(x.size());
 
@@ -2390,7 +2390,7 @@ CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Ten
 
             for(Index k = 0; k < n; k ++)
             {
-                if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
+                if(abs(x(k,i) + y(k,j) - static_cast<type>(2.0)) <= static_cast<type>(1.0e-4))
                 {
                     count ++;
 
@@ -3054,7 +3054,7 @@ Tensor<Index, 2> contingency_table(const Tensor<type, 2>& matrix, const Tensor<I
 
             for(Index k = 0; k < matrix.dimension(0); k ++)
             {
-                if(matrix(k,i_2) + matrix(k,j_2) - 2 <= 0.0001)
+                if(matrix(k,i_2) + matrix(k,j_2) - static_cast<type>(2.0) <= static_cast<type>(0.0001))
                 {
                     count ++;
                     contingency_table(i,j) = count;
@@ -3120,22 +3120,22 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 
 type chi_square_critical_point(const type& alpha, const type& degrees_of_freedom)
 {   
-    const type zeta = degrees_of_freedom/2.0;
+    const type zeta = degrees_of_freedom/static_cast<type>(2.0);
 
-    const type gamma = pow((zeta+1),zeta-0.5)/exp(zeta+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta));
+    const type gamma = pow((zeta+static_cast<type>(1.0)),zeta-static_cast<type>(0.5))/exp(zeta+static_cast<type>(1.0))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265)))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta);
 
-    const type step = 1.0e-5;
+    const type step = static_cast<type>(1.0e-5);
 
     type p_0 = static_cast<type>(0.0);
     type p_1 = static_cast<type>(0.0);
 
     type x = static_cast<type>(0.0);
 
-    while(p_1 < 1.0 - alpha)
+    while(p_1 < static_cast<type>(1.0) - alpha)
     {
         x += step;
 
-        const type f_x = pow(x, (zeta-1))/((exp(x/2))*pow(2, zeta)*gamma);
+        const type f_x = pow(x, (zeta-static_cast<type>(1)))/((exp(x/static_cast<type>(2)))*pow(static_cast<type>(2), zeta)*gamma);
 
         p_1 = p_0 + step * f_x;
 
@@ -3225,7 +3225,7 @@ type karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>& y
 
             for(Index k = 0; k < n; k ++)
             {
-                if(abs(x(k,i) + y(k,j) - 2) <= 1e-4)
+                if(abs(x(k,i) + y(k,j) - static_cast<type>(2)) <= static_cast<type>(1e-4))
                 {
                     count ++;
 
@@ -3244,7 +3244,7 @@ type karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>& y
 
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
 
-    const type karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
+    const type karl_pearson_correlation = sqrt(k / (k - static_cast<type>(1.0))) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 
     return karl_pearson_correlation;
 }
@@ -3715,9 +3715,9 @@ type f_snedecor_critical_point(const Tensor<string, 2>& matrix, const type& alph
     const type zeta2 = degrees_of_freedom2/static_cast<type>(2.0);
     const type zeta3 = zeta1 + zeta2;
 
-    const type gamma1 = pow((zeta1+1),zeta1-0.5)/exp(zeta1+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta1));
-    const type gamma2 = pow((zeta2+1),zeta2-0.5)/exp(zeta2+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta2));
-    const type gamma3 = pow((zeta3+1),zeta3-0.5)/exp(zeta3+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta3));
+    const type gamma1 = pow((zeta1+static_cast<type>(1)),zeta1-static_cast<type>(0.5))/exp(zeta1+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta1));
+    const type gamma2 = pow((zeta2+static_cast<type>(1)),zeta2-static_cast<type>(0.5))/exp(zeta2+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta2));
+    const type gamma3 = pow((zeta3+static_cast<type>(1)),zeta3-static_cast<type>(0.5))/exp(zeta3+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta3));;
 
     const type beta = gamma1 * gamma2 / gamma3;
 
@@ -3732,7 +3732,7 @@ type f_snedecor_critical_point(const Tensor<string, 2>& matrix, const type& alph
 
         x += step;
 
-        f_x = pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), 0.5) / (x * beta);
+        f_x = static_cast<type>(pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), static_cast<type>(0.5)) / (x * beta));
 
         p_1 = p_0 + step * static_cast<type>(f_x);
 
@@ -3752,28 +3752,28 @@ type f_snedecor_critical_point(const Tensor<type, 2>& matrix)
     const Index degrees_of_freedom1 = matrix.dimension(1) - 1;
     const Index degrees_of_freedom2 = matrix.dimension(0) - matrix.dimension(1);
 
-    const type zeta1 = degrees_of_freedom1/2.0;
-    const type zeta2 = degrees_of_freedom2/2.0;
+    const type zeta1 = degrees_of_freedom1/static_cast<type>(2.0);
+    const type zeta2 = degrees_of_freedom2/static_cast<type>(2.0);
     const type zeta3 = zeta1 + zeta2;
 
-    const type gamma1 = pow((zeta1+1),zeta1-0.5)/exp(zeta1+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta1));
-    const type gamma2 = pow((zeta2+1),zeta2-0.5)/exp(zeta2+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta2));
-    const type gamma3 = pow((zeta3+1),zeta3-0.5)/exp(zeta3+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta3));
+    const type gamma1 = pow((zeta1+static_cast<type>(1)),zeta1-static_cast<type>(0.5))/exp(zeta1+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta1));
+    const type gamma2 = pow((zeta2+static_cast<type>(1)),zeta2-static_cast<type>(0.5))/exp(zeta2+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta2));
+    const type gamma3 = pow((zeta3+static_cast<type>(1)),zeta3-static_cast<type>(0.5))/exp(zeta3+static_cast<type>(1))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta3));;
 
     const type beta = gamma1 * gamma2 / gamma3;
 
     type x = static_cast<type>(0.0);
-    type step = 0.0001;
+    type step = static_cast<type>(0.0001);
 
     type p_0 = static_cast<type>(0.0);
     type p_1 = static_cast<type>(0.0);
     type f_x = static_cast<type>(0.0);
 
-    while (p_1 < 1- 0.01){
+    while (p_1 < static_cast<type>(1) - static_cast<type>(0.01)){
 
         x += step;
 
-        f_x = pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), 0.5) / (x * beta);
+        f_x = static_cast<type>(pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), static_cast<type>(0.5)) / (x * beta));
 
         p_1 = p_0 + step * static_cast<type>(f_x);
 

@@ -977,15 +977,15 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     type random;
 
-    type random_uniform;
+    //type random_uniform;
 
     Index random_loops = 0;
 
     for(Index i = 0; i < final_correlations.size(); i++)
     {
-        if(final_correlations(i) < 1.0/population_size)
+        if(final_correlations(i) < static_cast<type>(1.0)/population_size)
         {
-            final_correlations(i) = 1.0/population_size;
+            final_correlations(i) = static_cast<type>(1.0)/population_size;
         }
     }
 
@@ -1233,7 +1233,7 @@ void GeneticAlgorithm::calculate_rank_fitness()
                 if(previous_rank(k) == j) continue;
             }
 
-            if(sorted_vector(i) == column(j))
+            if (static_cast<Index>(sorted_vector(i)) == static_cast<Index>(column(j)))
             {
                 rank(i) = j;
 

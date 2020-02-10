@@ -2912,7 +2912,7 @@ const Index& DataSet::get_lags_number() const
 
 const Index& DataSet::get_steps_ahead() const
 {
-    return(steps_ahead);
+    return (steps_ahead);
 }
 
 
