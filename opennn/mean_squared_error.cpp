@@ -431,13 +431,12 @@ check();
 
 LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
 
 #endif
-/*
+
     // Neural network
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -466,7 +465,7 @@ check();
     {
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
+/*
         const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
@@ -496,12 +495,12 @@ check();
             terms_second_order_loss.gradient += gradient;
             terms_second_order_loss.hessian += hessian_approximation;
          }
-
+*/
     }
 
     terms_second_order_loss.loss /= static_cast<type>(training_instances_number);
-    terms_second_order_loss.gradient *= (static_cast<type>(2.0)/static_cast<type>(training_instances_number));
-    terms_second_order_loss.hessian *= (static_cast<type>(2.0)/static_cast<type>(training_instances_number));
+    terms_second_order_loss.gradient = (static_cast<type>(2.0)/static_cast<type>(training_instances_number))*terms_second_order_loss.gradient;
+    terms_second_order_loss.hessian = (static_cast<type>(2.0)/static_cast<type>(training_instances_number))*terms_second_order_loss.hessian;
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
@@ -511,10 +510,6 @@ check();
     }
 
     return terms_second_order_loss;
-  */
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-    SecondOrderLoss terms_second_order_loss(parameters_number);
-    return  terms_second_order_loss;
 }
 
 
@@ -588,14 +583,16 @@ type MeanSquaredError::sum_squared_error(const Tensor<type, 2>& outputs, const T
 {
     cout << outputs << endl;
     const Tensor<type, 2> error = targets - outputs;
-/*
+
     const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     const Tensor<type, 0> sse = error.contract(error, product_dimensions);
-*/
+/*
 
     const Tensor<type, 0> sse = error.square().sum();
 cout << sse << endl;
+    return sse(0);
+*/
     return sse(0);
 }
 

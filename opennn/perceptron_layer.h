@@ -151,7 +151,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -160,7 +160,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -399,7 +399,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
 
                 hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
 
@@ -410,7 +410,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -497,7 +497,7 @@ public:
 
                 back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
 
                 break;
             }
@@ -508,7 +508,7 @@ public:
 
                 back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 
                 break;
             }

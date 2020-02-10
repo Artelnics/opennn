@@ -141,7 +141,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -150,7 +150,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }

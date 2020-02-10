@@ -158,6 +158,7 @@ const bool& LearningRateAlgorithm::get_display() const
 void LearningRateAlgorithm::set()
 {
    loss_index_pointer = nullptr;
+
    set_default();
 }
 
