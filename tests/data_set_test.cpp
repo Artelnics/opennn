@@ -2850,10 +2850,10 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-
+/*
    // Constructor and destructor methods
    test_constructor();
-/*   test_destructor();
+   test_destructor();
 
    // Assignment operators methods
    test_assignment_operator();
