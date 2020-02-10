@@ -272,7 +272,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
   {
       if(minimum_frequency == frequencies(i))
       {
-          minimal_centers(index) = static_cast<Index>(frequencies(i));
+          minimal_centers(index) = frequencies(i);
 
           index++;
       }
@@ -497,40 +497,6 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
 }
 
 
-<<<<<<< HEAD
-=======
-/// Returns the mean of the elements in the vector.
-/// @param vector
-
-type mean(const Tensor<type, 1>& vector)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-  const Index size = vector.dimension(0);
-
-  if(size == 0)
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Statistics class.\n"
-           << "type mean(const Tensor<type, 1>&) const method.\n"
-           << "Size of vector must be greater than zero.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-#endif
-
-
-    Tensor<type, 0> mean = vector.mean();
-
-    return mean(0);
-}
-
-
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 /// Returns the mean of the subvector defined by a start and end elements.
 /// @param vector
 /// @param begin Start element.
@@ -582,7 +548,7 @@ type mean(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "type mean_missing_values(const Tensor<type, 1>& vector, const Index& begin, const Index& end) "
+           << "type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end) "
               "const method.\n"
            << "Size must be greater than zero.\n";
 
@@ -622,7 +588,7 @@ type variance(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "type variance_missing_values(const Tensor<type, 1>& vector) "
+           << "type variance(const Tensor<type, 1>& vector) "
               "const method.\n"
            << "Size must be greater than zero.\n";
 
@@ -1117,11 +1083,11 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
       if(bins_number%2 == 0)
       {
-          bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0));
+          bin_center = static_cast<Index>(static_cast<type>(bins_number)/2.0);
       }
       else
       {
-          bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0 + 0.5));
+          bin_center = static_cast<Index>(static_cast<type>(bins_number)/2.0 + 0.5);
       }
 
       Tensor<type, 1> minimums(bins_number);
@@ -1214,11 +1180,7 @@ Histogram histogram(const Tensor<bool, 1>& vector)
   {
     for(Index j = 0; j < 2; j++)
     {
-<<<<<<< HEAD
       if(static_cast<Index>(vector(i)) == minimums(j))
-=======
-      if(static_cast<Index>(vector[i]) == static_cast<Index>(minimums[j]))
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
       {
         frequencies(j)++;
       }
@@ -1245,9 +1207,9 @@ Histogram histogram(const Tensor<bool, 1>& vector)
 /// The second subvector contains the center of the bins.
 /// @param vector
 /// @param bins_number
-Histogram histogram(const Tensor<Index, 1>/*& vector*/, const Index/*& bins_number*/)
-{
 
+Histogram histogram(const Tensor<Index, 1>& vector, const Index& bins_number)
+{
     #ifdef __OPENNN_DEBUG__
 
       if(bins_number < 1) {
@@ -1291,61 +1253,6 @@ Histogram histogram(const Tensor<Index, 1>/*& vector*/, const Index/*& bins_numb
 }
 
 
-/// This method bins the elements of the vector into a given number of equally
-/// spaced containers.
-/// It returns a vector of two vectors.
-/// The size of both subvectors is the number of bins.
-/// The first subvector contains the frequency of the bins.
-/// The second subvector contains the center of the bins.
-/// @param vector
-/// @todo missing values
-
-Histogram histogram_missing_values(const Tensor<bool, 1>& vector)
-{
-  Tensor<Index, 1> minimums(2);
-  Tensor<Index, 1> maximums(2);
-
-  Tensor<Index, 1> centers(2);
-  Tensor<Index, 1> frequencies(2);
-
-  frequencies.setConstant(0);
-
-  minimums[0] = 0;
-  maximums[0] = 0;
-  centers[0] = 0;
-
-  minimums[1] = 1;
-  maximums[1] = 1;
-  centers[1] = 1;
-
-  // Calculate bins frequency
-
-  const Index size = vector.dimension(0);
-
-  for(Index i = 0; i < size; i++)
-  {
-/*
-    if(!missing_values.contains(i)) {
-    for(Index j = 0; j < 2; j++) {
-      if(static_cast<Index>(vector(i)) == minimums(j)) {
-        frequencies(j)++;
-      }
-    }
-    }
-*/
-  }
-
-  Histogram histogram(2);
-/*
-  histogram.centers = centers.cast<type>();
-  histogram.minimums = minimums.cast<type>();
-  histogram.maximums = maximums.cast<type>();
-  histogram.frequencies = frequencies;
-*/
-  return histogram;
-}
-
-
 /// Returns a vector containing the sum of the frequencies of the bins to which
 /// this vector belongs.
 /// @param histograms Used histograms.
@@ -1372,7 +1279,7 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&histograms)
 /// @param matrix Data to calculate histograms
 /// @param bins_number Number of bins for each histogram.
 
-Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& /*bins_number*/)
+Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1506,13 +1413,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-<<<<<<< HEAD
             const type numerator = squared_sums(i) -(sums(i) * sums(i)) / row_indices_size;
             const type denominator = row_indices_size - 1.0;
-=======
-            const type numerator = squared_sums[i] -(sums[i] * sums[i]) / row_indices_size;
-            const type denominator = row_indices_size - static_cast<type>(1.0);
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
             standard_deviation(i) = numerator / denominator;
 
@@ -1529,40 +1431,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     }
 
     return descriptives;
-}
-
-
-/// Returns the basic descriptives of all the columns for given rows when the matrix has missing values.
-/// The format is a vector of descriptives structures.
-/// The size of that vector is equal to the number of columns in this matrix.
-/// @param matrix Used matrix.
-/// @param row_indices Indices of the rows for which the descriptives are to be computed.
-
-Tensor<Descriptives, 1> rows_descriptives_missing_values(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices)
-{
-    const Index columns_number = matrix.dimension(1);
-
-    const Index row_indices_size = row_indices.size();
-
-    Tensor<Descriptives, 1> rows_descriptives(columns_number);
-
-    Tensor<type, 1> column(row_indices_size);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-//        column = matrix.get_column(i, row_indices);
-
-        for(Index j = 0; j < row_indices_size; j++)
-        {
-            Index row_index = row_indices(j);
-
-            column(j) = matrix(row_index,i);
-        }
-
-        rows_descriptives(i) = descriptives(column);
-    }
-
-    return rows_descriptives;
 }
 
 
@@ -1735,8 +1603,7 @@ type range(const Tensor<type, 1>& vector)
 /// @param columns_indices Indices of the columns for which box plots are going to be calculated.
 /// @todo
 
-
-Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>/*& rows_indices*/, const Tensor<Index, 1>& columns_indices)
+Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
 {
     const Index columns_number = columns_indices.size();
 
@@ -1803,95 +1670,12 @@ Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<
         else
         {
             // First quartile
-<<<<<<< HEAD
-=======
-
-            box_plots[i][1] = column[rows_number / 4];
-
-            // Second quartile
-
-            box_plots[i][2] = column[rows_number * 2 / 4];
-
-            //Third quartile
-
-            box_plots[i][3] = column[rows_number * 3 / 4];
-        }
-
-        // Maximum
-
-        box_plots[i][4] = column[rows_number-1];
-    }
-*/
-    return box_plots;
-}
-
-
-/// Returns the minimum, maximum, mean and standard deviation of the elements in
-/// the vector.
-/// @param Used vector.
-
-Descriptives descriptives(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.dimension(0);
-
-#ifdef __OPENNN_DEBUG__
-
-  if(size == 0) {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Statistics Class.\n"
-           << "type descriptives(const Tensor<type, 1>&).\n"
-           << "Size must be greater than zero.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-#endif
-
-  Descriptives descriptives;
-  type minimum = numeric_limits<type>::max();
-  type maximum;
-  type sum = 0;
-  type squared_sum = 0;
-  Index count = 0;
-
-  maximum = static_cast<type>(-1.0)*numeric_limits<type>::max();
-
-  for(Index i = 0; i < size; i++)
-  {
-      if(vector[i] < minimum)
-      {
-          minimum = vector[i];
-      }
-
-      if(vector[i] > maximum)
-      {
-          maximum = vector[i];
-      }
-
-      sum += vector[i];
-      squared_sum += vector[i]*vector[i];
-
-      count++;
-  }
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
             box_plots(i)[1] = column[rows_number / 4];
 
             // Second quartile
 
-<<<<<<< HEAD
             box_plots(i)[2] = column[rows_number * 2 / 4];
-=======
-  if(count <= 1)
-  {
-    standard_deviation = static_cast<type>(0.0);
-  }
-  else
-  {
-      const type numerator = squared_sum -(sum * sum) / count;
-      const type denominator = size - static_cast<type>(1.0);
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
             //Third quartile
 
@@ -1920,7 +1704,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Statistics Class.\n"
-           << "type descriptives_missing_values(const Tensor<type, 1>&, "
+           << "type descriptives(const Tensor<type, 1>&, "
               "const Tensor<Index, 1>&).\n"
            << "Size must be greater than zero.\n";
 
@@ -1970,7 +1754,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
   else
   {
       const type numerator = squared_sum -(sum * sum) / count;
-      const type denominator = size -static_cast<type>(1.0);
+      const type denominator = size - 1.0;
 
       standard_deviation = numerator / denominator;
   }
@@ -2015,15 +1799,9 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-<<<<<<< HEAD
         const type normal_distribution = 0.5 * erfc((mean - sorted_vector(i))/(standard_deviation*sqrt(2)));
 /*        const type half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2))); */
         const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
-=======
-        const type normal_distribution = static_cast<type>(0.5) * erfc((mean - static_cast<Index>(sorted_vector[i]))/((static_cast<Index>(standard_deviation))*static_cast<type>(sqrt(2))));
-/*        const type half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2))); */
-        const type uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
         type empirical_distribution;
 
@@ -2068,80 +1846,6 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 }
 
 
-/// Calculates the distance between the empirical distribution of the vector and
-/// the normal, half-normal and uniform cumulative distribution. It returns 0, 1
-/// or 2 if the closest distribution is the normal, half-normal or the uniform,
-/// respectively.
-
-Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>/*& vector*/, const Tensor<Index, 1>/*& missing_indices*/)
-{
-/*
-    Tensor<type, 1> distances(3, 0.0);
-
-    type normal_distribution; // Normal distribution
-    type half_normal_distribution; // Half-normal distribution
-    type uniform_distribution; // Uniform distribution
-    type empirical_distribution; // Empirical distribution
-
-    Tensor<Index, 1> used_indices(1,1, vector.size());
-    used_indices = used_indices.get_difference(missing_indices);
-
-    const Tensor<type, 1> used_values = vector.get_subvector(used_indices);
-    const Index n = used_values.size();
-
-    Tensor<type, 1> sorted_vector(used_values);
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-
-    const Descriptives descriptives = OpenNN::descriptives(used_values);
-
-    const type mean = descriptives.mean;
-    const type standard_deviation = descriptives.standard_deviation;
-    const type minimum = sorted_vector[0];
-    const type maximum = sorted_vector[n-1];
-
-    if(abs(minimum - maximum) < numeric_limits<type>::epsilon() || standard_deviation < 1.0e-09)
-    {
-        return 2;
-    }
-
-    Index counter = 0;
-
- #pragma omp parallel for private(empirical_distribution, normal_distribution, half_normal_distribution, uniform_distribution, counter)
-
-    for(Index i = 0; i < n; i++)
-    {
-        normal_distribution = 0.5 * erfc((mean - sorted_vector(i))/(standard_deviation*sqrt(2)));
-        half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2)));
-        uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
-        counter = 0;
-
-        for(Index j = 0; j < n; j++)
-        {
-            if(sorted_vector(j) <= sorted_vector(i))
-            {
-                counter++;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
-
-        #pragma omp critical
-        {
-            distances[0] += abs(normal_distribution - empirical_distribution);
-            distances[1] += abs(half_normal_distribution - empirical_distribution);
-            distances[2] += abs(uniform_distribution - empirical_distribution);
-        }
-    }
-
-    return minimal_index(distances);
-*/
-    return 0;
-}
-
 
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
@@ -2151,7 +1855,7 @@ Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1
 Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
 {
 
-//    const Index rows_number = matrix.dimension(0);
+    const Index rows_number = matrix.dimension(0);
 
     const Index columns_number = matrix.dimension(1);
 
@@ -2270,19 +1974,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
-<<<<<<< HEAD
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
-=======
-    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
-
-
-   const Index row_indices_size = row_indices.size();
-   const Index columns_indices_size = columns_indices.size();
-
-
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2399,7 +2092,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2431,32 +2124,20 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
    type mean = static_cast<type>(0.0);
 
+   Index count = 0;
+
     for(Index i = 0; i < rows_number; i++)
     {
-        mean += matrix(i,column_index);
+        if(!::isnan(matrix(i,column_index)))
+        {
+            mean += matrix(i,column_index);
+            count++;
+        }
     }
 
-   mean /= static_cast<type>(rows_number);
+   mean /= static_cast<type>(count);
 
    return mean;
-}
-
-
-/// Returns a vector with the mean values of given columns for given rows when the matrix has missing values.
-/// The size of the vector is equal to the size of the column indices vector.
-
-Tensor<type, 1> mean_missing_values(const Tensor<type, 2>/*& matrix*/)
-{
-/* @todo , initialize sequential
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    const Tensor<Index, 1> row_indices(0, 1, rows_number-1);
-    const Tensor<Index, 1> columns_indices(0, 1, columns_number-1);
-
-    return mean_missing_values(matrix, row_indices, columns_indices);
-*/
-    return Tensor<type, 1>();
 }
 
 
@@ -2513,7 +2194,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 type median(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
    #ifdef __OPENNN_DEBUG__
 
@@ -2608,8 +2289,8 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
-//    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
    const Index row_indices_size = row_indices.size();
    const Index columns_indices_size = columns_indices.size();
@@ -2717,169 +2398,6 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
    return median;
 }
 
-/// Returns the median of the elements of a vector with missing values.
-
-type median_missing_values(const Tensor<type, 1>& vector)
-{
-
-  const Index size = vector.dimension(0);
-
-//  const Index nan = vector.count_NAN();
-
-  Index new_size = 0;
-
-  for(Index i = 0; i < size; i++)
-  {
-      if(!::isnan(vector(i)))
-      {
-           new_size++;
-      }
-  }
-
-  Tensor<type, 1> new_vector(new_size);
-
-  Index index = 0;
-
-  for(Index i = 0; i < size; i++){
-
-      if(!::isnan(vector(i)))
-      {
-           new_vector[index] = vector(i);
-
-           index++;
-
-       }
-     }
-
-  return median(new_vector);
-
-}
-
-
-/// Returns a vector with the median values of given columns for given rows when the matrix has missing values.
-/// The size of the vector is equal to the size of the column indices vector.
-
-Tensor<type, 1> median_missing_values(const Tensor<type, 2>/*& matrix*/)
-{
-//    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
-/*
-    Tensor<Index, 1> row_indices(0, 1, rows_number-1);
-    Tensor<Index, 1> columns_indices(0, 1, columns_number-1);
-
-    return median_missing_values(matrix, row_indices, columns_indices);
-*/
-
-    return Tensor<type, 1>();
-}
-
-
-/// Returns a vector with the median values of given columns for given rows when the matrix has missing values.
-/// The size of the vector is equal to the size of the column indices vector.
-/// @param row_indices Indices of rows.
-/// @param columns_indices Indices of columns.
-
-Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
-                                     const Tensor<Index, 1>& row_indices,
-                                     const Tensor<Index, 1>& columns_indices)
-{
-//    const Index rows_number = matrix.dimension(0);
-//    const Index columns_number = matrix.dimension(1);
-    const Index columns_indices_size = columns_indices.size();
-    const Index row_indices_size = row_indices.size();
-
-   #ifdef __OPENNN_DEBUG__
-
-
-   // Rows check
-
-   if(row_indices_size > rows_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix template.\n"
-             << "Tensor<type, 1> median_missing_values(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Tensor<Index, 1>, 1>&) const method.\n"
-             << "Size of row indices(" << row_indices_size << ") is greater than number of rows(" << rows_number << ").\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   for(Index i = 0; i < row_indices_size; i++)
-   {
-      if(row_indices(i) >= rows_number)
-      {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: Matrix template.\n"
-                << "Tensor<type, 1> median_missing_values(const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<Tensor<Index, 1>, 1>&) const method.\n"
-                << "Row index " << i << " must be less than rows number.\n";
-
-         throw logic_error(buffer.str());
-      }
-   }
-
-   if(row_indices_size == 0)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix template.\n"
-             << "Tensor<type, 1> median_missing_values(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Tensor<Index, 1>, 1>&) const method.\n"
-             << "Size of row indices must be greater than zero.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   // Columns check
-
-   if(columns_indices_size > columns_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix template.\n"
-             << "Tensor<type, 1> median_missing_values(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Tensor<Index, 1>, 1>&) const method.\n"
-             << "Column indices size must be equal or less than columns number.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   for(Index i = 0; i < columns_indices_size; i++)
-   {
-      if(columns_indices(i) >= columns_number)
-      {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: Matrix template.\n"
-                << "Tensor<type, 1> median_missing_values(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Tensor<Index, 1>, 1>&) const method.\n"
-                << "Column index " << i << " must be less than columns number.\n";
-
-         throw logic_error(buffer.str());
-      }
-   }
-
-   #endif
-
-   // median
-
-   Tensor<type, 1> median(columns_indices_size);
-
-   for(Index j = 0; j < columns_indices_size; j++)
-   {
-      const Index column_index = columns_indices(j);
-
-      Tensor<type, 1> column_missing_values(row_indices_size);//(matrix.get_column(column_index, row_indices));
-
-      for(Index k = 0; k < row_indices_size; k++)
-      {
-          const Index row_index = row_indices(k);
-
-          column_missing_values(k) = matrix(row_index,column_index);
-      }
-
-      median(j) = median_missing_values(column_missing_values);
-   }
-
-   return median;
-}
 
 
 /// Returns true if the elements in the vector have a normal distribution with a given critical value.
@@ -2988,11 +2506,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-<<<<<<< HEAD
         normal_distribution = 0.5 * erfc((mean_value - sorted_vector(i))/(standard_deviation*sqrt(2.0)));
-=======
-        normal_distribution = static_cast<type>(0.5) * erfc((mean_value - static_cast<Index>(sorted_vector[i]))/(static_cast<Index>(standard_deviation)*static_cast<type>(sqrt(2.0))));
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -3038,11 +2552,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-<<<<<<< HEAD
         half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2)));
-=======
-        half_normal_distribution = erf((static_cast<Index>(sorted_vector[i]))/(static_cast<Index>(standard_deviation) * static_cast<type>(sqrt(2))));
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -3121,7 +2631,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    type significance_level = static_cast<type>(0.05);
+    type significance_level = 0.05;
 
     type A_significance_level;
     type B_significance_level;
@@ -3147,7 +2657,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 
         critical_values(i) = sqrt(1/(A_significance_level*size+B_significance_level));
 
-        significance_level += static_cast<type>(0.05);
+        significance_level += 0.05;
     }
 
     //return vector.Lilliefors_normality_test(critical_values);
@@ -3185,11 +2695,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-<<<<<<< HEAD
         normal_distribution = 0.5 * erfc((mean_value - sorted_vector(i))/(standard_deviation*sqrt(2.0)));
-=======
-        normal_distribution = static_cast<type>(0.5) * erfc((mean_value - static_cast<Index>(sorted_vector[i]))/(static_cast<Index>(standard_deviation)*static_cast<type>(sqrt(2.0))));
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -3213,13 +2719,8 @@ type normality_parameter(const Tensor<type, 1>& vector)
         }
         else
         {
-<<<<<<< HEAD
             normal_area += 0.5*(sorted_vector(i)-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
             empirical_area += 0.5*(sorted_vector(i)-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
-=======
-            normal_area += static_cast<type>(0.5)*static_cast<Index>((sorted_vector[i]-sorted_vector[i-1]))*(normal_distribution+previous_normal_distribution);
-            empirical_area += static_cast<type>(0.5)*static_cast<Index>((sorted_vector[i]-sorted_vector[i-1]))*(empirical_distribution+previous_empirical_distribution);
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
             previous_normal_distribution = normal_distribution;
             previous_empirical_distribution = empirical_distribution;
@@ -3242,11 +2743,7 @@ Tensor<type, 1> variation_percentage(const Tensor<type, 1>& vector)
     {
         if(abs(vector[i-1]) < numeric_limits<type>::min())
         {
-<<<<<<< HEAD
             new_vector(i) = (vector(i) - vector[i-1])*100.0/vector[i-1];
-=======
-            new_vector[i] = static_cast<Index>((vector[i] - vector[i-1]))* static_cast<type>(100.0)/static_cast<Index>(vector[i-1]);
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
         }
     }
 
@@ -3305,7 +2802,7 @@ Index maximal_index(const Tensor<type, 1>& vector)
 /// Returns the indices of the smallest elements in the vector.
 /// @param number Number of minimal indices to be computed.
 
-Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index /*&number*/)
+Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
 
   const Index size = vector.dimension(0);
@@ -3493,7 +2990,7 @@ type strongest(const Tensor<type, 1>& vector)
 /// to each of the given integers. The matrix must have 2 columns, the first
 /// one containing the integers and the second one the corresponding values.
 
-Tensor<type, 1> means_by_categories(const Tensor<type, 2>/*& matrix*/)
+Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 {
 /*
     const Index integers_number = matrix.size();
@@ -3553,75 +3050,6 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>/*& matrix*/)
 }
 
 
-<<<<<<< HEAD
-=======
-/// Returns a vector containing the means of the subsets which correspond
-/// to each of the given integers. The matrix must have 2 columns, the first
-/// one containing the integers and the second one the corresponding values.
-/// Both columns can contain NAN.
-
-Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>/*& matrix*/)
-{
-/*
-    const Index integers_number = matrix.size();
-
-    Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
-    Tensor<type, 1> values = matrix.chip(1,1);
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(integers_number == 0)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Matrix template.\n"
-              << "Tensor<type, 1> calculate_means_integers(const Tensor<type, 2>& \n"
-              << "Number of integers must be greater than 0.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    const Index rows_number = matrix.dimension(0);
-
-    Tensor<type, 1> means(elements_uniques);
-
-    type sum = static_cast<type>(0.0);
-    Index count = 0;
-
-    for(Index i = 0; i < integers_number; i++)
-    {
-        sum = static_cast<type>(0.0);
-        count = 0;
-
-        for(unsigned j = 0; j < rows_number; j++)
-        {
-            if(matrix(j,0) == elements_uniques[i] && !::isnan(values[j]))
-            {
-                sum += matrix(j,1);
-                count++;
-            }
-        }
-
-        if(count != 0)
-        {
-            means[i] = static_cast<type>(sum)/static_cast<type>(count);
-
-        }
-        else
-        {
-            means[i] = static_cast<type>(0.0);
-        }
-    }
-
-    return means;
-*/
-
-    return Tensor<type, 1>();
-}
-
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 
 /// Returns a vector containing the values of the means for the 0s and 1s of a
 /// binary column.
@@ -3641,7 +3069,7 @@ Tensor<type, 1> means_binary_column(const Tensor<type, 2>& matrix)
             means[0] += matrix(i,1);
             count++;
         }
-        else if(static_cast<Index>(matrix(i,0)) == 1.0)
+        else if(matrix(i,0) == 1.0)
         {
             means[1] += matrix(i,1);
             count++;
@@ -3681,7 +3109,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 
         for(Index j = 0; j < matrix.dimension(0); j++)
         {
-            if(static_cast<Index>(matrix(j,i)) == 1.0)
+            if(matrix(j,i) == 1.0)
             {
                 sum += matrix(j,matrix.dimension(1)-1);
 
@@ -3703,22 +3131,6 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 }
 
 
-<<<<<<< HEAD
-=======
-/// Returns a vector containing the values of the means for the 1s of each
-/// of the binary columns.
-/// All the columns except the last one must be binary.
-
-Tensor<type, 1> means_binary_columns_missing_values(const Tensor<type, 2>/*& matrix*/)
-{
-/*
-   return means_binary_columns(matrix.delete_rows_with_value(static_cast<type>(NAN)));
-*/
-    return Tensor<type, 1>();
-}
-
-
->>>>>>> 51527da611e42dbf8ecfdb47630718b4c844bb56
 ///Returns a vector with the percentiles of a vector given.
 
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
