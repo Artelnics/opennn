@@ -304,6 +304,7 @@ public:
 
    Tensor<Index, 1> get_variable_indices(const Index&) const;
    Tensor<Index, 1> get_unused_variables_indices() const;
+   Tensor<Index, 1> get_used_variables_indices() const;
    Tensor<Index, 1> get_input_variables_indices() const;
    Tensor<Index, 1> get_target_variables_indices() const;
 
@@ -554,8 +555,6 @@ public:
 
    Tensor<Descriptives, 1> calculate_columns_descriptives() const;
 
-   Tensor<type, 2> calculate_columns_descriptives_matrix() const;
-
    Tensor<Descriptives, 1> calculate_columns_descriptives_positive_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_negative_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_classes(const Index&) const;
@@ -563,6 +562,8 @@ public:
    Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_testing_instances() const;
+
+   Tensor<type, 2> calculate_variables_descriptives_matrix() const;
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
