@@ -1362,7 +1362,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
-
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
@@ -1373,13 +1372,16 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     Tensor<type, 1> minimums(columns_indices_size);
     minimums.setConstant(numeric_limits<type>::max());
 
-    Tensor<type, 1> maximums;
-
-    maximums.resize(columns_indices_size);
+    Tensor<type, 1> maximums(columns_indices_size);
     maximums.setConstant(-numeric_limits<type>::max());
 
     Tensor<type, 1> sums(columns_indices_size);
     Tensor<type, 1> squared_sums(columns_indices_size);
+    Tensor<Index, 1> count(columns_indices_size);
+
+    sums.setZero();
+    squared_sums.setZero();
+    count.setZero();
 
     for(Index i = 0; i < row_indices_size; i++)
     {
@@ -1390,6 +1392,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         for(Index j = 0; j < columns_indices_size; j++)
         {
             column_index = columns_indices(j);
+
+            if(isnan((matrix(row_index,column_index)))) continue;
 
             if(matrix(row_index,column_index) < minimums(j))
             {
@@ -1403,10 +1407,11 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
 
             sums(j) += matrix(row_index,column_index);
             squared_sums(j) += matrix(row_index,column_index)*matrix(row_index,column_index);
+            count(j)++;
         }
     }
 
-    const Tensor<type, 1> mean = sums/static_cast<type>(row_indices_size);
+    const Tensor<type, 1> mean = sums/count;
 
     Tensor<type, 1> standard_deviation(columns_indices_size);
 
@@ -1414,8 +1419,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const type numerator = squared_sums(i) -(sums(i) * sums(i)) / row_indices_size;
-            const type denominator = row_indices_size - 1.0;
+            const type numerator = squared_sums(i) -(sums(i) * sums(i)) / count(i);
+            const type denominator = static_cast<type>(count(i) - 1);
 
             standard_deviation(i) = numerator / denominator;
 
