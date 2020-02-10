@@ -43,6 +43,37 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
+    struct OptimizationParameters
+    {
+        /// Default constructor.
+
+        explicit OptimizationParameters()
+        {
+        }
+
+        explicit OptimizationParameters(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        {
+            stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
+
+            //stochastic_gradient_descent_pointer->get_neural_network_file_name()
+        }
+
+        virtual ~OptimizationParameters() {}
+
+
+
+        void print() const
+        {
+        }
+
+        StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
+
+        Index learning_rate_iteration = 0;
+
+        Tensor<type, 2> parameters_increment;
+    };
+
+
    // Constructors
 
    explicit StochasticGradientDescent(); 
@@ -145,17 +176,14 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_parameters(const LossIndex::BackPropagation& back_propagation)
+   void update_parameters(const LossIndex::BackPropagation& back_propagation, OptimizationParameters& optimization_parameters)
    {
-       /*
        NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();
-
-       type learning_rate_iteration
 
        type learning_rate;
 
-       initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
-
+       initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + optimization_parameters.learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+/*
        parameters_increment.device(thread_pool_device) = back_propagation.gradient*static_cast<type>(-learning_rate);
 
        if(momentum > 0 && !nesterov)
@@ -182,9 +210,8 @@ public:
        }
 
        neural_network_pointer->set_parameters(parameters);
-
-       learning_rate_iteration++;
 */
+       optimization_parameters.learning_rate_iteration++;
    }
 
 

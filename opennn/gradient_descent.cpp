@@ -765,7 +765,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<type, 1> parameters(parameters_number);
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 0> parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
@@ -797,8 +797,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    pair<type,type> directional_point(2, 0.0);
 
-   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    type minimum_selection_error = numeric_limits<type>::max();
+   Tensor<type, 1> minimum_selection_error_parameters = parameters;
 
    bool stop_training = false;
 
@@ -813,8 +813,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network stuff
-
-      parameters = neural_network_pointer->get_parameters();
 
       parameters_norm = parameters.square().sum().sqrt();
 
@@ -837,7 +835,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       if(epoch == 0)
       {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
       }
       else if(epoch != 0 && selection_error > old_selection_error)
       {
@@ -846,7 +843,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       else if(selection_error <= minimum_selection_error)
       {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
       }
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();

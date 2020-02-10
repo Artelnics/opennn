@@ -1088,7 +1088,6 @@ check();
 
 type LossIndex::calculate_selection_error() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();

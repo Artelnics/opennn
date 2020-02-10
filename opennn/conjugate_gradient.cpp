@@ -1215,7 +1215,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    if(display) cout << "Training with conjugate gradient...\n";
 
-   Results results; //= new ConjugateGradientResults(this);
+   Results results;
    results.resize_training_history(maximum_epochs_number+1);
 
    // Elapsed time
@@ -1270,7 +1270,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    pair<type,type> directional_point(2, 0.0);
 
-   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters = parameters;
    type minimum_selection_error = static_cast<type>(0.0);
 
    bool stop_training = false;
@@ -1285,8 +1285,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    {
       // Neural network
 
-      parameters = neural_network_pointer->get_parameters();
-
       parameters_norm = parameters.square().sum().sqrt();
 
       if(parameters_norm(0) >= error_parameters_norm)
@@ -1294,7 +1292,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          ostringstream buffer;
 
          buffer << "OpenNN Exception: ConjugateGradient class.\n"
-                << "ConjugateGradientResults* perform_training() method.\n"
+                << "Results perform_training() method.\n"
                 << "Parameters norm is greater than error parameters norm.\n";
  
          throw logic_error(buffer.str());
@@ -1331,8 +1329,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       if(epoch == 0)
       {
           minimum_selection_error = selection_error;
-
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
       }
       else if(epoch != 0 && selection_error > old_selection_error)
       {
@@ -1342,7 +1338,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       {
           minimum_selection_error = selection_error;
 
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
       }
 
       // Optimization algorithm 

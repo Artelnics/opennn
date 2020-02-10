@@ -295,6 +295,8 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
+//   virtual void calculate_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const {}
+
    virtual void calculate_error(BackPropagation&) const {}
 
    void calculate_back_propagation(const DataSet::Batch& batch,

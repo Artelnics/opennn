@@ -316,7 +316,6 @@ type WeightedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_i
 
 Tensor<type, 1> WeightedSquaredError::calculate_training_error_gradient() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
