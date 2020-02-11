@@ -51,7 +51,7 @@ PrincipalComponentsLayer::~PrincipalComponentsLayer()
 
 const PrincipalComponentsLayer::PrincipalComponentsMethod& PrincipalComponentsLayer::get_principal_components_method() const
 {
-    return(principal_components_method);
+    return principal_components_method;
 }
 
 
@@ -243,12 +243,12 @@ string PrincipalComponentsLayer::write_expression(const Tensor<string, 1>& input
     {
         case NoPrincipalComponents:
         {
-            return(write_no_principal_components_expression(inputs_names, outputs_names));
+            return write_no_principal_components_expression(inputs_names, outputs_names);
         }
 
         case PrincipalComponents:
         {
-            return(write_principal_components_expression(inputs_names, outputs_names));
+            return write_principal_components_expression(inputs_names, outputs_names);
         }
     }
 

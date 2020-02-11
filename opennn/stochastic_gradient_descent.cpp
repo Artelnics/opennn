@@ -59,7 +59,7 @@ StochasticGradientDescent::~StochasticGradientDescent()
 
 const type& StochasticGradientDescent::get_initial_learning_rate() const
 {
-   return(initial_learning_rate);
+   return initial_learning_rate;
 }
 
 
@@ -67,7 +67,7 @@ const type& StochasticGradientDescent::get_initial_learning_rate() const
 
 const type& StochasticGradientDescent::get_initial_decay() const
 {
-   return(initial_decay);
+   return initial_decay;
 }
 
 
@@ -75,7 +75,7 @@ const type& StochasticGradientDescent::get_initial_decay() const
 
 const type& StochasticGradientDescent::get_momentum() const
 {
-   return(momentum);
+   return momentum;
 }
 
 
@@ -83,7 +83,7 @@ const type& StochasticGradientDescent::get_momentum() const
 
 const bool& StochasticGradientDescent::get_nesterov() const
 {
-   return(nesterov);
+   return nesterov;
 }
 
 
@@ -92,7 +92,7 @@ const bool& StochasticGradientDescent::get_nesterov() const
 
 const type& StochasticGradientDescent::get_warning_parameters_norm() const
 {
-   return(warning_parameters_norm);
+   return warning_parameters_norm;
 }
 
 
@@ -101,7 +101,7 @@ const type& StochasticGradientDescent::get_warning_parameters_norm() const
 
 const type& StochasticGradientDescent::get_warning_gradient_norm() const
 {
-   return(warning_gradient_norm);
+   return warning_gradient_norm;
 }
 
 
@@ -110,7 +110,7 @@ const type& StochasticGradientDescent::get_warning_gradient_norm() const
 
 const type& StochasticGradientDescent::get_error_parameters_norm() const
 {
-   return(error_parameters_norm);
+   return error_parameters_norm;
 }
 
 
@@ -119,7 +119,7 @@ const type& StochasticGradientDescent::get_error_parameters_norm() const
 
 const type& StochasticGradientDescent::get_error_gradient_norm() const
 {
-   return(error_gradient_norm);
+   return error_gradient_norm;
 }
 
 
@@ -127,7 +127,7 @@ const type& StochasticGradientDescent::get_error_gradient_norm() const
 
 const type& StochasticGradientDescent::get_minimum_parameters_increment_norm() const
 {
-   return(minimum_parameters_increment_norm);
+   return minimum_parameters_increment_norm;
 }
 
 
@@ -135,7 +135,7 @@ const type& StochasticGradientDescent::get_minimum_parameters_increment_norm() c
 
 const type& StochasticGradientDescent::get_minimum_loss_increase() const
 {
-   return(minimum_loss_decrease);
+   return minimum_loss_decrease;
 }
 
 
@@ -144,7 +144,7 @@ const type& StochasticGradientDescent::get_minimum_loss_increase() const
 
 const type& StochasticGradientDescent::get_loss_goal() const
 {
-   return(loss_goal);
+   return loss_goal;
 }
 
 
@@ -153,7 +153,7 @@ const type& StochasticGradientDescent::get_loss_goal() const
 
 const type& StochasticGradientDescent::get_gradient_norm_goal() const
 {
-   return(gradient_norm_goal);
+   return gradient_norm_goal;
 }
 
 
@@ -161,7 +161,7 @@ const type& StochasticGradientDescent::get_gradient_norm_goal() const
 
 const Index& StochasticGradientDescent::get_maximum_selection_error_increases() const
 {
-   return(maximum_selection_error_increases);
+   return maximum_selection_error_increases;
 }
 
 
@@ -169,7 +169,7 @@ const Index& StochasticGradientDescent::get_maximum_selection_error_increases() 
 
 const type& StochasticGradientDescent::get_maximum_time() const
 {
-   return(maximum_time);
+   return maximum_time;
 }
 
 
@@ -177,7 +177,7 @@ const type& StochasticGradientDescent::get_maximum_time() const
 
 const bool& StochasticGradientDescent::get_choose_best_selection() const
 {
-    return(choose_best_selection);
+    return choose_best_selection;
 }
 
 
@@ -185,7 +185,7 @@ const bool& StochasticGradientDescent::get_choose_best_selection() const
 
 const bool& StochasticGradientDescent::get_apply_early_stopping() const
 {
-    return(apply_early_stopping);
+    return apply_early_stopping;
 }
 
 
@@ -193,7 +193,7 @@ const bool& StochasticGradientDescent::get_apply_early_stopping() const
 
 const bool& StochasticGradientDescent::get_reserve_training_error_history() const
 {
-   return(reserve_training_error_history);
+   return reserve_training_error_history;
 }
 
 
@@ -201,7 +201,7 @@ const bool& StochasticGradientDescent::get_reserve_training_error_history() cons
 
 const bool& StochasticGradientDescent::get_reserve_selection_error_history() const
 {
-   return(reserve_selection_error_history);
+   return reserve_selection_error_history;
 }
 
 

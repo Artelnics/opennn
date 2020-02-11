@@ -154,7 +154,7 @@ DataSet* TestingAnalysis::get_data_set_pointer() const
 
     #endif
 
-   return(data_set_pointer);
+   return data_set_pointer;
 }
 
 
@@ -321,7 +321,7 @@ Tensor<type, 1> TestingAnalysis::get_linear_regression_correlations_std() const
         std_correlations[i] = linear_regression[i].correlation;
     }
 
-    return(std_correlations);
+    return std_correlations;
 }
 
 
@@ -1532,7 +1532,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
     positives_negatives_rate[0] = confusion(0,0) + confusion(0,1);
     positives_negatives_rate[1] = confusion(1,0) + confusion(1,1);
 
-    return(positives_negatives_rate);
+    return positives_negatives_rate;
 }
 
 
@@ -1708,7 +1708,7 @@ type TestingAnalysis::calculate_Wilcoxon_parameter(const type& x, const type& y)
     }
     else
     {
-        return(0.5);
+        return 0.5;
     }
 }
 
@@ -2825,7 +2825,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_instances(const Tenso
         }
     }
 */
-    return(false_positives_indices);
+    return false_positives_indices;
 }
 
 

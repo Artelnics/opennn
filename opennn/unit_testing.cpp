@@ -40,7 +40,7 @@ Index UnitTesting::get_tests_count() const
 
 Index UnitTesting::get_tests_passed_count() const
 {
-   return(tests_passed_count);
+   return tests_passed_count;
 }
 
 
@@ -48,7 +48,7 @@ Index UnitTesting::get_tests_passed_count() const
 
 Index UnitTesting::get_tests_failed_count() const
 {
-   return(tests_failed_count);
+   return tests_failed_count;
 }
 
 
@@ -56,13 +56,13 @@ Index UnitTesting::get_tests_failed_count() const
 
 Index UnitTesting::get_random_tests_number() const
 {
-   return(random_tests_number);
+   return random_tests_number;
 }
 
 
 bool UnitTesting::get_numerical_differentiation_tests() const
 {
-   return(numerical_differentiation_tests);
+   return numerical_differentiation_tests;
 }
 
 
