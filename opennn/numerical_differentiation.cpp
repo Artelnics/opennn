@@ -40,7 +40,7 @@ NumericalDifferentiation::~NumericalDifferentiation()
 
 const NumericalDifferentiation::NumericalDifferentiationMethod& NumericalDifferentiation::get_numerical_differentiation_method() const
 {
-   return(numerical_differentiation_method);                           
+   return numerical_differentiation_method ;
 }
 
 
@@ -69,7 +69,7 @@ string NumericalDifferentiation::write_numerical_differentiation_method() const
 
 const Index& NumericalDifferentiation::get_precision_digits() const
 {
-   return(precision_digits);
+   return precision_digits;
 }
 
 
