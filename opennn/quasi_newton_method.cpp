@@ -762,7 +762,7 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 1> & ten
 
     Tensor<type, 2> direct(size, size);
 
-    #pragma omp parallel for if(x_size > 1000)
+    #pragma omp parallel for if(size > 1000)
 
     for(Index i = 0; i < size; i++)
     {
