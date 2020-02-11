@@ -584,13 +584,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
     {
        case L1:
        {
-//            return l1_norm(parameters);
+            return l1_norm(parameters);
        }
        case L2:
        {
-            const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
-
-            return parameters_norm(0);
+            return l2_norm(parameters);
 
        }
        case NoRegularization:
@@ -619,7 +617,7 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
        }
        case L2:
        {
-//            return l2_norm_gradient(parameters);
+            return l2_norm_gradient(parameters);
        }
        case NoRegularization:
        {
@@ -647,7 +645,7 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
        }
        case L2:
        {
-//            return l2_norm_hessian(parameters);
+            return l2_norm_hessian(parameters);
        }
        case NoRegularization:
        {
@@ -830,6 +828,26 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
     //return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
     return Tensor<type, 1>();
+}
+
+Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
+{
+
+    const Index size = tensor.size();
+
+    Tensor<type, 2> direct(size, size);
+
+    #pragma omp parallel for if(size > 1000)
+
+    for(Index i = 0; i < size; i++)
+    {
+      for(Index j = 0; j < size; j++)
+      {
+        direct(i, j) = tensor(i) * other_tensor(j);
+      }
+    }
+
+    return direct;
 }
 
 }
