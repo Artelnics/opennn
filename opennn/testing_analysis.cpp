@@ -1444,7 +1444,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(decision_threshold == 0.0 && targets(i,0) == 0.0 )
+        if(static_cast<Index>(decision_threshold) == static_cast<Index>(0.0) && static_cast<Index>(targets(i,0)) == static_cast<Index>(0.0) )
         {
             false_positive++;
         }
@@ -1862,7 +1862,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
 
     for(Index i = 0; i < testing_instances_number; i++)
     {
-        if(abs(targets(i,0) - 1.0) < numeric_limits<type>::min())
+        if(abs(targets(i,0) - static_cast<type>(1.0)) < numeric_limits<type>::min())
         {
             for(Index j = 0; j < testing_instances_number; j++)
             {
@@ -1915,12 +1915,12 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
 
     const type area_under_curve = calculate_area_under_curve(targets, outputs);
 
-    const type Q_1 = area_under_curve/(2.0-area_under_curve);
-    const type Q_2 = (2.0*area_under_curve*area_under_curve)/(1.0*area_under_curve);
+    const type Q_1 = area_under_curve/(static_cast<type>(2.0) -area_under_curve);
+    const type Q_2 = (static_cast<type>(2.0) *area_under_curve*area_under_curve)/(static_cast<type>(1.0) *area_under_curve);
 
-    const type confidence_limit = 1.64485*sqrt((area_under_curve*(1.0-area_under_curve)
-                                                + (total_positives-1.0)*(Q_1-area_under_curve*area_under_curve)
-                                                + (total_negatives-1.0)*(Q_2-area_under_curve*area_under_curve))/(total_positives*total_negatives));
+    const type confidence_limit = static_cast<type>(1.64485)*sqrt((area_under_curve*(static_cast<type>(1.0) -area_under_curve)
+                                                + (total_positives- static_cast<type>(1.0))*(Q_1-area_under_curve*area_under_curve)
+                                                + (total_negatives- static_cast<type>(1.0))*(Q_2-area_under_curve*area_under_curve))/(total_positives*total_negatives));
 
     return confidence_limit;
 }
@@ -1960,12 +1960,12 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
         throw logic_error(buffer.str());
      }
 
-    const type Q_1 = area_under_curve/(2.0-area_under_curve);
-    const type Q_2 = (2.0*area_under_curve*area_under_curve)/(1.0*area_under_curve);
+    const type Q_1 = area_under_curve/(static_cast<type>(2.0) -area_under_curve);
+    const type Q_2 = (static_cast<type>(2.0) *area_under_curve*area_under_curve)/(static_cast<type>(1.0) *area_under_curve);
 
-    const type confidence_limit = 1.64485*sqrt((area_under_curve*(1.0-area_under_curve)
-                                                + (total_positives-1.0)*(Q_1-area_under_curve*area_under_curve)
-                                                + (total_negatives-1.0)*(Q_2-area_under_curve*area_under_curve))/(total_positives*total_negatives));
+    const type confidence_limit = static_cast<type>(1.64485) *sqrt((area_under_curve*(static_cast<type>(1.0)-area_under_curve)
+                                                + (total_positives-static_cast<type>(1.0))*(Q_1-area_under_curve*area_under_curve)
+                                                + (total_negatives-static_cast<type>(1.0))*(Q_2-area_under_curve*area_under_curve))/(total_positives*total_negatives));
 
     return confidence_limit;
 }
@@ -2508,7 +2508,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
 
     Tensor<type, 1> maximum_gain(2);
 
-    const type percentage_increment = 0.05;
+    const type percentage_increment = static_cast<type>(0.05);
 
     type percentage = static_cast<type>(0.0);
 
@@ -2517,7 +2517,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         percentage += percentage_increment;
 
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > 0.0)
+        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > static_cast<type>(0.0))
         {
             maximum_gain[1] = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
             maximum_gain[0] = percentage;
@@ -2623,17 +2623,17 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 
         positives = 0;
         sum = static_cast<type>(0.0);
-        probability += 0.1;
+        probability += static_cast<type>(0.1);
 
         for(Index j = 0; j < rows_number; j++)
         {
-            if(outputs(j, 0) >= (probability - 0.1) && outputs(j, 0) < probability)
+            if(outputs(j, 0) >= (probability - static_cast<type>(0.1)) && outputs(j, 0) < probability)
             {
                 count++;
 
                 sum += outputs(j, 0);
 
-                if(targets(j, 0) == 1.0)
+                if(static_cast<Index>(targets(j, 0)) == 1)
                 {
                     positives++;
                 }
@@ -3275,24 +3275,24 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
    type positive_likelihood;
 
-   if(abs(classification_accuracy - 1.0) < numeric_limits<type>::min())
+   if(abs(classification_accuracy - static_cast<type>(1.0)) < numeric_limits<type>::min())
    {
        positive_likelihood = 1.0;
    }
-   else if(abs(1.0 - specificity) < numeric_limits<type>::min())
+   else if(abs(static_cast<type>(1.0) - specificity) < numeric_limits<type>::min())
    {
        positive_likelihood = static_cast<type>(0.0);
    }
    else
    {
-       positive_likelihood = sensitivity/(1.0 - specificity);
+       positive_likelihood = sensitivity/(static_cast<type>(1.0) - specificity);
    }
 
    // Negative likelihood
 
    type negative_likelihood;
 
-   if(classification_accuracy == 1.0)
+   if(static_cast<Index>(classification_accuracy) == 1)
    {
        negative_likelihood = 1.0;
    }
@@ -3302,7 +3302,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    }
    else
    {
-       negative_likelihood = specificity/(1.0 - sensitivity);
+       negative_likelihood = specificity/(static_cast<type>(1.0) - sensitivity);
    }
 
    // F1 score
@@ -3315,7 +3315,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    }
    else
    {
-       f1_score = 2.0*true_positive/(2.0*true_positive + false_positive + false_negative);
+       f1_score = static_cast<type>(2.0)*true_positive/(static_cast<type>(2.0)*true_positive + false_positive + false_negative);
    }
 
    // False positive rate
@@ -3380,7 +3380,8 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    }
    else
    {
-       Matthews_correlation_coefficient = static_cast<type>(true_positive * true_negative - false_positive * false_negative) / sqrt(((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative)));
+       Matthews_correlation_coefficient = static_cast<type>(true_positive * true_negative - false_positive * false_negative) / static_cast<type>(sqrt(((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative))))
+               ;
    }
 
    //Informedness
@@ -3397,7 +3398,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
    }
    else
    {
-       markedness = precision + static_cast<type>(true_negative)/static_cast<type>(true_negative + false_positive) - 1.0;
+       markedness = precision + static_cast<type>(true_negative)/static_cast<type>(true_negative + false_positive) - static_cast<type>(1.0);
    }
 
    //Arrange vector
