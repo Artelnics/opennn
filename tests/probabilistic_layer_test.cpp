@@ -139,7 +139,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
    probabilistic_layer.set_neurons_number(1);
    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-   probabilistic_layer.set_biases(biases);
+//   probabilistic_layer.set_biases(biases);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
 
