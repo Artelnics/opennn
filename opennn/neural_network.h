@@ -356,9 +356,9 @@ public:
 
 
    void calculate_forward_propagation(const DataSet::Batch& batch,
-                                      const Tensor<type, 1>&,
+                                      const Tensor<type, 1>& parameters,
                                       ForwardPropagation& forward_propagation) const
-   {
+   {                       
        const Index trainable_layers_number = get_trainable_layers_number();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -369,7 +369,7 @@ public:
        {
             trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1].activations,
                                                                         forward_propagation.layers[i]);
-       }
+       }       
    }
 
 

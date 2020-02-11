@@ -62,8 +62,10 @@ public:
 
    // Error methods
 
-
-
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       return 0.0;
+   }
 
    // Gradient methods
 

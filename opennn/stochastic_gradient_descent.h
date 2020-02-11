@@ -61,7 +61,6 @@ public:
         virtual ~OptimizationParameters() {}
 
 
-
         void print() const
         {
         }

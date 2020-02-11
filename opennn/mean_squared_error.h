@@ -66,11 +66,9 @@ public:
 
    // Error methods
 
-   type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
-
-       neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -124,7 +122,19 @@ public:
    type calculate_error(const DataSet::Batch& batch,
                         const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
-       return 0;
+       const Index instances_number = batch.get_instances_number();
+
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations;
+
+       const Tensor<type, 2>& targets = batch.targets_2d;
+
+       Tensor<type, 0> sum_squared_error;
+
+       sum_squared_error = (outputs - targets).square().sum();
+
+       return sum_squared_error(0)/static_cast<type>(instances_number);
    }
 
 

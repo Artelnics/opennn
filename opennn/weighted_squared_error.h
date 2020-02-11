@@ -87,6 +87,13 @@ public:
 
    Tensor<type, 1> calculate_training_error_gradient() const;
 
+
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       return 0;
+   }
+
+
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
