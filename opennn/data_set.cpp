@@ -573,7 +573,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
         {
             if(categories_uses(i) != UnusedVariable)
             {
-                used_variables_names[category_index] = categories(i);
+                used_variables_names(category_index) = categories(i);
 
                 category_index++;
             }
@@ -610,30 +610,30 @@ void DataSet::transform_columns_time_series()
     {
         column_index = i%columns_number;
 
-        if(columns[column_index].type == DateTime)
+        if(columns(column_index).type == DateTime)
         {
             continue;
         }
 
         if(i < lags_number*columns_number)
         {
-            new_columns[new_column_index].name = columns[column_index].name + "_lag_" + to_string(lag_index);
-            new_columns[new_column_index].set_use(Input);
+            new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
+            new_columns(new_column_index).set_use(Input);
 
-            new_columns[new_column_index].type = columns[column_index].type;
-            new_columns[new_column_index].categories = columns[column_index].categories;
-            new_columns[new_column_index].categories_uses = columns[column_index].categories_uses;
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
         else
         {
-            new_columns[new_column_index].name = columns[column_index].name + "_ahead_" + to_string(ahead_index);
-            new_columns[new_column_index].set_use(Target);
+            new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+            new_columns(new_column_index).set_use(Target);
 
-            new_columns[new_column_index].type = columns[column_index].type;
-            new_columns[new_column_index].categories = columns[column_index].categories;
-            new_columns[new_column_index].categories_uses = columns[column_index].categories_uses;
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
@@ -700,19 +700,19 @@ Tensor<Index, 1> DataSet::get_instances_uses_numbers() const
     {
         if(instances_uses(i) == Training)
         {
-           count[0]++;
+           count(0)++;
         }
         else if(instances_uses(i) == Selection)
         {
-           count[1]++;
+           count(1)++;
         }
         else if(instances_uses(i) == Testing)
         {
-           count[2]++;
+           count(2)++;
         }
         else
         {
-           count[3]++;
+           count(3)++;
         }
     }
 
@@ -764,7 +764,7 @@ Tensor<Index, 1> DataSet::get_training_instances_indices() const
     {
        if(instances_uses(i) == Training)
        {
-          training_indices[count] = i;
+          training_indices(count) = i;
           count++;
        }
     }
@@ -788,7 +788,7 @@ Tensor<Index, 1> DataSet::get_selection_instances_indices() const
     {
        if(instances_uses(i) == Selection)
        {
-          selection_indices[count] = i;
+          selection_indices(count) = i;
           count++;
        }
     }
@@ -813,7 +813,7 @@ Tensor<Index, 1> DataSet::get_testing_instances_indices() const
    {
       if(instances_uses(i) == Testing)
       {
-         testing_indices[count] = i;
+         testing_indices(count) = i;
          count++;
       }
    }
@@ -863,7 +863,7 @@ Tensor<Index, 1> DataSet::get_unused_instances_indices() const
     {
         if(instances_uses(i) == UnusedInstance)
         {
-            unused_indices[count] = i;
+            unused_indices(count) = i;
             count++;
         }
     }
@@ -1526,13 +1526,13 @@ void DataSet::set_default_columns_uses()
    }
    else if(size == 1)
    {
-        columns[0].set_use(UnusedVariable);
+        columns(0).set_use(UnusedVariable);
    }
    else
    {
        set_input();
 
-       columns[size-1].set_use(Target);
+       columns(size-1).set_use(Target);
 
        const Index inputs_number = get_input_variables_number();
        const Index targets_number = get_target_variables_number();
@@ -1588,7 +1588,7 @@ void DataSet::set_default_columns_names()
 
 void DataSet::set_column_name(const Index& column_index, const string& new_name)
 {
-    columns[column_index].name = new_name;
+    columns(column_index).name = new_name;
 }
 
 
@@ -1769,7 +1769,7 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
    {
        Index input_index = input_columns_indices(i);
 
-       const Tensor<string, 1> current_used_variables_names = columns[input_index].get_used_variables_names();
+       const Tensor<string, 1> current_used_variables_names = columns(input_index).get_used_variables_names();
 
        for(Index j = 0; j < current_used_variables_names.size(); j++)
        {
@@ -1800,7 +1800,7 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
     {
         Index target_index = target_columns_indices(i);
 
-        const Tensor<string, 1> current_used_variables_names = columns[target_index].get_used_variables_names();
+        const Tensor<string, 1> current_used_variables_names = columns(target_index).get_used_variables_names();
 
         for(Index j = 0; j < current_used_variables_names.size(); j++)
         {
@@ -2304,7 +2304,7 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
         if(current_categories_number == 0 && columns(i).column_use == UnusedVariable)
         {
-            unused_indices[unused_index] = i;
+            unused_indices(unused_index) = i;
             unused_index++;
             unused_variable_index++;
         }
@@ -2314,7 +2314,7 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
             {
                 if(columns(i).categories_uses(j) == UnusedVariable)
                 {
-                    unused_indices[unused_index] = unused_variable_index;
+                    unused_indices(unused_index) = unused_variable_index;
                     unused_index++;
                 }
 
@@ -2346,7 +2346,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
         if(current_categories_number == 0 && columns(i).column_use != UnusedVariable)
         {
-            used_indices[used_index] = i;
+            used_indices(used_index) = i;
             used_index++;
             used_variable_index++;
         }
@@ -2356,7 +2356,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
             {
                 if(columns(i).categories_uses(j) != UnusedVariable)
                 {
-                    used_indices[used_index] = used_variable_index;
+                    used_indices(used_index) = used_variable_index;
                     used_index++;
                 }
 
@@ -2389,7 +2389,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
         if(current_categories_number == 0 && columns(i).column_use == Input)
         {
-            input_variables_indices[input_index] = input_variable_index;
+            input_variables_indices(input_index) = input_variable_index;
             input_index++;
             input_variable_index++;
         }
@@ -2399,7 +2399,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             {
                 if(columns(i).categories_uses(j) == Input)
                 {
-                    input_variables_indices[input_index] = input_variable_index;
+                    input_variables_indices(input_index) = input_variable_index;
                     input_index++;
                 }
 
@@ -2784,7 +2784,7 @@ void DataSet::set_binary_simple_columns()
 
         }
 
-        if(is_binary) columns[column_index].type = Binary;
+        if(is_binary) columns(column_index).type = Binary;
 */
     }
 }
@@ -3363,11 +3363,11 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
         }
     }
 
-    if(columns[column_index].categories.size() > 0)
+    if(columns(column_index).categories.size() > 0)
     {
-        Tensor<Index, 1> variable_indices(columns[column_index].categories.size());
+        Tensor<Index, 1> variable_indices(columns(column_index).categories.size());
 
-        for (Index j = 0; j<columns[column_index].categories.size(); j++)
+        for (Index j = 0; j<columns(column_index).categories.size(); j++)
         {
             variable_indices(j) = index+j;
         }
@@ -3506,7 +3506,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
     }
 
 #endif
-    return data.chip(variable_index[0], 1);
+    return data.chip(variable_index(0), 1);
 
 }
 
@@ -3728,9 +3728,9 @@ void DataSet::set(const Index& new_instances_number, const Index& new_variables_
        columns(index).type = Numeric;
    }
 
-   columns[new_variables_number-1].name = "column_" + to_string(new_variables_number-1);
-   columns[new_variables_number-1].column_use = Target;
-   columns[new_variables_number-1].type = Numeric;
+   columns(new_variables_number-1).name = "column_" + to_string(new_variables_number-1);
+   columns(new_variables_number-1).column_use = Target;
+   columns(new_variables_number-1).type = Numeric;
 
    instances_uses.resize(new_instances_number);
    split_instances_random();
@@ -4200,7 +4200,7 @@ Tensor<Index, 1> DataSet::unuse_non_significant_input_columns()
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Index inputs_number = input_variables_indices.size();
 
-    const Index target_index = get_target_variables_indices()[0];
+    const Index target_index = get_target_variables_indices()(0);
 
     const Index instances_number = get_used_instances_number();
 
@@ -4950,13 +4950,13 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
    {
        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
 
-       const ColumnType input_type = columns[input_columns_indices(i)].type;
+       const ColumnType input_type = columns(input_columns_indices(i)).type;
 
        for(Index j = 0; j < target_columns_number; j++)
        {
            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
 
-           const ColumnType target_type = columns[target_columns_indices(j)].type;
+           const ColumnType target_type = columns(target_columns_indices(j)).type;
 
            if(input_type == Numeric && target_type == Numeric)
            {
@@ -7730,7 +7730,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
    {
       class_distribution.resize(2, 0);
 
-      Index target_index = target_variables_indices[0];
+      Index target_index = target_variables_indices(0);
 
       Index positives = 0;
       Index negatives = 0;
@@ -7750,8 +7750,8 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
           }
       }
 
-      class_distribution[0] = negatives;
-      class_distribution[1] = positives;
+      class_distribution(0) = negatives;
+      class_distribution(1) = positives;
    }
    else // More than two classes
    {
@@ -7791,10 +7791,10 @@ Tensor<Index, 1> DataSet::balance_binary_targets_distribution(const type& percen
 /*
     const Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.cast<type>(), 2);
 
-    const Index maximal_target_class_index = maximal_indices[0];
-    const Index minimal_target_class_index = maximal_indices[1];
+    const Index maximal_target_class_index = maximal_indices(0);
+    const Index minimal_target_class_index = maximal_indices(1);
 
-    Index total_unbalanced_instances_number = static_cast<Index>((percentage/100.0)*(target_class_distribution[maximal_target_class_index] - target_class_distribution[minimal_target_class_index]));
+    Index total_unbalanced_instances_number = static_cast<Index>((percentage/100.0)*(target_class_distribution(maximal_target_class_index) - target_class_distribution(minimal_target_class_index)));
 
     Index actual_unused_instances_number;
 
@@ -7849,7 +7849,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
     const Tensor<Index, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.cast<type>(), targets_number);
 
-    const Index minimal_target_class_index = maximal_target_class_indices[targets_number - 1];
+    const Index minimal_target_class_index = maximal_target_class_indices(targets_number - 1);
 
     // Target class differences
 
@@ -7857,7 +7857,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
     for(Index i = 0; i < targets_number; i++)
     {
-        target_class_differences(i) = target_class_distribution(i) - target_class_distribution[minimal_target_class_index];
+        target_class_differences(i) = target_class_distribution(i) - target_class_distribution(minimal_target_class_index);
     }
 
     Tensor<type, 1> instance;
@@ -7891,7 +7891,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
         maximal_difference_index = maximal_index(target_class_differences.cast<type>());
 
-        unbalanced_instances_number = static_cast<Index>(target_class_differences[maximal_difference_index]/10);
+        unbalanced_instances_number = static_cast<Index>(target_class_differences(maximal_difference_index)/10);
 
         if(unbalanced_instances_number < 1)
         {
@@ -7912,9 +7912,9 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
             instance = get_instance_data(instance_index);
 
-            instance_target_index = targets_variables_indices[maximal_difference_index];
+            instance_target_index = targets_variables_indices(maximal_difference_index);
 
-            if(instance[instance_target_index] == 1.0)
+            if(instance(instance_target_index) == 1.0)
             {
                 //instance_frequencies = instance.total_frequencies(data_histograms);
 
@@ -7931,7 +7931,7 @@ Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 
         set_unused(unbalanced_instances_indices);
 
-        target_class_differences[maximal_difference_index] = target_class_differences[maximal_difference_index] - unbalanced_instances_number;
+        target_class_differences(maximal_difference_index) = target_class_differences(maximal_difference_index) - unbalanced_instances_number;
     }
 */
     return unused_instances;
@@ -7985,7 +7985,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 /*
     for(Index i = 0; i < targets_number; i++)
     {
-        frequency = data_histograms[targets(i) - unused_variables.count_less_than(targets(i))].calculate_maximum_frequency();
+        frequency = data_histograms(targets(i) - unused_variables.count_less_than(targets(i))).calculate_maximum_frequency();
 
         if(frequency > maximum_frequency)
         {
@@ -7995,7 +7995,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
             most_populated_target = targets(i);
 
-            most_populated_bin = data_histograms[targets(i) - unused].calculate_most_populated_bin();
+            most_populated_bin = data_histograms(targets(i) - unused).calculate_most_populated_bin();
         }
     }
 */
@@ -8018,9 +8018,9 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
         instance = get_instance_data(index);
 
-        value = instance[most_populated_target];
+        value = instance(most_populated_target);
 
-        bin = data_histograms[most_populated_target - unused].calculate_bin(value);
+        bin = data_histograms(most_populated_target - unused).calculate_bin(value);
 
         if(bin == most_populated_bin)
         {
@@ -8101,7 +8101,7 @@ Tensor<Index, 1> DataSet::calculate_Tukey_outliers(const Index& column_index, co
 {
     Tensor<Index, 1> outliers;
 
-    if(columns[column_index].type != Numeric) return outliers;
+    if(columns(column_index).type != Numeric) return outliers;
 
     const Index instances_number = get_used_instances_number();
     const Tensor<Index, 1> instances_indices = get_used_instances_indices();
@@ -8123,11 +8123,11 @@ Tensor<Index, 1> DataSet::calculate_Tukey_outliers(const Index& column_index, co
     {
         const Tensor<type, 1> instance = get_instance(instances_indices(j));
 
-        if(instance[variable_index] < (box_plot[1] - cleaning_parameter*interquartile_range))
+        if(instance(variable_index) < (box_plot(1) - cleaning_parameter*interquartile_range))
         {
             outliers.push_back(instances_indices(j));
         }
-        else if(instance[variable_index] >(box_plot[3] + cleaning_parameter*interquartile_range))
+        else if(instance(variable_index) >(box_plot(3) + cleaning_parameter*interquartile_range))
         {
             outliers.push_back(instances_indices(j));
         }
@@ -8153,8 +8153,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     Tensor<Tensor<Index, 1>, 1> return_values(2);
 
-    return_values[0] = Tensor<Index, 1>(instances_number);
-    return_values[1] = Tensor<Index, 1>(variables_number);
+    return_values(0) = Tensor<Index, 1>(instances_number);
+    return_values(1) = Tensor<Index, 1>(variables_number);
 
     Index variable_index;
 
@@ -8177,31 +8177,31 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
         const BoxPlot variable_box_plot = box_plots(i);
 
-        if(abs(variable_box_plot[3] - variable_box_plot[1]) < numeric_limits<type>::epsilon())
+        if(abs(variable_box_plot(3) - variable_box_plot(1)) < numeric_limits<type>::epsilon())
         {
             continue;
         }
         else
         {
-            interquartile_range = abs((variable_box_plot[3] - variable_box_plot[1]));
+            interquartile_range = abs((variable_box_plot(3) - variable_box_plot(1)));
         }
 
         Index variables_outliers = 0;
 
         for(Index j = 0; j < static_cast<Index>(instances_number); j++)
         {
-            const Tensor<type, 1> instance = get_instance(instances_indices[static_cast<Index>(j)]);
+            const Tensor<type, 1> instance = get_instance(instances_indices(static_cast<Index>(j)));
 
-            if(instance[variable_index] <(variable_box_plot[1] - cleaning_parameter*interquartile_range) ||
-               instance[variable_index] >(variable_box_plot[3] + cleaning_parameter*interquartile_range))
+            if(instance(variable_index) <(variable_box_plot(1) - cleaning_parameter*interquartile_range) ||
+               instance(variable_index) >(variable_box_plot(3) + cleaning_parameter*interquartile_range))
             {
-                    return_values[0][static_cast<Index>(j)] = 1;
+                    return_values(0)(static_cast<Index>(j)) = 1;
 
                     variables_outliers++;
             }
         }
 
-        return_values[1](i) = variables_outliers;
+        return_values(1)(i) = variables_outliers;
     }
 */
     return return_values;
@@ -8215,7 +8215,7 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
     const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 /*
-    const Tensor<Index, 1> outliers_instances = outliers_indices[0].get_indices_greater_than(0);
+    const Tensor<Index, 1> outliers_instances = outliers_indices(0).get_indices_greater_than(0);
 
     set_instances_unused(outliers_instances);
 */
@@ -8623,7 +8623,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             if(data(current_instance_index,current_variable_index) < minimums(j)
             || data(current_instance_index,current_variable_index) > maximums(j))
             {
-                filtered_indices[current_instance_index] = 1.0;
+                filtered_indices(current_instance_index) = 1.0;
 
                 set_instance_use(current_instance_index, UnusedInstance);
             }
@@ -8739,9 +8739,9 @@ void DataSet::numeric_to_categorical(const Index& variable_index)
 
     data = data.to_categorical(variable_index);
 
-    columns[variable_index].categories_uses = Tensor<VariableUse, 1>(categories.size(), columns[variable_index].column_use);
-    columns[variable_index].type = Categorical;
-    columns[variable_index].categories = categories.to_string_vector();
+    columns(variable_index).categories_uses = Tensor<VariableUse, 1>(categories.size(), columns(variable_index).column_use);
+    columns(variable_index).type = Categorical;
+    columns(variable_index).categories = categories.to_string_vector();
 */
 }
 
@@ -8941,7 +8941,7 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        data_file_preview[lines_count] = get_tokens(line, separator_char);
+        data_file_preview(lines_count) = get_tokens(line, separator_char);
 
         lines_count++;
 
@@ -8952,7 +8952,7 @@ void DataSet::read_csv_1()
 
     // Check empty file    @todo, size() methods returns 0
 
-    if(data_file_preview[0].size() == 0)
+    if(data_file_preview(0).size() == 0)
     {
         ostringstream buffer;
 
@@ -8965,18 +8965,18 @@ void DataSet::read_csv_1()
 
     // Set rows labels and columns names
 
-    if(contains_substring(data_file_preview[0][0], "id"))
+    if(contains_substring(data_file_preview(0)(0), "id"))
     {
         has_rows_labels = true;
     }
 
-    const Index columns_number = data_file_preview[0].size();
+    const Index columns_number = data_file_preview(0).size();
 
     columns.resize(columns_number);
 
     // Check if header has numeric value
 
-    if(has_columns_names && has_numbers(data_file_preview[0]))
+    if(has_columns_names && has_numbers(data_file_preview(0)))
     {
         ostringstream buffer;
 
@@ -8991,7 +8991,7 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-        set_columns_names(data_file_preview[0]);
+        set_columns_names(data_file_preview(0));
     }
     else
     {
@@ -9002,13 +9002,13 @@ void DataSet::read_csv_1()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if((is_date_time_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
-        || (is_date_time_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
+        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
         {
             columns(i).type = DateTime;
         }
-        else if((is_numeric_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
-             || (is_numeric_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
+        else if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+             || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
         {
             columns(i).type = Numeric;
         }
@@ -9644,14 +9644,14 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
     const Index new_size = (end-start)/step+1;
 
     new_tensor.resize(new_size);
-    new_tensor[0] = start;
+    new_tensor(0) = start;
 
     for(Index i = 1; i < new_size-1; i++)
     {
-        new_tensor(i) = new_tensor[i-1]+step;
+        new_tensor(i) = new_tensor(i-1)+step;
     }
 
-    new_tensor[new_size-1] = end;
+    new_tensor(new_size-1) = end;
 }
 
 
@@ -9669,7 +9669,7 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
     {
        for(Index j = 0; j < batch_size; ++j)
        {
-        batches(i,j) = training_indices[count];
+        batches(i,j) = training_indices(count);
 
         count++;
        }
@@ -9702,11 +9702,11 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 
     for(Index j = 0; j < inputs_number; j++)
     {
-        variable = inputs(j);
+        variable = inputs[j];
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances(i);
+            instance = instances[j];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
@@ -9715,7 +9715,7 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 //        {
 //            variable = targets_pointer(j);
 
-//            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+//            targets_2d_pointer(rows_number*j+i) = data_pointer(total_rows*variable+instance);
 //        }
     }
 }
