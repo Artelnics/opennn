@@ -671,7 +671,7 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    Tensor<type, 1> parameters;
 
-   type parameters_norm;
+   type parameters_norm = 0;
 
    // Test
 

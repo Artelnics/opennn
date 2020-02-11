@@ -1234,19 +1234,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-
    const Index training_instances_number = data_set_pointer->get_training_instances_number();
    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-   const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
-
-   const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-   const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+   const bool has_selection = data_set_pointer->has_selection();
 
    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
 
    // Neural network
 
@@ -1254,9 +1249,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<type, 1> parameters(parameters_number);
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> old_parameters(parameters_number);
-   type parameters_norm;
+   type parameters_norm = 0;
 
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm;
@@ -1271,11 +1266,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    type old_training_loss = 0;
    type training_loss_decrease = 0;
 
-//   type regularization = 0;
-//   type regularization_weight = loss_index_pointer->get_regularization_weight();
-
    Tensor<type, 1> old_gradient(parameters_number);
-   type gradient_norm;
+   type gradient_norm = 0;
 
    Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
    Tensor<type, 2> old_inverse_hessian;
@@ -1289,7 +1281,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    Tensor<type, 1> training_direction(parameters_number);
 
-//   type training_slope;
+   Tensor<type, 0> training_slope;
 
    const type first_learning_rate = static_cast<type>(0.01);
 
@@ -1305,8 +1297,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    bool stop_training = false;
 
-   bool is_forecasting = false;
-
    Index selection_failures = 0;
 
    time_t beginning_time, current_time;
@@ -1319,10 +1309,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    {
        // Batch
 
-       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
-
-       const Index batches_number = training_batches.dimension(0);
-
        // Neural network
 
        parameters = neural_network_pointer->get_parameters();
@@ -1334,51 +1320,15 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
-       training_loss = 0;
+       neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
        // Loss index
 
-       training_error = training_loss/static_cast<type>(batches_number);
-/*
-       regularization = loss_index_pointer->calculate_regularization();
+       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
 
-       if(epoch == 0)
-       {
-           training_error = loss_index_pointer->calculate_training_error();
+       training_loss = training_back_propagation.loss;
 
-           training_loss = training_error + regularization_weight*regularization;
-           training_loss_decrease = 0;
-       }
-       else
-       {
-           training_loss = directional_point.second;
-           training_loss_decrease = training_loss - old_training_loss;
-
-           training_error = training_loss - regularization_weight*regularization;
-       }
-*/
-//       if(has_selection) selection_error = loss_index_pointer->calculate_selection_error();
-
-       if(epoch == 0)
-       {
-           minimum_selection_error = selection_error;
-
-           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
-       }
-       else if(epoch != 0 && selection_error > old_selection_error)
-       {
-           selection_failures++;
-       }
-       else if(selection_error <= minimum_selection_error)
-       {
-           minimum_selection_error = selection_error;
-
-           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
-       }
-
-//       gradient = loss_index_pointer->calculate_training_loss_gradient();
-
-//       gradient_norm = l2_norm(gradient);
+       if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
        gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1387,59 +1337,55 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
        }
 
-       if(epoch == 0
-       /*|| (old_parameters - parameters).abs() < numeric_limits<type>::min()
-       || (old_gradient - gradient).abs() < numeric_limits<type>::min()*/)
+       if(has_selection)
        {
-//           inverse_hessian.initialize_identity();
+           selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+
+            if(epoch == 0)
+            {
+               minimum_selection_error = selection_error;
+
+               minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+            }
+            else if(selection_error > old_selection_error)
+            {
+               selection_failures++;
+            }
+            else if(selection_error <= minimum_selection_error)
+            {
+               minimum_selection_error = selection_error;
+
+               minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+            }
+       }
+
+
+       if(epoch == 0
+       || l2_norm(old_parameters - parameters) < numeric_limits<type>::min()
+       || l2_norm(old_gradient - training_back_propagation.gradient) < numeric_limits<type>::min())
+       {
            for(Index i = 0; i < inverse_hessian.dimension(0); i++)
            {
-               for(Index j = 0; j < inverse_hessian.dimension(1); j++)
-               {
-                   if(i == j) inverse_hessian(i,j) = 1.0;
-               }
+               inverse_hessian(i,i) = 1.0;
            }
-
        }
        else
        {
-           switch(inverse_hessian_approximation_method)
-           {
-              case DFP:
-              {
-
-                inverse_hessian = calculate_DFP_inverse_hessian(old_parameters,
-                                                                parameters,
-                                                                old_gradient,
-                                                                training_back_propagation.gradient,
-                                                                old_inverse_hessian);
-
-              }
-              break;
-
-              case BFGS:
-              {
-                inverse_hessian = calculate_BFGS_inverse_hessian(old_parameters,
-                                                                 parameters,
-                                                                 old_gradient,
-                                                                 training_back_propagation.gradient,
-                                                                 old_inverse_hessian);
-              }
-              break;
-           }
-
-           old_parameters.resize(0);
-           old_gradient.resize(0);
+           inverse_hessian = calculate_inverse_hessian_approximation(
+                old_parameters,
+                parameters,
+                old_gradient,
+                training_back_propagation.gradient,
+                old_inverse_hessian);
        }
 
        // Optimization algorithm
 
        training_direction = calculate_training_direction(training_back_propagation.gradient, inverse_hessian);
-cout << "1" << endl;
+
        // Calculate loss training slope
 
-       const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
-cout << "2" << endl;
+       training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -1451,7 +1397,7 @@ cout << "2" << endl;
 
            training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
        }
-cout << "3" << endl;
+
        // Get initial training rate
 
        epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
@@ -1463,10 +1409,10 @@ cout << "3" << endl;
                                                                                initial_learning_rate);
 
        learning_rate = directional_point.first;
-cout << "4" << endl;
+
        // Reset training direction when training rate is 0
 
-       if(epoch != 0 && abs(learning_rate) < static_cast<type>(1.0e-99))
+       if(abs(learning_rate) < numeric_limits<type>::min())
        {
            training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
 
@@ -1478,10 +1424,8 @@ cout << "4" << endl;
 
            learning_rate = directional_point.first;
        }
-cout << "5" << endl;
-       parameters_increment = training_direction*learning_rate;
 
-//       parameters_increment_norm = l2_norm(parameters_increment);
+       parameters_increment = training_direction*learning_rate;
 
        parameters_increment_norm = l2_norm(parameters_increment);
 
@@ -1497,7 +1441,7 @@ cout << "5" << endl;
        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
        // Stopping Criteria
-cout << "6" << endl;
+
         if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)

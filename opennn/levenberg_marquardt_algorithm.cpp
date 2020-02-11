@@ -756,7 +756,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-   type parameters_norm;
+   type parameters_norm = 0;
 
    // Loss index
 
@@ -769,7 +769,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Index selection_failures = 0;
 
-   type gradient_norm;
+   type gradient_norm = 0;
 
    // Training strategy stuff
 

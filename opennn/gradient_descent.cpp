@@ -756,9 +756,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Index training_instances_number = data_set_pointer->get_training_instances_number();
    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
-   const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
-
    const bool has_selection = data_set_pointer->has_selection();
 
    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
@@ -772,9 +769,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    type parameters_norm = 0;
-
-   Tensor<type, 1> parameters_increment(parameters_number);
-   type parameters_increment_norm = 0;
 
    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -792,15 +786,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
-   // Optimization algorithm
-
-   Index selection_error_increases = 0;
-
-   Tensor<type, 1> training_direction(parameters_number);
-
-   Tensor<type, 0> training_slope;
-
-
    // Learning rate
 
    const type first_learning_rate = static_cast<type>(0.01);
@@ -811,18 +796,29 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    pair<type,type> directional_point(2, 0.0);
 
-   type minimum_selection_error = numeric_limits<type>::max();
-   Tensor<type, 1> minimum_selection_error_parameters = parameters;
-
    bool stop_training = false;
 
-   time_t beginning_time, current_time;
-   time(&beginning_time);
-   type elapsed_time = 0;
+   // Optimization algorithm
+
+   Index selection_error_increases = 0;
+
+   Tensor<type, 1> parameters_increment(parameters_number);
+   type parameters_increment_norm = 0;
+
+   Tensor<type, 1> training_direction(parameters_number);
+
+   Tensor<type, 0> training_slope;
+
+   type minimum_selection_error = numeric_limits<type>::max();
+   Tensor<type, 1> minimum_selection_error_parameters = parameters;
 
    results.resize_training_history(maximum_epochs_number+1);
 
    // Main loop
+
+   time_t beginning_time, current_time;
+   time(&beginning_time);
+   type elapsed_time = 0;
 
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
@@ -838,6 +834,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       // Loss index
 
       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+      training_loss = training_back_propagation.loss;
 
       if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
@@ -903,15 +901,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Training history loss index
 
-      if(reserve_training_error_history)
-      {
-         results.training_error_history[epoch] = training_loss;
-      }
+      if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
 
-      if(reserve_selection_error_history)
-      {
-         results.selection_error_history[epoch] = selection_error;
-      }
+      if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
       // Stopping Criteria
 
@@ -1018,11 +1010,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                       << "Training rate: " << learning_rate << "\n";
 //                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-//            if(!selection_indices.empty() != 0)
-            if(selection_indices.dimension(0)!=0 != 0)
-            {
-               cout << "Selection error: " << selection_error << endl;
-            }
+            if(has_selection) cout << "Selection error: " << selection_error << endl;
          }
 
          results.resize_training_history(1+epoch);
@@ -1053,10 +1041,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
               << "Training rate: " << learning_rate << "\n";
 //              << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-         if(selection_indices.dimension(0)!=0 != 0)
-         {
-            cout << "Selection error: " << selection_error << endl;
-         }
+         if(has_selection) cout << "Selection error: " << selection_error << endl;
       }
 
       // Set new parameters
@@ -1072,7 +1057,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       old_learning_rate = learning_rate;
 
-      if(stop_training) {break;}
+      if(stop_training) break;
    }
 
    if(choose_best_selection)

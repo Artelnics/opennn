@@ -679,7 +679,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   type parameters_norm;
+   type parameters_norm = 0;
 
    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_instances_number, neural_network_pointer);
@@ -694,7 +694,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    type old_selection_error = 0;
 
    type loss = 0;
-   type gradient_norm;
+   type gradient_norm = 0;
 
    // Optimization algorithm
 
