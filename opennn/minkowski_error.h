@@ -67,7 +67,7 @@ public:
 
    // loss methods
 
-   type calculate_training_error(const Tensor<type, 1>&) const;
+   
 
    type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
    {

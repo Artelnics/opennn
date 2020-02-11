@@ -341,9 +341,12 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// @param training_direction Initial training direction.
 /// @param initial_learning_rate Initial training rate to start the algorithm. 
 
-pair<type,type> LearningRateAlgorithm::calculate_directional_point(const type& loss,
-                                                                   const Tensor<type, 1>& training_direction,
-                                                                   const type& initial_learning_rate) const
+pair<type,type> LearningRateAlgorithm::calculate_directional_point(
+       const DataSet::Batch& batch,
+       const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+       const type& loss,
+       const Tensor<type, 1>& training_direction,
+       const type& initial_learning_rate) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -377,15 +380,21 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(const type& l
    {
       case Fixed:
 
-       return calculate_fixed_directional_point(loss, training_direction, initial_learning_rate);
+       return calculate_fixed_directional_point(batch,
+                                                parameters, forward_propagation,
+                                                loss, training_direction, initial_learning_rate);
 
       case GoldenSection:
 
-       return calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
+       return calculate_golden_section_directional_point(batch,
+                                                         parameters, forward_propagation,
+                                                         loss, training_direction, initial_learning_rate);
 
       case BrentMethod:
 
-       return calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
+       return calculate_Brent_method_directional_point(batch,
+                                                       parameters, forward_propagation,
+                                                       loss, training_direction, initial_learning_rate);
    }
 
    return pair<type,type>();
@@ -399,6 +408,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(const type& l
 /// @param initial_learning_rate Initial training rate to start the algorithm. 
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
+        const DataSet::Batch& batch,
+        const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
         const type& loss,
         const Tensor<type, 1>& training_direction,
         const type& initial_learning_rate) const
@@ -424,7 +435,10 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
    triplet.B.first = initial_learning_rate;
 
-//   triplet.B.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.B.first);
+   Tensor<type, 1> potential_parameters = parameters + training_direction*triplet.B.first;
+
+   triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+
    count++;
 
    if(triplet.A.second > triplet.B.second)
@@ -432,7 +446,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
        triplet.U = triplet.B;
 
        triplet.B.first *= golden_ratio;
-//       triplet.B.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.B.first);
+
+       potential_parameters = parameters + training_direction*triplet.B.first;
+
+       triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+
        count++;
 
        while(triplet.U.second > triplet.B.second)
@@ -441,14 +459,22 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
            triplet.U = triplet.B;
 
            triplet.B.first *= golden_ratio;
-//           triplet.B.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.B.first);
+
+           potential_parameters = parameters + training_direction*triplet.B.first;
+
+           triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+
            count++;
        }
    }
    else if(triplet.A.second < triplet.B.second)
    {
        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
-//       triplet.U.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.U.first);
+
+       potential_parameters = parameters + training_direction*triplet.U.first;
+
+       triplet.U.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+
        count++;
 
        while(triplet.A.second < triplet.U.second)
@@ -456,7 +482,10 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
           triplet.B = triplet.U;
 
           triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
-//          triplet.U.second = loss_index_pointer->calculate_training_loss(training_direction, triplet.U.first);
+
+          potential_parameters = parameters + training_direction*triplet.U.first;
+
+          triplet.U.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
 
           if(triplet.U.first - triplet.A.first <= loss_tolerance)
           {
@@ -480,13 +509,20 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 /// @param training_direction Training direction for the directional point.
 /// @param initial_learning_rate Training rate for the directional point.
 
-pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(const type&, const Tensor<type, 1>& training_direction, const type& initial_learning_rate) const
+pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(
+         const DataSet::Batch& batch,
+         const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+         const type&,
+         const Tensor<type, 1>& training_direction,
+         const type& initial_learning_rate) const
 {
    pair<type,type> directional_point;
 
    directional_point.first = initial_learning_rate;
 
-//   directional_point.second = loss_index_pointer->calculate_training_loss(training_direction, initial_learning_rate);
+   const Tensor<type, 1> potential_parameters = parameters + training_direction*initial_learning_rate;
+
+   directional_point.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
 
    return directional_point;
 }
@@ -498,17 +534,26 @@ pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(const t
 /// @param training_direction Training direction vector.
 /// @param initial_learning_rate Initial training rate in line minimization.
 
-pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_point(const type& loss,
-                                                                                 const Tensor<type, 1>& training_direction,
-                                                                                 const type& initial_learning_rate) const
+pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_point(
+       const DataSet::Batch& batch,
+       const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+       const type& loss,
+       const Tensor<type, 1>& training_direction,
+       const type& initial_learning_rate) const
 {
    ostringstream buffer;
 
    // Bracket minimum
 
+   const Index parameters_number = parameters.size();
+
+   Tensor<type, 1> potential_parameters(parameters_number);
+
    try
    {
-      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+      Triplet triplet = calculate_bracketing_triplet(batch,
+                                                     parameters, forward_propagation,
+                                                     loss, training_direction, initial_learning_rate);
 
       if(triplet.has_length_zero()) return triplet.A;
 
@@ -520,7 +565,9 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
       {
          V.first = calculate_golden_section_learning_rate(triplet);
 
-//         V.second = loss_index_pointer->calculate_training_loss(training_direction, V.first);
+         potential_parameters = parameters + training_direction*V.first;
+
+         V.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
 
          // Update points
  
@@ -584,8 +631,12 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
       cerr << e.what() << endl;
 
       pair<type,type> X;
+
       X.first = initial_learning_rate;
-//      X.second = loss_index_pointer->calculate_training_loss(training_direction, X.first);
+
+      potential_parameters = parameters + training_direction*X.first;
+
+      X.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
 
        if(X.second > loss)
 	   {
@@ -604,17 +655,27 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 /// @param training_direction Training direction vector.
 /// @param initial_learning_rate Initial training rate in line minimization.
 
-pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point(const type& loss,
-                                                                               const Tensor<type, 1>& training_direction,
-                                                                               const type& initial_learning_rate) const
+pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point(
+        const DataSet::Batch& batch,
+        const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+        const type& loss,
+        const Tensor<type, 1>& training_direction,
+        const type& initial_learning_rate) const
 {
    ostringstream buffer;
+
+   const Index parameters_number = parameters.size();
+
+   Tensor<type, 1> potential_parameters(parameters_number);
 
    // Bracket minimum
 
    try
    {
-      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+      Triplet triplet = calculate_bracketing_triplet(batch,
+                                                     parameters, forward_propagation,
+                                                     loss,
+                                                     training_direction, initial_learning_rate);
 
       Index count = 0;
 
@@ -637,7 +698,10 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
          // Calculate loss for V
 
-//         V.second = loss_index_pointer->calculate_training_loss(training_direction, V.first);
+          potential_parameters = parameters + training_direction*V.first;
+
+          V.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+
          count++;
 
          // Update points
@@ -702,7 +766,10 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       pair<type, type> X;
       X.first = initial_learning_rate;
-//      X.second = loss_index_pointer->calculate_training_loss(training_direction, X.first);
+
+      potential_parameters = parameters + training_direction*X.first;
+
+      X.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
 
       if(X.second > loss)
 	  {
@@ -904,8 +971,6 @@ tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
    return document;
 }
 
-
-//void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the learning rate algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.

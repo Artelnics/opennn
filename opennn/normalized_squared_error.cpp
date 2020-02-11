@@ -225,59 +225,6 @@ check();
 }
 
 
-type NormalizedSquaredError::calculate_training_error(const Tensor<type, 1>& parameters) const
-{
-    /*
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    //Neural network
-
-     bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-
-    const Index inputs_number = data_set_pointer->get_input_variables_number();
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
-    Tensor<type, 2> targets(batch_instances_number, targets_number);
-    Tensor<type, 2> outputs(batch_instances_number, targets_number);
-
-    type training_error = static_cast<type>(0.0);
-
-     #pragma omp parallel for reduction(+ : training_error)
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
-        outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
-        const type batch_error = sum_squared_error(outputs, targets);
-
-        training_error += batch_error;
-
-    }
-
-    return training_error / normalization_coefficient;
-    */
-    return 0.0;
-}
-
-
 /// Returns loss vector of the error terms function for the normalized squared error.
 /// It uses the error back-propagation method.
 
