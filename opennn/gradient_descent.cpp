@@ -790,6 +790,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    Tensor<type, 1> gradient(parameters_number);
    Tensor<type, 0> gradient_norm;
 
+   LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
+
    // Optimization algorithm stuff 
 
    Index selection_error_increases = 0;
@@ -829,13 +831,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       if(epoch == 0)
       {
-//         training_loss = loss_index_pointer->calculate_training_loss();
+          neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
-         neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
-
-         training_loss = loss_index_pointer->calculate_error(
-                     selection_forward_propagation.layers[trainable_layers_number].activations,
-                     selection_batch.targets_2d);
+          loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
       }
       else
       {
@@ -843,11 +841,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      //gradient = loss_index_pointer->calculate_training_loss_gradient();
-
-      if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
-
       gradient_norm = gradient.square().sum().sqrt();
+
+      if(gradient_norm(0) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
       if(display && gradient_norm(0) >= warning_gradient_norm)
       {
@@ -856,25 +852,21 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       if(selection_instances_number > 0)
       {
-          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+          selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
-          selection_error = loss_index_pointer->calculate_error(
-                      selection_forward_propagation.layers[trainable_layers_number].activations,
-                      selection_batch.targets_2d);
-      }
-
-      if(epoch == 0)
-      {
-          minimum_selection_error = selection_error;
-      }
-      else if(epoch != 0 && selection_error > old_selection_error)
-      {
-         selection_error_increases++;
-      }
-      else if(selection_error <= minimum_selection_error)
-      {
-          minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = parameters;
+          if(epoch == 0)
+          {
+              minimum_selection_error = selection_error;
+          }
+          else if(epoch != 0 && selection_error > old_selection_error)
+          {
+             selection_error_increases++;
+          }
+          else if(selection_error <= minimum_selection_error)
+          {
+              minimum_selection_error = selection_error;
+              minimum_selection_error_parameters = parameters;
+          }
       }
 
       // Optimization algorithm
