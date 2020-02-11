@@ -6898,8 +6898,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
          }
      }
 
-     cout << "1" << endl;
-
      // Missing values label
 
      const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
@@ -6921,8 +6919,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
      {
          set_missing_values_label("NA");
      }
-
-     cout << "2" << endl;
 
      // Forecasting
 
@@ -7197,8 +7193,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
      {
          set_instances_uses(get_tokens(instances_uses_element->GetText(), ' '));
      }
-
-     cout << "instances uses" << endl;
 
      // Missing values
 
