@@ -157,7 +157,7 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 
 const UnscalingLayer::UnscalingMethod& UnscalingLayer::get_unscaling_method() const
 {
-    return(unscaling_method);
+    return unscaling_method;
 }
 
 
@@ -578,17 +578,17 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         case MinimumMaximum:
         {
-            return(calculate_minimum_maximum_outputs(inputs));
+            return calculate_minimum_maximum_outputs(inputs);
         }
 
         case MeanStandardDeviation:
         {
-            return(calculate_mean_standard_deviation_outputs(inputs));
+            return calculate_mean_standard_deviation_outputs(inputs);
         }
 
         case Logarithmic:
         {
-            return(calculate_logarithmic_outputs(inputs));
+            return calculate_logarithmic_outputs(inputs);
         }
 
         case NoUnscaling:
@@ -1364,22 +1364,22 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
     {
         case NoUnscaling:
         {
-            return(write_none_expression(inputs_names, outputs_names));
+            return write_none_expression(inputs_names, outputs_names);
         }
 
         case MinimumMaximum:
         {
-            return(write_minimum_maximum_expression(inputs_names, outputs_names));
+            return write_minimum_maximum_expression(inputs_names, outputs_names);
         }
 
         case MeanStandardDeviation:
         {
-            return(write_mean_standard_deviation_expression(inputs_names, outputs_names));
+            return write_mean_standard_deviation_expression(inputs_names, outputs_names);
         }
 
         case Logarithmic:
         {
-            return(write_logarithmic_expression(inputs_names, outputs_names));
+            return write_logarithmic_expression(inputs_names, outputs_names);
         }
     }
 
@@ -1399,22 +1399,22 @@ string UnscalingLayer::write_expression_php(const Tensor<string, 1>& inputs_name
     {
     case NoUnscaling:
     {
-        return(write_none_expression_php(inputs_names, outputs_names));
+        return write_none_expression_php(inputs_names, outputs_names);
     }
 
     case MinimumMaximum:
     {
-        return(write_minimum_maximum_expression_php(inputs_names, outputs_names));
+        return write_minimum_maximum_expression_php(inputs_names, outputs_names);
     }
 
     case MeanStandardDeviation:
     {
-        return(write_mean_standard_deviation_expression_php(inputs_names, outputs_names));
+        return write_mean_standard_deviation_expression_php(inputs_names, outputs_names);
     }
 
     case Logarithmic:
     {
-        return(write_logarithmic_expression_php(inputs_names, outputs_names));
+        return write_logarithmic_expression_php(inputs_names, outputs_names);
     }
 
     }

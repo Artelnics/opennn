@@ -103,7 +103,7 @@ WeightedSquaredError::~WeightedSquaredError()
 
 type WeightedSquaredError::get_positives_weight() const
 {
-    return(positives_weight);
+    return positives_weight;
 }
 
 
@@ -111,7 +111,7 @@ type WeightedSquaredError::get_positives_weight() const
 
 type WeightedSquaredError::get_negatives_weight() const
 {
-    return(negatives_weight);
+    return negatives_weight;
 }
 
 
@@ -119,7 +119,7 @@ type WeightedSquaredError::get_negatives_weight() const
 
 type WeightedSquaredError::get_training_normalization_coefficient() const
 {
-    return(training_normalization_coefficient);
+    return training_normalization_coefficient;
 }
 
 
