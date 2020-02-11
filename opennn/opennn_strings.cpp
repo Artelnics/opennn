@@ -414,7 +414,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             }
 
             time_structure.tm_year = stoi(matchs[29].str())-1900;
-            time_structure.tm_mon = static_cast<size_t>(month_number) - 1;
+            time_structure.tm_mon = static_cast<int>(month_number) - 1;
             time_structure.tm_mday = stoi(matchs[31].str());
             time_structure.tm_hour = stoi(matchs[32].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[33].str());
