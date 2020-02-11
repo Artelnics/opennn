@@ -733,7 +733,7 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
       case NORMALIZED_SQUARED_ERROR:
       {
 
-         normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
+//         normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
 
          normalized_squared_error_pointer->set_regularization_method(regularization_method);
 
@@ -769,7 +769,7 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
       case CROSS_ENTROPY_ERROR:
       {
 
-        cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
+//        cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
 
         cross_entropy_error_pointer->set_regularization_method(regularization_method);
 

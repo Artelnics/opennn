@@ -4642,8 +4642,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-    Tensor<Index, 1> variables_indices(1);
-    variables_indices.setConstant(class_index);
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     const Index instances_number = used_instances_indices.size();
 
@@ -4675,7 +4674,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const In
         }
     }
 
-    return descriptives(data, class_used_instances_indices, variables_indices);
+    return descriptives(data, class_used_instances_indices, input_variables_indices);
 }
 
 
