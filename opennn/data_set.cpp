@@ -4313,21 +4313,71 @@ Tensor<Histogram, 1> DataSet::calculate_columns_histograms(const Index& bins_num
 {
    const Index used_columns_number = get_used_columns_number();
    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+   const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+   const Index used_instances_number = used_instances_indices.size();
 
    Tensor<Histogram, 1> histograms(used_columns_number);
 
+   Index variable_index = 0;
+
    #pragma omp parallel for shared(histograms)
 
-   for(Index i = 0; i < static_cast<Index>(used_columns_number); i++)
+   for(Index i = 0; i < used_columns_number; i++)
    {
        if(columns(i).type == Numeric)
        {
-           const Index index = used_columns_indices(i);
-/*
-           const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
+           Tensor<type, 1> column(used_instances_number);
+
+           for(Index j = 0; j < used_instances_number; j++)
+           {
+               column(j) = data(used_instances_indices(j), variable_index);
+           }
 
            histograms(i) = histogram(column, bins_number);
-*/
+           variable_index++;
+       }
+       else if(columns(i).type == Categorical)
+       {
+           const Index categories_number = columns(i).get_categories_number();
+
+           Tensor<Index, 1> categories_frequencies(categories_number);
+
+           for(Index j = 0; j < categories_number; j++)
+           {
+               for(Index k = 0; k < used_instances_number; k++)
+               {
+                   if(data(used_instances_indices(k), variable_index) == 1.0)
+                   {
+                       categories_frequencies(j)++;
+                   }
+               }
+           }
+
+           histograms(i).frequencies = categories_frequencies;
+
+           variable_index += columns(i).get_categories_number();
+       }
+       else if(columns(i).type == Binary)
+       {
+           Tensor<Index, 1> binary_frequencies(2);
+
+           for(Index j = 0; j < used_instances_number; j++)
+           {
+               if(data(used_instances_indices(j), variable_index) == 1.0)
+               {
+                   binary_frequencies(0)++;
+               }
+               else
+               {
+                   binary_frequencies(1)++;
+               }
+           }
+
+           variable_index++;
+       }
+       else
+       {
+           variable_index++;
        }
    }
 
