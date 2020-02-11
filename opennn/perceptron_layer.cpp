@@ -508,8 +508,8 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
     fan_in = synaptic_weights.dimension(0);
     fan_out = synaptic_weights.dimension(1);
 
-    scale /= ((fan_in + fan_out) / 2.0);
-    limit = sqrt(3.0 * scale);
+    scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
+    limit = sqrt(static_cast<type>(3.0) * scale);
 
 /*
     synaptic_weights.setRandom(-limit, limit);
