@@ -1006,7 +1006,7 @@ Tensor<type, 1> ConjugateGradient::calculate_PR_training_direction
 
    /*const type PR_training_direction_norm = l2_norm(PR_training_direction);
 
-   return(PR_training_direction/PR_training_direction_norm);*/
+   return PR_training_direction/PR_training_direction_norm ;*/
    return Tensor<type, 1>();
 
 }
@@ -1081,7 +1081,7 @@ Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
 /*
    const type FR_training_direction_norm = l2_norm(FR_training_direction);
 
-   return(FR_training_direction/FR_training_direction_norm);
+   return FR_training_direction/FR_training_direction_norm;
 */
    return Tensor<type, 1 >();
 }

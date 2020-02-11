@@ -283,7 +283,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
   /*
   const Tensor<Index, 1> minimal_indices = frequencies.get_indices_equal_to(minimum_frequency);
 
-  return(centers.get_subvector(minimal_indices));
+  return centers.get_subvector(minimal_indices);
 */
 }
 
@@ -342,7 +342,7 @@ Index Histogram::calculate_bin(const type&value) const
   }
 
   if(value >= maximum_value) {
-    return(bins_number - 1);
+    return bins_number - 1;
   } else {
     ostringstream buffer;
 
@@ -528,7 +528,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
       sum += vector(i);
   }
 
-  return(sum /static_cast<type>(end-begin+1));
+  return sum /static_cast<type>(end-begin+1);
 }
 
 
@@ -613,7 +613,7 @@ type variance(const Tensor<type, 1>& vector)
   }
 
   if(count <= 1) {
-    return(0.0);
+    return 0.0;
   }
 
   const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
