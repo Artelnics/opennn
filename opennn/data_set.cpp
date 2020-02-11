@@ -2955,7 +2955,7 @@ const Index& DataSet::get_lags_number() const
 
 const Index& DataSet::get_steps_ahead() const
 {
-    return(steps_ahead);
+    return steps_ahead;
 }
 
 
@@ -8646,7 +8646,7 @@ Tensor<Index, 1> DataSet::filter_column(const Index& variable_index, const type&
         }
     }
 /*
-    return(filtered_indices.get_indices_greater_than(0.5));
+    return filtered_indices.get_indices_greater_than(0.5);
 */
 
     return Tensor<Index, 1>();

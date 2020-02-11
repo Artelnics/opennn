@@ -510,7 +510,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
    {
       Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-      if(triplet.has_length_zero()) return(triplet.A);
+      if(triplet.has_length_zero()) return triplet.A;
 
       pair<type,type> V;
 
@@ -577,7 +577,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
       }while(triplet.B.second - triplet.A.second > learning_rate_tolerance);
 
-      return(triplet.U);
+      return triplet.U;
    }
    catch(const logic_error& e)
    {  
@@ -618,7 +618,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       Index count = 0;
 
-      if(triplet.A == triplet.B) return(triplet.A);
+      if(triplet.A == triplet.B) return triplet.A;
 
       pair<type, type> V;
 
@@ -684,7 +684,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
          triplet.check();
       }
 
-      return(triplet.U);
+      return triplet.U;
    }
    catch(range_error& e) // Interval is of length 0
    {  
@@ -694,7 +694,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
       A.first = static_cast<type>(0.0);
       A.second = loss;
 
-      return(A);
+      return A;
    }
    catch(const logic_error& e)
    {  
@@ -810,7 +810,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
       throw logic_error(buffer.str());
    }
 
-   return(Brent_method_learning_rate);
+   return Brent_method_learning_rate ;
 }
 
 
