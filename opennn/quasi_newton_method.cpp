@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   Q U A S I - N E W T O N   M E T H O D   C L A S S                     
+//   Q U A S I - N E W T O N   M E T H O D   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -12,10 +12,10 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a quasi-Newton method optimization algorithm not associated to any loss index. 
+/// It creates a quasi-Newton method optimization algorithm not associated to any loss index.
 /// It also initializes the class members to their default values.
 
-QuasiNewtonMethod::QuasiNewtonMethod() 
+QuasiNewtonMethod::QuasiNewtonMethod()
  : OptimizationAlgorithm()
 {
    set_default();
@@ -55,7 +55,7 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 }
 
 
-/// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object. 
+/// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
 {
@@ -63,7 +63,7 @@ const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() co
 }
 
 
-/// Returns a pointer to the learning rate algorithm object inside the quasi-Newton method object. 
+/// Returns a pointer to the learning rate algorithm object inside the quasi-Newton method object.
 
 LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm_pointer()
 {
@@ -71,7 +71,7 @@ LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm_pointer()
 }
 
 
-/// Returns the method for approximating the inverse hessian matrix to be used when training. 
+/// Returns the method for approximating the inverse hessian matrix to be used when training.
 
 const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::get_inverse_hessian_approximation_method() const
 {
@@ -79,7 +79,7 @@ const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::g
 }
 
 
-/// Returns the name of the method for the approximation of the inverse hessian. 
+/// Returns the name of the method for the approximation of the inverse hessian.
 
 string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 {
@@ -100,7 +100,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen. 
+/// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen.
 
 const type& QuasiNewtonMethod::get_warning_parameters_norm() const
 {
@@ -108,7 +108,7 @@ const type& QuasiNewtonMethod::get_warning_parameters_norm() const
 }
 
 
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen. 
+/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen.
 
 const type& QuasiNewtonMethod::get_warning_gradient_norm() const
 {
@@ -134,7 +134,7 @@ const type& QuasiNewtonMethod::get_error_parameters_norm() const
 
 
 /// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits. 
+/// to the screen and the program exits.
 
 const type& QuasiNewtonMethod::get_error_gradient_norm() const
 {
@@ -142,7 +142,7 @@ const type& QuasiNewtonMethod::get_error_gradient_norm() const
 }
 
 
-/// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
+/// Returns the training rate value at wich the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
 
 const type& QuasiNewtonMethod::get_error_learning_rate() const
@@ -157,7 +157,7 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training. 
+/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
 {
@@ -165,7 +165,7 @@ const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
 }
 
 
-/// Returns the minimum loss improvement during training.  
+/// Returns the minimum loss improvement during training.
 
 const type& QuasiNewtonMethod::get_minimum_loss_increase() const
 {
@@ -173,7 +173,7 @@ const type& QuasiNewtonMethod::get_minimum_loss_increase() const
 }
 
 
-/// Returns the goal value for the loss. 
+/// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
 const type& QuasiNewtonMethod::get_loss_goal() const
@@ -207,7 +207,7 @@ const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
 }
 
 
-/// Returns the maximum training time.  
+/// Returns the maximum training time.
 
 const type& QuasiNewtonMethod::get_maximum_time() const
 {
@@ -259,7 +259,7 @@ void QuasiNewtonMethod::set_loss_index_pointer(LossIndex* new_loss_index_pointer
 }
 
 
-/// Sets a new inverse hessian approximatation method value. 
+/// Sets a new inverse hessian approximatation method value.
 /// @param new_inverse_hessian_approximation_method Inverse hessian approximation method value.
 
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
@@ -269,13 +269,13 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
 }
 
 
-/// Sets a new method for approximating the inverse of the hessian matrix from a string containing the name. 
+/// Sets a new method for approximating the inverse of the hessian matrix from a string containing the name.
 /// Possible values are:
 /// <ul>
 /// <li> "DFP"
 /// <li> "BFGS"
 /// </ul>
-/// @param new_inverse_hessian_approximation_method_name Name of inverse hessian approximation method.  
+/// @param new_inverse_hessian_approximation_method_name Name of inverse hessian approximation method.
 
 void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
 {
@@ -293,15 +293,15 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
 
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "void set_inverse_hessian_approximation_method(const string&) method.\n"
-			 << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
-   
-      throw logic_error(buffer.str());	  
+             << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
+
+      throw logic_error(buffer.str());
    }
 }
 
 
 /// Makes the training history of all variables to reseved or not in memory.
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, 
+/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
 /// false otherwise.
 
 void QuasiNewtonMethod::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
@@ -366,13 +366,13 @@ void QuasiNewtonMethod::set_default()
 }
 
 
-/// Sets a new value for the parameters vector norm at which a warning message is written to the 
-/// screen. 
-/// @param new_warning_parameters_norm Warning norm of parameters vector value. 
+/// Sets a new value for the parameters vector norm at which a warning message is written to the
+/// screen.
+/// @param new_warning_parameters_norm Warning norm of parameters vector value.
 
 void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{  
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
@@ -382,26 +382,26 @@ void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_para
              << "void set_warning_parameters_norm(const type&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
 
    // Set warning parameters norm
 
-   warning_parameters_norm = new_warning_parameters_norm;     
+   warning_parameters_norm = new_warning_parameters_norm;
 }
 
 
-/// Sets a new value for the gradient vector norm at which 
-/// a warning message is written to the screen. 
-/// @param new_warning_gradient_norm Warning norm of gradient vector value. 
+/// Sets a new value for the gradient vector norm at which
+/// a warning message is written to the screen.
+/// @param new_warning_gradient_norm Warning norm of gradient vector value.
 
 void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradient_norm)
 {
-   
 
-   #ifdef __OPENNN_DEBUG__ 
+
+   #ifdef __OPENNN_DEBUG__
 
    if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
@@ -411,18 +411,18 @@ void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradie
              << "void set_warning_gradient_norm(const type&) method.\n"
              << "Warning gradient norm must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
 
    // Set warning gradient norm
 
-   warning_gradient_norm = new_warning_gradient_norm;     
+   warning_gradient_norm = new_warning_gradient_norm;
 }
 
 
-/// Sets a new training rate value at wich a warning message is written to the screen during line 
+/// Sets a new training rate value at wich a warning message is written to the screen during line
 /// minimization.
 /// @param new_warning_learning_rate Warning training rate value.
 
@@ -434,11 +434,11 @@ void QuasiNewtonMethod::set_warning_learning_rate(const type& new_warning_learni
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n" 
+      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "void set_warning_learning_rate(const type&) method.\n"
              << "Warning training rate must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -447,13 +447,13 @@ void QuasiNewtonMethod::set_warning_learning_rate(const type& new_warning_learni
 }
 
 
-/// Sets a new value for the parameters vector norm at which an error message is written to the 
-/// screen and the program exits. 
-/// @param new_error_parameters_norm Error norm of parameters vector value. 
+/// Sets a new value for the parameters vector norm at which an error message is written to the
+/// screen and the program exits.
+/// @param new_error_parameters_norm Error norm of parameters vector value.
 
 void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_parameters_norm)
-{  
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_error_parameters_norm < static_cast<type>(0.0))
    {
@@ -463,7 +463,7 @@ void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_paramete
              << "void set_error_parameters_norm(const type&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -474,13 +474,13 @@ void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_paramete
 }
 
 
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen 
-/// and the program exits. 
-/// @param new_error_gradient_norm Error norm of gradient vector value. 
+/// Sets a new value for the gradient vector norm at which an error message is written to the screen
+/// and the program exits.
+/// @param new_error_gradient_norm Error norm of gradient vector value.
 
 void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_norm)
-{ 
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_error_gradient_norm < static_cast<type>(0.0))
    {
@@ -490,7 +490,7 @@ void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_n
              << "void set_error_gradient_norm(const type&) method.\n"
              << "Error gradient norm must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -501,13 +501,13 @@ void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_n
 }
 
 
-/// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when 
+/// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
 /// @param new_error_learning_rate Error training rate value.
 
 void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_rate)
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    if(new_error_learning_rate < static_cast<type>(0.0))
    {
@@ -517,7 +517,7 @@ void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_r
              << "void set_error_learning_rate(const type&) method.\n"
              << "Error training rate must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -528,12 +528,12 @@ void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_r
 }
 
 
-/// Sets a new value for the minimum parameters increment norm stopping criterion. 
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
+/// Sets a new value for the minimum parameters increment norm stopping criterion.
+/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
 
 void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{  
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
@@ -543,7 +543,7 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
              << "void new_minimum_parameters_increment_norm(const type&) method.\n"
              << "Minimum parameters increment norm must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -558,8 +558,8 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two epochs.
 
 void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
-{ 
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
@@ -569,7 +569,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_i
              << "void set_minimum_loss_decrease(const type&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -580,7 +580,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_i
 }
 
 
-/// Sets a new goal value for the loss. 
+/// Sets a new goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 /// @param new_loss_goal Goal value for the loss.
 
@@ -590,13 +590,13 @@ void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 }
 
 
-/// Sets a new the goal value for the norm of the error function gradient. 
+/// Sets a new the goal value for the norm of the error function gradient.
 /// This is used as a stopping criterion when training a neural network
 /// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
 void QuasiNewtonMethod::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
@@ -606,7 +606,7 @@ void QuasiNewtonMethod::set_gradient_norm_goal(const type& new_gradient_norm_goa
              << "void set_gradient_norm_goal(const type&) method.\n"
              << "Gradient norm goal must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -639,8 +639,8 @@ void QuasiNewtonMethod::set_maximum_epochs_number(const Index& new_maximum_epoch
 /// @param new_maximum_time Maximum training time.
 
 void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
-{  
-   #ifdef __OPENNN_DEBUG__ 
+{
+   #ifdef __OPENNN_DEBUG__
 
    if(new_maximum_time < static_cast<type>(0.0))
    {
@@ -650,9 +650,9 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
              << "void set_maximum_time(const type&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
-   
+
    #endif
 
    // Set maximum time
@@ -691,10 +691,10 @@ void QuasiNewtonMethod::set_reserve_training_error_history(const bool& new_reser
 
 
 /// Makes the selection error history to be reserved or not in memory.
-/// This is a vector. 
+/// This is a vector.
 /// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
 
-void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)  
+void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
    reserve_selection_error_history = new_reserve_selection_error_history;
 }
@@ -705,9 +705,9 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
 /// Number of epochs between the training showing progress.
 
 void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
-{ 
-   #ifdef __OPENNN_DEBUG__ 
-     
+{
+   #ifdef __OPENNN_DEBUG__
+
    if(new_display_period == 0)
    {
       ostringstream buffer;
@@ -716,7 +716,7 @@ void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
              << "void set_display_period(const Index&) method.\n"
              << "Display period must be greater than 0.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -725,15 +725,15 @@ void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
 }
 
 
-/// Calculates an approximation of the inverse hessian, accoring to the method used. 
+/// Calculates an approximation of the inverse hessian, accoring to the method used.
 /// @param old_parameters Another point of the error function.
 /// @param parameters Current point of the error function
-/// @param old_gradient Gradient at the other point. 
-/// @param gradient Gradient at the current point. 
+/// @param old_gradient Gradient at the other point.
+/// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
 Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
-const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, 
+const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
 const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient,
 const Tensor<type, 2>& old_inverse_hessian) const
 {
@@ -747,7 +747,8 @@ const Tensor<type, 2>& old_inverse_hessian) const
    ostringstream buffer;
 
    buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-          << "Tensor<type, 1> calculate_inverse_hessian_approximation() method.\n"
+          << "Tensor<type, 1> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, "
+             "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
           << "Unknown inverse hessian approximation method.\n";
 
    throw logic_error(buffer.str());
@@ -755,27 +756,30 @@ const Tensor<type, 2>& old_inverse_hessian) const
 
 
 /// Returns the quasi-Newton method training direction, which has been previously normalized.
-/// @param gradient Gradient vector. 
-/// @param inverse_hessian_approximation Inverse hessian approximation matrix. 
+/// @param gradient Gradient vector.
+/// @param inverse_hessian_approximation Inverse hessian approximation matrix.
 
 Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<type, 1>& gradient,
                                                                 const Tensor<type, 2>& inverse_hessian_approximation) const
 {
 //  normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
 
+
     const Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, AT_B);
-/*
-    return normalized((-1.0)*hessian_dot_gradient);
-*/
-    return Tensor<type, 1>();
+
+    const Tensor<type, 0> norm = gradient.square().sum().sqrt();
+
+    return ((-1.0)*(hessian_dot_gradient/norm(0)));
+
+//    return normalized((-1.0)*hessian_dot_gradient);
 }
 
 
-/// Returns the gradient descent training direction, which is the negative of the normalized gradient. 
+/// Returns the gradient descent training direction, which is the negative of the normalized gradient.
 /// @param gradient Gradient vector.
 
 Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient) const
-{   
+{
     #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -811,8 +815,8 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction
 }
 
 
-/// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel 
-///(DFP) algorithm. 
+/// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
+///(DFP) algorithm.
 /// @param old_parameters A previous set of parameters.
 /// @param old_gradient The gradient of the error function for that previous set of parameters.
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
@@ -827,7 +831,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 {
    ostringstream buffer;
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -855,7 +859,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
    const Index old_gradient_size = old_gradient.size();
    const Index gradient_size = gradient.size();
-    
+
    if(old_gradient_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
@@ -892,13 +896,13 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
       throw logic_error(buffer.str());
    }
- 
+
    #endif
 
    // Parameters difference Vector
-   
+
    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
-   
+
 /*
    if(parameters_difference.abs() < numeric_limits<type>::min())
    {
@@ -906,7 +910,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
              << "Parameters difference vector is zero.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    // Gradient difference Vector
@@ -919,7 +923,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
              << "Gradient difference vector is zero.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    if(absolute_value(old_inverse_hessian) < 1.0e-50)
@@ -928,14 +932,14 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
              << "Old inverse hessian matrix is zero.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }*/
 
    // Dots
 
-   const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
+   const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
 
-//   const type parameters_dot_gradient = parameter_dot_gradient(0);
+   const type parameters_dot_gradient =parameter_dot_gradient(0);
 
    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix);
 
@@ -946,13 +950,14 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
 //   dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)
 
-   if(abs(parameters_dot_gradient(0)) < static_cast<type>(1.0e-50))
+
+   if(abs(parameters_dot_gradient) < static_cast<type>(1.0e-50))
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
              << "Denominator of first term is zero.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
    else if(abs(gradient_dot_hesian_dot_gradient(0)) < static_cast<type>(1.0e-50))
    {
@@ -960,7 +965,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
              << "Denominator of second term is zero.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
@@ -982,8 +987,8 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 }
 
 
-/// Returns an approximation of the inverse hessian matrix according to the 
-/// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm. 
+/// Returns an approximation of the inverse hessian matrix according to the
+/// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm.
 /// @param old_parameters A previous set of parameters.
 /// @param old_gradient The gradient of the error function for that previous set of parameters.
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
@@ -994,7 +999,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
 const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 2>& old_inverse_hessian) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
@@ -1004,14 +1009,14 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 
    const Index old_parameters_size = old_parameters.size();
    const Index parameters_size = parameters.size();
-    
+
    if(old_parameters_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method.\n"
              << "Size of old parameters vector must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
    else if(parameters_size != parameters_number)
    {
@@ -1019,7 +1024,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
              << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method.\n"
              << "Size of parameters vector must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    const Index old_gradient_size = old_gradient.size();
@@ -1031,7 +1036,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
              << endl
              << "Size of old gradient vector must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    const Index gradient_size = gradient.size();
@@ -1042,7 +1047,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
              << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method." << endl
              << "Size of gradient vector must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    const Index rows_number = old_inverse_hessian.dimension(0);
@@ -1054,7 +1059,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
              << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method.\n"
              << "Number of rows in old inverse hessian must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    if(columns_number != parameters_number)
@@ -1063,13 +1068,13 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
              << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method.\n"
              << "Number of columns in old inverse hessian must be equal to number of parameters.\n";
 
-      throw logic_error(buffer.str());	  
+      throw logic_error(buffer.str());
    }
 
    #endif
 
    // Parameters difference Vector
-   
+
    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
 
 //   if(absolute_value(parameters_difference) < 1.0e-50)
@@ -1084,7 +1089,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 //   }
 
    // Gradient difference Vector
-   
+
    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
 //   if(absolute_value(gradient_difference) < numeric_limits<type>::min())
@@ -1105,7 +1110,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 //      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
 //             << "Tensor<type, 2> calculate_BFGS_inverse_hessian() method.\n"
 //             << "Old inverse hessian matrix is zero.\n";
-   
+
 //	  throw logic_error(buffer.str());
 //   }
 
@@ -1149,7 +1154,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    #endif
 
-   // Start training 
+   // Start training
 
    if(display)
    {
@@ -1179,16 +1184,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
-   const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(true);
-   const Index batches_number = training_batches.dimension(0);
-
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters(parameters_number);
    Tensor<type, 1> old_parameters(parameters_number);
    Tensor<type, 0> parameters_norm;
 
@@ -1233,11 +1235,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    pair<type,type> directional_point(2, 0.0);
 
-   Tensor<type, 1> minimum_selection_error_parameters = parameters;
+   Tensor<type, 1> minimum_selection_error_parameters;
 
    type minimum_selection_error = static_cast<type>(0.0);
 
    bool stop_training = false;
+
+   bool is_forecasting = false;
 
    Index selection_failures = 0;
 
@@ -1245,11 +1249,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    time(&beginning_time);
    type elapsed_time;
 
-   // Main loop 
+   // Main loop
 
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
+       // Batch
+
+       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
+
+       const Index batches_number = training_batches.dimension(0);
+
        // Neural network
+
+       parameters = neural_network_pointer->get_parameters();
 
        parameters_norm = parameters.square().sum().sqrt();
 
@@ -1260,15 +1272,36 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        training_loss = static_cast<type>(0.0);
 
+       for(Index iteration = 0; iteration < batches_number; iteration++)
+       {
+           // Data set
+
+          const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
+
+          batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+
+          // Neural network
+
+          neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+           // Loss
+
+          loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+
+          training_loss += back_propagation.loss;
+
+
+       }
+
        // Loss index stuff
 
-       training_error = training_loss/static_cast<type>(batches_number);      
-
-       regularization = loss_index_pointer->calculate_regularization(parameters);
+       training_error = training_loss/static_cast<type>(batches_number);
+/*
+       regularization = loss_index_pointer->calculate_regularization();
 
        if(epoch == 0)
        {
-           //training_error = loss_index_pointer->calculate_training_error();
+           training_error = loss_index_pointer->calculate_training_error();
 
            training_loss = training_error + regularization_weight*regularization;
            training_loss_decrease = static_cast<type>(0.0);
@@ -1280,15 +1313,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
            training_error = training_loss - regularization_weight*regularization;
        }
-
-       if(selection_instances_number > 0)
-       {
-//           selection_error = loss_index_pointer->calculate_selection_error();
-       }
+*/
+//       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
 
        if(epoch == 0)
        {
            minimum_selection_error = selection_error;
+
+           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -1298,12 +1330,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        {
            minimum_selection_error = selection_error;
 
-           minimum_selection_error_parameters = parameters;
+           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
        }
 
-       //gradient = loss_index_pointer->calculate_training_loss_gradient();
+//       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-       gradient_norm = gradient.square().sum().sqrt();
+//       gradient_norm = gradient.square().sum().sqrt();
+
+       gradient_norm = back_propagation.gradient.square().sum().sqrt();
 
        if(display && gradient_norm(0) >= warning_gradient_norm)
        {
@@ -1314,25 +1348,41 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        /*|| (old_parameters - parameters).abs() < numeric_limits<type>::min()
        || (old_gradient - gradient).abs() < numeric_limits<type>::min()*/)
        {
-            inverse_hessian.setZero();
-
-            for(Index i = 0; i < parameters_number; i++) inverse_hessian(i,i) = 1;
+/*
+           inverse_hessian.initialize_identity();
+*/
        }
        else
        {
-           inverse_hessian = calculate_inverse_hessian_approximation(old_parameters, parameters,
-                                                                     old_gradient,
-                                                                     gradient,
-                                                                     old_inverse_hessian);
+           switch(inverse_hessian_approximation_method)
+           {
+              case DFP:
+              {
+
+                inverse_hessian = calculate_DFP_inverse_hessian(old_parameters, parameters, old_gradient, back_propagation.gradient, old_inverse_hessian);
+
+              }
+              break;
+
+              case BFGS:
+              {
+                inverse_hessian = calculate_BFGS_inverse_hessian(old_parameters, parameters, old_gradient, back_propagation.gradient, old_inverse_hessian);
+              }
+              break;
+           }
+
+           old_parameters.resize(0);
+           old_gradient.resize(0);
        }
 
        // Optimization algorithm
 
-       training_direction = calculate_training_direction(gradient, inverse_hessian);
-
+       training_direction = calculate_training_direction(back_propagation.gradient, inverse_hessian);
+cout << "1" << endl;
        // Calculate loss training slope
 
-       const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, AT_B);
+       const Tensor<type, 0> training_slope = (back_propagation.gradient/gradient_norm(0)).contract(training_direction, AT_B);
+cout << "2" << endl;
 
        // Check for a descent direction
 
@@ -1342,9 +1392,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
            //cout << "Training slope is greater than zero." << endl;
 
-           training_direction = calculate_gradient_descent_training_direction(gradient);
+           training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
        }
-
+cout << "3" << endl;
        // Get initial training rate
 
        epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
@@ -1352,18 +1402,18 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_learning_rate);
 
        learning_rate = directional_point.first;
-
+cout << "4" << endl;
        // Reset training direction when training rate is 0
 
        if(epoch != 0 && abs(learning_rate) < static_cast<type>(1.0e-99))
        {
-           training_direction = calculate_gradient_descent_training_direction(gradient);
+           training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
 
            directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_learning_rate);
 
            learning_rate = directional_point.first;
        }
-
+cout << "5" << endl;
        parameters_increment = training_direction*learning_rate;
 
 //       parameters_increment_norm = l2_norm(parameters_increment);
@@ -1381,7 +1431,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
        // Stopping Criteria
-
+cout << "6" << endl;
         if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
@@ -1408,7 +1458,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
        else if(training_loss <= loss_goal)
        {
-           if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+           if(display)
+           {
+               cout << "Epoch " << epoch << ": Loss goal reached.\n";
+           }
 
            stop_training = true;
 
@@ -1416,7 +1469,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
        else if(gradient_norm(0) <= gradient_norm_goal)
        {
-           if(display) cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
+           if(display)
+           {
+               cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
+           }
 
            stop_training = true;
 
@@ -1436,7 +1492,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
        else if(epoch == maximum_epochs_number)
        {
-           if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+           if(display)
+           {
+               cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+           }
 
            stop_training = true;
 
@@ -1444,7 +1503,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
        else if(elapsed_time >= maximum_time)
        {
-           if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+           if(display)
+           {
+               cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+           }
 
            stop_training = true;
 
@@ -1555,8 +1617,8 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-/// Returns a XML-type string representation of this quasi-Newton method object. 
-/// It contains the training methods and parameters chosen, as well as 
+/// Returns a XML-type string representation of this quasi-Newton method object.
+/// It contains the training methods and parameters chosen, as well as
 /// the stopping criteria and other user stuff concerning the quasi-Newton method object.
 
 tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
@@ -1631,7 +1693,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Warning gradient norm 
+   // Warning gradient norm
 //   {
 //   element = document->NewElement("WarningGradientNorm");
 //   root_element->LinkEndChild(element);
@@ -1643,7 +1705,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Warning training rate 
+   // Warning training rate
 //   {
 //   element = document->NewElement("WarningLearningRate");
 //   root_element->LinkEndChild(element);
@@ -1667,7 +1729,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Error gradient norm 
+   // Error gradient norm
 //   {
 //   element = document->NewElement("ErrorGradientNorm");
 //   root_element->LinkEndChild(element);
@@ -1703,19 +1765,19 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Minimum loss decrease 
+   // Minimum loss decrease
    {
    element = document->NewElement("MinimumLossDecrease");
    root_element->LinkEndChild(element);
 
-   buffer.str(""); 
+   buffer.str("");
    buffer << minimum_loss_decrease;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Loss goal 
+   // Loss goal
    {
    element = document->NewElement("LossGoal");
    root_element->LinkEndChild(element);
@@ -1727,7 +1789,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Gradient norm goal 
+   // Gradient norm goal
    {
    element = document->NewElement("GradientNormGoal");
    root_element->LinkEndChild(element);
@@ -1751,7 +1813,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Maximum iterations number 
+   // Maximum iterations number
    {
    element = document->NewElement("MaximumEpochsNumber");
    root_element->LinkEndChild(element);
@@ -1763,7 +1825,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Maximum time 
+   // Maximum time
    {
    element = document->NewElement("MaximumTime");
    root_element->LinkEndChild(element);
@@ -1800,7 +1862,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    }
 
 
-   // Reserve gradient history 
+   // Reserve gradient history
 //   {
 //   element = document->NewElement("ReserveGradientHistory");
 //   root_element->LinkEndChild(element);
@@ -2243,7 +2305,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Warning gradient norm 
+   // Warning gradient norm
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
 
@@ -2262,7 +2324,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Warning training rate 
+   // Warning training rate
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningLearningRate");
 
@@ -2300,7 +2362,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Error gradient norm 
+   // Error gradient norm
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
 
@@ -2393,7 +2455,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Minimum loss decrease 
+   // Minimum loss decrease
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
 
@@ -2412,7 +2474,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Loss goal 
+   // Loss goal
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
@@ -2431,7 +2493,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Gradient norm goal 
+   // Gradient norm goal
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
 
@@ -2488,7 +2550,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum time 
+   // Maximum time
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
 
@@ -2641,3 +2703,4 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
