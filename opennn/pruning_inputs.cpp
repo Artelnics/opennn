@@ -195,7 +195,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         cout << endl << "Calculating correlations..." << endl;
     }
 
-    // Loss index Stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
@@ -261,7 +261,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     Index selection_failures = 0;
 
     time_t beginning_time, current_time;
-    type elapsed_time = static_cast<type>(0.0);
+    type elapsed_time = 0;
 
     time(&beginning_time);
 

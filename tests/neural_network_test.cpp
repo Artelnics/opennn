@@ -1732,7 +1732,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
     dataset.set_batch_instances_number(5);
 
-    DataSet::Batch batch(&dataset);
+    DataSet::Batch batch(5, &dataset);
 
     Tensor<Index,2> batches_indices = dataset.get_training_batches(false);
 

@@ -513,7 +513,7 @@ void ModelSelection::destruct_inputs_selection()
 void ModelSelection::check() const
 {
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     ostringstream buffer;
 
@@ -526,7 +526,7 @@ void ModelSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
@@ -539,7 +539,7 @@ void ModelSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Neural network stuff
+    // Neural network
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -561,7 +561,7 @@ void ModelSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Data set stuff
+    // Data set
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -1159,7 +1159,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    type cross_validation_error = static_cast<type>(0.0);
+    type cross_validation_error = 0;
 
     for(Index i = 0; i < k; i++)
     {
@@ -1272,7 +1272,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(k);
-    type cross_validation_error = static_cast<type>(0.0);
+    type cross_validation_error = 0;
 
     for(Index i = 0; i < k; i++)
     {
@@ -1368,7 +1368,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
     type minimum_error = 1.0;
 
     Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
-    type cross_validation_error = static_cast<type>(0.0);
+    type cross_validation_error = 0;
 
     for(Index i = 0; i < positives_instances_number; i++)
     {

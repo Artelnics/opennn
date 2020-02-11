@@ -38,13 +38,13 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-  type s_x = static_cast<type>(0.0);
-  type s_y = static_cast<type>(0.0);
+  type s_x = 0;
+  type s_y = 0;
 
-  type s_xx = static_cast<type>(0.0);
-  type s_yy = static_cast<type>(0.0);
+  type s_xx = 0;
+  type s_yy = 0;
 
-  type s_xy = static_cast<type>(0.0);
+  type s_xy = 0;
 
   for(Index i = 0; i < n; i++)
   {
@@ -79,7 +79,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     if(denominator < numeric_limits<type>::epsilon())
     {
-      linear_correlation = static_cast<type>(0.0);
+      linear_correlation = 0;
     }
     else
     {
@@ -591,7 +591,7 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
     denominator = sqrt(this_denominator * y_denominator);
 
     if(abs(denominator) < numeric_limits<type>::min()) {
-      cross_correlation[i] = static_cast<type>(0.0);
+      cross_correlation[i] = 0;
     } else {
       cross_correlation[i] = numerator / denominator;
     }
@@ -629,8 +629,8 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 
     Tensor<type, 1> error_gradient(2);
 
-    type sum_a = static_cast<type>(0.0);
-    type sum_b = static_cast<type>(0.0);
+    type sum_a = 0;
+    type sum_b = 0;
 
     #pragma omp parallel for
 
@@ -688,8 +688,8 @@ Tensor<type, 1> logistic_error_gradient_missing_values(const type& a, const type
 
     Tensor<type, 1> error_gradient(2);
 
-    type sum_a = static_cast<type>(0.0);
-    type sum_b = static_cast<type>(0.0);
+    type sum_a = 0;
+    type sum_b = 0;
 
     type exponential;
 
@@ -744,7 +744,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 
     type error;
 
-    type sum_squared_error = static_cast<type>(0.0);
+    type sum_squared_error = 0;
 
     for(Index i = 0; i < x.size(); i ++)
     {
@@ -790,9 +790,9 @@ type  logistic_error_missing_values
 
     const type new_n = static_cast<type>(new_vector_x.size());
 
-    type difference = static_cast<type>(0.0);
+    type difference = 0;
 
-    type error = static_cast<type>(0.0);
+    type error = 0;
 
     for(Index i = 0; i < new_n; i ++)
     {
@@ -857,9 +857,9 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
             && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
             && abs(s_xy) < numeric_limits<type>::min())
     {
-      linear_regression.a = static_cast<type>(0.0);
+      linear_regression.a = 0;
 
-      linear_regression.b = static_cast<type>(0.0);
+      linear_regression.b = 0;
 
       linear_regression.correlation = 1.0;
     }
@@ -941,9 +941,9 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
     if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
             && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
     {
-      linear_regression.a = static_cast<type>(0.0);
+      linear_regression.a = 0;
 
-      linear_regression.b = static_cast<type>(0.0);
+      linear_regression.b = 0;
 
       linear_regression.correlation = 1.0;
     }
@@ -1044,9 +1044,9 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
      if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
              && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
      {
-       logarithmic_regression.a = static_cast<type>(0.0);
+       logarithmic_regression.a = 0;
 
-       logarithmic_regression.b = static_cast<type>(0.0);
+       logarithmic_regression.b = 0;
 
        logarithmic_regression.correlation = 1.0;
      }
@@ -1131,9 +1131,9 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
              && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
              && abs(s_xy) < numeric_limits<type>::min())
      {
-       logarithmic_regression.a = static_cast<type>(0.0);
+       logarithmic_regression.a = 0;
 
-       logarithmic_regression.b = static_cast<type>(0.0);
+       logarithmic_regression.b = 0;
 
        logarithmic_regression.correlation = 1.0;
      }
@@ -1200,9 +1200,9 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
-      exponential_regression.a = static_cast<type>(0.0);
+      exponential_regression.a = 0;
 
-      exponential_regression.b = static_cast<type>(0.0);
+      exponential_regression.b = 0;
 
       exponential_regression.correlation = 1.0;
      } else {
@@ -1288,9 +1288,9 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
-      exponential_regression.a = static_cast<type>(0.0);
+      exponential_regression.a = 0;
 
-      exponential_regression.b = static_cast<type>(0.0);
+      exponential_regression.b = 0;
 
       exponential_regression.correlation = 1.0;
      } else {
@@ -1364,9 +1364,9 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
     power_regression.regression_type = Power;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy) < numeric_limits<type>::min()) {
-      power_regression.a = static_cast<type>(0.0);
+      power_regression.a = 0;
 
-      power_regression.b = static_cast<type>(0.0);
+      power_regression.b = 0;
 
       power_regression.correlation = 1.0;
     } else {
@@ -1441,9 +1441,9 @@ RegressionResults power_regression_missing_values(const Tensor<type, 1>& x, cons
     power_regression.regression_type = Power;
 
     if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_xy) < numeric_limits<type>::min()) {
-      power_regression.a = static_cast<type>(0.0);
+      power_regression.a = 0;
 
-      power_regression.b = static_cast<type>(0.0);
+      power_regression.b = 0;
 
       power_regression.correlation = 1.0;
     } else {
@@ -2575,8 +2575,8 @@ CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, con
 
     const Tensor<type, 0> total_average = vector.sum() / n;
 
-    type total_sum_of_squares = static_cast<type>(0.0);
-    type treatment_sum_of_squares = static_cast<type>(0.0);
+    type total_sum_of_squares = 0;
+    type treatment_sum_of_squares = 0;
 //@todo, check
     for(Index i = 0; i < n; i ++)
     {
@@ -2687,8 +2687,8 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
 
     const Tensor<type, 0> total_average = new_y.sum() / n;
 
-    type total_sum_of_squares = static_cast<type>(0.0);
-    type treatment_sum_of_squares = static_cast<type>(0.0);
+    type total_sum_of_squares = 0;
+    type treatment_sum_of_squares = 0;
 
     for(Index i = 0; i < n; i ++)
     {
@@ -2772,7 +2772,7 @@ type covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2
      const Tensor<type, 0> mean_1 = vector_1.mean();
      const Tensor<type, 0> mean_2 = vector_2.mean();
 
-     type numerator = static_cast<type>(0.0);
+     type numerator = 0;
      type denominator = static_cast<type>(size_2-1);
 
      for(Index i = 0; i < size_1; i++)
@@ -2830,7 +2830,7 @@ type covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& 
      const Tensor<type, 0> mean_1 = new_x.mean();
      const Tensor<type, 0> mean_2 = new_y.mean();
 
-     type numerator = static_cast<type>(0.0);
+     type numerator = 0;
      type denominator = static_cast<type>(size_2-1);
 
      for(Index i = 0; i < size_1; i++)
@@ -3126,10 +3126,10 @@ type chi_square_critical_point(const type& alpha, const type& degrees_of_freedom
 
     const type step = static_cast<type>(1.0e-5);
 
-    type p_0 = static_cast<type>(0.0);
-    type p_1 = static_cast<type>(0.0);
+    type p_0 = 0;
+    type p_1 = 0;
 
-    type x = static_cast<type>(0.0);
+    type x = 0;
 
     while(p_1 < static_cast<type>(1.0) - alpha)
     {
@@ -3387,8 +3387,8 @@ type one_way_anova(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 
     const Tensor<type, 0> total_average = vector.sum()/n;
 
-    type total_sum_of_squares = static_cast<type>(0.0);
-    type treatment_sum_of_squares = static_cast<type>(0.0);
+    type total_sum_of_squares = 0;
+    type treatment_sum_of_squares = 0;
 
     const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
     const Tensor<type, 1> number_elements = matrix.sum(columns);
@@ -3512,8 +3512,8 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type,
 
     const Tensor<type, 0> total_average = vector.sum() / n;
 
-    type total_sum_of_squares = static_cast<type>(0.0);
-    type treatment_sum_of_squares = static_cast<type>(0.0);
+    type total_sum_of_squares = 0;
+    type treatment_sum_of_squares = 0;
 
     const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
     const Tensor<type, 1> number_elements = matrix.sum(columns);
@@ -3620,8 +3620,8 @@ type one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, con
 
     const Tensor<type, 0> total_average = new_y.sum() / n;
 
-    type total_sum_of_squares = static_cast<type>(0.0);
-    type treatment_sum_of_squares = static_cast<type>(0.0);
+    type total_sum_of_squares = 0;
+    type treatment_sum_of_squares = 0;
 
     const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
     const Tensor<type, 1> number_elements = matrix.sum(columns);
@@ -3677,12 +3677,12 @@ type f_snedecor_critical_point(const Tensor<type, 2>& matrix, const type& alpha)
 
     const type beta = gamma1 * gamma2 / gamma3;
 
-    type x = static_cast<type>(0.0);
+    type x = 0;
     type step = 0.00001;
 
-    type p_0 = static_cast<type>(0.0);
-    type p_1 = static_cast<type>(0.0);
-    type f_x = static_cast<type>(0.0);
+    type p_0 = 0;
+    type p_1 = 0;
+    type f_x = 0;
 
     while (p_1 < 1- alpha){
 
@@ -3721,12 +3721,12 @@ type f_snedecor_critical_point(const Tensor<string, 2>& matrix, const type& alph
 
     const type beta = gamma1 * gamma2 / gamma3;
 
-    type x = static_cast<type>(0.0);
+    type x = 0;
     type step = static_cast<type>(0.0001);
 
-    type p_0 = static_cast<type>(0.0);
-    type p_1 = static_cast<type>(0.0);
-    type f_x = static_cast<type>(0.0);
+    type p_0 = 0;
+    type p_1 = 0;
+    type f_x = 0;
 
     while (p_1 < 1- alpha){
 
@@ -3762,12 +3762,12 @@ type f_snedecor_critical_point(const Tensor<type, 2>& matrix)
 
     const type beta = gamma1 * gamma2 / gamma3;
 
-    type x = static_cast<type>(0.0);
+    type x = 0;
     type step = static_cast<type>(0.0001);
 
-    type p_0 = static_cast<type>(0.0);
-    type p_1 = static_cast<type>(0.0);
-    type f_x = static_cast<type>(0.0);
+    type p_0 = 0;
+    type p_1 = 0;
+    type f_x = 0;
 
     while (p_1 < static_cast<type>(1) - static_cast<type>(0.01)){
 
@@ -3811,12 +3811,12 @@ type f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 
     const type beta = gamma1 * gamma2 / gamma3;
 
-    type x = static_cast<type>(0.0);
+    type x = 0;
     type step = 0.0001;
 
-    type p_0 = static_cast<type>(0.0);
-    type p_1 = static_cast<type>(0.0);
-    type f_x = static_cast<type>(0.0);
+    type p_0 = 0;
+    type p_1 = 0;
+    type f_x = 0;
 
     while (p_1 < 1- 0.99){
 

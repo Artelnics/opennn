@@ -327,7 +327,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
 #ifdef __OPENNN_DEBUG__
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     ostringstream buffer;
 
@@ -340,7 +340,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
         throw logic_error(buffer.str());
     }
 
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
@@ -353,7 +353,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
         throw logic_error(buffer.str());
     }
 
-    // Neural network stuff
+    // Neural network
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -859,15 +859,15 @@ void GeneticAlgorithm::initialize_population()
 
 void GeneticAlgorithm::initialize_random_population()
 {
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    // Neural network stuff
+    // Neural network
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -942,11 +942,11 @@ void GeneticAlgorithm::initialize_random_population()
 
 void GeneticAlgorithm::initialize_weighted_population()
 {    
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    // Data set stuff
+    // Data set
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -958,7 +958,7 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     Tensor<type, 1> final_correlations = correlations.sum(rows_sum).abs();
 
-    // Neural network stuff
+    // Neural network
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -1088,21 +1088,21 @@ void GeneticAlgorithm::evaluate_population()
 
 #endif
 
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    // Data set stuff
+    // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
     
     Tensor<DataSet::VariableUse, 1> current_uses(original_uses);
 
-    // Neural network stuff
+    // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     Tensor<bool, 1> current_inputs;
 
@@ -1983,21 +1983,21 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         cout << "Performing genetic inputs selection..." << endl;
     }
 
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    // Data set stuff
+    // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
 //    const Index targets_number = data_set_pointer->get_target_variables_number();
 
-    // Neural network stuff
+    // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     Index minimal_index;
     type current_training_error;
@@ -2011,7 +2011,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 //    type previous_minimum_selection_error = 1e10;
 
     type optimum_selection_error = 1e10;
-    type optimum_training_error = static_cast<type>(0.0);
+    type optimum_training_error = 0;
 
     Tensor<bool, 1> optimal_inputs;
     Tensor<type, 1> optimal_parameters;
@@ -2025,7 +2025,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     Index index = 0;
 
     time_t beginning_time, current_time;
-    type elapsed_time = static_cast<type>(0.0);
+    type elapsed_time = 0;
 
     original_uses = data_set_pointer->get_columns_uses();
 

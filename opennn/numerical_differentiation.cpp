@@ -252,7 +252,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
     const Index size = x.size();
 
     Tensor<type, 1> derivatives(size);
-    derivatives[0] = static_cast<type>(0.0);
+    derivatives[0] = 0;
 
     for(Index i = 1; i < size; i++)
     {

@@ -191,7 +191,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     if(display) cout << "Performing growing inputs selection..." << endl;
 
-    // Loss index Stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
@@ -244,8 +244,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    type current_training_error = static_cast<type>(0.0);
-    type current_selection_error = static_cast<type>(0.0);
+    type current_training_error = 0;
+    type current_selection_error = 0;
 
     Tensor<type, 1> current_parameters;
 
@@ -258,7 +258,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Index selection_failures = 0;
 
     time_t beginning_time, current_time;
-    type elapsed_time = static_cast<type>(0.0);
+    type elapsed_time = 0;
 
     time(&beginning_time);
 
@@ -454,7 +454,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
    Tensor<DataSet::VariableUse, 1> optimum_uses = current_uses;
 
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     Index index;
 
@@ -483,7 +483,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     time_t beginning_time, current_time;
 
-    type elapsed_time = static_cast<type>(0.0);
+    type elapsed_time = 0;
 
 
    if(display)

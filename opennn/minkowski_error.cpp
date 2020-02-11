@@ -326,8 +326,8 @@ type MinkowskiError::minkowski_error(const Tensor<type, 2>& x, const Tensor<type
 
     #endif
 /*
-    type minkowski_error = static_cast<type>(0.0);
-    type row_minkowski_error = static_cast<type>(0.0);
+    type minkowski_error = 0;
+    type row_minkowski_error = 0;
 */
     Tensor<type, 0> error = (((x - y).abs().pow(minkowski_parameter)).sum()).pow(static_cast<type>(1.0)/ minkowski_parameter);
 
@@ -335,7 +335,7 @@ type MinkowskiError::minkowski_error(const Tensor<type, 2>& x, const Tensor<type
 /*
     for(Index i = 0; i < rows_number; i++)
     {
-        row_minkowski_error = static_cast<type>(0.0);
+        row_minkowski_error = 0;
 
         for(Index j = 0; j < columns_number; j++)
         {
