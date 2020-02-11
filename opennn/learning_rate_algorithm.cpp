@@ -414,6 +414,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         const Tensor<type, 1>& training_direction,
         const type& initial_learning_rate) const
 {    
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
     Triplet triplet;
 
     // Left point
@@ -437,7 +439,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
    Tensor<type, 1> potential_parameters = parameters + training_direction*triplet.B.first;
 
-   triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+   neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+   triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
    count++;
 
@@ -449,7 +453,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
        potential_parameters = parameters + training_direction*triplet.B.first;
 
-       triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+       neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+       triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
        count++;
 
@@ -462,7 +468,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
            potential_parameters = parameters + training_direction*triplet.B.first;
 
-           triplet.B.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+           triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
            count++;
        }
@@ -473,7 +481,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
        potential_parameters = parameters + training_direction*triplet.U.first;
 
-       triplet.U.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+       neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+       triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
        count++;
 
@@ -485,7 +495,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
           potential_parameters = parameters + training_direction*triplet.U.first;
 
-          triplet.U.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+          neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+          triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
           if(triplet.U.first - triplet.A.first <= loss_tolerance)
           {
@@ -516,13 +528,17 @@ pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(
          const Tensor<type, 1>& training_direction,
          const type& initial_learning_rate) const
 {
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
    pair<type,type> directional_point;
 
    directional_point.first = initial_learning_rate;
 
    const Tensor<type, 1> potential_parameters = parameters + training_direction*initial_learning_rate;
 
-   directional_point.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+   neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+   directional_point.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
    return directional_point;
 }
@@ -543,7 +559,10 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 {
    ostringstream buffer;
 
+
    // Bracket minimum
+
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = parameters.size();
 
@@ -567,7 +586,9 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
          potential_parameters = parameters + training_direction*V.first;
 
-         V.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+         neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+         V.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
          // Update points
  
@@ -636,7 +657,9 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
       potential_parameters = parameters + training_direction*X.first;
 
-      X.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+      neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+      X.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
        if(X.second > loss)
 	   {
@@ -663,6 +686,8 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
         const type& initial_learning_rate) const
 {
    ostringstream buffer;
+
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = parameters.size();
 
@@ -700,7 +725,9 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
           potential_parameters = parameters + training_direction*V.first;
 
-          V.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+          neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+          V.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
          count++;
 
@@ -769,7 +796,9 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       potential_parameters = parameters + training_direction*X.first;
 
-      X.second = loss_index_pointer->calculate_error(batch, potential_parameters, forward_propagation);
+      neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
+
+      X.second = loss_index_pointer->calculate_error(batch, forward_propagation);
 
       if(X.second > loss)
 	  {

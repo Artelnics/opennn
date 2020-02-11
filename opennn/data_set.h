@@ -196,6 +196,11 @@ public:
 
        virtual ~Batch() {}
 
+       Index get_instances_number() const
+       {
+           return inputs_2d.dimension(0);
+       }
+
        void allocate()
        {
            const Index batch_instances_number = data_set_pointer->get_batch_instances_number();

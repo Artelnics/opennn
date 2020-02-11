@@ -40,23 +40,19 @@ class NormalizedSquaredError : public LossIndex
 
 public:
 
-   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
+    // Constructors
 
-   // NEURAL NETWORK CONSTRUCTOR
+   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
 
    explicit NormalizedSquaredError(NeuralNetwork*);
 
-   // DATA SET CONSTRUCTOR
-
    explicit NormalizedSquaredError(DataSet*);
 
-   // DEFAULT CONSTRUCTOR
-
-   explicit NormalizedSquaredError();
-
-   
+   explicit NormalizedSquaredError();   
 
    explicit NormalizedSquaredError(const tinyxml2::XMLDocument&);
+
+    // Destructor
 
    virtual ~NormalizedSquaredError();
 
@@ -79,15 +75,10 @@ public:
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
    // Error methods
-
-   
-   
-
-   type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
+     
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
-
-       neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 

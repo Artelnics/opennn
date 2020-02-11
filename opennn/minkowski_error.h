@@ -67,13 +67,9 @@ public:
 
    // loss methods
 
-   
-
-   type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> minkowski_error;
-
-       neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
