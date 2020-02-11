@@ -1181,7 +1181,7 @@ Histogram histogram(const Tensor<bool, 1>& vector)
   {
     for(Index j = 0; j < 2; j++)
     {
-      if(static_cast<Index>(vector(i)) == minimums(j))
+      if(static_cast<Index>(vector(i)) == static_cast<Index>(minimums(j)))
       {
         frequencies(j)++;
       }
@@ -1760,7 +1760,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
   else
   {
       const type numerator = squared_sum -(sum * sum) / count;
-      const type denominator = size - 1.0;
+      const type denominator = size - static_cast<type>(1.0);
 
       standard_deviation = numerator / denominator;
   }
@@ -1805,7 +1805,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        const type normal_distribution = 0.5 * erfc((mean - sorted_vector(i))/(standard_deviation*sqrt(2)));
+        const type normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc((mean - sorted_vector(i)))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2)))));
 /*        const type half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2))); */
         const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
 
@@ -2512,7 +2512,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = 0.5 * erfc((mean_value - sorted_vector(i))/(standard_deviation*sqrt(2.0)));
+        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc((mean_value - sorted_vector(i)))/(standard_deviation*static_cast<type>(sqrt(2.0))));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2558,7 +2558,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2)));
+        half_normal_distribution = static_cast<type>(erf((sorted_vector(i)))/(standard_deviation * static_cast<type>(sqrt(2))));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2637,7 +2637,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    type significance_level = 0.05;
+    type significance_level = static_cast<type>(0.05);
 
     type A_significance_level;
     type B_significance_level;
@@ -2663,7 +2663,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
 
         critical_values(i) = sqrt(1/(A_significance_level*size+B_significance_level));
 
-        significance_level += 0.05;
+        significance_level += static_cast<type>(0.05);
     }
 
     //return vector.Lilliefors_normality_test(critical_values);
@@ -2701,7 +2701,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = 0.5 * erfc((mean_value - sorted_vector(i))/(standard_deviation*sqrt(2.0)));
+        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc((mean_value - sorted_vector(i)))/(standard_deviation*static_cast<type>(sqrt(2.0))));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2725,8 +2725,8 @@ type normality_parameter(const Tensor<type, 1>& vector)
         }
         else
         {
-            normal_area += 0.5*(sorted_vector(i)-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
-            empirical_area += 0.5*(sorted_vector(i)-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
+            normal_area += static_cast<type>(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
+            empirical_area += static_cast<type>(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
 
             previous_normal_distribution = normal_distribution;
             previous_empirical_distribution = empirical_distribution;
@@ -2749,7 +2749,7 @@ Tensor<type, 1> variation_percentage(const Tensor<type, 1>& vector)
     {
         if(abs(vector[i-1]) < numeric_limits<type>::min())
         {
-            new_vector(i) = (vector(i) - vector[i-1])*100.0/vector[i-1];
+            new_vector(i) = (vector(i) - vector[i-1])*static_cast<type>(100.0)/vector[i-1];
         }
     }
 
@@ -3075,7 +3075,7 @@ Tensor<type, 1> means_binary_column(const Tensor<type, 2>& matrix)
             means[0] += matrix(i,1);
             count++;
         }
-        else if(matrix(i,0) == 1.0)
+        else if(static_cast<Index>(matrix(i,0)) == 1)
         {
             means[1] += matrix(i,1);
             count++;
@@ -3115,7 +3115,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 
         for(Index j = 0; j < matrix.dimension(0); j++)
         {
-            if(matrix(j,i) == 1.0)
+            if(static_cast<Index>(matrix(j,i)) == 1)
             {
                 sum += matrix(j,matrix.dimension(1)-1);
 
