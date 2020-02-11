@@ -907,7 +907,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
            results.elapsed_time = elapsed_time;
 
            results.epochs_number = epoch;
-
            break;
         }
         else if(display && epoch % display_period == 0)
