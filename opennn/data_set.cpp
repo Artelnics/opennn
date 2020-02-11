@@ -4512,10 +4512,13 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
 
     const Index target_index = get_target_variables_indices()(0);
 
+
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     const Index instances_number = used_instances_indices.size();
+
+    cout << "1" << endl;
 
     // Count used positive instances
 
@@ -4527,6 +4530,8 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
 
         if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
     }
+
+    cout << "2" << endl;
 
     // Get used positive instances indices
 
@@ -4540,9 +4545,14 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
         if(data(instance_index, target_index) == static_cast<type>(1.0))
         {
             positive_used_instances_indices(positive_instance_index) = instance_index;
+            positive_instance_index++;
         }
-
     }
+
+    cout << "3" << endl;
+
+    cout << "positive_used_instances_indices: " << positive_used_instances_indices << endl;
+    cout << "input_variables_indices: " << input_variables_indices << endl;
 
     return descriptives(data, positive_used_instances_indices, input_variables_indices);
 }
@@ -4600,6 +4610,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
         if(data(instance_index, target_index) == static_cast<type>(0.0))
         {
             negative_used_instances_indices(negative_instance_index) = instance_index;
+            negative_instance_index++;
         }
 
     }
