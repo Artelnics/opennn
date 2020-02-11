@@ -724,9 +724,9 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
 
     #endif
 
-    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+    const type gradient_norm = l2_norm(gradient);
 
-    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
+    return (static_cast<type>(-1.0)/gradient_norm)*gradient;
 }
 
 
@@ -770,7 +770,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 //   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm = static_cast<type>(0.0);
@@ -788,7 +788,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    type training_loss_decrease = -numeric_limits<type>::max();
 
    Tensor<type, 1> gradient(parameters_number);
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
@@ -823,9 +823,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    {
       // Neural network stuff
 
-      parameters_norm = parameters.square().sum().sqrt();
+      parameters_norm = l2_norm(parameters);
 
-      if(display && parameters_norm(0) >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+      if(display && parameters_norm >= warning_parameters_norm)
+          cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
       // Loss index stuff
 
@@ -843,11 +844,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      gradient_norm = gradient.square().sum().sqrt();
+      gradient_norm = l2_norm(gradient);
 
-      if(gradient_norm(0) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
+      if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
-      if(display && gradient_norm(0) >= warning_gradient_norm)
+      if(display && gradient_norm >= warning_gradient_norm)
       {
           cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
       }
@@ -880,7 +881,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Calculate slope
 
-      const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm(0)).contract(training_direction, AT_B);
+      const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
 
       // Check for a descent direction
 
@@ -983,7 +984,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          results.stopping_condition = MaximumSelectionErrorIncreases;
       }
 
-      else if(gradient_norm(0) <= gradient_norm_goal)
+      else if(gradient_norm <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1046,13 +1047,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
          results.final_parameters = parameters;
 
-         results.final_parameters_norm = parameters_norm(0);
+         results.final_parameters_norm = parameters_norm;
 
          results.final_training_error = training_loss;
 
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm(0);
+         results.final_gradient_norm = gradient_norm;
 
          results.elapsed_time = elapsed_time;
 
@@ -1095,7 +1096,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1103,12 +1104,12 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
 

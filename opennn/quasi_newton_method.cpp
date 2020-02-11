@@ -819,9 +819,9 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<typ
 
     const Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, AT_B);
 
-    const Tensor<type, 0> norm = gradient.square().sum().sqrt();
+    const type norm = l2_norm(gradient);
 
-    return ((-1.0)*(hessian_dot_gradient/norm(0)));
+    return (static_cast<type>(-1.0)/norm)*hessian_dot_gradient;
 
 //    return normalized((-1.0)*hessian_dot_gradient);
 }
@@ -861,9 +861,9 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction
 
     #endif
 
-    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+    const type gradient_norm = l2_norm(gradient);
 
-    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
+    return (static_cast<type>(-1.0)/gradient_norm)*gradient;
 }
 
 
@@ -1254,10 +1254,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    Tensor<type, 1> parameters(parameters_number);
    Tensor<type, 1> old_parameters(parameters_number);
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
-   Tensor<type, 0> parameters_increment_norm;
+   type parameters_increment_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -1275,7 +1275,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    Tensor<type, 1> gradient(parameters_number);
    Tensor<type, 1> old_gradient(parameters_number);
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
    Tensor<type, 2> old_inverse_hessian;
@@ -1325,11 +1325,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        parameters = neural_network_pointer->get_parameters();
 
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
-       if(display && parameters_norm(0) >= warning_parameters_norm)
+       if(display && parameters_norm >= warning_parameters_norm)
        {
-           cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
+           cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
        training_loss = static_cast<type>(0.0);
@@ -1396,11 +1396,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
 //       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-//       gradient_norm = gradient.square().sum().sqrt();
+//       gradient_norm = l2_norm(gradient);
 
-       gradient_norm = back_propagation.gradient.square().sum().sqrt();
+       gradient_norm = l2_norm(back_propagation.gradient);
 
-       if(display && gradient_norm(0) >= warning_gradient_norm)
+       if(display && gradient_norm >= warning_gradient_norm)
        {
            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
        }
@@ -1448,7 +1448,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 cout << "1" << endl;
        // Calculate loss training slope
 
-       const Tensor<type, 0> training_slope = (back_propagation.gradient/gradient_norm(0)).contract(training_direction, AT_B);
+       const Tensor<type, 0> training_slope = (back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
 cout << "2" << endl;
 
        // Check for a descent direction
@@ -1485,7 +1485,7 @@ cout << "5" << endl;
 
 //       parameters_increment_norm = l2_norm(parameters_increment);
 
-       parameters_increment_norm = parameters_increment.square().sum().sqrt();
+       parameters_increment_norm = l2_norm(parameters_increment);
 
        // Elapsed time
 
@@ -1500,7 +1500,7 @@ cout << "5" << endl;
 
        // Stopping Criteria
 cout << "6" << endl;
-        if(parameters_increment_norm(0) <= minimum_parameters_increment_norm)
+        if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1535,7 +1535,7 @@ cout << "6" << endl;
 
            results.stopping_condition = LossGoal;
        }
-       else if(gradient_norm(0) <= gradient_norm_goal)
+       else if(gradient_norm <= gradient_norm_goal)
        {
            if(display)
            {
@@ -1589,12 +1589,12 @@ cout << "6" << endl;
        if(stop_training)
        {
            results.final_parameters = parameters;
-           results.final_parameters_norm = parameters_norm(0);
+           results.final_parameters_norm = parameters_norm;
 
            results.final_training_error = training_error;
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm(0);
+           results.final_gradient_norm = gradient_norm;
 
            results.elapsed_time = elapsed_time;
 
@@ -1662,7 +1662,7 @@ cout << "6" << endl;
    if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
