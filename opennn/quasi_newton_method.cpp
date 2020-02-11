@@ -755,6 +755,58 @@ const Tensor<type, 2>& old_inverse_hessian) const
 }
 
 
+Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
+{
+
+    const Index size = tensor.size();
+
+    Tensor<type, 2> direct(size, size);
+
+    #pragma omp parallel for if(x_size > 1000)
+
+    for(Index i = 0; i < size; i++)
+    {
+      for(Index j = 0; j < size; j++)
+      {
+        direct(i, j) = tensor(i) * other_tensor(j);
+      }
+    }
+
+    return direct;
+}
+
+Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 2>& tensor, const Tensor<type, 2>& other_tensor) const
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+
+    const Index other_rows_number = tensor.dimension(0);
+    const Index other_columns_number = tensor.dimension(1);
+
+    Tensor<type, 2> direct(rows_number*other_rows_number, columns_number*other_columns_number);
+
+    Index alpha;
+    Index beta;
+
+   for(Index i = 0; i < rows_number; i++)
+   {
+       for(Index j = 0; j < columns_number; j++)
+       {
+           for(Index k = 0; k < other_rows_number; k++)
+           {
+               for(Index l = 0; l < other_columns_number; l++)
+               {
+                   alpha = other_rows_number*i+k;
+                   beta = other_columns_number*j+l;
+
+                   direct(alpha,beta) = tensor(i,j)*other_tensor(k,l);
+               }
+           }
+       }
+   }
+   return direct;
+}
+
 /// Returns the quasi-Newton method training direction, which has been previously normalized.
 /// @param gradient Gradient vector.
 /// @param inverse_hessian_approximation Inverse hessian approximation matrix.
@@ -937,9 +989,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
    // Dots
 
-   const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
-
-   const type parameters_dot_gradient =parameter_dot_gradient(0);
+   const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
 
    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix);
 
@@ -951,7 +1001,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 //   dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)
 
 
-   if(abs(parameters_dot_gradient) < static_cast<type>(1.0e-50))
+   if(abs(parameters_dot_gradient(0)) < static_cast<type>(1.0e-50))
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian() method.\n"
@@ -977,12 +1027,16 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
    const Tensor<type, 0> gradient_dot_gradient
            = gradient_difference.contract(hessian_dot_gradient_difference, AT_B);
-
-//   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 /*
+   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
+
    inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
             /(gradient_dot_gradient(0)); //dot(gradient_difference, hessian_dot_gradient_difference);
 */
+   inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
+
+   inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_gradient(0);
+
    return inverse_hessian_approximation;
 }
 
@@ -1139,6 +1193,14 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 
    inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
 */
+
+   inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
+
+   inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)
+   /gradient_dot_hessian_dot_gradient(0);
+
+   inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
+
    return inverse_hessian_approximation;
 }
 
@@ -1182,7 +1244,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    DataSet::Batch batch(data_set_pointer);
 
-   const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
+//   const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
    // Neural network stuff
 
@@ -1195,7 +1257,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    Tensor<type, 0> parameters_norm;
 
    Tensor<type, 1> parameters_increment(parameters_number);
-   type parameters_increment_norm;
+   Tensor<type, 0> parameters_increment_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -1208,8 +1270,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    type old_training_loss = static_cast<type>(0.0);
    type training_loss_decrease = static_cast<type>(0.0);
 
-   type regularization = static_cast<type>(0.0);
-   type regularization_weight = loss_index_pointer->get_regularization_weight();
+//   type regularization = static_cast<type>(0.0);
+//   type regularization_weight = loss_index_pointer->get_regularization_weight();
 
    Tensor<type, 1> gradient(parameters_number);
    Tensor<type, 1> old_gradient(parameters_number);
@@ -1290,7 +1352,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
           training_loss += back_propagation.loss;
 
-
        }
 
        // Loss index stuff
@@ -1348,9 +1409,15 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        /*|| (old_parameters - parameters).abs() < numeric_limits<type>::min()
        || (old_gradient - gradient).abs() < numeric_limits<type>::min()*/)
        {
-/*
-           inverse_hessian.initialize_identity();
-*/
+//           inverse_hessian.initialize_identity();
+           for(Index i = 0; i < inverse_hessian.dimension(0); i++)
+           {
+               for(Index j = 0; j < inverse_hessian.dimension(1); j++)
+               {
+                   if(i == j) inverse_hessian(i,j) = 1.0;
+               }
+           }
+
        }
        else
        {
@@ -1418,10 +1485,11 @@ cout << "5" << endl;
 
 //       parameters_increment_norm = l2_norm(parameters_increment);
 
+       parameters_increment_norm = parameters_increment.square().sum().sqrt();
+
        // Elapsed time
 
        time(&current_time);
-
        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
        // Training history
@@ -1432,7 +1500,7 @@ cout << "5" << endl;
 
        // Stopping Criteria
 cout << "6" << endl;
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+        if(parameters_increment_norm(0) <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1541,7 +1609,8 @@ cout << "6" << endl;
                     << "Gradient norm: " << gradient_norm <<  "\n"
                     << loss_index_pointer->write_information()
                     << "Training rate: " << learning_rate <<  "\n"
-                    /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                    << "Elapsed time:  " << elapsed_time << endl;
+                    /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/
 
                if(selection_error > 0)
                {
@@ -1559,7 +1628,7 @@ cout << "6" << endl;
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()
                 << "Training rate: " << learning_rate << "\n"
-                /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                << "Elapsed time: " << elapsed_time << endl;
 
            if(selection_error > 0)
            {

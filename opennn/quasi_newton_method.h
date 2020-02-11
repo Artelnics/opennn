@@ -172,6 +172,9 @@ public:
                                                            const Tensor<type, 1>&,
                                                            const Tensor<type, 2>&) const;
 
+   Tensor<type, 2> kronecker_product(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+
    Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
    Results perform_training();
