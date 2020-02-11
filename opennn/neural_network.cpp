@@ -2643,7 +2643,7 @@ string NeuralNetwork::write_expression_python() const
     {
         buffer << "from math import exp\n"
                   "def Logistic(x) : \n"
-                  "   return(1/(1+exp(-x))) \n\n";
+                  "   return 1/(1+exp(-x)) \n\n";
     }
 
     if(activations.contains(PerceptronLayer::HyperbolicTangent))
@@ -3040,7 +3040,7 @@ string NeuralNetwork::write_expression_php() const
     {
         buffer << "function Logistic($x)\n"
                   "{\n"
-                  "   return(1/(1+exp(-$x)));"
+                  "   return 1/(1+exp(-$x));"
                   "}\n\n";
     }
 */
