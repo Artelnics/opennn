@@ -1198,9 +1198,9 @@ Tensor<type, 1> ConjugateGradient::calculate_gradient_descent_training_direction
 
     #endif
 
-    const Tensor<type, 0> gradient_norm = gradient.square().sum().sqrt();
+    const type gradient_norm = l2_norm(gradient);
 
-    return (static_cast<type>(-1.0)/gradient_norm(0))*gradient;
+    return (static_cast<type>(-1.0)/gradient_norm)*gradient;
 }
 
 
@@ -1237,7 +1237,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
    // Loss index stuff
 
@@ -1246,7 +1246,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type training_loss_decrease = static_cast<type>(0.0);
       
    Tensor<type, 1> gradient(parameters_number);
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    type selection_error = static_cast<type>(0.0);
    type old_selection_error = static_cast<type>(0.0);
@@ -1285,9 +1285,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    {
       // Neural network
 
-      parameters_norm = parameters.square().sum().sqrt();
+      parameters_norm = l2_norm(parameters);
 
-      if(parameters_norm(0) >= error_parameters_norm)
+      if(parameters_norm >= error_parameters_norm)
       {
          ostringstream buffer;
 
@@ -1297,9 +1297,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
  
          throw logic_error(buffer.str());
       }
-      else if(display && parameters_norm(0) >= warning_parameters_norm)
+      else if(display && parameters_norm >= warning_parameters_norm)
       {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
+         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
       }
 
       // Loss index
@@ -1317,9 +1317,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       //gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      gradient_norm = gradient.square().sum().sqrt();
+      gradient_norm = l2_norm(gradient);
 
-      if(display && gradient_norm(0) >= warning_gradient_norm)
+      if(display && gradient_norm >= warning_gradient_norm)
       {
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
@@ -1468,7 +1468,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.stopping_condition = LossGoal;
       }
 
-      else if(gradient_norm(0) <= gradient_norm_goal)
+      else if(gradient_norm <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1544,12 +1544,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          results.resize_training_history(1+epoch);
 
          results.final_parameters = parameters;
-         results.final_parameters_norm = parameters_norm(0);
+         results.final_parameters_norm = parameters_norm;
 
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm(0);
+         results.final_gradient_norm = gradient_norm;
 
          results.elapsed_time = elapsed_time;
 
@@ -1595,7 +1595,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1604,12 +1604,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
 

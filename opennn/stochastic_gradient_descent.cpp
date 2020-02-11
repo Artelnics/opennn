@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    Tensor<type, 1> last_increment(parameters_number);
 
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -765,7 +765,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    type loss = static_cast<type>(0.0);
 
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    // Optimization algorithm stuff
 
@@ -806,9 +806,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
-       if(display && parameters_norm(0) >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        loss = static_cast<type>(0.0);
 
@@ -866,7 +866,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            learning_rate_iteration++;
        }
 
-       gradient_norm = back_propagation.gradient.square().sum().sqrt();
+       gradient_norm = l2_norm(back_propagation.gradient);
 
        // Loss
 
@@ -963,13 +963,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm(0);
+           results.final_parameters_norm = parameters_norm;
 
            results.final_training_error = training_error;
 
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm(0);
+           results.final_gradient_norm = gradient_norm;
 
            results.elapsed_time = elapsed_time;
 
@@ -1015,12 +1015,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
 
    results.final_training_error= training_error;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
 

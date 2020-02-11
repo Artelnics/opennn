@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
    // Loss index stuff
 
@@ -763,7 +763,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    Index selection_failures = 0;
 
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    // Training strategy stuff
 
@@ -785,11 +785,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    {
       // Neural network
 
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
-      if(display && parameters_norm(0) >= warning_parameters_norm)
+      if(display && parameters_norm >= warning_parameters_norm)
       {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << "." << endl;
+         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << "." << endl;
       }
 
       // Loss index 
@@ -800,7 +800,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
 //      gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
-      if(display && gradient_norm(0) >= warning_gradient_norm)
+      if(display && gradient_norm >= warning_gradient_norm)
       {
          cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << endl;
       }
@@ -931,7 +931,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          results.stopping_condition = MinimumLossDecrease;
       }
 
-      else if(gradient_norm(0) <= gradient_norm_goal)
+      else if(gradient_norm <= gradient_norm_goal)
       {
          if(display)
          {
@@ -1002,12 +1002,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           results.resize_training_history(1+epoch);
 
          results.final_parameters = parameters;
-         results.final_parameters_norm = parameters_norm(0);
+         results.final_parameters_norm = parameters_norm;
 
          results.final_training_error = training_loss;
          results.final_selection_error = selection_error;
 
-         results.final_gradient_norm = gradient_norm(0);
+         results.final_gradient_norm = gradient_norm;
    
          results.elapsed_time = elapsed_time;
 
@@ -1040,7 +1040,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1049,12 +1049,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
 
    results.final_training_error = training_loss;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
 
