@@ -4375,7 +4375,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_histograms(const Index& bins_num
 
            variable_index++;
        }
-       else
+       else // Time @todo
        {
            variable_index++;
        }
