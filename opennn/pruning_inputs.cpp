@@ -236,7 +236,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     {
         for(Index j = 0; j < correlations_ascending.size(); j++)
         {
-            if(total_correlations(i) == correlations_ascending(j))
+            if(static_cast<Index>(total_correlations(i)) == static_cast<Index>( correlations_ascending(j)))
             {
                 correlations_ascending_indices(i) = j;
             }
@@ -342,7 +342,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         time(&current_time);
 
-        elapsed_time = difftime(current_time,beginning_time);
+        elapsed_time = static_cast<type>( difftime(current_time,beginning_time));
 
         // Stopping criteria
 
@@ -1174,7 +1174,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_maximum_time = atoi(element->GetText());
+           const type new_maximum_time = static_cast<type>( atoi(element->GetText()));
 
            try
            {
