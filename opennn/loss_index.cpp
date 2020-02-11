@@ -591,7 +591,7 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
             const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
 
             return parameters_norm(0);
-;
+
        }
        case NoRegularization:
        {

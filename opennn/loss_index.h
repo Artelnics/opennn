@@ -271,7 +271,7 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
-   virtual type calculate_error(const DataSet::Batch&, NeuralNetwork::ForwardPropagation&) const {return 0.0;}
+   virtual type calculate_error(const DataSet::Batch&, NeuralNetwork::ForwardPropagation&) const = 0;
 
    virtual void calculate_error(BackPropagation&) const {}
 
@@ -475,6 +475,100 @@ public:
    // Checking methods
 
    void check() const;
+
+   // Metrics
+
+   type l2_norm(const Tensor<type, 1>& parameters) const
+   {
+       Tensor<type, 0> norm;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                norm.device(*default_device) = parameters.square().sum().sqrt();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       return norm(0);
+   }
+
+   type l1_norm(const Tensor<type, 1>& parameters) const
+   {
+       Tensor<type, 0> norm;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                norm.device(*default_device) = parameters.square().sum().sqrt();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       return norm(0);
+   }
 
 protected:
 
