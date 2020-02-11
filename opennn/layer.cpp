@@ -1698,7 +1698,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
   for(Index j = 0; j < rows_number; j++)
   {
-      type sum = static_cast<type>(0.0);
+      type sum = 0;
 
       for(Index i = 0; i < columns_number; i++)
       {

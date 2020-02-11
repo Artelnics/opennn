@@ -168,7 +168,7 @@ public:
 
        SecondOrderLoss(const Index& parameters_number)
        {
-           loss = static_cast<type>(0.0);
+           loss = 0;
            gradient = Tensor<type, 1>(parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }

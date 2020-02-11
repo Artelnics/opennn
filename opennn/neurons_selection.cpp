@@ -234,12 +234,12 @@ void NeuronsSelection::set_default()
 
     // Stopping criteria
 
-    selection_error_goal = static_cast<type>(0.0);
+    selection_error_goal = 0;
 
     maximum_epochs_number = 1000;
     maximum_time = 10000.0;
 
-    tolerance = static_cast<type>(0.0);
+    tolerance = 0;
 }
 
 
@@ -500,19 +500,19 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
 #endif
 
-    // Neural network stuff
+    // Neural network
 
     const Index trainable_layers_number = neural_network.get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network.get_trainable_layers_pointers();
 
-    // Loss index stuff
+    // Loss index
 
     type optimum_selection_error = numeric_limits<type>::max();
     type optimum_training_error = numeric_limits<type>::max();
     Tensor<type, 1> optimum_parameters;
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     OptimizationAlgorithm::Results results;
 
@@ -740,7 +740,7 @@ void NeuronsSelection::delete_training_loss_history()
 
 void NeuronsSelection::check() const
 {
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     ostringstream buffer;
 
@@ -753,7 +753,7 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Loss index stuff
+    // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
@@ -766,7 +766,7 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Neural network stuff
+    // Neural network
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -798,7 +798,7 @@ void NeuronsSelection::check() const
       throw logic_error(buffer.str());
    }
 
-    // Data set stuff
+    // Data set
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 

@@ -94,7 +94,7 @@ type NormalizedSquaredError::get_normalization_coefficient() const
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    // Data set stuff
+    // Data set
 
     const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
@@ -106,7 +106,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    type new_normalization_coefficient = static_cast<type>(0.0);
+    type new_normalization_coefficient = 0;
 
      #pragma omp parallel for reduction(+ : new_normalization_coefficient)
 
@@ -142,7 +142,7 @@ void NormalizedSquaredError::set_normalization_coefficient(const type& new_norma
 
 void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
-    // Data set stuff
+    // Data set
 
 //
 
@@ -158,7 +158,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     // Normalized squared error stuff
 
-    type new_selection_normalization_coefficient = static_cast<type>(0.0);
+    type new_selection_normalization_coefficient = 0;
 
      #pragma omp parallel for reduction(+ : new_selection_normalization_coefficient)
 
@@ -278,7 +278,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 
    #endif
 
-   // Data set stuff
+   // Data set
 
    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
 

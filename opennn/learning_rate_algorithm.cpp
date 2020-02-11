@@ -420,7 +420,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     // Left point
 
-    triplet.A.first = static_cast<type>(0.0);
+    triplet.A.first = 0;
     triplet.A.second = loss;
 /*
    if(training_direction == 0.0 || initial_learning_rate) < numeric_limits<type>::min())
@@ -663,8 +663,8 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
        if(X.second > loss)
 	   {
-          X.first = static_cast<type>(0.0);
-          X.second = static_cast<type>(0.0);
+          X.first = 0;
+          X.second = 0;
 	   }
 
       return X;
@@ -782,7 +782,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
       cerr << e.what() << endl;
 
       pair<type, type> A;
-      A.first = static_cast<type>(0.0);
+      A.first = 0;
       A.second = loss;
 
       return A;
@@ -802,8 +802,8 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
       if(X.second > loss)
 	  {
-         X.first = static_cast<type>(0.0);
-         X.second = static_cast<type>(0.0);
+         X.first = 0;
+         X.second = 0;
 	  }
 
       return X;

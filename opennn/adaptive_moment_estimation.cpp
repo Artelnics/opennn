@@ -222,7 +222,7 @@ void AdaptiveMomentEstimation::set_default()
    // TRAINING OPERATORS
 
    initial_learning_rate = static_cast<type>(0.001);
-   initial_decay = static_cast<type>(0.0);
+   initial_decay = 0;
    beta_1 = static_cast<type>(0.9);
    beta_2 = static_cast<type>(0.999);
 
@@ -237,10 +237,10 @@ void AdaptiveMomentEstimation::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = static_cast<type>(0.0);
-   minimum_loss_decrease = static_cast<type>(0.0);
+   minimum_parameters_increment_norm = 0;
+   minimum_loss_decrease = 0;
    loss_goal = -numeric_limits<type>::max();
-   gradient_norm_goal = static_cast<type>(0.0);
+   gradient_norm_goal = 0;
    maximum_selection_error_increases = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 10000;
@@ -650,7 +650,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    if(display) cout << "Training with adaptive moment estimator \"Adam\" ...\n";
 
-   // Data set stuff
+   // Data set
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -666,10 +666,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-   DataSet::Batch training_batch(data_set_pointer);
-   DataSet::Batch selection_batch(data_set_pointer);
+   const bool has_selection = data_set_pointer->has_selection();
 
-   // Neural network stuff
+   DataSet::Batch batch(batch_instances_number, data_set_pointer);
+
+   // Neural network
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -683,21 +684,21 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_instances_number, neural_network_pointer);
 
-   // Loss index stuff
+   // Loss index
 
    LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
-   type training_error = static_cast<type>(0.0);
+   type training_error = 0;
 
-   type selection_error = static_cast<type>(0.0);
-   type old_selection_error = static_cast<type>(0.0);
+   type selection_error = 0;
+   type old_selection_error = 0;
 
-   type loss = static_cast<type>(0.0);
+   type loss = 0;
    type gradient_norm;
 
-   // Optimization algorithm stuff
+   // Optimization algorithm
 
-   type learning_rate = static_cast<type>(0.0);
+   type learning_rate = 0;
 
    Index selection_error_increases = 0;
 
@@ -708,7 +709,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = static_cast<type>(0.0);
+   type elapsed_time = 0;
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -737,7 +738,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        if(display && parameters_norm >= warning_parameters_norm)
            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-       loss = static_cast<type>(0.0);
+       loss = 0;
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
@@ -750,11 +751,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Neural network
 
-           neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, training_forward_propagation);
 
            // Loss index
 
-           loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
+           loss_index_pointer->calculate_back_propagation(batch, training_forward_propagation, back_propagation);
 
            learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
                          - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0)
@@ -790,14 +791,14 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        training_error = loss/static_cast<type>(batches_number);
 
-       if(selection_instances_number > 0)
+       if(has_selection)
        {
 //           neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
 
 //           selection_error = loss_index_pointer->calculate_error(
 //                       selection_forward_propagation.layers[trainable_layers_number].activations,
 //                       selection_batch.targets_2d);
-           selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+           selection_error = loss_index_pointer->calculate_error(batch, selection_forward_propagation);
 
            if(epoch == 0)
            {

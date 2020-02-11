@@ -18,7 +18,7 @@ Descriptives::Descriptives()
   name = "Descriptives";
   minimum = -1.0;
   maximum = 1.0;
-  mean = static_cast<type>(0.0);
+  mean = 0;
   standard_deviation = 1.0;
 }
 
@@ -521,7 +521,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
   if(end == begin) return vector[begin];
 
-  type sum = static_cast<type>(0.0);
+  type sum = 0;
 
   for(Index i = begin; i <= end; i++)
   {
@@ -598,8 +598,8 @@ type variance(const Tensor<type, 1>& vector)
 
 #endif
 
-  type sum = static_cast<type>(0.0);
-  type squared_sum = static_cast<type>(0.0);
+  type sum = 0;
+  type squared_sum = 0;
 
   Index count = 0;
 
@@ -656,8 +656,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
   Tensor<type, 1> std(size);
 
-  type mean_value = static_cast<type>(0.0);
-  type sum = static_cast<type>(0.0);
+  type mean_value = 0;
+  type sum = 0;
 
   for(Index i = 0; i < size; i++)
   {
@@ -673,8 +673,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
       std(i) = sqrt(sum / type(period));
 
-      mean_value = static_cast<type>(0.0);
-      sum = static_cast<type>(0.0);
+      mean_value = 0;
+      sum = 0;
   }
 
 
@@ -712,7 +712,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
   const type mean_value = mean(vector);
 
-  type sum = static_cast<type>(0.0);
+  type sum = 0;
 
   Index count = 0;
 
@@ -763,7 +763,7 @@ type kurtosis(const Tensor<type, 1>& vector)
 
   const type mean_value = mean(vector);
 
-  type sum = static_cast<type>(0.0);
+  type sum = 0;
 
   Index count = 0;
 
@@ -1756,7 +1756,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 
   if(count <= 1)
   {
-    standard_deviation = static_cast<type>(0.0);
+    standard_deviation = 0;
   }
   else
   {
@@ -1816,7 +1816,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         if(vector(i) < sorted_vector[0])
         {
-            empirical_distribution = static_cast<type>(0.0);
+            empirical_distribution = 0;
         }
         else if(vector(i) >= sorted_vector[n-1])
         {
@@ -2129,7 +2129,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
    // Mean
 
-   type mean = static_cast<type>(0.0);
+   type mean = 0;
 
    Index count = 0;
 
@@ -2231,7 +2231,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
    // median
 
-   type median = static_cast<type>(0.0);
+   type median = 0;
 
    Tensor<type, 1> sorted_column(matrix.chip(column_index,1));
 
@@ -2434,7 +2434,7 @@ bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const type
 
         if(vector(i) < sorted_vector[0])
         {
-            Snx = static_cast<type>(0.0);
+            Snx = 0;
         }
         else if(vector(i) >= sorted_vector[n-1])
         {
@@ -2495,7 +2495,7 @@ Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>& vector,
 
 type normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type normal_distribution_distance = static_cast<type>(0.0);
+    type normal_distribution_distance = 0;
 
     const Index n = vector.dimension(0);
 
@@ -2542,7 +2542,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
 type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type half_normal_distribution_distance = static_cast<type>(0.0);
+    type half_normal_distribution_distance = 0;
 
     const Index n = vector.dimension(0);
 
@@ -2588,7 +2588,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
 type uniform_distribution_distance(const Tensor<type, 1>& vector)
 {
-    type uniform_distribution_distance = static_cast<type>(0.0);
+    type uniform_distribution_distance = 0;
 
     const Index n = vector.dimension(0);
 
@@ -2688,15 +2688,15 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     type normal_distribution;
     type empirical_distribution;
-    type previous_normal_distribution = static_cast<type>(0.0);
-    type previous_empirical_distribution = static_cast<type>(0.0);
+    type previous_normal_distribution = 0;
+    type previous_empirical_distribution = 0;
 
     Tensor<type, 1> sorted_vector(vector);
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
-    type empirical_area = static_cast<type>(0.0);
-    type normal_area = static_cast<type>(0.0);
+    type empirical_area = 0;
+    type normal_area = 0;
 
     Index counter = 0;
 
@@ -3023,12 +3023,12 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 
     Tensor<type, 1> means(elements_uniques);
 
-    type sum = static_cast<type>(0.0);
+    type sum = 0;
     Index count = 0;
 
     for(Index i = 0; i < integers_number; i++)
     {
-        sum = static_cast<type>(0.0);
+        sum = 0;
         count = 0;
 
         for(unsigned j = 0; j < rows_number; j++)
@@ -3047,7 +3047,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
         }
         else
         {
-            means(i) = static_cast<type>(0.0);
+            means(i) = 0;
         }
     }
 
@@ -3090,8 +3090,8 @@ Tensor<type, 1> means_binary_column(const Tensor<type, 2>& matrix)
     }
     else
     {
-        means[0] = static_cast<type>(0.0);
-        means[1] = static_cast<type>(0.0);
+        means[0] = 0;
+        means[1] = 0;
     }
 
     return means;
@@ -3106,12 +3106,12 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 {
     Tensor<type, 1> means(matrix.dimension(1)-1);
 
-    type sum = static_cast<type>(0.0);
+    type sum = 0;
     Index count = 0;
 
     for(Index i = 0; i < matrix.dimension(1)-1; i++)
     {
-        sum = static_cast<type>(0.0);
+        sum = 0;
         count = 0;
 
         for(Index j = 0; j < matrix.dimension(0); j++)
@@ -3131,7 +3131,7 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
         }
         else
         {
-            means(i) = static_cast<type>(0.0);
+            means(i) = 0;
         }
     }
     return means;

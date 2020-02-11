@@ -224,16 +224,16 @@ void InputsSelection::set_default()
 
     // Stopping criteria
 
-    selection_error_goal = static_cast<type>(0.0);
+    selection_error_goal = 0;
 
     maximum_epochs_number = 1000;
 
     maximum_correlation = 1.0;
-    minimum_correlation = static_cast<type>(0.0);
+    minimum_correlation = 0;
 
     maximum_time = 10000.0;
 
-    tolerance = static_cast<type>(0.0);
+    tolerance = 0;
 }
 
 
@@ -466,11 +466,11 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
 #endif
 
-    // Neural network stuff
+    // Neural network
 
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     OptimizationAlgorithm::Results results;
 
@@ -890,7 +890,7 @@ void InputsSelection::delete_parameters_history()
 
 void InputsSelection::check() const
 {
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     ostringstream buffer;
 
@@ -903,7 +903,7 @@ void InputsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Loss index stuff
+    // Loss index
 
 
     if(!training_strategy_pointer->has_loss_index())
@@ -917,7 +917,7 @@ void InputsSelection::check() const
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    // Neural network stuff
+    // Neural network
 
     if(!loss_index_pointer->has_neural_network())
     {
@@ -939,7 +939,7 @@ void InputsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    // Data set stuff
+    // Data set
 
     if(!loss_index_pointer->has_data_set())
     {

@@ -154,7 +154,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         cout.flush();
     }
 
-    // Neural network stuff
+    // Neural network
 
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
@@ -162,21 +162,21 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
 
-    // Loss index stuff
+    // Loss index
 
     type prev_selection_error = numeric_limits<type>::max();
 
     Tensor<type, 1> optimal_parameters;
 
-    type optimum_training_loss = static_cast<type>(0.0);
-    type optimum_selection_error = static_cast<type>(0.0);
+    type optimum_training_loss = 0;
+    type optimum_selection_error = 0;
 
-    type current_training_loss = static_cast<type>(0.0);
-    type current_selection_error = static_cast<type>(0.0);
+    type current_training_loss = 0;
+    type current_selection_error = 0;
 
     Tensor<type, 1> current_parameters;
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
     Index optimal_neurons_number = 0;
 
@@ -187,7 +187,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     bool end = false;
 
     time_t beginning_time, current_time;
-    type elapsed_time = static_cast<type>(0.0);
+    type elapsed_time = 0;
 
     time(&beginning_time);
 
@@ -200,7 +200,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number); // Fix
         trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number); // Fix
 
-        // Loss index stuff
+        // Loss index
 
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();

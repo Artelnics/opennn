@@ -363,7 +363,7 @@ void LossIndex::check() const
         throw logic_error(buffer.str());
   }
 
-  // Data set stuff
+  // Data set
 
   if(!data_set_pointer)
   {

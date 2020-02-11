@@ -244,12 +244,12 @@ void GradientDescent::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = static_cast<type>(0.0);
+   minimum_parameters_increment_norm = 0;
 
-   minimum_loss_decrease = static_cast<type>(0.0);
+   minimum_loss_decrease = 0;
 
    loss_goal = -numeric_limits<type>::max();
-   gradient_norm_goal = static_cast<type>(0.0);
+   gradient_norm_goal = 0;
    maximum_selection_error_increases = 1000000;
 
    maximum_epochs_number = 1000;
@@ -749,7 +749,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    if(display) cout << "Training with gradient descent...\n";
 
-   // Data set stuff
+   // Data set
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -759,50 +759,55 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
-   DataSet::Batch training_batch(data_set_pointer);
-   DataSet::Batch selection_batch(data_set_pointer);
+   const bool has_selection = data_set_pointer->has_selection();
 
-   // Neural network stuff
+   DataSet::Batch training_batch(training_instances_number, data_set_pointer);
+   DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+   // Neural network
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
-//   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   type parameters_norm;
+   type parameters_norm = 0;
 
    Tensor<type, 1> parameters_increment(parameters_number);
-   type parameters_increment_norm = static_cast<type>(0.0);
+   type parameters_increment_norm = 0;
 
    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
-   // Loss index stuff
+   // Loss index
 
-   type selection_error = static_cast<type>(0.0);
-   type old_selection_error = static_cast<type>(0.0);
+   type selection_error = 0;
+   type old_selection_error = 0;
       
-   type training_loss = static_cast<type>(0.0);
-   type old_training_loss = static_cast<type>(0.0);
+   type training_loss = 0;
+   type old_training_loss = 0;
    type training_loss_decrease = -numeric_limits<type>::max();
 
-   Tensor<type, 1> gradient(parameters_number);
    type gradient_norm;
 
    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
-   // Optimization algorithm stuff 
+   // Optimization algorithm
 
    Index selection_error_increases = 0;
 
    Tensor<type, 1> training_direction(parameters_number);
 
+   Tensor<type, 0> training_slope;
+
+
+   // Learning rate
+
    const type first_learning_rate = static_cast<type>(0.01);
 
-   type initial_learning_rate = static_cast<type>(0.0);
-   type learning_rate = static_cast<type>(0.0);
-   type old_learning_rate = static_cast<type>(0.0);
+   type initial_learning_rate = 0;
+   type learning_rate = 0;
+   type old_learning_rate = 0;
 
    pair<type,type> directional_point(2, 0.0);
 
@@ -813,7 +818,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = static_cast<type>(0.0);
+   type elapsed_time = 0;
 
    results.resize_training_history(maximum_epochs_number+1);
 
@@ -821,39 +826,29 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
-      // Neural network stuff
+      // Neural network
 
       parameters_norm = l2_norm(parameters);
 
       if(display && parameters_norm >= warning_parameters_norm)
           cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-      // Loss index stuff
+      neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
-      if(epoch == 0)
-      {
-          neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+      // Loss index
 
-          loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+      loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
 
-          training_loss = training_back_propagation.loss;
-      }
-      else
-      {
-         training_loss = directional_point.second;
-         training_loss_decrease = training_loss - old_training_loss;
-      }
+      if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
-      gradient_norm = l2_norm(gradient);
+      gradient_norm = l2_norm(training_back_propagation.gradient);
 
       if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
       if(display && gradient_norm >= warning_gradient_norm)
-      {
           cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-      }
 
-      if(selection_instances_number > 0)
+      if(has_selection)
       {
           selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
@@ -861,7 +856,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
           {
               minimum_selection_error = selection_error;
           }
-          else if(epoch != 0 && selection_error > old_selection_error)
+          else if(selection_error > old_selection_error)
           {
              selection_error_increases++;
           }
@@ -879,41 +874,27 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       if(l2_norm(training_direction) < numeric_limits<type>::min())
           throw logic_error("Training direction is zero");
 
-      // Calculate slope
-
-      const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
-
-      // Check for a descent direction
+      training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
 
       if(training_slope(0) >= static_cast<type>(0.0))
           throw logic_error("Training slope is equal or greater than zero");
 
-      if(epoch == 0)
-      {
-         initial_learning_rate = first_learning_rate;
-      }
-      else
-      {
-         initial_learning_rate = old_learning_rate;
-      }
+      epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
 
-      directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
-                                                                              parameters, training_forward_propagation,
-                                                                              training_loss,
-                                                                              training_direction, initial_learning_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(
+            training_batch,
+            parameters, training_forward_propagation,
+            training_loss,
+            training_direction, initial_learning_rate);
 
       learning_rate = directional_point.first;
 
       if(abs(learning_rate) < numeric_limits<type>::min())
-      {
-          cout << "Training rate is zero" << endl;
-
-          learning_rate = static_cast<type>(1.0e-2);
-          //throw logic_error("Training rate is zero");ç
-      }
+          throw logic_error("Training rate is zero");
 
       parameters_increment = training_direction*learning_rate;
-//      parameters_increment_norm = l2_norm(parameters_increment);
+
+      parameters_increment_norm = l2_norm(parameters_increment);
 
       // Elapsed time
 

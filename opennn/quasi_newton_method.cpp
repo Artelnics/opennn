@@ -341,11 +341,11 @@ void QuasiNewtonMethod::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = static_cast<type>(0.0);
+   minimum_parameters_increment_norm = 0;
 
-   minimum_loss_decrease = static_cast<type>(0.0);
+   minimum_loss_decrease = 0;
    loss_goal = -numeric_limits<type>::max();
-   gradient_norm_goal = static_cast<type>(0.0);
+   gradient_norm_goal = 0;
    maximum_selection_error_increases = 1000000;
 
    maximum_epochs_number = 1000;
@@ -1230,7 +1230,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    results.resize_training_history(1+maximum_epochs_number);
 
-   // Data set stuff
+   // Data set
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -1245,12 +1245,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
-   DataSet::Batch training_batch(data_set_pointer);
-   DataSet::Batch selection_batch(data_set_pointer);
+   DataSet::Batch training_batch(training_instances_number, data_set_pointer);
+   DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-//   const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
-
-   // Neural network stuff
+   // Neural network
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -1266,29 +1264,28 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
-   // Loss index stuff
+   // Loss index
 
-   type training_loss = static_cast<type>(0.0);
-   type training_error = static_cast<type>(0.0);
-   type old_training_loss = static_cast<type>(0.0);
-   type training_loss_decrease = static_cast<type>(0.0);
+   type training_loss = 0;
+   type training_error = 0;
+   type old_training_loss = 0;
+   type training_loss_decrease = 0;
 
-//   type regularization = static_cast<type>(0.0);
+//   type regularization = 0;
 //   type regularization_weight = loss_index_pointer->get_regularization_weight();
 
-   Tensor<type, 1> gradient(parameters_number);
    Tensor<type, 1> old_gradient(parameters_number);
    type gradient_norm;
 
    Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
    Tensor<type, 2> old_inverse_hessian;
 
-   type selection_error = static_cast<type>(0.0);
-   type old_selection_error = static_cast<type>(0.0);
+   type selection_error = 0;
+   type old_selection_error = 0;
 
    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
-   // Optimization algorithm stuff
+   // Optimization algorithm
 
    Tensor<type, 1> training_direction(parameters_number);
 
@@ -1297,14 +1294,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    const type first_learning_rate = static_cast<type>(0.01);
 
    type initial_learning_rate = static_cast<type>(0.01);
-   type learning_rate = static_cast<type>(0.0);
-   type old_learning_rate = static_cast<type>(0.0);
+   type learning_rate = 0;
+   type old_learning_rate = 0;
 
    pair<type,type> directional_point(2, 0.0);
 
    Tensor<type, 1> minimum_selection_error_parameters;
 
-   type minimum_selection_error = static_cast<type>(0.0);
+   type minimum_selection_error = 0;
 
    bool stop_training = false;
 
@@ -1337,9 +1334,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
-       training_loss = static_cast<type>(0.0);
+       training_loss = 0;
 
-       // Loss index stuff
+       // Loss index
 
        training_error = training_loss/static_cast<type>(batches_number);
 /*
@@ -1350,7 +1347,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            training_error = loss_index_pointer->calculate_training_error();
 
            training_loss = training_error + regularization_weight*regularization;
-           training_loss_decrease = static_cast<type>(0.0);
+           training_loss_decrease = 0;
        }
        else
        {
@@ -1360,7 +1357,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
            training_error = training_loss - regularization_weight*regularization;
        }
 */
-//       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+//       if(has_selection) selection_error = loss_index_pointer->calculate_selection_error();
 
        if(epoch == 0)
        {
@@ -1645,7 +1642,7 @@ cout << "6" << endl;
 
        old_selection_error = selection_error;
 
-       old_gradient = gradient;
+       old_gradient = training_back_propagation.gradient;
 
        old_inverse_hessian = inverse_hessian;
 
