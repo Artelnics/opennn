@@ -60,7 +60,7 @@ LevenbergMarquardtAlgorithm::~LevenbergMarquardtAlgorithm()
 
 const type& LevenbergMarquardtAlgorithm::get_warning_parameters_norm() const
 {
-   return(warning_parameters_norm);       
+   return warning_parameters_norm;
 }
 
 
@@ -69,7 +69,7 @@ const type& LevenbergMarquardtAlgorithm::get_warning_parameters_norm() const
 
 const type& LevenbergMarquardtAlgorithm::get_warning_gradient_norm() const
 {
-   return(warning_gradient_norm);       
+   return warning_gradient_norm;
 }
 
 
@@ -78,7 +78,7 @@ const type& LevenbergMarquardtAlgorithm::get_warning_gradient_norm() const
 
 const type& LevenbergMarquardtAlgorithm::get_error_parameters_norm() const
 {
-   return(error_parameters_norm);
+   return error_parameters_norm;
 }
 
 
@@ -87,7 +87,7 @@ const type& LevenbergMarquardtAlgorithm::get_error_parameters_norm() const
 
 const type& LevenbergMarquardtAlgorithm::get_error_gradient_norm() const
 {
-   return(error_gradient_norm);
+   return error_gradient_norm;
 }
 
 
@@ -95,7 +95,7 @@ const type& LevenbergMarquardtAlgorithm::get_error_gradient_norm() const
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_parameters_increment_norm() const
 {
-   return(minimum_parameters_increment_norm);
+   return minimum_parameters_increment_norm;
 }
 
 
@@ -103,7 +103,7 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_parameters_increment_norm()
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_loss_increase() const
 {
-   return(minimum_loss_decrease);
+   return minimum_loss_decrease;
 }
 
 
@@ -112,7 +112,7 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_loss_increase() const
 
 const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 {
-   return(loss_goal);
+   return loss_goal;
 }
 
 
@@ -121,7 +121,7 @@ const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 
 const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 {
-   return(gradient_norm_goal);
+   return gradient_norm_goal;
 }
 
 
@@ -129,7 +129,7 @@ const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_increases() const
 {
-   return(maximum_selection_error_increases);
+   return maximum_selection_error_increases;
 }
 
 
@@ -137,7 +137,7 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_increases(
 
 const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 {
-   return(maximum_epochs_number);
+   return maximum_epochs_number;
 }
 
 
@@ -145,7 +145,7 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 
 const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
 {
-   return(maximum_time);
+   return maximum_time;
 }
 
 
@@ -153,7 +153,7 @@ const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
 
 const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 {
-    return(choose_best_selection);
+    return choose_best_selection;
 }
 
 
@@ -161,7 +161,7 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 
 const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
 {
-    return(apply_early_stopping);
+    return apply_early_stopping;
 }
 
 
@@ -169,7 +169,7 @@ const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
 {
-   return(reserve_training_error_history);
+   return reserve_training_error_history;
 }
 
 
@@ -177,7 +177,7 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() co
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() const
 {
-   return(reserve_selection_error_history);
+   return reserve_selection_error_history;
 }
 
 
@@ -185,7 +185,7 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() c
 
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 {
-   return(damping_parameter);
+   return damping_parameter;
 }
 
 
@@ -193,7 +193,7 @@ const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter_factor() const
 {
-   return(damping_parameter_factor);
+   return damping_parameter_factor;
 }
 
 
@@ -201,7 +201,7 @@ const type& LevenbergMarquardtAlgorithm::get_damping_parameter_factor() const
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_damping_parameter() const
 {
-   return(minimum_damping_parameter);
+   return minimum_damping_parameter;
 }
 
 
@@ -209,7 +209,7 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_damping_parameter() const
 
 const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 {
-   return(maximum_damping_parameter);
+   return maximum_damping_parameter;
 }
 
 
