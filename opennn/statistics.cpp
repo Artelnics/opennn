@@ -273,7 +273,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
   {
       if(minimum_frequency == frequencies(i))
       {
-          minimal_centers(index) = frequencies(i);
+          minimal_centers(index) = static_cast<type>(frequencies(i));
 
           index++;
       }
@@ -1084,11 +1084,11 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
       if(bins_number%2 == 0)
       {
-          bin_center = static_cast<Index>(static_cast<type>(bins_number)/2.0);
+          bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0));
       }
       else
       {
-          bin_center = static_cast<Index>(static_cast<type>(bins_number)/2.0 + 0.5);
+          bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0) + static_cast<type>(0.5));
       }
 
       Tensor<type, 1> minimums(bins_number);
