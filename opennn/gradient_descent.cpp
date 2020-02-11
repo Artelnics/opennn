@@ -834,6 +834,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
           neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
           loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+          training_loss = training_back_propagation.loss;
       }
       else
       {
@@ -871,7 +873,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Optimization algorithm
 
-      training_direction = calculate_training_direction(gradient);
+      training_direction = calculate_training_direction(training_back_propagation.gradient);
 
       if(norm(training_direction) < numeric_limits<type>::min())
           throw logic_error("Training direction is zero");
