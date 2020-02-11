@@ -666,7 +666,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-   DataSet::Batch batch(data_set_pointer);
+   DataSet::Batch training_batch(data_set_pointer);
+   DataSet::Batch selection_batch(data_set_pointer);
 
    // Neural network stuff
 
@@ -677,9 +678,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm;
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -691,7 +693,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    type old_selection_error = static_cast<type>(0.0);
 
    type loss = static_cast<type>(0.0);
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm;
 
    // Optimization algorithm stuff
 
@@ -730,10 +732,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
-       if(display && parameters_norm(0) >= warning_parameters_norm)
-           cout << "OpenNN Warning: Parameters norm is " << parameters_norm(0) << ".\n";
+       if(display && parameters_norm >= warning_parameters_norm)
+           cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        loss = static_cast<type>(0.0);
 
@@ -748,11 +750,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Neural network
 
-           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
            // Loss index
 
-           loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+           loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
 
            learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
                          - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0)
@@ -782,7 +784,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        // Gradient
 
-//       gradient_norm = l2_norm(back_propagation.gradient);
+       gradient_norm = l2_norm(back_propagation.gradient);
 
         // Loss
 
@@ -795,21 +797,22 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //           selection_error = loss_index_pointer->calculate_error(
 //                       selection_forward_propagation.layers[trainable_layers_number].activations,
 //                       selection_batch.targets_2d);
-       }
+           selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
-       if(epoch == 0)
-       {
-          minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = parameters;
-       }
-       else if(epoch != 0 && selection_error > old_selection_error)
-       {
-          selection_error_increases++;
-       }
-       else if(selection_error <= minimum_selection_error)
-       {
-          minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = parameters;
+           if(epoch == 0)
+           {
+              minimum_selection_error = selection_error;
+              minimum_selection_error_parameters = parameters;
+           }
+           else if(epoch != 0 && selection_error > old_selection_error)
+           {
+              selection_error_increases++;
+           }
+           else if(selection_error <= minimum_selection_error)
+           {
+              minimum_selection_error = selection_error;
+              minimum_selection_error_parameters = parameters;
+           }
        }
 
        // Elapsed time
@@ -888,7 +891,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                    << "Gradient norm: " << gradient_norm << "\n"
                    << loss_index_pointer->write_information()
                    << "Learning rate: " << learning_rate << "\n"
-//                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+                   << "Elapsed time: " << elapsed_time<<"\n"
                    << "Selection error: " << selection_error << endl;
            }
 
@@ -896,13 +899,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm(0);
+           results.final_parameters_norm = parameters_norm;
 
            results.final_training_error = training_error;
 
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm(0);
+           results.final_gradient_norm = gradient_norm;
 
            results.elapsed_time = elapsed_time;
 
@@ -928,12 +931,12 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
           old_selection_error = selection_error;
 
        if(stop_training) break;
-   }
+     }
 
    if(choose_best_selection)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -941,10 +944,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
    results.final_training_error = training_error;
    results.final_selection_error = selection_error;
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
    results.elapsed_time = elapsed_time;
 
    return results;
