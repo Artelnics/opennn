@@ -2126,6 +2126,28 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
 }
 
 
+/// Returns the target columns of the data set.
+
+Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
+{
+    const Index targets_number = get_target_columns_number();
+
+    Tensor<Column, 1> target_columns(targets_number);
+    Index target_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Target)
+        {
+            target_columns(target_index) = columns(i);
+            target_index++;
+        }
+    }
+
+    return target_columns;
+}
+
+
 /// Returns the used columns of the data set.
 
 Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
@@ -4621,51 +4643,43 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
 
 /// Returns a matrix with the data set descriptive statistics.
 /// @param class_index Data set index number to make the descriptive statistics.
-/// @todo Low priority.
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-/*
-    const Tensor<type, 1> targets = data.get_column(class_index, used_instances_indices);
+    Tensor<Index, 1> variables_indices(1);
+    variables_indices.setConstant(class_index);
 
-    #ifdef __OPENNN_DEBUG__
+    const Index instances_number = used_instances_indices.size();
 
-    if(!targets.is_binary())
+    // Count used class instances
+
+    Index class_instances_number = 0;
+
+    for (Index i = 0; i < instances_number; i++)
     {
-        ostringstream buffer;
+        Index instance_index = used_instances_indices(i);
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_columns_descriptives_classes() const method.\n"
-               << "Targets vector must be binary.\n";
-
-        throw logic_error(buffer.str());
+        if(data(instance_index, class_index) == static_cast<type>(1.0)) class_instances_number++;
     }
 
-#endif
+    // Get used class instances indices
 
-    const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
+    Tensor<Index, 1> class_used_instances_indices(class_instances_number);
+    Index class_instance_index = 0;
 
-    const Index inputs_number = inputs_variables_indices.size();
-
-    const Tensor<Index, 1> class_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
-
-    Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
-
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
-        const Index variable_index = inputs_variables_indices[i];
+        Index instance_index = used_instances_indices(i);
 
-        const Tensor<type, 1> variable_data = data.get_column(variable_index, class_used_instances_indices);
-
-        const Descriptives data_descriptives = descriptives(variable_data);
-
-        data_statistics_matrix.set_row(i, data_descriptives.to_vector());
+        if(data(instance_index, class_index) == static_cast<type>(0.0))
+        {
+            class_used_instances_indices(class_instance_index) = instance_index;
+            class_instance_index++;
+        }
     }
 
-    return data_statistics_matrix;
-*/
-    return Tensor<Descriptives, 1>();
+    return descriptives(data, class_used_instances_indices, variables_indices);
 }
 
 
