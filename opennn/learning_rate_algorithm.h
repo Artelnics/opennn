@@ -101,7 +101,7 @@ public:
 
        inline type get_length() const
        {
-           return(B.first - A.first);
+           return B.first - A.first;
        }
 
 
