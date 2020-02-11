@@ -32,7 +32,7 @@ UnitTesting::~UnitTesting()
 
 Index UnitTesting::get_tests_count() const
 {
-   return(tests_count);
+   return tests_count;
 }
 
 
