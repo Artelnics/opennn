@@ -138,12 +138,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivatives(t, f, x));
+            return calculate_forward_differences_derivatives(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_derivatives(t, f, x));
+            return calculate_central_differences_derivatives(t, f, x);
     	 }   	     
       }
 
@@ -246,12 +246,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivatives(t, f, x));
+            return calculate_forward_differences_derivatives(t, f, x);
          }	     
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_derivatives(t, f, x));
+            return calculate_central_differences_derivatives(t, f, x);
     	 }
 
       }
@@ -342,12 +342,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivatives(t, f, dummy, x));
+            return calculate_forward_differences_derivatives(t, f, dummy, x);
          }
 
          case CentralDifferences:
          {
-           return(calculate_central_differences_derivatives(t, f, dummy, x));
+           return calculate_central_differences_derivatives(t, f, dummy, x);
     	 } 	     
       }
 
@@ -409,7 +409,7 @@ public:
     
       const type d2 = (-y_forward_2 + 16.0*y_forward -30.0*y + 16.0*y_backward - y_backward_2)/(12.0*pow(h, 2));
 
-      return(d2);
+      return d2;
    }
 
 
@@ -425,12 +425,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivatives(t, f, x));
+            return calculate_forward_differences_second_derivatives(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivatives(t, f, x));
+            return calculate_central_differences_second_derivatives(t, f, x);
     	 }   	    
       }
 
@@ -502,12 +502,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivatives(t, f, x));
+            return calculate_forward_differences_second_derivatives(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivatives(t, f, x));
+            return calculate_central_differences_second_derivatives(t, f, x);
     	 }
       }
 
@@ -577,7 +577,7 @@ public:
 
      }
 
-      return(M);
+      return M;
    }
 
 
@@ -651,12 +651,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivatives(t, f, dummy, x));
+            return calculate_forward_differences_second_derivatives(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivatives(t, f, dummy, x));
+            return calculate_central_differences_second_derivatives(t, f, dummy, x);
     	 }
       }
 
@@ -757,12 +757,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_gradient(t, f, x));
+            return calculate_forward_differences_gradient(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_gradient(t, f, x));
+            return calculate_central_differences_gradient(t, f, x);
     	 }
       }
 
@@ -861,12 +861,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_gradient(t, f, x));
+            return calculate_forward_differences_gradient(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_gradient(t, f, x));
+            return calculate_central_differences_gradient(t, f, x);
     	 }
       }
 
@@ -969,12 +969,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_gradient(t, f, dummy, x));
+            return calculate_forward_differences_gradient(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_gradient(t, f, dummy, x));
+            return calculate_central_differences_gradient(t, f, dummy, x);
     	 }
       }
 
@@ -1199,12 +1199,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_gradient(t, f, dummy, x));
+            return calculate_forward_differences_gradient(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_gradient(t, f, dummy, x));
+            return calculate_central_differences_gradient(t, f, dummy, x);
     	 }
       }
 
@@ -1227,12 +1227,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_gradient(t, f, dummy, x));
+            return calculate_forward_differences_gradient(t, f, dummy, x);
          }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_gradient(t, f, dummy, x));
+            return calculate_central_differences_gradient(t, f, dummy, x);
          }
       }
 
@@ -1470,12 +1470,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, x));
+            return calculate_forward_differences_hessian(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, x));
+            return calculate_central_differences_hessian(t, f, x);
          }
       }
 
@@ -1682,12 +1682,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, dummy, x));
+            return calculate_forward_differences_hessian(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, dummy, x));
+            return calculate_central_differences_hessian(t, f, dummy, x);
          }
       }
 
@@ -1894,12 +1894,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, dummy, x));
+            return calculate_forward_differences_hessian(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, dummy, x));
+            return calculate_central_differences_hessian(t, f, dummy, x);
     	 }
       }
 
@@ -1942,7 +1942,7 @@ public:
 		  }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -1988,7 +1988,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2005,12 +2005,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Jacobian(t, f, x));
+            return calculate_forward_differences_Jacobian(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Jacobian(t, f, x));
+            return calculate_central_differences_Jacobian(t, f, x);
     	 }
       }
 
@@ -2054,7 +2054,7 @@ public:
 		  }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2101,7 +2101,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2119,12 +2119,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Jacobian(t, f, dummy, x));
+            return calculate_forward_differences_Jacobian(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Jacobian(t, f, dummy, x));
+            return calculate_central_differences_Jacobian(t, f, dummy, x);
     	 }
       }
 
@@ -2169,7 +2169,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2217,7 +2217,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2236,12 +2236,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Jacobian(t, f, dummy, x));
+            return calculate_forward_differences_Jacobian(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Jacobian(t, f, dummy, x));
+            return calculate_central_differences_Jacobian(t, f, dummy, x);
     	 }
       }
 
@@ -2288,7 +2288,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2338,7 +2338,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2359,12 +2359,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Jacobian(t, f, dummy_int, dummy_vector, x));
+            return calculate_forward_differences_Jacobian(t, f, dummy_int, dummy_vector, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Jacobian(t, f, dummy_int, dummy_vector, x));
+            return calculate_central_differences_Jacobian(t, f, dummy_int, dummy_vector, x);
     	 }
       }
 
@@ -2411,7 +2411,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2461,7 +2461,7 @@ public:
 		 }
 	  }
 
-      return(J);
+      return J;
    }
 
 
@@ -2482,12 +2482,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x));
+            return calculate_forward_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x));
+            return calculate_central_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x);
     	 }
       }
 
@@ -2702,12 +2702,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, x));
+            return calculate_forward_differences_hessian(t, f, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, x));
+            return calculate_central_differences_hessian(t, f, x);
          }
       }
 
@@ -2933,12 +2933,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, dummy_vector, x));
+            return calculate_forward_differences_hessian(t, f, dummy_vector, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, dummy_vector, x));
+            return calculate_central_differences_hessian(t, f, dummy_vector, x);
     	 }
       }
 
@@ -3161,12 +3161,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, dummy, x));
+            return calculate_forward_differences_hessian(t, f, dummy, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, dummy, x));
+            return calculate_central_differences_hessian(t, f, dummy, x);
     	 }
       }
 
@@ -3395,12 +3395,12 @@ public:
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_hessian(t, f, dummy_int, dummy_vector, x));
+            return calculate_forward_differences_hessian(t, f, dummy_int, dummy_vector, x);
       	 }
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_hessian(t, f, dummy_int, dummy_vector, x));
+            return calculate_central_differences_hessian(t, f, dummy_int, dummy_vector, x);
     	 }   	         
       }
 

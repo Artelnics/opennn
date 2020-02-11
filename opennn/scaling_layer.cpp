@@ -844,7 +844,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MinimumMaximum)
                     {
-                        outputs(i,j) = 2.0*(inputs(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - 1.0;
+                        outputs(i,j) = static_cast<type>(2.0)*(inputs(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
@@ -981,7 +981,7 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
         }
         else
         {
-            outputs(j) = 2.0*(inputs(j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - 1.0;
+            outputs(j) = static_cast<type>(2.0)*(inputs(j)) - descriptives(j).minimum/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
         }
     }
 

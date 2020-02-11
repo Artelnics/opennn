@@ -629,7 +629,7 @@ type NumericalDifferentiationTest::f1(const type& x) const
 
 type NumericalDifferentiationTest::f2(const Tensor<type, 1>& x) const
 {
-   return(x.sum());
+   return x.sum();
 }
 
 
