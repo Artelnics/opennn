@@ -767,7 +767,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const Index parameters_number = neural_network_pointer->get_parameters_number();
-   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+//   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 0> parameters_norm;
@@ -834,6 +834,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
           neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
           loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+          training_loss = training_back_propagation.loss;
       }
       else
       {
@@ -871,14 +873,14 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Optimization algorithm
 
-      training_direction = calculate_training_direction(gradient);
+      training_direction = calculate_training_direction(training_back_propagation.gradient);
 
-      if(norm(training_direction) < numeric_limits<type>::min())
+      if(l2_norm(training_direction) < numeric_limits<type>::min())
           throw logic_error("Training direction is zero");
 
       // Calculate slope
 
-      const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, AT_B);
+      const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm(0)).contract(training_direction, AT_B);
 
       // Check for a descent direction
 

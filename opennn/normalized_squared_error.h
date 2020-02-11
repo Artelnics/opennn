@@ -83,10 +83,58 @@ public:
    
    type calculate_training_error(const Tensor<type, 1>&) const;
 
-   
+   type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
 
-   
-   
+       neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+                                                             - batch.targets_2d).square().sum();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+                                                                - batch.targets_2d).square().sum();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       return sum_squared_error(0)/normalization_coefficient;
+   }
+
 
    // Gradient methods
 
