@@ -642,7 +642,7 @@ void PerceptronLayerTest::test_calculate_parameters_norm()
    Tensor<type, 2> synaptic_weights;
    Tensor<type, 1> parameters;
 
-   type parameters_norm;
+   type parameters_norm = 0;
 
    // Test
 

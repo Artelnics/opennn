@@ -1092,7 +1092,7 @@ Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
 /// @param gradient Current gradient vector. 
 /// @param old_training_direction Training direction in the previous iteration. 
 
-Tensor<type, 1> ConjugateGradient::calculate_training_direction
+Tensor<type, 1> ConjugateGradient::calculate_conjugate_gradient_training_direction
 (const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 1>& old_training_direction) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -1230,7 +1230,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    const bool has_selection = data_set_pointer->has_selection();
 
-   const Index training_instances_number = data_set_pointer->get_selection_instances_number();
+   const Index training_instances_number = data_set_pointer->get_training_instances_number();
    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
@@ -1243,7 +1243,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-   type parameters_norm;
+   type parameters_norm = 0;
 
    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -1254,7 +1254,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type old_training_loss = 0;
    type training_loss_decrease = 0;
       
-   type gradient_norm;
+   type gradient_norm = 0;
 
    type selection_error = 0;
    type old_selection_error = 0;
@@ -1314,21 +1314,13 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       // Loss index
 
-      if(epoch == 0)
-      {      
-          neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+      neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
-          loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+      loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
 
-          training_loss = training_back_propagation.loss;
-      }
-      else
-      {
-         training_loss = directional_point.second;
-         training_loss_decrease = training_loss - old_training_loss;
-      }
+      training_loss = training_back_propagation.loss;
 
-      //gradient = loss_index_pointer->calculate_training_loss_gradient();
+      if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
       gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1339,18 +1331,16 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       if(has_selection)
       {
-//          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
 
-//          selection_error = loss_index_pointer->calculate_error(
-//                      selection_forward_propagation.layers[trainable_layers_number].activations,
-//                      selection_batch.targets_2d);
+          selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
       }
 
       if(epoch == 0)
       {
           minimum_selection_error = selection_error;
       }
-      else if(epoch != 0 && selection_error > old_selection_error)
+      else if(selection_error > old_selection_error)
       {
           selection_error_increases++;
       }
@@ -1365,22 +1355,18 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       if(epoch == 0 || epoch % parameters_number == 0)
       {
-         // Gradient descent training direction
-
-         training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
+         training_direction = calculate_gradient_descent_training_direction(
+                     training_back_propagation.gradient);
       }
       else
       {
-         // Conjugate gradient training direction
-
-         training_direction = calculate_training_direction(old_gradient, training_back_propagation.gradient, old_training_direction);
+         training_direction = calculate_conjugate_gradient_training_direction(
+                     old_gradient, training_back_propagation.gradient, old_training_direction);
       }
 
       // Calculate loss training_slope
 
       training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
-
-//      training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction 
 
@@ -1395,14 +1381,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       // Get initial training rate
 
-      if(epoch == 0)
-      {
-         initial_learning_rate = first_learning_rate;
-      }
-      else
-      {
-         initial_learning_rate = old_learning_rate;
-      }
+      epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
 
       directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
                                                                               parameters, training_forward_propagation,
@@ -1428,7 +1407,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
       }
 
       parameters_increment = training_direction*learning_rate;
-//      parameters_increment_norm = l2_norm(parameters_increment);
+
+      parameters_increment_norm = l2_norm(parameters_increment);
       
       // Elapsed time
 

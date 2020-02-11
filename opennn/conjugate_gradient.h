@@ -32,9 +32,8 @@
 namespace OpenNN
 {
 
-
-
-/// In the conjugate gradient algorithms a search is performed along conjugate directions, which produces generally faster convergence than a search along the steepest descent directions.
+/// In the conjugate gradient algorithms a search is performed along conjugate directions,
+/// which produces generally faster convergence than a search along the steepest descent directions.
 
 /// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
 ///
@@ -161,7 +160,7 @@ public:
 
    Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Training methods
 

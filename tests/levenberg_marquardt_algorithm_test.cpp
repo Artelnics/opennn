@@ -325,7 +325,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    type loss_goal;
    type minimum_loss_increase;
    type gradient_norm_goal;
-   type gradient_norm;
+   type gradient_norm = 0;
 
    // Test
 

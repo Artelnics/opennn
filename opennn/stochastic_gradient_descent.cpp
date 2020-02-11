@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    Tensor<type, 1> last_increment(parameters_number);
 
-   type parameters_norm;
+   type parameters_norm = 0;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -765,7 +765,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    type loss = 0;
 
-   type gradient_norm;
+   type gradient_norm = 0;
 
    // Optimization algorithm
 
