@@ -733,7 +733,7 @@ Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool
 
     if(flag_loss && flag_selection)
     {
-        return(mean_final);
+        return mean_final;
     }
 
     neural_network->perturbate_parameters(0.001);

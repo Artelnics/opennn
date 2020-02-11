@@ -336,7 +336,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         time(&current_time);
 
-        elapsed_time = difftime(current_time,beginning_time);
+        elapsed_time = static_cast<type>(difftime(current_time,beginning_time));
 
         // Stopping criteria
 
