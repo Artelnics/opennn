@@ -66,8 +66,6 @@ public:
 
    // Error methods
 
-   type calculate_training_error(const Tensor<type, 1>&) const;
-
    type calculate_error(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
@@ -120,6 +118,13 @@ public:
        const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
        return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+   }
+
+
+   type calculate_error(const DataSet::Batch& batch,
+                        const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       return 0;
    }
 
 

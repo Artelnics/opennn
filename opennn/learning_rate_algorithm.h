@@ -270,13 +270,25 @@ public:
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const type&, const Tensor<type, 1>&, const type&) const;
+   Triplet calculate_bracketing_triplet(const DataSet::Batch&,
+                                        const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
+                                        const type&, const Tensor<type, 1>&, const type&) const;
 
-   pair<type, type> calculate_fixed_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
-   pair<type, type> calculate_golden_section_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
-   pair<type, type> calculate_Brent_method_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
+   pair<type, type> calculate_fixed_directional_point(const DataSet::Batch&,
+                                                      const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
+                                                      const type&, const Tensor<type, 1>&, const type&) const;
 
-   pair<type, type> calculate_directional_point(const type&, const Tensor<type, 1>&, const type&) const;
+   pair<type, type> calculate_golden_section_directional_point(const DataSet::Batch&,
+                                                               const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
+                                                               const type&, const Tensor<type, 1>&, const type&) const;
+
+   pair<type, type> calculate_Brent_method_directional_point(const DataSet::Batch&,
+                                                             const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
+                                                             const type&, const Tensor<type, 1>&, const type&) const;
+
+   pair<type, type> calculate_directional_point(const DataSet::Batch&,
+                                                const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
+                                                const type&, const Tensor<type, 1>&, const type&) const;
 
    // Serialization methods
 

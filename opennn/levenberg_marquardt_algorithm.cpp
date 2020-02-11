@@ -1044,7 +1044,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-//       training_loss = loss_index_pointer->calculate_training_loss();
+//       neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+
+//       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+//       training_loss = training_back_propagation.loss;
+
        selection_error = minimum_selection_error;
    }
 

@@ -1228,7 +1228,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+   const Index training_instances_number = data_set_pointer->get_selection_instances_number();
    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+
+   DataSet::Batch training_batch(data_set_pointer);
+   DataSet::Batch selection_batch(data_set_pointer);
 
    // Neural network stuff
 
@@ -1238,6 +1242,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    type parameters_norm;
+
+   NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -1252,6 +1259,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    type old_selection_error = static_cast<type>(0.0);
 
    string information;
+
+   LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
    // Optimization algorithm stuff 
 
@@ -1306,8 +1315,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
       if(epoch == 0)
       {      
-         //training_loss = loss_index_pointer->calculate_training_loss();
-         training_loss_decrease = static_cast<type>(0.0);
+          neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+
+          loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+          training_loss = training_back_propagation.loss;
       }
       else
       {
@@ -1391,7 +1403,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
          initial_learning_rate = old_learning_rate;
       }
 
-      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_learning_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
+                                                                              parameters, training_forward_propagation,
+                                                                              training_loss,
+                                                                              training_direction,
+                                                                              initial_learning_rate);
 
       learning_rate = directional_point.first;
 
@@ -1401,7 +1417,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
          training_direction = calculate_gradient_descent_training_direction(gradient);         
 
-         directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_learning_rate);
+         directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
+                                                                                 parameters, training_forward_propagation,
+                                                                                 training_loss,
+                                                                                 training_direction,
+                                                                                 first_learning_rate);
 
          learning_rate = directional_point.first;
       }
@@ -1599,7 +1619,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-//       training_loss = loss_index_pointer->calculate_training_loss();
+       neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+
+       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+       training_loss = training_back_propagation.loss;
+
        selection_error = minimum_selection_error;
    }
 

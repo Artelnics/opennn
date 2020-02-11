@@ -1236,13 +1236,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
+   const Index training_instances_number = data_set_pointer->get_training_instances_number();
+   const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
-   DataSet::Batch batch(data_set_pointer);
+   DataSet::Batch training_batch(data_set_pointer);
+   DataSet::Batch selection_batch(data_set_pointer);
 
 //   const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
@@ -1259,11 +1263,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    Tensor<type, 1> parameters_increment(parameters_number);
    type parameters_increment_norm;
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
    // Loss index stuff
-
-   LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
    type training_loss = static_cast<type>(0.0);
    type training_error = static_cast<type>(0.0);
@@ -1282,6 +1285,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    type selection_error = static_cast<type>(0.0);
    type old_selection_error = static_cast<type>(0.0);
+
+   LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
 
    // Optimization algorithm stuff
 
@@ -1334,26 +1339,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        training_loss = static_cast<type>(0.0);
 
-       for(Index iteration = 0; iteration < batches_number; iteration++)
-       {
-           // Data set
-
-          const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
-
-          batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
-
-          // Neural network
-
-          neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
-
-           // Loss
-
-          loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
-
-          training_loss += back_propagation.loss;
-
-       }
-
        // Loss index stuff
 
        training_error = training_loss/static_cast<type>(batches_number);
@@ -1398,7 +1383,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
 //       gradient_norm = l2_norm(gradient);
 
-       gradient_norm = l2_norm(back_propagation.gradient);
+       gradient_norm = l2_norm(training_back_propagation.gradient);
 
        if(display && gradient_norm >= warning_gradient_norm)
        {
@@ -1426,14 +1411,22 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
               case DFP:
               {
 
-                inverse_hessian = calculate_DFP_inverse_hessian(old_parameters, parameters, old_gradient, back_propagation.gradient, old_inverse_hessian);
+                inverse_hessian = calculate_DFP_inverse_hessian(old_parameters,
+                                                                parameters,
+                                                                old_gradient,
+                                                                training_back_propagation.gradient,
+                                                                old_inverse_hessian);
 
               }
               break;
 
               case BFGS:
               {
-                inverse_hessian = calculate_BFGS_inverse_hessian(old_parameters, parameters, old_gradient, back_propagation.gradient, old_inverse_hessian);
+                inverse_hessian = calculate_BFGS_inverse_hessian(old_parameters,
+                                                                 parameters,
+                                                                 old_gradient,
+                                                                 training_back_propagation.gradient,
+                                                                 old_inverse_hessian);
               }
               break;
            }
@@ -1444,11 +1437,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        // Optimization algorithm
 
-       training_direction = calculate_training_direction(back_propagation.gradient, inverse_hessian);
+       training_direction = calculate_training_direction(training_back_propagation.gradient, inverse_hessian);
 cout << "1" << endl;
        // Calculate loss training slope
 
-       const Tensor<type, 0> training_slope = (back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
+       const Tensor<type, 0> training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
 cout << "2" << endl;
 
        // Check for a descent direction
@@ -1459,14 +1452,18 @@ cout << "2" << endl;
 
            //cout << "Training slope is greater than zero." << endl;
 
-           training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
+           training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
        }
 cout << "3" << endl;
        // Get initial training rate
 
        epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
 
-       directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_learning_rate);
+       directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
+                                                                               parameters, training_forward_propagation,
+                                                                               training_loss,
+                                                                               training_direction,
+                                                                               initial_learning_rate);
 
        learning_rate = directional_point.first;
 cout << "4" << endl;
@@ -1474,9 +1471,13 @@ cout << "4" << endl;
 
        if(epoch != 0 && abs(learning_rate) < static_cast<type>(1.0e-99))
        {
-           training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
+           training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
 
-           directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_learning_rate);
+           directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
+                                                                                   parameters, training_forward_propagation,
+                                                                                   training_loss,
+                                                                                   training_direction,
+                                                                                   first_learning_rate);
 
            learning_rate = directional_point.first;
        }
@@ -1666,7 +1667,12 @@ cout << "6" << endl;
 
        neural_network_pointer->set_parameters(parameters);
 
-//       training_loss = loss_index_pointer->calculate_training_loss();
+       neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+
+       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+
+       training_loss = training_back_propagation.loss;
+
        selection_error = minimum_selection_error;
    }
 

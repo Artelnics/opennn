@@ -273,6 +273,8 @@ public:
 
    virtual type calculate_error(const DataSet::Batch&, NeuralNetwork::ForwardPropagation&) const = 0;
 
+   virtual type calculate_error(const DataSet::Batch&, const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&) const {return 0;}
+
    virtual void calculate_error(BackPropagation&) const {}
 
    void calculate_back_propagation(const DataSet::Batch& batch,

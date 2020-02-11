@@ -897,9 +897,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
          initial_learning_rate = old_learning_rate;
       }
 
-      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss,
-                                                                              training_direction,
-                                                                              initial_learning_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
+                                                                              parameters, training_forward_propagation,
+                                                                              training_loss,
+                                                                              training_direction, initial_learning_rate);
 
       learning_rate = directional_point.first;
 
