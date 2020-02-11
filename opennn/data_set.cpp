@@ -4585,7 +4585,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0)) negative_instances_number++;
+        if(data(instance_index, target_index) == static_cast<type>(0.0)) negative_instances_number++;
     }
 
     // Get used negative instances indices
@@ -4597,7 +4597,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0))
+        if(data(instance_index, target_index) == static_cast<type>(0.0))
         {
             negative_used_instances_indices(negative_instance_index) = instance_index;
         }
