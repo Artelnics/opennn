@@ -2947,7 +2947,7 @@ const string& DataSet::get_missing_values_label() const
 
 const Index& DataSet::get_lags_number() const
 {
-    return(lags_number);
+    return lags_number;
 }
 
 
@@ -2974,27 +2974,27 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 {
     if(scaling_unscaling_method == "NoScaling")
     {
-        return(NoScaling);
+        return NoScaling;
     }
     else if(scaling_unscaling_method == "NoUnscaling")
     {
-        return(NoUnscaling);
+        return NoUnscaling;
     }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
-        return(MinimumMaximum);
+        return MinimumMaximum;
     }
     else if(scaling_unscaling_method == "Logarithmic")
     {
-        return(Logarithmic);
+        return Logarithmic;
     }
     else if(scaling_unscaling_method == "MeanStandardDeviation")
     {
-        return(MeanStandardDeviation);
+        return MeanStandardDeviation;
     }
     else if(scaling_unscaling_method == "StandardDeviation")
     {
-        return(StandardDeviation);
+        return StandardDeviation;
     }
     else
     {
