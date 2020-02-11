@@ -875,7 +875,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       training_direction = calculate_training_direction(training_back_propagation.gradient);
 
-      if(norm_l2(training_direction) < numeric_limits<type>::min())
+      if(l2_norm(training_direction) < numeric_limits<type>::min())
           throw logic_error("Training direction is zero");
 
       // Calculate slope
