@@ -526,6 +526,61 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+    else if(type == Binary)
+    {
+        if(categories.size() > 0)
+        {
+            // Categories
+
+            file_stream.OpenElement("Categories");
+            file_stream.PushText(categories(0).c_str());
+            file_stream.PushText(" ");
+            file_stream.PushText(categories(1).c_str());
+            file_stream.CloseElement();
+
+            // Categories uses
+
+            file_stream.OpenElement("CategoriesUses");
+
+            if(categories_uses(0) == Input)
+            {
+                file_stream.PushText("Input");
+            }
+            else if (categories_uses(0) == Target)
+            {
+                file_stream.PushText("Target");
+            }
+            else if (categories_uses(0) == Time)
+            {
+                file_stream.PushText("Time");
+            }
+            else
+            {
+                file_stream.PushText("Unused");
+            }
+
+            file_stream.PushText(" ");
+
+            if(categories_uses(1) == Input)
+            {
+                file_stream.PushText("Input");
+            }
+            else if (categories_uses(1) == Target)
+            {
+                file_stream.PushText("Target");
+            }
+            else if (categories_uses(1) == Time)
+            {
+                file_stream.PushText("Time");
+            }
+            else
+            {
+                file_stream.PushText("Unused");
+            }
+
+            file_stream.CloseElement();
+        }
+    }
 }
 
 
@@ -4370,6 +4425,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
         else if(columns(i).type == Binary)
         {
             Tensor<Index, 1> binary_frequencies(2);
+            binary_frequencies.setZero();
 
             for(Index j = 0; j < used_instances_number; j++)
             {
@@ -4382,6 +4438,8 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                     binary_frequencies(1)++;
                 }
             }
+
+            histograms(i).frequencies = binary_frequencies;
 
             variable_index++;
         }
@@ -7168,7 +7226,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == Categorical)
+            if(columns(i).type == Categorical || columns(i).type == Binary)
             {
                 // Categories
 
@@ -7210,7 +7268,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
                 }
             }
-
         }
     }
 
@@ -9346,11 +9403,12 @@ void DataSet::read_csv_2_complete()
             if(columns(j).categories.size() == 2)
             {
                 columns(j).type = Binary;
-                columns(j).categories.resize(0);
-                columns(j).categories_uses.resize(0);
+//                columns(j).categories.resize(0);
+//                columns(j).categories_uses.resize(0);
             }
         }
     }
+
 
     file.close();
 
@@ -9488,6 +9546,10 @@ void DataSet::read_csv_3_complete()
                 if(tokens(j) == missing_values_label)
                 {
                     data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
+                }
+                else if(columns(j).categories.size() > 0 && tokens(j) == columns(j).categories(0))
+                {
+                    data(instance_index, variable_indices(0)) = 1.0;
                 }
                 else if(tokens(j) == columns(j).name)
                 {
