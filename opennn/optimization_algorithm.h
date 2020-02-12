@@ -92,11 +92,7 @@ public:
        /// Writes final results of the training.
 /*
        Tensor<string, 2> write_final_results(const Index& precision = 3) const;
-*/
-
-       /// Writes the time from seconds in format HH:mm:ss.
-
-       string write_elapsed_time(const type&);
+*/       
 
        // Training history
 
@@ -159,6 +155,10 @@ public:
    const Index& get_save_period() const;
 
    const string& get_neural_network_file_name() const;
+
+   /// Writes the time from seconds in format HH:mm:ss.
+
+   const string write_elapsed_time(const type&) const;
 
    // Set methods
 

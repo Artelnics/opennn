@@ -64,6 +64,13 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+        Tensor<type, 2> a(3,3);
+        a.setConstant(2);
+
+        TensorMap<Tensor<type, 2>> b(a.data(), 2, 2);
+
+        cout << b << endl;
+
         cout << "End" << endl;
 
         return 0;

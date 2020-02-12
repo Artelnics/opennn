@@ -901,7 +901,7 @@ cout << "6" << endl;
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << elapsed_time<<"\n"
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                      << "Selection error: " << selection_error << endl;
             }
 

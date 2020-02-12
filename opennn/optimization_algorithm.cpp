@@ -490,7 +490,7 @@ void OptimizationAlgorithm::Results::resize_training_history(const Index& new_si
     selection_error_history.resize(new_size);
 }
 
-string OptimizationAlgorithm::Results::write_elapsed_time(const type& time)
+const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
 {
     int seconds;
     int minutes;
