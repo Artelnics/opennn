@@ -490,6 +490,25 @@ void OptimizationAlgorithm::Results::resize_training_history(const Index& new_si
     selection_error_history.resize(new_size);
 }
 
+string OptimizationAlgorithm::Results::write_elapsed_time(const type& time)
+{
+    int seconds;
+    int minutes;
+    int hours;
+
+    hours = static_cast<int>(time) / 3600;
+    seconds = static_cast<int>(time) % 3600;
+    minutes = seconds / 60;
+    seconds = seconds % 60;
+
+    ostringstream elapsed_time;
+
+    elapsed_time << setfill('0') << setw(2) << hours << ":"
+                 << setfill('0') << setw(2) << minutes << ":"
+                 << setfill('0') << setw(2) << seconds << endl;
+
+    return elapsed_time.str();
+}
 
 /// Returns a string representation of the current quasi-Newton method results structure.
 
