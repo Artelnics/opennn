@@ -70,6 +70,7 @@ public:
         Index learning_rate_iteration = 0;
 
         Tensor<type, 2> parameters_increment;
+        Tensor<type, 2> last_parameters_increment;
     };
 
 
@@ -176,44 +177,48 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    void update_parameters(const LossIndex::BackPropagation& back_propagation,
-                          OptimizationParameters& optimization_parameters)
+                          OptimizationParameters& optimization_parameters,
+                          Tensor<type, 1>& parameters)
    {
+/*
        NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();
 
-       type learning_rate;
+       type learning_rate = 0;
 
-       initial_decay > 0 ? learning_rate = initial_learning_rate*(1/(1 + optimization_parameters.learning_rate_iteration*initial_decay)) : initial_learning_rate;
+       initial_decay > 0
+               ? learning_rate = initial_learning_rate/(1 + optimization_parameters.learning_rate_iteration*initial_decay)
+                : initial_learning_rate;
 
        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//       optimization_parameters.parameters_increment.device(thread_pool_device) = back_propagation.gradient*static_cast<type>(-learning_rate);
+       optimization_parameters.parameters_increment.device(thread_pool_device) = back_propagation.gradient*static_cast<type>(-learning_rate);
 
        if(momentum > 0 && !nesterov)
        {
-//           optimization_parameters.parameters_increment.device(thread_pool_device) += last_increment*momentum;
+           optimization_parameters.parameters_increment.device(thread_pool_device) += optimization_parameters.last_parameters_increment*momentum;
 
-//           last_increment = parameters_increment;
-
-//           parameters.device(thread_pool_device) += parameters_increment;
+//           parameters.device(thread_pool_device) = parameters + optimization_parameters.parameters_increment;
        }
        else if(momentum > 0 && nesterov)
        {
-//           parameters_increment.device(thread_pool_device) += last_increment*momentum;
+//           optimization_parameters.parameters_increment.device(thread_pool_device) += optimization_parameters.last_parameters_increment*momentum;
 
-//           last_increment = parameters_increment;
-
-//           nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - back_propagation.gradient*learning_rate;
+//           optimization_parameters.nesterov_increment.device(thread_pool_device)
+//                   = optimization_parameters.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
 //           parameters.device(thread_pool_device) += nesterov_increment;
        }
        else
        {
-//           parameters.device(thread_pool_device) = parameters + parameters_increment;
+           parameters.device(thread_pool_device) += optimization_parameters.parameters_increment;
        }
 
-//       neural_network_pointer->set_parameters(parameters);
+       optimization_parameters.last_parameters_increment = optimization_parameters.parameters_increment;
 
        optimization_parameters.learning_rate_iteration++;
+
+       neural_network_pointer->set_parameters(parameters);
+*/
    }
 
 

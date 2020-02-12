@@ -30,7 +30,7 @@
 namespace OpenNN
 {
 
-/// This abstrac class represents the concept of loss index composed of an error term and a regularization term.
+/// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
 /// The error terms could be:
