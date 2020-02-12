@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S                 
+//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,11 +11,11 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
-/// It creates a scaling layer object with no scaling neurons. 
+/// Default constructor.
+/// It creates a scaling layer object with no scaling neurons.
 
 ResponseOptimization::ResponseOptimization()
-{   
+{
 }
 
 
@@ -25,10 +25,10 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
-/*
-    inputs_conditions.set(inputs_number, Between);
-    outputs_conditions.set(outputs_number, Minimum);
-*/
+    /*
+        inputs_conditions.set(inputs_number, Between);
+        outputs_conditions.set(outputs_number, Minimum);
+    */
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
@@ -109,91 +109,91 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
     switch(condition)
     {
-        case Minimum:
+    case Minimum:
 
-            if(values.size() != 0)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For Minimum condition, size of values must be 0.\n";
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For Minimum condition, size of values must be 0.\n";
 
-                throw logic_error(buffer.str());
-            }
-
-        return;
-
-        case Maximum:
-
-            if(values.size() != 0)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For Maximum condition, size of values must be 0.\n";
-
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
         return;
 
-        case EqualTo:
+    case Maximum:
 
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For Maximum condition, size of values must be 0.\n";
 
-                throw logic_error(buffer.str());
-            }
-
-            inputs_minimums[index] = values[0];
-            inputs_maximums[index] = values[0];
+            throw logic_error(buffer.str());
+        }
 
         return;
 
-        case LessEqualTo:
+    case EqualTo:
 
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
 
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
-            inputs_maximums[index] = values[0];
-
-        return;
-
-        case GreaterEqualTo:
-
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            inputs_minimums[index] = values[0];
+        inputs_minimums[index] = values[0];
+        inputs_maximums[index] = values[0];
 
         return;
 
-        case Between:
+    case LessEqualTo:
 
-            if(values.size() != 2)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_input_condition() method.\n"
-                       << "For Between condition, size of values must be 2.\n";
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
 
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
-            inputs_minimums[index] = values[0];
-            inputs_maximums[index] = values[1];
+        inputs_maximums[index] = values[0];
+
+        return;
+
+    case GreaterEqualTo:
+
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        inputs_minimums[index] = values[0];
+
+        return;
+
+    case Between:
+
+        if(values.size() != 2)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For Between condition, size of values must be 2.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        inputs_minimums[index] = values[0];
+        inputs_maximums[index] = values[1];
 
         return;
     }
@@ -208,93 +208,93 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
     switch(condition)
     {
-        case Minimum:
+    case Minimum:
 
-            if(values.size() != 0)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For Minimum condition, size of values must be 0.\n";
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For Minimum condition, size of values must be 0.\n";
 
-                throw logic_error(buffer.str());
-            }
-
-        return;
-
-        case Maximum:
-
-            if(values.size() != 0)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For Maximum condition, size of values must be 0.\n";
-
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
         return;
 
-        case EqualTo:
+    case Maximum:
 
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For Maximum condition, size of values must be 0.\n";
 
-                throw logic_error(buffer.str());
-            }
-
-            outputs_minimums[index] = values[0];
-            outputs_maximums[index] = values[0];
+            throw logic_error(buffer.str());
+        }
 
         return;
 
-        case LessEqualTo:
+    case EqualTo:
 
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
 
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
-            outputs_maximums[index] = values[0];
-
-        return;
-
-        case GreaterEqualTo:
-
-            if(values.size() != 1)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For LessEqualTo condition, size of values must be 1.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            outputs_minimums[index] = values[0];
+        outputs_minimums[index] = values[0];
+        outputs_maximums[index] = values[0];
 
         return;
 
-        case Between:
+    case LessEqualTo:
 
-            if(values.size() != 2)
-            {
-                buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                       << "void set_output_condition() method.\n"
-                       << "For Between condition, size of values must be 2.\n";
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
 
-                throw logic_error(buffer.str());
-            }
+            throw logic_error(buffer.str());
+        }
 
-            outputs_minimums[index] = values[0];
-            outputs_maximums[index] = values[1];
+        outputs_maximums[index] = values[0];
 
-        return;        
+        return;
+
+    case GreaterEqualTo:
+
+        if(values.size() != 1)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For LessEqualTo condition, size of values must be 1.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        outputs_minimums[index] = values[0];
+
+        return;
+
+    case Between:
+
+        if(values.size() != 2)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For Between condition, size of values must be 2.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        outputs_minimums[index] = values[0];
+        outputs_maximums[index] = values[1];
+
+        return;
     }
 }
 
@@ -309,23 +309,23 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
     const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
 
     Index index;
-/*
-    for(Index i = 0; i < variables_number; i ++)
-    {
-        if(inputs_names.contains(names[i]))
+    /*
+        for(Index i = 0; i < variables_number; i ++)
         {
-            index = neural_network_pointer->get_input_index(names[i]);
+            if(inputs_names.contains(names[i]))
+            {
+                index = neural_network_pointer->get_input_index(names[i]);
 
-            set_input_condition(index, conditions[i], values_conditions[i]);
-        }
-        else
-        {
-            index = neural_network_pointer->get_output_index(names[i]);
+                set_input_condition(index, conditions[i], values_conditions[i]);
+            }
+            else
+            {
+                index = neural_network_pointer->get_output_index(names[i]);
 
-            set_output_condition(index, conditions[i], values_conditions[i]);
+                set_output_condition(index, conditions[i], values_conditions[i]);
+            }
         }
-    }
-*/
+    */
 }
 
 
@@ -354,12 +354,12 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
             conditions[i] = Between;
         }
         else if(conditions_string[i] == ">="
-             || conditions_string[i] == ">")
+                || conditions_string[i] == ">")
         {
             conditions[i] = GreaterEqualTo;
         }
         else if(conditions_string[i] == "<="
-             || conditions_string[i] == "<")
+                || conditions_string[i] == "<")
         {
             conditions[i] = LessEqualTo;
         }
@@ -387,60 +387,60 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
         switch(current_condition)
         {
-            case Minimum:
+        case Minimum:
 
-                values_conditions[i] = Tensor<type, 1>();
+            values_conditions[i] = Tensor<type, 1>();
 
-                index++;
+            index++;
             break;
 
-            case Maximum:
+        case Maximum:
 
-                values_conditions[i] = Tensor<type, 1>();
+            values_conditions[i] = Tensor<type, 1>();
 
-                index++;
+            index++;
             break;
 
-            case EqualTo:
+        case EqualTo:
 
-                current_values.resize(1);
-                current_values[0] = values[index];
-                index++;
+            current_values.resize(1);
+            current_values[0] = values[index];
+            index++;
 
-                values_conditions[i] = current_values;
-
-            break;
-
-            case LessEqualTo:
-
-                current_values.resize(1);
-                current_values[0] = values[index];
-                index++;
-
-                values_conditions[i] = current_values;
+            values_conditions[i] = current_values;
 
             break;
 
-            case GreaterEqualTo:
+        case LessEqualTo:
 
-                current_values.resize(1);
-                current_values[0] = values[index];
+            current_values.resize(1);
+            current_values[0] = values[index];
+            index++;
 
-                index++;
-
-                values_conditions[i] = current_values;
+            values_conditions[i] = current_values;
 
             break;
 
-            case Between:
+        case GreaterEqualTo:
 
-                current_values.resize(2);
-                current_values[0] = values[index];
-                index++;
-                current_values[1] = values[index];
-                index++;
+            current_values.resize(1);
+            current_values[0] = values[index];
 
-                values_conditions[i] = current_values;
+            index++;
+
+            values_conditions[i] = current_values;
+
+            break;
+
+        case Between:
+
+            current_values.resize(2);
+            current_values[0] = values[index];
+            index++;
+            current_values[1] = values[index];
+            index++;
+
+            values_conditions[i] = current_values;
 
             break;
         }
@@ -472,16 +472,16 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
 {
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
-/*
-    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
+    /*
+        Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
 
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
-    }
+        for(Index i = 0; i < outputs_number; i++)
+        {
+            envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
+        }
 
-    return envelope;
-*/
+        return envelope;
+    */
 
     return Tensor<type, 2>();
 }
@@ -532,22 +532,22 @@ ResponseOptimization::Results* ResponseOptimization::perform_optimization() cons
     }
 
     const Index optimal_index = minimal_index(objective);
-/*
-    results->optimal_variables = envelope.get_row(optimal_index);
+    /*
+        results->optimal_variables = envelope.get_row(optimal_index);
 
-    results->optimum_objective = objective[optimal_index];
-*/
+        results->optimum_objective = objective[optimal_index];
+    */
     return results;
 }
 
 
 type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum) const
 {
-  const type random = static_cast<type>(rand()/(RAND_MAX + 1.0));
+    const type random = static_cast<type>(rand()/(RAND_MAX + 1.0));
 
-  const type random_uniform = minimum + (maximum - minimum) * random;
+    const type random_uniform = minimum + (maximum - minimum) * random;
 
-  return random_uniform;
+    return random_uniform;
 }
 
 }

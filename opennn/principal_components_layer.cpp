@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R  
+//   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -16,7 +16,7 @@ namespace OpenNN
 
 PrincipalComponentsLayer::PrincipalComponentsLayer() : Layer()
 {
-   set();
+    set();
 }
 
 
@@ -164,73 +164,73 @@ Index PrincipalComponentsLayer::get_neurons_number() const
 
 Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-/*
-    const Index inputs_number = inputs.dimension(1);    
+    /*
+        const Index inputs_number = inputs.dimension(1);
 
-    #ifdef __OPENNN_DEBUG__
+        #ifdef __OPENNN_DEBUG__
 
-    ostringstream buffer;
+        ostringstream buffer;
 
-    if(principal_components.dimension(0) != inputs_number)
-    {
-       buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
-              << "Tensor<type, 2> calculate_outputs(Matrix Tensor<type, 1>&) const method.\n"
-              << "Size of inputs must be equal to the number of rows of the principal components matrix.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    if(write_principal_components_method() != "PrincipalComponents")
-    {
-        return inputs;
-    }
-
-        const Tensor<Index, 1> principal_components_indices(0, 1.0, get_principal_components_number()-1);
-
-        const Tensor<Index, 1> input_variables_indices(0, 1.0, inputs_number-1);
-
-        const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
-
-        const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
-
-        return dot(inputs_adjust, used_principal_components.calculate_transpose());
-
-        for(Index i = 0;  i < points_number; i++)
+        if(principal_components.dimension(0) != inputs_number)
         {
+           buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
+                  << "Tensor<type, 2> calculate_outputs(Matrix Tensor<type, 1>&) const method.\n"
+                  << "Size of inputs must be equal to the number of rows of the principal components matrix.\n";
+
+           throw logic_error(buffer.str());
+        }
+
+        #endif
+
+        if(write_principal_components_method() != "PrincipalComponents")
+        {
+            return inputs;
+        }
+
             const Tensor<Index, 1> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
             const Tensor<Index, 1> input_variables_indices(0, 1.0, inputs_number-1);
 
             const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
-            // Data adjust
-
             const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
 
-//            Tensor<type, 1> inputs_adjust(inputs_number);
+            return dot(inputs_adjust, used_principal_components.calculate_transpose());
 
-//            for(Index j = 0; j < inputs_number; j++)
-//            {
-//                inputs_adjust[j] = inputs[j] - means[j];
-//            }
-
-            // Outputs
-
-            const Index principal_components_number = used_principal_components.dimension(0);
-
-            Tensor<type, 2> outputs(points_number, principal_components_number);
-
-            for(Index j = 0; j < principal_components_number; j++)
+            for(Index i = 0;  i < points_number; i++)
             {
-                outputs(i,j) = inputs_adjust.dot(used_principal_components.chip(j, 0));
+                const Tensor<Index, 1> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+
+                const Tensor<Index, 1> input_variables_indices(0, 1.0, inputs_number-1);
+
+                const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
+
+                // Data adjust
+
+                const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
+
+    //            Tensor<type, 1> inputs_adjust(inputs_number);
+
+    //            for(Index j = 0; j < inputs_number; j++)
+    //            {
+    //                inputs_adjust[j] = inputs[j] - means[j];
+    //            }
+
+                // Outputs
+
+                const Index principal_components_number = used_principal_components.dimension(0);
+
+                Tensor<type, 2> outputs(points_number, principal_components_number);
+
+                for(Index j = 0; j < principal_components_number; j++)
+                {
+                    outputs(i,j) = inputs_adjust.dot(used_principal_components.chip(j, 0));
+                }
+
             }
 
-        }
-
-        return outputs;
-    */
+            return outputs;
+        */
     return Tensor<type, 2>();
 }
 
@@ -241,15 +241,15 @@ string PrincipalComponentsLayer::write_expression(const Tensor<string, 1>& input
 {
     switch(principal_components_method)
     {
-        case NoPrincipalComponents:
-        {
-            return write_no_principal_components_expression(inputs_names, outputs_names);
-        }
+    case NoPrincipalComponents:
+    {
+        return write_no_principal_components_expression(inputs_names, outputs_names);
+    }
 
-        case PrincipalComponents:
-        {
-            return write_principal_components_expression(inputs_names, outputs_names);
-        }
+    case PrincipalComponents:
+    {
+        return write_principal_components_expression(inputs_names, outputs_names);
+    }
     }
 
     // Default
@@ -293,7 +293,7 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Ten
     const Index inputs_number = get_inputs_number();
     const Index principal_components_number = get_principal_components_number();
 
-    for(Index i = 0; i < principal_components_number;i ++)
+    for(Index i = 0; i < principal_components_number; i ++)
     {
         buffer << outputs_names[i] << "= (";
 
@@ -333,11 +333,11 @@ void PrincipalComponentsLayer::set()
 {
     set_inputs_number(0);
     set_principal_components_number(0);
-/*
-    means.set();
-    explained_variance.set();
-    principal_components.set();
-*/
+    /*
+        means.set();
+        explained_variance.set();
+        principal_components.set();
+    */
     set_default();
 }
 
@@ -351,13 +351,13 @@ void PrincipalComponentsLayer::set(const Index& new_inputs_number, const Index& 
 {
     set_inputs_number(new_inputs_number);
     set_principal_components_number(new_principal_components_number);
-/*
-    means.set(new_inputs_number, 0.0);
+    /*
+        means.set(new_inputs_number, 0.0);
 
-    explained_variance.set(new_inputs_number, 0.0);
+        explained_variance.set(new_inputs_number, 0.0);
 
-    principal_components.set(new_principal_components_number, new_inputs_number, 0.0);
-*/
+        principal_components.set(new_principal_components_number, new_inputs_number, 0.0);
+    */
     set_default();
 }
 
@@ -371,11 +371,11 @@ void PrincipalComponentsLayer::set(const PrincipalComponentsLayer& new_principal
 {
     principal_components_method = new_principal_components_layer.principal_components_method;
 
-   principal_components = new_principal_components_layer.principal_components;
+    principal_components = new_principal_components_layer.principal_components;
 
-   means = new_principal_components_layer.means;
+    means = new_principal_components_layer.means;
 
-   display = new_principal_components_layer.display;
+    display = new_principal_components_layer.display;
 }
 
 
@@ -385,9 +385,9 @@ void PrincipalComponentsLayer::set(const PrincipalComponentsLayer& new_principal
 void PrincipalComponentsLayer::set_principal_components(const Tensor<type, 2>& new_principal_components)
 {
     principal_components = new_principal_components;
-/*
-    means.set();
-*/
+    /*
+        means.set();
+    */
     set_default();
 }
 
@@ -416,9 +416,9 @@ void PrincipalComponentsLayer::set_principal_components_number(const Index& new_
 
 void PrincipalComponentsLayer::set_principal_component(const Index& index, const Tensor<type, 1>& principal_component)
 {
-/*
-    principal_components.set_row(index, principal_component);
-*/
+    /*
+        principal_components.set_row(index, principal_component);
+    */
 }
 
 
@@ -426,7 +426,7 @@ void PrincipalComponentsLayer::set_principal_component(const Index& index, const
 /// @param new_means Object to be set.
 
 void PrincipalComponentsLayer::set_means(const Tensor<type, 1>& new_means)
-{    
+{
     means = new_means;
 }
 
@@ -437,9 +437,9 @@ void PrincipalComponentsLayer::set_means(const Tensor<type, 1>& new_means)
 
 void PrincipalComponentsLayer::set_means(const Index& new_size, const type& new_value)
 {
-/*
-    means.set(new_size, new_value);
-*/
+    /*
+        means.set(new_size, new_value);
+    */
 }
 
 
@@ -509,7 +509,7 @@ void PrincipalComponentsLayer::set_principal_components_method(const string & ne
 
 void PrincipalComponentsLayer::set_display(const bool& new_display)
 {
-   display = new_display;
+    display = new_display;
 }
 
 
@@ -519,66 +519,66 @@ void PrincipalComponentsLayer::set_display(const bool& new_display)
 tinyxml2::XMLDocument* PrincipalComponentsLayer::to_XML() const
 {
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-  /*
-    ostringstream buffer;
+    /*
+      ostringstream buffer;
 
-    tinyxml2::XMLElement* principal_components_layer_element = document->NewElement("PrincipalComponentsLayer");
+      tinyxml2::XMLElement* principal_components_layer_element = document->NewElement("PrincipalComponentsLayer");
 
-    document->InsertFirstChild(principal_components_layer_element);
+      document->InsertFirstChild(principal_components_layer_element);
 
-    // Principal components neurons number
+      // Principal components neurons number
 
-    tinyxml2::XMLElement* size_element = document->NewElement("PrincipalComponentsNeuronsNumber");
-    principal_components_layer_element->LinkEndChild(size_element);
+      tinyxml2::XMLElement* size_element = document->NewElement("PrincipalComponentsNeuronsNumber");
+      principal_components_layer_element->LinkEndChild(size_element);
 
-    const Index principal_components_neurons_number = get_principal_components_neurons_number();
+      const Index principal_components_neurons_number = get_principal_components_neurons_number();
 
-    buffer.str("");
-    buffer << principal_components_neurons_number;
+      buffer.str("");
+      buffer << principal_components_neurons_number;
 
-    tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
-    size_element->LinkEndChild(size_text);
+      tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
+      size_element->LinkEndChild(size_text);
 
-    // Principal components matrix
+      // Principal components matrix
 
-    for(Index i = 0; i < principal_components_neurons_number; i++)
-    {
-        tinyxml2::XMLElement* principal_components_element = document->NewElement("PrincipalComponents");
-        principal_components_element->SetAttribute("Index",(unsigned)i+1);
+      for(Index i = 0; i < principal_components_neurons_number; i++)
+      {
+          tinyxml2::XMLElement* principal_components_element = document->NewElement("PrincipalComponents");
+          principal_components_element->SetAttribute("Index",(unsigned)i+1);
 
-        principal_components_layer_element->LinkEndChild(principal_components_element);
+          principal_components_layer_element->LinkEndChild(principal_components_element);
 
-        // Eigenvector
+          // Eigenvector
 
-        tinyxml2::XMLElement* eigenvector_element = document->NewElement("Eigenvector");
-        principal_components_element->LinkEndChild(eigenvector_element);
+          tinyxml2::XMLElement* eigenvector_element = document->NewElement("Eigenvector");
+          principal_components_element->LinkEndChild(eigenvector_element);
 
-        buffer.str("");
-        buffer << principal_components.chip(i, 0);
+          buffer.str("");
+          buffer << principal_components.chip(i, 0);
 
-        tinyxml2::XMLText* eigenvector_text = document->NewText(buffer.str().c_str());
-        eigenvector_element->LinkEndChild(eigenvector_text);
-    }
+          tinyxml2::XMLText* eigenvector_text = document->NewText(buffer.str().c_str());
+          eigenvector_element->LinkEndChild(eigenvector_text);
+      }
 
-    // Means
+      // Means
 
-    tinyxml2::XMLElement* means_element = document->NewElement("Means");
-    means_element->LinkEndChild(means_element);
+      tinyxml2::XMLElement* means_element = document->NewElement("Means");
+      means_element->LinkEndChild(means_element);
 
-    buffer.str("");
-    buffer << means;
+      buffer.str("");
+      buffer << means;
 
-    tinyxml2::XMLText* means_text = document->NewText(buffer.str().c_str());
-    means_element->LinkEndChild(means_text);
+      tinyxml2::XMLText* means_text = document->NewText(buffer.str().c_str());
+      means_element->LinkEndChild(means_text);
 
-    // Principal components method
+      // Principal components method
 
-    tinyxml2::XMLElement* method_element = document->NewElement("PrincipalComponentsMethod");
-    principal_components_layer_element->LinkEndChild(method_element);
+      tinyxml2::XMLElement* method_element = document->NewElement("PrincipalComponentsMethod");
+      principal_components_layer_element->LinkEndChild(method_element);
 
-    tinyxml2::XMLText* method_text = document->NewText(write_principal_components_method().c_str());
-    method_element->LinkEndChild(method_text);
-*/
+      tinyxml2::XMLText* method_text = document->NewText(write_principal_components_method().c_str());
+      method_element->LinkEndChild(method_text);
+    */
     return document;
 }
 
@@ -653,10 +653,10 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
             file_stream.PushAttribute("Index", i+1);
 
             // Principal component
-/*
-            buffer.str("");
-            buffer << principal_components.chip(i, 0);
-*/
+            /*
+                        buffer.str("");
+                        buffer << principal_components.chip(i, 0);
+            */
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
@@ -764,19 +764,19 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(means_text)
             {
-/*
-                Tensor<type, 1> new_means;
-                new_means.parse(means_text);
+                /*
+                                Tensor<type, 1> new_means;
+                                new_means.parse(means_text);
 
-                try
-                {
-                    set_means(new_means);
-                }
-                catch(const logic_error& e)
-                {
-                    cerr << e.what() <<endl;
-                }
-*/
+                                try
+                                {
+                                    set_means(new_means);
+                                }
+                                catch(const logic_error& e)
+                                {
+                                    cerr << e.what() <<endl;
+                                }
+                */
             }
         }
 
@@ -798,26 +798,26 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(explained_variance_text)
             {
-/*
-                Tensor<type, 1> new_explained_variance;
-                new_explained_variance.parse(explained_variance_text);
+                /*
+                                Tensor<type, 1> new_explained_variance;
+                                new_explained_variance.parse(explained_variance_text);
 
-                try
-                {
-                    set_explained_variance(new_explained_variance);
-                }
-                catch(const logic_error& e)
-                {
-                    cerr << e.what() <<endl;
-                }
-*/
+                                try
+                                {
+                                    set_explained_variance(new_explained_variance);
+                                }
+                                catch(const logic_error& e)
+                                {
+                                    cerr << e.what() <<endl;
+                                }
+                */
             }
         }
 
         // Principal components
-/*
-        principal_components.set(inputs_number, inputs_number);
-*/
+        /*
+                principal_components.set(inputs_number, inputs_number);
+        */
         unsigned index = 0; // Index does not work
 
         const tinyxml2::XMLElement* start_element = means_element;
@@ -853,19 +853,19 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(principal_component_text)
             {
-/*
-                Tensor<type, 1> principal_component;
-                principal_component.parse(principal_component_text);
+                /*
+                                Tensor<type, 1> principal_component;
+                                principal_component.parse(principal_component_text);
 
-                try
-                {
-                    set_principal_component(i, principal_component);
-                }
-                catch(const logic_error& e)
-                {
-                    cerr << e.what() <<endl;
-                }
-*/
+                                try
+                                {
+                                    set_principal_component(i, principal_component);
+                                }
+                                catch(const logic_error& e)
+                                {
+                                    cerr << e.what() <<endl;
+                                }
+                */
             }
         }
     }

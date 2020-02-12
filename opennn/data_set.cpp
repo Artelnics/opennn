@@ -19,9 +19,9 @@ namespace OpenNN
 
 DataSet::DataSet()
 {
-   set();
+    set();
 
-   set_default();
+    set_default();
 }
 
 
@@ -46,9 +46,9 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 
 DataSet::DataSet(const Index& new_instances_number, const Index& new_variables_number)
 {
-   set(new_instances_number, new_variables_number);
+    set(new_instances_number, new_variables_number);
 
-   set_default();
+    set_default();
 }
 
 
@@ -61,9 +61,9 @@ DataSet::DataSet(const Index& new_instances_number, const Index& new_variables_n
 
 DataSet::DataSet(const Index& new_instances_number, const Index& new_inputs_number, const Index& new_targets_number)
 {
-   set(new_instances_number, new_inputs_number, new_targets_number);
+    set(new_instances_number, new_inputs_number, new_targets_number);
 
-   set_default();
+    set_default();
 }
 
 
@@ -74,7 +74,7 @@ DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
 {
 //   set_default();
 
-   from_XML(data_set_document);
+    from_XML(data_set_document);
 }
 
 
@@ -86,17 +86,17 @@ DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
 {
-   set();
+    set();
 
-   set_default();
+    set_default();
 
-   set_data_file_name(data_file_name);
+    set_data_file_name(data_file_name);
 
-   set_separator(separator);
+    set_separator(separator);
 
-   set_has_columns_names(new_has_columns_names);
+    set_has_columns_names(new_has_columns_names);
 
-   read_csv();
+    read_csv();
 }
 
 
@@ -106,9 +106,9 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
 
 DataSet::DataSet(const DataSet& other_data_set)
 {
-   set_default();
+    set_default();
 
-   set(other_data_set);
+    set(other_data_set);
 }
 
 
@@ -124,7 +124,7 @@ DataSet::~DataSet()
 
 const bool& DataSet::get_display() const
 {
-   return display;
+    return display;
 }
 
 
@@ -293,7 +293,7 @@ void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categorie
             categories_uses(i) = Time;
         }
         else if(new_categories_uses(i) == "Unused"
-             || new_categories_uses(i) == "UnusedVariable")
+                || new_categories_uses(i) == "UnusedVariable")
         {
             categories_uses(i) = UnusedVariable;
         }
@@ -322,11 +322,11 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 
     if(!name_element)
     {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Name element is nullptr.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Name element is nullptr.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(name_element->GetText())
@@ -342,11 +342,11 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 
     if(!column_use_element)
     {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Column use element is nullptr.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Column use element is nullptr.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(column_use_element->GetText())
@@ -362,11 +362,11 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 
     if(!type_element)
     {
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Type element is nullptr.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Type element is nullptr.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(type_element->GetText())
@@ -384,11 +384,11 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 
         if(!categories_element)
         {
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                  << "Categories element is nullptr.\n";
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Categories element is nullptr.\n";
 
-           throw logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         if(categories_element->GetText())
@@ -404,11 +404,11 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 
         if(!categories_uses_element)
         {
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                  << "Categories uses element is nullptr.\n";
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Categories uses element is nullptr.\n";
 
-           throw logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         if(categories_uses_element->GetText())
@@ -700,19 +700,19 @@ Tensor<Index, 1> DataSet::get_instances_uses_numbers() const
     {
         if(instances_uses(i) == Training)
         {
-           count(0)++;
+            count(0)++;
         }
         else if(instances_uses(i) == Selection)
         {
-           count(1)++;
+            count(1)++;
         }
         else if(instances_uses(i) == Testing)
         {
-           count(2)++;
+            count(2)++;
         }
         else
         {
-           count(3)++;
+            count(3)++;
         }
     }
 
@@ -762,11 +762,11 @@ Tensor<Index, 1> DataSet::get_training_instances_indices() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == Training)
-       {
-          training_indices(count) = i;
-          count++;
-       }
+        if(instances_uses(i) == Training)
+        {
+            training_indices(count) = i;
+            count++;
+        }
     }
     return training_indices;
 }
@@ -786,11 +786,11 @@ Tensor<Index, 1> DataSet::get_selection_instances_indices() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == Selection)
-       {
-          selection_indices(count) = i;
-          count++;
-       }
+        if(instances_uses(i) == Selection)
+        {
+            selection_indices(count) = i;
+            count++;
+        }
     }
 
     return selection_indices;
@@ -801,24 +801,24 @@ Tensor<Index, 1> DataSet::get_selection_instances_indices() const
 
 Tensor<Index, 1> DataSet::get_testing_instances_indices() const
 {
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   const Index testing_instances_number = get_testing_instances_number();
+    const Index testing_instances_number = get_testing_instances_number();
 
-   Tensor<Index, 1> testing_indices(testing_instances_number);
+    Tensor<Index, 1> testing_indices(testing_instances_number);
 
-   Index count = 0;
+    Index count = 0;
 
-   for(Index i = 0; i < instances_number; i++)
-   {
-      if(instances_uses(i) == Testing)
-      {
-         testing_indices(count) = i;
-         count++;
-      }
-   }
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(instances_uses(i) == Testing)
+        {
+            testing_indices(count) = i;
+            count++;
+        }
+    }
 
-   return testing_indices;
+    return testing_indices;
 }
 
 
@@ -937,10 +937,10 @@ Index DataSet::get_training_instances_number() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == Training)
-       {
-          training_instances_number++;
-       }
+        if(instances_uses(i) == Training)
+        {
+            training_instances_number++;
+        }
     }
 
     return training_instances_number;
@@ -957,10 +957,10 @@ Index DataSet::get_selection_instances_number() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == Selection)
-       {
-          selection_instances_number++;
-       }
+        if(instances_uses(i) == Selection)
+        {
+            selection_instances_number++;
+        }
     }
 
     return selection_instances_number;
@@ -977,10 +977,10 @@ Index DataSet::get_testing_instances_number() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == Testing)
-       {
-          testing_instances_number++;
-       }
+        if(instances_uses(i) == Testing)
+        {
+            testing_instances_number++;
+        }
     }
 
     return testing_instances_number;
@@ -1010,10 +1010,10 @@ Index DataSet::get_unused_instances_number() const
 
     for(Index i = 0; i < instances_number; i++)
     {
-       if(instances_uses(i) == UnusedInstance)
-       {
-          unused_instances_number++;
-       }
+        if(instances_uses(i) == UnusedInstance)
+        {
+            unused_instances_number++;
+        }
     }
 
     return unused_instances_number;
@@ -1024,12 +1024,12 @@ Index DataSet::get_unused_instances_number() const
 
 void DataSet::set_training()
 {
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   for(Index i = 0; i < instances_number; i++)
-   {
-       instances_uses(i) = Training;
-   }
+    for(Index i = 0; i < instances_number; i++)
+    {
+        instances_uses(i) = Training;
+    }
 }
 
 
@@ -1153,29 +1153,29 @@ void DataSet::set_instance_use(const Index& index, const string& new_use)
 {
     if(new_use == "Training")
     {
-       instances_uses(index) = Training;
+        instances_uses(index) = Training;
     }
     else if(new_use == "Selection")
     {
-       instances_uses(index) = Selection;
+        instances_uses(index) = Selection;
     }
     else if(new_use == "Testing")
     {
-       instances_uses(index) = Testing;
+        instances_uses(index) = Testing;
     }
     else if(new_use == "Unused")
     {
-       instances_uses(index) = UnusedInstance;
+        instances_uses(index) = UnusedInstance;
     }
     else
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception DataSet class.\n"
-              << "void set_instance_use(const string&) method.\n"
-              << "Unknown use: " << new_use << "\n";
+        buffer << "OpenNN Exception DataSet class.\n"
+               << "void set_instance_use(const string&) method.\n"
+               << "Unknown use: " << new_use << "\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
@@ -1188,27 +1188,27 @@ void DataSet::set_instances_uses(const Tensor<InstanceUse, 1>& new_uses)
 {
     const Index instances_number = get_instances_number();
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index new_uses_size = new_uses.size();
+    const Index new_uses_size = new_uses.size();
 
-   if(new_uses_size != instances_number)
-   {
-      ostringstream buffer;
+    if(new_uses_size != instances_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void set_instances_uses(const Tensor<InstanceUse, 1>&) method.\n"
-             << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_instances_uses(const Tensor<InstanceUse, 1>&) method.\n"
+               << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   for(Index i = 0; i < instances_number; i++)
-   {
-       instances_uses(i) = new_uses(i);
-   }
+    for(Index i = 0; i < instances_number; i++)
+    {
+        instances_uses(i) = new_uses(i);
+    }
 }
 
 
@@ -1223,48 +1223,48 @@ void DataSet::set_instances_uses(const Tensor<string, 1>& new_uses)
 
     ostringstream buffer;
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index new_uses_size = new_uses.size();
+    const Index new_uses_size = new_uses.size();
 
-   if(new_uses_size != instances_number)
-   {
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
-             << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
+    if(new_uses_size != instances_number)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
+               << "Size of uses(" << new_uses_size << ") must be equal to number of instances(" << instances_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   for(Index i = 0; i < instances_number; i++)
-   {      
-      if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
-      {
-         instances_uses(i) = Training;
-      }
-      else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
-      {
-         instances_uses(i) = Selection;
-      }
-      else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
-      {
-         instances_uses(i) = Testing;
-      }
-      else if(new_uses(i).compare("Unused") == 0 || new_uses(i).compare("3") == 0)
-      {
-         instances_uses(i) = UnusedInstance;
-      }
-      else
-      {
-         buffer << "OpenNN Exception DataSet class.\n"
-                << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
-                << "Unknown use: " << new_uses(i) << ".\n";
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
+        {
+            instances_uses(i) = Training;
+        }
+        else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
+        {
+            instances_uses(i) = Selection;
+        }
+        else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
+        {
+            instances_uses(i) = Testing;
+        }
+        else if(new_uses(i).compare("Unused") == 0 || new_uses(i).compare("3") == 0)
+        {
+            instances_uses(i) = UnusedInstance;
+        }
+        else
+        {
+            buffer << "OpenNN Exception DataSet class.\n"
+                   << "void set_instances_uses(const Tensor<string, 1>&) method.\n"
+                   << "Unknown use: " << new_uses(i) << ".\n";
 
-         throw logic_error(buffer.str());
-      }
-   }
+            throw logic_error(buffer.str());
+        }
+    }
 }
 
 
@@ -1274,97 +1274,97 @@ void DataSet::set_instances_uses(const Tensor<string, 1>& new_uses)
 /// @param testing_instances_ratio Ratio of testing instances in the data set.
 
 void DataSet::split_instances_random(const type& training_instances_ratio,
-                           const type& selection_instances_ratio,
-                           const type& testing_instances_ratio)
+                                     const type& selection_instances_ratio,
+                                     const type& testing_instances_ratio)
 {
 
-   const Index used_instances_number = get_used_instances_number();
+    const Index used_instances_number = get_used_instances_number();
 
-   if(used_instances_number == 0) return;
+    if(used_instances_number == 0) return;
 
-   const type total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
+    const type total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
 
-   // Get number of instances for training, selection and testing
+    // Get number of instances for training, selection and testing
 
-   const Index selection_instances_number = static_cast<Index>(selection_instances_ratio*used_instances_number/total_ratio);
-   const Index testing_instances_number = static_cast<Index>(testing_instances_ratio*used_instances_number/total_ratio);
-   const Index training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
+    const Index selection_instances_number = static_cast<Index>(selection_instances_ratio*used_instances_number/total_ratio);
+    const Index testing_instances_number = static_cast<Index>(testing_instances_ratio*used_instances_number/total_ratio);
+    const Index training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
-   const Index sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
+    const Index sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
 
-   if(sum_instances_number != used_instances_number)
-   {
-      ostringstream buffer;
+    if(sum_instances_number != used_instances_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Warning: DataSet class.\n"
-             << "void split_instances_random(const type&, const type&, const type&) method.\n"
-             << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
+        buffer << "OpenNN Warning: DataSet class.\n"
+               << "void split_instances_random(const type&, const type&, const type&) method.\n"
+               << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   Tensor<Index, 1> indices;
+    Tensor<Index, 1> indices;
 
-   intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+    intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
 
-   random_shuffle(indices.data(), indices.data() + indices.size());
+    random_shuffle(indices.data(), indices.data() + indices.size());
 
-   Index i = 0;
-   Index index;
+    Index i = 0;
+    Index index;
 
-   // Training
+    // Training
 
-   Index count_training = 0;
+    Index count_training = 0;
 
-   while(count_training != training_instances_number)
-   {
-      index = indices(i);
+    while(count_training != training_instances_number)
+    {
+        index = indices(i);
 
-      if(instances_uses(index) != UnusedInstance)
-      {
-        instances_uses(index)= Training;
-        count_training++;
-      }
+        if(instances_uses(index) != UnusedInstance)
+        {
+            instances_uses(index)= Training;
+            count_training++;
+        }
 
-      i++;
-   }
+        i++;
+    }
 
-   // Selection
+    // Selection
 
-   Index count_selection = 0;
+    Index count_selection = 0;
 
-   while(count_selection != selection_instances_number)
-   {
-      index = indices(i);
+    while(count_selection != selection_instances_number)
+    {
+        index = indices(i);
 
-      if(instances_uses(index) != UnusedInstance)
-      {
-        instances_uses(index) = Selection;
-        count_selection++;
-      }
+        if(instances_uses(index) != UnusedInstance)
+        {
+            instances_uses(index) = Selection;
+            count_selection++;
+        }
 
-      i++;
-   }
+        i++;
+    }
 
-   // Testing
+    // Testing
 
 
-   Index count_testing = 0;
+    Index count_testing = 0;
 
-   while(count_testing != testing_instances_number)
-   {
-      index = indices(i);
+    while(count_testing != testing_instances_number)
+    {
+        index = indices(i);
 
-      if(instances_uses(index) != UnusedInstance)
-      {
+        if(instances_uses(index) != UnusedInstance)
+        {
             instances_uses(index) = Testing;
             count_testing++;
-      }
+        }
 
-      i++;
-   }
+        i++;
+    }
 
 
 }
@@ -1376,79 +1376,79 @@ void DataSet::split_instances_random(const type& training_instances_ratio,
 /// @param testing_instances_ratio Ratio of testing instances in the data set.
 
 void DataSet::split_instances_sequential(const type& training_instances_ratio,
-                                         const type& selection_instances_ratio,
-                                         const type& testing_instances_ratio)
+        const type& selection_instances_ratio,
+        const type& testing_instances_ratio)
 {
-   const Index used_instances_number = get_used_instances_number();
+    const Index used_instances_number = get_used_instances_number();
 
-   if(used_instances_number == 0) return;
+    if(used_instances_number == 0) return;
 
-   const type total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
+    const type total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
 
-   // Get number of instances for training, selection and testing
+    // Get number of instances for training, selection and testing
 
-   const Index selection_instances_number = static_cast<Index>(selection_instances_ratio*used_instances_number/total_ratio);
-   const Index testing_instances_number = static_cast<Index>(testing_instances_ratio*used_instances_number/total_ratio);
-   const Index training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
+    const Index selection_instances_number = static_cast<Index>(selection_instances_ratio*used_instances_number/total_ratio);
+    const Index testing_instances_number = static_cast<Index>(testing_instances_ratio*used_instances_number/total_ratio);
+    const Index training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
-   const Index sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
+    const Index sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
 
-   if(sum_instances_number != used_instances_number)
-   {
-      ostringstream buffer;
+    if(sum_instances_number != used_instances_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Warning: Instances class.\n"
-             << "void split_instances_sequential(const type&, const type&, const type&) method.\n"
-             << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
+        buffer << "OpenNN Warning: Instances class.\n"
+               << "void split_instances_sequential(const type&, const type&, const type&) method.\n"
+               << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   Index i = 0;
+    Index i = 0;
 
-   // Training
+    // Training
 
-   Index count_training = 0;
+    Index count_training = 0;
 
-   while(count_training != training_instances_number)
-   {
-      if(instances_uses(i) != UnusedInstance)
-      {
-        instances_uses(i) = Training;
-        count_training++;
-      }
+    while(count_training != training_instances_number)
+    {
+        if(instances_uses(i) != UnusedInstance)
+        {
+            instances_uses(i) = Training;
+            count_training++;
+        }
 
-      i++;
-   }
+        i++;
+    }
 
-   // Selection
+    // Selection
 
-   Index count_selection = 0;
+    Index count_selection = 0;
 
-   while(count_selection != selection_instances_number)
-   {
-      if(instances_uses(i) != UnusedInstance)
-      {
-        instances_uses(i) = Selection;
-        count_selection++;
-      }
+    while(count_selection != selection_instances_number)
+    {
+        if(instances_uses(i) != UnusedInstance)
+        {
+            instances_uses(i) = Selection;
+            count_selection++;
+        }
 
-      i++;
-   }
+        i++;
+    }
 
-   // Testing
+    // Testing
 
-   Index count_testing = 0;
+    Index count_testing = 0;
 
-   while(count_testing != testing_instances_number)
-   {
-      if(instances_uses(i) != UnusedInstance)
-      {
+    while(count_testing != testing_instances_number)
+    {
+        if(instances_uses(i) != UnusedInstance)
+        {
             instances_uses(i) = Testing;
             count_testing++;
-      }
-      i++;
-   }
+        }
+        i++;
+    }
 }
 
 
@@ -1474,9 +1474,9 @@ void DataSet::set_batch_instances_number(const Index& new_batch_instances_number
 
 void DataSet::set_selection_to_testing_instances()
 {
-/*
-    instances_uses.replace_value(Selection, Testing);
-*/
+    /*
+        instances_uses.replace_value(Selection, Testing);
+    */
 }
 
 
@@ -1484,9 +1484,9 @@ void DataSet::set_selection_to_testing_instances()
 
 void DataSet::set_testing_to_selection_instances()
 {
-/*
-    instances_uses.replace_value(Testing, Selection);
-*/
+    /*
+        instances_uses.replace_value(Testing, Selection);
+    */
 }
 
 
@@ -1518,29 +1518,29 @@ void DataSet::set_k_fold_cross_validation_instances_uses(const Index& k, const I
 
 void DataSet::set_default_columns_uses()
 {
-   const Index size = columns.size();
+    const Index size = columns.size();
 
-   if(size == 0)
-   {
+    if(size == 0)
+    {
         return;
-   }
-   else if(size == 1)
-   {
+    }
+    else if(size == 1)
+    {
         columns(0).set_use(UnusedVariable);
-   }
-   else
-   {
-       set_input();
+    }
+    else
+    {
+        set_input();
 
-       columns(size-1).set_use(Target);
+        columns(size-1).set_use(Target);
 
-       const Index inputs_number = get_input_variables_number();
-       const Index targets_number = get_target_variables_number();
+        const Index inputs_number = get_input_variables_number();
+        const Index targets_number = get_target_variables_number();
 
-       input_variables_dimensions.resize(inputs_number);
+        input_variables_dimensions.resize(inputs_number);
 
-       target_variables_dimensions.resize(targets_number);
-   }
+        target_variables_dimensions.resize(targets_number);
+    }
 }
 
 
@@ -1550,35 +1550,35 @@ void DataSet::set_default_columns_uses()
 
 void DataSet::set_default_columns_names()
 {
-   const Index size = columns.size();
+    const Index size = columns.size();
 
-   if(size == 0)
-   {
+    if(size == 0)
+    {
         return;
-   }
-   else if(size == 1)
-   {
+    }
+    else if(size == 1)
+    {
         return;
-   }
-   else
-   {
-       Index input_index = 1;
-       Index target_index = 2;
+    }
+    else
+    {
+        Index input_index = 1;
+        Index target_index = 2;
 
-       for(Index i = 0; i < size; i++)
-       {
-           if(columns(i).column_use == Input)
-           {
-               columns(i).name = "input_" + std::to_string(input_index);
-               input_index++;
-           }
-           else if(columns(i).column_use == Target)
-           {
-               columns(i).name = "target_" + std::to_string(target_index);
-               target_index++;
-           }
-       }
-   }
+        for(Index i = 0; i < size; i++)
+        {
+            if(columns(i).column_use == Input)
+            {
+                columns(i).name = "input_" + std::to_string(input_index);
+                input_index++;
+            }
+            else if(columns(i).column_use == Target)
+            {
+                columns(i).name = "target_" + std::to_string(target_index);
+                target_index++;
+            }
+        }
+    }
 }
 
 
@@ -1665,55 +1665,55 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 
 string DataSet::get_variable_name(const Index& variable_index) const
 {
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   if(variable_index >= variables_number)
-   {
-      ostringstream buffer;
+    if(variable_index >= variables_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "string& get_variable_name(const Index) method.\n"
-             << "Index of variable("<<variable_index<<") must be less than number of variables("<<variables_number<<").\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "string& get_variable_name(const Index) method.\n"
+               << "Index of variable("<<variable_index<<") must be less than number of variables("<<variables_number<<").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index columns_number = get_columns_number();
+    const Index columns_number = get_columns_number();
 
-   Index index = 0;
+    Index index = 0;
 
-   for(Index i = 0; i < columns_number; i++)
-   {
-       if(columns(i).type == Categorical)
-       {
-           for(Index j = 0; j < columns(i).get_categories_number(); j++)
-           {
-               if(index == variable_index)
-               {
-                   return columns(i).categories(j);
-               }
-               else
-               {
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).get_categories_number(); j++)
+            {
+                if(index == variable_index)
+                {
+                    return columns(i).categories(j);
+                }
+                else
+                {
                     index++;
-               }
-           }
-       }
-       else
-       {
-           if(index == variable_index)
-           {
-               return columns(i).name;
-           }
-           else
-           {
+                }
+            }
+        }
+        else
+        {
+            if(index == variable_index)
+            {
+                return columns(i).name;
+            }
+            else
+            {
                 index++;
-           }
-       }
-   }
+            }
+        }
+    }
 
     return string();
 }
@@ -1757,29 +1757,29 @@ Tensor<string, 1> DataSet::get_variables_names() const
 
 Tensor<string, 1> DataSet::get_input_variables_names() const
 {
-   const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_input_variables_number();
 
-   const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
-   Tensor<string, 1> input_variables_names(input_variables_number);
+    Tensor<string, 1> input_variables_names(input_variables_number);
 
-   Index index = 0;
+    Index index = 0;
 
-   for(Index i = 0; i < input_columns_indices.size(); i++)
-   {
-       Index input_index = input_columns_indices(i);
+    for(Index i = 0; i < input_columns_indices.size(); i++)
+    {
+        Index input_index = input_columns_indices(i);
 
-       const Tensor<string, 1> current_used_variables_names = columns(input_index).get_used_variables_names();
+        const Tensor<string, 1> current_used_variables_names = columns(input_index).get_used_variables_names();
 
-       for(Index j = 0; j < current_used_variables_names.size(); j++)
-       {
-           input_variables_names(index + j) = current_used_variables_names(j);
-       }
+        for(Index j = 0; j < current_used_variables_names.size(); j++)
+        {
+            input_variables_names(index + j) = current_used_variables_names(j);
+        }
 
-       index += current_used_variables_names.size();
-   }
+        index += current_used_variables_names.size();
+    }
 
-   return input_variables_names;
+    return input_variables_names;
 }
 
 
@@ -1928,8 +1928,8 @@ Tensor<Index, 1> DataSet::get_used_columns_indices() const
     for(Index i = 0; i < variables_number; i++)
     {
         if(columns(i).column_use  == Input
-        || columns(i).column_use  == Target
-        || columns(i).column_use  == Time)
+                || columns(i).column_use  == Target
+                || columns(i).column_use  == Time)
         {
             used_indices(index) = i;
             index++;
@@ -2152,11 +2152,11 @@ Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
 
 Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
 {
-/*
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    /*
+        const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-    return columns.get_subvector(used_columns_indices);
-*/
+        return columns.get_subvector(used_columns_indices);
+    */
     return Tensor<DataSet::Column, 1>();
 }
 
@@ -2197,24 +2197,24 @@ Index DataSet::get_variables_number() const
 
 Index DataSet::get_input_variables_number() const
 {
-   Index inputs_number = 0;
+    Index inputs_number = 0;
 
-   for(Index i = 0; i < columns.size(); i++)
-   {
-       if(columns(i).type == Categorical)
-       {
-           for(Index j = 0; j < columns(i).categories_uses.size(); j++)
-           {
-               if(columns(i).categories_uses(j) == Input) inputs_number++;
-           }
-       }
-       else if(columns(i).column_use == Input)
-       {
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).categories_uses.size(); j++)
+            {
+                if(columns(i).categories_uses(j) == Input) inputs_number++;
+            }
+        }
+        else if(columns(i).column_use == Input)
+        {
             inputs_number++;
-       }
-   }
+        }
+    }
 
-   return inputs_number;
+    return inputs_number;
 }
 
 
@@ -2236,7 +2236,7 @@ Index DataSet::get_target_variables_number() const
         }
         else if(columns(i).column_use == Target)
         {
-             targets_number++;
+            targets_number++;
         }
     }
 
@@ -2262,7 +2262,7 @@ Index DataSet::get_unused_variables_number() const
         }
         else if(columns(i).column_use == UnusedVariable)
         {
-             unused_number++;
+            unused_number++;
         }
     }
 
@@ -2276,11 +2276,11 @@ Index DataSet::get_unused_variables_number() const
 Index DataSet::get_variable_index(const string& name) const
 {
     const Tensor<string, 1> names = get_variables_names();
-/*
-    const Index index = names.get_first_index(name);
+    /*
+        const Index index = names.get_first_index(name);
 
-    return index;
-*/
+        return index;
+    */
     return 0;
 }
 
@@ -2560,7 +2560,7 @@ void DataSet::set_input_columns_unused()
 
 void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
 {
-   columns(index).column_use = new_use;
+    columns(index).column_use = new_use;
 }
 
 
@@ -2570,9 +2570,9 @@ void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
 
 void DataSet::set_column_use(const string& name, const VariableUse& new_use)
 {
-   const Index index = get_column_index(name);
+    const Index index = get_column_index(name);
 
-   set_column_use(index, new_use);
+    set_column_use(index, new_use);
 }
 
 
@@ -2582,57 +2582,57 @@ void DataSet::set_column_use(const string& name, const VariableUse& new_use)
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   if(variable_index >= variables_number)
-   {
-      ostringstream buffer;
+    if(variable_index >= variables_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: Variables class.\n"
-             << "void set_name(const Index&, const string&) method.\n"
-             << "Index of variable must be less than number of variables.\n";
+        buffer << "OpenNN Exception: Variables class.\n"
+               << "void set_name(const Index&, const string&) method.\n"
+               << "Index of variable must be less than number of variables.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index columns_number = get_columns_number();
+    const Index columns_number = get_columns_number();
 
-   Index index = 0;
+    Index index = 0;
 
-   for(Index i = 0; i < columns_number; i++)
-   {
-       if(columns(i).type == Categorical)
-       {
-           for(Index j = 0; j < columns(i).get_categories_number(); j++)
-           {
-               if(index == variable_index)
-               {
-                   columns(i).categories(j) = new_variable_name;
-                   return;
-               }
-               else
-               {
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).get_categories_number(); j++)
+            {
+                if(index == variable_index)
+                {
+                    columns(i).categories(j) = new_variable_name;
+                    return;
+                }
+                else
+                {
                     index++;
-               }
-           }
-       }
-       else
-       {
-           if(index == variable_index)
-           {
-               columns(i).name = new_variable_name;
-               return;
-           }
-           else
-           {
+                }
+            }
+        }
+        else
+        {
+            if(index == variable_index)
+            {
+                columns(i).name = new_variable_name;
+                return;
+            }
+            else
+            {
                 index++;
-           }
-       }
-   }
+            }
+        }
+    }
 }
 
 
@@ -2646,41 +2646,41 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 
     const Index variables_number = get_variables_number();
 
-   const Index size = new_variables_names.size();
+    const Index size = new_variables_names.size();
 
-   if(size != variables_number)
-   {
-      ostringstream buffer;
+    if(size != variables_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: Variables class.\n"
-             << "void set_names(const Tensor<string, 1>&) method.\n"
-             << "Size (" << size << ") must be equal to number of variables (" << variables_number << ").\n";
+        buffer << "OpenNN Exception: Variables class.\n"
+               << "void set_names(const Tensor<string, 1>&) method.\n"
+               << "Size (" << size << ") must be equal to number of variables (" << variables_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index columns_number = get_columns_number();
+    const Index columns_number = get_columns_number();
 
-   Index index = 0;
+    Index index = 0;
 
-   for(Index i = 0; i < columns_number; i++)
-   {
-       if(columns(i).type == Categorical)
-       {
-           for(Index j = 0; j < columns(i).get_categories_number(); j++)
-           {
-               columns(i).categories(j) = new_variables_names(index);
-               index++;
-           }
-       }
-       else
-       {
-           columns(i).name = new_variables_names(index);
-           index++;
-       }
-   }
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).get_categories_number(); j++)
+            {
+                columns(i).categories(j) = new_variables_names(index);
+                index++;
+            }
+        }
+        else
+        {
+            columns(i).name = new_variables_names(index);
+            index++;
+        }
+    }
 }
 
 
@@ -2765,27 +2765,27 @@ void DataSet::set_binary_simple_columns()
     for(Index column_index = 0; column_index < data.dimension(1); column_index++)
     {
         is_binary = true;
-/*
-        values.clear();
+        /*
+                values.clear();
 
-        for(Index row_index = 0; row_index < data.dimension(0); row_index++)
-        {
-            if(std::find(values.begin(), values.end(), data(row_index, column_index)) == values.end()
-            && !::isnan(data(row_index, column_index)))
-            {
-                values.push_back(data(row_index, column_index));
-            }
+                for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+                {
+                    if(std::find(values.begin(), values.end(), data(row_index, column_index)) == values.end()
+                    && !::isnan(data(row_index, column_index)))
+                    {
+                        values.push_back(data(row_index, column_index));
+                    }
 
-            if(values.size() > 2)
-            {
-                is_binary = false;
-                break;
-            }
+                    if(values.size() > 2)
+                    {
+                        is_binary = false;
+                        break;
+                    }
 
-        }
+                }
 
-        if(is_binary) columns(column_index).type = Binary;
-*/
+                if(is_binary) columns(column_index).type = Binary;
+        */
     }
 }
 
@@ -2814,12 +2814,12 @@ bool DataSet::is_binary_classification() const
     {
         return false;
     }
-/*
-    if(!get_target_data().is_binary())
-    {
-        return false;
-    }
-*/
+    /*
+        if(!get_target_data().is_binary())
+        {
+            return false;
+        }
+    */
     return true;
 }
 
@@ -2829,20 +2829,20 @@ bool DataSet::is_binary_classification() const
 bool DataSet::is_multiple_classification() const
 {
     const Tensor<type, 2> targets = get_target_data();
-/*
-    if(!targets.is_binary())
-    {
-        return false;
-    }
-
-    for(Index i = 0; i < targets.dimension(0); i++)
-    {
-        if(targets.chip(i, 0).calculate_sum()) < numeric_limits<type>::min())
+    /*
+        if(!targets.is_binary())
         {
             return false;
         }
-    }
-*/
+
+        for(Index i = 0; i < targets.dimension(0); i++)
+        {
+            if(targets.chip(i, 0).calculate_sum()) < numeric_limits<type>::min())
+            {
+                return false;
+            }
+        }
+    */
     return true;
 }
 
@@ -2850,7 +2850,7 @@ bool DataSet::is_multiple_classification() const
 /// Returns true if the data matrix is empty, and false otherwise.
 
 bool DataSet::is_empty() const
-{   
+{
     if(data.dimension(0) == 0 || data.dimension(1) == 0)
     {
         return true;
@@ -2866,7 +2866,7 @@ bool DataSet::is_empty() const
 
 const Tensor<type, 2>& DataSet::get_data() const
 {
-   return data;
+    return data;
 }
 
 
@@ -2875,7 +2875,7 @@ const Tensor<type, 2>& DataSet::get_data() const
 
 const Tensor<type, 2>& DataSet::get_time_series_data() const
 {
-   return time_series_data;
+    return time_series_data;
 }
 
 
@@ -2891,7 +2891,7 @@ DataSet::MissingValuesMethod DataSet::get_missing_values_method() const
 
 const string& DataSet::get_data_file_name() const
 {
-   return data_file_name;
+    return data_file_name;
 }
 
 
@@ -2925,13 +2925,17 @@ char DataSet::get_separator_char() const
 {
     switch(separator)
     {
-        case Space: return ' ';
+    case Space:
+        return ' ';
 
-        case Tab: return '\t';
+    case Tab:
+        return '\t';
 
-        case Comma: return ',';
+    case Comma:
+        return ',';
 
-        case Semicolon: return ';';
+    case Semicolon:
+        return ';';
     }
 
     return char();
@@ -2944,13 +2948,17 @@ string DataSet::get_separator_string() const
 {
     switch(separator)
     {
-        case Space: return "Space";
+    case Space:
+        return "Space";
 
-        case Tab: return "Tab";
+    case Tab:
+        return "Tab";
 
-        case Comma: return "Comma";
+    case Comma:
+        return "Comma";
 
-        case Semicolon: return "Semicolon";
+    case Semicolon:
+        return "Semicolon";
     }
 
     return string();
@@ -3037,16 +3045,16 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 
 Tensor<type, 2> DataSet::get_training_data() const
 {
-/*
-   const Index variables_number = get_variables_number();
+    /*
+       const Index variables_number = get_variables_number();
 
-   Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
 
-   const Tensor<Index, 1> training_indices = get_training_instances_indices();
+       const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-   return get_subtensor_data(training_indices, variables_indices);
-   */
-   return Tensor<type,2>();
+       return get_subtensor_data(training_indices, variables_indices);
+       */
+    return Tensor<type,2>();
 }
 
 
@@ -3056,14 +3064,14 @@ Tensor<type, 2> DataSet::get_training_data() const
 
 Tensor<type, 2> DataSet::get_selection_data() const
 {
-   const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   Tensor<Index, 1> variables_indices;
-   intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    Tensor<Index, 1> variables_indices;
+    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
-   return get_subtensor_data(selection_indices, variables_indices);
+    return get_subtensor_data(selection_indices, variables_indices);
 }
 
 
@@ -3073,14 +3081,14 @@ Tensor<type, 2> DataSet::get_selection_data() const
 
 Tensor<type, 2> DataSet::get_testing_data() const
 {
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   Tensor<Index, 1> variables_indices;
-   intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    Tensor<Index, 1> variables_indices;
+    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
-   const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_subtensor_data(testing_indices, variables_indices);
+    return get_subtensor_data(testing_indices, variables_indices);
 }
 
 
@@ -3090,14 +3098,14 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
 Tensor<type, 2> DataSet::get_input_data() const
 {
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   Tensor<Index, 1> indices;
-   intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+    Tensor<Index, 1> indices;
+    intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
 
-   const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_subtensor_data(indices, input_variables_indices);
+    return get_subtensor_data(indices, input_variables_indices);
 }
 
 
@@ -3107,14 +3115,14 @@ Tensor<type, 2> DataSet::get_input_data() const
 
 Tensor<type, 2> DataSet::get_target_data() const
 {
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   Tensor<Index, 1> indices;
-   intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+    Tensor<Index, 1> indices;
+    intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
 
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_subtensor_data(indices, target_variables_indices);
+    return get_subtensor_data(indices, target_variables_indices);
 }
 
 
@@ -3162,11 +3170,11 @@ Tensor<type, 2> DataSet::get_training_input_data() const
 
 Tensor<type, 2> DataSet::get_training_target_data() const
 {
-   const Tensor<Index, 1> training_indices = get_training_instances_indices();
+    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-   const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
 
-   return get_subtensor_data(training_indices, target_variables_indices);
+    return get_subtensor_data(training_indices, target_variables_indices);
 }
 
 
@@ -3176,11 +3184,11 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 
 Tensor<type, 2> DataSet::get_selection_input_data() const
 {
-   const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-   const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_subtensor_data(selection_indices, input_variables_indices);
+    return get_subtensor_data(selection_indices, input_variables_indices);
 }
 
 
@@ -3190,11 +3198,11 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
 
 Tensor<type, 2> DataSet::get_selection_target_data() const
 {
-   const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_subtensor_data(selection_indices, target_variables_indices);
+    return get_subtensor_data(selection_indices, target_variables_indices);
 }
 
 
@@ -3204,11 +3212,11 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 
 Tensor<type, 2> DataSet::get_testing_input_data() const
 {
-   const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_subtensor_data(testing_indices, input_variables_indices);
+    return get_subtensor_data(testing_indices, input_variables_indices);
 }
 
 
@@ -3218,11 +3226,11 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 
 Tensor<type, 2> DataSet::get_testing_target_data() const
 {
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_subtensor_data(testing_indices, target_variables_indices);
+    return get_subtensor_data(testing_indices, target_variables_indices);
 }
 
 
@@ -3232,24 +3240,24 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 Tensor<type, 1> DataSet::get_instance_data(const Index& index) const
 {
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   if(index >= instances_number)
-   {
-      ostringstream buffer;
+    if(index >= instances_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_instance(const Index&) const method.\n"
-             << "Index of instance (" << index << ") must be less than number of instances (" << instances_number << ").\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_instance(const Index&) const method.\n"
+               << "Index of instance (" << index << ") must be less than number of instances (" << instances_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   // Get instance
+    // Get instance
 
     return data.chip(index,0);
 }
@@ -3261,37 +3269,37 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& index) const
 
 Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Tensor<Index, 1>& variables_indices) const
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index instances_number = get_instances_number();
+    const Index instances_number = get_instances_number();
 
-   if(instance_index >= instances_number)
-   {
-      ostringstream buffer;
+    if(instance_index >= instances_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_instance(const Index&, const Tensor<Index, 1>&) const method.\n"
-             << "Index of instance must be less than number of \n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_instance(const Index&, const Tensor<Index, 1>&) const method.\n"
+               << "Index of instance must be less than number of \n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index variables_number = variables_indices.size();
+    const Index variables_number = variables_indices.size();
 
-   Tensor<type, 1 > row(variables_number);
+    Tensor<type, 1 > row(variables_number);
 
-   for(Index i = 0; i < variables_number; i++)
-   {
-       Index variable_index = variables_indices(i);
+    for(Index i = 0; i < variables_number; i++)
+    {
+        Index variable_index = variables_indices(i);
 
-       row(i) = data(instance_index, variable_index);
-   }
+        row(i) = data(instance_index, variable_index);
+    }
 
-   return row;
+    return row;
 
-   //return data.get_row(instance_index, variables_indices);
+    //return data.get_row(instance_index, variables_indices);
 
 }
 
@@ -3389,9 +3397,9 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
 
 Tensor<type, 2> DataSet::get_column_data(const Tensor<Index, 1>& variables_indices) const
 {
-/*
-    return data.get_submatrix_columns(variables_indices);
-*/
+    /*
+        return data.get_submatrix_columns(variables_indices);
+    */
     return Tensor<type, 2>();
 }
 
@@ -3429,22 +3437,22 @@ Tensor<type, 2> DataSet::get_column_data(const string& column_name) const
 Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
 {
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   if(index >= variables_number)
-   {
-      ostringstream buffer;
+    if(index >= variables_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_variable(const Index&) const method.\n"
-             << "Index of variable must be less than number of \n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const Index&) const method.\n"
+               << "Index of variable must be less than number of \n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
     return data.chip(index, 1);
 }
@@ -3485,24 +3493,24 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 
     if(variables_size == 0)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<type, 1> get_variable(const string&) const method.\n"
-              << "Variable: " << variable_name << " does not exist.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const string&) const method.\n"
+               << "Variable: " << variable_name << " does not exist.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(variables_size > 1)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<type, 1> get_variable(const string&) const method.\n"
-              << "Variable: " << variable_name << " appears more than once in the data set.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const string&) const method.\n"
+               << "Variable: " << variable_name << " appears more than once in the data set.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3518,33 +3526,33 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& instances_indices) const
 {
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   if(variable_index >= variables_number)
-   {
-      ostringstream buffer;
+    if(variable_index >= variables_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<type, 1> get_variable(const Index&, const Tensor<Index, 1>&) const method.\n"
-             << "Index of variable must be less than number of \n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const Index&, const Tensor<Index, 1>&) const method.\n"
+               << "Index of variable must be less than number of \n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index instances_indices_size = instances_indices.size();
+    const Index instances_indices_size = instances_indices.size();
 
-   Tensor<type, 1 > column(instances_indices_size);
+    Tensor<type, 1 > column(instances_indices_size);
 
-   for(Index i = 0; i < instances_indices_size; i++)
-   {
-       Index instance_index = instances_indices(i);
+    for(Index i = 0; i < instances_indices_size; i++)
+    {
+        Index instance_index = instances_indices(i);
 
-       column(i) = data(instance_index, variable_index);
-   }
+        column(i) = data(instance_index, variable_index);
+    }
 
     return column;
 }
@@ -3586,24 +3594,24 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 
     if(variables_size == 0)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<type, 1> get_variable(const string&) const method.\n"
-              << "Variable: " << variable_name << " does not exist.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const string&) const method.\n"
+               << "Variable: " << variable_name << " does not exist.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(variables_size > 1)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<type, 1> get_variable(const string&, const Tensor<Index, 1>&) const method.\n"
-              << "Variable: " << variable_name << " appears more than once in the data set.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 1> get_variable(const string&, const Tensor<Index, 1>&) const method.\n"
+               << "Variable: " << variable_name << " appears more than once in the data set.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3653,11 +3661,11 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-   data_file_name = "";
+    data_file_name = "";
 
-   data.resize(0,0);
+    data.resize(0,0);
 
-   display = true;
+    display = true;
 }
 
 
@@ -3666,20 +3674,20 @@ void DataSet::set()
 
 void DataSet::set(const Tensor<type, 2>& new_data)
 {
-   data_file_name = "";
+    data_file_name = "";
 
-   const Index variables_number = new_data.dimension(1);
-   const Index instances_number = new_data.dimension(0);
+    const Index variables_number = new_data.dimension(1);
+    const Index instances_number = new_data.dimension(0);
 
-   set(instances_number, variables_number);
+    set(instances_number, variables_number);
 
-   data = new_data;
-/*
-   if(get_header_line()) set_variables_names(data.get_header());
-*/
-   display = true;
+    data = new_data;
+    /*
+       if(get_header_line()) set_variables_names(data.get_header());
+    */
+    display = true;
 
-   set_default_columns_uses();
+    set_default_columns_uses();
 }
 
 
@@ -3691,51 +3699,51 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 void DataSet::set(const Index& new_instances_number, const Index& new_variables_number)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(new_instances_number == 0)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void set(const Index&, const Index&) method.\n"
-              << "Number of instances must be greater than zero.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set(const Index&, const Index&) method.\n"
+               << "Number of instances must be greater than zero.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(new_variables_number == 0)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void set(const Index&, const Index&) method.\n"
-              << "Number of variables must be greater than zero.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set(const Index&, const Index&) method.\n"
+               << "Number of variables must be greater than zero.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   data = Tensor<type, 2>(new_instances_number, new_variables_number);
+    data = Tensor<type, 2>(new_instances_number, new_variables_number);
 
-   columns.resize(new_variables_number);
+    columns.resize(new_variables_number);
 
-   for(Index index = 0; index < new_variables_number-1; index++)
-   {
-       columns(index).name = "column_" + to_string(index);
-       columns(index).column_use = Input;
-       columns(index).type = Numeric;
-   }
+    for(Index index = 0; index < new_variables_number-1; index++)
+    {
+        columns(index).name = "column_" + to_string(index);
+        columns(index).column_use = Input;
+        columns(index).type = Numeric;
+    }
 
-   columns(new_variables_number-1).name = "column_" + to_string(new_variables_number-1);
-   columns(new_variables_number-1).column_use = Target;
-   columns(new_variables_number-1).type = Numeric;
+    columns(new_variables_number-1).name = "column_" + to_string(new_variables_number-1);
+    columns(new_variables_number-1).column_use = Target;
+    columns(new_variables_number-1).type = Numeric;
 
-   instances_uses.resize(new_instances_number);
-   split_instances_random();
+    instances_uses.resize(new_instances_number);
+    split_instances_random();
 
-   display = true;
+    display = true;
 
 }
 
@@ -3751,37 +3759,37 @@ void DataSet::set(const Index& new_instances_number,
                   const Index& new_targets_number)
 {
 
-   data_file_name = "";
+    data_file_name = "";
 
-   const Index new_variables_number = new_inputs_number + new_targets_number;
-/*
-   data.resize(new_instances_number, new_variables_number);
-*/
-   columns.resize(new_variables_number);
+    const Index new_variables_number = new_inputs_number + new_targets_number;
+    /*
+       data.resize(new_instances_number, new_variables_number);
+    */
+    columns.resize(new_variables_number);
 
-   for(Index i = 0; i < new_variables_number; i++)
-   {
-       if(i < new_inputs_number)
-       {
-           columns(i).name = "column_" + to_string(i);
-           columns(i).column_use = Input;
-           columns(i).type = Numeric;
-       }
-       else
-       {
-           columns(i).name = "column_" + to_string(i);
-           columns(i).column_use = Target;
-           columns(i).type = Numeric;
-       }
-   }
+    for(Index i = 0; i < new_variables_number; i++)
+    {
+        if(i < new_inputs_number)
+        {
+            columns(i).name = "column_" + to_string(i);
+            columns(i).column_use = Input;
+            columns(i).type = Numeric;
+        }
+        else
+        {
+            columns(i).name = "column_" + to_string(i);
+            columns(i).column_use = Target;
+            columns(i).type = Numeric;
+        }
+    }
 
-   input_variables_dimensions.resize(new_inputs_number);
-   target_variables_dimensions.resize(new_targets_number);
+    input_variables_dimensions.resize(new_inputs_number);
+    target_variables_dimensions.resize(new_targets_number);
 
-   instances_uses.resize(new_instances_number);
-   split_instances_random();
+    instances_uses.resize(new_instances_number);
+    split_instances_random();
 
-   display = true;
+    display = true;
 
 }
 
@@ -3791,19 +3799,19 @@ void DataSet::set(const Index& new_instances_number,
 
 void DataSet::set(const DataSet& other_data_set)
 {
-   data_file_name = other_data_set.data_file_name;
+    data_file_name = other_data_set.data_file_name;
 
-   has_columns_names = other_data_set.has_columns_names;
+    has_columns_names = other_data_set.has_columns_names;
 
-   separator = other_data_set.separator;
+    separator = other_data_set.separator;
 
-   missing_values_label = other_data_set.missing_values_label;
+    missing_values_label = other_data_set.missing_values_label;
 
-   data = other_data_set.data;
+    data = other_data_set.data;
 
-   columns = other_data_set.columns;
+    columns = other_data_set.columns;
 
-   display = other_data_set.display;
+    display = other_data_set.display;
 }
 
 
@@ -3823,7 +3831,7 @@ void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 
 void DataSet::set(const string& file_name)
 {
-   load(file_name);
+    load(file_name);
 }
 
 
@@ -3834,7 +3842,7 @@ void DataSet::set(const string& file_name)
 
 void DataSet::set_display(const bool& new_display)
 {
-   display = new_display;
+    display = new_display;
 }
 
 
@@ -3874,11 +3882,11 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
     data = new_data;
 
-   set_instances_number(data.dimension(0));
+    set_instances_number(data.dimension(0));
 
 //   set_variables_number(data.dimension(1));
 
-   set_instances_number(data.dimension(0));
+    set_instances_number(data.dimension(0));
 
     const Index instances_number = data.dimension(0);
     const Index variables_number = data.dimension(1);
@@ -3895,7 +3903,7 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
 void DataSet::set_data_file_name(const string& new_data_file_name)
 {
-   data_file_name = new_data_file_name;
+    data_file_name = new_data_file_name;
 }
 
 
@@ -3998,20 +4006,20 @@ void DataSet::set_separator(const string& new_separator_string)
 
 void DataSet::set_missing_values_label(const string& new_missing_values_label)
 {
-    #ifdef __OPENNN_DEBUG__
-/*
-    if(get_trimmed(new_missing_values_label).empty())
-    {
-       ostringstream buffer;
+#ifdef __OPENNN_DEBUG__
+    /*
+        if(get_trimmed(new_missing_values_label).empty())
+        {
+           ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void set_missing_values_label(const string&) method.\n"
-              << "Missing values label cannot be empty.\n";
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "void set_missing_values_label(const string&) method.\n"
+                  << "Missing values label cannot be empty.\n";
 
-       throw logic_error(buffer.str());
-    }
-*/
-    #endif
+           throw logic_error(buffer.str());
+        }
+    */
+#endif
 
     missing_values_label = new_missing_values_label;
 }
@@ -4095,9 +4103,9 @@ void DataSet::set_device_pointer(Device* new_device_pointer)
 
 void DataSet::set_instances_number(const Index& new_instances_number)
 {
-   const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-   set(new_instances_number,variables_number);
+    set(new_instances_number,variables_number);
 }
 
 
@@ -4106,36 +4114,36 @@ void DataSet::set_instances_number(const Index& new_instances_number)
 
 Tensor<string, 1> DataSet::unuse_constant_columns()
 {
-   const Index columns_number = get_columns_number();
+    const Index columns_number = get_columns_number();
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   if(columns_number == 0)
-   {
-      ostringstream buffer;
+    if(columns_number == 0)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "Tensor<string, 1> unuse_constant_columns() method.\n"
-             << "Number of columns is zero.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<string, 1> unuse_constant_columns() method.\n"
+               << "Number of columns is zero.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   Tensor<string, 1> constant_columns;
+    Tensor<string, 1> constant_columns;
 
-   for(Index i = 0; i < columns_number; i++)
-   {
-/*
-      if(get_variable_use(i) == Input && data.is_column_constant(i))
-      {
-         set_column_use(i, DataSet::UnusedVariable);
+    for(Index i = 0; i < columns_number; i++)
+    {
+        /*
+              if(get_variable_use(i) == Input && data.is_column_constant(i))
+              {
+                 set_column_use(i, DataSet::UnusedVariable);
 
-         constant_columns.push_back(columns(i).name);
-      }
-*/
-   }
+                 constant_columns.push_back(columns(i).name);
+              }
+        */
+    }
 
     return constant_columns;
 }
@@ -4148,44 +4156,44 @@ Tensor<Index, 1> DataSet::unuse_repeated_instances()
 {
     const Index instances_number = get_instances_number();
 
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(instances_number == 0)
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Index, 1> unuse_repeated_instances() method.\n"
-              << "Number of instances is zero.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Index, 1> unuse_repeated_instances() method.\n"
+               << "Number of instances is zero.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
     Tensor<Index, 1> repeated_instances;
 
     Tensor<type, 1> instance_i;
     Tensor<type, 1> instance_j;
 
-#pragma omp parallel for private(instance_i, instance_j) schedule(dynamic)
+    #pragma omp parallel for private(instance_i, instance_j) schedule(dynamic)
 
     for(Index i = 0; i < static_cast<Index>(instances_number); i++)
     {
-       instance_i = get_instance_data(i);
+        instance_i = get_instance_data(i);
 
-       for(Index j = static_cast<Index>(i+1); j < instances_number; j++)
-       {
-          instance_j = get_instance_data(j);
-/*
-          if(get_instance_use(j) != UnusedInstance && instance_j == instance_i)
-          {
-              set_instance_use(j, UnusedInstance);
+        for(Index j = static_cast<Index>(i+1); j < instances_number; j++)
+        {
+            instance_j = get_instance_data(j);
+            /*
+                      if(get_instance_use(j) != UnusedInstance && instance_j == instance_i)
+                      {
+                          set_instance_use(j, UnusedInstance);
 
-              repeated_instances.push_back(j);
-          }
-*/
-       }
+                          repeated_instances.push_back(j);
+                      }
+            */
+        }
     }
 
     return repeated_instances;
@@ -4220,23 +4228,23 @@ Tensor<Index, 1> DataSet::unuse_non_significant_input_columns()
         positives = 0;
 
         current_input_index = input_variables_indices(i);
-/*
-        if(!is_binary_variable(current_input_index)) continue;
+        /*
+                if(!is_binary_variable(current_input_index)) continue;
 
-        for(Index j = 0; j < instances_number; j++)
-        {
-            if(data(j, current_input_index) == 1.0 && data(j, target_index) == 1.0)
-            {
-                positives++;
-            }
-        }
+                for(Index j = 0; j < instances_number; j++)
+                {
+                    if(data(j, current_input_index) == 1.0 && data(j, target_index) == 1.0)
+                    {
+                        positives++;
+                    }
+                }
 
-        if(positives == 0)
-        {
-            set_column_use(current_input_index, DataSet::UnusedVariable);
-            non_significant_variables.push_back(current_input_index);
-        }
-*/
+                if(positives == 0)
+                {
+                    set_column_use(current_input_index, DataSet::UnusedVariable);
+                    non_significant_variables.push_back(current_input_index);
+                }
+        */
     }
 
     return non_significant_variables;
@@ -4251,23 +4259,23 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const type& missing_rati
     const Index columns_number = get_columns_number();
 
     const Index instances_number = get_instances_number();
-/*
-    const Tensor<Index, 1> columns_missing_values = data.count_nan_columns();
+    /*
+        const Tensor<Index, 1> columns_missing_values = data.count_nan_columns();
 
-    const Tensor<type, 1> columns_missing_ratios = columns_missing_values.cast<type>()/(static_cast<type>(instances_number)-1.0);
-*/
+        const Tensor<type, 1> columns_missing_ratios = columns_missing_values.cast<type>()/(static_cast<type>(instances_number)-1.0);
+    */
     Tensor<string, 1> unused_variables;
-/*
-    for(Index i = 0; i < columns_number; i++)
-    {
-        if(columns(i).column_use != DataSet::UnusedVariable && columns_missing_ratios(i) >= missing_ratio)
+    /*
+        for(Index i = 0; i < columns_number; i++)
         {
-            set_column_use(i, DataSet::UnusedVariable);
+            if(columns(i).column_use != DataSet::UnusedVariable && columns_missing_ratios(i) >= missing_ratio)
+            {
+                set_column_use(i, DataSet::UnusedVariable);
 
-            unused_variables.push_back(columns(i).name);
+                unused_variables.push_back(columns(i).name);
+            }
         }
-    }
-*/
+    */
     return unused_variables;
 }
 
@@ -4311,77 +4319,77 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
 
 Tensor<Histogram, 1> DataSet::calculate_columns_histograms(const Index& bins_number) const
 {
-   const Index used_columns_number = get_used_columns_number();
-   const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-   const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-   const Index used_instances_number = used_instances_indices.size();
+    const Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+    const Index used_instances_number = used_instances_indices.size();
 
-   Tensor<Histogram, 1> histograms(used_columns_number);
+    Tensor<Histogram, 1> histograms(used_columns_number);
 
-   Index variable_index = 0;
+    Index variable_index = 0;
 
-   #pragma omp parallel for shared(histograms)
+    #pragma omp parallel for shared(histograms)
 
-   for(Index i = 0; i < used_columns_number; i++)
-   {
-       if(columns(i).type == Numeric)
-       {
-           Tensor<type, 1> column(used_instances_number);
+    for(Index i = 0; i < used_columns_number; i++)
+    {
+        if(columns(i).type == Numeric)
+        {
+            Tensor<type, 1> column(used_instances_number);
 
-           for(Index j = 0; j < used_instances_number; j++)
-           {
-               column(j) = data(used_instances_indices(j), variable_index);
-           }
+            for(Index j = 0; j < used_instances_number; j++)
+            {
+                column(j) = data(used_instances_indices(j), variable_index);
+            }
 
-           histograms(i) = histogram(column, bins_number);
-           variable_index++;
-       }
-       else if(columns(i).type == Categorical)
-       {
-           const Index categories_number = columns(i).get_categories_number();
+            histograms(i) = histogram(column, bins_number);
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            const Index categories_number = columns(i).get_categories_number();
 
-           Tensor<Index, 1> categories_frequencies(categories_number);
+            Tensor<Index, 1> categories_frequencies(categories_number);
 
-           for(Index j = 0; j < categories_number; j++)
-           {
-               for(Index k = 0; k < used_instances_number; k++)
-               {
-                   if(data(used_instances_indices(k), variable_index) == 1.0)
-                   {
-                       categories_frequencies(j)++;
-                   }
-               }
-           }
+            for(Index j = 0; j < categories_number; j++)
+            {
+                for(Index k = 0; k < used_instances_number; k++)
+                {
+                    if(data(used_instances_indices(k), variable_index) == 1.0)
+                    {
+                        categories_frequencies(j)++;
+                    }
+                }
+            }
 
-           histograms(i).frequencies = categories_frequencies;
+            histograms(i).frequencies = categories_frequencies;
 
-           variable_index += columns(i).get_categories_number();
-       }
-       else if(columns(i).type == Binary)
-       {
-           Tensor<Index, 1> binary_frequencies(2);
+            variable_index += columns(i).get_categories_number();
+        }
+        else if(columns(i).type == Binary)
+        {
+            Tensor<Index, 1> binary_frequencies(2);
 
-           for(Index j = 0; j < used_instances_number; j++)
-           {
-               if(data(used_instances_indices(j), variable_index) == 1.0)
-               {
-                   binary_frequencies(0)++;
-               }
-               else
-               {
-                   binary_frequencies(1)++;
-               }
-           }
+            for(Index j = 0; j < used_instances_number; j++)
+            {
+                if(data(used_instances_indices(j), variable_index) == 1.0)
+                {
+                    binary_frequencies(0)++;
+                }
+                else
+                {
+                    binary_frequencies(1)++;
+                }
+            }
 
-           variable_index++;
-       }
-       else // Time @todo
-       {
-           variable_index++;
-       }
-   }
+            variable_index++;
+        }
+        else // Time @todo
+        {
+            variable_index++;
+        }
+    }
 
-   return histograms;
+    return histograms;
 }
 
 
@@ -4410,11 +4418,11 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         if(columns(i).type == Numeric)
         {
             const Index index = used_columns_indices(i);
-/*
-            const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
+            /*
+                        const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
 
-            box_plots(i) = box_plot(column);
-*/
+                        box_plots(i) = box_plot(column);
+            */
         }
     }
 
@@ -4445,11 +4453,11 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         {
             ostringstream buffer;
 
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "Index calculate_training_negatives(const Index&) const method.\n"
-                  << "Training instance is neither a positive nor a negative: " << data(training_index, target_index) << endl;
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Index calculate_training_negatives(const Index&) const method.\n"
+                   << "Training instance is neither a positive nor a negative: " << data(training_index, target_index) << endl;
 
-           throw logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
     }
 
@@ -4480,11 +4488,11 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
         {
             ostringstream buffer;
 
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "Index calculate_selection_negatives(const Index&) const method.\n"
-                  << "Selection instance is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Selection instance is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
 
-           throw logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
     }
 
@@ -4515,11 +4523,11 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
         {
             ostringstream buffer;
 
-           buffer << "OpenNN Exception: DataSet class.\n"
-                  << "Index calculate_selection_negatives(const Index&) const method.\n"
-                  << "Testing instance is neither a positive nor a negative: " << data(testing_index, target_index) << endl;
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Testing instance is neither a positive nor a negative: " << data(testing_index, target_index) << endl;
 
-           throw logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
     }
 
@@ -4739,11 +4747,11 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const In
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_training_instances() const
 {
-   const Tensor<Index, 1> training_indices = get_training_instances_indices();
+    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-   const Tensor<Index, 1> used_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_indices = get_used_columns_indices();
 
-   return descriptives(data, training_indices, used_indices);
+    return descriptives(data, training_indices, used_indices);
 }
 
 
@@ -4777,13 +4785,13 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_selection_instan
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_testing_instances() const
 {
-/*
-    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    /*
+        const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-    const Tensor<Index, 1> used_indices = get_used_columns_indices();
+        const Tensor<Index, 1> used_indices = get_used_columns_indices();
 
-    return descriptives_missing_values(data, testing_indices, used_indices);
-*/
+        return descriptives_missing_values(data, testing_indices, used_indices);
+    */
     return Tensor<Descriptives, 1>();
 }
 
@@ -4809,9 +4817,9 @@ Tensor<type, 2> DataSet::calculate_variables_descriptives_matrix() const
 
 
 
-/*
-        data_statistics_matrix.set_row(i, data_statistics_vector(i).to_vector());
-*/
+        /*
+                data_statistics_matrix.set_row(i, data_statistics_vector(i).to_vector());
+        */
     }
 
     return data_statistics_matrix;
@@ -4843,11 +4851,11 @@ Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
 
 Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 {
-   const Tensor<Index, 1> used_indices = get_used_instances_indices();
+    const Tensor<Index, 1> used_indices = get_used_instances_indices();
 
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return descriptives(data, used_indices, target_variables_indices);
+    return descriptives(data, used_indices, target_variables_indices);
 }
 
 
@@ -4884,7 +4892,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 
     Tensor<type, 1> means(variables_number);
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < variables_number; i++)
     {
@@ -4910,9 +4918,9 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 
 Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) const
 {
-/*
-   return descriptives_missing_values(data.chip(input_index,1));
-*/
+    /*
+       return descriptives_missing_values(data.chip(input_index,1));
+    */
     return Descriptives();
 }
 
@@ -4934,13 +4942,13 @@ Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
-/*
-    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    /*
+        const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return mean_missing_values(data, selection_indices, target_variables_indices);
-*/
+        return mean_missing_values(data, selection_indices, target_variables_indices);
+    */
     return Tensor<type, 1>();
 }
 
@@ -4949,13 +4957,13 @@ Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 
 Tensor<type, 1> DataSet::calculate_testing_targets_mean() const
 {
-/*
-   const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    /*
+       const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+       const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return mean_missing_values(data, testing_indices, target_variables_indices);
-*/
+       return mean_missing_values(data, testing_indices, target_variables_indices);
+    */
     return Tensor<type, 1>();
 }
 
@@ -4985,83 +4993,83 @@ void DataSet::set_gmt(Index& new_gmt)
 
 Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlations() const
 {
-   const Index input_columns_number = get_input_columns_number();
-   const Index target_columns_number = get_target_columns_number();
+    const Index input_columns_number = get_input_columns_number();
+    const Index target_columns_number = get_target_columns_number();
 
-   const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
-   Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-   Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
+    Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
-   for(Index i = 0; i < input_columns_number; i++)
-   {
-       const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
 
-       const ColumnType input_type = columns(input_columns_indices(i)).type;
+        const ColumnType input_type = columns(input_columns_indices(i)).type;
 
-       for(Index j = 0; j < target_columns_number; j++)
-       {
-           const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+        for(Index j = 0; j < target_columns_number; j++)
+        {
+            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
 
-           const ColumnType target_type = columns(target_columns_indices(j)).type;
+            const ColumnType target_type = columns(target_columns_indices(j)).type;
 
-           if(input_type == Numeric && target_type == Numeric)
-           {
-               correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+            if(input_type == Numeric && target_type == Numeric)
+            {
+                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
 
-               const CorrelationResults linear_correlation = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-               const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-               const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-               const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults linear_correlation = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
 
-               CorrelationResults strongest_correlation = linear_correlation;
+                CorrelationResults strongest_correlation = linear_correlation;
 
-               if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = exponential_correlation;
-               else if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = logarithmic_correlation;
-               else if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = power_correlation;
+                if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = exponential_correlation;
+                else if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = logarithmic_correlation;
+                else if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = power_correlation;
 
-               correlations(i,j) = strongest_correlation;
-           }
-           else if(input_type == Binary && target_type == Binary)
-           {
-               correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-           }
-           else if(input_type == Categorical && target_type == Categorical)
-           {
-               correlations(i,j) = karl_pearson_correlations_missing_values(input, target);
-           }
-           else if(input_type == Numeric && target_type == Binary)
-           {               
-               correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-           }
-           else if(input_type == Binary && target_type == Numeric)
-           {
-               correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-           }
-           else if(input_type == Categorical && target_type == Numeric)
-           {
-               correlations(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
-           }
-           else if(input_type == Numeric && target_type == Categorical)
-           {
-               correlations(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
-           }
-           else
-           {
-               ostringstream buffer;
+                correlations(i,j) = strongest_correlation;
+            }
+            else if(input_type == Binary && target_type == Binary)
+            {
+                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Categorical && target_type == Categorical)
+            {
+                correlations(i,j) = karl_pearson_correlations_missing_values(input, target);
+            }
+            else if(input_type == Numeric && target_type == Binary)
+            {
+                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Binary && target_type == Numeric)
+            {
+                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Categorical && target_type == Numeric)
+            {
+                correlations(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
+            }
+            else if(input_type == Numeric && target_type == Categorical)
+            {
+                correlations(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
+            }
+            else
+            {
+                ostringstream buffer;
 
-               buffer << "OpenNN Exception: DataSet class.\n"
-                      << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                      << "Case not found: Column i " << input_type << " and Column j " << target_type << ".\n";
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
+                       << "Case not found: Column i " << input_type << " and Column j " << target_type << ".\n";
 
-               throw logic_error(buffer.str());
-           }
-       }
-   }
+                throw logic_error(buffer.str());
+            }
+        }
+    }
 
-   return correlations;
+    return correlations;
 }
 
 
@@ -5101,19 +5109,19 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
 
 void DataSet::print_missing_values_information() const
 {
-/*
-    const Index missing_values_number = data.count_nan();
+    /*
+        const Index missing_values_number = data.count_nan();
 
-    cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
+        cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
 
-    const Index variables_with_missing_values = data.count_columns_with_nan();
+        const Index variables_with_missing_values = data.count_columns_with_nan();
 
-    cout << "Variables with missing values: " << variables_with_missing_values << " (" << variables_with_missing_values*100/data.dimension(1) << "%)" << endl;
+        cout << "Variables with missing values: " << variables_with_missing_values << " (" << variables_with_missing_values*100/data.dimension(1) << "%)" << endl;
 
-    const Index instances_with_missing_values = data.count_rows_with_nan();
+        const Index instances_with_missing_values = data.count_rows_with_nan();
 
-    cout << "Instances with missing values: " << instances_with_missing_values << " (" << instances_with_missing_values*100/data.dimension(0) << "%)" << endl;
-*/
+        cout << "Instances with missing values: " << instances_with_missing_values << " (" << instances_with_missing_values*100/data.dimension(0) << "%)" << endl;
+    */
 }
 
 
@@ -5156,23 +5164,23 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     Tensor<type, 1> target_correlations(inputs_number);
 
     Tensor<string, 2> top_correlations(inputs_number, 2);
-/*
-    map<type,string> top_correlation;
+    /*
+        map<type,string> top_correlation;
 
-    for(Index i = 0 ; i < inputs_number; i++)
-    {
-        for(Index j = 0 ; j < targets_number ; j++)
+        for(Index i = 0 ; i < inputs_number; i++)
         {
-//            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_names(i) + " - " + targets_name(j)));
+            for(Index j = 0 ; j < targets_number ; j++)
+            {
+    //            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_names(i) + " - " + targets_name(j)));
+            }
         }
-    }
 
-    map<type,string>::iterator it;
+        map<type,string>::iterator it;
 
-    for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
-    {
-        cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }*/
+        for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
+        {
+            cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
+        }*/
 }
 
 
@@ -5181,87 +5189,87 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
 
 Tensor<type, 2> DataSet::calculate_inputs_correlations() const
 {
-/*
-    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    /*
+        const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
-    const Index input_columns_number = get_input_columns_number();
+        const Index input_columns_number = get_input_columns_number();
 
-    Tensor<type, 2> correlations(input_columns_number, input_columns_number);
+        Tensor<type, 2> correlations(input_columns_number, input_columns_number);
 
-    correlations.initialize_identity();
+        correlations.initialize_identity();
 
-    for(Index i = 0; i < input_columns_number; i++)
-    {
-        const ColumnType type_i = columns(i).type;
-
-        const Tensor<type, 2> column_i = get_column_data(input_columns_indices(i));
-
-        for(Index j = i; j < input_columns_number; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            const ColumnType type_j = columns(j).type;
+            const ColumnType type_i = columns(i).type;
 
-            const Tensor<type, 2> column_j = get_column_data(input_columns_indices(j));
+            const Tensor<type, 2> column_i = get_column_data(input_columns_indices(i));
 
-            if(type_i == Numeric && type_j == Numeric)
+            for(Index j = i; j < input_columns_number; j++)
             {
-                correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                const ColumnType type_j = columns(j).type;
 
-                const type linear_correlation = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
-                const type exponential_correlation = exponential_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
-                const type logarithmic_correlation = logarithmic_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
-                const type power_correlation = power_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
-                const Tensor<type, 1> correlations_i_j({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation});
+                const Tensor<type, 2> column_j = get_column_data(input_columns_indices(j));
 
-                correlations(i,j) = strongest(correlations_i_j);
-            }
-            else if(type_i == Binary && type_j == Binary)
-            {
-                correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
-            }
-            else if(type_i == Categorical && type_j == Categorical)
-            {
-                correlations(i,j) = karl_pearson_correlation_missing_values(column_i, column_j);
-            }
-            else if(type_i == Numeric && type_j == Binary)
-            {
-                correlations(i,j) = logistic_correlation_missing_values(column_i, column_j);
-            }
-            else if(type_i == Binary && type_j == Numeric)
-            {
-                correlations(i,j) = logistic_correlation_missing_values(column_j, column_i);
-            }
-            else if(type_i == Categorical && type_j == Numeric)
-            {
-                correlations(i,j) = one_way_anova_correlation(column_i, column_j.chip(0,1));
-            }
-            else if(type_i == Numeric && type_j == Categorical)
-            {
-                correlations(i,j) = one_way_anova_correlation(column_j, column_i.chip(0,1));
-            }
-            else
-            {
-                ostringstream buffer;
+                if(type_i == Numeric && type_j == Numeric)
+                {
+                    correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
 
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                       << "Case not found: Column i " << type_i << " and Column j " << type_j << ".\n";
+                    const type linear_correlation = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                    const type exponential_correlation = exponential_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                    const type logarithmic_correlation = logarithmic_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                    const type power_correlation = power_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                    const Tensor<type, 1> correlations_i_j({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation});
 
-                throw logic_error(buffer.str());
+                    correlations(i,j) = strongest(correlations_i_j);
+                }
+                else if(type_i == Binary && type_j == Binary)
+                {
+                    correlations(i,j) = linear_correlation_missing_values(column_i.chip(0,1), column_j.chip(0,1));
+                }
+                else if(type_i == Categorical && type_j == Categorical)
+                {
+                    correlations(i,j) = karl_pearson_correlation_missing_values(column_i, column_j);
+                }
+                else if(type_i == Numeric && type_j == Binary)
+                {
+                    correlations(i,j) = logistic_correlation_missing_values(column_i, column_j);
+                }
+                else if(type_i == Binary && type_j == Numeric)
+                {
+                    correlations(i,j) = logistic_correlation_missing_values(column_j, column_i);
+                }
+                else if(type_i == Categorical && type_j == Numeric)
+                {
+                    correlations(i,j) = one_way_anova_correlation(column_i, column_j.chip(0,1));
+                }
+                else if(type_i == Numeric && type_j == Categorical)
+                {
+                    correlations(i,j) = one_way_anova_correlation(column_j, column_i.chip(0,1));
+                }
+                else
+                {
+                    ostringstream buffer;
+
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
+                           << "Case not found: Column i " << type_i << " and Column j " << type_j << ".\n";
+
+                    throw logic_error(buffer.str());
+                }
+
             }
-
         }
-    }
 
-    for(Index i = 0; i < input_columns_number; i++)
-    {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations(i,j) = correlations(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations(i,j) = correlations(j,i);
+            }
         }
-    }
 
-    return correlations;
-*/
+        return correlations;
+    */
     return Tensor<type, 2>();
 }
 
@@ -5307,25 +5315,25 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
     Tensor<string, 2> top_correlations(correlations_number, 3);
-/*
-    map<type, string> top_correlation;
+    /*
+        map<type, string> top_correlation;
 
-    for(Index i = 0; i < variables_number; i++)
-    {
-        for(Index j = i; j < variables_number; j++)
+        for(Index i = 0; i < variables_number; i++)
         {
-            if(i == j) continue;
+            for(Index j = i; j < variables_number; j++)
+            {
+                if(i == j) continue;
 
-            top_correlation.insert(pair<type,string>(variables_correlations(i,j), variables_name(i) + " - " + variables_name(j)));
+                top_correlation.insert(pair<type,string>(variables_correlations(i,j), variables_name(i) + " - " + variables_name(j)));
+             }
          }
-     }
 
-    map<type,string> :: iterator it;
+        map<type,string> :: iterator it;
 
-    for(it=top_correlation.begin(); it!=top_correlation.end(); it++)
-    {
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }*/
+        for(it=top_correlation.begin(); it!=top_correlation.end(); it++)
+        {
+            cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
+        }*/
 }
 
 
@@ -5341,24 +5349,24 @@ Tensor<type, 2> DataSet::calculate_covariance_matrix() const
     const Index inputs_number = get_input_variables_number();
 
     Tensor<type, 2> covariance_matrix(inputs_number, inputs_number);
-/*
-    for(Index i = 0; i < static_cast<Index>(inputs_number); i++)
-    {
-        const Index first_input_index = input_variables_indices(i);
-
-        const Tensor<type, 1> first_inputs = data.get_column(first_input_index, used_instances_indices);
-
-        for(Index j = i; j < inputs_number; j++)
+    /*
+        for(Index i = 0; i < static_cast<Index>(inputs_number); i++)
         {
-            const Index second_input_index = input_variables_indices(j);
+            const Index first_input_index = input_variables_indices(i);
 
-            const Tensor<type, 1> second_inputs = data.get_column(second_input_index, used_instances_indices);
+            const Tensor<type, 1> first_inputs = data.get_column(first_input_index, used_instances_indices);
 
-            covariance_matrix(i,j) = covariance(first_inputs, second_inputs);
-            covariance_matrix(j,i) = covariance_matrix(i,j);
+            for(Index j = i; j < inputs_number; j++)
+            {
+                const Index second_input_index = input_variables_indices(j);
+
+                const Tensor<type, 1> second_inputs = data.get_column(second_input_index, used_instances_indices);
+
+                covariance_matrix(i,j) = covariance(first_inputs, second_inputs);
+                covariance_matrix(j,i) = covariance_matrix(i,j);
+            }
         }
-    }
-*/
+    */
     return covariance_matrix;
 }
 
@@ -5370,79 +5378,79 @@ Tensor<type, 2> DataSet::calculate_covariance_matrix() const
 
 Tensor<type, 2> DataSet::perform_principal_components_analysis(const type& minimum_explained_variance)
 {
-/*
-    // Subtract off the mean
+    /*
+        // Subtract off the mean
 
-    subtract_inputs_mean();
+        subtract_inputs_mean();
 
-    // Calculate covariance matrix
+        // Calculate covariance matrix
 
-    const Tensor<type, 2> covariance_matrix = this->calculate_covariance_matrix();
+        const Tensor<type, 2> covariance_matrix = this->calculate_covariance_matrix();
 
-    // Calculate eigenvectors
+        // Calculate eigenvectors
 
-    const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
+        const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
 
-    // Calculate eigenvalues
+        // Calculate eigenvalues
 
-    const Tensor<type, 2> eigenvalues = OpenNN::eigenvalues(covariance_matrix);
+        const Tensor<type, 2> eigenvalues = OpenNN::eigenvalues(covariance_matrix);
 
-    // Calculate explained variance
+        // Calculate explained variance
 
-    const Tensor<type, 1> explained_variance = OpenNN::explained_variance(eigenvalues.chip(0,1));
+        const Tensor<type, 1> explained_variance = OpenNN::explained_variance(eigenvalues.chip(0,1));
 
-    // Sort principal components
+        // Sort principal components
 
-    const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
+        const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
 
-    // Choose eigenvectors
+        // Choose eigenvectors
 
-    const Index inputs_number = covariance_matrix.dimension(1);
+        const Index inputs_number = covariance_matrix.dimension(1);
 
-    Tensor<Index, 1> principal_components_indices;
+        Tensor<Index, 1> principal_components_indices;
 
-    Index index;
+        Index index;
 
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        index = sorted_principal_components_indices(i);
-
-        if(explained_variance(index) >= minimum_explained_variance)
+        for(Index i = 0; i < inputs_number; i++)
         {
-            principal_components_indices.push_back(i);
+            index = sorted_principal_components_indices(i);
+
+            if(explained_variance(index) >= minimum_explained_variance)
+            {
+                principal_components_indices.push_back(i);
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        const Index principal_components_number = principal_components_indices.size();
+
+        // Arrange principal components matrix
+
+        Tensor<type, 2> principal_components;
+
+        if(principal_components_number == 0)
+        {
+            return principal_components;
         }
         else
         {
-            continue;
+            principal_components.resize(principal_components_number, inputs_number);
         }
-    }
 
-    const Index principal_components_number = principal_components_indices.size();
+        for(Index i = 0; i < principal_components_number; i++)
+        {
+            index = sorted_principal_components_indices(i);
 
-    // Arrange principal components matrix
+            principal_components.set_row(i, eigenvectors.chip(index,1));
+        }
 
-    Tensor<type, 2> principal_components;
+        // Return feature matrix
 
-    if(principal_components_number == 0)
-    {
-        return principal_components;
-    }
-    else
-    {
-        principal_components.resize(principal_components_number, inputs_number);
-    }
-
-    for(Index i = 0; i < principal_components_number; i++)
-    {
-        index = sorted_principal_components_indices(i);
-
-        principal_components.set_row(i, eigenvectors.chip(index,1));
-    }
-
-    // Return feature matrix
-
-    return principal_components.get_submatrix_rows(principal_components_indices);
-*/
+        return principal_components.get_submatrix_rows(principal_components_indices);
+    */
     return Tensor<type, 2>();
 }
 
@@ -5455,70 +5463,70 @@ Tensor<type, 2> DataSet::perform_principal_components_analysis(const type& minim
 /// @param minimum_explained_variance Minimum percentage of variance used to select a principal component.
 
 Tensor<type, 2> DataSet::perform_principal_components_analysis(const Tensor<type, 2>& covariance_matrix,
-                                                              const Tensor<type, 1>& explained_variance,
-                                                              const type& minimum_explained_variance)
+        const Tensor<type, 1>& explained_variance,
+        const type& minimum_explained_variance)
 {
-/*
-    // Subtract off the mean
+    /*
+        // Subtract off the mean
 
-    subtract_inputs_mean();
+        subtract_inputs_mean();
 
-    // Calculate eigenvectors
+        // Calculate eigenvectors
 
-    const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
+        const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
 
-    // Sort principal components
+        // Sort principal components
 
-    const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
+        const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
 
-    // Choose eigenvectors
+        // Choose eigenvectors
 
-    const Index inputs_number = covariance_matrix.dimension(1);
+        const Index inputs_number = covariance_matrix.dimension(1);
 
-    Tensor<Index, 1> principal_components_indices;
+        Tensor<Index, 1> principal_components_indices;
 
-    Index index;
+        Index index;
 
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        index = sorted_principal_components_indices(i);
-
-        if(explained_variance(index) >= minimum_explained_variance)
+        for(Index i = 0; i < inputs_number; i++)
         {
-            principal_components_indices.push_back(i);
+            index = sorted_principal_components_indices(i);
+
+            if(explained_variance(index) >= minimum_explained_variance)
+            {
+                principal_components_indices.push_back(i);
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        const Index principal_components_number = principal_components_indices.size();
+
+        // Arrange principal components matrix
+
+        Tensor<type, 2> principal_components;
+
+        if(principal_components_number == 0)
+        {
+            return principal_components;
         }
         else
         {
-            continue;
+            principal_components.resize(principal_components_number, inputs_number);
         }
-    }
 
-    const Index principal_components_number = principal_components_indices.size();
+        for(Index i = 0; i < principal_components_number; i++)
+        {
+            index = sorted_principal_components_indices(i);
 
-    // Arrange principal components matrix
+            principal_components.set_row(i, eigenvectors.chip(index,1));
+        }
 
-    Tensor<type, 2> principal_components;
+        // Return feature matrix
 
-    if(principal_components_number == 0)
-    {
-        return principal_components;
-    }
-    else
-    {
-        principal_components.resize(principal_components_number, inputs_number);
-    }
-
-    for(Index i = 0; i < principal_components_number; i++)
-    {
-        index = sorted_principal_components_indices(i);
-
-        principal_components.set_row(i, eigenvectors.chip(index,1));
-    }
-
-    // Return feature matrix
-
-    return principal_components.get_submatrix_rows(principal_components_indices);
-*/
+        return principal_components.get_submatrix_rows(principal_components_indices);
+    */
     return Tensor<type, 2>();
 }
 
@@ -5558,9 +5566,9 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 //            new_data(i,j) = dot(inputs.chip(instance_index, 0), principal_components.chip(j, 0));
         }
     }
-/*
-    data = new_data.assemble_columns(targets);
-*/
+    /*
+        data = new_data.assemble_columns(targets);
+    */
 }
 
 
@@ -5571,41 +5579,41 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 
 void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
-/*
-   #ifdef __OPENNN_DEBUG__
+    /*
+       #ifdef __OPENNN_DEBUG__
 
-   ostringstream buffer;
+       ostringstream buffer;
 
-   const Index columns_number = data.dimension(1);
+       const Index columns_number = data.dimension(1);
 
-   const Index descriptives_size = data_descriptives.size();
+       const Index descriptives_size = data_descriptives.size();
 
-   if(descriptives_size != columns_number)
-   {
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
-             << "Size of descriptives must be equal to number of columns.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   const Index variables_number = get_variables_number();
-
-   for(Index i = 0; i < variables_number; i++)
-   {
-       if(display && abs(data_descriptives(i).standard_deviation) < numeric_limits<type>::min())
+       if(descriptives_size != columns_number)
        {
-          cout << "OpenNN Warning: DataSet class.\n"
-                    << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
-                    << "Standard deviation of variable " <<  i << " is zero.\n"
-                    << "That variable won't be scaled.\n";
-        }
-    }
+          buffer << "OpenNN Exception: DataSet class.\n"
+                 << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
+                 << "Size of descriptives must be equal to number of columns.\n";
 
-   scale_mean_standard_deviation(data, data_descriptives);
-*/
+          throw logic_error(buffer.str());
+       }
+
+       #endif
+
+       const Index variables_number = get_variables_number();
+
+       for(Index i = 0; i < variables_number; i++)
+       {
+           if(display && abs(data_descriptives(i).standard_deviation) < numeric_limits<type>::min())
+           {
+              cout << "OpenNN Warning: DataSet class.\n"
+                        << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
+                        << "Standard deviation of variable " <<  i << " is zero.\n"
+                        << "That variable won't be scaled.\n";
+            }
+        }
+
+       scale_mean_standard_deviation(data, data_descriptives);
+    */
 }
 
 
@@ -5678,27 +5686,27 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 
     Index current_distribution;
     Tensor<string, 1> scaling_methods(used_inputs_number);
-/*
-#pragma omp parallel for private(current_distribution)
+    /*
+    #pragma omp parallel for private(current_distribution)
 
-    for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
-    {
-        current_distribution = perform_distribution_distance_analysis(data.get_column(used_inputs_indices(i)));
+        for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
+        {
+            current_distribution = perform_distribution_distance_analysis(data.get_column(used_inputs_indices(i)));
 
-        if(current_distribution == 0) // Normal distribution
-        {
-            scaling_methods(i) = "MeanStandardDeviation";
+            if(current_distribution == 0) // Normal distribution
+            {
+                scaling_methods(i) = "MeanStandardDeviation";
+            }
+            else if(current_distribution == 1) // Uniform distribution
+            {
+                scaling_methods(i) = "MinimumMaximum";
+            }
+            else // Default
+            {
+                scaling_methods(i) = "MinimumMaximum";
+            }
         }
-        else if(current_distribution == 1) // Uniform distribution
-        {
-            scaling_methods(i) = "MinimumMaximum";
-        }
-        else // Default
-        {
-            scaling_methods(i) = "MinimumMaximum";
-        }
-    }
-*/
+    */
     return scaling_methods;
 }
 
@@ -5712,37 +5720,37 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 {
     const Index variables_number = get_variables_number();
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   ostringstream buffer;
+    ostringstream buffer;
 
-   const Index descriptives_size = data_descriptives.size();
+    const Index descriptives_size = data_descriptives.size();
 
-   if(descriptives_size != variables_number)
-   {
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
-             << "Size of data descriptives must be equal to number of variables.\n";
+    if(descriptives_size != variables_number)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
+               << "Size of data descriptives must be equal to number of variables.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   for(Index i = 0; i < variables_number; i++)
-   {
-       if(display
-       && abs(data_descriptives(i).maximum - data_descriptives(i).minimum) < numeric_limits<type>::min())
-       {
-          cout << "OpenNN Warning: DataSet class.\n"
-                    << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
-                    << "Range of variable " <<  i << " is zero.\n"
-                    << "That variable won't be scaled.\n";
+    for(Index i = 0; i < variables_number; i++)
+    {
+        if(display
+                && abs(data_descriptives(i).maximum - data_descriptives(i).minimum) < numeric_limits<type>::min())
+        {
+            cout << "OpenNN Warning: DataSet class.\n"
+                 << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
+                 << "Range of variable " <<  i << " is zero.\n"
+                 << "That variable won't be scaled.\n";
         }
     }
-/*
-   scale_minimum_maximum(data, data_descriptives);
-*/
+    /*
+       scale_minimum_maximum(data, data_descriptives);
+    */
 }
 
 
@@ -5754,9 +5762,9 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 void DataSet::scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-/*
-    scale_columns_mean_standard_deviation(data, inputs_descriptives, input_variables_indices);
-*/
+    /*
+        scale_columns_mean_standard_deviation(data, inputs_descriptives, input_variables_indices);
+    */
 }
 
 
@@ -5765,27 +5773,27 @@ void DataSet::scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>
 /// It also returns a vector of vectors with the variables descriptives.
 
 Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
-{    
-    #ifdef __OPENNN_DEBUG__
+{
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation() method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation() method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
-   scale_inputs_mean_standard_deviation(inputs_descriptives);
+    scale_inputs_mean_standard_deviation(inputs_descriptives);
 
-   return inputs_descriptives;
+    return inputs_descriptives;
 }
 
 
@@ -5796,13 +5804,13 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-/*
-    Tensor<type, 1> column = data.chip(input_index,1);
+    /*
+        Tensor<type, 1> column = data.chip(input_index,1);
 
-    scale_mean_standard_deviation(column, input_statistics);
+        scale_mean_standard_deviation(column, input_statistics);
 
-    data.set_column(input_index, column, "");
-*/
+        data.set_column(input_index, column, "");
+    */
 }
 
 
@@ -5813,26 +5821,26 @@ void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_stat
 
 Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_index)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Descriptives scale_input_mean_standard_deviation(const Index&) method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Descriptives scale_input_mean_standard_deviation(const Index&) method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
+    const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
 
-   scale_input_mean_standard_deviation(input_statistics, input_index);
+    scale_input_mean_standard_deviation(input_statistics, input_index);
 
-   return input_statistics;
+    return input_statistics;
 }
 
 
@@ -5843,13 +5851,13 @@ Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_ind
 
 void DataSet::scale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-/*
-    Tensor<type, 1> column = data.chip(input_index,1);
+    /*
+        Tensor<type, 1> column = data.chip(input_index,1);
 
-    scale_standard_deviation(column, input_statistics);
+        scale_standard_deviation(column, input_statistics);
 
-    data.set_column(input_index, column, "");
-*/
+        data.set_column(input_index, column, "");
+    */
 }
 
 
@@ -5860,26 +5868,26 @@ void DataSet::scale_input_standard_deviation(const Descriptives& input_statistic
 
 Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Descriptives scale_input_standard_deviation(const Index&) method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Descriptives scale_input_standard_deviation(const Index&) method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
+    const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
 
-   scale_input_standard_deviation(input_statistics, input_index);
+    scale_input_standard_deviation(input_statistics, input_index);
 
-   return input_statistics;
+    return input_statistics;
 }
 
 
@@ -5902,26 +5910,26 @@ void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs
 
 Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Descriptives, 1> scale_inputs_minimum_maximum() method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Descriptives, 1> scale_inputs_minimum_maximum() method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
-   scale_inputs_minimum_maximum(inputs_descriptives);
+    scale_inputs_minimum_maximum(inputs_descriptives);
 
-   return inputs_descriptives;
+    return inputs_descriptives;
 }
 
 
@@ -5932,13 +5940,13 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-/*
-    Tensor<type, 1> column = data.chip(input_index,1);
+    /*
+        Tensor<type, 1> column = data.chip(input_index,1);
 
-    scale_minimum_maximum(column, input_statistics);
+        scale_minimum_maximum(column, input_statistics);
 
-    data.set_column(input_index, column, "");
-*/
+        data.set_column(input_index, column, "");
+    */
 }
 
 
@@ -5948,20 +5956,20 @@ void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, 
 
 Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Descriptives scale_input_minimum_maximum(const Index&) method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Descriptives scale_input_minimum_maximum(const Index&) method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
     const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
 
@@ -5980,24 +5988,28 @@ Tensor<Descriptives, 1> DataSet::scale_inputs(const string& scaling_unscaling_me
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
     {
-        case NoScaling: return calculate_input_variables_descriptives();
+    case NoScaling:
+        return calculate_input_variables_descriptives();
 
-        case MinimumMaximum: return scale_inputs_minimum_maximum();
+    case MinimumMaximum:
+        return scale_inputs_minimum_maximum();
 
-        case MeanStandardDeviation: return scale_inputs_mean_standard_deviation();
+    case MeanStandardDeviation:
+        return scale_inputs_mean_standard_deviation();
 
-        case StandardDeviation: return scale_inputs_mean_standard_deviation();
+    case StandardDeviation:
+        return scale_inputs_mean_standard_deviation();
 
-        default:
-        {
-            ostringstream buffer;
+    default:
+    {
+        ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "Tensor<Descriptives, 1> scale_inputs() method.\n"
-                   << "Unknown scaling and unscaling method.\n";
+        buffer << "OpenNN Exception: DataSet class\n"
+               << "Tensor<Descriptives, 1> scale_inputs() method.\n"
+               << "Unknown scaling and unscaling method.\n";
 
-            throw logic_error(buffer.str());
-        }
+        throw logic_error(buffer.str());
+    }
     }
 }
 
@@ -6008,37 +6020,37 @@ Tensor<Descriptives, 1> DataSet::scale_inputs(const string& scaling_unscaling_me
 
 void DataSet::scale_inputs(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& inputs_descriptives)
 {
-   switch(get_scaling_unscaling_method(scaling_unscaling_method))
-   {
-      case NoScaling:
-      {
-          // Do nothing
-      }
-      break;
+    switch(get_scaling_unscaling_method(scaling_unscaling_method))
+    {
+    case NoScaling:
+    {
+        // Do nothing
+    }
+    break;
 
-      case MinimumMaximum:
-      {
-         scale_inputs_minimum_maximum(inputs_descriptives);
-      }
-      break;
+    case MinimumMaximum:
+    {
+        scale_inputs_minimum_maximum(inputs_descriptives);
+    }
+    break;
 
-      case MeanStandardDeviation:
-      {
-         scale_inputs_mean_standard_deviation(inputs_descriptives);
-      }
-      break;
+    case MeanStandardDeviation:
+    {
+        scale_inputs_mean_standard_deviation(inputs_descriptives);
+    }
+    break;
 
-      default:
-      {
-         ostringstream buffer;
+    default:
+    {
+        ostringstream buffer;
 
-         buffer << "OpenNN Exception: DataSet class\n"
-                << "void scale_inputs(const string&, const Tensor<Descriptives, 1>&) method.\n"
-                << "Unknown scaling and unscaling method.\n";
+        buffer << "OpenNN Exception: DataSet class\n"
+               << "void scale_inputs(const string&, const Tensor<Descriptives, 1>&) method.\n"
+               << "Unknown scaling and unscaling method.\n";
 
-         throw logic_error(buffer.str());
-      }
-   }
+        throw logic_error(buffer.str());
+    }
+    }
 }
 
 
@@ -6049,46 +6061,46 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
-   {
-       switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
-       {
-          case NoScaling:
-          {
-              // Do nothing
-          }
-          break;
+    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    {
+        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        {
+        case NoScaling:
+        {
+            // Do nothing
+        }
+        break;
 
-          case MinimumMaximum:
-          {
-             scale_input_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
-          }
-          break;
+        case MinimumMaximum:
+        {
+            scale_input_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
 
-          case MeanStandardDeviation:
-          {
-              scale_input_mean_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
-          }
-          break;
+        case MeanStandardDeviation:
+        {
+            scale_input_mean_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
 
-          case StandardDeviation:
-          {
-               scale_input_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
-          }
-          break;
+        case StandardDeviation:
+        {
+            scale_input_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
 
-          default:
-          {
-             ostringstream buffer;
+        default:
+        {
+            ostringstream buffer;
 
-             buffer << "OpenNN Exception: DataSet class\n"
-                    << "void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                    << "Unknown scaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown scaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
 
-             throw logic_error(buffer.str());
-          }
-       }
-   }
+            throw logic_error(buffer.str());
+        }
+        }
+    }
 }
 
 
@@ -6100,9 +6112,9 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-/*
-    scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
-*/
+    /*
+        scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
+    */
 }
 
 
@@ -6112,26 +6124,26 @@ void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1
 
 Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Descriptives, 1> scale_targets_mean_standard_deviation() method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Descriptives, 1> scale_targets_mean_standard_deviation() method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
-   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
+    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-   scale_targets_mean_standard_deviation(targets_descriptives);
+    scale_targets_mean_standard_deviation(targets_descriptives);
 
-   return targets_descriptives;
+    return targets_descriptives;
 }
 
 
@@ -6142,20 +6154,20 @@ Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
 
 void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Descriptives, 1> scale_targets_minimum_maximum() method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Descriptives, 1> scale_targets_minimum_maximum() method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
@@ -6169,11 +6181,11 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
 
 Tensor<Descriptives, 1> DataSet::scale_targets_minimum_maximum()
 {
-   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
+    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-   scale_targets_minimum_maximum(targets_descriptives);
+    scale_targets_minimum_maximum(targets_descriptives);
 
-   return targets_descriptives;
+    return targets_descriptives;
 }
 
 
@@ -6184,25 +6196,25 @@ Tensor<Descriptives, 1> DataSet::scale_targets_minimum_maximum()
 
 void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_descriptives)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(is_empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "Tensor<Descriptives, 1> scale_targets_logarithmic() method.\n"
-              << "Data file is not loaded.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Descriptives, 1> scale_targets_logarithmic() method.\n"
+               << "Data file is not loaded.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-/*
-    scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
-*/
+    /*
+        scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
+    */
 }
 
 
@@ -6213,11 +6225,11 @@ void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_d
 
 Tensor<Descriptives, 1> DataSet::scale_targets_logarithmic()
 {
-   const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
+    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-   scale_targets_logarithmic(targets_descriptives);
+    scale_targets_logarithmic(targets_descriptives);
 
-   return targets_descriptives;
+    return targets_descriptives;
 }
 
 
@@ -6229,7 +6241,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_logarithmic()
 Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_method)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
-   {
+    {
     case NoUnscaling:
     {
         return calculate_target_variables_descriptives();
@@ -6260,7 +6272,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 
         throw logic_error(buffer.str());
     }
-   }
+    }
 }
 
 
@@ -6270,14 +6282,21 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& targets_descriptives)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
-   {
-    case NoUnscaling: break;
+    {
+    case NoUnscaling:
+        break;
 
-    case MinimumMaximum: scale_targets_minimum_maximum(targets_descriptives); break;
+    case MinimumMaximum:
+        scale_targets_minimum_maximum(targets_descriptives);
+        break;
 
-    case MeanStandardDeviation: scale_targets_mean_standard_deviation(targets_descriptives); break;
+    case MeanStandardDeviation:
+        scale_targets_mean_standard_deviation(targets_descriptives);
+        break;
 
-    case Logarithmic: scale_targets_logarithmic(targets_descriptives); break;
+    case Logarithmic:
+        scale_targets_logarithmic(targets_descriptives);
+        break;
 
     default:
     {
@@ -6289,7 +6308,7 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor
 
         throw logic_error(buffer.str());
     }
-   }
+    }
 }
 
 
@@ -6300,9 +6319,9 @@ void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor
 
 void DataSet::unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
-/*
-   unscale_mean_standard_deviation(data, data_descriptives);
-*/
+    /*
+       unscale_mean_standard_deviation(data, data_descriptives);
+    */
 }
 
 
@@ -6313,9 +6332,9 @@ void DataSet::unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>
 
 void DataSet::unscale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
-/*
-   unscale_minimum_maximum(data, data_descriptives);
-*/
+    /*
+       unscale_minimum_maximum(data, data_descriptives);
+    */
 }
 
 
@@ -6327,9 +6346,9 @@ void DataSet::unscale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_d
 void DataSet::unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-/*
-    unscale_columns_mean_standard_deviation(data, data_descriptives, input_variables_indices);
-*/
+    /*
+        unscale_columns_mean_standard_deviation(data, data_descriptives, input_variables_indices);
+    */
 }
 
 
@@ -6341,9 +6360,9 @@ void DataSet::unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 
 void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-/*
-    unscale_columns_minimum_maximum(data, data_descriptives, input_variables_indices);
-*/
+    /*
+        unscale_columns_minimum_maximum(data, data_descriptives, input_variables_indices);
+    */
 }
 
 
@@ -6355,9 +6374,9 @@ void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& data
 void DataSet::unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-/*
-    unscale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
-*/
+    /*
+        unscale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
+    */
 }
 
 
@@ -6369,9 +6388,9 @@ void DataSet::unscale_targets_mean_standard_deviation(const Tensor<Descriptives,
 void DataSet::unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-/*
-    unscale_columns_minimum_maximum(data, data_descriptives, target_variables_indices);
-*/
+    /*
+        unscale_columns_minimum_maximum(data, data_descriptives, target_variables_indices);
+    */
 }
 
 
@@ -6380,7 +6399,7 @@ void DataSet::unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>& dat
 
 void DataSet::initialize_data(const type& new_value)
 {
-   data.setConstant(new_value);
+    data.setConstant(new_value);
 }
 
 
@@ -6389,7 +6408,7 @@ void DataSet::initialize_data(const type& new_value)
 
 void DataSet::set_data_random()
 {
-   data.setRandom();
+    data.setRandom();
 }
 
 
@@ -6397,118 +6416,118 @@ void DataSet::set_data_random()
 
 tinyxml2::XMLDocument* DataSet::to_XML() const
 {
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   ostringstream buffer;
+    ostringstream buffer;
 
-   // Data set
+    // Data set
 
-   tinyxml2::XMLElement* data_set_element = document->NewElement("DataSet");
-   document->InsertFirstChild(data_set_element);
+    tinyxml2::XMLElement* data_set_element = document->NewElement("DataSet");
+    document->InsertFirstChild(data_set_element);
 
-   tinyxml2::XMLElement* element = nullptr;
-   tinyxml2::XMLText* text = nullptr;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
-   // Data file
+    // Data file
 
-   tinyxml2::XMLElement* data_file_element = document->NewElement("DataFile");
+    tinyxml2::XMLElement* data_file_element = document->NewElement("DataFile");
 
-   data_set_element->InsertFirstChild(data_file_element);
+    data_set_element->InsertFirstChild(data_file_element);
 
-   // Lags number
-   {
-       element = document->NewElement("LagsNumber");
-       data_file_element->LinkEndChild(element);
+    // Lags number
+    {
+        element = document->NewElement("LagsNumber");
+        data_file_element->LinkEndChild(element);
 
-       const Index lags_number = get_lags_number();
+        const Index lags_number = get_lags_number();
 
-       buffer.str("");
-       buffer << lags_number;
+        buffer.str("");
+        buffer << lags_number;
 
-       text = document->NewText(buffer.str().c_str());
-       element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Steps ahead
-   {
-       element = document->NewElement("StepsAhead");
-       data_file_element->LinkEndChild(element);
+    // Steps ahead
+    {
+        element = document->NewElement("StepsAhead");
+        data_file_element->LinkEndChild(element);
 
-       const Index steps_ahead = get_steps_ahead();
+        const Index steps_ahead = get_steps_ahead();
 
-       buffer.str("");
-       buffer << steps_ahead;
+        buffer.str("");
+        buffer << steps_ahead;
 
-       text = document->NewText(buffer.str().c_str());
-       element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Time index
-   {
-       element = document->NewElement("TimeIndex");
-       data_file_element->LinkEndChild(element);
+    // Time index
+    {
+        element = document->NewElement("TimeIndex");
+        data_file_element->LinkEndChild(element);
 
-       const Index time_index = get_time_index();
+        const Index time_index = get_time_index();
 
-       buffer.str("");
-       buffer << time_index;
+        buffer.str("");
+        buffer << time_index;
 
-       text = document->NewText(buffer.str().c_str());
-       element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Header line
-   {
-      element = document->NewElement("ColumnsNames");
-      data_file_element->LinkEndChild(element);
+    // Header line
+    {
+        element = document->NewElement("ColumnsNames");
+        data_file_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << has_columns_names;
+        buffer.str("");
+        buffer << has_columns_names;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Rows label
-   {
-      element = document->NewElement("rows_labels");
-      data_file_element->LinkEndChild(element);
+    // Rows label
+    {
+        element = document->NewElement("rows_labels");
+        data_file_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << has_rows_labels;
+        buffer.str("");
+        buffer << has_rows_labels;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Separator
-   {
-      element = document->NewElement("Separator");
-      data_file_element->LinkEndChild(element);
+    // Separator
+    {
+        element = document->NewElement("Separator");
+        data_file_element->LinkEndChild(element);
 
-      text = document->NewText(get_separator_string().c_str());
-      element->LinkEndChild(text);
-   }
+        text = document->NewText(get_separator_string().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Missing values label
-   {
-      element = document->NewElement("MissingValuesLabel");
-      data_file_element->LinkEndChild(element);
+    // Missing values label
+    {
+        element = document->NewElement("MissingValuesLabel");
+        data_file_element->LinkEndChild(element);
 
-      text = document->NewText(missing_values_label.c_str());
-      element->LinkEndChild(text);
-   }
+        text = document->NewText(missing_values_label.c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Data file name
-   {
-      element = document->NewElement("data_file_name");
-      data_file_element->LinkEndChild(element);
+    // Data file name
+    {
+        element = document->NewElement("data_file_name");
+        data_file_element->LinkEndChild(element);
 
-      text = document->NewText(data_file_name.c_str());
-      element->LinkEndChild(text);
-   }
+        text = document->NewText(data_file_name.c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Display
+    // Display
 //   {
 //      element = document->NewElement("Display");
 //      data_set_element->LinkEndChild(element);
@@ -6520,7 +6539,7 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-   return document;
+    return document;
 }
 
 
@@ -6844,517 +6863,517 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
 
-     // Data set element
+    // Data set element
 
-     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
-     if(!data_set_element)
-     {
+    if(!data_set_element)
+    {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data set element is nullptr.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     // Data file
+    // Data file
 
-     const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
+    const tinyxml2::XMLElement* data_file_element = data_set_element->FirstChildElement("DataFile");
 
-     if(!data_file_element)
-     {
+    if(!data_file_element)
+    {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data file element is nullptr.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     // Data file name
+    // Data file name
 
-     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
+    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
 
-     if(!data_file_name_element)
-     {
+    if(!data_file_name_element)
+    {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DataFileName element is nullptr.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     if(data_file_name_element->GetText())
-     {
-         const string new_data_file_name = data_file_name_element->GetText();
+    if(data_file_name_element->GetText())
+    {
+        const string new_data_file_name = data_file_name_element->GetText();
 
-         set_data_file_name(new_data_file_name);
-     }
+        set_data_file_name(new_data_file_name);
+    }
 
-     // Separator
+    // Separator
 
-     const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
+    const tinyxml2::XMLElement* separator_element = data_file_element->FirstChildElement("Separator");
 
-     if(separator_element)
-     {
-         if(separator_element->GetText())
-         {
-           const string new_separator = separator_element->GetText();
+    if(separator_element)
+    {
+        if(separator_element->GetText())
+        {
+            const string new_separator = separator_element->GetText();
 
-           set_separator(new_separator);
-         }
-         else
-         {
-             set_separator("Comma");
-         }
-     }
-     else
-     {
-         set_separator("Comma");
-     }
+            set_separator(new_separator);
+        }
+        else
+        {
+            set_separator("Comma");
+        }
+    }
+    else
+    {
+        set_separator("Comma");
+    }
 
-     // Has columns names
+    // Has columns names
 
-     const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
+    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
 
-     if(columns_names_element)
-     {
-         const string new_columns_names_string = columns_names_element->GetText();
+    if(columns_names_element)
+    {
+        const string new_columns_names_string = columns_names_element->GetText();
 
-         try
-         {
-             set_has_columns_names(new_columns_names_string == "1");
-         }
-         catch(const logic_error& e)
-         {
-             cerr << e.what() << endl;
-         }
-     }
+        try
+        {
+            set_has_columns_names(new_columns_names_string == "1");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 
-     // Rows label
+    // Rows label
 
-     const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
+    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
 
-     if(rows_label_element)
-     {
-         const string new_rows_label_string = rows_label_element->GetText();
+    if(rows_label_element)
+    {
+        const string new_rows_label_string = rows_label_element->GetText();
 
-         try
-         {
-             set_has_rows_label(new_rows_label_string == "1");
-         }
-         catch(const logic_error& e)
-         {
-             cerr << e.what() << endl;
-         }
-     }
+        try
+        {
+            set_has_rows_label(new_rows_label_string == "1");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 
-     // Missing values label
+    // Missing values label
 
-     const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
+    const tinyxml2::XMLElement* missing_values_label_element = data_file_element->FirstChildElement("MissingValuesLabel");
 
-     if(missing_values_label_element)
-     {
-         if(missing_values_label_element->GetText())
-         {
-             const string new_missing_values_label = missing_values_label_element->GetText();
+    if(missing_values_label_element)
+    {
+        if(missing_values_label_element->GetText())
+        {
+            const string new_missing_values_label = missing_values_label_element->GetText();
 
-             set_missing_values_label(new_missing_values_label);
-         }
-         else
-         {
-             set_missing_values_label("NA");
-         }
-     }
-     else
-     {
-         set_missing_values_label("NA");
-     }
+            set_missing_values_label(new_missing_values_label);
+        }
+        else
+        {
+            set_missing_values_label("NA");
+        }
+    }
+    else
+    {
+        set_missing_values_label("NA");
+    }
 
-     // Forecasting
+    // Forecasting
 
-     // Lags number
+    // Lags number
 
-     const tinyxml2::XMLElement* lags_number_element = data_file_element->FirstChildElement("LagsNumber");
+    const tinyxml2::XMLElement* lags_number_element = data_file_element->FirstChildElement("LagsNumber");
 
-     if(!lags_number_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Lags number element is nullptr.\n";
+    if(!lags_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Lags number element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(lags_number_element->GetText())
-     {
-         const Index new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
+    if(lags_number_element->GetText())
+    {
+        const Index new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
 
-         set_lags_number(new_lags_number);
-     }
+        set_lags_number(new_lags_number);
+    }
 
-     // Steps ahead
+    // Steps ahead
 
-     const tinyxml2::XMLElement* steps_ahead_element = data_file_element->FirstChildElement("StepsAhead");
+    const tinyxml2::XMLElement* steps_ahead_element = data_file_element->FirstChildElement("StepsAhead");
 
-     if(!steps_ahead_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Steps ahead element is nullptr.\n";
+    if(!steps_ahead_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Steps ahead element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(steps_ahead_element->GetText())
-     {
-         const Index new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
+    if(steps_ahead_element->GetText())
+    {
+        const Index new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
 
-         set_steps_ahead_number(new_steps_ahead);
-     }
+        set_steps_ahead_number(new_steps_ahead);
+    }
 
-     // Time index
+    // Time index
 
-     const tinyxml2::XMLElement* time_index_element = data_file_element->FirstChildElement("TimeIndex");
+    const tinyxml2::XMLElement* time_index_element = data_file_element->FirstChildElement("TimeIndex");
 
-     if(!time_index_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Time index element is nullptr.\n";
+    if(!time_index_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Time index element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(time_index_element->GetText())
-     {
-         const Index new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
+    if(time_index_element->GetText())
+    {
+        const Index new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
 
-         set_time_index(new_time_index);
-     }
+        set_time_index(new_time_index);
+    }
 
-     // Columns
+    // Columns
 
-     const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
+    const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
 
-     if(!columns_element)
-     {
+    if(!columns_element)
+    {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns element is nullptr.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     // Columns number
+    // Columns number
 
-     const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
+    const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
 
-     if(!columns_number_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Columns number element is nullptr.\n";
+    if(!columns_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Columns number element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     Index new_columns_number = 0;
+    Index new_columns_number = 0;
 
-     if(columns_number_element->GetText())
-     {
-         new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+    if(columns_number_element->GetText())
+    {
+        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
 
-         set_columns_number(new_columns_number);
-     }
+        set_columns_number(new_columns_number);
+    }
 
-     // Columns
+    // Columns
 
-     const tinyxml2::XMLElement* start_element = columns_number_element;
+    const tinyxml2::XMLElement* start_element = columns_number_element;
 
-     if(new_columns_number > 0)
-     {
-         for(Index i = 0; i < new_columns_number; i++)
-         {
-             const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
-             start_element = column_element;
+    if(new_columns_number > 0)
+    {
+        for(Index i = 0; i < new_columns_number; i++)
+        {
+            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
+            start_element = column_element;
 
-             if(column_element->Attribute("Item") != std::to_string(i+1))
-             {
-                 buffer << "OpenNN Exception: DataSet class.\n"
-                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                        << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
+            if(column_element->Attribute("Item") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                 throw logic_error(buffer.str());
-             }
+                throw logic_error(buffer.str());
+            }
 
-             // Name
+            // Name
 
-             const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
+            const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
 
-             if(!name_element)
-             {
+            if(!name_element)
+            {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
                 throw logic_error(buffer.str());
-             }
+            }
 
-             if(name_element->GetText())
-             {
-                 const string new_name = name_element->GetText();
+            if(name_element->GetText())
+            {
+                const string new_name = name_element->GetText();
 
-                 columns(i).name = new_name;
-             }
+                columns(i).name = new_name;
+            }
 
-             // Column use
+            // Column use
 
-             const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
+            const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
 
-             if(!column_use_element)
-             {
+            if(!column_use_element)
+            {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column use element is nullptr.\n";
 
                 throw logic_error(buffer.str());
-             }
+            }
 
-             if(column_use_element->GetText())
-             {
-                 const string new_column_use = column_use_element->GetText();
+            if(column_use_element->GetText())
+            {
+                const string new_column_use = column_use_element->GetText();
 
-                 columns(i).set_use(new_column_use);
-             }
+                columns(i).set_use(new_column_use);
+            }
 
-             // Type
+            // Type
 
-             const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
+            const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
 
-             if(!type_element)
-             {
+            if(!type_element)
+            {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
                 throw logic_error(buffer.str());
-             }
+            }
 
-             if(type_element->GetText())
-             {
-                 const string new_type = type_element->GetText();
+            if(type_element->GetText())
+            {
+                const string new_type = type_element->GetText();
 
-                 columns(i).set_type(new_type);
-             }
+                columns(i).set_type(new_type);
+            }
 
-             if(columns(i).type == Categorical)
-             {
-                 // Categories
+            if(columns(i).type == Categorical)
+            {
+                // Categories
 
-                 const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
+                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
 
-                 if(!categories_element)
-                 {
+                if(!categories_element)
+                {
                     buffer << "OpenNN Exception: DataSet class.\n"
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
                     throw logic_error(buffer.str());
-                 }
+                }
 
-                 if(categories_element->GetText())
-                 {
-                     const string new_categories = categories_element->GetText();
+                if(categories_element->GetText())
+                {
+                    const string new_categories = categories_element->GetText();
 
-                     columns(i).categories = get_tokens(new_categories, ' ');
-                 }
+                    columns(i).categories = get_tokens(new_categories, ' ');
+                }
 
-                 // Categories uses
+                // Categories uses
 
-                 const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
+                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
 
-                 if(!categories_uses_element)
-                 {
+                if(!categories_uses_element)
+                {
                     buffer << "OpenNN Exception: DataSet class.\n"
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
                     throw logic_error(buffer.str());
-                 }
+                }
 
-                 if(categories_uses_element->GetText())
-                 {
-                     const string new_categories_uses = categories_uses_element->GetText();
+                if(categories_uses_element->GetText())
+                {
+                    const string new_categories_uses = categories_uses_element->GetText();
 
-                     columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
-                 }
-             }
+                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
+                }
+            }
 
-         }
-     }
+        }
+    }
 
-     // Instances
+    // Instances
 
-     const tinyxml2::XMLElement* instances_element = data_set_element->FirstChildElement("Instances");
+    const tinyxml2::XMLElement* instances_element = data_set_element->FirstChildElement("Instances");
 
-     if(!instances_element)
-     {
+    if(!instances_element)
+    {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Instances element is nullptr.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     // Instances number
+    // Instances number
 
-     const tinyxml2::XMLElement* instances_number_element = instances_element->FirstChildElement("InstancesNumber");
+    const tinyxml2::XMLElement* instances_number_element = instances_element->FirstChildElement("InstancesNumber");
 
-     if(!instances_number_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Instances number element is nullptr.\n";
+    if(!instances_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Instances number element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(instances_number_element->GetText())
-     {
-         const Index new_instances_number = static_cast<Index>(atoi(instances_number_element->GetText()));
+    if(instances_number_element->GetText())
+    {
+        const Index new_instances_number = static_cast<Index>(atoi(instances_number_element->GetText()));
 
-         instances_uses.resize(new_instances_number);
-     }
+        instances_uses.resize(new_instances_number);
+    }
 
-     // Instances uses
+    // Instances uses
 
-     const tinyxml2::XMLElement* instances_uses_element = instances_element->FirstChildElement("InstancesUses");
+    const tinyxml2::XMLElement* instances_uses_element = instances_element->FirstChildElement("InstancesUses");
 
-     if(!instances_uses_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Instances uses element is nullptr.\n";
+    if(!instances_uses_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Instances uses element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(instances_uses_element->GetText())
-     {
-         set_instances_uses(get_tokens(instances_uses_element->GetText(), ' '));
-     }
+    if(instances_uses_element->GetText())
+    {
+        set_instances_uses(get_tokens(instances_uses_element->GetText(), ' '));
+    }
 
-     // Missing values
+    // Missing values
 
-     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
-     if(!missing_values_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Missing values element is nullptr.\n";
+    if(!missing_values_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     // Missing values method
+    // Missing values method
 
-     const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
-     if(!missing_values_method_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Missing values method element is nullptr.\n";
+    if(!missing_values_method_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values method element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     if(missing_values_method_element->GetText())
-     {
-         set_missing_values_method(missing_values_method_element->GetText());
-     }
+    if(missing_values_method_element->GetText())
+    {
+        set_missing_values_method(missing_values_method_element->GetText());
+    }
 
-     cout << "missing values mehtod" << endl;
+    cout << "missing values mehtod" << endl;
 
-     // Preview data
+    // Preview data
 
-     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
-     if(!preview_data_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Preview data element is nullptr.\n";
+    if(!preview_data_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Preview data element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     // Preview size
+    // Preview size
 
-     const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
-     if(!preview_size_element)
-     {
-         buffer << "OpenNN Exception: DataSet class.\n"
-                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                << "Preview size element is nullptr.\n";
+    if(!preview_size_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Preview size element is nullptr.\n";
 
-         throw logic_error(buffer.str());
-     }
+        throw logic_error(buffer.str());
+    }
 
-     Index new_preview_size = 0;
+    Index new_preview_size = 0;
 
-     if(preview_size_element->GetText())
-     {
-         new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+    if(preview_size_element->GetText())
+    {
+        new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 
-         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
-     }
+        if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
+    }
 
-     // Preview data
+    // Preview data
 
-     start_element = preview_size_element;
+    start_element = preview_size_element;
 
-     for(Index i = 0; i < new_preview_size; i++)
-     {
-         const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
-         start_element = row_element;
+    for(Index i = 0; i < new_preview_size; i++)
+    {
+        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+        start_element = row_element;
 
-         if(row_element->Attribute("Item") != std::to_string(i+1))
-         {
-             buffer << "OpenNN Exception: DataSet class.\n"
-                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                    << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+        if(row_element->Attribute("Item") != std::to_string(i+1))
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-             throw logic_error(buffer.str());
-         }
+            throw logic_error(buffer.str());
+        }
 
-         if(row_element->GetText())
-         {
-             data_file_preview(i) = get_tokens(row_element->GetText(), ' ');
-         }
-     }
+        if(row_element->GetText())
+        {
+            data_file_preview(i) = get_tokens(row_element->GetText(), ' ');
+        }
+    }
 
-     // Display
+    // Display
 
-     /*
-     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    /*
+    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
-     if(display_element)
-     {
-         const string new_display_string = display_element->GetText();
+    if(display_element)
+    {
+        const string new_display_string = display_element->GetText();
 
-         try
-         {
-             set_display(new_display_string != "0");
-         }
-         catch(const logic_error& e)
-         {
-             cerr << e.what() << endl;
-         }
-     }
-     */
+        try
+        {
+            set_display(new_display_string != "0");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
+    */
 }
 
 
@@ -7362,17 +7381,17 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 string DataSet::object_to_string() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   buffer << "Data set object\n"
-          << "Data file name: " << data_file_name << "\n"
-          << "Header line: " << has_columns_names << "\n"
-          << "Separator: " << separator << "\n"
-          << "Missing values label: " << missing_values_label << "\n"
-          << "Data:\n" << data << "\n"
-          << "Display: " << display << "\n";
+    buffer << "Data set object\n"
+           << "Data file name: " << data_file_name << "\n"
+           << "Header line: " << has_columns_names << "\n"
+           << "Separator: " << separator << "\n"
+           << "Missing values label: " << missing_values_label << "\n"
+           << "Data:\n" << data << "\n"
+           << "Display: " << display << "\n";
 
-   return buffer.str();
+    return buffer.str();
 }
 
 
@@ -7380,10 +7399,10 @@ string DataSet::object_to_string() const
 
 void DataSet::print() const
 {
-   if(display)
-   {
-      cout << object_to_string();
-   }
+    if(display)
+    {
+        cout << object_to_string();
+    }
 }
 
 
@@ -7449,20 +7468,20 @@ void DataSet::save(const string& file_name) const
 
 void DataSet::load(const string& file_name)
 {
-   tinyxml2::XMLDocument document;
+    tinyxml2::XMLDocument document;
 
-   if(document.LoadFile(file_name.c_str()))
-   {
-      ostringstream buffer;
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void load(const string&) method.\n"
-             << "Cannot load XML file " << file_name << ".\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   from_XML(document);
+    from_XML(document);
 }
 
 
@@ -7486,7 +7505,7 @@ void DataSet::print_columns_types() const
 
 void DataSet::print_data() const
 {
-   if(display) cout << data << endl;
+    if(display) cout << data << endl;
 }
 
 
@@ -7495,33 +7514,33 @@ void DataSet::print_data() const
 
 void DataSet::print_data_preview() const
 {
-   if(display)
-   {
-       const Index instances_number = get_instances_number();
+    if(display)
+    {
+        const Index instances_number = get_instances_number();
 
-       if(instances_number > 0)
-       {
-          const Tensor<type, 1> first_instance = data.chip(0, 0);
+        if(instances_number > 0)
+        {
+            const Tensor<type, 1> first_instance = data.chip(0, 0);
 
-          cout << "First instance:\n"
-                    << first_instance << endl;
-       }
+            cout << "First instance:\n"
+                 << first_instance << endl;
+        }
 
-       if(instances_number > 1)
-       {
-          const Tensor<type, 1> second_instance = data.chip(1, 0);
+        if(instances_number > 1)
+        {
+            const Tensor<type, 1> second_instance = data.chip(1, 0);
 
-          cout << "Second instance:\n"
-                    << second_instance << endl;
-       }
+            cout << "Second instance:\n"
+                 << second_instance << endl;
+        }
 
-       if(instances_number > 2)
-       {
-          const Tensor<type, 1> last_instance = data.chip(instances_number-1, 0);
+        if(instances_number > 2)
+        {
+            const Tensor<type, 1> last_instance = data.chip(instances_number-1, 0);
 
-          cout << "Instance " << instances_number << ":\n"
-                    << last_instance << endl;
-       }
+            cout << "Instance " << instances_number << ":\n"
+                 << last_instance << endl;
+        }
     }
 }
 
@@ -7530,9 +7549,9 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-/*
-    data.save_csv(data_file_name);
-*/
+    /*
+        data.save_csv(data_file_name);
+    */
 }
 
 
@@ -7544,13 +7563,13 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     if(!file.is_open())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet template." << endl
-              << "void save_data_binary(const string) method." << endl
-              << "Cannot open data binary file." << endl;
+        buffer << "OpenNN Exception: DataSet template." << endl
+               << "void save_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Write data
@@ -7605,16 +7624,16 @@ void DataSet::transform_time_series()
     transform_columns_time_series();
 
     Tensor<InstanceUse, 1> new_instance_uses(data.dimension(0));
-/*
-    instances_uses = new_instance_uses;
+    /*
+        instances_uses = new_instance_uses;
 
-    const Index inputs_number = get_input_variables_number();
-    const Index targets_number = get_target_variables_number();
+        const Index inputs_number = get_input_variables_number();
+        const Index targets_number = get_target_variables_number();
 
-    input_variables_dimensions.resize(Tensor<Index, 1>({inputs_number}));
+        input_variables_dimensions.resize(Tensor<Index, 1>({inputs_number}));
 
-    target_variables_dimensions.resize(Tensor<Index, 1>({targets_number}));
-*/
+        target_variables_dimensions.resize(Tensor<Index, 1>({targets_number}));
+    */
 }
 
 
@@ -7623,9 +7642,9 @@ void DataSet::transform_time_series()
 
 void DataSet::transform_association()
 {
-/*
-    OpenNN::transform_association(data);
-*/
+    /*
+        OpenNN::transform_association(data);
+    */
 }
 
 
@@ -7643,50 +7662,50 @@ void DataSet::delete_unused_instances()
             j++;
         }
     }
-/*
-    data = data.delete_rows(index);
-*/
+    /*
+        data = data.delete_rows(index);
+    */
 }
 
 
 void DataSet::fill_time_series(const Index& period )
 {
-/*
-    Index rows = static_cast<Index>((data(data.dimension(0)- 1, 0)- data(0,0)) / period) + 1 ;
+    /*
+        Index rows = static_cast<Index>((data(data.dimension(0)- 1, 0)- data(0,0)) / period) + 1 ;
 
-    Tensor<type, 2> new_data(rows, data.dimension(1));
+        Tensor<type, 2> new_data(rows, data.dimension(1));
 
-    new_data.setConstant(static_cast<type>(NAN));
+        new_data.setConstant(static_cast<type>(NAN));
 
-    Index j = 1;
+        Index j = 1;
 
-    new_data.set_row(0, data.chip(0, 0));
+        new_data.set_row(0, data.chip(0, 0));
 
-    cout.precision(20);
+        cout.precision(20);
 
-    for (Index i = 1; i < rows ; i++)
-    {
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(j - 1, 0)))
-      {
+        for (Index i = 1; i < rows ; i++)
+        {
+          if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(j - 1, 0)))
+          {
 
-          j = j + 1;
-      }
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(0,0) + i * period))
-      {
-          new_data.set_row(i, data.chip(j, 0));
+              j = j + 1;
+          }
+          if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(0,0) + i * period))
+          {
+              new_data.set_row(i, data.chip(j, 0));
 
-          j = j + 1;
-      }
-      else
-      {
-          new_data(i,0) = data(0,0) + i * period;
-      }
-    }
+              j = j + 1;
+          }
+          else
+          {
+              new_data(i,0) = data(0,0) + i * period;
+          }
+        }
 
-    time_series_data = new_data;
+        time_series_data = new_data;
 
-    data = new_data;
-*/
+        data = new_data;
+    */
 }
 
 
@@ -7730,15 +7749,15 @@ void DataSet::load_data_binary()
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
-       data(row_index, column_index) = value;
+        data(row_index, column_index) = value;
 
-       row_index++;
+        row_index++;
 
-       if((i+1)%rows_number == 0)
-       {
-           column_index++;
-           row_index = 0;
-       }
+        if((i+1)%rows_number == 0)
+        {
+            column_index++;
+            row_index = 0;
+        }
     }
 
     file.close();
@@ -7749,9 +7768,9 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary()
 {
-/*
-    time_series_data.load_binary(data_file_name);
-*/
+    /*
+        time_series_data.load_binary(data_file_name);
+    */
 }
 
 
@@ -7763,58 +7782,58 @@ void DataSet::load_time_series_data_binary()
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
-   const Index instances_number = get_instances_number();
-   const Index targets_number = get_target_variables_number();
-   const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Index instances_number = get_instances_number();
+    const Index targets_number = get_target_variables_number();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   Tensor<Index, 1> class_distribution;
-/*
-   if(targets_number == 1) // Two classes
-   {
-      class_distribution.resize(2, 0);
+    Tensor<Index, 1> class_distribution;
+    /*
+       if(targets_number == 1) // Two classes
+       {
+          class_distribution.resize(2, 0);
 
-      Index target_index = target_variables_indices(0);
+          Index target_index = target_variables_indices(0);
 
-      Index positives = 0;
-      Index negatives = 0;
+          Index positives = 0;
+          Index negatives = 0;
 
-      for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
-      {
-          if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
+          for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
           {
-              if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
+              if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
               {
-                  negatives++;
-              }
-              else
-              {
-                  positives++;
+                  if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
+                  {
+                      negatives++;
+                  }
+                  else
+                  {
+                      positives++;
+                  }
               }
           }
-      }
 
-      class_distribution(0) = negatives;
-      class_distribution(1) = positives;
-   }
-   else // More than two classes
-   {
-      class_distribution.resize(targets_number, 0);
+          class_distribution(0) = negatives;
+          class_distribution(1) = positives;
+       }
+       else // More than two classes
+       {
+          class_distribution.resize(targets_number, 0);
 
-      for(Index i = 0; i < instances_number; i++)
-      {
-          if(get_instance_use(i) != UnusedInstance)
+          for(Index i = 0; i < instances_number; i++)
           {
-             for(Index j = 0; j < targets_number; j++)
-             {
-                 if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
+              if(get_instance_use(i) != UnusedInstance)
+              {
+                 for(Index j = 0; j < targets_number; j++)
+                 {
+                     if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
 
-                 if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
-             }
+                     if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
+                 }
+              }
           }
-      }
-   }
-*/
-   return class_distribution;
+       }
+    */
+    return class_distribution;
 }
 
 
@@ -7831,43 +7850,43 @@ Tensor<Index, 1> DataSet::balance_binary_targets_distribution(const type& percen
     const Index instances_number = get_used_instances_number();
 
     const Tensor<Index, 1> target_class_distribution = calculate_target_distribution();
-/*
-    const Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.cast<type>(), 2);
+    /*
+        const Tensor<Index, 1> maximal_indices = OpenNN::maximal_indices(target_class_distribution.cast<type>(), 2);
 
-    const Index maximal_target_class_index = maximal_indices(0);
-    const Index minimal_target_class_index = maximal_indices(1);
+        const Index maximal_target_class_index = maximal_indices(0);
+        const Index minimal_target_class_index = maximal_indices(1);
 
-    Index total_unbalanced_instances_number = static_cast<Index>((percentage/100.0)*(target_class_distribution(maximal_target_class_index) - target_class_distribution(minimal_target_class_index)));
+        Index total_unbalanced_instances_number = static_cast<Index>((percentage/100.0)*(target_class_distribution(maximal_target_class_index) - target_class_distribution(minimal_target_class_index)));
 
-    Index actual_unused_instances_number;
+        Index actual_unused_instances_number;
 
-    Index unbalanced_instances_number = total_unbalanced_instances_number/10;
+        Index unbalanced_instances_number = total_unbalanced_instances_number/10;
 
-    Tensor<Index, 1> actual_unused_instances;
+        Tensor<Index, 1> actual_unused_instances;
 
-    while(total_unbalanced_instances_number != 0)
-    {
-        if(total_unbalanced_instances_number < instances_number/10)
+        while(total_unbalanced_instances_number != 0)
         {
-           unbalanced_instances_number = total_unbalanced_instances_number;
+            if(total_unbalanced_instances_number < instances_number/10)
+            {
+               unbalanced_instances_number = total_unbalanced_instances_number;
+            }
+            else if(total_unbalanced_instances_number > 0 && unbalanced_instances_number < 1)
+            {
+                unbalanced_instances_number = total_unbalanced_instances_number;
+            }
+
+            actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
+
+            actual_unused_instances_number = actual_unused_size();
+
+            unused_instances = unused_assemble(actual_unused_instances);
+
+            total_unbalanced_instances_number = total_unbalanced_instances_number - actual_unused_instances_number;
+
+            actual_unused_clear();
+
         }
-        else if(total_unbalanced_instances_number > 0 && unbalanced_instances_number < 1)
-        {
-            unbalanced_instances_number = total_unbalanced_instances_number;
-        }
-
-        actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
-
-        actual_unused_instances_number = actual_unused_size();
-
-        unused_instances = unused_assemble(actual_unused_instances);
-
-        total_unbalanced_instances_number = total_unbalanced_instances_number - actual_unused_instances_number;
-
-        actual_unused_clear();
-
-    }
-*/
+    */
     return unused_instances;
 }
 
@@ -7880,103 +7899,103 @@ Tensor<Index, 1> DataSet::balance_binary_targets_distribution(const type& percen
 Tensor<Index, 1> DataSet::balance_multiple_targets_distribution()
 {
     Tensor<Index, 1> unused_instances;
-/*
-    const Index bins_number = 10;
+    /*
+        const Index bins_number = 10;
 
-    const Tensor<Index, 1> target_class_distribution = calculate_target_distribution();
+        const Tensor<Index, 1> target_class_distribution = calculate_target_distribution();
 
-    const Index targets_number = get_target_variables_number();
+        const Index targets_number = get_target_variables_number();
 
-    const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> targets_variables_indices = get_target_variables_indices();
+        const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
+        const Tensor<Index, 1> targets_variables_indices = get_target_variables_indices();
 
-    const Tensor<Index, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.cast<type>(), targets_number);
+        const Tensor<Index, 1> maximal_target_class_indices = maximal_indices(target_class_distribution.cast<type>(), targets_number);
 
-    const Index minimal_target_class_index = maximal_target_class_indices(targets_number - 1);
+        const Index minimal_target_class_index = maximal_target_class_indices(targets_number - 1);
 
-    // Target class differences
+        // Target class differences
 
-    Tensor<Index, 1> target_class_differences(targets_number);
+        Tensor<Index, 1> target_class_differences(targets_number);
 
-    for(Index i = 0; i < targets_number; i++)
-    {
-        target_class_differences(i) = target_class_distribution(i) - target_class_distribution(minimal_target_class_index);
-    }
-
-    Tensor<type, 1> instance;
-
-    Index count_instances = 0;
-
-    Index unbalanced_instances_number;
-
-    Index instances_number;
-    Tensor<Index, 1> instances_indices;
-
-    Tensor<Histogram, 1> data_histograms;
-
-    Tensor<Index, 2> total_frequencies;
-    Tensor<Index, 1> instance_frequencies;
-
-    Index maximal_difference_index;
-    Index instance_index;
-    Index instance_target_index;
-
-    Tensor<Index, 1> unbalanced_instances_indices;
-
-    while(!target_class_differences.is_in(0, 0))
-    {
-        unbalanced_instances_indices.clear();
-        instances_indices.clear();
-
-        instances_indices = get_used_instances_indices();
-
-        instances_number = instances_indices.size();
-
-        maximal_difference_index = maximal_index(target_class_differences.cast<type>());
-
-        unbalanced_instances_number = static_cast<Index>(target_class_differences(maximal_difference_index)/10);
-
-        if(unbalanced_instances_number < 1)
+        for(Index i = 0; i < targets_number; i++)
         {
-            unbalanced_instances_number = 1;
+            target_class_differences(i) = target_class_distribution(i) - target_class_distribution(minimal_target_class_index);
         }
 
-        data_histograms = calculate_columns_histograms(bins_number);
+        Tensor<type, 1> instance;
 
-        total_frequencies.clear();
+        Index count_instances = 0;
 
-        total_frequencies.resize(instances_number, 2);
+        Index unbalanced_instances_number;
 
-        count_instances = 0;
+        Index instances_number;
+        Tensor<Index, 1> instances_indices;
 
-        for(Index i = 0; i < instances_number; i++)
+        Tensor<Histogram, 1> data_histograms;
+
+        Tensor<Index, 2> total_frequencies;
+        Tensor<Index, 1> instance_frequencies;
+
+        Index maximal_difference_index;
+        Index instance_index;
+        Index instance_target_index;
+
+        Tensor<Index, 1> unbalanced_instances_indices;
+
+        while(!target_class_differences.is_in(0, 0))
         {
-            instance_index = instances_indices(i);
+            unbalanced_instances_indices.clear();
+            instances_indices.clear();
 
-            instance = get_instance_data(instance_index);
+            instances_indices = get_used_instances_indices();
 
-            instance_target_index = targets_variables_indices(maximal_difference_index);
+            instances_number = instances_indices.size();
 
-            if(instance(instance_target_index) == 1.0)
+            maximal_difference_index = maximal_index(target_class_differences.cast<type>());
+
+            unbalanced_instances_number = static_cast<Index>(target_class_differences(maximal_difference_index)/10);
+
+            if(unbalanced_instances_number < 1)
             {
-                //instance_frequencies = instance.total_frequencies(data_histograms);
-
-                total_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs_variables_indices);
-                total_frequencies(count_instances, 1) = instance_index;
-
-                count_instances++;
+                unbalanced_instances_number = 1;
             }
+
+            data_histograms = calculate_columns_histograms(bins_number);
+
+            total_frequencies.clear();
+
+            total_frequencies.resize(instances_number, 2);
+
+            count_instances = 0;
+
+            for(Index i = 0; i < instances_number; i++)
+            {
+                instance_index = instances_indices(i);
+
+                instance = get_instance_data(instance_index);
+
+                instance_target_index = targets_variables_indices(maximal_difference_index);
+
+                if(instance(instance_target_index) == 1.0)
+                {
+                    //instance_frequencies = instance.total_frequencies(data_histograms);
+
+                    total_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs_variables_indices);
+                    total_frequencies(count_instances, 1) = instance_index;
+
+                    count_instances++;
+                }
+            }
+
+            unbalanced_instances_indices = total_frequencies.sort_descending(0).get_column(1).get_first(unbalanced_instances_number);
+
+            unused_instances = unused_assemble(unbalanced_instances_indices);
+
+            set_unused(unbalanced_instances_indices);
+
+            target_class_differences(maximal_difference_index) = target_class_differences(maximal_difference_index) - unbalanced_instances_number;
         }
-
-        unbalanced_instances_indices = total_frequencies.sort_descending(0).get_column(1).get_first(unbalanced_instances_number);
-
-        unused_instances = unused_assemble(unbalanced_instances_indices);
-
-        set_unused(unbalanced_instances_indices);
-
-        target_class_differences(maximal_difference_index) = target_class_differences(maximal_difference_index) - unbalanced_instances_number;
-    }
-*/
+    */
     return unused_instances;
 }
 
@@ -8025,23 +8044,23 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
     Index maximum_frequency = 0;
 
     Index unused = 0;
-/*
-    for(Index i = 0; i < targets_number; i++)
-    {
-        frequency = data_histograms(targets(i) - unused_variables.count_less_than(targets(i))).calculate_maximum_frequency();
-
-        if(frequency > maximum_frequency)
+    /*
+        for(Index i = 0; i < targets_number; i++)
         {
-            unused = unused_variables.count_less_than(targets(i));
+            frequency = data_histograms(targets(i) - unused_variables.count_less_than(targets(i))).calculate_maximum_frequency();
 
-            maximum_frequency = frequency;
+            if(frequency > maximum_frequency)
+            {
+                unused = unused_variables.count_less_than(targets(i));
 
-            most_populated_target = targets(i);
+                maximum_frequency = frequency;
 
-            most_populated_bin = data_histograms(targets(i) - unused).calculate_most_populated_bin();
+                most_populated_target = targets(i);
+
+                most_populated_bin = data_histograms(targets(i) - unused).calculate_most_populated_bin();
+            }
         }
-    }
-*/
+    */
     // Calculates frequencies of the instances which belong to the most populated target
 
     Index index;
@@ -8070,25 +8089,25 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
 //            instance_frequencies = instance.total_frequencies(data_histograms);
 //            instance_frequencies = total_frequencies(data_histograms);
-/*
-            total_instances_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs);
-            total_instances_frequencies(count_instances, 1) = used_instances(i);
-*/
+            /*
+                        total_instances_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs);
+                        total_instances_frequencies(count_instances, 1) = used_instances(i);
+            */
             count_instances++;
         }
     }
 
     // Unuses instances
-/*
-    if(instances_to_unuse > maximum_frequency)
-    {
-        most_populated_instances = total_instances_frequencies.sort_descending(0).get_column(1).get_first(maximum_frequency);
-    }
-    else
-    {
-        most_populated_instances = total_instances_frequencies.sort_descending(0).get_column(1).get_first(instances_to_unuse);
-    }
-*/
+    /*
+        if(instances_to_unuse > maximum_frequency)
+        {
+            most_populated_instances = total_instances_frequencies.sort_descending(0).get_column(1).get_first(maximum_frequency);
+        }
+        else
+        {
+            most_populated_instances = total_instances_frequencies.sort_descending(0).get_column(1).get_first(instances_to_unuse);
+        }
+    */
     set_instances_unused(most_populated_instances);
 
     return most_populated_instances;
@@ -8111,26 +8130,26 @@ Tensor<Index, 1> DataSet::balance_approximation_targets_distribution(const type&
 
     Index count;
 
-/*
-    while(unused_size() < instances_to_unuse)
-    {
-        if(instances_to_unuse - unused_size() < instances_to_unuse/10)
+    /*
+        while(unused_size() < instances_to_unuse)
         {
-            count = instances_to_unuse - unused_size();
-        }
-        else
-        {
-            count = instances_to_unuse/10;
-        }
+            if(instances_to_unuse - unused_size() < instances_to_unuse/10)
+            {
+                count = instances_to_unuse - unused_size();
+            }
+            else
+            {
+                count = instances_to_unuse/10;
+            }
 
-        if(count == 0)
-        {
-            count = 1;
-        }
+            if(count == 0)
+            {
+                count = 1;
+            }
 
-        unused_instances = unused_assemble(unuse_most_populated_target(count));
-    }
-*/
+            unused_instances = unused_assemble(unuse_most_populated_target(count));
+        }
+    */
     return unused_instances;
 }
 
@@ -8150,32 +8169,32 @@ Tensor<Index, 1> DataSet::calculate_Tukey_outliers(const Index& column_index, co
     const Tensor<Index, 1> instances_indices = get_used_instances_indices();
 
     type interquartile_range;
-/*
-    const BoxPlot box_plot = OpenNN::box_plot(get_column_data(column_index).to_vector());
+    /*
+        const BoxPlot box_plot = OpenNN::box_plot(get_column_data(column_index).to_vector());
 
-    if(abs(box_plot.third_quartile - box_plot.first_quartile) < numeric_limits<type>::epsilon())
-    {
-        return outliers;
-    }
-    else
-    {
-        interquartile_range = abs((box_plot.third_quartile - box_plot.first_quartile));
-    }   
-
-    for(Index j = 0; j < instances_number; j++)
-    {
-        const Tensor<type, 1> instance = get_instance(instances_indices(j));
-
-        if(instance(variable_index) < (box_plot(1) - cleaning_parameter*interquartile_range))
+        if(abs(box_plot.third_quartile - box_plot.first_quartile) < numeric_limits<type>::epsilon())
         {
-            outliers.push_back(instances_indices(j));
+            return outliers;
         }
-        else if(instance(variable_index) >(box_plot(3) + cleaning_parameter*interquartile_range))
+        else
         {
-            outliers.push_back(instances_indices(j));
+            interquartile_range = abs((box_plot.third_quartile - box_plot.first_quartile));
         }
-    }
-*/
+
+        for(Index j = 0; j < instances_number; j++)
+        {
+            const Tensor<type, 1> instance = get_instance(instances_indices(j));
+
+            if(instance(variable_index) < (box_plot(1) - cleaning_parameter*interquartile_range))
+            {
+                outliers.push_back(instances_indices(j));
+            }
+            else if(instance(variable_index) >(box_plot(3) + cleaning_parameter*interquartile_range))
+            {
+                outliers.push_back(instances_indices(j));
+            }
+        }
+    */
     return outliers;
 }
 
@@ -8202,51 +8221,51 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
     Index variable_index;
 
     Tensor<BoxPlot, 1> box_plots(variables_number);
-/*
-    for(Index i = 0; i < variables_number; i++)
-    {
-        variable_index = used_variables_indices(i);
-
-        if(is_binary_variable(variable_index)) continue;
-
-        box_plots(i) = box_plot(data.chip(variable_index,1));
-    }
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        variable_index = used_variables_indices(i);
-
-        if(is_binary_variable(variable_index)) continue;
-
-        const BoxPlot variable_box_plot = box_plots(i);
-
-        if(abs(variable_box_plot(3) - variable_box_plot(1)) < numeric_limits<type>::epsilon())
+    /*
+        for(Index i = 0; i < variables_number; i++)
         {
-            continue;
-        }
-        else
-        {
-            interquartile_range = abs((variable_box_plot(3) - variable_box_plot(1)));
+            variable_index = used_variables_indices(i);
+
+            if(is_binary_variable(variable_index)) continue;
+
+            box_plots(i) = box_plot(data.chip(variable_index,1));
         }
 
-        Index variables_outliers = 0;
-
-        for(Index j = 0; j < static_cast<Index>(instances_number); j++)
+        for(Index i = 0; i < variables_number; i++)
         {
-            const Tensor<type, 1> instance = get_instance(instances_indices(static_cast<Index>(j)));
+            variable_index = used_variables_indices(i);
 
-            if(instance(variable_index) <(variable_box_plot(1) - cleaning_parameter*interquartile_range) ||
-               instance(variable_index) >(variable_box_plot(3) + cleaning_parameter*interquartile_range))
+            if(is_binary_variable(variable_index)) continue;
+
+            const BoxPlot variable_box_plot = box_plots(i);
+
+            if(abs(variable_box_plot(3) - variable_box_plot(1)) < numeric_limits<type>::epsilon())
             {
-                    return_values(0)(static_cast<Index>(j)) = 1;
-
-                    variables_outliers++;
+                continue;
             }
-        }
+            else
+            {
+                interquartile_range = abs((variable_box_plot(3) - variable_box_plot(1)));
+            }
 
-        return_values(1)(i) = variables_outliers;
-    }
-*/
+            Index variables_outliers = 0;
+
+            for(Index j = 0; j < static_cast<Index>(instances_number); j++)
+            {
+                const Tensor<type, 1> instance = get_instance(instances_indices(static_cast<Index>(j)));
+
+                if(instance(variable_index) <(variable_box_plot(1) - cleaning_parameter*interquartile_range) ||
+                   instance(variable_index) >(variable_box_plot(3) + cleaning_parameter*interquartile_range))
+                {
+                        return_values(0)(static_cast<Index>(j)) = 1;
+
+                        variables_outliers++;
+                }
+            }
+
+            return_values(1)(i) = variables_outliers;
+        }
+    */
     return return_values;
 }
 
@@ -8257,11 +8276,11 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
     const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
-/*
-    const Tensor<Index, 1> outliers_instances = outliers_indices(0).get_indices_greater_than(0);
+    /*
+        const Tensor<Index, 1> outliers_instances = outliers_indices(0).get_indices_greater_than(0);
 
-    set_instances_unused(outliers_instances);
-*/
+        set_instances_unused(outliers_instances);
+    */
 }
 
 
@@ -8287,12 +8306,12 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_nu
     const Index variables_number = data.dimension(1);
 
     Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
-/*
-    for(Index j = 0; j < variables_number; j++)
-    {
-        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
-    }
-*/
+    /*
+        for(Index j = 0; j < variables_number; j++)
+        {
+            autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
+        }
+    */
     return autocorrelations;
 }
 
@@ -8325,19 +8344,19 @@ Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& la
 
 Tensor<type, 2> DataSet::calculate_lag_plot() const
 {
-/*
-    const Index instances_number = get_used_instances_number();
+    /*
+        const Index instances_number = get_used_instances_number();
 
-    const Index columns_number = data.dimension(1) - 1;
+        const Index columns_number = data.dimension(1) - 1;
 
-    Tensor<type, 2> lag_plot(instances_number, columns_number);
+        Tensor<type, 2> lag_plot(instances_number, columns_number);
 
-    Tensor<Index, 1> columns_indices(1, 1, columns_number);
+        Tensor<Index, 1> columns_indices(1, 1, columns_number);
 
-    lag_plot = data.get_submatrix_columns(columns_indices);
+        lag_plot = data.get_submatrix_columns(columns_indices);
 
-    return lag_plot;
-*/
+        return lag_plot;
+    */
     return Tensor<type, 2>();
 }
 
@@ -8377,20 +8396,20 @@ Tensor<type, 2> DataSet::calculate_lag_plot(const Index& maximum_lags_number)
 
 void DataSet::generate_constant_data(const Index& instances_number, const Index& variables_number)
 {
-/*
-    set(instances_number, variables_number);
+    /*
+        set(instances_number, variables_number);
 
-    data.setRandom(-5.12, 5.12);
+        data.setRandom(-5.12, 5.12);
 
-    for(Index i = 0; i < instances_number; i++)
-    {
-        data(i, variables_number-1) = 0;
-    }
+        for(Index i = 0; i < instances_number; i++)
+        {
+            data(i, variables_number-1) = 0;
+        }
 
-    scale_minimum_maximum(data);
+        scale_minimum_maximum(data);
 
-    set_default_columns_uses();
-*/
+        set_default_columns_uses();
+    */
 }
 
 
@@ -8402,9 +8421,9 @@ void DataSet::generate_constant_data(const Index& instances_number, const Index&
 void DataSet::generate_random_data(const Index& instances_number, const Index& variables_number)
 {
     set(instances_number, variables_number);
-/*
-    data.setRandom(0.0, 1.0);
-*/
+    /*
+        data.setRandom(0.0, 1.0);
+    */
 }
 
 
@@ -8462,9 +8481,9 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
     const Index inputs_number = variables_number-1;
 
     set(instances_number, variables_number);
-/*
-    data.setRandom(-2.048, 2.048);
-*/
+    /*
+        data.setRandom(-2.048, 2.048);
+    */
     data.setRandom();
 
     type rosenbrock;
@@ -8476,9 +8495,9 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
         for(Index j = 0; j < inputs_number-1; j++)
         {
             rosenbrock +=
-           (1.0 - data(i,j))*(1.0 - data(i,j))
-            + 100.0*(data(i,j+1)-data(i,j)*data(i,j))*
-                    (data(i,j+1)-data(i,j)*data(i,j));
+                (1.0 - data(i,j))*(1.0 - data(i,j))
+                + 100.0*(data(i,j+1)-data(i,j)*data(i,j))*
+                (data(i,j+1)-data(i,j)*data(i,j));
         }
 
         data(i, inputs_number) = rosenbrock;
@@ -8493,40 +8512,40 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
 void DataSet::generate_inputs_selection_data(const Index& instances_number, const Index& variables_number)
 {
     set(instances_number,variables_number);
-/*
-    data.setRandom(0.0, 1.0);
+    /*
+        data.setRandom(0.0, 1.0);
 
-    for(Index i = 0; i < instances_number; i++)
-    {
-        for(Index j = 0; j < variables_number-2; j++)
+        for(Index i = 0; i < instances_number; i++)
         {
-            data(i,variables_number-1) += data(i,j);
+            for(Index j = 0; j < variables_number-2; j++)
+            {
+                data(i,variables_number-1) += data(i,j);
+            }
         }
-    }
 
-    set_default_columns_uses();
-*/
+        set_default_columns_uses();
+    */
 }
 
 
 void DataSet::generate_sum_data(const Index& instances_number, const Index& variables_number)
 {
     set(instances_number,variables_number);
-/*
-    data.setRandom(0.0, 1.0);
+    /*
+        data.setRandom(0.0, 1.0);
 
-    for(Index i = 0; i < instances_number; i++)
-    {
-        for(Index j = 0; j < variables_number-1; j++)
+        for(Index i = 0; i < instances_number; i++)
         {
-            data(i,variables_number-1) += data(i,j);
+            for(Index j = 0; j < variables_number-1; j++)
+            {
+                data(i,variables_number-1) += data(i,j);
+            }
         }
-    }
 
-    set_default();
+        set_default();
 
-    scale_data_mean_standard_deviation();
-*/
+        scale_data_mean_standard_deviation();
+    */
 }
 
 
@@ -8544,25 +8563,25 @@ void DataSet::generate_data_binary_classification(const Index& instances_number,
     Tensor<type, 1> target_0(negatives);
 
     Tensor<type, 2> class_0(negatives, inputs_number+1);
-/*
-    class_0.setRandom(-0.5, 1.0);
+    /*
+        class_0.setRandom(-0.5, 1.0);
 
-    class_0.set_column(inputs_number, target_0, "");
+        class_0.set_column(inputs_number, target_0, "");
 
-    // Positives data
+        // Positives data
 
-    Tensor<type, 1> target_1(positives, 1.0);
+        Tensor<type, 1> target_1(positives, 1.0);
 
-    Tensor<type, 2> class_1(positives, inputs_number+1);
+        Tensor<type, 2> class_1(positives, inputs_number+1);
 
-    class_1.setRandom(0.5, 1.0);
+        class_1.setRandom(0.5, 1.0);
 
-    class_1.set_column(inputs_number, target_1, "");
+        class_1.set_column(inputs_number, target_1, "");
 
-    // Assemble
+        // Assemble
 
-    set(class_0.assemble_rows(class_1));
-*/
+        set(class_0.assemble_rows(class_1));
+    */
 }
 
 
@@ -8584,9 +8603,9 @@ void DataSet::generate_data_multiple_classification(const Index& instances_numbe
 
         targets(i, target_index) = 1.0;
     }
-/*
-    set(new_data.assemble_columns(targets));
-*/
+    /*
+        set(new_data.assemble_columns(targets));
+    */
 }
 
 
@@ -8619,7 +8638,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 
     const Index used_variables_number = get_used_variables_number();
 
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     if(minimums.size() != used_variables_number)
     {
@@ -8643,7 +8662,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
         throw logic_error(buffer.str());
     }
 
-    #endif
+#endif
 
     const Index instances_number = get_instances_number();
 
@@ -8664,7 +8683,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             const Index current_instance_index = current_instances_indices(i);
 
             if(data(current_instance_index,current_variable_index) < minimums(j)
-            || data(current_instance_index,current_variable_index) > maximums(j))
+                    || data(current_instance_index,current_variable_index) > maximums(j))
             {
                 filtered_indices(current_instance_index) = 1.0;
 
@@ -8672,9 +8691,9 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             }
         }
     }
-/*
-    return filtered_indices.get_indices_greater_than(0.5);
-*/
+    /*
+        return filtered_indices.get_indices_greater_than(0.5);
+    */
     return Tensor<Index, 1>();
 }
 
@@ -8709,9 +8728,9 @@ Tensor<Index, 1> DataSet::filter_column(const Index& variable_index, const type&
             set_instance_use(index, UnusedInstance);
         }
     }
-/*
-    return filtered_indices.get_indices_greater_than(0.5);
-*/
+    /*
+        return filtered_indices.get_indices_greater_than(0.5);
+    */
 
     return Tensor<Index, 1>();
 }
@@ -8747,9 +8766,9 @@ Tensor<Index, 1> DataSet::filter_column(const string& variable_name, const type&
             set_instance_use(index, UnusedInstance);
         }
     }
-/*
-    return filtered_indices.get_indices_greater_than(0.5);
-*/
+    /*
+        return filtered_indices.get_indices_greater_than(0.5);
+    */
 
     return Tensor<Index, 1>();
 }
@@ -8761,7 +8780,7 @@ Tensor<Index, 1> DataSet::filter_column(const string& variable_name, const type&
 
 void DataSet::numeric_to_categorical(const Index& variable_index)
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     const Index variables_number = get_variables_number();
 
@@ -8776,16 +8795,16 @@ void DataSet::numeric_to_categorical(const Index& variable_index)
         throw logic_error(buffer.str());
     }
 
-    #endif
-/*
-    const Tensor<type, 1> categories = data.get_column(variable_index).get_unique_elements();
+#endif
+    /*
+        const Tensor<type, 1> categories = data.get_column(variable_index).get_unique_elements();
 
-    data = data.to_categorical(variable_index);
+        data = data.to_categorical(variable_index);
 
-    columns(variable_index).categories_uses = Tensor<VariableUse, 1>(categories.size(), columns(variable_index).column_use);
-    columns(variable_index).type = Categorical;
-    columns(variable_index).categories = categories.to_string_vector();
-*/
+        columns(variable_index).categories_uses = Tensor<VariableUse, 1>(categories.size(), columns(variable_index).column_use);
+        columns(variable_index).type = Categorical;
+        columns(variable_index).categories = categories.to_string_vector();
+    */
 }
 
 
@@ -8794,17 +8813,17 @@ void DataSet::numeric_to_categorical(const Index& variable_index)
 void DataSet::impute_missing_values_unuse()
 {
     const Index instances_number = get_instances_number();
-/*
-#pragma omp parallel for
+    /*
+    #pragma omp parallel for
 
-    for(Index i = 0; i <instances_number; i++)
-    {
-        if(data.has_nan_row(i))
+        for(Index i = 0; i <instances_number; i++)
         {
-            set_instance_use(i, "Unused");
+            if(data.has_nan_row(i))
+            {
+                set_instance_use(i, "Unused");
+            }
         }
-    }
-*/
+    */
 }
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
@@ -8812,25 +8831,25 @@ void DataSet::impute_missing_values_unuse()
 void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-/*
-    const Tensor<type, 1> means = mean_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
+    /*
+        const Tensor<type, 1> means = mean_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
-    const Index variables_number = used_columns_indices.size();
-    const Index instances_number = get_instances_number();
+        const Index variables_number = used_columns_indices.size();
+        const Index instances_number = get_instances_number();
 
-    cout<<"instances number"<< instances_number<<endl;
-    cout<<"rows"<<data.dimension(0)<<endl;
+        cout<<"instances number"<< instances_number<<endl;
+        cout<<"rows"<<data.dimension(0)<<endl;
 
-    #pragma omp parallel for schedule(dynamic)
+        #pragma omp parallel for schedule(dynamic)
 
-    for(Index j = 0; j < variables_number; j++)
-    {
-        for(Index i = 0 ; i < instances_number - 1 ; i++)
+        for(Index j = 0; j < variables_number; j++)
         {
-            if(::isnan(data(i,j))) data(i,j) = means(j);
+            for(Index i = 0 ; i < instances_number - 1 ; i++)
+            {
+                if(::isnan(data(i,j))) data(i,j) = means(j);
+            }
         }
-    }
-*/
+    */
 }
 
 
@@ -8839,22 +8858,22 @@ void DataSet::impute_missing_values_mean()
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-/*
-    const Tensor<type, 1> medians = median_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
+    /*
+        const Tensor<type, 1> medians = median_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
-    const Index variables_number = used_columns_indices.size();
-    const Index instances_number = get_instances_number();
+        const Index variables_number = used_columns_indices.size();
+        const Index instances_number = get_instances_number();
 
-    #pragma omp parallel for schedule(dynamic)
+        #pragma omp parallel for schedule(dynamic)
 
-    for(Index j = 0; j < variables_number; j++)
-    {
-        for(Index i = 0 ; i < instances_number ; i++)
+        for(Index j = 0; j < variables_number; j++)
         {
-            if(::isnan(data(i,j))) data(i,j) = medians(j);
+            for(Index i = 0 ; i < instances_number ; i++)
+            {
+                if(::isnan(data(i,j))) data(i,j) = medians(j);
+            }
         }
-    }
-*/
+    */
 }
 
 
@@ -8866,23 +8885,23 @@ void DataSet::scrub_missing_values()
 {
     switch(missing_values_method)
     {
-       case Unuse:
-       {
-            impute_missing_values_unuse();
-       }
-       break;
+    case Unuse:
+    {
+        impute_missing_values_unuse();
+    }
+    break;
 
-       case Mean:
-       {
-            impute_missing_values_mean();
-       }
-       break;
+    case Mean:
+    {
+        impute_missing_values_mean();
+    }
+    break;
 
-       case Median:
-       {
-            impute_missing_values_median();
-       }
-       break;
+    case Median:
+    {
+        impute_missing_values_median();
+    }
+    break;
     }
 }
 
@@ -8903,29 +8922,29 @@ void DataSet::read_csv()
         read_csv_3_complete();
     }
 
-/*
+    /*
 
-        // Fill time series
+            // Fill time series
 
-        const Index period = static_cast<Index>(data(1, time_index) - data(0,time_index));
+            const Index period = static_cast<Index>(data(1, time_index) - data(0,time_index));
 
-        if(static_cast<Index>((data(data.dimension(0) - 1, time_index) - data(0,time_index))/period) + 1 == data.dimension(0))
-        {
-            // Do nothing
-        }
-        else
-        {
-            fill_time_series(period);
-        }
+            if(static_cast<Index>((data(data.dimension(0) - 1, time_index) - data(0,time_index))/period) + 1 == data.dimension(0))
+            {
+                // Do nothing
+            }
+            else
+            {
+                fill_time_series(period);
+            }
 
 
-         scrub_missing_values();
+             scrub_missing_values();
 
-        // Transform time series
+            // Transform time series
 
-        transform_time_series();
-        split_instances_random(0.75,0,0.25);
-        */
+            transform_time_series();
+            split_instances_random(0.75,0,0.25);
+            */
 
 }
 
@@ -8953,13 +8972,13 @@ void DataSet::read_csv_1()
 
     if(!file.is_open())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -9046,12 +9065,12 @@ void DataSet::read_csv_1()
     for(Index i = 0; i < columns_number; i++)
     {
         if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
         {
             columns(i).type = DateTime;
         }
         else if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-             || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+                || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
         {
             columns(i).type = Numeric;
         }
@@ -9069,13 +9088,13 @@ void DataSet::read_csv_2_simple()
 
     if(!file.is_open())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -9154,13 +9173,13 @@ void DataSet::read_csv_3_simple()
 
     if(!file.is_open())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -9230,8 +9249,8 @@ void DataSet::read_csv_2_complete()
 {
     ifstream file(data_file_name.c_str());
 
-     if(!file.is_open())
-     {
+    if(!file.is_open())
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
@@ -9239,112 +9258,112 @@ void DataSet::read_csv_2_complete()
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     const char separator_char = get_separator_char();
+    const char separator_char = get_separator_char();
 
-     string line;
+    string line;
 
-     Tensor<string, 1> tokens;
+    Tensor<string, 1> tokens;
 
-     Index lines_count = 0;
-     Index tokens_count;
+    Index lines_count = 0;
+    Index tokens_count;
 
-     const Index columns_number = columns.size();
+    const Index columns_number = columns.size();
 
-     for(unsigned j = 0; j < columns_number; j++)
-     {
-         if(columns(j).type != Categorical)
-         {
-             columns(j).column_use = Input;
-         }
-     }
+    for(unsigned j = 0; j < columns_number; j++)
+    {
+        if(columns(j).type != Categorical)
+        {
+            columns(j).column_use = Input;
+        }
+    }
 
-     // Skip header
+    // Skip header
 
-     if(has_columns_names)
-     {
-         while(file.good())
-         {
-             getline(file, line);
+    if(has_columns_names)
+    {
+        while(file.good())
+        {
+            getline(file, line);
 
-             trim(line);
+            trim(line);
 
-             if(line.empty()) continue;
+            if(line.empty()) continue;
 
-             break;
-         }
-     }
+            break;
+        }
+    }
 
-     // Read data
+    // Read data
 
-     while(file.good())
-     {
-         getline(file, line);
+    while(file.good())
+    {
+        getline(file, line);
 
-         trim(line);
+        trim(line);
 
-         if(line.empty()) continue;
+        if(line.empty()) continue;
 
-         tokens = get_tokens(line, separator_char);
+        tokens = get_tokens(line, separator_char);
 
-         tokens_count = tokens.size();
+        tokens_count = tokens.size();
 
-         if(static_cast<unsigned>(tokens_count) != columns_number)
-         {
-             const string message =
- //                    "Instance " + to_string(lines_count+1) + " error:\n"
- //                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
-                     "Please check the format of the data file.";
+        if(static_cast<unsigned>(tokens_count) != columns_number)
+        {
+            const string message =
+//                    "Instance " + to_string(lines_count+1) + " error:\n"
+//                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
+                "Please check the format of the data file.";
 
-             throw logic_error(message);
-         }
+            throw logic_error(message);
+        }
 
-         for(unsigned j = 0; j < columns_number; j++)
-         {
-             trim(tokens(j));
+        for(unsigned j = 0; j < columns_number; j++)
+        {
+            trim(tokens(j));
 
-             if(columns(j).type == Categorical)
-             {
-                 if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
-                 {
-                     if(tokens(j) == missing_values_label) continue;
+            if(columns(j).type == Categorical)
+            {
+                if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                {
+                    if(tokens(j) == missing_values_label) continue;
 
-                     columns(j).add_category(tokens(j));
-                 }
-             }
-         }
+                    columns(j).add_category(tokens(j));
+                }
+            }
+        }
 
-         lines_count++;
-     }
+        lines_count++;
+    }
 
-     for(unsigned j = 0; j < columns_number; j++)
-     {
-          if(columns(j).type == Categorical)
-          {
-              if(columns(j).categories.size() == 2)
-              {
-                  columns(j).type = Binary;
-                  columns(j).categories.resize(0);
-                  columns(j).categories_uses.resize(0);
-              }
-          }
-     }
+    for(unsigned j = 0; j < columns_number; j++)
+    {
+        if(columns(j).type == Categorical)
+        {
+            if(columns(j).categories.size() == 2)
+            {
+                columns(j).type = Binary;
+                columns(j).categories.resize(0);
+                columns(j).categories_uses.resize(0);
+            }
+        }
+    }
 
-     file.close();
+    file.close();
 
-     const Index instances_number = static_cast<unsigned>(lines_count);
+    const Index instances_number = static_cast<unsigned>(lines_count);
 
-     const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();
 
-     data.resize(static_cast<Index>(instances_number), variables_number);
-     data.setZero();
+    data.resize(static_cast<Index>(instances_number), variables_number);
+    data.setZero();
 
-     set_default_columns_uses();
+    set_default_columns_uses();
 
-     instances_uses.resize(static_cast<Index>(instances_number));
+    instances_uses.resize(static_cast<Index>(instances_number));
 
-     split_instances_random();
+    split_instances_random();
 }
 
 
@@ -9354,13 +9373,13 @@ void DataSet::read_csv_3_complete()
 
     if(!file.is_open())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void read_csv() method.\n"
-              << "Cannot open data file: " << data_file_name << "\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -9395,108 +9414,108 @@ void DataSet::read_csv_3_complete()
 
     while(file.good())
     {
-          getline(file, line);
+        getline(file, line);
 
-          trim(line);
+        trim(line);
 
-          if(line.empty()) continue;
+        if(line.empty()) continue;
 
-          tokens = get_tokens(line, separator_char);
+        tokens = get_tokens(line, separator_char);
 
-          for(Index j = 0; j < columns_number; j++)
-          {
-              trim(tokens(j));
+        for(Index j = 0; j < columns_number; j++)
+        {
+            trim(tokens(j));
 
-              erase(line, '"');
+            erase(line, '"');
 
-                if(columns(j).type == Numeric)
+            if(columns(j).type == Numeric)
+            {
+                if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
-                    if(tokens(j) == missing_values_label || tokens(j).empty())
+                    data(instance_index, j) = static_cast<type>(NAN);
+                }
+                else
+                {
+                    try
                     {
-                        data(instance_index, j) = static_cast<type>(NAN);
+                        data(instance_index, j) = stod(tokens(j));
                     }
-                    else
+                    catch (invalid_argument)
                     {
-                        try
-                        {
-                            data(instance_index, j) = stod(tokens(j));
-                        }
-                        catch (invalid_argument)
-                        {
-                            ostringstream buffer;
+                        ostringstream buffer;
 
-                            buffer << "OpenNN Exception: DataSet class.\n"
-                                   << "void read_csv() method.\n"
-                                   << "Instance " << instance_index << "; Invalid number: " << tokens(j) << "\n";
+                        buffer << "OpenNN Exception: DataSet class.\n"
+                               << "void read_csv() method.\n"
+                               << "Instance " << instance_index << "; Invalid number: " << tokens(j) << "\n";
 
-                            throw logic_error(buffer.str());
-                        }
+                        throw logic_error(buffer.str());
                     }
                 }
-                else if(columns(j).type == DateTime)
+            }
+            else if(columns(j).type == DateTime)
+            {
+                if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
-                    if(tokens(j) == missing_values_label || tokens(j).empty())
-                    {
-                        data(instance_index, j) = static_cast<type>(NAN);
-                    }
-                    else
-                    {
-                        data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
-                    }
+                    data(instance_index, j) = static_cast<type>(NAN);
                 }
-                else if(columns(j).type == Categorical)
+                else
                 {
-                    const Tensor<Index, 1> variable_indices = get_variable_indices(j);
-
-                    for(Index k = 0; k < variable_indices.size(); k++)
-                    {
-                        if(tokens(j) == missing_values_label)
-                        {
-                            data(instance_index, variable_indices(k)) = static_cast<type>(NAN);
-                        }
-                        else if(tokens(j) == columns(j).categories(k))
-                        {
-                            data(instance_index, variable_indices(k)) = 1.0;
-                        }
-                    }
+                    data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
                 }
-                else if(columns(j).type == Binary)
-                {
-                    const Tensor<Index, 1> variable_indices = get_variable_indices(j);
+            }
+            else if(columns(j).type == Categorical)
+            {
+                const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
+                for(Index k = 0; k < variable_indices.size(); k++)
+                {
                     if(tokens(j) == missing_values_label)
                     {
-                        data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
+                        data(instance_index, variable_indices(k)) = static_cast<type>(NAN);
                     }
-                    else if(tokens(j) == columns(j).name)
+                    else if(tokens(j) == columns(j).categories(k))
                     {
-                        data(instance_index, variable_indices(0)) = 1.0;
+                        data(instance_index, variable_indices(k)) = 1.0;
                     }
                 }
-          }
+            }
+            else if(columns(j).type == Binary)
+            {
+                const Tensor<Index, 1> variable_indices = get_variable_indices(j);
 
-          instance_index++;
+                if(tokens(j) == missing_values_label)
+                {
+                    data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
+                }
+                else if(tokens(j) == columns(j).name)
+                {
+                    data(instance_index, variable_indices(0)) = 1.0;
+                }
+            }
+        }
+
+        instance_index++;
     }
 
     // Read header
-/*
-    for (Index j = 0; j < columns_number; j++)
-    {
-        if(columns(j).type == Categorical)
+    /*
+        for (Index j = 0; j < columns_number; j++)
         {
-            const Tensor<Index, 1> variable_indices = get_variable_indices(j);
-
-            for(Index k = 0; k < variable_indices.size(); k++)
+            if(columns(j).type == Categorical)
             {
-                data.set_header(variable_indices(k), columns(j).categories(k));
+                const Tensor<Index, 1> variable_indices = get_variable_indices(j);
+
+                for(Index k = 0; k < variable_indices.size(); k++)
+                {
+                    data.set_header(variable_indices(k), columns(j).categories(k));
+                }
+            }
+            else // Binary, DateTime, Numeric
+            {
+                data.set_header(j,columns(j).name);
             }
         }
-        else // Binary, DateTime, Numeric
-        {
-            data.set_header(j,columns(j).name);
-        }
-    }
-*/
+    */
     file.close();
 }
 
@@ -9504,9 +9523,9 @@ void DataSet::read_csv_3_complete()
 void DataSet::check_separators(const string& line) const
 {
     if(line.find(',') == string::npos
-    && line.find(';') == string::npos
-    && line.find(' ') == string::npos
-    && line.find('\t') == string::npos)
+            && line.find(';') == string::npos
+            && line.find(' ') == string::npos
+            && line.find('\t') == string::npos)
     {
         return;
     }
@@ -9516,7 +9535,7 @@ void DataSet::check_separators(const string& line) const
     if(line.find(separator_char) == string::npos)
     {
         const string message =
-        "Error: " + get_separator_string() + " separator not found in data file " + data_file_name + ".";
+            "Error: " + get_separator_string() + " separator not found in data file " + data_file_name + ".";
 
         throw logic_error(message);
     }
@@ -9526,14 +9545,14 @@ void DataSet::check_separators(const string& line) const
         if(line.find(',') != string::npos)
         {
             const string message =
-            "Error: Found comma (',') in data file " + data_file_name + ", but separator is space (' ').";
+                "Error: Found comma (',') in data file " + data_file_name + ", but separator is space (' ').";
 
             throw logic_error(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
-            "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is space (' ').";
+                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is space (' ').";
 
             throw logic_error(message);
         }
@@ -9543,14 +9562,14 @@ void DataSet::check_separators(const string& line) const
         if(line.find(',') != string::npos)
         {
             const string message =
-            "Error: Found comma (',') in data file " + data_file_name + ", but separator is tab ('   ').";
+                "Error: Found comma (',') in data file " + data_file_name + ", but separator is tab ('   ').";
 
             throw logic_error(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
-            "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is tab ('   ').";
+                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is tab ('   ').";
 
             throw logic_error(message);
         }
@@ -9560,17 +9579,17 @@ void DataSet::check_separators(const string& line) const
         if(line.find(";") != string::npos)
         {
             const string message =
-            "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is comma (',').";
+                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is comma (',').";
 
             throw logic_error(message);
         }
     }
     else if(separator == Semicolon)
     {
-            if(line.find(",") != string::npos)
-            {
+        if(line.find(",") != string::npos)
+        {
             const string message =
-            "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';').";
+                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';').";
 
             throw logic_error(message);
         }
@@ -9690,7 +9709,7 @@ Index DataSet::count_nan() const
 
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
-                                                const Index& start, const Index& step, const Index& end) const
+        const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
 
@@ -9718,12 +9737,12 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
 
     for(Index i = 0; i < batches_number; ++i)
     {
-       for(Index j = 0; j < batch_size; ++j)
-       {
-        batches(i,j) = training_indices(count);
+        for(Index j = 0; j < batch_size; ++j)
+        {
+            batches(i,j) = training_indices(count);
 
-        count++;
-       }
+            count++;
+        }
     }
 
     return batches;

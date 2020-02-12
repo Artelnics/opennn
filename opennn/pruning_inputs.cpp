@@ -1,14 +1,15 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P R U N I N G   I N P U T S   C L A S S                               
+//   P R U N I N G   I N P U T S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "pruning_inputs.h"
 
-namespace OpenNN {
+namespace OpenNN
+{
 
 /// Default constructor.
 
@@ -379,7 +380,8 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             results->stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
         else if(current_columns_indices.size() <= minimum_inputs_number)
-        {//¿?
+        {
+            //¿?
             end_algorithm = true;
 
             if(display) cout << "Minimum inputs("<< minimum_inputs_number <<") reached." << endl;
@@ -459,138 +461,138 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 /// Writes as matrix of strings the most representative atributes.
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
-{  
-/*
-    ostringstream buffer;
+{
+    /*
+        ostringstream buffer;
 
-    Tensor<string, 1> labels;
-    Tensor<string, 1> values;
+        Tensor<string, 1> labels;
+        Tensor<string, 1> values;
 
-   // Trials number
+       // Trials number
 
-   labels.push_back("Trials number");
+       labels.push_back("Trials number");
 
-   buffer.str("");
-   buffer << trials_number;
+       buffer.str("");
+       buffer << trials_number;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Tolerance
+       // Tolerance
 
-   labels.push_back("Tolerance");
+       labels.push_back("Tolerance");
 
-   buffer.str("");
-   buffer << tolerance;
+       buffer.str("");
+       buffer << tolerance;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Selection loss goal
+       // Selection loss goal
 
-   labels.push_back("Selection loss goal");
+       labels.push_back("Selection loss goal");
 
-   buffer.str("");
-   buffer << selection_error_goal;
+       buffer.str("");
+       buffer << selection_error_goal;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum selection failures
+       // Maximum selection failures
 
-   labels.push_back("Maximum selection failures");
+       labels.push_back("Maximum selection failures");
 
-   buffer.str("");
-   buffer << maximum_selection_failures;
+       buffer.str("");
+       buffer << maximum_selection_failures;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Minimum inputs number
+       // Minimum inputs number
 
-   labels.push_back("Minimum inputs number");
+       labels.push_back("Minimum inputs number");
 
-   buffer.str("");
-   buffer << minimum_inputs_number;
+       buffer.str("");
+       buffer << minimum_inputs_number;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Minimum correlation
+       // Minimum correlation
 
-   labels.push_back("Minimum correlation");
+       labels.push_back("Minimum correlation");
 
-   buffer.str("");
-   buffer << minimum_correlation;
+       buffer.str("");
+       buffer << minimum_correlation;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum correlation
+       // Maximum correlation
 
-   labels.push_back("Maximum correlation");
+       labels.push_back("Maximum correlation");
 
-   buffer.str("");
-   buffer << maximum_correlation;
+       buffer.str("");
+       buffer << maximum_correlation;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum iterations number
+       // Maximum iterations number
 
-   labels.push_back("Maximum iterations number");
+       labels.push_back("Maximum iterations number");
 
-   buffer.str("");
-   buffer << maximum_epochs_number;
+       buffer.str("");
+       buffer << maximum_epochs_number;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum time
+       // Maximum time
 
-   labels.push_back("Maximum time");
+       labels.push_back("Maximum time");
 
-   buffer.str("");
-   buffer << maximum_time;
+       buffer.str("");
+       buffer << maximum_time;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Plot training loss history
+       // Plot training loss history
 
-   labels.push_back("Plot training loss history");
+       labels.push_back("Plot training loss history");
 
-   buffer.str("");
+       buffer.str("");
 
-   if(reserve_error_data)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
+       if(reserve_error_data)
+       {
+           buffer << "true";
+       }
+       else
+       {
+           buffer << "false";
+       }
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Plot selection error history
+       // Plot selection error history
 
-   labels.push_back("Plot selection error history");
+       labels.push_back("Plot selection error history");
 
-   buffer.str("");
+       buffer.str("");
 
-   if(reserve_selection_error_data)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
+       if(reserve_selection_error_data)
+       {
+           buffer << "true";
+       }
+       else
+       {
+           buffer << "false";
+       }
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   const Index rows_number = labels.size();
-   const Index columns_number = 2;
+       const Index rows_number = labels.size();
+       const Index columns_number = 2;
 
-   Tensor<string, 2> string_matrix(rows_number, columns_number);
+       Tensor<string, 2> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels, "name");
-   string_matrix.set_column(1, values, "value");
+       string_matrix.set_column(0, labels, "name");
+       string_matrix.set_column(1, values, "value");
 
-    return string_matrix;
-*/
+        return string_matrix;
+    */
     return Tensor<string, 2>();
 
 }
@@ -601,20 +603,20 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
 
 tinyxml2::XMLDocument* PruningInputs::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Order Selection algorithm
+    // Order Selection algorithm
 
-   tinyxml2::XMLElement* root_element = document->NewElement("PruningInputs");
+    tinyxml2::XMLElement* root_element = document->NewElement("PruningInputs");
 
-   document->InsertFirstChild(root_element);
+    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = nullptr;
-   tinyxml2::XMLText* text = nullptr;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
-   // Regression
+    // Regression
 //   {
 //   element = document->NewElement("Approximation");
 //   root_element->LinkEndChild(element);
@@ -626,151 +628,151 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Trials number
-   {
-   element = document->NewElement("TrialsNumber");
-   root_element->LinkEndChild(element);
+    // Trials number
+    {
+        element = document->NewElement("TrialsNumber");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << trials_number;
+        buffer.str("");
+        buffer << trials_number;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Tolerance
-   {
-   element = document->NewElement("Tolerance");
-   root_element->LinkEndChild(element);
+    // Tolerance
+    {
+        element = document->NewElement("Tolerance");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << tolerance;
+        buffer.str("");
+        buffer << tolerance;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // selection error goal
-   {
-   element = document->NewElement("SelectionErrorGoal");
-   root_element->LinkEndChild(element);
+    // selection error goal
+    {
+        element = document->NewElement("SelectionErrorGoal");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << selection_error_goal;
+        buffer.str("");
+        buffer << selection_error_goal;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum selection failures
-   {
-   element = document->NewElement("MaximumSelectionFailures");
-   root_element->LinkEndChild(element);
+    // Maximum selection failures
+    {
+        element = document->NewElement("MaximumSelectionFailures");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_selection_failures;
+        buffer.str("");
+        buffer << maximum_selection_failures;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Minimum inputs number
-   {
-   element = document->NewElement("MinimumInputsNumber");
-   root_element->LinkEndChild(element);
+    // Minimum inputs number
+    {
+        element = document->NewElement("MinimumInputsNumber");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << minimum_inputs_number;
+        buffer.str("");
+        buffer << minimum_inputs_number;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum inputs number
-   {
-   element = document->NewElement("MaximumInputsNumber");
-   root_element->LinkEndChild(element);
+    // Maximum inputs number
+    {
+        element = document->NewElement("MaximumInputsNumber");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_inputs_number;
+        buffer.str("");
+        buffer << maximum_inputs_number;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Minimum correlation
-   {
-   element = document->NewElement("MinimumCorrelation");
-   root_element->LinkEndChild(element);
+    // Minimum correlation
+    {
+        element = document->NewElement("MinimumCorrelation");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << minimum_correlation;
+        buffer.str("");
+        buffer << minimum_correlation;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum correlation
-   {
-   element = document->NewElement("MaximumCorrelation");
-   root_element->LinkEndChild(element);
+    // Maximum correlation
+    {
+        element = document->NewElement("MaximumCorrelation");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_correlation;
+        buffer.str("");
+        buffer << maximum_correlation;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum iterations
-   {
-   element = document->NewElement("MaximumEpochsNumber");
-   root_element->LinkEndChild(element);
+    // Maximum iterations
+    {
+        element = document->NewElement("MaximumEpochsNumber");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_epochs_number;
+        buffer.str("");
+        buffer << maximum_epochs_number;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum time
-   {
-   element = document->NewElement("MaximumTime");
-   root_element->LinkEndChild(element);
+    // Maximum time
+    {
+        element = document->NewElement("MaximumTime");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_time;
+        buffer.str("");
+        buffer << maximum_time;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve error data
-   {
-   element = document->NewElement("ReserveTrainingErrorHistory");
-   root_element->LinkEndChild(element);
+    // Reserve error data
+    {
+        element = document->NewElement("ReserveTrainingErrorHistory");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_error_data;
+        buffer.str("");
+        buffer << reserve_error_data;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve selection error data
-   {
-   element = document->NewElement("ReserveSelectionErrorHistory");
-   root_element->LinkEndChild(element);
+    // Reserve selection error data
+    {
+        element = document->NewElement("ReserveSelectionErrorHistory");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_selection_error_data;
+        buffer.str("");
+        buffer << reserve_selection_error_data;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve parameters data
+    // Reserve parameters data
 //   {
 //   element = document->NewElement("ReserveParametersData");
 //   root_element->LinkEndChild(element);
@@ -782,7 +784,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Reserve minimal parameters
+    // Reserve minimal parameters
 //   {
 //   element = document->NewElement("ReserveMinimalParameters");
 //   root_element->LinkEndChild(element);
@@ -794,7 +796,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Display
+    // Display
 //   {
 //   element = document->NewElement("Display");
 //   root_element->LinkEndChild(element);
@@ -806,7 +808,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   return document;
+    return document;
 }
 
 
@@ -988,11 +990,11 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
             try
             {
-               set_approximation(new_approximation != "0");
+                set_approximation(new_approximation != "0");
             }
             catch(const logic_error& e)
             {
-               cerr << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1003,16 +1005,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_trials_number(new_trials_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_trials_number(new_trials_number);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1022,16 +1024,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_error_data = element->GetText();
+            const string new_reserve_error_data = element->GetText();
 
-           try
-           {
-              set_reserve_error_data(new_reserve_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_reserve_error_data(new_reserve_error_data != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1041,16 +1043,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_selection_error_data = element->GetText();
+            const string new_reserve_selection_error_data = element->GetText();
 
-           try
-           {
-              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1060,16 +1062,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_minimal_parameters = element->GetText();
+            const string new_reserve_minimal_parameters = element->GetText();
 
-           try
-           {
-              set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1079,16 +1081,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_display = element->GetText();
+            const string new_display = element->GetText();
 
-           try
-           {
-              set_display(new_display != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_display(new_display != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1098,16 +1100,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
+            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
 
-           try
-           {
-              set_selection_error_goal(new_selection_error_goal);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_selection_error_goal(new_selection_error_goal);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1117,16 +1119,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_maximum_iterations_number(new_maximum_iterations_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_iterations_number(new_maximum_iterations_number);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1136,16 +1138,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_maximum_correlation = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_correlation = static_cast<type>(atof(element->GetText()));
 
-           try
-           {
-              set_maximum_correlation(new_maximum_correlation);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_correlation(new_maximum_correlation);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1155,16 +1157,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_minimum_correlation = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_correlation = static_cast<type>(atof(element->GetText()));
 
-           try
-           {
-              set_minimum_correlation(new_minimum_correlation);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_minimum_correlation(new_minimum_correlation);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1174,16 +1176,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_maximum_time = static_cast<type>( atoi(element->GetText()));
+            const type new_maximum_time = static_cast<type>( atoi(element->GetText()));
 
-           try
-           {
-              set_maximum_time(new_maximum_time);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_time(new_maximum_time);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1193,16 +1195,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const type new_tolerance = static_cast<type>(atof(element->GetText()));
+            const type new_tolerance = static_cast<type>(atof(element->GetText()));
 
-           try
-           {
-              set_tolerance(new_tolerance);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_tolerance(new_tolerance);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1212,16 +1214,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const Index new_minimum_inputs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_minimum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_minimum_inputs_number(new_minimum_inputs_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_minimum_inputs_number(new_minimum_inputs_number);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1231,16 +1233,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const Index new_maximum_inputs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_maximum_inputs_number(new_maximum_inputs_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_inputs_number(new_maximum_inputs_number);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1250,16 +1252,16 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_maximum_selection_failures(new_maximum_selection_failures);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_selection_failures(new_maximum_selection_failures);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1272,11 +1274,11 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
 void PruningInputs::save(const string& file_name) const
 {
-   tinyxml2::XMLDocument* document = to_XML();
+    tinyxml2::XMLDocument* document = to_XML();
 
-   document->SaveFile(file_name.c_str());
+    document->SaveFile(file_name.c_str());
 
-   delete document;
+    delete document;
 }
 
 
@@ -1287,22 +1289,22 @@ void PruningInputs::save(const string& file_name) const
 
 void PruningInputs::load(const string& file_name)
 {
-   set_default();
+    set_default();
 
-   tinyxml2::XMLDocument document;
+    tinyxml2::XMLDocument document;
 
-   if(document.LoadFile(file_name.c_str()))
-   {
-      ostringstream buffer;
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: PruningInputs class.\n"
-             << "void load(const string&) method.\n"
-             << "Cannot load XML file " << file_name << ".\n";
+        buffer << "OpenNN Exception: PruningInputs class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   from_XML(document);
+    from_XML(document);
 }
 }
 

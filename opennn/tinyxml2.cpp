@@ -33,71 +33,73 @@ distribution.
 #endif
 
 #if defined(_MSC_VER) &&(_MSC_VER >= 1400 ) &&(!defined WINCE)
-	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
-    /*int _snprintf_s(
-	   char *buffer,
-       int sizeOfBuffer,
-       int count,
-	   const char *format [,
-		  argument] ...
-	);*/
-    static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
-	{
-		va_list va;
-		va_start(va, format );
-        int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
-		va_end(va );
-		return result;
-	}
+// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
+/*int _snprintf_s(
+   char *buffer,
+   int sizeOfBuffer,
+   int count,
+   const char *format [,
+	  argument] ...
+);*/
+static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format );
+    int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
+    va_end(va );
+    return result;
+}
 
-    static inline int TIXML_VSNPRINTF(char* buffer, int size, const char* format, va_list va )
-	{
-        int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
-		return result;
-	}
+static inline int TIXML_VSNPRINTF(char* buffer, int size, const char* format, va_list va )
+{
+    int result = vsnprintf_s(buffer, size, _TRUNCATE, format, va );
+    return result;
+}
 
-	#define TIXML_VSCPRINTF	_vscprintf
-	#define TIXML_SSCANF	sscanf_s
+#define TIXML_VSCPRINTF	_vscprintf
+#define TIXML_SSCANF	sscanf_s
 #elif defined _MSC_VER
-	// Microsoft Visual Studio 2003 and earlier or WinCE
-	#define TIXML_SNPRINTF	_snprintf
-	#define TIXML_VSNPRINTF _vsnprintf
-	#define TIXML_SSCANF	sscanf
-	#if(_MSC_VER < 1400 ) &&(!defined WINCE)
-		// Microsoft Visual Studio 2003 and not WinCE.
-		#define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
-	#else
-		// Microsoft Visual Studio 2003 and earlier or WinCE.
-        static inline int TIXML_VSCPRINTF(const char* format, va_list va )
-		{
-            int len = 512;
-			for(;;) {
-				len = len*2;
-				char* str = new char[len]();
-                const int required = _vsnprintf(str, len, format, va);
-				delete[] str;
-				if(required != -1 ) {
-					TIXMLASSERT(required >= 0 );
-					len = required;
-					break;
-				}
-			}
-			TIXMLASSERT(len >= 0 );
-			return len;
-		}
-	#endif
+// Microsoft Visual Studio 2003 and earlier or WinCE
+#define TIXML_SNPRINTF	_snprintf
+#define TIXML_VSNPRINTF _vsnprintf
+#define TIXML_SSCANF	sscanf
+#if(_MSC_VER < 1400 ) &&(!defined WINCE)
+// Microsoft Visual Studio 2003 and not WinCE.
+#define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
 #else
-	// GCC version 3 and higher
-	//#warning("Using sn* functions.")
-	#define TIXML_SNPRINTF	snprintf
-	#define TIXML_VSNPRINTF	vsnprintf
-    static inline int TIXML_VSCPRINTF(const char* format, va_list va )
-	{
-        int len = vsnprintf(0, 0, format, va );
-		TIXMLASSERT(len >= 0 );
-		return len;
-	}
-	#define TIXML_SSCANF   sscanf
+// Microsoft Visual Studio 2003 and earlier or WinCE.
+static inline int TIXML_VSCPRINTF(const char* format, va_list va )
+{
+    int len = 512;
+    for(;;)
+    {
+        len = len*2;
+        char* str = new char[len]();
+        const int required = _vsnprintf(str, len, format, va);
+        delete[] str;
+        if(required != -1 )
+        {
+            TIXMLASSERT(required >= 0 );
+            len = required;
+            break;
+        }
+    }
+    TIXMLASSERT(len >= 0 );
+    return len;
+}
+#endif
+#else
+// GCC version 3 and higher
+//#warning("Using sn* functions.")
+#define TIXML_SNPRINTF	snprintf
+#define TIXML_VSNPRINTF	vsnprintf
+static inline int TIXML_VSCPRINTF(const char* format, va_list va )
+{
+    int len = vsnprintf(0, 0, format, va );
+    TIXMLASSERT(len >= 0 );
+    return len;
+}
+#define TIXML_SSCANF   sscanf
 #endif
 
 
@@ -119,14 +121,16 @@ static const unsigned char TIXML_UTF_LEAD_2 = 0xbfU;
 namespace tinyxml2
 {
 
-struct Entity {
+struct Entity
+{
     const char* pattern;
     int length;
     char value;
 };
 
 static const int NUM_ENTITIES = 5;
-static const Entity entities[NUM_ENTITIES] = {
+static const Entity entities[NUM_ENTITIES] =
+{
     { "quot", 4,	DOUBLE_QUOTE },
     { "amp", 3,		'&'  },
     { "apos", 4,	SINGLE_QUOTE },
@@ -143,7 +147,8 @@ StrPair::~StrPair()
 
 void StrPair::TransferTo(StrPair* other )
 {
-    if(this == other ) {
+    if(this == other )
+    {
         return;
     }
     // This in effect implements the assignment operator by "moving"
@@ -168,7 +173,8 @@ void StrPair::TransferTo(StrPair* other )
 
 void StrPair::Reset()
 {
-    if(_flags & NEEDS_DELETE ) {
+    if(_flags & NEEDS_DELETE )
+    {
         delete [] _start;
     }
     _flags = 0;
@@ -194,18 +200,22 @@ char* StrPair::ParseText(char* p, const char* endTag, int strFlags, int* curLine
 {
     TIXMLASSERT(p );
     TIXMLASSERT(endTag && *endTag );
-	TIXMLASSERT(curLineNumPtr);
+    TIXMLASSERT(curLineNumPtr);
 
     char* start = p;
     char  endChar = *endTag;
     int length = strlen(endTag );
 
     // Inner loop of text parsing.
-    while(*p ) {
-        if(*p == endChar && strncmp(p, endTag, length ) == 0 ) {
+    while(*p )
+    {
+        if(*p == endChar && strncmp(p, endTag, length ) == 0 )
+        {
             Set(start, p, strFlags );
             return p + length;
-        } else if(*p == '\n') {
+        }
+        else if(*p == '\n')
+        {
             ++ (*curLineNumPtr);
         }
         ++p;
@@ -217,16 +227,19 @@ char* StrPair::ParseText(char* p, const char* endTag, int strFlags, int* curLine
 
 char* StrPair::ParseName(char* p )
 {
-    if(!p || !(*p)) {
+    if(!p || !(*p))
+    {
         return 0;
     }
-    if(!XMLUtil::IsNameStartChar(*p )) {
+    if(!XMLUtil::IsNameStartChar(*p ))
+    {
         return 0;
     }
 
     char* const start = p;
     ++p;
-    while(*p && XMLUtil::IsNameChar(*p )) {
+    while(*p && XMLUtil::IsNameChar(*p ))
+    {
         ++p;
     }
 
@@ -242,14 +255,18 @@ void StrPair::CollapseWhitespace()
     // Trim leading space.
     _start = XMLUtil::SkipWhiteSpace(_start, 0 );
 
-    if(*_start ) {
+    if(*_start )
+    {
         const char* p = _start;	// the read pointer
         char* q = _start;	// the write pointer
 
-        while(*p ) {
-            if(XMLUtil::IsWhiteSpace(*p )) {
+        while(*p )
+        {
+            if(XMLUtil::IsWhiteSpace(*p ))
+            {
                 p = XMLUtil::SkipWhiteSpace(p, 0 );
-                if(*p == 0 ) {
+                if(*p == 0 )
+                {
                     break;    // don't write to q; this trims the trailing space.
                 }
                 *q = ' ';
@@ -268,55 +285,68 @@ const char* StrPair::GetStr()
 {
     TIXMLASSERT(_start );
     TIXMLASSERT(_end );
-    if(_flags & NEEDS_FLUSH ) {
+    if(_flags & NEEDS_FLUSH )
+    {
         *_end = 0;
         _flags ^= NEEDS_FLUSH;
 
-        if(_flags ) {
+        if(_flags )
+        {
             const char* p = _start;	// the read pointer
             char* q = _start;	// the write pointer
 
-            while(p < _end ) {
-                if((_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == CR ) {
+            while(p < _end )
+            {
+                if((_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == CR )
+                {
                     // CR-LF pair becomes LF
                     // CR alone becomes LF
                     // LF-CR becomes LF
-                    if(*(p+1) == LF ) {
+                    if(*(p+1) == LF )
+                    {
                         p += 2;
                     }
-                    else {
+                    else
+                    {
                         ++p;
                     }
                     *q = LF;
                     ++q;
                 }
-                else if((_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == LF ) {
-                    if(*(p+1) == CR ) {
+                else if((_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == LF )
+                {
+                    if(*(p+1) == CR )
+                    {
                         p += 2;
                     }
-                    else {
+                    else
+                    {
                         ++p;
                     }
                     *q = LF;
                     ++q;
                 }
-                else if((_flags & NEEDS_ENTITY_PROCESSING) && *p == '&') {
+                else if((_flags & NEEDS_ENTITY_PROCESSING) && *p == '&')
+                {
                     // Entities handled by tinyXML2:
                     // - special entities in the entity table [in/out]
                     // - numeric character reference [in]
                     //   &#20013; or &#x4e2d;
 
-                    if(*(p+1) == '#') {
+                    if(*(p+1) == '#')
+                    {
                         const int buflen = 10;
                         char buf[buflen] = { 0 };
                         int len = 0;
                         char* adjusted = const_cast<char*>(XMLUtil::GetCharacterRef(p, buf, &len ));
-                        if(adjusted == 0 ) {
+                        if(adjusted == 0 )
+                        {
                             *q = *p;
                             ++p;
                             ++q;
                         }
-                        else {
+                        else
+                        {
                             TIXMLASSERT(0 <= len && len <= buflen );
                             TIXMLASSERT(q + len <= adjusted );
                             p = adjusted;
@@ -324,12 +354,15 @@ const char* StrPair::GetStr()
                             q += len;
                         }
                     }
-                    else {
+                    else
+                    {
                         bool entityFound = false;
-                        for(int i = 0; i < NUM_ENTITIES; ++i ) {
+                        for(int i = 0; i < NUM_ENTITIES; ++i )
+                        {
                             const Entity& entity = entities[i];
                             if(strncmp(p + 1, entity.pattern, entity.length ) == 0
-                                    && *(p + entity.length + 1 ) == ';') {
+                                    && *(p + entity.length + 1 ) == ';')
+                            {
                                 // Found an entity - convert.
                                 *q = entity.value;
                                 ++q;
@@ -338,14 +371,16 @@ const char* StrPair::GetStr()
                                 break;
                             }
                         }
-                        if(!entityFound ) {
+                        if(!entityFound )
+                        {
                             // fixme: treat as error?
                             ++p;
                             ++q;
                         }
                     }
                 }
-                else {
+                else
+                {
                     *q = *p;
                     ++p;
                     ++q;
@@ -355,7 +390,8 @@ const char* StrPair::GetStr()
         }
         // The loop below has plenty going on, and this
         // is a less useful mode. Break it out.
-        if(_flags & NEEDS_WHITESPACE_COLLAPSING ) {
+        if(_flags & NEEDS_WHITESPACE_COLLAPSING )
+        {
             CollapseWhitespace();
         }
         _flags = (_flags & NEEDS_DELETE);
@@ -374,11 +410,11 @@ const char* XMLUtil::writeBoolFalse = "false";
 
 void XMLUtil::SetBoolSerialization(const char* writeTrue, const char* writeFalse)
 {
-	static const char* defTrue  = "true";
-	static const char* defFalse = "false";
+    static const char* defTrue  = "true";
+    static const char* defFalse = "false";
 
-	writeBoolTrue = (writeTrue) ? writeTrue : defTrue;
-	writeBoolFalse = (writeFalse) ? writeFalse : defFalse;
+    writeBoolTrue = (writeTrue) ? writeTrue : defTrue;
+    writeBoolFalse = (writeFalse) ? writeFalse : defFalse;
 }
 
 
@@ -391,7 +427,8 @@ const char* XMLUtil::ReadBOM(const char* p, bool* bom )
     // Check for BOM:
     if(   *(pu+0) == TIXML_UTF_LEAD_0
             && *(pu+1) == TIXML_UTF_LEAD_1
-            && *(pu+2) == TIXML_UTF_LEAD_2 ) {
+            && *(pu+2) == TIXML_UTF_LEAD_2 )
+    {
         *bom = true;
         p += 3;
     }
@@ -406,19 +443,24 @@ void XMLUtil::ConvertUTF32ToUTF8(unsigned long input, char* output, int* length 
     const unsigned long BYTE_MARK = 0x80;
     const unsigned long FIRST_BYTE_MARK[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 
-    if(input < 0x80) {
+    if(input < 0x80)
+    {
         *length = 1;
     }
-    else if(input < 0x800 ) {
+    else if(input < 0x800 )
+    {
         *length = 2;
     }
-    else if(input < 0x10000 ) {
+    else if(input < 0x10000 )
+    {
         *length = 3;
     }
-    else if(input < 0x200000 ) {
+    else if(input < 0x200000 )
+    {
         *length = 4;
     }
-    else {
+    else
+    {
         *length = 0;    // This code won't convert this correctly anyway.
         return;
     }
@@ -427,28 +469,29 @@ void XMLUtil::ConvertUTF32ToUTF8(unsigned long input, char* output, int* length 
 
     // Scary scary fall throughs are annotated with carefully designed comments
     // to suppress compiler warnings such as -Wimplicit-fallthrough in gcc
-    switch(*length) {
-        case 4:
-            --output;
-            *output = (char)((input | BYTE_MARK) & BYTE_MASK);
-            input >>= 6;
-            //fall through
-        case 3:
-            --output;
-            *output = (char)((input | BYTE_MARK) & BYTE_MASK);
-            input >>= 6;
-            //fall through
-        case 2:
-            --output;
-            *output = (char)((input | BYTE_MARK) & BYTE_MASK);
-            input >>= 6;
-            //fall through
-        case 1:
-            --output;
-            *output = (char)(input | FIRST_BYTE_MARK[*length]);
-            break;
-        default:
-            TIXMLASSERT(false );
+    switch(*length)
+    {
+    case 4:
+        --output;
+        *output = (char)((input | BYTE_MARK) & BYTE_MASK);
+        input >>= 6;
+    //fall through
+    case 3:
+        --output;
+        *output = (char)((input | BYTE_MARK) & BYTE_MASK);
+        input >>= 6;
+    //fall through
+    case 2:
+        --output;
+        *output = (char)((input | BYTE_MARK) & BYTE_MASK);
+        input >>= 6;
+    //fall through
+    case 1:
+        --output;
+        *output = (char)(input | FIRST_BYTE_MARK[*length]);
+        break;
+    default:
+        TIXMLASSERT(false );
     }
 }
 
@@ -458,23 +501,27 @@ const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length )
     // Presume an entity, and pull it out.
     *length = 0;
 
-    if(*(p+1) == '#' && *(p+2)) {
+    if(*(p+1) == '#' && *(p+2))
+    {
         unsigned long ucs = 0;
         TIXMLASSERT(sizeof(ucs ) >= 4 );
         ptrdiff_t delta = 0;
         unsigned mult = 1;
         static const char SEMICOLON = ';';
 
-        if(*(p+2) == 'x') {
+        if(*(p+2) == 'x')
+        {
             // Hexadecimal.
             const char* q = p+3;
-            if(!(*q)) {
+            if(!(*q))
+            {
                 return 0;
             }
 
             q = strchr(q, SEMICOLON );
 
-            if(!q ) {
+            if(!q )
+            {
                 return 0;
             }
             TIXMLASSERT(*q == SEMICOLON );
@@ -482,19 +529,24 @@ const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length )
             delta = q-p;
             --q;
 
-            while(*q != 'x') {
+            while(*q != 'x')
+            {
                 unsigned int digit = 0;
 
-                if(*q >= '0' && *q <= '9') {
+                if(*q >= '0' && *q <= '9')
+                {
                     digit = *q - '0';
                 }
-                else if(*q >= 'a' && *q <= 'f') {
+                else if(*q >= 'a' && *q <= 'f')
+                {
                     digit = *q - 'a' + 10;
                 }
-                else if(*q >= 'A' && *q <= 'F') {
+                else if(*q >= 'A' && *q <= 'F')
+                {
                     digit = *q - 'A' + 10;
                 }
-                else {
+                else
+                {
                     return 0;
                 }
                 TIXMLASSERT(digit < 16 );
@@ -507,16 +559,19 @@ const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length )
                 --q;
             }
         }
-        else {
+        else
+        {
             // Decimal.
             const char* q = p+2;
-            if(!(*q)) {
+            if(!(*q))
+            {
                 return 0;
             }
 
             q = strchr(q, SEMICOLON );
 
-            if(!q ) {
+            if(!q )
+            {
                 return 0;
             }
             TIXMLASSERT(*q == SEMICOLON );
@@ -524,8 +579,10 @@ const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length )
             delta = q-p;
             --q;
 
-            while(*q != '#') {
-                if(*q >= '0' && *q <= '9') {
+            while(*q != '#')
+            {
+                if(*q >= '0' && *q <= '9')
+                {
                     const unsigned int digit = *q - '0';
                     TIXMLASSERT(digit < 10 );
                     TIXMLASSERT(digit == 0 || mult <= UINT_MAX / digit );
@@ -533,7 +590,8 @@ const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length )
                     TIXMLASSERT(ucs <= ULONG_MAX - digitScaled );
                     ucs += digitScaled;
                 }
-                else {
+                else
+                {
                     return 0;
                 }
                 TIXMLASSERT(mult <= UINT_MAX / 10 );
@@ -584,14 +642,15 @@ void XMLUtil::ToStr(double v, char* buffer, int bufferSize )
 
 void XMLUtil::ToStr(int64_t v, char* buffer, int bufferSize)
 {
-	// horrible syntax trick to make the compiler happy about %lld
-	TIXML_SNPRINTF(buffer, bufferSize, "%lld",(long long)v);
+    // horrible syntax trick to make the compiler happy about %lld
+    TIXML_SNPRINTF(buffer, bufferSize, "%lld",(long long)v);
 }
 
 
 bool XMLUtil::ToInt(const char* str, int* value )
 {
-    if(TIXML_SSCANF(str, "%d", value ) == 1 ) {
+    if(TIXML_SSCANF(str, "%d", value ) == 1 )
+    {
         return true;
     }
     return false;
@@ -599,7 +658,8 @@ bool XMLUtil::ToInt(const char* str, int* value )
 
 bool XMLUtil::ToUnsigned(const char* str, unsigned *value )
 {
-    if(TIXML_SSCANF(str, "%u", value ) == 1 ) {
+    if(TIXML_SSCANF(str, "%u", value ) == 1 )
+    {
         return true;
     }
     return false;
@@ -608,15 +668,18 @@ bool XMLUtil::ToUnsigned(const char* str, unsigned *value )
 bool XMLUtil::ToBool(const char* str, bool* value )
 {
     int ival = 0;
-    if(ToInt(str, &ival )) {
+    if(ToInt(str, &ival ))
+    {
         *value = (ival==0) ? false : true;
         return true;
     }
-    if(StringEqual(str, "true")) {
+    if(StringEqual(str, "true"))
+    {
         *value = true;
         return true;
     }
-    else if(StringEqual(str, "false")) {
+    else if(StringEqual(str, "false"))
+    {
         *value = false;
         return true;
     }
@@ -626,7 +689,8 @@ bool XMLUtil::ToBool(const char* str, bool* value )
 
 bool XMLUtil::ToFloat(const char* str, float* value )
 {
-    if(TIXML_SSCANF(str, "%f", value ) == 1 ) {
+    if(TIXML_SSCANF(str, "%f", value ) == 1 )
+    {
         return true;
     }
     return false;
@@ -635,7 +699,8 @@ bool XMLUtil::ToFloat(const char* str, float* value )
 
 bool XMLUtil::ToDouble(const char* str, double* value )
 {
-    if(TIXML_SSCANF(str, "%lf", value ) == 1 ) {
+    if(TIXML_SSCANF(str, "%lf", value ) == 1 )
+    {
         return true;
     }
     return false;
@@ -644,12 +709,13 @@ bool XMLUtil::ToDouble(const char* str, double* value )
 
 bool XMLUtil::ToInt64(const char* str, int64_t* value)
 {
-	long long v = 0;	// horrible syntax trick to make the compiler happy about %lld
-	if(TIXML_SSCANF(str, "%lld", &v) == 1) {
-		*value = (int64_t)v;
-		return true;
-	}
-	return false;
+    long long v = 0;	// horrible syntax trick to make the compiler happy about %lld
+    if(TIXML_SSCANF(str, "%lld", &v) == 1)
+    {
+        *value = (int64_t)v;
+        return true;
+    }
+    return false;
 }
 
 
@@ -660,7 +726,8 @@ char* XMLDocument::Identify(char* p, XMLNode** node )
     char* const start = p;
     int const startLine = _parseCurLineNum;
     p = XMLUtil::SkipWhiteSpace(p, &_parseCurLineNum );
-    if(!*p ) {
+    if(!*p )
+    {
         *node = 0;
         TIXMLASSERT(p );
         return p;
@@ -682,34 +749,40 @@ char* XMLDocument::Identify(char* p, XMLNode** node )
     TIXMLASSERT(sizeof(XMLComment ) == sizeof(XMLUnknown ));		// use same memory pool
     TIXMLASSERT(sizeof(XMLComment ) == sizeof(XMLDeclaration ));	// use same memory pool
     XMLNode* returnNode = 0;
-    if(XMLUtil::StringEqual(p, xmlHeader, xmlHeaderLen )) {
+    if(XMLUtil::StringEqual(p, xmlHeader, xmlHeaderLen ))
+    {
         returnNode = CreateUnlinkedNode<XMLDeclaration>(_commentPool );
         returnNode->_parseLineNum = _parseCurLineNum;
         p += xmlHeaderLen;
     }
-    else if(XMLUtil::StringEqual(p, commentHeader, commentHeaderLen )) {
+    else if(XMLUtil::StringEqual(p, commentHeader, commentHeaderLen ))
+    {
         returnNode = CreateUnlinkedNode<XMLComment>(_commentPool );
         returnNode->_parseLineNum = _parseCurLineNum;
         p += commentHeaderLen;
     }
-    else if(XMLUtil::StringEqual(p, cdataHeader, cdataHeaderLen )) {
+    else if(XMLUtil::StringEqual(p, cdataHeader, cdataHeaderLen ))
+    {
         XMLText* text = CreateUnlinkedNode<XMLText>(_textPool );
         returnNode = text;
         returnNode->_parseLineNum = _parseCurLineNum;
         p += cdataHeaderLen;
         text->SetCData(true );
     }
-    else if(XMLUtil::StringEqual(p, dtdHeader, dtdHeaderLen )) {
+    else if(XMLUtil::StringEqual(p, dtdHeader, dtdHeaderLen ))
+    {
         returnNode = CreateUnlinkedNode<XMLUnknown>(_commentPool );
         returnNode->_parseLineNum = _parseCurLineNum;
         p += dtdHeaderLen;
     }
-    else if(XMLUtil::StringEqual(p, elementHeader, elementHeaderLen )) {
+    else if(XMLUtil::StringEqual(p, elementHeader, elementHeaderLen ))
+    {
         returnNode = CreateUnlinkedNode<XMLElement>(_elementPool );
         returnNode->_parseLineNum = _parseCurLineNum;
         p += elementHeaderLen;
     }
-    else {
+    else
+    {
         returnNode = CreateUnlinkedNode<XMLText>(_textPool );
         returnNode->_parseLineNum = _parseCurLineNum; // Report line of first non-whitespace character
         p = start;	// Back it up, all the text counts.
@@ -726,9 +799,12 @@ char* XMLDocument::Identify(char* p, XMLNode** node )
 bool XMLDocument::Accept(XMLVisitor* visitor ) const
 {
     TIXMLASSERT(visitor );
-    if(visitor->VisitEnter(*this )) {
-        for(const XMLNode* node=FirstChild(); node; node=node->NextSibling()) {
-            if(!node->Accept(visitor )) {
+    if(visitor->VisitEnter(*this ))
+    {
+        for(const XMLNode* node=FirstChild(); node; node=node->NextSibling())
+        {
+            if(!node->Accept(visitor ))
+            {
                 break;
             }
         }
@@ -746,7 +822,7 @@ XMLNode::XMLNode(XMLDocument* doc ) :
     _parseLineNum(0 ),
     _firstChild(0 ), _lastChild(0 ),
     _prev(0 ), _next(0 ),
-	_userData(0 ),
+    _userData(0 ),
     _memPool(0 )
 {
 }
@@ -755,12 +831,13 @@ XMLNode::XMLNode(XMLDocument* doc ) :
 XMLNode::~XMLNode()
 {
     DeleteChildren();
-    if(_parent ) {
+    if(_parent )
+    {
         _parent->Unlink(this );
     }
 }
 
-const char* XMLNode::Value() const 
+const char* XMLNode::Value() const
 {
     // Edge case: XMLDocuments don't have a Value. Return null.
     if(this->ToDocument())
@@ -770,30 +847,34 @@ const char* XMLNode::Value() const
 
 void XMLNode::SetValue(const char* str, bool staticMem )
 {
-    if(staticMem ) {
+    if(staticMem )
+    {
         _value.SetInternedStr(str );
     }
-    else {
+    else
+    {
         _value.SetStr(str );
     }
 }
 
 XMLNode* XMLNode::DeepClone(XMLDocument* target) const
 {
-	XMLNode* clone = this->ShallowClone(target);
-	if(!clone) return 0;
+    XMLNode* clone = this->ShallowClone(target);
+    if(!clone) return 0;
 
-	for(const XMLNode* child = this->FirstChild(); child; child = child->NextSibling()) {
-		XMLNode* childClone = child->DeepClone(target);
-		TIXMLASSERT(childClone);
-		clone->InsertEndChild(childClone);
-	}
-	return clone;
+    for(const XMLNode* child = this->FirstChild(); child; child = child->NextSibling())
+    {
+        XMLNode* childClone = child->DeepClone(target);
+        TIXMLASSERT(childClone);
+        clone->InsertEndChild(childClone);
+    }
+    return clone;
 }
 
 void XMLNode::DeleteChildren()
 {
-    while(_firstChild ) {
+    while(_firstChild )
+    {
         TIXMLASSERT(_lastChild );
         DeleteChild(_firstChild );
     }
@@ -806,22 +887,26 @@ void XMLNode::Unlink(XMLNode* child )
     TIXMLASSERT(child );
     TIXMLASSERT(child->_document == _document );
     TIXMLASSERT(child->_parent == this );
-    if(child == _firstChild ) {
+    if(child == _firstChild )
+    {
         _firstChild = _firstChild->_next;
     }
-    if(child == _lastChild ) {
+    if(child == _lastChild )
+    {
         _lastChild = _lastChild->_prev;
     }
 
-    if(child->_prev ) {
+    if(child->_prev )
+    {
         child->_prev->_next = child->_next;
     }
-    if(child->_next ) {
+    if(child->_next )
+    {
         child->_next->_prev = child->_prev;
     }
-	child->_next = 0;
-	child->_prev = 0;
-	child->_parent = nullptr;
+    child->_next = 0;
+    child->_prev = 0;
+    child->_parent = nullptr;
 }
 
 
@@ -831,9 +916,9 @@ void XMLNode::DeleteChild(XMLNode* node )
     TIXMLASSERT(node->_document == _document );
     TIXMLASSERT(node->_parent == this );
     Unlink(node );
-	TIXMLASSERT(node->_prev == 0);
-	TIXMLASSERT(node->_next == 0);
-	TIXMLASSERT(node->_parent == 0);
+    TIXMLASSERT(node->_prev == 0);
+    TIXMLASSERT(node->_next == 0);
+    TIXMLASSERT(node->_parent == 0);
     DeleteNode(node );
 }
 
@@ -841,13 +926,15 @@ void XMLNode::DeleteChild(XMLNode* node )
 XMLNode* XMLNode::InsertEndChild(XMLNode* addThis )
 {
     TIXMLASSERT(addThis );
-    if(addThis->_document != _document ) {
+    if(addThis->_document != _document )
+    {
         TIXMLASSERT(false );
         return 0;
     }
     InsertChildPreamble(addThis );
 
-    if(_lastChild ) {
+    if(_lastChild )
+    {
         TIXMLASSERT(_firstChild );
         TIXMLASSERT(_lastChild->_next == 0 );
         _lastChild->_next = addThis;
@@ -856,7 +943,8 @@ XMLNode* XMLNode::InsertEndChild(XMLNode* addThis )
 
         addThis->_next = 0;
     }
-    else {
+    else
+    {
         TIXMLASSERT(_firstChild == 0 );
         _firstChild = _lastChild = addThis;
 
@@ -871,13 +959,15 @@ XMLNode* XMLNode::InsertEndChild(XMLNode* addThis )
 XMLNode* XMLNode::InsertFirstChild(XMLNode* addThis )
 {
     TIXMLASSERT(addThis );
-    if(addThis->_document != _document ) {
+    if(addThis->_document != _document )
+    {
         TIXMLASSERT(false );
         return 0;
     }
     InsertChildPreamble(addThis );
 
-    if(_firstChild ) {
+    if(_firstChild )
+    {
         TIXMLASSERT(_lastChild );
         TIXMLASSERT(_firstChild->_prev == 0 );
 
@@ -887,7 +977,8 @@ XMLNode* XMLNode::InsertFirstChild(XMLNode* addThis )
 
         addThis->_prev = 0;
     }
-    else {
+    else
+    {
         TIXMLASSERT(_lastChild == 0 );
         _firstChild = _lastChild = addThis;
 
@@ -902,18 +993,21 @@ XMLNode* XMLNode::InsertFirstChild(XMLNode* addThis )
 XMLNode* XMLNode::InsertAfterChild(XMLNode* afterThis, XMLNode* addThis )
 {
     TIXMLASSERT(addThis );
-    if(addThis->_document != _document ) {
+    if(addThis->_document != _document )
+    {
         TIXMLASSERT(false );
         return 0;
     }
 
     TIXMLASSERT(afterThis );
 
-    if(afterThis->_parent != this ) {
+    if(afterThis->_parent != this )
+    {
         TIXMLASSERT(false );
         return 0;
     }
-    if(afterThis == addThis ) {
+    if(afterThis == addThis )
+    {
         // Current state: BeforeThis->AddThis->OneAfterAddThis
         // Now AddThis must disappear from it's location and then
         // reappear between BeforeThis and OneAfterAddThis.
@@ -921,7 +1015,8 @@ XMLNode* XMLNode::InsertAfterChild(XMLNode* afterThis, XMLNode* addThis )
         return addThis;
     }
 
-    if(afterThis->_next == 0 ) {
+    if(afterThis->_next == 0 )
+    {
         // The last node or the only node.
         return InsertEndChild(addThis );
     }
@@ -939,9 +1034,11 @@ XMLNode* XMLNode::InsertAfterChild(XMLNode* afterThis, XMLNode* addThis )
 
 const XMLElement* XMLNode::FirstChildElement(const char* name ) const
 {
-    for(const XMLNode* node = _firstChild; node; node = node->_next ) {
+    for(const XMLNode* node = _firstChild; node; node = node->_next )
+    {
         const XMLElement* element = node->ToElementWithName(name );
-        if(element ) {
+        if(element )
+        {
             return element;
         }
     }
@@ -951,9 +1048,11 @@ const XMLElement* XMLNode::FirstChildElement(const char* name ) const
 
 const XMLElement* XMLNode::LastChildElement(const char* name ) const
 {
-    for(const XMLNode* node = _lastChild; node; node = node->_prev ) {
+    for(const XMLNode* node = _lastChild; node; node = node->_prev )
+    {
         const XMLElement* element = node->ToElementWithName(name );
-        if(element ) {
+        if(element )
+        {
             return element;
         }
     }
@@ -963,9 +1062,11 @@ const XMLElement* XMLNode::LastChildElement(const char* name ) const
 
 const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
 {
-    for(const XMLNode* node = _next; node; node = node->_next ) {
+    for(const XMLNode* node = _next; node; node = node->_next )
+    {
         const XMLElement* element = node->ToElementWithName(name );
-        if(element ) {
+        if(element )
+        {
             return element;
         }
     }
@@ -975,9 +1076,11 @@ const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
 
 const XMLElement* XMLNode::PreviousSiblingElement(const char* name ) const
 {
-    for(const XMLNode* node = _prev; node; node = node->_prev ) {
+    for(const XMLNode* node = _prev; node; node = node->_prev )
+    {
         const XMLElement* element = node->ToElementWithName(name );
-        if(element ) {
+        if(element )
+        {
             return element;
         }
     }
@@ -1004,12 +1107,14 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
     // 'endTag' is the end tag for this node, it is returned by a call to a child.
     // 'parentEnd' is the end tag for the parent, which is filled in and returned.
 
-    while(p && *p ) {
+    while(p && *p )
+    {
         XMLNode* node = 0;
 
         p = _document->Identify(p, &node );
         TIXMLASSERT(p );
-        if(node == 0 ) {
+        if(node == 0 )
+        {
             break;
         }
 
@@ -1017,29 +1122,36 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
 
         StrPair endTag;
         p = node->ParseDeep(p, &endTag, curLineNumPtr );
-        if(!p ) {
+        if(!p )
+        {
             DeleteNode(node );
-            if(!_document->Error()) {
+            if(!_document->Error())
+            {
                 _document->SetError(XML_ERROR_PARSING, initialLineNum, 0);
             }
             break;
         }
 
         XMLDeclaration* decl = node->ToDeclaration();
-        if(decl ) {
+        if(decl )
+        {
             // Declarations are only allowed at document level
             bool wellLocated = (ToDocument() != 0 );
-            if(wellLocated ) {
+            if(wellLocated )
+            {
                 // Multiple declarations are allowed but all declarations
                 // must occur before anything else
-                for(const XMLNode* existingNode = _document->FirstChild(); existingNode; existingNode = existingNode->NextSibling()) {
-                    if(!existingNode->ToDeclaration()) {
+                for(const XMLNode* existingNode = _document->FirstChild(); existingNode; existingNode = existingNode->NextSibling())
+                {
+                    if(!existingNode->ToDeclaration())
+                    {
                         wellLocated = false;
                         break;
                     }
                 }
             }
-            if(!wellLocated ) {
+            if(!wellLocated )
+            {
                 _document->SetError(XML_ERROR_PARSING_DECLARATION, initialLineNum, "XMLDeclaration value=%s", decl->Value());
                 DeleteNode(node );
                 break;
@@ -1047,10 +1159,13 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
         }
 
         XMLElement* ele = node->ToElement();
-        if(ele ) {
+        if(ele )
+        {
             // We read the end tag. Return it to the parent.
-            if(ele->ClosingType() == XMLElement::CLOSING ) {
-                if(parentEndTag ) {
+            if(ele->ClosingType() == XMLElement::CLOSING )
+            {
+                if(parentEndTag )
+                {
                     ele->_value.TransferTo(parentEndTag );
                 }
                 node->_memPool->SetTracked();   // created and then immediately deleted.
@@ -1061,20 +1176,26 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
             // Handle an end tag returned to this level.
             // And handle a bunch of annoying errors.
             bool mismatch = false;
-            if(endTag.Empty()) {
-                if(ele->ClosingType() == XMLElement::OPEN ) {
+            if(endTag.Empty())
+            {
+                if(ele->ClosingType() == XMLElement::OPEN )
+                {
                     mismatch = true;
                 }
             }
-            else {
-                if(ele->ClosingType() != XMLElement::OPEN ) {
+            else
+            {
+                if(ele->ClosingType() != XMLElement::OPEN )
+                {
                     mismatch = true;
                 }
-                else if(!XMLUtil::StringEqual(endTag.GetStr(), ele->Name())) {
+                else if(!XMLUtil::StringEqual(endTag.GetStr(), ele->Name()))
+                {
                     mismatch = true;
                 }
             }
-            if(mismatch ) {
+            if(mismatch )
+            {
                 _document->SetError(XML_ERROR_MISMATCHED_ELEMENT, initialLineNum, "XMLElement name=%s", ele->Name());
                 DeleteNode(node );
                 break;
@@ -1087,13 +1208,15 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
 
 /*static*/ void XMLNode::DeleteNode(XMLNode* node )
 {
-    if(node == 0 ) {
+    if(node == 0 )
+    {
         return;
     }
-	TIXMLASSERT(node->_document);
-	if(!node->ToDocument()) {
-		node->_document->MarkInUse(node);
-	}
+    TIXMLASSERT(node->_document);
+    if(!node->ToDocument())
+    {
+        node->_document->MarkInUse(node);
+    }
 
     MemPool* pool = node->_memPool;
     node->~XMLNode();
@@ -1105,26 +1228,31 @@ void XMLNode::InsertChildPreamble(XMLNode* insertThis ) const
     TIXMLASSERT(insertThis );
     TIXMLASSERT(insertThis->_document == _document );
 
-	if(insertThis->_parent) {
+    if(insertThis->_parent)
+    {
         insertThis->_parent->Unlink(insertThis );
-	}
-	else {
-		insertThis->_document->MarkInUse(insertThis);
+    }
+    else
+    {
+        insertThis->_document->MarkInUse(insertThis);
         insertThis->_memPool->SetTracked();
-	}
+    }
 }
 
 const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 {
     const XMLElement* element = this->ToElement();
-    if(element == 0 ) {
+    if(element == 0 )
+    {
         return 0;
     }
-    if(name == 0 ) {
+    if(name == 0 )
+    {
         return element;
     }
-    if(XMLUtil::StringEqual(element->Name(), name )) {
-       return element;
+    if(XMLUtil::StringEqual(element->Name(), name ))
+    {
+        return element;
     }
     return 0;
 }
@@ -1132,24 +1260,30 @@ const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 // --------- XMLText ---------- //
 char* XMLText::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
-    if(this->CData()) {
+    if(this->CData())
+    {
         p = _value.ParseText(p, "]]>", StrPair::NEEDS_NEWLINE_NORMALIZATION, curLineNumPtr );
-        if(!p ) {
+        if(!p )
+        {
             _document->SetError(XML_ERROR_PARSING_CDATA, _parseLineNum, 0 );
         }
         return p;
     }
-    else {
+    else
+    {
         int flags = _document->ProcessEntities() ? StrPair::TEXT_ELEMENT : StrPair::TEXT_ELEMENT_LEAVE_ENTITIES;
-        if(_document->WhitespaceMode() == COLLAPSE_WHITESPACE ) {
+        if(_document->WhitespaceMode() == COLLAPSE_WHITESPACE )
+        {
             flags |= StrPair::NEEDS_WHITESPACE_COLLAPSING;
         }
 
         p = _value.ParseText(p, "<", flags, curLineNumPtr );
-        if(p && *p ) {
+        if(p && *p )
+        {
             return p-1;
         }
-        if(!p ) {
+        if(!p )
+        {
             _document->SetError(XML_ERROR_PARSING_TEXT, _parseLineNum, 0 );
         }
     }
@@ -1159,7 +1293,8 @@ char* XMLText::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 
 XMLNode* XMLText::ShallowClone(XMLDocument* doc ) const
 {
-    if(!doc ) {
+    if(!doc )
+    {
         doc = _document;
     }
     XMLText* text = doc->NewText(Value());	// fixme: this will always allocate memory. Intern?
@@ -1199,7 +1334,8 @@ char* XMLComment::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
     // Comment parses as text.
     p = _value.ParseText(p, "-->", StrPair::COMMENT, curLineNumPtr );
-    if(p == 0 ) {
+    if(p == 0 )
+    {
         _document->SetError(XML_ERROR_PARSING_COMMENT, _parseLineNum, 0 );
     }
     return p;
@@ -1208,7 +1344,8 @@ char* XMLComment::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 
 XMLNode* XMLComment::ShallowClone(XMLDocument* doc ) const
 {
-    if(!doc ) {
+    if(!doc )
+    {
         doc = _document;
     }
     XMLComment* comment = doc->NewComment(Value());	// fixme: this will always allocate memory. Intern?
@@ -1248,7 +1385,8 @@ char* XMLDeclaration::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
     // Declaration parses as text.
     p = _value.ParseText(p, "?>", StrPair::NEEDS_NEWLINE_NORMALIZATION, curLineNumPtr );
-    if(p == 0 ) {
+    if(p == 0 )
+    {
         _document->SetError(XML_ERROR_PARSING_DECLARATION, _parseLineNum, 0 );
     }
     return p;
@@ -1257,7 +1395,8 @@ char* XMLDeclaration::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 
 XMLNode* XMLDeclaration::ShallowClone(XMLDocument* doc ) const
 {
-    if(!doc ) {
+    if(!doc )
+    {
         doc = _document;
     }
     XMLDeclaration* dec = doc->NewDeclaration(Value());	// fixme: this will always allocate memory. Intern?
@@ -1296,7 +1435,8 @@ char* XMLUnknown::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
     // Unknown parses as text.
     p = _value.ParseText(p, ">", StrPair::NEEDS_NEWLINE_NORMALIZATION, curLineNumPtr );
-    if(!p ) {
+    if(!p )
+    {
         _document->SetError(XML_ERROR_PARSING_UNKNOWN, _parseLineNum, 0 );
     }
     return p;
@@ -1305,7 +1445,8 @@ char* XMLUnknown::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 
 XMLNode* XMLUnknown::ShallowClone(XMLDocument* doc ) const
 {
-    if(!doc ) {
+    if(!doc )
+    {
         doc = _document;
     }
     XMLUnknown* text = doc->NewUnknown(Value());	// fixme: this will always allocate memory. Intern?
@@ -1329,12 +1470,12 @@ bool XMLUnknown::Accept(XMLVisitor* visitor ) const
 
 // --------- XMLAttribute ---------- //
 
-const char* XMLAttribute::Name() const 
+const char* XMLAttribute::Name() const
 {
     return _name.GetStr();
 }
 
-const char* XMLAttribute::Value() const 
+const char* XMLAttribute::Value() const
 {
     return _value.GetStr();
 }
@@ -1343,19 +1484,22 @@ char* XMLAttribute::ParseDeep(char* p, bool processEntities, int* curLineNumPtr 
 {
     // Parse using the name rules: bug fix, was using ParseText before
     p = _name.ParseName(p );
-    if(!p || !*p ) {
+    if(!p || !*p )
+    {
         return 0;
     }
 
     // Skip white space before =
     p = XMLUtil::SkipWhiteSpace(p, curLineNumPtr );
-    if(*p != '=') {
+    if(*p != '=')
+    {
         return 0;
     }
 
     ++p;	// move up to opening quote
     p = XMLUtil::SkipWhiteSpace(p, curLineNumPtr );
-    if(*p != '\"' && *p != '\'') {
+    if(*p != '\"' && *p != '\'')
+    {
         return 0;
     }
 
@@ -1375,7 +1519,8 @@ void XMLAttribute::SetName(const char* n )
 
 XMLError XMLAttribute::QueryIntValue(int* value ) const
 {
-    if(XMLUtil::ToInt(Value(), value )) {
+    if(XMLUtil::ToInt(Value(), value ))
+    {
         return XML_SUCCESS;
     }
     return XML_WRONG_ATTRIBUTE_TYPE;
@@ -1384,7 +1529,8 @@ XMLError XMLAttribute::QueryIntValue(int* value ) const
 
 XMLError XMLAttribute::QueryUnsignedValue(unsigned int* value ) const
 {
-    if(XMLUtil::ToUnsigned(Value(), value )) {
+    if(XMLUtil::ToUnsigned(Value(), value ))
+    {
         return XML_SUCCESS;
     }
     return XML_WRONG_ATTRIBUTE_TYPE;
@@ -1393,16 +1539,18 @@ XMLError XMLAttribute::QueryUnsignedValue(unsigned int* value ) const
 
 XMLError XMLAttribute::QueryInt64Value(int64_t* value) const
 {
-	if(XMLUtil::ToInt64(Value(), value)) {
-		return XML_SUCCESS;
-	}
-	return XML_WRONG_ATTRIBUTE_TYPE;
+    if(XMLUtil::ToInt64(Value(), value))
+    {
+        return XML_SUCCESS;
+    }
+    return XML_WRONG_ATTRIBUTE_TYPE;
 }
 
 
 XMLError XMLAttribute::QueryBoolValue(bool* value ) const
 {
-    if(XMLUtil::ToBool(Value(), value )) {
+    if(XMLUtil::ToBool(Value(), value ))
+    {
         return XML_SUCCESS;
     }
     return XML_WRONG_ATTRIBUTE_TYPE;
@@ -1411,7 +1559,8 @@ XMLError XMLAttribute::QueryBoolValue(bool* value ) const
 
 XMLError XMLAttribute::QueryFloatValue(float* value ) const
 {
-    if(XMLUtil::ToFloat(Value(), value )) {
+    if(XMLUtil::ToFloat(Value(), value ))
+    {
         return XML_SUCCESS;
     }
     return XML_WRONG_ATTRIBUTE_TYPE;
@@ -1420,7 +1569,8 @@ XMLError XMLAttribute::QueryFloatValue(float* value ) const
 
 XMLError XMLAttribute::QueryDoubleValue(double* value ) const
 {
-    if(XMLUtil::ToDouble(Value(), value )) {
+    if(XMLUtil::ToDouble(Value(), value ))
+    {
         return XML_SUCCESS;
     }
     return XML_WRONG_ATTRIBUTE_TYPE;
@@ -1451,9 +1601,9 @@ void XMLAttribute::SetAttribute(unsigned v )
 
 void XMLAttribute::SetAttribute(int64_t v)
 {
-	char buf[BUF_SIZE];
-	XMLUtil::ToStr(v, buf, BUF_SIZE);
-	_value.SetStr(buf);
+    char buf[BUF_SIZE];
+    XMLUtil::ToStr(v, buf, BUF_SIZE);
+    _value.SetStr(buf);
 }
 
 
@@ -1490,7 +1640,8 @@ XMLElement::XMLElement(XMLDocument* doc ) : XMLNode(doc ),
 
 XMLElement::~XMLElement()
 {
-    while(_rootAttribute ) {
+    while(_rootAttribute )
+    {
         XMLAttribute* next = _rootAttribute->_next;
         DeleteAttribute(_rootAttribute );
         _rootAttribute = next;
@@ -1500,8 +1651,10 @@ XMLElement::~XMLElement()
 
 const XMLAttribute* XMLElement::FindAttribute(const char* name ) const
 {
-    for(XMLAttribute* a = _rootAttribute; a; a = a->_next ) {
-        if(XMLUtil::StringEqual(a->Name(), name )) {
+    for(XMLAttribute* a = _rootAttribute; a; a = a->_next )
+    {
+        if(XMLUtil::StringEqual(a->Name(), name ))
+        {
             return a;
         }
     }
@@ -1512,10 +1665,12 @@ const XMLAttribute* XMLElement::FindAttribute(const char* name ) const
 const char* XMLElement::Attribute(const char* name, const char* value ) const
 {
     const XMLAttribute* a = FindAttribute(name );
-    if(!a ) {
+    if(!a )
+    {
         return 0;
     }
-    if(!value || XMLUtil::StringEqual(a->Value(), value )) {
+    if(!value || XMLUtil::StringEqual(a->Value(), value ))
+    {
         return a->Value();
     }
     return 0;
@@ -1524,48 +1679,49 @@ const char* XMLElement::Attribute(const char* name, const char* value ) const
 int XMLElement::IntAttribute(const char* name, int defaultValue) const
 {
     int i = defaultValue;
-	QueryIntAttribute(name, &i);
-	return i;
+    QueryIntAttribute(name, &i);
+    return i;
 }
 
-unsigned XMLElement::UnsignedAttribute(const char* name, unsigned defaultValue) const 
+unsigned XMLElement::UnsignedAttribute(const char* name, unsigned defaultValue) const
 {
-	unsigned i = defaultValue;
-	QueryUnsignedAttribute(name, &i);
-	return i;
+    unsigned i = defaultValue;
+    QueryUnsignedAttribute(name, &i);
+    return i;
 }
 
-int64_t XMLElement::Int64Attribute(const char* name, int64_t defaultValue) const 
+int64_t XMLElement::Int64Attribute(const char* name, int64_t defaultValue) const
 {
-	int64_t i = defaultValue;
-	QueryInt64Attribute(name, &i);
-	return i;
+    int64_t i = defaultValue;
+    QueryInt64Attribute(name, &i);
+    return i;
 }
 
-bool XMLElement::BoolAttribute(const char* name, bool defaultValue) const 
+bool XMLElement::BoolAttribute(const char* name, bool defaultValue) const
 {
-	bool b = defaultValue;
-	QueryBoolAttribute(name, &b);
-	return b;
+    bool b = defaultValue;
+    QueryBoolAttribute(name, &b);
+    return b;
 }
 
-double XMLElement::DoubleAttribute(const char* name, double defaultValue) const 
+double XMLElement::DoubleAttribute(const char* name, double defaultValue) const
 {
-	double d = defaultValue;
-	QueryDoubleAttribute(name, &d);
-	return d;
+    double d = defaultValue;
+    QueryDoubleAttribute(name, &d);
+    return d;
 }
 
-float XMLElement::FloatAttribute(const char* name, float defaultValue) const 
+float XMLElement::FloatAttribute(const char* name, float defaultValue) const
 {
-	float f = defaultValue;
-	QueryFloatAttribute(name, &f);
-	return f;
+    float f = defaultValue;
+    QueryFloatAttribute(name, &f);
+    return f;
 }
 
 const char* XMLElement::GetText() const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         return FirstChild()->Value();
     }
     return 0;
@@ -1574,12 +1730,13 @@ const char* XMLElement::GetText() const
 
 void	XMLElement::SetText(const char* inText )
 {
-	if(FirstChild() && FirstChild()->ToText())
-		FirstChild()->SetValue(inText );
-	else {
-		XMLText*	theText = GetDocument()->NewText(inText );
-		InsertFirstChild(theText );
-	}
+    if(FirstChild() && FirstChild()->ToText())
+        FirstChild()->SetValue(inText );
+    else
+    {
+        XMLText*	theText = GetDocument()->NewText(inText );
+        InsertFirstChild(theText );
+    }
 }
 
 
@@ -1591,7 +1748,7 @@ void XMLElement::SetText(int v )
 }
 
 
-void XMLElement::SetText(unsigned v ) 
+void XMLElement::SetText(unsigned v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr(v, buf, BUF_SIZE );
@@ -1601,9 +1758,9 @@ void XMLElement::SetText(unsigned v )
 
 void XMLElement::SetText(int64_t v)
 {
-	char buf[BUF_SIZE];
-	XMLUtil::ToStr(v, buf, BUF_SIZE);
-	SetText(buf);
+    char buf[BUF_SIZE];
+    XMLUtil::ToStr(v, buf, BUF_SIZE);
+    SetText(buf);
 }
 
 
@@ -1615,7 +1772,7 @@ void XMLElement::SetText(bool v )
 }
 
 
-void XMLElement::SetText(float v ) 
+void XMLElement::SetText(float v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr(v, buf, BUF_SIZE );
@@ -1623,7 +1780,7 @@ void XMLElement::SetText(float v )
 }
 
 
-void XMLElement::SetText(double v ) 
+void XMLElement::SetText(double v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr(v, buf, BUF_SIZE );
@@ -1633,9 +1790,11 @@ void XMLElement::SetText(double v )
 
 XMLError XMLElement::QueryIntText(int* ival ) const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         const char* t = FirstChild()->Value();
-        if(XMLUtil::ToInt(t, ival )) {
+        if(XMLUtil::ToInt(t, ival ))
+        {
             return XML_SUCCESS;
         }
         return XML_CAN_NOT_CONVERT_TEXT;
@@ -1646,9 +1805,11 @@ XMLError XMLElement::QueryIntText(int* ival ) const
 
 XMLError XMLElement::QueryUnsignedText(unsigned* uval ) const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         const char* t = FirstChild()->Value();
-        if(XMLUtil::ToUnsigned(t, uval )) {
+        if(XMLUtil::ToUnsigned(t, uval ))
+        {
             return XML_SUCCESS;
         }
         return XML_CAN_NOT_CONVERT_TEXT;
@@ -1659,22 +1820,26 @@ XMLError XMLElement::QueryUnsignedText(unsigned* uval ) const
 
 XMLError XMLElement::QueryInt64Text(int64_t* ival) const
 {
-	if(FirstChild() && FirstChild()->ToText()) {
-		const char* t = FirstChild()->Value();
-		if(XMLUtil::ToInt64(t, ival)) {
-			return XML_SUCCESS;
-		}
-		return XML_CAN_NOT_CONVERT_TEXT;
-	}
-	return XML_NO_TEXT_NODE;
+    if(FirstChild() && FirstChild()->ToText())
+    {
+        const char* t = FirstChild()->Value();
+        if(XMLUtil::ToInt64(t, ival))
+        {
+            return XML_SUCCESS;
+        }
+        return XML_CAN_NOT_CONVERT_TEXT;
+    }
+    return XML_NO_TEXT_NODE;
 }
 
 
 XMLError XMLElement::QueryBoolText(bool* bval ) const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         const char* t = FirstChild()->Value();
-        if(XMLUtil::ToBool(t, bval )) {
+        if(XMLUtil::ToBool(t, bval ))
+        {
             return XML_SUCCESS;
         }
         return XML_CAN_NOT_CONVERT_TEXT;
@@ -1685,9 +1850,11 @@ XMLError XMLElement::QueryBoolText(bool* bval ) const
 
 XMLError XMLElement::QueryDoubleText(double* dval ) const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         const char* t = FirstChild()->Value();
-        if(XMLUtil::ToDouble(t, dval )) {
+        if(XMLUtil::ToDouble(t, dval ))
+        {
             return XML_SUCCESS;
         }
         return XML_CAN_NOT_CONVERT_TEXT;
@@ -1698,9 +1865,11 @@ XMLError XMLElement::QueryDoubleText(double* dval ) const
 
 XMLError XMLElement::QueryFloatText(float* fval ) const
 {
-    if(FirstChild() && FirstChild()->ToText()) {
+    if(FirstChild() && FirstChild()->ToText())
+    {
         const char* t = FirstChild()->Value();
-        if(XMLUtil::ToFloat(t, fval )) {
+        if(XMLUtil::ToFloat(t, fval ))
+        {
             return XML_SUCCESS;
         }
         return XML_CAN_NOT_CONVERT_TEXT;
@@ -1711,43 +1880,43 @@ XMLError XMLElement::QueryFloatText(float* fval ) const
 int XMLElement::IntText(int defaultValue) const
 {
     int i = defaultValue;
-	QueryIntText(&i);
-	return i;
+    QueryIntText(&i);
+    return i;
 }
 
 unsigned XMLElement::UnsignedText(unsigned defaultValue) const
 {
-	unsigned i = defaultValue;
-	QueryUnsignedText(&i);
-	return i;
+    unsigned i = defaultValue;
+    QueryUnsignedText(&i);
+    return i;
 }
 
 int64_t XMLElement::Int64Text(int64_t defaultValue) const
 {
-	int64_t i = defaultValue;
-	QueryInt64Text(&i);
-	return i;
+    int64_t i = defaultValue;
+    QueryInt64Text(&i);
+    return i;
 }
 
 bool XMLElement::BoolText(bool defaultValue) const
 {
-	bool b = defaultValue;
-	QueryBoolText(&b);
-	return b;
+    bool b = defaultValue;
+    QueryBoolText(&b);
+    return b;
 }
 
 double XMLElement::DoubleText(double defaultValue) const
 {
-	double d = defaultValue;
-	QueryDoubleText(&d);
-	return d;
+    double d = defaultValue;
+    QueryDoubleText(&d);
+    return d;
 }
 
 float XMLElement::FloatText(float defaultValue) const
 {
-	float f = defaultValue;
-	QueryFloatText(&f);
-	return f;
+    float f = defaultValue;
+    QueryFloatText(&f);
+    return f;
 }
 
 
@@ -1757,19 +1926,24 @@ XMLAttribute* XMLElement::FindOrCreateAttribute(const char* name )
     XMLAttribute* attrib = 0;
     for(attrib = _rootAttribute;
             attrib;
-            last = attrib, attrib = attrib->_next ) {
-        if(XMLUtil::StringEqual(attrib->Name(), name )) {
+            last = attrib, attrib = attrib->_next )
+    {
+        if(XMLUtil::StringEqual(attrib->Name(), name ))
+        {
             break;
         }
     }
-    if(!attrib ) {
+    if(!attrib )
+    {
         attrib = CreateAttribute();
         TIXMLASSERT(attrib );
-        if(last ) {
+        if(last )
+        {
             TIXMLASSERT(last->_next == 0 );
             last->_next = attrib;
         }
-        else {
+        else
+        {
             TIXMLASSERT(_rootAttribute == 0 );
             _rootAttribute = attrib;
         }
@@ -1782,12 +1956,16 @@ XMLAttribute* XMLElement::FindOrCreateAttribute(const char* name )
 void XMLElement::DeleteAttribute(const char* name )
 {
     XMLAttribute* prev = 0;
-    for(XMLAttribute* a=_rootAttribute; a; a=a->_next ) {
-        if(XMLUtil::StringEqual(name, a->Name())) {
-            if(prev ) {
+    for(XMLAttribute* a=_rootAttribute; a; a=a->_next )
+    {
+        if(XMLUtil::StringEqual(name, a->Name()))
+        {
+            if(prev )
+            {
                 prev->_next = a->_next;
             }
-            else {
+            else
+            {
                 _rootAttribute = a->_next;
             }
             DeleteAttribute(a );
@@ -1803,15 +1981,18 @@ char* XMLElement::ParseAttributes(char* p, int* curLineNumPtr )
     XMLAttribute* prevAttribute = 0;
 
     // Read the attributes.
-    while(p ) {
+    while(p )
+    {
         p = XMLUtil::SkipWhiteSpace(p, curLineNumPtr );
-        if(!(*p)) {
+        if(!(*p))
+        {
             _document->SetError(XML_ERROR_PARSING_ELEMENT, _parseLineNum, "XMLElement name=%s", Name());
             return 0;
         }
 
         // attribute.
-        if(XMLUtil::IsNameStartChar(*p )) {
+        if(XMLUtil::IsNameStartChar(*p ))
+        {
             XMLAttribute* attrib = CreateAttribute();
             TIXMLASSERT(attrib );
             attrib->_parseLineNum = _document->_parseCurLineNum;
@@ -1819,7 +2000,8 @@ char* XMLElement::ParseAttributes(char* p, int* curLineNumPtr )
             int attrLineNum = attrib->_parseLineNum;
 
             p = attrib->ParseDeep(p, _document->ProcessEntities(), curLineNumPtr );
-            if(!p || Attribute(attrib->Name())) {
+            if(!p || Attribute(attrib->Name()))
+            {
                 DeleteAttribute(attrib );
                 _document->SetError(XML_ERROR_PARSING_ATTRIBUTE, attrLineNum, "XMLElement name=%s", Name());
                 return 0;
@@ -1829,27 +2011,32 @@ char* XMLElement::ParseAttributes(char* p, int* curLineNumPtr )
             // attribute will be doubly added. However, tracking the 'prevAttribute'
             // avoids re-scanning the attribute list. Preferring performance for
             // now, may reconsider in the future.
-            if(prevAttribute ) {
+            if(prevAttribute )
+            {
                 TIXMLASSERT(prevAttribute->_next == 0 );
                 prevAttribute->_next = attrib;
             }
-            else {
+            else
+            {
                 TIXMLASSERT(_rootAttribute == 0 );
                 _rootAttribute = attrib;
             }
             prevAttribute = attrib;
         }
         // end of the tag
-        else if(*p == '>') {
+        else if(*p == '>')
+        {
             ++p;
             break;
         }
         // end of the tag
-        else if(*p == '/' && *(p+1) == '>') {
+        else if(*p == '/' && *(p+1) == '>')
+        {
             _closingType = CLOSED;
             return p+2;	// done; sealed element.
         }
-        else {
+        else
+        {
             _document->SetError(XML_ERROR_PARSING_ELEMENT, _parseLineNum, 0 );
             return 0;
         }
@@ -1859,7 +2046,8 @@ char* XMLElement::ParseAttributes(char* p, int* curLineNumPtr )
 
 void XMLElement::DeleteAttribute(XMLAttribute* attribute )
 {
-    if(attribute == 0 ) {
+    if(attribute == 0 )
+    {
         return;
     }
     MemPool* pool = attribute->_memPool;
@@ -1889,18 +2077,21 @@ char* XMLElement::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
     // The closing element is the </element> form. It is
     // parsed just like a regular element then deleted from
     // the DOM.
-    if(*p == '/') {
+    if(*p == '/')
+    {
         _closingType = CLOSING;
         ++p;
     }
 
     p = _value.ParseName(p );
-    if(_value.Empty()) {
+    if(_value.Empty())
+    {
         return 0;
     }
 
     p = ParseAttributes(p, curLineNumPtr );
-    if(!p || !*p || _closingType != OPEN ) {
+    if(!p || !*p || _closingType != OPEN )
+    {
         return p;
     }
 
@@ -1912,11 +2103,13 @@ char* XMLElement::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
 
 XMLNode* XMLElement::ShallowClone(XMLDocument* doc ) const
 {
-    if(!doc ) {
+    if(!doc )
+    {
         doc = _document;
     }
     XMLElement* element = doc->NewElement(Value());					// fixme: this will always allocate memory. Intern?
-    for(const XMLAttribute* a=FirstAttribute(); a; a=a->Next()) {
+    for(const XMLAttribute* a=FirstAttribute(); a; a=a->Next())
+    {
         element->SetAttribute(a->Name(), a->Value());					// fixme: this will always allocate memory. Intern?
     }
     return element;
@@ -1927,19 +2120,23 @@ bool XMLElement::ShallowEqual(const XMLNode* compare ) const
 {
     TIXMLASSERT(compare );
     const XMLElement* other = compare->ToElement();
-    if(other && XMLUtil::StringEqual(other->Name(), Name())) {
+    if(other && XMLUtil::StringEqual(other->Name(), Name()))
+    {
 
         const XMLAttribute* a=FirstAttribute();
         const XMLAttribute* b=other->FirstAttribute();
 
-        while(a && b ) {
-            if(!XMLUtil::StringEqual(a->Value(), b->Value())) {
+        while(a && b )
+        {
+            if(!XMLUtil::StringEqual(a->Value(), b->Value()))
+            {
                 return false;
             }
             a = a->Next();
             b = b->Next();
         }
-        if(a || b ) {
+        if(a || b )
+        {
             // different count
             return false;
         }
@@ -1952,9 +2149,12 @@ bool XMLElement::ShallowEqual(const XMLNode* compare ) const
 bool XMLElement::Accept(XMLVisitor* visitor ) const
 {
     TIXMLASSERT(visitor );
-    if(visitor->VisitEnter(*this, _rootAttribute )) {
-        for(const XMLNode* node=FirstChild(); node; node=node->NextSibling()) {
-            if(!node->Accept(visitor )) {
+    if(visitor->VisitEnter(*this, _rootAttribute ))
+    {
+        for(const XMLNode* node=FirstChild(); node; node=node->NextSibling())
+        {
+            if(!node->Accept(visitor ))
+            {
                 break;
             }
         }
@@ -1966,7 +2166,8 @@ bool XMLElement::Accept(XMLVisitor* visitor ) const
 // --------- XMLDocument ----------- //
 
 // Warning: List must match 'enum XMLError'
-const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
+const char* XMLDocument::_errorNames[XML_ERROR_COUNT] =
+{
     "XML_SUCCESS",
     "XML_NO_ATTRIBUTE",
     "XML_WRONG_ATTRIBUTE_TYPE",
@@ -2019,23 +2220,26 @@ XMLDocument::~XMLDocument()
 
 void XMLDocument::MarkInUse(XMLNode* node)
 {
-	TIXMLASSERT(node);
-	TIXMLASSERT(node->_parent == 0);
+    TIXMLASSERT(node);
+    TIXMLASSERT(node->_parent == 0);
 
-    for(int i = 0; i < _unlinked.Size(); ++i) {
-		if(node == _unlinked[i]) {
-			_unlinked.SwapRemove(i);
-			break;
-		}
-	}
+    for(int i = 0; i < _unlinked.Size(); ++i)
+    {
+        if(node == _unlinked[i])
+        {
+            _unlinked.SwapRemove(i);
+            break;
+        }
+    }
 }
 
 void XMLDocument::Clear()
 {
     DeleteChildren();
-	while(_unlinked.Size()) {
-		DeleteNode(_unlinked[0]);	// Will remove from _unlinked as part of delete.
-	}
+    while(_unlinked.Size())
+    {
+        DeleteNode(_unlinked[0]);	// Will remove from _unlinked as part of delete.
+    }
 
 #ifdef TINYXML2_DEBUG
     const bool hadError = Error();
@@ -2051,9 +2255,10 @@ void XMLDocument::Clear()
     _commentPool.Trace("comment");
     _attributePool.Trace("attribute");
 #endif
-    
+
 #ifdef TINYXML2_DEBUG
-    if(!hadError ) {
+    if(!hadError )
+    {
         TIXMLASSERT(_elementPool.CurrentAllocs()   == _elementPool.Untracked());
         TIXMLASSERT(_attributePool.CurrentAllocs() == _attributePool.Untracked());
         TIXMLASSERT(_textPool.CurrentAllocs()      == _textPool.Untracked());
@@ -2065,15 +2270,17 @@ void XMLDocument::Clear()
 
 void XMLDocument::DeepCopy(XMLDocument* target) const
 {
-	TIXMLASSERT(target);
-    if(target == this) {
+    TIXMLASSERT(target);
+    if(target == this)
+    {
         return; // technically success - a no-op.
     }
 
-	target->Clear();
-	for(const XMLNode* node = this->FirstChild(); node; node = node->NextSibling()) {
-		target->InsertEndChild(node->DeepClone(target));
-	}
+    target->Clear();
+    for(const XMLNode* node = this->FirstChild(); node; node = node->NextSibling())
+    {
+        target->InsertEndChild(node->DeepClone(target));
+    }
 }
 
 XMLElement* XMLDocument::NewElement(const char* name )
@@ -2122,7 +2329,8 @@ static FILE* callfopen(const char* filepath, const char* mode )
 #if defined(_MSC_VER) &&(_MSC_VER >= 1400 ) &&(!defined WINCE)
     FILE* fp = 0;
     errno_t err = fopen_s(&fp, filepath, mode );
-    if(err ) {
+    if(err )
+    {
         return 0;
     }
 #else
@@ -2130,14 +2338,17 @@ static FILE* callfopen(const char* filepath, const char* mode )
 #endif
     return fp;
 }
-    
-void XMLDocument::DeleteNode(XMLNode* node )	{
+
+void XMLDocument::DeleteNode(XMLNode* node )
+{
     TIXMLASSERT(node );
     TIXMLASSERT(node->_document == this );
-    if(node->_parent) {
+    if(node->_parent)
+    {
         node->_parent->DeleteChild(node );
     }
-    else {
+    else
+    {
         // Isn't in the tree.
         // Use the parent delete.
         // Also, we need to mark it tracked: we 'know'
@@ -2153,7 +2364,8 @@ XMLError XMLDocument::LoadFile(const char* filename )
 {
     Clear();
     FILE* fp = callfopen(filename, "rb");
-    if(!fp ) {
+    if(!fp )
+    {
         SetError(XML_ERROR_FILE_NOT_FOUND, 0, "filename=%s", filename ? filename : "<null>");
         return _errorID;
     }
@@ -2170,7 +2382,8 @@ XMLError XMLDocument::LoadFile(const char* filename )
 // types sizes relate to each other.
 template
 <bool = (sizeof(unsigned long) >= sizeof(int))>
-struct LongFitsIntoSizeTMinusOne {
+struct LongFitsIntoSizeTMinusOne
+{
     static bool Fits(unsigned long value )
     {
         return value <(int)-1;
@@ -2178,7 +2391,8 @@ struct LongFitsIntoSizeTMinusOne {
 };
 
 template <>
-struct LongFitsIntoSizeTMinusOne<false> {
+struct LongFitsIntoSizeTMinusOne<false>
+{
     static bool Fits(unsigned long )
     {
         return true;
@@ -2190,7 +2404,8 @@ XMLError XMLDocument::LoadFile(FILE* fp )
     Clear();
 
     fseek(fp, 0, SEEK_SET );
-    if(fgetc(fp ) == EOF && ferror(fp ) != 0 ) {
+    if(fgetc(fp ) == EOF && ferror(fp ) != 0 )
+    {
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
@@ -2198,19 +2413,22 @@ XMLError XMLDocument::LoadFile(FILE* fp )
     fseek(fp, 0, SEEK_END );
     const long filelength = ftell(fp );
     fseek(fp, 0, SEEK_SET );
-    if(filelength == -1L ) {
+    if(filelength == -1L )
+    {
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
     TIXMLASSERT(filelength >= 0 );
 
-    if(!LongFitsIntoSizeTMinusOne<>::Fits(filelength )) {
+    if(!LongFitsIntoSizeTMinusOne<>::Fits(filelength ))
+    {
         // Cannot handle files which won't fit in buffer together with null terminator
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
 
-    if(filelength == 0 ) {
+    if(filelength == 0 )
+    {
         SetError(XML_ERROR_EMPTY_DOCUMENT, 0, 0 );
         return _errorID;
     }
@@ -2219,7 +2437,8 @@ XMLError XMLDocument::LoadFile(FILE* fp )
     TIXMLASSERT(_charBuffer == 0 );
     _charBuffer = new char[size+1];
     int read = fread(_charBuffer, 1, size, fp );
-    if(read != size ) {
+    if(read != size )
+    {
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
@@ -2234,7 +2453,8 @@ XMLError XMLDocument::LoadFile(FILE* fp )
 XMLError XMLDocument::SaveFile(const char* filename, bool compact )
 {
     FILE* fp = callfopen(filename, "w");
-    if(!fp ) {
+    if(!fp )
+    {
         SetError(XML_ERROR_FILE_COULD_NOT_BE_OPENED, 0, "filename=%s", filename ? filename : "<null>");
         return _errorID;
     }
@@ -2259,11 +2479,13 @@ XMLError XMLDocument::Parse(const char* p, int len )
 {
     Clear();
 
-    if(len == 0 || !p || !*p ) {
+    if(len == 0 || !p || !*p )
+    {
         SetError(XML_ERROR_EMPTY_DOCUMENT, 0, 0 );
         return _errorID;
     }
-    if(len == (int)(-1)) {
+    if(len == (int)(-1))
+    {
         len = strlen(p );
     }
     TIXMLASSERT(_charBuffer == 0 );
@@ -2272,7 +2494,8 @@ XMLError XMLDocument::Parse(const char* p, int len )
     _charBuffer[len] = 0;
 
     Parse();
-    if(Error()) {
+    if(Error())
+    {
         // clean up now essentially dangling memory.
         // and the parse fail can put objects in the
         // pools that are dead and inaccessible.
@@ -2288,10 +2511,12 @@ XMLError XMLDocument::Parse(const char* p, int len )
 
 void XMLDocument::Print(XMLPrinter* streamer ) const
 {
-    if(streamer ) {
+    if(streamer )
+    {
         Accept(streamer );
     }
-    else {
+    else
+    {
         XMLPrinter stdoutStreamer(stdout );
         Accept(&stdoutStreamer );
     }
@@ -2303,39 +2528,40 @@ void XMLDocument::SetError(XMLError error, int lineNum, const char* format, ...)
     TIXMLASSERT(error >= 0 && error < XML_ERROR_COUNT );
     _errorID = error;
     _errorLineNum = lineNum;
-	_errorStr.Reset();
+    _errorStr.Reset();
 
     int BUFFER_SIZE = 1000;
     char* buffer = new char[BUFFER_SIZE];
 
     TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d(0x%x) Line number=%d", ErrorIDToName(error), int(error), int(error), lineNum);
 
-	if(format) {
+    if(format)
+    {
         int len = strlen(buffer);
-		TIXML_SNPRINTF(buffer + len, BUFFER_SIZE - len, ": ");
-		len = strlen(buffer);
+        TIXML_SNPRINTF(buffer + len, BUFFER_SIZE - len, ": ");
+        len = strlen(buffer);
 
-		va_list va;
-		va_start(va, format);
-		TIXML_VSNPRINTF(buffer + len, BUFFER_SIZE - len, format, va);
-		va_end(va);
-	}
-	_errorStr.SetStr(buffer);
-	delete[] buffer;
+        va_list va;
+        va_start(va, format);
+        TIXML_VSNPRINTF(buffer + len, BUFFER_SIZE - len, format, va);
+        va_end(va);
+    }
+    _errorStr.SetStr(buffer);
+    delete[] buffer;
 }
 
 
 /*static*/ const char* XMLDocument::ErrorIDToName(XMLError errorID)
 {
-	TIXMLASSERT(errorID >= 0 && errorID < XML_ERROR_COUNT );
+    TIXMLASSERT(errorID >= 0 && errorID < XML_ERROR_COUNT );
     const char* errorName = _errorNames[errorID];
     TIXMLASSERT(errorName && errorName[0]);
     return errorName;
 }
 
-const char* XMLDocument::ErrorStr() const 
+const char* XMLDocument::ErrorStr() const
 {
-	return _errorStr.Empty() ? "" : _errorStr.GetStr();
+    return _errorStr.Empty() ? "" : _errorStr.GetStr();
 }
 
 
@@ -2358,7 +2584,8 @@ void XMLDocument::Parse()
     char* p = _charBuffer;
     p = XMLUtil::SkipWhiteSpace(p, &_parseCurLineNum );
     p = const_cast<char*>(XMLUtil::ReadBOM(p, &_writeBOM ));
-    if(!*p ) {
+    if(!*p )
+    {
         SetError(XML_ERROR_EMPTY_DOCUMENT, 0, 0 );
         return;
     }
@@ -2376,11 +2603,13 @@ XMLPrinter::XMLPrinter(FILE* file, bool compact, int depth ) :
     _compactMode(compact ),
     _buffer()
 {
-    for(int i = 0; i <ENTITY_RANGE; ++i ) {
+    for(int i = 0; i <ENTITY_RANGE; ++i )
+    {
         _entityFlag[i] = false;
         _restrictedEntityFlag[i] = false;
     }
-    for(int i = 0; i <NUM_ENTITIES; ++i ) {
+    for(int i = 0; i <NUM_ENTITIES; ++i )
+    {
         const char entityValue = entities[i].value;
         const unsigned char flagint = (unsigned char)entityValue;
         TIXMLASSERT(flagint < ENTITY_RANGE );
@@ -2398,10 +2627,12 @@ void XMLPrinter::Print(const char* format, ...)
     va_list     va;
     va_start(va, format );
 
-    if(_fp ) {
+    if(_fp )
+    {
         vfprintf(_fp, format, va );
     }
-    else {
+    else
+    {
         const int len = TIXML_VSCPRINTF(format, va );
         // Close out and re-start the va-args
         va_end(va );
@@ -2409,7 +2640,7 @@ void XMLPrinter::Print(const char* format, ...)
         va_start(va, format );
         TIXMLASSERT(_buffer.Size() > 0 && _buffer[_buffer.Size() - 1] == 0 );
         char* p = _buffer.PushArr(len ) - 1;	// back up over the null terminator.
-		TIXML_VSNPRINTF(p, len+1, format, va );
+        TIXML_VSNPRINTF(p, len+1, format, va );
     }
     va_end(va );
 }
@@ -2417,10 +2648,12 @@ void XMLPrinter::Print(const char* format, ...)
 
 void XMLPrinter::Write(const char* data, int size )
 {
-    if(_fp ) {
-        fwrite(data , sizeof(char), size, _fp);
+    if(_fp )
+    {
+        fwrite(data, sizeof(char), size, _fp);
     }
-    else {
+    else
+    {
         char* p = _buffer.PushArr(static_cast<int>(size)) - 1;   // back up over the null terminator.
         memcpy(p, data, size );
         p[size] = 0;
@@ -2430,10 +2663,12 @@ void XMLPrinter::Write(const char* data, int size )
 
 void XMLPrinter::Putc(char ch )
 {
-    if(_fp ) {
+    if(_fp )
+    {
         fputc(ch, _fp);
     }
-    else {
+    else
+    {
         char* p = _buffer.PushArr(sizeof(char)) - 1;   // back up over the null terminator.
         p[0] = ch;
         p[1] = 0;
@@ -2443,7 +2678,8 @@ void XMLPrinter::Putc(char ch )
 
 void XMLPrinter::PrintSpace(int depth )
 {
-    for(int i = 0; i <depth; ++i ) {
+    for(int i = 0; i <depth; ++i )
+    {
         Write("   ");
     }
 }
@@ -2454,25 +2690,32 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
     // Look for runs of bytes between entities to print.
     const char* q = p;
 
-    if(_processEntities ) {
+    if(_processEntities )
+    {
         const bool* flag = restricted ? _restrictedEntityFlag : _entityFlag;
-        while(*q ) {
+        while(*q )
+        {
             TIXMLASSERT(p <= q );
             // Remember, char is sometimes signed.(How many times has that bitten me?)
-            if(*q > 0 && *q < ENTITY_RANGE ) {
+            if(*q > 0 && *q < ENTITY_RANGE )
+            {
                 // Check for entities. If one is found, flush
                 // the stream up until the entity, write the
                 // entity, and keep looking.
-                if(flag[(unsigned char)(*q)]) {
-                    while(p < q ) {
+                if(flag[(unsigned char)(*q)])
+                {
+                    while(p < q )
+                    {
                         const int delta = q - p;
                         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
                         Write(p, toPrint );
                         p += toPrint;
                     }
                     bool entityPatternPrinted = false;
-                    for(int i = 0; i <NUM_ENTITIES; ++i ) {
-                        if(entities[i].value == *q ) {
+                    for(int i = 0; i <NUM_ENTITIES; ++i )
+                    {
+                        if(entities[i].value == *q )
+                        {
                             Putc('&');
                             Write(entities[i].pattern, entities[i].length );
                             Putc(';');
@@ -2480,7 +2723,8 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                             break;
                         }
                     }
-                    if(!entityPatternPrinted ) {
+                    if(!entityPatternPrinted )
+                    {
                         // TIXMLASSERT(entityPatternPrinted ) causes gcc -Wunused-but-set-variable in release
                         TIXMLASSERT(false );
                     }
@@ -2494,7 +2738,8 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
     // Flush the remaining string. This will be the entire
     // string if an entity wasn't found.
     TIXMLASSERT(p <= q );
-    if(!_processEntities ||(p < q )) {
+    if(!_processEntities ||(p < q ))
+    {
         const int delta = q - p;
         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
         Write(p, toPrint );
@@ -2504,11 +2749,13 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
 
 void XMLPrinter::PushHeader(bool writeBOM, bool writeDec )
 {
-    if(writeBOM ) {
+    if(writeBOM )
+    {
         static const unsigned char bom[] = { TIXML_UTF_LEAD_0, TIXML_UTF_LEAD_1, TIXML_UTF_LEAD_2, 0 };
         Write(reinterpret_cast< const char* >(bom ));
     }
-    if(writeDec ) {
+    if(writeDec )
+    {
         PushDeclaration("xml version=\"1.0\"");
     }
 }
@@ -2519,10 +2766,12 @@ void XMLPrinter::OpenElement(const char* name, bool compactMode )
     SealElementIfJustOpened();
     _stack.Push(name );
 
-    if(_textDepth < 0 && !_firstElement && !compactMode ) {
+    if(_textDepth < 0 && !_firstElement && !compactMode )
+    {
         Putc('\n');
     }
-    if(!compactMode ) {
+    if(!compactMode )
+    {
         PrintSpace(_depth );
     }
 
@@ -2564,9 +2813,9 @@ void XMLPrinter::PushAttribute(const char* name, unsigned v )
 
 void XMLPrinter::PushAttribute(const char* name, int64_t v)
 {
-	char buf[BUF_SIZE];
-	XMLUtil::ToStr(v, buf, BUF_SIZE);
-	PushAttribute(name, buf);
+    char buf[BUF_SIZE];
+    XMLUtil::ToStr(v, buf, BUF_SIZE);
+    PushAttribute(name, buf);
 }
 
 
@@ -2591,11 +2840,14 @@ void XMLPrinter::CloseElement(bool compactMode )
     --_depth;
     const char* name = _stack.Pop();
 
-    if(_elementJustOpened ) {
+    if(_elementJustOpened )
+    {
         Write("/>");
     }
-    else {
-        if(_textDepth < 0 && !compactMode) {
+    else
+    {
+        if(_textDepth < 0 && !compactMode)
+        {
             Putc('\n');
             PrintSpace(_depth );
         }
@@ -2604,10 +2856,12 @@ void XMLPrinter::CloseElement(bool compactMode )
         Write(">");
     }
 
-    if(_textDepth == _depth ) {
+    if(_textDepth == _depth )
+    {
         _textDepth = -1;
     }
-    if(_depth == 0 && !compactMode) {
+    if(_depth == 0 && !compactMode)
+    {
         Putc('\n');
     }
     _elementJustOpened = false;
@@ -2616,7 +2870,8 @@ void XMLPrinter::CloseElement(bool compactMode )
 
 void XMLPrinter::SealElementIfJustOpened()
 {
-    if(!_elementJustOpened ) {
+    if(!_elementJustOpened )
+    {
         return;
     }
     _elementJustOpened = false;
@@ -2629,12 +2884,14 @@ void XMLPrinter::PushText(const char* text, bool cdata )
     _textDepth = _depth-1;
 
     SealElementIfJustOpened();
-    if(cdata ) {
+    if(cdata )
+    {
         Write("<![CDATA[");
         Write(text );
         Write("]]>");
     }
-    else {
+    else
+    {
         PrintString(text, true );
     }
 }
@@ -2689,7 +2946,8 @@ void XMLPrinter::PushText(double value )
 void XMLPrinter::PushComment(const char* comment )
 {
     SealElementIfJustOpened();
-    if(_textDepth < 0 && !_firstElement && !_compactMode) {
+    if(_textDepth < 0 && !_firstElement && !_compactMode)
+    {
         Putc('\n');
         PrintSpace(_depth );
     }
@@ -2704,7 +2962,8 @@ void XMLPrinter::PushComment(const char* comment )
 void XMLPrinter::PushDeclaration(const char* value )
 {
     SealElementIfJustOpened();
-    if(_textDepth < 0 && !_firstElement && !_compactMode) {
+    if(_textDepth < 0 && !_firstElement && !_compactMode)
+    {
         Putc('\n');
         PrintSpace(_depth );
     }
@@ -2719,7 +2978,8 @@ void XMLPrinter::PushDeclaration(const char* value )
 void XMLPrinter::PushUnknown(const char* value )
 {
     SealElementIfJustOpened();
-    if(_textDepth < 0 && !_firstElement && !_compactMode) {
+    if(_textDepth < 0 && !_firstElement && !_compactMode)
+    {
         Putc('\n');
         PrintSpace(_depth );
     }
@@ -2734,7 +2994,8 @@ void XMLPrinter::PushUnknown(const char* value )
 bool XMLPrinter::VisitEnter(const XMLDocument& doc )
 {
     _processEntities = doc.ProcessEntities();
-    if(doc.HasBOM()) {
+    if(doc.HasBOM())
+    {
         PushHeader(true, false );
     }
     return true;
@@ -2744,12 +3005,14 @@ bool XMLPrinter::VisitEnter(const XMLDocument& doc )
 bool XMLPrinter::VisitEnter(const XMLElement& element, const XMLAttribute* attribute )
 {
     const XMLElement* parentElem = 0;
-    if(element.Parent()) {
+    if(element.Parent())
+    {
         parentElem = element.Parent()->ToElement();
     }
     const bool compactMode = parentElem ? CompactMode(*parentElem ) : _compactMode;
     OpenElement(element.Name(), compactMode );
-    while(attribute ) {
+    while(attribute )
+    {
         PushAttribute(attribute->Name(), attribute->Value());
         attribute = attribute->Next();
     }

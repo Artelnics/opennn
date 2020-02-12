@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S U M   S Q U A R E D   E R R O R   C L A S S                         
+//   S U M   S Q U A R E D   E R R O R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,7 +11,7 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates a sum squared error term not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
@@ -20,59 +20,59 @@ SumSquaredError::SumSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor. 
+/// Neural network constructor.
 /// It creates a sum squared error term associated to a neural network but not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
-SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer) 
-: LossIndex(new_neural_network_pointer)
+SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer)
+    : LossIndex(new_neural_network_pointer)
 {
 }
 
 
-/// Data set constructor. 
+/// Data set constructor.
 /// It creates a sum squared error not associated to any neural network but to be measured on a data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 SumSquaredError::SumSquaredError(DataSet* new_data_set_pointer)
-: LossIndex(new_data_set_pointer)
+    : LossIndex(new_data_set_pointer)
 {
 }
 
 
-/// Neural network and data set constructor. 
+/// Neural network and data set constructor.
 /// It creates a sum squared error associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
- : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
 
-/// XML constructor. 
+/// XML constructor.
 /// It creates a sum squared error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from a TinyXML document.
 /// @param sum_squared_error_document XML document with the class members.
 
 SumSquaredError::SumSquaredError(const tinyxml2::XMLDocument& sum_squared_error_document)
- : LossIndex(sum_squared_error_document)
+    : LossIndex(sum_squared_error_document)
 {
     from_XML(sum_squared_error_document);
 }
 
 
-/// Copy constructor. 
+/// Copy constructor.
 /// It creates a sum squared error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from another sum squared error object.
-/// @param new_sum_squared_error Object to be copied. 
+/// @param new_sum_squared_error Object to be copied.
 
 SumSquaredError::SumSquaredError(const SumSquaredError& new_sum_squared_error)
- : LossIndex(new_sum_squared_error)
+    : LossIndex(new_sum_squared_error)
 {
 
 }
@@ -80,23 +80,23 @@ SumSquaredError::SumSquaredError(const SumSquaredError& new_sum_squared_error)
 
 /// Destructor.
 
-SumSquaredError::~SumSquaredError() 
+SumSquaredError::~SumSquaredError()
 {
 }
 
 
-/// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
+/// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances.
 
 Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     check();
 
-    #endif
-/*
-    return error_rows(outputs, targets);
-*/
+#endif
+    /*
+        return error_rows(outputs, targets);
+    */
     return Tensor<type, 1>();
 }
 
@@ -106,74 +106,74 @@ Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<typ
 
 Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<type, 1>& parameters) const
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     check();
 
-    #endif
-/*
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+#endif
+    /*
+        const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+        const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+        const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    return error_rows(outputs, targets);
-*/
+        return error_rows(outputs, targets);
+    */
     return Tensor<type, 1>();
 
 }
 
 
-/// Returns the squared errors of the training instances. 
+/// Returns the squared errors of the training instances.
 /// @todo Use batchs, ready to review.
 
 Tensor<type, 1> SumSquaredError::calculate_squared_errors() const
 {
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   check();
+    check();
 
-   #endif
-/*
-    bool is_forecasting = false;
+#endif
+    /*
+        bool is_forecasting = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+        if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-   // Data set
+       // Data set
 
-   const Tensor<Tensor<Index, 1>, 1> batch_indices = data_set_pointer->get_training_batches(!is_forecasting);
+       const Tensor<Tensor<Index, 1>, 1> batch_indices = data_set_pointer->get_training_batches(!is_forecasting);
 
-   const Index batches_number = batch_indices.size();
+       const Index batches_number = batch_indices.size();
 
-   // Loss index
+       // Loss index
 
-   Tensor<type, 1> squared_errors(batches_number);
+       Tensor<type, 1> squared_errors(batches_number);
 
-    #pragma omp parallel for
+        #pragma omp parallel for
 
-   for(Index i = 0; i < batches_number ; i++)
-   {
-      // Input vector
+       for(Index i = 0; i < batches_number ; i++)
+       {
+          // Input vector
 
-      const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices[i]);
+          const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices[i]);
 
-      // Output vector
+          // Output vector
 
-      const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+          const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-      // Target vector
+          // Target vector
 
-      const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices[i]);
+          const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices[i]);
 
-      // Error
+          // Error
 
-      squared_errors[i] = sum_squared_error(outputs, targets);
-   }
+          squared_errors[i] = sum_squared_error(outputs, targets);
+       }
 
-   return squared_errors;
-*/
-   return Tensor<type, 1>();
+       return squared_errors;
+    */
+    return Tensor<type, 1>();
 
 }
 
@@ -186,71 +186,71 @@ LossIndex::SecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() 
 {
 #ifdef __OPENNN_DEBUG__
 
-check();
+    check();
 
 #endif
-/*
-    // Neural network
+    /*
+        // Neural network
 
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
+        const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-     bool is_forecasting = false;
+         bool is_forecasting = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+        if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    // Data set
+        // Data set
 
-    const Tensor<Tensor<Index, 1>, 1> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+        const Tensor<Tensor<Index, 1>, 1> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+        const Index batches_number = training_batches.size();
 
-    SecondOrderLoss terms_second_order_loss(parameters_number);
+        SecondOrderLoss terms_second_order_loss(parameters_number);
 
-     #pragma omp parallel for
+         #pragma omp parallel for
 
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
-        const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-
-        const Tensor<type, 1> error_terms
-                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
-
-        const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
-
-        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-        const Tensor<type, 2> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
-
-        const type loss = dot(error_terms, error_terms);
-
-        const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
-
-        Tensor<type, 2> hessian_approximation;
-        //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
-
-          #pragma omp critical
+        for(Index i = 0; i < batches_number; i++)
         {
-            terms_second_order_loss.loss += loss;
-            terms_second_order_loss.gradient += gradient;
-            terms_second_order_loss.hessian += hessian_approximation;
-         }
-    }
+            const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
+            const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
-    const Tensor<type, 2> regularization_hessian = calculate_regularization_hessian();
+            const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-    terms_second_order_loss.gradient *= 2.0;
-    terms_second_order_loss.hessian *= 2.0;
+            const Tensor<type, 1> error_terms
+                    = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-    return terms_second_order_loss;
-*/
+            const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+
+            const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+
+            const Tensor<type, 2> error_terms_Jacobian
+                    = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+
+            const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+
+            const type loss = dot(error_terms, error_terms);
+
+            const Tensor<type, 1> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+
+            Tensor<type, 2> hessian_approximation;
+            //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+
+              #pragma omp critical
+            {
+                terms_second_order_loss.loss += loss;
+                terms_second_order_loss.gradient += gradient;
+                terms_second_order_loss.hessian += hessian_approximation;
+             }
+        }
+
+        const Tensor<type, 2> regularization_hessian = calculate_regularization_hessian();
+
+        terms_second_order_loss.gradient *= 2.0;
+        terms_second_order_loss.hessian *= 2.0;
+
+        return terms_second_order_loss;
+    */
     return LossIndex::SecondOrderLoss();
 }
 
@@ -259,7 +259,7 @@ check();
 
 string SumSquaredError::get_error_type() const
 {
-   return "SUM_SQUARED_ERROR";
+    return "SUM_SQUARED_ERROR";
 }
 
 
@@ -267,25 +267,25 @@ string SumSquaredError::get_error_type() const
 
 string SumSquaredError::get_error_type_text() const
 {
-   return "Sum squared error";
+    return "Sum squared error";
 }
 
 
-/// Returns a representation of the sum squared error object, in XML format. 
+/// Returns a representation of the sum squared error object, in XML format.
 
 tinyxml2::XMLDocument* SumSquaredError::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Sum squared error
+    // Sum squared error
 
-   tinyxml2::XMLElement* root_element = document->NewElement("SumSquaredError");
+    tinyxml2::XMLElement* root_element = document->NewElement("SumSquaredError");
 
-   document->InsertFirstChild(root_element);
+    document->InsertFirstChild(root_element);
 
-   // Display
+    // Display
 
 //   {
 //      tinyxml2::XMLElement* display_element = document->NewElement("Display");
@@ -298,7 +298,7 @@ tinyxml2::XMLDocument* SumSquaredError::to_XML() const
 //      display_element->LinkEndChild(display_text);
 //   }
 
-   return document;
+    return document;
 }
 
 
