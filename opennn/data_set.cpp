@@ -4313,11 +4313,13 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
 }
 
 
-/// Returns a histogram for each variable with a given number of bins.
+/// Returns the distribution of each of the columns. In the case of numeric columns, it returns a
+/// histogram, for the case of categorical columns, it returns the frequencies of each category nad for the
+/// binary columns it returns the frequencies of the positives and negatives.
 /// The default number of bins is 10.
 /// @param bins_number Number of bins.
 
-Tensor<Histogram, 1> DataSet::calculate_columns_histograms(const Index& bins_number) const
+Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_number) const
 {
     const Index used_columns_number = get_used_columns_number();
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
@@ -8035,7 +8037,7 @@ Tensor<Index, 1> DataSet::unuse_most_populated_target(const Index& instances_to_
 
     // Most populated target
 
-    const Tensor<Histogram, 1> data_histograms = calculate_columns_histograms(bins_number);
+    const Tensor<Histogram, 1> data_histograms = calculate_columns_distribution(bins_number);
 
     Index most_populated_target = 0;
     Index most_populated_bin = 0;
