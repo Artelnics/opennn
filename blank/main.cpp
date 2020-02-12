@@ -64,7 +64,7 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-
+        cout << "End" << endl;
 
         return 0;
     }
