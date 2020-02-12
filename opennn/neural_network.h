@@ -363,6 +363,7 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
+
        trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs_2d, forward_propagation.layers[0]);
 
        for(Index i = 1; i < trainable_layers_number; i++)

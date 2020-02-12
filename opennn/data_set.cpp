@@ -526,6 +526,61 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+    else if(type == Binary)
+    {
+        if(categories.size() > 0)
+        {
+            // Categories
+
+            file_stream.OpenElement("Categories");
+            file_stream.PushText(categories(0).c_str());
+            file_stream.PushText(" ");
+            file_stream.PushText(categories(1).c_str());
+            file_stream.CloseElement();
+
+            // Categories uses
+
+            file_stream.OpenElement("CategoriesUses");
+
+            if(categories_uses(0) == Input)
+            {
+                file_stream.PushText("Input");
+            }
+            else if (categories_uses(0) == Target)
+            {
+                file_stream.PushText("Target");
+            }
+            else if (categories_uses(0) == Time)
+            {
+                file_stream.PushText("Time");
+            }
+            else
+            {
+                file_stream.PushText("Unused");
+            }
+
+            file_stream.PushText(" ");
+
+            if(categories_uses(1) == Input)
+            {
+                file_stream.PushText("Input");
+            }
+            else if (categories_uses(1) == Target)
+            {
+                file_stream.PushText("Target");
+            }
+            else if (categories_uses(1) == Time)
+            {
+                file_stream.PushText("Time");
+            }
+            else
+            {
+                file_stream.PushText("Unused");
+            }
+
+            file_stream.CloseElement();
+        }
+    }
 }
 
 
@@ -1642,7 +1697,6 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
     {
         if(columns(i).type == Categorical)
         {
-//            variables_uses.embed(index, columns(i).categories_uses);
             for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
             {
                 variables_uses(i + index) = (columns(i).categories_uses)(i);
@@ -1734,7 +1788,6 @@ Tensor<string, 1> DataSet::get_variables_names() const
     {
         if(columns(i).type == Categorical)
         {
-//            variables_names.embed(index, columns(i).categories);
             for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
             {
                 variables_names(i + index) = (columns(i).categories_uses)(i);
@@ -2300,16 +2353,10 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        const Index current_categories_number = columns(i).get_categories_number();
+        if(columns(i).type == Categorical)
+        {
+            const Index current_categories_number = columns(i).get_categories_number();
 
-        if(current_categories_number == 0 && columns(i).column_use == UnusedVariable)
-        {
-            unused_indices(unused_index) = i;
-            unused_index++;
-            unused_variable_index++;
-        }
-        else
-        {
             for(Index j = 0; j < current_categories_number; j++)
             {
                 if(columns(i).categories_uses(j) == UnusedVariable)
@@ -2320,6 +2367,12 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
                 unused_variable_index++;
             }
+        }
+        else if(columns(i).column_use == UnusedVariable)
+        {
+            unused_indices(unused_index) = i;
+            unused_index++;
+            unused_variable_index++;
         }
     }
 
@@ -2342,16 +2395,10 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        const Index current_categories_number = columns(i).get_categories_number();
+        if(columns(i).type == Categorical)
+        {
+            const Index current_categories_number = columns(i).get_categories_number();
 
-        if(current_categories_number == 0 && columns(i).column_use != UnusedVariable)
-        {
-            used_indices(used_index) = i;
-            used_index++;
-            used_variable_index++;
-        }
-        else
-        {
             for(Index j = 0; j < current_categories_number; j++)
             {
                 if(columns(i).categories_uses(j) != UnusedVariable)
@@ -2362,6 +2409,12 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
                 used_variable_index++;
             }
+        }
+        else if(columns(i).column_use != UnusedVariable)
+        {
+            used_indices(used_index) = i;
+            used_index++;
+            used_variable_index++;
         }
     }
 
@@ -2385,16 +2438,11 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        const Index current_categories_number = columns(i).get_categories_number();
 
-        if(current_categories_number == 0 && columns(i).column_use == Input)
+        if(columns(i).type == Categorical)
         {
-            input_variables_indices(input_index) = input_variable_index;
-            input_index++;
-            input_variable_index++;
-        }
-        else if(current_categories_number > 0)
-        {
+            const Index current_categories_number = columns(i).get_categories_number();
+
             for(Index j = 0; j < current_categories_number; j++)
             {
                 if(columns(i).categories_uses(j) == Input)
@@ -2406,8 +2454,10 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
                 input_variable_index++;
             }
         }
-        else
+        else if(columns(i).column_use == Input) // Binary, numeric
         {
+            input_variables_indices(input_index) = input_variable_index;
+            input_index++;
             input_variable_index++;
         }
     }
@@ -2431,16 +2481,10 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        const Index current_categories_number = columns(i).get_categories_number();
+        if(columns(i).type == Categorical)
+        {
+            const Index current_categories_number = columns(i).get_categories_number();
 
-        if(current_categories_number == 0 && columns(i).column_use == Target)
-        {
-            target_variables_indices(target_index) = i;
-            target_index++;
-            target_variable_index++;
-        }
-        else if(current_categories_number > 0)
-        {
             for(Index j = 0; j < current_categories_number; j++)
             {
                 if(columns(i).categories_uses(j) == Target)
@@ -2452,8 +2496,10 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
                 target_variable_index++;
             }
         }
-        else
+        else if(columns(i).column_use == Target)
         {
+            target_variables_indices(target_index) = i;
+            target_index++;
             target_variable_index++;
         }
     }
@@ -3361,17 +3407,17 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
 
     for(Index i = 0; i < column_index; i++)
     {
-        if(columns(i).categories.size() == 0)
-        {
-            index++;
-        }
-        else
+        if(columns(i).type == Categorical)
         {
             index += columns(i).categories.size();
         }
+        else
+        {
+            index++;
+        }
     }
 
-    if(columns(column_index).categories.size() > 0)
+    if(columns(column_index).type == Categorical)
     {
         Tensor<Index, 1> variable_indices(columns(column_index).categories.size());
 
@@ -4330,8 +4376,6 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
     Index variable_index = 0;
 
-    #pragma omp parallel for shared(histograms)
-
     for(Index i = 0; i < used_columns_number; i++)
     {
         if(columns(i).type == Numeric)
@@ -4351,6 +4395,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
             const Index categories_number = columns(i).get_categories_number();
 
             Tensor<Index, 1> categories_frequencies(categories_number);
+            categories_frequencies.setZero();
 
             for(Index j = 0; j < categories_number; j++)
             {
@@ -4361,15 +4406,16 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                         categories_frequencies(j)++;
                     }
                 }
+
+                variable_index++;
             }
 
             histograms(i).frequencies = categories_frequencies;
-
-            variable_index += columns(i).get_categories_number();
         }
         else if(columns(i).type == Binary)
         {
             Tensor<Index, 1> binary_frequencies(2);
+            binary_frequencies.setZero();
 
             for(Index j = 0; j < used_instances_number; j++)
             {
@@ -4382,6 +4428,8 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                     binary_frequencies(1)++;
                 }
             }
+
+            histograms(i).frequencies = binary_frequencies;
 
             variable_index++;
         }
@@ -7168,7 +7216,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == Categorical)
+            if(columns(i).type == Categorical || columns(i).type == Binary)
             {
                 // Categories
 
@@ -7210,7 +7258,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
                 }
             }
-
         }
     }
 
@@ -9346,11 +9393,12 @@ void DataSet::read_csv_2_complete()
             if(columns(j).categories.size() == 2)
             {
                 columns(j).type = Binary;
-                columns(j).categories.resize(0);
-                columns(j).categories_uses.resize(0);
+//                columns(j).categories.resize(0);
+//                columns(j).categories_uses.resize(0);
             }
         }
     }
+
 
     file.close();
 
@@ -9488,6 +9536,10 @@ void DataSet::read_csv_3_complete()
                 if(tokens(j) == missing_values_label)
                 {
                     data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
+                }
+                else if(columns(j).categories.size() > 0 && tokens(j) == columns(j).categories(0))
+                {
+                    data(instance_index, variable_indices(0)) = 1.0;
                 }
                 else if(tokens(j) == columns(j).name)
                 {
