@@ -94,7 +94,7 @@ public:
        Tensor<string, 2> write_final_results(const Index& precision = 3) const;
 */
 
-       /// Writes the time from seconds to HH:mm:ss.
+       /// Writes the time from seconds in format HH:mm:ss.
 
        string write_elapsed_time(const type&);
 
