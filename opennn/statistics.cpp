@@ -268,52 +268,64 @@ Index Histogram::calculate_most_populated_bin() const
 
 
 /// Returns a vector with the centers of the less populated bins.
-/// @todo, does it make sense?
 
 Tensor<type, 1> Histogram::calculate_minimal_centers() const
 {
-
     const Index minimum_frequency = calculate_minimum_frequency();
 
-    Index index = 0;
-
-    Tensor<type, 1> minimal_centers;
+    Index minimal_indices_size = 0;
 
     for(Index i = 0; i < frequencies.size(); i++)
     {
-        if(minimum_frequency == frequencies(i))
+        if(frequencies(i) == minimum_frequency)
         {
-            minimal_centers(index) = static_cast<type>(frequencies(i));
+            minimal_indices_size++;
+        }
+    }
+
+    Index index = 0;
+
+    Tensor<type, 1> minimal_centers(minimal_indices_size);
+
+    for(Index i = 0; i < frequencies.size(); i++)
+    {
+        if(frequencies(i) == minimum_frequency)
+        {
+            minimal_centers(index) = static_cast<type>(centers(i));
 
             index++;
         }
     }
 
     return minimal_centers;
-    /*
-    const Tensor<Index, 1> minimal_indices = frequencies.get_indices_equal_to(minimum_frequency);
-
-    return centers.get_subvector(minimal_indices);
-    */
 }
 
 
 /// Returns a vector with the centers of the most populated bins.
-/// @todo, does it make sense?
 
 Tensor<type, 1> Histogram::calculate_maximal_centers() const
 {
     const Index maximum_frequency = calculate_maximum_frequency();
 
+    Index maximal_indices_size = 0;
+
+    for(Index i = 0; i < frequencies.size(); i++)
+    {
+        if(frequencies(i) == maximum_frequency)
+        {
+            maximal_indices_size++;
+        }
+    }
+
     Index index = 0;
 
-    Tensor<type, 1> maximal_centers;
+    Tensor<type, 1> maximal_centers(maximal_indices_size);
 
     for(Index i = 0; i < frequencies.size(); i++)
     {
         if(maximum_frequency == frequencies(i))
         {
-            maximal_centers(index) = static_cast<type>(frequencies(i));
+            maximal_centers(index) = static_cast<type>(centers(i));
 
             index++;
         }
