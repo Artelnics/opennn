@@ -313,6 +313,23 @@ public:
        calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
    }
 
+
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
+                                      const Tensor<type, 1>& potential_parameters,
+                                      ForwardPropagation& forward_propagation)
+   {
+       Tensor<type, 2> potential_biases;
+       Tensor<type, 2> potential_synaptic_weights;
+
+
+       calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations);
+
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
+   }
+
+
    // Delta methods
 
    void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,

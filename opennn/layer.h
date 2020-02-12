@@ -197,6 +197,8 @@ public:
 
     virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
+    virtual void calculate_forward_propagation(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation&) {}
+
     // Deltas
 
     virtual void calculate_output_delta(const Tensor<type, 2>&,
