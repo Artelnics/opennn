@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O S S   I N D E X   C L A S S                                       
+//   L O S S   I N D E X   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,47 +11,47 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates a default error term object, with all pointers initialized to nullptr.
 /// It also initializes all the rest of class members to their default values.
 
 LossIndex::LossIndex()
- : neural_network_pointer(nullptr), 
-   data_set_pointer(nullptr)
+    : neural_network_pointer(nullptr),
+      data_set_pointer(nullptr)
 {
-   set_default();
+    set_default();
 }
 
 
-/// Neural network constructor. 
+/// Neural network constructor.
 /// It creates a error term object associated to a neural network object.
 /// The rest of pointers are initialized to nullptr.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer)
- : neural_network_pointer(new_neural_network_pointer), 
-   data_set_pointer(nullptr)
+    : neural_network_pointer(new_neural_network_pointer),
+      data_set_pointer(nullptr)
 {
-   set_default();
+    set_default();
 }
 
 
-/// Data set constructor. 
+/// Data set constructor.
 /// It creates a error term object associated to a given data set object.
 /// The rest of pointers are initialized to nullptr.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 LossIndex::LossIndex(DataSet* new_data_set_pointer)
- : neural_network_pointer(nullptr), 
-   data_set_pointer(new_data_set_pointer)
+    : neural_network_pointer(nullptr),
+      data_set_pointer(new_data_set_pointer)
 {
-   set_default();
+    set_default();
 }
 
 
-/// Neural network and data set constructor. 
+/// Neural network and data set constructor.
 /// It creates a error term object associated to a neural network and to be measured on a data set.
 /// The rest of pointers are initialized to nullptr.
 /// It also initializes all the rest of class members to their default values.
@@ -59,41 +59,41 @@ LossIndex::LossIndex(DataSet* new_data_set_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
- : neural_network_pointer(new_neural_network_pointer), 
-   data_set_pointer(new_data_set_pointer)
+    : neural_network_pointer(new_neural_network_pointer),
+      data_set_pointer(new_data_set_pointer)
 {
-   set_default();
+    set_default();
 }
 
 
-/// XML constructor. 
+/// XML constructor.
 /// It creates a default error term object, with all pointers initialized to nullptr.
 /// It also loads all the rest of class members from a XML document.
 /// @param error_term_document Pointer to a TinyXML document with the object data.
 
 LossIndex::LossIndex(const tinyxml2::XMLDocument& error_term_document)
- : neural_network_pointer(nullptr), 
-   data_set_pointer(nullptr)
+    : neural_network_pointer(nullptr),
+      data_set_pointer(nullptr)
 {
-   set_default();
+    set_default();
 
-   from_XML(error_term_document);
+    from_XML(error_term_document);
 }
 
 
-/// Copy constructor. 
+/// Copy constructor.
 /// It creates a copy of an existing error term object.
 /// @param other_error_term Error term object to be copied.
 
 LossIndex::LossIndex(const LossIndex& other_error_term)
- : neural_network_pointer(nullptr), 
-   data_set_pointer(nullptr)
+    : neural_network_pointer(nullptr),
+      data_set_pointer(nullptr)
 {
-   neural_network_pointer = other_error_term.neural_network_pointer;
+    neural_network_pointer = other_error_term.neural_network_pointer;
 
-   data_set_pointer = other_error_term.data_set_pointer;
+    data_set_pointer = other_error_term.data_set_pointer;
 
-   display = other_error_term.display;
+    display = other_error_term.display;
 }
 
 
@@ -108,7 +108,7 @@ LossIndex::~LossIndex()
 
 const type& LossIndex::get_regularization_weight() const
 {
-   return regularization_weight;
+    return regularization_weight;
 }
 
 
@@ -117,7 +117,7 @@ const type& LossIndex::get_regularization_weight() const
 
 const bool& LossIndex::get_display() const
 {
-   return display;
+    return display;
 }
 
 
@@ -166,10 +166,10 @@ LossIndex::RegularizationMethod LossIndex::get_regularization_method() const
 
 void LossIndex::set()
 {
-   neural_network_pointer = nullptr;
-   data_set_pointer = nullptr;
+    neural_network_pointer = nullptr;
+    data_set_pointer = nullptr;
 
-   set_default();
+    set_default();
 }
 
 
@@ -179,10 +179,10 @@ void LossIndex::set()
 
 void LossIndex::set(NeuralNetwork* new_neural_network_pointer)
 {
-   neural_network_pointer = new_neural_network_pointer;
-   data_set_pointer = nullptr;
+    neural_network_pointer = new_neural_network_pointer;
+    data_set_pointer = nullptr;
 
-   set_default();
+    set_default();
 }
 
 
@@ -192,10 +192,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network_pointer)
 
 void LossIndex::set(DataSet* new_data_set_pointer)
 {
-   neural_network_pointer = nullptr;
-   data_set_pointer = new_data_set_pointer;
+    neural_network_pointer = nullptr;
+    data_set_pointer = new_data_set_pointer;
 
-   set_default();
+    set_default();
 }
 
 
@@ -206,11 +206,11 @@ void LossIndex::set(DataSet* new_data_set_pointer)
 
 void LossIndex::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
 {
-   neural_network_pointer = new_neural_network_pointer;
+    neural_network_pointer = new_neural_network_pointer;
 
-   data_set_pointer = new_data_set_pointer;
+    data_set_pointer = new_data_set_pointer;
 
-   set_default();
+    set_default();
 }
 
 
@@ -219,19 +219,19 @@ void LossIndex::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data
 
 void LossIndex::set(const LossIndex& other_error_term)
 {
-   neural_network_pointer = other_error_term.neural_network_pointer;
+    neural_network_pointer = other_error_term.neural_network_pointer;
 
-   data_set_pointer = other_error_term.data_set_pointer;
+    data_set_pointer = other_error_term.data_set_pointer;
 
-   regularization_method = other_error_term.regularization_method;
+    regularization_method = other_error_term.regularization_method;
 
-   display = other_error_term.display;
+    display = other_error_term.display;
 }
 
 
 void LossIndex::set_device_pointer(Device* new_device_pointer)
 {
-   device_pointer = new_device_pointer;
+    device_pointer = new_device_pointer;
 }
 
 
@@ -240,7 +240,7 @@ void LossIndex::set_device_pointer(Device* new_device_pointer)
 
 void LossIndex::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
 {
-   neural_network_pointer = new_neural_network_pointer;
+    neural_network_pointer = new_neural_network_pointer;
 }
 
 
@@ -248,7 +248,7 @@ void LossIndex::set_neural_network_pointer(NeuralNetwork* new_neural_network_poi
 
 void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
-   data_set_pointer = new_data_set_pointer;
+    data_set_pointer = new_data_set_pointer;
 }
 
 
@@ -256,8 +256,8 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void LossIndex::set_default()
 {
-   regularization_method = L2;
-   display = true;
+    regularization_method = L2;
+    display = true;
 }
 
 
@@ -316,7 +316,7 @@ void LossIndex::set_regularization_weight(const type& new_regularization_weight)
 
 void LossIndex::set_display(const bool& new_display)
 {
-   display = new_display;
+    display = new_display;
 }
 
 
@@ -324,81 +324,81 @@ void LossIndex::set_display(const bool& new_display)
 
 bool LossIndex::has_selection() const
 {
-   if(data_set_pointer->get_selection_instances_number() != 0)
-   {
-       return true;
-   }
-   else
-   {
-       return false;
-   }
+    if(data_set_pointer->get_selection_instances_number() != 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
 
 /// Checks that there is a neural network associated to the error term.
-/// If some of the above conditions is not hold, the method throws an exception. 
+/// If some of the above conditions is not hold, the method throws an exception.
 
 void LossIndex::check() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   if(!neural_network_pointer)
-   {
-      buffer << "OpenNN Exception: LossIndex class.\n"
-             << "void check() const.\n"
-             << "Pointer to neural network is nullptr.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-  if(trainable_layers_number == 0)
-  {
+    if(!neural_network_pointer)
+    {
         buffer << "OpenNN Exception: LossIndex class.\n"
-            << "void check() const method.\n"
-            << "Neural network has no layers.\n";
+               << "void check() const.\n"
+               << "Pointer to neural network is nullptr.\n";
 
         throw logic_error(buffer.str());
-  }
+    }
 
-  // Data set
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-  if(!data_set_pointer)
-  {
-     buffer << "OpenNN Exception: LossIndex class.\n"
-            << "void check() const method.\n"
-            << "Pointer to data set is nullptr.\n";
+    if(trainable_layers_number == 0)
+    {
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void check() const method.\n"
+               << "Neural network has no layers.\n";
 
-     throw logic_error(buffer.str());
-  }
+        throw logic_error(buffer.str());
+    }
 
-  const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+    // Data set
 
-  const Index inputs_number = trainable_layers_pointers[0]->get_inputs_number();
-  const Index outputs_number = trainable_layers_pointers[trainable_layers_number-1]->get_neurons_number();
+    if(!data_set_pointer)
+    {
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void check() const method.\n"
+               << "Pointer to data set is nullptr.\n";
 
-  const Index data_set_inputs_number = data_set_pointer->get_input_variables_number();
-  const Index targets_number = data_set_pointer->get_target_variables_number();
+        throw logic_error(buffer.str());
+    }
 
-  if(data_set_inputs_number != inputs_number)
-  {
-     buffer << "OpenNN Exception: LossIndex class.\n"
-            << "void check() const method.\n"
-            << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-     throw logic_error(buffer.str());
-  }
+    const Index inputs_number = trainable_layers_pointers[0]->get_inputs_number();
+    const Index outputs_number = trainable_layers_pointers[trainable_layers_number-1]->get_neurons_number();
 
-  if(outputs_number != targets_number)
-  {
-     buffer << "OpenNN Exception: LossIndex class.\n"
-            << "void check() const method.\n"
-            << "Number of outputs in neural network (" << outputs_number << ") must be equal to number of targets in data set (" << targets_number << ").\n";
+    const Index data_set_inputs_number = data_set_pointer->get_input_variables_number();
+    const Index targets_number = data_set_pointer->get_target_variables_number();
 
-     throw logic_error(buffer.str());
-  }
+    if(data_set_inputs_number != inputs_number)
+    {
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void check() const method.\n"
+               << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(outputs_number != targets_number)
+    {
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void check() const method.\n"
+               << "Number of outputs in neural network (" << outputs_number << ") must be equal to number of targets in data set (" << targets_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
 }
 
 
@@ -412,66 +412,66 @@ void LossIndex::check() const
 /// @param layers_delta vector of tensors with layers delta.
 
 Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>& inputs,
-                                                         const Tensor<Layer::ForwardPropagation, 1>& forward_propagation,
-                                                         const Tensor<Tensor<type, 2>, 1>& layers_delta) const
-{  
-   #ifdef __OPENNN_DEBUG__
+        const Tensor<Layer::ForwardPropagation, 1>& forward_propagation,
+        const Tensor<Tensor<type, 2>, 1>& layers_delta) const
+{
+#ifdef __OPENNN_DEBUG__
 
-   check();
+    check();
 
-   #endif
+#endif
 
-   const Index layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   // Hidden errors size
+    // Hidden errors size
 
-   const Index layers_delta_size = layers_delta.size();
+    const Index layers_delta_size = layers_delta.size();
 
-   if(layers_delta_size != layers_number)
-   {
-       ostringstream buffer;
+    if(layers_delta_size != layers_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Tensor<type, 2> calculate_layers_error_Jacobian(const Tensor<Tensor<type, 1>, 1>&, const Tensor<type, 1>&) method.\n"
-             << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "Tensor<type, 2> calculate_layers_error_Jacobian(const Tensor<Tensor<type, 1>, 1>&, const Tensor<type, 1>&) method.\n"
+               << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   const Index parameters_number = neural_network_pointer->get_parameters_number();
-   const Index instances_number = data_set_pointer->get_instances_number();
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index instances_number = data_set_pointer->get_instances_number();
 
-   const Tensor<Index, 1> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+    const Tensor<Index, 1> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-   Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
+    Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
-   Index index = 0;
+    Index index = 0;
 
 //   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
-   for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[0], inputs).size(); i++)
-   {
-       error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[0], inputs))(i);
-   }
+    for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[0], inputs).size(); i++)
+    {
+        error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[0], inputs))(i);
+    }
 
-   index += layers_parameters_number[0];
-/*
-   for(Index i = 1; i < layers_number; i++)
-   {
+    index += layers_parameters_number[0];
+    /*
+       for(Index i = 1; i < layers_number; i++)
+       {
 
-//      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
-      for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations).size(); i++)
-      {
-          error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations))(i);
-      }
+    //      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
+          for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations).size(); i++)
+          {
+              error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations))(i);
+          }
 
-      index += layers_parameters_number[i];
-   }
-*/
-   return error_Jacobian;
+          index += layers_parameters_number[i];
+       }
+    */
+    return error_Jacobian;
 }
 
 
@@ -484,7 +484,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
 /// @param layer_inputs Tensor with layers inputs.
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas,
-                                                               const Tensor<type, 2>& layer_inputs) const
+        const Tensor<type, 2>& layer_inputs) const
 {
     const Index instances_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
@@ -512,7 +512,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
             }
 
             layer_error_Jacobian(instance, synaptic_weights_number+perceptron) = layer_delta;
-         }
+        }
     }
 
     return layer_error_Jacobian;
@@ -522,7 +522,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 /// Returns the value of the loss function at some step along some direction.
 /*
 type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const type& rate) const
-{    
+{
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     return calculate_training_loss(parameters + direction*rate);
@@ -533,7 +533,7 @@ type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const 
 
 string LossIndex::get_error_type() const
 {
-   return "USER_ERROR_TERM";
+    return "USER_ERROR_TERM";
 }
 
 
@@ -541,17 +541,17 @@ string LossIndex::get_error_type() const
 
 string LossIndex::get_error_type_text() const
 {
-   return "USER_ERROR_TERM";
+    return "USER_ERROR_TERM";
 }
 
 
 /// Returns a string with the default information of the error term.
-/// It will be used by the training strategy to monitor the training process. 
-/// By default this information is empty. 
+/// It will be used by the training strategy to monitor the training process.
+/// By default this information is empty.
 
 string LossIndex::write_information() const
 {
-   return string();
+    return string();
 }
 
 
@@ -562,11 +562,14 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-       case L1: return "L1_NORM";
+    case L1:
+        return "L1_NORM";
 
-       case L2: return "L2_NORM";
+    case L2:
+        return "L2_NORM";
 
-       case NoRegularization: return "NO_REGULARIZATION";
+    case NoRegularization:
+        return "NO_REGULARIZATION";
     }
 
     return string();
@@ -582,19 +585,19 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 
     switch(regularization_method)
     {
-       case L1:
-       {
-            return l1_norm(parameters);
-       }
-       case L2:
-       {
-            return l2_norm(parameters);
+    case L1:
+    {
+        return l1_norm(parameters);
+    }
+    case L2:
+    {
+        return l2_norm(parameters);
 
-       }
-       case NoRegularization:
-       {
-            return 0.0;
-       }
+    }
+    case NoRegularization:
+    {
+        return 0.0;
+    }
     }
 
     return 0.0;
@@ -611,18 +614,18 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
 {
     switch(regularization_method)
     {
-       case L1:
-       {
+    case L1:
+    {
 //            return l1_norm_gradient(parameters);
-       }
-       case L2:
-       {
-            return l2_norm_gradient(parameters);
-       }
-       case NoRegularization:
-       {
-            return Tensor<type, 1>(parameters.size()).setConstant(0.0);
-       }
+    }
+    case L2:
+    {
+        return l2_norm_gradient(parameters);
+    }
+    case NoRegularization:
+    {
+        return Tensor<type, 1>(parameters.size()).setConstant(0.0);
+    }
     }
 
     return Tensor<type, 1>();
@@ -639,20 +642,20 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
 {
     switch(regularization_method)
     {
-       case L1:
-       {
+    case L1:
+    {
 //            return l1_norm_hessian(parameters);
-       }
-       case L2:
-       {
-            return l2_norm_hessian(parameters);
-       }
-       case NoRegularization:
-       {
-            const Index parameters_number = parameters.size();
+    }
+    case L2:
+    {
+        return l2_norm_hessian(parameters);
+    }
+    case NoRegularization:
+    {
+        const Index parameters_number = parameters.size();
 
-            return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
-       }
+        return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
+    }
     }
 
     return Tensor<type, 2>();
@@ -664,17 +667,17 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
 
 tinyxml2::XMLDocument* LossIndex::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Error term
+    // Error term
 
-   tinyxml2::XMLElement* root_element = document->NewElement("LossIndex");
+    tinyxml2::XMLElement* root_element = document->NewElement("LossIndex");
 
-   document->InsertFirstChild(root_element);
+    document->InsertFirstChild(root_element);
 
-   return document;
+    return document;
 }
 
 
@@ -714,65 +717,65 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     if(element)
     {
-       const type new_regularization_weight = static_cast<type>(atof(element->GetText()));
+        const type new_regularization_weight = static_cast<type>(atof(element->GetText()));
 
-       try
-       {
-          set_regularization_weight(new_regularization_weight);
-       }
-       catch(const logic_error& e)
-       {
-          cerr << e.what() << endl;
-       }
+        try
+        {
+            set_regularization_weight(new_regularization_weight);
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
     }
 }
 
 
 void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-     ostringstream buffer;
+    ostringstream buffer;
 
-     file_stream.OpenElement("Regularization");
+    file_stream.OpenElement("Regularization");
 
-     // Regularization method
+    // Regularization method
 
-     switch(regularization_method)
-     {
-        case L1:
-        {
-            file_stream.PushAttribute("Type", "L1_NORM");
-        }
-        break;
+    switch(regularization_method)
+    {
+    case L1:
+    {
+        file_stream.PushAttribute("Type", "L1_NORM");
+    }
+    break;
 
-        case L2:
-        {
-            file_stream.PushAttribute("Type", "L2_NORM");
-        }
-        break;
+    case L2:
+    {
+        file_stream.PushAttribute("Type", "L2_NORM");
+    }
+    break;
 
-        case NoRegularization:
-        {
-            file_stream.PushAttribute("Type", "NO_REGULARIZATION");
-        }
-        break;
-     }
+    case NoRegularization:
+    {
+        file_stream.PushAttribute("Type", "NO_REGULARIZATION");
+    }
+    break;
+    }
 
-     // Regularization weight
+    // Regularization weight
 
-     file_stream.OpenElement("NeuralParametersNormWeight");
+    file_stream.OpenElement("NeuralParametersNormWeight");
 
-     buffer.str("");
-     buffer << regularization_weight;
+    buffer.str("");
+    buffer << regularization_weight;
 
-     file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-     // Close regularization weight
+    // Close regularization weight
 
-     file_stream.CloseElement();
+    file_stream.CloseElement();
 
-     // Close regularization
+    // Close regularization
 
-     file_stream.CloseElement();
+    file_stream.CloseElement();
 }
 
 
@@ -841,10 +844,10 @@ Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, con
 
     for(Index i = 0; i < size; i++)
     {
-      for(Index j = 0; j < size; j++)
-      {
-        direct(i, j) = tensor(i) * other_tensor(j);
-      }
+        for(Index j = 0; j < size; j++)
+        {
+            direct(i, j) = tensor(i) * other_tensor(j);
+        }
     }
 
     return direct;

@@ -11,8 +11,8 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
-/// It creates a default cross entropy error term object, 
+/// Default constructor.
+/// It creates a default cross entropy error term object,
 /// which is not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
@@ -21,59 +21,59 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 }
 
 
-/// Neural network constructor. 
+/// Neural network constructor.
 /// It creates a cross entropy error term associated to a neural network but not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer)
- : LossIndex(new_neural_network_pointer)
+    : LossIndex(new_neural_network_pointer)
 {
 }
 
 
-/// Data set constructor. 
+/// Data set constructor.
 /// It creates a cross entropy error not associated to any neural network but to be measured on a data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
-CrossEntropyError::CrossEntropyError(DataSet* new_data_set_pointer) 
-: LossIndex(new_data_set_pointer)
+CrossEntropyError::CrossEntropyError(DataSet* new_data_set_pointer)
+    : LossIndex(new_data_set_pointer)
 {
 }
 
 
-/// Neural network and data set constructor. 
+/// Neural network and data set constructor.
 /// It creates a cross entropy error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values:
 /// @param new_neural_network_pointer: Pointer to a neural network object.
 /// @param new_data_set_pointer: Pointer to a data set object.
 
 CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-: LossIndex(new_neural_network_pointer, new_data_set_pointer)
+    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
 
-/// XML constructor. 
+/// XML constructor.
 /// It creates a cross entropy error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from a TinyXML document->
 /// @param cross_entropy_error_document XML document with the class members.
 
 CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& cross_entropy_error_document)
- : LossIndex(cross_entropy_error_document)
+    : LossIndex(cross_entropy_error_document)
 {
     from_XML(cross_entropy_error_document);
 }
 
 
-/// Copy constructor. 
+/// Copy constructor.
 /// It creates a cross entropy error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from another cross-entropy error object.
-/// @param new_cross_entropy_error Object to be copied. 
+/// @param new_cross_entropy_error Object to be copied.
 
 CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_error)
- : LossIndex(new_cross_entropy_error)
+    : LossIndex(new_cross_entropy_error)
 {
 
 }
@@ -81,7 +81,7 @@ CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_
 
 /// Destructor.
 
-CrossEntropyError::~CrossEntropyError() 
+CrossEntropyError::~CrossEntropyError()
 {
 }
 
@@ -90,7 +90,7 @@ CrossEntropyError::~CrossEntropyError()
 
 string CrossEntropyError::get_error_type() const
 {
-   return "CROSS_ENTROPY_ERROR";
+    return "CROSS_ENTROPY_ERROR";
 }
 
 
@@ -98,26 +98,26 @@ string CrossEntropyError::get_error_type() const
 
 string CrossEntropyError::get_error_type_text() const
 {
-   return "Cross entropy error";
+    return "Cross entropy error";
 }
 
 
-/// Serializes the cross entropy error object into a XML document of the TinyXML library. 
-/// See the OpenNN manual for more information about the format of this document-> 
+/// Serializes the cross entropy error object into a XML document of the TinyXML library.
+/// See the OpenNN manual for more information about the format of this document->
 
 tinyxml2::XMLDocument* CrossEntropyError::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Cross entropy error 
+    // Cross entropy error
 
-   tinyxml2::XMLElement* cross_entropy_error_element = document->NewElement("CrossEntropyError");
+    tinyxml2::XMLElement* cross_entropy_error_element = document->NewElement("CrossEntropyError");
 
-   document->InsertFirstChild(cross_entropy_error_element);
+    document->InsertFirstChild(cross_entropy_error_element);
 
-   // Display
+    // Display
 
 //   {
 //      tinyxml2::XMLElement* display_element = document->NewElement("Display");
@@ -130,7 +130,7 @@ tinyxml2::XMLDocument* CrossEntropyError::to_XML() const
 //      display_element->LinkEndChild(display_text);
 //   }
 
-   return document;
+    return document;
 }
 
 

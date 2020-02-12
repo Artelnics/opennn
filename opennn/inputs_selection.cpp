@@ -8,7 +8,8 @@
 
 #include "inputs_selection.h"
 
-namespace OpenNN {
+namespace OpenNN
+{
 
 
 /// Default constructor.
@@ -515,12 +516,12 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
             optimum_losses(0) = selection_error_history(i);
             flag_selection = true;
         }
-/*
-        if(inputs_history[i] == inputs)
-        {
-            optimum_losses[1] = selection_error_history[i];
-            flag_selection = true;
-        }*/
+        /*
+                if(inputs_history[i] == inputs)
+                {
+                    optimum_losses[1] = selection_error_history[i];
+                    flag_selection = true;
+                }*/
     }
 
     if(flag_loss && flag_selection)
@@ -578,15 +579,15 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
     selection_error_history = insert_result(optimum_selection_error, selection_error_history);
 
     parameters_history = insert_result(optimum_parameters, parameters_history);
-/*
-    inputs_history.push_back(inputs);
+    /*
+        inputs_history.push_back(inputs);
 
-    training_error_history.push_back(optimum_training_error);
+        training_error_history.push_back(optimum_training_error);
 
-    selection_error_history.push_back(optimum_selection_error);
+        selection_error_history.push_back(optimum_selection_error);
 
-    parameters_history.push_back(optimum_parameters);
-*/
+        parameters_history.push_back(optimum_parameters);
+    */
     optimum_losses[0] = optimum_training_error;
     optimum_losses[1] = optimum_selection_error;
 
@@ -671,136 +672,136 @@ Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>
 
 Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool, 1>&inputs)
 {
-/*
-#ifdef __OPENNN_DEBUG__
+    /*
+    #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_equal_to(true) <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-               << "Number of inputs must be greater or equal than 1.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(trials_number <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-               << "Number of parameters assay must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
-
-    OptimizationAlgorithm::Results results;
-
-    Tensor<type, 1> mean_final(2);
-    mean_final[0] = 0;
-    mean_final[1] = 0;
-
-    Tensor<type, 1> current_loss(2);
-
-    Tensor<type, 1> final_parameters;
-
-    bool flag_loss = false;
-    bool flag_selection = false;
-
-    for(Index i = 0; i < inputs_history.size(); i++)
-    {
-        if(inputs_history[i] == inputs)
+        if(inputs.count_equal_to(true) <= 0)
         {
-            mean_final[0] = training_error_history[i];
-            flag_loss = true;
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                   << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
+                   << "Number of inputs must be greater or equal than 1.\n";
+
+            throw logic_error(buffer.str());
         }
-    }
 
-    for(Index i = 0; i < inputs_history.size(); i++)
-    {
-        if(inputs_history[i] == inputs)
+        if(trials_number <= 0)
         {
-            mean_final[1] = selection_error_history[i];
-            flag_selection = true;
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                   << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
+                   << "Number of parameters assay must be greater than 0.\n";
+
+            throw logic_error(buffer.str());
         }
-    }
 
-    if(flag_loss && flag_selection)
-    {
-        return mean_final;
-    }
+    #endif
 
-    neural_network->perturbate_parameters(0.001);
+        NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
-    results = training_strategy_pointer->perform_training();
+        OptimizationAlgorithm::Results results;
 
-//    current_loss = get_final_losses(results);
+        Tensor<type, 1> mean_final(2);
+        mean_final[0] = 0;
+        mean_final[1] = 0;
 
-    mean_final[0] = current_loss[0];
-    mean_final[1] = current_loss[1];
+        Tensor<type, 1> current_loss(2);
 
-    final_parameters.resize(neural_network->get_parameters());
+        Tensor<type, 1> final_parameters;
 
-    for(Index i = 1; i < trials_number; i++)
-    {
-        if(display)
+        bool flag_loss = false;
+        bool flag_selection = false;
+
+        for(Index i = 0; i < inputs_history.size(); i++)
         {
-            cout << "Trial number: " << i << endl;
-            if(i == 1)
+            if(inputs_history[i] == inputs)
             {
-                cout << "Training loss: " << mean_final[0] << endl;
-                cout << "Selection error: " << mean_final[1] << endl;
-                cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-            }
-            else
-            {
-                cout << "Training loss: " << current_loss[0] << endl;
-                cout << "Selection error: " << current_loss[1] << endl;
-                cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
+                mean_final[0] = training_error_history[i];
+                flag_loss = true;
             }
         }
 
-        neural_network->set_parameters_random();
+        for(Index i = 0; i < inputs_history.size(); i++)
+        {
+            if(inputs_history[i] == inputs)
+            {
+                mean_final[1] = selection_error_history[i];
+                flag_selection = true;
+            }
+        }
+
+        if(flag_loss && flag_selection)
+        {
+            return mean_final;
+        }
+
+        neural_network->perturbate_parameters(0.001);
 
         results = training_strategy_pointer->perform_training();
 
-//        current_loss = get_final_losses(results);
+    //    current_loss = get_final_losses(results);
 
-        if(!flag_loss)
+        mean_final[0] = current_loss[0];
+        mean_final[1] = current_loss[1];
+
+        final_parameters.resize(neural_network->get_parameters());
+
+        for(Index i = 1; i < trials_number; i++)
         {
-            mean_final[0] += current_loss[0]/trials_number;
+            if(display)
+            {
+                cout << "Trial number: " << i << endl;
+                if(i == 1)
+                {
+                    cout << "Training loss: " << mean_final[0] << endl;
+                    cout << "Selection error: " << mean_final[1] << endl;
+                    cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
+                }
+                else
+                {
+                    cout << "Training loss: " << current_loss[0] << endl;
+                    cout << "Selection error: " << current_loss[1] << endl;
+                    cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
+                }
+            }
+
+            neural_network->set_parameters_random();
+
+            results = training_strategy_pointer->perform_training();
+
+    //        current_loss = get_final_losses(results);
+
+            if(!flag_loss)
+            {
+                mean_final[0] += current_loss[0]/trials_number;
+            }
+
+            if(!flag_selection)
+            {
+                mean_final[1] += current_loss[1]/trials_number;
+            }
         }
 
-        if(!flag_selection)
+        if(display)
         {
-            mean_final[1] += current_loss[1]/trials_number;
+            cout << "Trial number: " << trials_number << endl;
+            cout << "Training loss: " << mean_final[0] << endl;
+            cout << "Selection error: " << mean_final[1] << endl;
+            cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
         }
-    }
 
-    if(display)
-    {
-        cout << "Trial number: " << trials_number << endl;
-        cout << "Training loss: " << mean_final[0] << endl;
-        cout << "Selection error: " << mean_final[1] << endl;
-        cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-    }
+        inputs_history.push_back(inputs);
 
-    inputs_history.push_back(inputs);
+        training_error_history.push_back(mean_final[0]);
 
-    training_error_history.push_back(mean_final[0]);
+        selection_error_history.push_back(mean_final[1]);
 
-    selection_error_history.push_back(mean_final[1]);
+        parameters_history.push_back(final_parameters);
 
-    parameters_history.push_back(final_parameters);
-
-    return mean_final;
-*/
+        return mean_final;
+    */
     return Tensor<type, 1>();
 
 }
@@ -811,38 +812,38 @@ Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool
 
 Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& inputs) const
 {
-/*
-#ifdef __OPENNN_DEBUG__
+    /*
+    #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_equal_to(true) <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) method.\n"
-               << "Inputs must be greater than 1.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Index i;
-
-    Tensor<type, 1> parameters;
-
-    for(i = 0; i < inputs_history.size(); i++)
-    {
-        if(inputs_history[i] == inputs)
+        if(inputs.count_equal_to(true) <= 0)
         {
-            parameters = parameters_history[i];
+            ostringstream buffer;
 
-            break;
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                   << "Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) method.\n"
+                   << "Inputs must be greater than 1.\n";
+
+            throw logic_error(buffer.str());
         }
-    }
 
-    return parameters;
-*/
+    #endif
+
+        Index i;
+
+        Tensor<type, 1> parameters;
+
+        for(i = 0; i < inputs_history.size(); i++)
+        {
+            if(inputs_history[i] == inputs)
+            {
+                parameters = parameters_history[i];
+
+                break;
+            }
+        }
+
+        return parameters;
+    */
     return Tensor<type, 1>();
 }
 
@@ -860,9 +861,9 @@ string InputsSelection::write_stopping_condition(const OptimizationAlgorithm::Re
 
 void InputsSelection::delete_selection_history()
 {
-/*
-    selection_error_history.set();
-*/
+    /*
+        selection_error_history.set();
+    */
 }
 
 
@@ -870,9 +871,9 @@ void InputsSelection::delete_selection_history()
 
 void InputsSelection::delete_loss_history()
 {
-/*
-    training_error_history.set();
-*/
+    /*
+        training_error_history.set();
+    */
 }
 
 
@@ -880,9 +881,9 @@ void InputsSelection::delete_loss_history()
 
 void InputsSelection::delete_parameters_history()
 {
-/*
-    parameters_history.set();
-*/
+    /*
+        parameters_history.set();
+    */
 }
 
 
@@ -952,7 +953,7 @@ void InputsSelection::check() const
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    
+
 
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
@@ -974,38 +975,38 @@ string InputsSelection::Results::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-        case MaximumTime:
-        {
-            return "MaximumTime";
-        }
-        case SelectionErrorGoal:
-        {
-            return "SelectionErrorGoal";
-        }
-        case MaximumInputs:
-        {
-            return "MaximumInputs";
-        }
-        case MinimumInputs:
-        {
-            return "MinimumInputs";
-        }
-        case MaximumIterations:
-        {
-            return "MaximumIterations";
-        }
-        case MaximumSelectionFailures:
-        {
-            return "MaximumSelectionFailures";
-        }
-        case CorrelationGoal:
-        {
-            return "CorrelationGoal";
-        }
-        case AlgorithmFinished:
-        {
-            return "AlgorithmFinished";
-        }
+    case MaximumTime:
+    {
+        return "MaximumTime";
+    }
+    case SelectionErrorGoal:
+    {
+        return "SelectionErrorGoal";
+    }
+    case MaximumInputs:
+    {
+        return "MaximumInputs";
+    }
+    case MinimumInputs:
+    {
+        return "MinimumInputs";
+    }
+    case MaximumIterations:
+    {
+        return "MaximumIterations";
+    }
+    case MaximumSelectionFailures:
+    {
+        return "MaximumSelectionFailures";
+    }
+    case CorrelationGoal:
+    {
+        return "CorrelationGoal";
+    }
+    case AlgorithmFinished:
+    {
+        return "AlgorithmFinished";
+    }
     }
 
     return string();
@@ -1016,80 +1017,80 @@ string InputsSelection::Results::write_stopping_condition() const
 
 string InputsSelection::Results::object_to_string() const
 {
-   ostringstream buffer;
-/*
-   // Inputs history
+    ostringstream buffer;
+    /*
+       // Inputs history
 
-   if(!inputs_data.empty())
-   {
-     buffer << "% Inputs history:\n"
-            << inputs_data.to_row_matrix() << "\n";
-   }
+       if(!inputs_data.empty())
+       {
+         buffer << "% Inputs history:\n"
+                << inputs_data.to_row_matrix() << "\n";
+       }
 
-   // Loss history
+       // Loss history
 
-   if(!loss_data.empty())
-   {
-       buffer << "% Loss history:\n"
-              << loss_data.to_row_matrix() << "\n";
-   }
+       if(!loss_data.empty())
+       {
+           buffer << "% Loss history:\n"
+                  << loss_data.to_row_matrix() << "\n";
+       }
 
-   // Selection loss history
+       // Selection loss history
 
-   if(!selection_error_data.empty())
-   {
-       buffer << "% Selection loss history:\n"
-              << selection_error_data.to_row_matrix() << "\n";
-   }
+       if(!selection_error_data.empty())
+       {
+           buffer << "% Selection loss history:\n"
+                  << selection_error_data.to_row_matrix() << "\n";
+       }
 
-   // Minimal parameters
+       // Minimal parameters
 
-   if(!minimal_parameters.empty())
-   {
-       buffer << "% Minimal parameters:\n"
-              << minimal_parameters << "\n";
-   }
+       if(!minimal_parameters.empty())
+       {
+           buffer << "% Minimal parameters:\n"
+                  << minimal_parameters << "\n";
+       }
 
-   // Stopping condition
+       // Stopping condition
 
-   buffer << "% Stopping condition\n"
-          << write_stopping_condition() << "\n";
+       buffer << "% Stopping condition\n"
+              << write_stopping_condition() << "\n";
 
-   // Optimum selection error
+       // Optimum selection error
 
-   if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
-   {
-       buffer << "% Optimum selection error:\n"
-              << final_selection_error << "\n";
-   }
+       if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
+       {
+           buffer << "% Optimum selection error:\n"
+                  << final_selection_error << "\n";
+       }
 
-   // Final training loss
+       // Final training loss
 
-   if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
-   {
-       buffer << "% Final training loss:\n"
-              << final_training_error << "\n";
-   }
+       if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
+       {
+           buffer << "% Final training loss:\n"
+                  << final_training_error << "\n";
+       }
 
-   // Optimal input
+       // Optimal input
 
-   if(!optimal_inputs_indices.empty())
-   {
-       buffer << "% Optimal input:\n"
-              << optimal_inputs_indices << "\n";
-   }
+       if(!optimal_inputs_indices.empty())
+       {
+           buffer << "% Optimal input:\n"
+                  << optimal_inputs_indices << "\n";
+       }
 
-   // Iterations number
+       // Iterations number
 
-   buffer << "% Number of iterations:\n"
-          << iterations_number << "\n";
+       buffer << "% Number of iterations:\n"
+              << iterations_number << "\n";
 
-   // Elapsed time
+       // Elapsed time
 
-   buffer << "% Elapsed time:\n"
-          << write_elapsed_time(elapsed_time) << "\n";
-*/
-   return buffer.str();
+       buffer << "% Elapsed time:\n"
+              << write_elapsed_time(elapsed_time) << "\n";
+    */
+    return buffer.str();
 }
 
 
@@ -1120,7 +1121,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> use
     while(i < uses.size())
     {
         if(uses[i] == DataSet::Input &&
-            input_number == j)
+                input_number == j)
         {
             break;
         }

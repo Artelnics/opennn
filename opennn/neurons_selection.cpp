@@ -205,7 +205,7 @@ void NeuronsSelection::set_default()
     Index outputs_number;
 
     if(training_strategy_pointer == nullptr
-    || !training_strategy_pointer->has_neural_network())
+            || !training_strategy_pointer->has_neural_network())
     {
         inputs_number = 0;
         outputs_number = 0;
@@ -592,15 +592,15 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     selection_error_history = insert_result(final_losses(1), selection_error_history);
 
     parameters_history = insert_result(optimum_parameters, parameters_history);
-/*
-    neurons_history.push_back(neurons_number);
+    /*
+        neurons_history.push_back(neurons_number);
 
-    training_loss_history.push_back(final_losses[0]);
+        training_loss_history.push_back(final_losses[0]);
 
-    selection_error_history.push_back(final_losses[1]);
+        selection_error_history.push_back(final_losses[1]);
 
-    parameters_history.push_back(optimum_parameters);
-*/
+        parameters_history.push_back(optimum_parameters);
+    */
     return final_losses;
 }
 
@@ -789,14 +789,14 @@ void NeuronsSelection::check() const
     }
 
 
-   if(neural_network_pointer->get_layers_number() == 1)
-   {
-      buffer << "OpenNN Exception: NeuronsSelection class.\n"
-             << "void check() const method.\n"
-             << "Number of layers in neural network must be greater than 1.\n";
+    if(neural_network_pointer->get_layers_number() == 1)
+    {
+        buffer << "OpenNN Exception: NeuronsSelection class.\n"
+               << "void check() const method.\n"
+               << "Number of layers in neural network must be greater than 1.\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
     // Data set
 
@@ -831,26 +831,26 @@ string NeuronsSelection::Results::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-        case MaximumTime:
-        {
-            return "MaximumTime";
-        }
-        case SelectionErrorGoal:
-        {
-            return "SelectionErrorGoal";
-        }
-        case MaximumIterations:
-        {
-            return "MaximumIterations";
-        }
-        case MaximumSelectionFailures:
-        {
-            return "MaximumSelectionFailures";
-        }
-        case AlgorithmFinished:
-        {
-            return "AlgorithmFinished";
-        }
+    case MaximumTime:
+    {
+        return "MaximumTime";
+    }
+    case SelectionErrorGoal:
+    {
+        return "SelectionErrorGoal";
+    }
+    case MaximumIterations:
+    {
+        return "MaximumIterations";
+    }
+    case MaximumSelectionFailures:
+    {
+        return "MaximumSelectionFailures";
+    }
+    case AlgorithmFinished:
+    {
+        return "AlgorithmFinished";
+    }
     }
 
     return string();
@@ -861,82 +861,82 @@ string NeuronsSelection::Results::write_stopping_condition() const
 
 string NeuronsSelection::Results::object_to_string() const
 {
-   ostringstream buffer;
-/*
-   // Neurons history
+    ostringstream buffer;
+    /*
+       // Neurons history
 
-   if(!neurons_data.empty())
-   {
-     buffer << "% Neurons history:\n"
-            << neurons_data.to_row_matrix() << "\n";
-   }
+       if(!neurons_data.empty())
+       {
+         buffer << "% Neurons history:\n"
+                << neurons_data.to_row_matrix() << "\n";
+       }
 
-   // Loss history
+       // Loss history
 
-   if(!training_loss_data.empty())
-   {
-       buffer << "% Loss history:\n"
-              << training_loss_data.to_row_matrix() << "\n";
-   }
+       if(!training_loss_data.empty())
+       {
+           buffer << "% Loss history:\n"
+                  << training_loss_data.to_row_matrix() << "\n";
+       }
 
-   // Selection loss history
+       // Selection loss history
 
-   if(!selection_error_data.empty())
-   {
-       buffer << "% Selection loss history:\n"
-              << selection_error_data.to_row_matrix() << "\n";
-   }
+       if(!selection_error_data.empty())
+       {
+           buffer << "% Selection loss history:\n"
+                  << selection_error_data.to_row_matrix() << "\n";
+       }
 
-   // Minimal parameters
+       // Minimal parameters
 
-   if(!minimal_parameters.empty())
-   {
-       buffer << "% Minimal parameters:\n"
-              << minimal_parameters << "\n";
-   }
-*/
-   // Stopping condition
+       if(!minimal_parameters.empty())
+       {
+           buffer << "% Minimal parameters:\n"
+                  << minimal_parameters << "\n";
+       }
+    */
+    // Stopping condition
 
-   buffer << "% Stopping condition\n"
-          << write_stopping_condition() << "\n";
+    buffer << "% Stopping condition\n"
+           << write_stopping_condition() << "\n";
 
-   // Optimum selection error
+    // Optimum selection error
 
-   if(final_selection_error > numeric_limits<type>::epsilon())
-   {
-       buffer << "% Optimum selection error:\n"
-              << final_selection_error << "\n";
-   }
+    if(final_selection_error > numeric_limits<type>::epsilon())
+    {
+        buffer << "% Optimum selection error:\n"
+               << final_selection_error << "\n";
+    }
 
-   // Final loss
+    // Final loss
 
-   if(final_training_loss > numeric_limits<type>::epsilon())
-   {
-       buffer << "% Final loss:\n"
-              << final_training_loss << "\n";
-   }
+    if(final_training_loss > numeric_limits<type>::epsilon())
+    {
+        buffer << "% Final loss:\n"
+               << final_training_loss << "\n";
+    }
 
-   // Optimal neurons
+    // Optimal neurons
 
-   if(optimal_neurons_number != 0)
-   {
-       buffer << "% Optimal neurons:\n"
-              << optimal_neurons_number << "\n";
-   }
+    if(optimal_neurons_number != 0)
+    {
+        buffer << "% Optimal neurons:\n"
+               << optimal_neurons_number << "\n";
+    }
 
-   // Iterations number
-
-
-   buffer << "% Number of iterations:\n"
-          << iterations_number << "\n";
+    // Iterations number
 
 
-   // Elapsed time
-/*
-   buffer << "% Elapsed time:\n"
-          << write_elapsed_time(elapsed_time) << "\n";
-*/
-   return buffer.str();
+    buffer << "% Number of iterations:\n"
+           << iterations_number << "\n";
+
+
+    // Elapsed time
+    /*
+       buffer << "% Elapsed time:\n"
+              << write_elapsed_time(elapsed_time) << "\n";
+    */
+    return buffer.str();
 }
 }
 
