@@ -592,9 +592,9 @@ public:
    Index calculate_selection_negatives(const Index&) const;
    Index calculate_testing_negatives(const Index&) const;
 
-   // Histrogram methods
+   // Distribution methods
 
-   Tensor<Histogram, 1> calculate_columns_histograms(const Index& = 10) const;
+   Tensor<Histogram, 1> calculate_columns_distribution(const Index& = 10) const;
 
    // Box and whiskers
 

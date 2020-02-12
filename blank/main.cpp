@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <statistics.h>
 #include <regex>
+#include <iomanip>
 
 // Systems Complementaries
 
@@ -55,6 +56,26 @@ using namespace chrono;
 
 using Eigen::MatrixXd;
 using Eigen::Vector3d;
+
+string write_elapsed_time(const type& time)
+{
+    int seconds;
+    int minutes;
+    int hours;
+
+    hours = static_cast<int>(time) / 3600;
+    seconds = static_cast<int>(time) % 3600;
+    minutes = seconds / 60;
+    seconds = seconds % 60;
+
+    ostringstream elapsed_time;
+
+    elapsed_time << setfill('0') << setw(2) << hours << ":"
+                 << setfill('0') << setw(2) << minutes << ":"
+                 << setfill('0') << setw(2) << seconds << endl;
+
+    return elapsed_time.str();
+}
 
 int main(void)
 {

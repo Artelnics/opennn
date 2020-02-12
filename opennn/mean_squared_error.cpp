@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M E A N   S Q U A R E D   E R R O R   C L A S S                       
+//   M E A N   S Q U A R E D   E R R O R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -28,7 +28,7 @@ MeanSquaredError::MeanSquaredError() : LossIndex()
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer)
-: LossIndex(new_neural_network_pointer)
+    : LossIndex(new_neural_network_pointer)
 {
 }
 
@@ -40,7 +40,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MeanSquaredError::MeanSquaredError(DataSet* new_data_set_pointer)
-: LossIndex(new_data_set_pointer)
+    : LossIndex(new_data_set_pointer)
 {
 }
 
@@ -53,7 +53,7 @@ MeanSquaredError::MeanSquaredError(DataSet* new_data_set_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-: LossIndex(new_neural_network_pointer, new_data_set_pointer)
+    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
@@ -65,7 +65,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 /// @param mean_squared_error_document TinyXML document with the mean squared error elements.
 
 MeanSquaredError::MeanSquaredError(const tinyxml2::XMLDocument& mean_squared_error_document)
- : LossIndex(mean_squared_error_document)
+    : LossIndex(mean_squared_error_document)
 {
     from_XML(mean_squared_error_document);
 }
@@ -76,7 +76,7 @@ MeanSquaredError::MeanSquaredError(const tinyxml2::XMLDocument& mean_squared_err
 /// @param other_mean_squared_error Mean squared error object to be copied.
 
 MeanSquaredError::MeanSquaredError(const MeanSquaredError& other_mean_squared_error)
-: LossIndex(other_mean_squared_error)
+    : LossIndex(other_mean_squared_error)
 {
 }
 
@@ -95,16 +95,16 @@ MeanSquaredError::~MeanSquaredError()
 
 Tensor<type, 1> MeanSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
-   // Control sentence
+    // Control sentence
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   check();
+    check();
 
-   #endif
-/*
-   return error_rows(outputs, targets);
-  */
+#endif
+    /*
+       return error_rows(outputs, targets);
+      */
 
     return Tensor<type, 1>();
 
@@ -120,7 +120,7 @@ Tensor<type, 1> MeanSquaredError::calculate_training_error_terms(const Tensor<ty
 {
 #ifdef __OPENNN_DEBUG__
 
-check();
+    check();
 
 #endif
 
@@ -131,9 +131,9 @@ check();
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
-/*
-    return error_rows(outputs, targets)/static_cast<type>(training_instances_number);
-*/
+    /*
+        return error_rows(outputs, targets)/static_cast<type>(training_instances_number);
+    */
     return Tensor<type, 1>();
 }
 
@@ -146,7 +146,7 @@ LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss()
 {
 #ifdef __OPENNN_DEBUG__
 
-check();
+    check();
 
 #endif
 
@@ -156,7 +156,7 @@ check();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-     bool is_forecasting = false;
+    bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
@@ -172,43 +172,43 @@ check();
 
     // Eigen stuff
 
-     #pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < batches_number; i++)
     {
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-/*
-        const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+        /*
+                const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-        const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
+                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-        const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+                const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-        const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+                const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+        //        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        //dot(error_terms, error_terms);
+                //dot(error_terms, error_terms);
 
-        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
+                const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
 
-        //dot(error_terms_Jacobian_transpose, error_terms);
+                //dot(error_terms_Jacobian_transpose, error_terms);
 
-        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);
+                const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);
 
-        Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_transpose_matrix);// = error_terms_Jacobian.dot(error_terms_Jacobian);
-        //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+                Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_transpose_matrix);// = error_terms_Jacobian.dot(error_terms_Jacobian);
+                //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
 
-        #pragma omp critical
-        {
-            terms_second_order_loss.loss += loss(0);
-            terms_second_order_loss.gradient += gradient;
-            terms_second_order_loss.hessian += hessian_approximation;
-         }
-*/
+                #pragma omp critical
+                {
+                    terms_second_order_loss.loss += loss(0);
+                    terms_second_order_loss.gradient += gradient;
+                    terms_second_order_loss.hessian += hessian_approximation;
+                 }
+        */
     }
 
     terms_second_order_loss.loss /= static_cast<type>(training_instances_number);
@@ -230,7 +230,7 @@ check();
 
 string MeanSquaredError::get_error_type() const
 {
-   return "MEAN_SQUARED_ERROR";
+    return "MEAN_SQUARED_ERROR";
 }
 
 
@@ -238,7 +238,7 @@ string MeanSquaredError::get_error_type() const
 
 string MeanSquaredError::get_error_type_text() const
 {
-   return "Mean squared error";
+    return "Mean squared error";
 }
 
 
@@ -247,17 +247,17 @@ string MeanSquaredError::get_error_type_text() const
 
 tinyxml2::XMLDocument* MeanSquaredError::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Mean squared error
+    // Mean squared error
 
-   tinyxml2::XMLElement* mean_squared_error_element = document->NewElement("MeanSquaredError");
+    tinyxml2::XMLElement* mean_squared_error_element = document->NewElement("MeanSquaredError");
 
-   document->InsertFirstChild(mean_squared_error_element);
+    document->InsertFirstChild(mean_squared_error_element);
 
-   // Display
+    // Display
 //   {
 //      tinyxml2::XMLElement* element = document->NewElement("Display");
 //      mean_squared_error_element->LinkEndChild(element);
@@ -269,7 +269,7 @@ tinyxml2::XMLDocument* MeanSquaredError::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-   return document;
+    return document;
 }
 
 

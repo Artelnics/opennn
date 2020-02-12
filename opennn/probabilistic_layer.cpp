@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P R O B A B I L I S T I C   L A Y E R   C L A S S                     
+//   P R O B A B I L I S T I C   L A Y E R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -226,9 +226,9 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& 
     }
 
     return  synaptic_weights_tensor;
-/*
-    return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
-*/
+    /*
+        return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
+    */
 }
 
 
@@ -268,9 +268,9 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
     }
 
     return parameters;
-/*
-    return synaptic_weights.to_vector().assemble(biases);
-*/
+    /*
+        return synaptic_weights.to_vector().assemble(biases);
+    */
 }
 
 
@@ -359,43 +359,43 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
     const Index parameters_number = get_parameters_number();
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     const Index new_parameters_size = new_parameters.size();
 
-   if(new_parameters_size != parameters_number)
-   {
-      ostringstream buffer;
+    if(new_parameters_size != parameters_number)
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-             << "void set_parameters(const Tensor<type, 1>&) method.\n"
-             << "Size of new parameters ("
-             << new_parameters_size << ") must be equal to number of parameters ("
-             << parameters_number << ").\n";
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void set_parameters(const Tensor<type, 1>&) method.\n"
+               << "Size of new parameters ("
+               << new_parameters_size << ") must be equal to number of parameters ("
+               << parameters_number << ").\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   #endif
+#endif
 
-   for(Index i = 0; i < inputs_number*neurons_number-1; i++)
-   {
-       synaptic_weights(i) = new_parameters(i);
-   }
+    for(Index i = 0; i < inputs_number*neurons_number-1; i++)
+    {
+        synaptic_weights(i) = new_parameters(i);
+    }
 
-   Index index = 0;
+    Index index = 0;
 
-   for(Index j = inputs_number*neurons_number; j < parameters_number; j++)
-   {
-       biases(index) = new_parameters(j);
+    for(Index j = inputs_number*neurons_number; j < parameters_number; j++)
+    {
+        biases(index) = new_parameters(j);
 
-       index++;
-   }
-/*
-   synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
+        index++;
+    }
+    /*
+       synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
 
-   biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
-*/
+       biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
+    */
 }
 
 
@@ -606,9 +606,9 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-   biases.setRandom();
+    biases.setRandom();
 
-   synaptic_weights.setRandom();
+    synaptic_weights.setRandom();
 }
 
 
@@ -618,7 +618,7 @@ void ProbabilisticLayer::set_parameters_random()
 /// @param inputs Set of inputs to the probabilistic layer.
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs)
-{   
+{
     const Index batch_size = inputs.dimension(0);
     const Index outputs_number = get_neurons_number();
 
@@ -656,42 +656,42 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 /// @param synaptic_weights Set of synaptic weights of the probabilistic layer
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs,
-                                                      const Tensor<type, 2>& biases,
-                                                      const Tensor<type, 2>& synaptic_weights) const
+        const Tensor<type, 2>& biases,
+        const Tensor<type, 2>& synaptic_weights) const
 {
 #ifdef __OPENNN_DEBUG__
 
- const Index inputs_dimensions_number = inputs.rank();
+    const Index inputs_dimensions_number = inputs.rank();
 
- if(inputs_dimensions_number > 4)
- {
-    ostringstream buffer;
+    if(inputs_dimensions_number > 4)
+    {
+        ostringstream buffer;
 
-    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
-           << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
+               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
 
-    throw logic_error(buffer.str());
- }
+        throw logic_error(buffer.str());
+    }
 
 #endif
 
 #ifdef __OPENNN_DEBUG__
 
-const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(1);
 
-const Index inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
-if(inputs_columns_number != inputs_number)
-{
-   ostringstream buffer;
+    if(inputs_columns_number != inputs_number)
+    {
+        ostringstream buffer;
 
-   buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
-          << "Size of layer inputs (" << inputs_columns_number << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
+               << "Size of layer inputs (" << inputs_columns_number << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
-   throw logic_error(buffer.str());
-}
+        throw logic_error(buffer.str());
+    }
 
 #endif
 
@@ -993,9 +993,9 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
     ostringstream buffer;
 
     buffer.str("");
-/*
-    buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
-*/
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
+    */
     return buffer.str();
 }
 
@@ -1005,12 +1005,12 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
 string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names,
-                                                        const Tensor<string, 1>& outputs_names) const
+        const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-/*
-    buffer << outputs_names.vector_to_string(',') << " = probability(" << inputs_names.vector_to_string(',') << ");\n";
-*/
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = probability(" << inputs_names.vector_to_string(',') << ");\n";
+    */
     return buffer.str();
 }
 
@@ -1022,9 +1022,9 @@ string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>&
 string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-/*
-    buffer << outputs_names.vector_to_string(',') << " = competitive(" << inputs_names.vector_to_string(',') << ");\n";
-*/
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = competitive(" << inputs_names.vector_to_string(',') << ");\n";
+    */
     return buffer.str();
 }
 
@@ -1036,9 +1036,9 @@ string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>&
 string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-/*
-    buffer << outputs_names.vector_to_string(',') << " = softmax(" << inputs_names.vector_to_string(',') << ");\n";
-*/
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = softmax(" << inputs_names.vector_to_string(',') << ");\n";
+    */
     return buffer.str();
 }
 
@@ -1048,12 +1048,12 @@ string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inp
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
 string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names,
-                                                             const Tensor<string, 1>& outputs_names) const
+        const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-/*
-    buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
-*/
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
+    */
     return buffer.str();
 }
 
@@ -1067,13 +1067,17 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
 {
     switch(activation_function)
     {
-        case Binary: return write_binary_expression(inputs_names, outputs_names);
+    case Binary:
+        return write_binary_expression(inputs_names, outputs_names);
 
-        case Logistic: return write_probability_expression(inputs_names, outputs_names);
+    case Logistic:
+        return write_probability_expression(inputs_names, outputs_names);
 
-        case Competitive: return write_competitive_expression(inputs_names, outputs_names);
+    case Competitive:
+        return write_competitive_expression(inputs_names, outputs_names);
 
-        case Softmax: return write_softmax_expression(inputs_names, outputs_names);
+    case Softmax:
+        return write_softmax_expression(inputs_names, outputs_names);
     }// end switch
 
     // Default

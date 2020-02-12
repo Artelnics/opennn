@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M O D E L   S E L E C T I O N   C L A S S                             
+//   M O D E L   S E L E C T I O N   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -45,17 +45,17 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 
 ModelSelection::ModelSelection(const string& file_name)
 {
-   training_strategy_pointer = nullptr;
-   incremental_neurons_pointer = nullptr;
-   growing_inputs_pointer = nullptr;
-   pruning_inputs_pointer = nullptr;
-   genetic_algorithm_pointer = nullptr;
+    training_strategy_pointer = nullptr;
+    incremental_neurons_pointer = nullptr;
+    growing_inputs_pointer = nullptr;
+    pruning_inputs_pointer = nullptr;
+    genetic_algorithm_pointer = nullptr;
 
-   load(file_name);
+    load(file_name);
 }
 
 
-/// XML constructor. 
+/// XML constructor.
 /// @param model_selection_document Pointer to a TinyXML document containing the model selection data.
 
 ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_document)
@@ -251,31 +251,31 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 
     switch(new_neurons_selection_method)
     {
-        case NO_NEURONS_SELECTION:
-        {
-            // do nothing
+    case NO_NEURONS_SELECTION:
+    {
+        // do nothing
 
-            break;
+        break;
+    }
+    case INCREMENTAL_NEURONS:
+    {
+
+        if(training_strategy_pointer == nullptr)
+        {
+            incremental_neurons_pointer = new IncrementalNeurons();
         }
-        case INCREMENTAL_NEURONS:
+        else
         {
-
-            if(training_strategy_pointer == nullptr)
-            {
-                incremental_neurons_pointer = new IncrementalNeurons();
-            }
-            else
-            {
-                incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
-            }
+            incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
+        }
 
 //            if(training_strategy_pointer != nullptr)
 //            {
 //                incremental_neurons_pointer->set_training_strategy_pointer(training_strategy_pointer);
 //            }
 
-            break;
-        }
+        break;
+    }
     }
 }
 
@@ -317,45 +317,45 @@ void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSel
 
     switch(new_inputs_selection_method)
     {
-        case NO_INPUTS_SELECTION:
-        {
-           // do nothing
+    case NO_INPUTS_SELECTION:
+    {
+        // do nothing
 
-            break;
-        }
-        case GROWING_INPUTS:
-        {
-            growing_inputs_pointer = new GrowingInputs;
-/*
-            if(training_strategy_pointer == nullptr)
-            {
-                incremental_neurons_pointer = new IncrementalNeurons();
-            }
-            else
-            {
-                incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
-            }
-*/
-            if(training_strategy_pointer != nullptr) growing_inputs_pointer->set_training_strategy_pointer(training_strategy_pointer);
+        break;
+    }
+    case GROWING_INPUTS:
+    {
+        growing_inputs_pointer = new GrowingInputs;
+        /*
+                    if(training_strategy_pointer == nullptr)
+                    {
+                        incremental_neurons_pointer = new IncrementalNeurons();
+                    }
+                    else
+                    {
+                        incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
+                    }
+        */
+        if(training_strategy_pointer != nullptr) growing_inputs_pointer->set_training_strategy_pointer(training_strategy_pointer);
 
-            break;
-        }
-        case PRUNING_INPUTS:
-        {
-            pruning_inputs_pointer = new PruningInputs;
+        break;
+    }
+    case PRUNING_INPUTS:
+    {
+        pruning_inputs_pointer = new PruningInputs;
 
-            if(training_strategy_pointer != nullptr) pruning_inputs_pointer->set_training_strategy_pointer(training_strategy_pointer);
+        if(training_strategy_pointer != nullptr) pruning_inputs_pointer->set_training_strategy_pointer(training_strategy_pointer);
 
-            break;
-        }
-        case GENETIC_ALGORITHM:
-        {
-            genetic_algorithm_pointer = new GeneticAlgorithm;
+        break;
+    }
+    case GENETIC_ALGORITHM:
+    {
+        genetic_algorithm_pointer = new GeneticAlgorithm;
 
-            if(training_strategy_pointer != nullptr) genetic_algorithm_pointer->set_training_strategy_pointer(training_strategy_pointer);
+        if(training_strategy_pointer != nullptr) genetic_algorithm_pointer->set_training_strategy_pointer(training_strategy_pointer);
 
-            break;
-        }
+        break;
+    }
     }
 }
 
@@ -440,42 +440,42 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 
     switch(neurons_selection_method)
     {
-        case NO_NEURONS_SELECTION:
-        {
-            // do nothing
+    case NO_NEURONS_SELECTION:
+    {
+        // do nothing
 
-            break;
-        }
-        case INCREMENTAL_NEURONS:
-        {
-            incremental_neurons_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
+        break;
+    }
+    case INCREMENTAL_NEURONS:
+    {
+        incremental_neurons_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
+        break;
+    }
     }
 
     switch(inputs_selection_method)
     {
-        case NO_INPUTS_SELECTION:
-        {
-            // do nothing
+    case NO_INPUTS_SELECTION:
+    {
+        // do nothing
 
-            break;
-        }
-        case GROWING_INPUTS:
-        {
-            growing_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case PRUNING_INPUTS:
-        {
-            pruning_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case GENETIC_ALGORITHM:
-        {
-            genetic_algorithm_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
+        break;
+    }
+    case GROWING_INPUTS:
+    {
+        growing_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
+        break;
+    }
+    case PRUNING_INPUTS:
+    {
+        pruning_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
+        break;
+    }
+    case GENETIC_ALGORITHM:
+    {
+        genetic_algorithm_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
+        break;
+    }
     }
 }
 
@@ -598,18 +598,18 @@ ModelSelection::Results ModelSelection::perform_neurons_selection() const
 
     switch(neurons_selection_method)
     {
-        case NO_NEURONS_SELECTION:
-        {
-            break;
-        }
-        case INCREMENTAL_NEURONS:
-        {        
-            incremental_neurons_pointer->set_display(display);
+    case NO_NEURONS_SELECTION:
+    {
+        break;
+    }
+    case INCREMENTAL_NEURONS:
+    {
+        incremental_neurons_pointer->set_display(display);
 
-            results.incremental_neurons_results_pointer = incremental_neurons_pointer->perform_neurons_selection();
+        results.incremental_neurons_results_pointer = incremental_neurons_pointer->perform_neurons_selection();
 
-            break;
-        }
+        break;
+    }
     }
 
     return results;
@@ -625,34 +625,34 @@ ModelSelection::Results ModelSelection::perform_inputs_selection() const
 
     switch(inputs_selection_method)
     {
-        case NO_INPUTS_SELECTION:
-        {
-            break;
-        }
-        case GROWING_INPUTS:
-        {
-            growing_inputs_pointer->set_display(display);
+    case NO_INPUTS_SELECTION:
+    {
+        break;
+    }
+    case GROWING_INPUTS:
+    {
+        growing_inputs_pointer->set_display(display);
 
-            results.growing_inputs_results_pointer = growing_inputs_pointer->perform_inputs_selection();
+        results.growing_inputs_results_pointer = growing_inputs_pointer->perform_inputs_selection();
 
-            break;
-        }
-        case PRUNING_INPUTS:
-        {
-            pruning_inputs_pointer->set_display(display);
+        break;
+    }
+    case PRUNING_INPUTS:
+    {
+        pruning_inputs_pointer->set_display(display);
 
-            results.pruning_inputs_results_pointer = pruning_inputs_pointer->perform_inputs_selection();
+        results.pruning_inputs_results_pointer = pruning_inputs_pointer->perform_inputs_selection();
 
-            break;
-        }
-        case GENETIC_ALGORITHM:
-        {
-            genetic_algorithm_pointer->set_display(display);
+        break;
+    }
+    case GENETIC_ALGORITHM:
+    {
+        genetic_algorithm_pointer->set_display(display);
 
-            results.genetic_algorithm_results_pointer = genetic_algorithm_pointer->perform_inputs_selection();
+        results.genetic_algorithm_results_pointer = genetic_algorithm_pointer->perform_inputs_selection();
 
-            break;
-        }
+        break;
+    }
     }
 
     return results;
@@ -670,8 +670,8 @@ ModelSelection::Results ModelSelection::perform_model_selection() const
 }
 
 
-/// Serializes the model selection object into a XML document of the TinyXML library. 
-/// See the OpenNN manual for more information about the format of this document. 
+/// Serializes the model selection object into a XML document of the TinyXML library.
+/// See the OpenNN manual for more information about the format of this document.
 
 tinyxml2::XMLDocument* ModelSelection::to_XML() const
 {
@@ -696,7 +696,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         inputs_selection_element->SetAttribute("Type", "NO_INPUTS_SELECTION");
     }
-        break;
+    break;
 
     case GROWING_INPUTS:
     {
@@ -709,14 +709,15 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* growing_inputs_element = growing_inputs_document->FirstChildElement("GrowingInputs");
 
-        for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+        for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+        {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
 
         delete growing_inputs_document;
     }
-        break;
+    break;
 
     case PRUNING_INPUTS:
     {
@@ -729,14 +730,15 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* pruning_inputs_element = pruning_inputs_document->FirstChildElement("PruningInputs");
 
-        for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+        for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+        {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
 
         delete pruning_inputs_document;
     }
-        break;
+    break;
 
     case GENETIC_ALGORITHM:
     {
@@ -749,14 +751,15 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* genetic_algorithm_element = genetic_algorithm_document->FirstChildElement("GeneticAlgorithm");
 
-        for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+        for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+        {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
 
         delete genetic_algorithm_document;
     }
-        break;
+    break;
     }
 
     // Order Selection
@@ -770,7 +773,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         neurons_selection_element->SetAttribute("Type", "NO_NEURONS_SELECTION");
     }
-        break;
+    break;
 
     case INCREMENTAL_NEURONS:
     {
@@ -783,14 +786,15 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* incremental_neurons_element = incremental_neurons_document->FirstChildElement("IncrementalNeurons");
 
-        for(const tinyxml2::XMLNode* nodeFor=incremental_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+        for(const tinyxml2::XMLNode* nodeFor=incremental_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+        {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             neurons_selection_element->InsertEndChild(copy );
         }
 
         delete incremental_neurons_document;
     }
-        break;
+    break;
     }
 
     return document;
@@ -816,7 +820,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
 
     case GROWING_INPUTS:
     {
@@ -828,7 +832,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
 
     case PRUNING_INPUTS:
     {
@@ -840,7 +844,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
 
     case GENETIC_ALGORITHM:
     {
@@ -852,7 +856,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
     }
 
     // Order Selection
@@ -867,7 +871,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
 
     case INCREMENTAL_NEURONS:
     {
@@ -879,7 +883,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-        break;
+    break;
     }
 
     file_stream.CloseElement();
@@ -920,14 +924,15 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 // do nothing
             }
-                break;
+            break;
             case GROWING_INPUTS:
             {
                 tinyxml2::XMLDocument new_document;
 
                 tinyxml2::XMLElement* growing_element = new_document.NewElement("GrowingInputs");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     growing_element->InsertEndChild(copy );
                 }
@@ -936,14 +941,15 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 growing_inputs_pointer->from_XML(new_document);
             }
-                break;
+            break;
             case PRUNING_INPUTS:
             {
                 tinyxml2::XMLDocument new_document;
 
                 tinyxml2::XMLElement* pruning_element = new_document.NewElement("PruningInputs");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     pruning_element->InsertEndChild(copy );
                 }
@@ -952,14 +958,15 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 pruning_inputs_pointer->from_XML(new_document);
             }
-                break;
+            break;
             case GENETIC_ALGORITHM:
             {
                 tinyxml2::XMLDocument new_document;
 
                 tinyxml2::XMLElement* genetic_element = new_document.NewElement("GeneticAlgorithm");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     genetic_element->InsertEndChild(copy );
                 }
@@ -968,7 +975,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 genetic_algorithm_pointer->from_XML(new_document);
             }
-                break;
+            break;
             }
         }
     }
@@ -989,14 +996,15 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 // do nothing
             }
-                break;
+            break;
             case INCREMENTAL_NEURONS:
             {
                 tinyxml2::XMLDocument new_document;
 
                 tinyxml2::XMLElement* incremental_element = new_document.NewElement("IncrementalNeurons");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     incremental_element->InsertEndChild(copy );
                 }
@@ -1005,14 +1013,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 incremental_neurons_pointer->from_XML(new_document);
             }
-                break;
+            break;
             }
         }
     }
 }
 
 
-/// Prints to the screen the XML representation of this model selection object. 
+/// Prints to the screen the XML representation of this model selection object.
 
 void ModelSelection::print() const
 {
@@ -1020,8 +1028,8 @@ void ModelSelection::print() const
 }
 
 
-/// Saves the model selection members to a XML file. 
-/// @param file_name Name of model selection XML file. 
+/// Saves the model selection members to a XML file.
+/// @param file_name Name of model selection XML file.
 
 void ModelSelection::save(const string& file_name) const
 {
@@ -1033,8 +1041,8 @@ void ModelSelection::save(const string& file_name) const
 }
 
 
-/// Loads the model selection members from a XML file. 
-/// @param file_name Name of model selection XML file. 
+/// Loads the model selection members from a XML file.
+/// @param file_name Name of model selection XML file.
 
 void ModelSelection::load(const string& file_name)
 {
@@ -1123,29 +1131,29 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
 
     if(k < 2)
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
-              << "Number of iterations must be grater or equal than 2.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
+               << "Number of iterations must be grater or equal than 2.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(!data_set_pointer || data_set_pointer->has_data())
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
-              << "There is no data set assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
+               << "There is no data set assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(!neural_network_pointer)
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
-              << "There is no neural network assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index&).\n"
+               << "There is no neural network assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 #endif
 
@@ -1170,31 +1178,31 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
         training_strategy_pointer->perform_training();
 
         data_set_pointer->set_testing_to_selection_instances();
-/*
-        const type current_error = loss_index_pointer->calculate_selection_error();
+        /*
+                const type current_error = loss_index_pointer->calculate_selection_error();
 
-          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+                  neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
 
-          const type selection_error = loss_index_pointer->calculate_error(
-                      selection_forward_propagation.layers[trainable_layers_number].activations,
-                      selection_batch.targets_2d);
+                  const type selection_error = loss_index_pointer->calculate_error(
+                              selection_forward_propagation.layers[trainable_layers_number].activations,
+                              selection_batch.targets_2d);
 
 
-        if(i == 0 || current_error < minimum_error)
-        {
-            minimum_error = current_error;
-            minimum_error_parameters = neural_network_pointer->get_parameters();
-        }
+                if(i == 0 || current_error < minimum_error)
+                {
+                    minimum_error = current_error;
+                    minimum_error_parameters = neural_network_pointer->get_parameters();
+                }
 
-        neural_network_ensemble[i].set(*neural_network_pointer);
-        cross_validation_error += current_error;
+                neural_network_ensemble[i].set(*neural_network_pointer);
+                cross_validation_error += current_error;
 
-        if(display)
-        {
-            cout << "Iteration: " << i << "/" << k << endl;
-            cout << "Current error: " << current_error << endl;
-        }
- */
+                if(display)
+                {
+                    cout << "Iteration: " << i << "/" << k << endl;
+                    cout << "Current error: " << current_error << endl;
+                }
+         */
     }
 
     if(display)
@@ -1227,38 +1235,38 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
 
     if(k < 2)
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
-              << "Number of iterations must be grater or equal than 2.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
+               << "Number of iterations must be grater or equal than 2.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(selection_ratio <= static_cast<type>(0.0) || selection_ratio >= static_cast<type>(1.0))
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
-              << "The ratio of testing instances must be between 0.0 and 1.0.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
+               << "The ratio of testing instances must be between 0.0 and 1.0.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(!data_set_pointer || data_set_pointer->has_data())
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
-              << "There is no data set assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
+               << "There is no data set assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(!neural_network_pointer)
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
-              << "There is no neural network assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index&, const type&).\n"
+               << "There is no neural network assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 #endif
 
@@ -1283,24 +1291,24 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_random_cross_validation(const I
         training_strategy_pointer->perform_training();
 
         data_set_pointer->set_testing_to_selection_instances();
-/*
-        const type current_error = loss_index_pointer->calculate_selection_error();
+        /*
+                const type current_error = loss_index_pointer->calculate_selection_error();
 
-        if(i == 0 || current_error < minimum_error)
-        {
-            minimum_error = current_error;
-            minimum_error_parameters = neural_network_pointer->get_parameters();
-        }
+                if(i == 0 || current_error < minimum_error)
+                {
+                    minimum_error = current_error;
+                    minimum_error_parameters = neural_network_pointer->get_parameters();
+                }
 
-        neural_network_ensemble[i].set(*neural_network_pointer);
-        cross_validation_error += current_error;
+                neural_network_ensemble[i].set(*neural_network_pointer);
+                cross_validation_error += current_error;
 
-        if(display)
-        {
-            cout << "Iteration: " << i << "/" << k << endl;
-            cout << "Current error: " << current_error << endl;
-        }
-*/
+                if(display)
+                {
+                    cout << "Iteration: " << i << "/" << k << endl;
+                    cout << "Current error: " << current_error << endl;
+                }
+        */
     }
 
     if(display)
@@ -1331,20 +1339,20 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
 
     if(!data_set_pointer || data_set_pointer->has_data())
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
-              << "There is no data set assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
+               << "There is no data set assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(!neural_network_pointer)
     {
-       buffer << "OpenNN Exception: ModelSelection class.\n"
-              << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
-              << "There is no neural network assigned.\n";
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "Tensor<NeuralNetwork, 1> perform_positives_cross_validation().\n"
+               << "There is no neural network assigned.\n";
 
-       throw logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 #endif
 
@@ -1357,67 +1365,67 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const Index target_index = data_set_pointer->get_target_variables_indices()[0];
-/*
-    const Tensor<Index, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
+    /*
+        const Tensor<Index, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
 
-    const Index positives_instances_number = positives_instances_indices.size();
+        const Index positives_instances_number = positives_instances_indices.size();
 
-    data_set_pointer->split_instances_random(1,0,0);
+        data_set_pointer->split_instances_random(1,0,0);
 
-    Tensor<type, 1> minimum_error_parameters;
-    type minimum_error = 1.0;
+        Tensor<type, 1> minimum_error_parameters;
+        type minimum_error = 1.0;
 
-    Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
-    type cross_validation_error = 0;
+        Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
+        type cross_validation_error = 0;
 
-    for(Index i = 0; i < positives_instances_number; i++)
-    {
-        const Index current_selection_instance_index = positives_instances_indices[i];
-        const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
-        const type targets = current_selection_instance[target_index];
-        const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
-
-        data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
-        neural_network_pointer->set_parameters_random();
-
-        training_strategy_pointer->perform_training();
-
-        const type outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
-
-        const type current_error = abs(targets-outputs);
-        const type current_loss = loss_index_pointer->calculate_training_loss();
-
-        if(i == 0 || current_error < minimum_error)
+        for(Index i = 0; i < positives_instances_number; i++)
         {
-            minimum_error = current_error;
-            minimum_error_parameters = neural_network_pointer->get_parameters();
+            const Index current_selection_instance_index = positives_instances_indices[i];
+            const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
+            const type targets = current_selection_instance[target_index];
+            const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
+
+            data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
+            neural_network_pointer->set_parameters_random();
+
+            training_strategy_pointer->perform_training();
+
+            const type outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
+
+            const type current_error = abs(targets-outputs);
+            const type current_loss = loss_index_pointer->calculate_training_loss();
+
+            if(i == 0 || current_error < minimum_error)
+            {
+                minimum_error = current_error;
+                minimum_error_parameters = neural_network_pointer->get_parameters();
+            }
+
+            data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Training);
+
+            neural_network_ensemble[i].set(*neural_network_pointer);
+            cross_validation_error += current_error;
+
+            if(display)
+            {
+                cout << "Iteration: " << i+1 << "/" << positives_instances_number << endl;
+                cout << "instance index: " << current_selection_instance_index << endl;
+                cout << "Output data: " << outputs << endl;
+                cout << "Current loss: " << current_loss << endl;
+                cout << "Current error: " << current_error << endl;
+            }
         }
-
-        data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Training);
-
-        neural_network_ensemble[i].set(*neural_network_pointer);
-        cross_validation_error += current_error;
 
         if(display)
         {
-            cout << "Iteration: " << i+1 << "/" << positives_instances_number << endl;
-            cout << "instance index: " << current_selection_instance_index << endl;
-            cout << "Output data: " << outputs << endl;
-            cout << "Current loss: " << current_loss << endl;
-            cout << "Current error: " << current_error << endl;
+            cout << "Cross validation error: " << cross_validation_error/positives_instances_number << endl;
         }
-    }
 
-    if(display)
-    {
-        cout << "Cross validation error: " << cross_validation_error/positives_instances_number << endl;
-    }
+        data_set_pointer->set_instances_uses(original_uses);
+        neural_network_pointer->set_parameters(minimum_error_parameters);
 
-    data_set_pointer->set_instances_uses(original_uses);
-    neural_network_pointer->set_parameters(minimum_error_parameters);
-
-    return neural_network_ensemble;
-*/
+        return neural_network_ensemble;
+    */
     return Tensor<NeuralNetwork, 1>();
 }
 }
