@@ -656,6 +656,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
 //   const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
@@ -666,9 +667,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
+    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
+    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+
     const bool has_selection = data_set_pointer->has_selection();
 
-    DataSet::Batch batch(batch_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
+    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
     // Neural network
 
@@ -726,7 +731,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Main loop
-
+cout << "1" << endl;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
@@ -739,24 +744,28 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
         loss = 0;
-
+cout << "2" << endl;
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             iteration_count++;
 
             // Data set
-
+/*
             data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
             data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
+*/
+            const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
 
+            training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+cout << "3" << endl;
             // Neural network
 
-            neural_network_pointer->calculate_forward_propagation(batch, training_forward_propagation);
+            neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
             // Loss index
-
-            loss_index_pointer->calculate_back_propagation(batch, training_forward_propagation, back_propagation);
-
+cout << "4" << endl;
+            loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
+cout << "5" << endl;
             learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
                             - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0)
                                     - pow(beta_1, static_cast<type>(iteration_count)));
@@ -784,7 +793,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         }
 
         // Gradient
-
+cout << "6" << endl;
         gradient_norm = l2_norm(back_propagation.gradient);
 
         // Loss
@@ -798,7 +807,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //           selection_error = loss_index_pointer->calculate_error(
 //                       selection_forward_propagation.layers[trainable_layers_number].activations,
 //                       selection_batch.targets_2d);
-            selection_error = loss_index_pointer->calculate_error(batch, selection_forward_propagation);
+            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
             if(epoch == 0)
             {

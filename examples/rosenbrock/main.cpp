@@ -287,7 +287,7 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
@@ -298,8 +298,8 @@ int main(void)
         training_strategy.set_device_pointer(&device);
 
 //        training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
-        training_strategy.get_quasi_Newton_method_pointer()->perform_training();
-
+//        training_strategy.get_quasi_Newton_method_pointer()->perform_training();
+        training_strategy.get_adaptive_moment_estimation_pointer()->perform_training();
         cout << "End" << endl;
 
         return 0;
