@@ -537,7 +537,7 @@ pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(
 
     directional_point.first = initial_learning_rate;
 
-    const Tensor<type, 1> potential_parameters = parameters + training_direction*initial_learning_rate;
+    Tensor<type, 1> potential_parameters = parameters + training_direction*initial_learning_rate;
 
     neural_network_pointer->calculate_forward_propagation(batch, potential_parameters, forward_propagation);
 

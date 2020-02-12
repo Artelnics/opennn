@@ -318,9 +318,14 @@ public:
                                       const Tensor<type, 1>& potential_parameters,
                                       ForwardPropagation& forward_propagation)
    {
-       Tensor<type, 2> potential_biases;
-       Tensor<type, 2> potential_synaptic_weights;
+       const Index neurons_number = get_neurons_number();
 
+       const Index inputs_number = get_inputs_number();
+
+       // Do exception with inputs number and inputs.dimension(1)
+
+       Tensor<type, 2> potential_biases(neurons_number, 1);
+       Tensor<type, 2> potential_synaptic_weights(inputs_number, neurons_number);
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations);
 
