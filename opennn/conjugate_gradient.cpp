@@ -15,7 +15,8 @@ namespace OpenNN
 /// It creates a conjugate gradient optimization algorithm object not associated to any loss index object.
 /// It also initializes the class members to their default values.
 
-ConjugateGradient::ConjugateGradient() : OptimizationAlgorithm()
+ConjugateGradient::ConjugateGradient()
+    : OptimizationAlgorithm()
 {
     set_default();
 }

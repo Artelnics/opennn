@@ -280,17 +280,17 @@ public:
                                    BackPropagation& back_propagation) const
    {
        // Loss index
-
+cout << "4.1" << endl;
        calculate_errors(batch, forward_propagation, back_propagation);
-
+cout << "4.2" << endl;
        calculate_error(back_propagation);
-
+cout << "4.3" << endl;
        calculate_output_gradient(forward_propagation, back_propagation);
-
+cout << "4.4" << endl;
        calculate_layers_delta(forward_propagation, back_propagation);
-
+cout << "4.5" << endl;
        calculate_error_gradient(batch, forward_propagation, back_propagation);
-
+cout << "4.6" << endl;
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
@@ -426,15 +426,15 @@ public:
        const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
+cout << "4.5.1" << endl;
        trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs_2d,
                                                               forward_propagation.layers[0],
                                                               back_propagation.neural_network.layers[0]);
-
+cout << "4.5.2" << endl;
        Index index = 0;
 
        trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
-
+cout << "4.5.3" << endl;
        index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
