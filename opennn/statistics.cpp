@@ -1007,6 +1007,8 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
         }
     }
 
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<Index>());
+
     // Calculate quartiles
 
     Tensor<type, 1> first_sorted_vector(new_size/2);
@@ -1044,40 +1046,17 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
     }
     else if(new_size % 2 == 0)
     {
-        cout << "Par" << endl;
-
         Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
-        cout << "median_index: " << median_index << endl;
-        cout << "first_sorted_vector(median_index-1): " << first_sorted_vector(median_index-1) << endl;
-        cout << "first_sorted_vector(median_index): " << first_sorted_vector(median_index) << endl;
-
         quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
 
-        cout << "quartiles(0): " << quartiles(0) << endl;
-
         median_index = static_cast<Index>(new_size / 2);
-
-        cout << "median_index: " << median_index << endl;
-        cout << "sorted_vector(median_index-1): " << sorted_vector(median_index-1) << endl;
-        cout << "sorted_vector(median_index): " << sorted_vector(median_index) << endl;
-
         quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
 
-        cout << "quartiles(1): " << quartiles(1) << endl;
-
         median_index = static_cast<Index>(last_sorted_vector.size() / 2);
-
-        cout << "median_index: " << median_index << endl;
-        cout << "last_sorted_vector(median_index-1): " << last_sorted_vector(median_index-1) << endl;
-        cout << "last_sorted_vector(median_index): " << last_sorted_vector(median_index) << endl;
-
         quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
-
-        cout << "quartiles(2): " << quartiles(2) << endl;
     }
     else
     {
-        cout << "Impar" << endl;
         quartiles(0) = sorted_vector(new_size/4);
         quartiles(1) = sorted_vector(new_size/2);
         quartiles(2) = sorted_vector(new_size*3/4);
