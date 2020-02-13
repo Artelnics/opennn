@@ -65,13 +65,9 @@ int main(void)
         cout << "Blank application" << endl;
 
         Tensor<type, 1> a(5);
-        a.setConstant(2);
+        a.setValues({1,-1,-3,4,5});
 
-        cout << "a: " << a << endl;
-
-        a.resize(6);
-
-        cout << "a: " << a << endl;
+        cout << a.sign() << endl;
 
         return 0;
     }

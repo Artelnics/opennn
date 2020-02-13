@@ -782,7 +782,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     type old_training_loss = 0;
     type training_loss_decrease = -numeric_limits<type>::max();
 
-    type gradient_norm;
+    type gradient_norm = 0;
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
