@@ -255,9 +255,11 @@ struct Histogram
 
      // Quartiles
      Tensor<type, 1> quartiles(const Tensor<type, 1>&);
+     Tensor<type, 1> quartiles(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
      // Box plot
      BoxPlot box_plot(const Tensor<type, 1>&);
+     BoxPlot box_plot(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>&, const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&);
 
      // Descriptives vector

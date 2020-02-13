@@ -74,6 +74,7 @@ int main(void)
         cout << "a: " << a << endl;
 
         return 0;
+
     }
        catch(exception& e)
     {
