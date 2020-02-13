@@ -730,25 +730,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
+    const bool has_selection = data_set_pointer->has_selection();
+
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
     const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
-    DataSet::Batch batch(batch_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    Tensor<type, 1> parameters_increment(parameters_number);
-
-    Tensor<type, 1> last_increment(parameters_number);
 
     type parameters_norm = 0;
 
@@ -769,13 +765,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Optimization algorithm
 
-    OptimizationParameters optimization_parameters(this);
+    OptimizationData optimization_data(this);
 
     type learning_rate = initial_learning_rate;
 
     Index selection_failures = 0;
-
-    Tensor<type, 1> nesterov_increment(parameters_number);
 
     Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
@@ -790,15 +784,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     Index current_iteration = 0;
 
-    Index learning_rate_iteration = 1;
-
     bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Main loop
-
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
     for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
@@ -806,7 +796,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         const Index batches_number = training_batches.dimension(0);
 
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
@@ -818,52 +808,23 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
 
-            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+            training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
             // Neural network
 
-            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+            neural_network_pointer->calculate_forward_propagation(training_batch, forward_propagation);
 
             // Loss
 
-            loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
+            loss_index_pointer->calculate_back_propagation(training_batch, forward_propagation, back_propagation);
 
             loss += back_propagation.loss;
 
             // Optimization algorithm
 
-            initial_decay > 0
-            ? learning_rate = initial_learning_rate * (static_cast<type>(1.0) / (static_cast<type>(1.0) + learning_rate_iteration*initial_decay))
-                              : initial_learning_rate ;
+            update_optimization_data(back_propagation, optimization_data);
 
-            parameters_increment.device(*thread_pool_device) = static_cast<type>(-learning_rate)*back_propagation.gradient;
-
-            if(momentum > 0 && !nesterov)
-            {
-                parameters_increment.device(*thread_pool_device) += last_increment*momentum;
-
-                last_increment = parameters_increment;
-
-                parameters.device(*thread_pool_device) += parameters_increment;
-            }
-            else if(momentum > 0 && nesterov)
-            {
-                parameters_increment.device(*thread_pool_device) += last_increment*momentum;
-
-                last_increment = parameters_increment;
-
-                nesterov_increment.device(*thread_pool_device) = parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-                parameters.device(*thread_pool_device) += nesterov_increment;
-            }
-            else
-            {
-                parameters.device(*thread_pool_device) = parameters + parameters_increment;
-            }
-
-            neural_network_pointer->set_parameters(parameters);
-
-            learning_rate_iteration++;
+            neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
         gradient_norm = l2_norm(back_propagation.gradient);
@@ -872,22 +833,26 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         training_error = loss/static_cast<type>(batches_number);
 
-//       if(has_selection) selection_error = loss_index_pointer->calculate_selection_error();
+        if(has_selection)
+        {
+//            selection_error = loss_index_pointer->calculate_selection_error();
 
-        if(epoch == 0)
-        {
-            minimum_selection_error = selection_error;
-            minimum_selection_error_parameters = parameters;
+            if(epoch == 0)
+            {
+                minimum_selection_error = selection_error;
+                minimum_selection_error_parameters = optimization_data.parameters;
+            }
+            else if(epoch != 0 && selection_error > old_selection_error)
+            {
+                selection_failures++;
+            }
+            else if(selection_error <= minimum_selection_error)
+            {
+                minimum_selection_error = selection_error;
+                minimum_selection_error_parameters = optimization_data.parameters;
+            }
         }
-        else if(epoch != 0 && selection_error > old_selection_error)
-        {
-            selection_failures++;
-        }
-        else if(selection_error <= minimum_selection_error)
-        {
-            minimum_selection_error = selection_error;
-            minimum_selection_error_parameters = parameters;
-        }
+
 
         // Elapsed time
 
@@ -960,7 +925,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             results.resize_training_history(1 + epoch);
 
-            results.final_parameters = parameters;
+            results.final_parameters = optimization_data.parameters;
 
             results.final_parameters_norm = parameters_norm;
 
@@ -1002,17 +967,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
+        optimization_data.parameters = minimum_selection_error_parameters;
 
+        parameters_norm = l2_norm(optimization_data.parameters);
 
-//       parameters_norm = l2_norm(thread_pool_device, parameters);
-
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         selection_error = minimum_selection_error;
     }
 
-    results.final_parameters = parameters;
+    results.final_parameters = optimization_data.parameters;
     results.final_parameters_norm = parameters_norm;
 
     results.final_training_error= training_error;
