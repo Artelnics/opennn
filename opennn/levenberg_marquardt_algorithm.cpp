@@ -670,7 +670,6 @@ void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_pe
     display_period = new_display_period;
 }
 
-
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
@@ -776,7 +775,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     Tensor<type, 1> parameters_increment(parameters_number);
     type parameters_increment_norm;
 
-    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
+    Tensor<type, 1> optimal_selection_parameters(parameters_number);
     type minimum_selection_error = 0;
 
     bool stop_training = false;
@@ -865,7 +864,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             minimum_selection_error = selection_error;
 
-            minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+            optimal_selection_parameters = neural_network_pointer->get_parameters();
         }
         else if(epoch != 0 && selection_error > old_selection_error)
         {
@@ -875,7 +874,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             minimum_selection_error = selection_error;
 
-            minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+            optimal_selection_parameters = neural_network_pointer->get_parameters();
         }
 
         // Elapsed time
@@ -997,7 +996,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
-                     /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
                 {
@@ -1029,7 +1028,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
-                 /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(abs(selection_error - 0) < numeric_limits<type>::epsilon())
             {
@@ -1045,7 +1044,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
+        parameters = optimal_selection_parameters;
         parameters_norm = l2_norm(parameters);
 
         neural_network_pointer->set_parameters(parameters);
