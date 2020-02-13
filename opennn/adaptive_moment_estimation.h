@@ -78,8 +78,6 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
-            parameters_increment.resize(parameters_number);
-            last_parameters_increment.resize(parameters_number);
         }
 
         void print() const
@@ -91,8 +89,6 @@ public:
         Index learning_rate_iteration = 0;
 
         Tensor<type, 1> parameters;
-        Tensor<type, 1> parameters_increment;
-        Tensor<type, 1> last_parameters_increment;
         Tensor<type, 1> optimal_selection_parameters;
 
         Tensor<type, 1> gradient_exponential_decay;

@@ -672,8 +672,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
     type parameters_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
@@ -683,12 +681,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     LossIndex::BackPropagation back_propagation(training_instances_number, loss_index_pointer);
 
-    type training_error = 0;
-
     type selection_error = 0;
     type old_selection_error = 0;
 
-    type loss = 0;
+    type training_loss = 0;
     type gradient_norm = 0;
 
     // Optimization algorithm
@@ -730,17 +726,14 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         if(display && parameters_norm >= warning_parameters_norm)
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-        loss = 0;
-cout << "2" << endl;
+        training_loss = 0;
+
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             iteration_count++;
 
             // Data set
-/*
-            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
-            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
-*/
+
             const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
 
             training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
@@ -753,7 +746,7 @@ cout << "2" << endl;
 
             loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
 
-            loss += back_propagation.loss;
+            training_loss += back_propagation.loss;
 
             // Gradient
 
@@ -768,7 +761,7 @@ cout << "2" << endl;
 
         // Loss
 
-        training_error = loss/static_cast<type>(batches_number);
+        training_loss /= static_cast<type>(batches_number);
 
         if(has_selection)
         {
@@ -803,7 +796,7 @@ cout << "2" << endl;
 
         // Training history loss index
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
+        if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
 
         if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
@@ -846,7 +839,7 @@ cout << "2" << endl;
             results.stopping_condition = MaximumTime;
         }
 
-        else if(training_error <= loss_goal)
+        else if(training_loss <= loss_goal)
         {
             if(display)
             {
@@ -868,7 +861,7 @@ cout << "2" << endl;
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_error << "\n"
+                     << "Training loss: " << training_loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Learning rate: " << learning_rate << "\n"
@@ -882,7 +875,7 @@ cout << "2" << endl;
 
             results.final_parameters_norm = parameters_norm;
 
-            results.final_training_error = training_error;
+            results.final_training_error = training_loss;
 
             results.final_selection_error = selection_error;
 
@@ -897,7 +890,7 @@ cout << "2" << endl;
         else if(display && epoch % display_period == 0)
         {
             cout << "Epoch " << epoch << ";\n"
-                 << "Training loss: " << training_error << "\n"
+                 << "Training loss: " << training_loss << "\n"
 //                << "Batch size: " << batch_instances_number << "\n"
 //                << "Gradient norm: " << gradient_norm << "\n"
 //                << loss_index_pointer->write_information()
@@ -925,7 +918,7 @@ cout << "2" << endl;
 
     results.final_parameters = optimization_data.parameters;
     results.final_parameters_norm = parameters_norm;
-    results.final_training_error = training_error;
+    results.final_training_error = training_loss;
     results.final_selection_error = selection_error;
     results.final_gradient_norm = gradient_norm;
     results.elapsed_time = elapsed_time;

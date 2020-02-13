@@ -46,6 +46,57 @@ class ConjugateGradient : public OptimizationAlgorithm
 
 public:
 
+    struct OptimizationData
+    {
+        /// Default constructor.
+
+        explicit OptimizationData()
+        {
+        }
+
+        explicit OptimizationData(ConjugateGradient* new_conjugate_gradient_pointer)
+        {
+            set(new_conjugate_gradient_pointer);
+        }
+
+        virtual ~OptimizationData() {}
+
+        void set(ConjugateGradient* new_conjugate_gradient_pointer)
+        {
+            conjugate_gradient_pointer = new_conjugate_gradient_pointer;
+
+            LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
+
+            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+            const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+            parameters.resize(parameters_number);
+
+            parameters = neural_network_pointer->get_parameters();
+        }
+
+        void print() const
+        {
+        }
+
+        ConjugateGradient* conjugate_gradient_pointer = nullptr;
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> old_parameters;
+
+        Tensor<type, 1> old_gradient;
+
+        Tensor<type, 1> training_direction;
+
+        Tensor<type, 0> training_slope;
+
+        Index epoch = 0;
+
+        type learning_rate = 0;
+        type old_learning_rate = 0;
+    };
+
    // Enumerations
 
    /// Enumeration of the available training operators for obtaining the training direction.
