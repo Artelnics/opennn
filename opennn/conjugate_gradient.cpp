@@ -1573,8 +1573,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << information
-                 << "Training rate: " << learning_rate << "\n";
-//                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                 << "Training rate: " << learning_rate << "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection)
             {
