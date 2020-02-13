@@ -72,7 +72,6 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
-
             parameters = neural_network_pointer->get_parameters();
         }
 
@@ -85,16 +84,18 @@ public:
         Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
+        Tensor<type, 1> parameters_increment;
+
         Tensor<type, 1> old_gradient;
 
         Tensor<type, 1> training_direction;
-
-        Tensor<type, 0> training_slope;
+        Tensor<type, 1> old_training_direction;
 
         Index epoch = 0;
 
-        type learning_rate = 0;
         type old_learning_rate = 0;
+
+        type parameters_increment_norm = 0;
     };
 
    // Enumerations
@@ -209,8 +210,6 @@ public:
    Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const;
-
    Tensor<type, 1> calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Training methods
@@ -230,7 +229,96 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
+   void update_optimization_data(
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           const LossIndex::BackPropagation& back_propagation,
+           OptimizationData& optimization_data)
+   {
+       const Index parameters_number = optimization_data.parameters.dimension(0);
+
+       if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
+       {
+//           optimization_data.training_direction
+//                   = calculate_gradient_descent_training_direction(back_propagation.gradient);
+       }
+       else
+       {
+           optimization_data.training_direction = calculate_conjugate_gradient_training_direction(
+                       optimization_data.old_gradient,
+                       back_propagation.gradient,
+                       optimization_data.old_training_direction);
+       }
+
+       // Calculate loss training_slope
+
+       const Tensor<type, 0> training_slope;// = (back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
+
+       // Check for a descent direction
+
+       if(training_slope(0) >= 0)
+       {
+           // Reset training direction
+
+//           optimization_data.training_direction
+//                   = calculate_gradient_descent_training_direction(back_propagation.gradient);
+
+           cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
+       }
+
+       // Get initial training rate
+
+       type initial_learning_rate = 0;
+
+       optimization_data.epoch == 0
+               ? initial_learning_rate = first_learning_rate
+               : initial_learning_rate = optimization_data.old_learning_rate;
+
+       pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+            batch,
+            optimization_data.parameters, forward_propagation,
+            back_propagation.loss,
+            optimization_data.training_direction,
+            initial_learning_rate);
+
+       type learning_rate = directional_point.first;
+
+       if(optimization_data.epoch != 0 && abs(learning_rate) < numeric_limits<type>::min())
+       {
+           // Reset training direction
+
+//           optimization_data.training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
+
+           directional_point = learning_rate_algorithm.calculate_directional_point(batch,
+                               optimization_data.parameters, forward_propagation,
+                               back_propagation.loss,
+                               optimization_data.training_direction,
+                               first_learning_rate);
+
+           learning_rate = directional_point.first;
+       }
+
+       optimization_data.parameters_increment = optimization_data.training_direction*learning_rate;
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+       optimization_data.parameters += optimization_data.parameters_increment;
+
+       // Update stuff
+
+//       optimization_data.old_loss = back_propagation.loss;
+       optimization_data.old_gradient = back_propagation.gradient;
+
+       optimization_data.old_training_direction = optimization_data.training_direction;
+//       back_propagation.old_learning_rate = learning_rate;
+
+
+
+}
+
 private:
+
+   type first_learning_rate = static_cast<type>(0.01);
 
    /// Applied method for calculating the conjugate gradient direction.
 
@@ -309,7 +397,6 @@ private:
    /// True if the training error history vector is to be reserved, false otherwise.
 
    bool reserve_training_error_history;
-
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 

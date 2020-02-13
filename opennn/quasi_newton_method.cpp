@@ -1186,12 +1186,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
     type parameters_norm = 0;
 
-    Tensor<type, 1> parameters_increment(parameters_number);
-    type parameters_increment_norm;
+    type parameters_increment_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -1201,16 +1198,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type training_loss = 0;
     type training_error = 0;
     type old_training_loss = 0;
-    type training_loss_decrease = 0;
 
-    Tensor<type, 1> old_gradient(parameters_number);
     type gradient_norm = 0;
 
-    Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
-    Tensor<type, 2> old_inverse_hessian(parameters_number, parameters_number);
-
-    type selection_error = 0;
-    type old_selection_error = 0;
+    type selection_error = numeric_limits<type>::max();
+    type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
@@ -1219,21 +1211,20 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     Tensor<type, 0> training_slope;
 
     type learning_rate = 0;
-    type old_learning_rate = 0;
 
     Tensor<type, 1> optimal_selection_parameters;
 
-    type minimum_selection_error = 0;
+    type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
 
     Index selection_failures = 0;
 
-    OptimizationData optimization_data(this);
-
     time_t beginning_time, current_time;
     time(&beginning_time);
     type elapsed_time;
+
+    OptimizationData optimization_data(this);
 
     // Main loop
 
@@ -1267,30 +1258,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
-            if(epoch == 0)
-            {
-                minimum_selection_error = selection_error;
-
-                optimal_selection_parameters = neural_network_pointer->get_parameters();
-            }
-            else if(selection_error > old_selection_error)
+            if(selection_error > old_selection_error)
             {
                 selection_failures++;
             }
-            else if(selection_error <= minimum_selection_error)
+            else if(selection_error < minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
 
-                optimal_selection_parameters = neural_network_pointer->get_parameters();
+                optimal_selection_parameters = optimization_data.parameters;
             }
         }
-
-        // Elapsed time
-
-        time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
         // Training history
 
@@ -1299,6 +1277,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
         // Stopping Criteria
+
+        time(&current_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        //parameters_increment_norm = optimization_data.parameters
 
         if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
@@ -1312,12 +1295,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 0 && training_loss - old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss_decrease <<  endl;
+                     << "Loss decrease: " << training_loss - old_training_loss <<  endl;
             }
 
             stop_training = true;
@@ -1346,7 +1329,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = GradientNormGoal;
         }
-        else if(selection_failures >= maximum_selection_error_increases && apply_early_stopping)
+        else if(apply_early_stopping && selection_failures >= maximum_selection_error_increases)
         {
             if(display)
             {
