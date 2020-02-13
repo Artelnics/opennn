@@ -35,7 +35,8 @@ namespace OpenNN
 
 /// It supports momentum, learning rate decay, and Nesterov momentum.
 ///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
+/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 class StochasticGradientDescent : public OptimizationAlgorithm
 {
@@ -79,7 +80,7 @@ public:
 
         StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
 
-        Index learning_rate_iteration = 0;
+        Index iteration = 0;
 
         Tensor<type, 1> parameters;
         Tensor<type, 1> parameters_increment;
@@ -202,7 +203,7 @@ public:
        type learning_rate = 0;
 
        initial_decay > 0
-            ? learning_rate = initial_learning_rate/(1 + optimization_data.learning_rate_iteration*initial_decay)
+            ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
             : initial_learning_rate;
 
 //       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
@@ -232,7 +233,7 @@ public:
 
        optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
-       optimization_data.learning_rate_iteration++;
+       optimization_data.iteration++;
    }
 
 

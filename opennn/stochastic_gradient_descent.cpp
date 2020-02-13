@@ -769,7 +769,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     Index selection_failures = 0;
 
-    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
+    Tensor<type, 1> optimal_selection_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -838,7 +838,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             if(epoch == 0)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = optimization_data.parameters;
+                optimal_selection_parameters = optimization_data.parameters;
             }
             else if(epoch != 0 && selection_error > old_selection_error)
             {
@@ -847,7 +847,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = optimization_data.parameters;
+                optimal_selection_parameters = optimization_data.parameters;
             }
         }
 
@@ -965,7 +965,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(choose_best_selection)
     {
-        optimization_data.parameters = minimum_selection_error_parameters;
+        optimization_data.parameters = optimal_selection_parameters;
 
         parameters_norm = l2_norm(optimization_data.parameters);
 

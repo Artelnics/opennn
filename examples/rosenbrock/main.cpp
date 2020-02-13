@@ -56,15 +56,11 @@ int main(void)
 
         in2.setRandom();
 
-
-
         std::size_t in1_bytes = in1.size() * sizeof(float);
 
         std::size_t in2_bytes = in2.size() * sizeof(float);
 
         std::size_t out_bytes = out.size() * sizeof(float);
-
-
 
         float* d_in1;
 
@@ -77,8 +73,6 @@ int main(void)
         cudaMalloc((void**)(&d_in2), in2_bytes);
 
         cudaMalloc((void**)(&d_out), out_bytes);
-
-
 
         cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
 
@@ -93,8 +87,6 @@ int main(void)
         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in2(d_in2, 2);
 
         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(d_out, 2);
-
-<<<<<<< Updated upstream
 */
 
 
@@ -110,7 +102,6 @@ int main(void)
 
 //        combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 
-
         Tensor<type, 2> a(1000, 1000);
         Tensor<type, 2> b(1000, 1000);
         Tensor<type, 2> c(1000, 1000);
@@ -118,11 +109,9 @@ int main(void)
         a.setRandom();
         b.setRandom();
 
-        std::size_t bytes_a = a.size()  * sizeof(float);
+        std::size_t bytes_a = a.size() * sizeof(float);
         std::size_t bytes_b = b.size() * sizeof(float);
         std::size_t bytes_c = c.size() * sizeof(float);
-
-
 
         float* data_a;
 

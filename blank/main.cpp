@@ -70,6 +70,7 @@ int main(void)
         cout << a.sign() << endl;
 
         return 0;
+
     }
        catch(exception& e)
     {

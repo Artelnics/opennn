@@ -36,12 +36,14 @@
 namespace OpenNN
 {
 
-/// This concrete class represents the adaptive moment estimation(Adam) training algorithm, based on adaptative estimates of lower-order moments.
+/// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
+/// based on adaptative estimates of lower-order moments.
 
 ///
 /// For more information visit:
 ///
-/// \cite 1 C. Barranquero "High performance optimization algorithms for neural networks." \ref https://www.opennn.net/files/high_performance_optimization_algorithms_for_neural_networks.pdf .
+/// \cite 1 C. Barranquero "High performance optimization algorithms for neural networks."
+/// \ref https://www.opennn.net/files/high_performance_optimization_algorithms_for_neural_networks.pdf .
 ///
 /// \cite 2 D. P. Kingma and J. L. Ba, "ADAM: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
 
@@ -50,17 +52,66 @@ class AdaptiveMomentEstimation : public OptimizationAlgorithm
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+    struct OptimizationData
+    {
+        /// Default constructor.
+
+        explicit OptimizationData()
+        {
+        }
+
+        explicit OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
+        {
+            set(new_stochastic_gradient_descent_pointer);
+        }
+
+        virtual ~OptimizationData() {}
+
+        void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+        {
+            adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
+
+            LossIndex* loss_index_pointer = new_adaptive_moment_estimation_pointer->get_loss_index_pointer();
+
+            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+            const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+            parameters.resize(parameters_number);
+            parameters_increment.resize(parameters_number);
+            last_parameters_increment.resize(parameters_number);
+        }
+
+        void print() const
+        {
+        }
+
+        AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+
+        Index learning_rate_iteration = 0;
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> parameters_increment;
+        Tensor<type, 1> last_parameters_increment;
+        Tensor<type, 1> optimal_selection_parameters;
+
+        Tensor<type, 1> gradient_exponential_decay;
+        Tensor<type, 1> square_gradient_exponential_decay;
+
+        Tensor<type, 1> last_gradient_exponential_decay;
+        Tensor<type, 1> last_square_gradient_exponential_decay;
+
+        Index iteration;
+    };
+
+
+   // Constructors
 
    explicit AdaptiveMomentEstimation();
-
-   // LOSS INDEX CONSTRUCTOR
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
 
    explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
-
-   // DESTRUCTOR
 
    virtual ~AdaptiveMomentEstimation();
 
@@ -68,7 +119,6 @@ public:
 
     ///@todo, to remove
    /// Enumeration of Adam's variations.
-
    
    /// Get methods in training operators
 
@@ -78,7 +128,6 @@ public:
    const type& get_beta_1() const;
    const type& get_beta_2() const;
    const type& get_epsilon() const;
-
 
    // Training parameters
 
@@ -172,6 +221,34 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void update_optimization_data(const LossIndex::BackPropagation& back_propagation,
+                                 OptimizationData& optimization_data)
+   {
+       type learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
+                       - pow(beta_2, static_cast<type>(optimization_data.iteration)))/(static_cast<type>(1.0)
+                               - pow(beta_1, static_cast<type>(optimization_data.iteration)));
+
+
+
+       optimization_data.gradient_exponential_decay
+               = optimization_data.last_gradient_exponential_decay*beta_1
+               + back_propagation.gradient*(1 - beta_1);
+
+       optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
+
+       optimization_data.square_gradient_exponential_decay
+               = optimization_data.last_square_gradient_exponential_decay*beta_2
+               + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
+
+       optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+
+       // Update parameters
+
+//       optimization_data.parameters -= optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+
+   }
+
 
 private:
 
