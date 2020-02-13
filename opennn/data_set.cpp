@@ -1951,7 +1951,6 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-
     const Index variables_number = get_variables_number();
 
     const Index used_variables_number = get_used_variables_number();
@@ -4458,23 +4457,37 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
 Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 {
-    const Index used_columns_number = get_used_columns_number();
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
 
     Tensor<BoxPlot, 1> box_plots(used_columns_number);
 
-    #pragma omp parallel for shared(box_plots)
+    Index variable_index = 0;
 
-    for(Index i = 0; i < static_cast<Index>(used_columns_number); i++)
+    for(Index i = 0; i < used_columns_number; i++)
     {
-        if(columns(i).type == Numeric)
+        if(columns(i).type == Numeric || columns(i).type == Binary)
         {
-            const Index index = used_columns_indices(i);
-            /*
-                        const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
+            box_plots(i) = box_plot(data.chip(variable_index, 1), used_instances_indices);
 
-                        box_plots(i) = box_plot(column);
-            */
+
+            cout << "i: " << i << endl;
+            cout << "minimum: " << box_plots(i).minimum << endl;
+            cout << "first_quartile: " << box_plots(i).first_quartile << endl;
+            cout << "median: " << box_plots(i).median << endl;
+            cout << "third_quartile: " << box_plots(i).third_quartile << endl;
+            cout << "maximum: " << box_plots(i).maximum << endl;
+
+
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            variable_index += columns(i).categories.size();
+        }
+        else
+        {
+            variable_index++;
         }
     }
 
