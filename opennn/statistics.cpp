@@ -1478,7 +1478,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums(columns_indices_size);
-    maximums.setConstant(-numeric_limits<type>::max());
+    maximums.setConstant(numeric_limits<type>::min());
 
     Tensor<type, 1> sums(columns_indices_size);
     Tensor<type, 1> squared_sums(columns_indices_size);
