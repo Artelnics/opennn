@@ -43,7 +43,6 @@ namespace OpenNN
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
-
 class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
@@ -74,15 +73,21 @@ public:
 
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-            parameters.resize(parameters_number);
+            // Neural network data
 
+            parameters.resize(parameters_number);
             parameters = neural_network_pointer->get_parameters();
+
+            // Loss index data
 
             inverse_hessian.resize(parameters_number, parameters_number);
             inverse_hessian.setZero();
 
             old_inverse_hessian.resize(parameters_number, parameters_number);
             old_inverse_hessian.setZero();
+
+            // Optimization algorithm data
+
         }
 
         void print() const
@@ -91,19 +96,27 @@ public:
 
         QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
 
+        // Neural network data
+
         Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
-        Tensor<type, 1> old_gradient;
+        Tensor<type, 1> parameters_increment;
 
-        Tensor<type, 1> training_direction;
+        // Loss index data
+
+        Tensor<type, 1> old_gradient;
 
         Tensor<type, 2> inverse_hessian;
         Tensor<type, 2> old_inverse_hessian;
 
-        Tensor<type, 0> training_slope;
+        // Optimization algorithm data
 
         Index epoch = 0;
+
+        Tensor<type, 1> training_direction;
+
+        Tensor<type, 0> training_slope;
 
         type learning_rate = 0;
         type old_learning_rate = 0;
@@ -279,7 +292,6 @@ public:
                                  back_propagation.gradient,
                                  optimization_data.old_inverse_hessian);
        }
-
 
        // Optimization algorithm
 

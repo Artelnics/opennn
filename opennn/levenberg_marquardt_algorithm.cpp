@@ -776,7 +776,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     type parameters_increment_norm;
 
     Tensor<type, 1> optimal_selection_parameters(parameters_number);
-    type minimum_selection_error = 0;
+    type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
 
