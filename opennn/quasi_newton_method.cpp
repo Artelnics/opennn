@@ -759,12 +759,11 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
 
 Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
 {
-
     const Index size = tensor.size();
 
     Tensor<type, 2> direct(size, size);
 
-    #pragma omp parallel for if(size > 1000)
+    #pragma omp parallel for
 
     for(Index i = 0; i < size; i++)
     {
@@ -787,8 +786,7 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 2>& tens
 
     Tensor<type, 2> direct(rows_number*other_rows_number, columns_number*other_columns_number);
 
-    Index alpha;
-    Index beta;
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -796,76 +794,19 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 2>& tens
         {
             for(Index k = 0; k < other_rows_number; k++)
             {
+                const Index alpha = other_rows_number*i+k;
+
                 for(Index l = 0; l < other_columns_number; l++)
                 {
-                    alpha = other_rows_number*i+k;
-                    beta = other_columns_number*j+l;
+                    const Index beta = other_columns_number*j+l;
 
                     direct(alpha,beta) = tensor(i,j)*other_tensor(k,l);
                 }
             }
         }
     }
+
     return direct;
-}
-
-/// Returns the quasi-Newton method training direction, which has been previously normalized.
-/// @param gradient Gradient vector.
-/// @param inverse_hessian_approximation Inverse hessian approximation matrix.
-
-Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<type, 1>& gradient,
-        const Tensor<type, 2>& inverse_hessian_approximation) const
-{
-//  normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
-
-
-    const Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, AT_B);
-
-    const type norm = l2_norm(gradient);
-
-    return (static_cast<type>(-1.0)/norm)*hessian_dot_gradient;
-
-//    return normalized((-1.0)*hessian_dot_gradient);
-}
-
-
-/// Returns the gradient descent training direction, which is the negative of the normalized gradient.
-/// @param gradient Gradient vector.
-
-Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index gradient_size = gradient.size();
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const type gradient_norm = l2_norm(gradient);
-
-    return (static_cast<type>(-1.0)/gradient_norm)*gradient;
 }
 
 
@@ -1247,8 +1188,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-    Tensor<type, 1> old_parameters(parameters_number);
     type parameters_norm = 0;
 
     Tensor<type, 1> parameters_increment(parameters_number);
@@ -1268,7 +1207,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type gradient_norm = 0;
 
     Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
-    Tensor<type, 2> old_inverse_hessian;
+    Tensor<type, 2> old_inverse_hessian(parameters_number, parameters_number);
 
     type selection_error = 0;
     type old_selection_error = 0;
@@ -1277,17 +1216,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Optimization algorithm
 
-    Tensor<type, 1> training_direction(parameters_number);
-
     Tensor<type, 0> training_slope;
 
-    const type first_learning_rate = static_cast<type>(0.01);
-
-    type initial_learning_rate = static_cast<type>(0.01);
     type learning_rate = 0;
     type old_learning_rate = 0;
-
-    pair<type,type> directional_point(2, 0.0);
 
     Tensor<type, 1> optimal_selection_parameters;
 
@@ -1297,6 +1229,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     Index selection_failures = 0;
 
+    OptimizationData optimization_data(this);
+
     time_t beginning_time, current_time;
     time(&beginning_time);
     type elapsed_time;
@@ -1305,13 +1239,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        // Batch
-
         // Neural network
 
-        parameters = neural_network_pointer->get_parameters();
-
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
         {
@@ -1325,8 +1255,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
 
         training_loss = training_back_propagation.loss;
-
-        if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1357,79 +1285,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-        if(epoch == 0
-                || l2_norm(old_parameters - parameters) < numeric_limits<type>::min()
-                || l2_norm(old_gradient - training_back_propagation.gradient) < numeric_limits<type>::min())
-        {
-            for(Index i = 0; i < inverse_hessian.dimension(0); i++)
-            {
-                inverse_hessian(i,i) = 1.0;
-            }
-        }
-        else
-        {
-            inverse_hessian = calculate_inverse_hessian_approximation(
-                                  old_parameters,
-                                  parameters,
-                                  old_gradient,
-                                  training_back_propagation.gradient,
-                                  old_inverse_hessian);
-        }
-
-        // Optimization algorithm
-
-        training_direction = calculate_training_direction(training_back_propagation.gradient, inverse_hessian);
-
-        // Calculate loss training slope
-
-        training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
-
-        // Check for a descent direction
-
-        if(training_slope(0) >= static_cast<type>(0.0))
-        {
-            // Reset training direction
-
-            //cout << "Training slope is greater than zero." << endl;
-
-            training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
-        }
-
-        // Get initial training rate
-
-        epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
-
-        directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
-                            parameters, training_forward_propagation,
-                            training_loss,
-                            training_direction,
-                            initial_learning_rate);
-
-        learning_rate = directional_point.first;
-
-        // Reset training direction when training rate is 0
-
-        if(abs(learning_rate) < numeric_limits<type>::min())
-        {
-            training_direction = calculate_gradient_descent_training_direction(training_back_propagation.gradient);
-
-            directional_point = learning_rate_algorithm.calculate_directional_point(training_batch,
-                                parameters, training_forward_propagation,
-                                training_loss,
-                                training_direction,
-                                first_learning_rate);
-
-            learning_rate = directional_point.first;
-        }
-
-        parameters_increment = training_direction*learning_rate;
-
-        parameters_increment_norm = l2_norm(parameters_increment);
-
         // Elapsed time
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
 
         // Training history
 
@@ -1527,7 +1388,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         if(stop_training)
         {
-            results.final_parameters = parameters;
+            results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
 
             results.final_training_error = training_error;
@@ -1574,43 +1435,27 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-        // Update stuff
-
-        old_parameters = parameters;
-
-        old_training_loss = training_loss;
-
-        old_selection_error = selection_error;
-
-        old_gradient = training_back_propagation.gradient;
-
-        old_inverse_hessian = inverse_hessian;
-
-        old_learning_rate = learning_rate;
-
         // Set new parameters
 
-        parameters += parameters_increment;
-
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         if(stop_training) break;
     }
 
     if(choose_best_selection)
     {
-        parameters = optimal_selection_parameters;
-        parameters_norm = l2_norm(parameters);
+        //optimization_data.parameters = optimal_selection_parameters;
+        //parameters_norm = l2_norm(parameters);
 
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(optimal_selection_parameters);
 
-        neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+        //neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
-        loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+        //loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
 
-        training_loss = training_back_propagation.loss;
+        //training_loss = training_back_propagation.loss;
 
-        selection_error = minimum_selection_error;
+        //selection_error = minimum_selection_error;
     }
 
     return results;
