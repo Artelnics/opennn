@@ -304,28 +304,31 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
-   {
-       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
-
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
-
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
-   }
-
-
    void calculate_forward_propagation(const Tensor<type, 2>& inputs,
-                                      const Tensor<type, 1>& potential_parameters,
-                                      ForwardPropagation& forward_propagation)
-   {
-       const Index neurons_number = get_neurons_number();
+                                         Tensor<type, 1>& potential_parameters,
+                                         ForwardPropagation& forward_propagation)
+      {
 
+       const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
 
-       // Do exception with inputs number and inputs.dimension(1)
+#ifdef __OPENNN_DEBUG__
 
-       Tensor<type, 2> potential_biases(neurons_number, 1);
-       Tensor<type, 2> potential_synaptic_weights(inputs_number, neurons_number);
+       if(inputs_number != inputs.dimension(1))
+       {
+           ostringstream buffer;
+
+           buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                  << "void calculate_forward_propagation(const Tensor<type, 2>&, Tensor<type, 2>&, ForwardPropagation&) method.\n"
+                  << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs (" << inputs_number << ").\n";
+
+           throw logic_error(buffer.str());
+       }
+
+#endif
+
+       const TensorMap< Tensor<type, 2> > potential_synaptic_weights(potential_parameters.data(), inputs_number, neurons_number);
+       const TensorMap< Tensor<type, 2> > potential_biases(potential_parameters.data() + neurons_number*inputs_number, neurons_number, 1);
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations);
 

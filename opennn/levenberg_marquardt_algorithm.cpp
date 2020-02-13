@@ -670,7 +670,6 @@ void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_pe
     display_period = new_display_period;
 }
 
-
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
@@ -997,7 +996,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
-                     /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
                 {
@@ -1029,7 +1028,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
-                 /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/;
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(abs(selection_error - 0) < numeric_limits<type>::epsilon())
             {

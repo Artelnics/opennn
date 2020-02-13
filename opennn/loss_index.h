@@ -574,6 +574,52 @@ public:
        return norm(0);
    }
 
+   Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& parameters) const
+   {
+       const Index parameters_number = parameters.size();
+
+       Tensor<type, 1> gradient(parameters_number);
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                gradient.device(*default_device) = parameters.sign();
+
+                return gradient;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               gradient.device(*thread_pool_device) = parameters.sign();
+
+               return gradient;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+   }
+
    Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const
    {
        const Index parameters_number = parameters.size();
