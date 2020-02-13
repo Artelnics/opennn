@@ -558,7 +558,7 @@ public:
 
    Tensor<Descriptives, 1> calculate_columns_descriptives_positive_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_negative_instances() const;
-   Tensor<Descriptives, 1> calculate_columns_descriptives_classes(const Index&) const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_categories(const Index&) const;
 
    Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;

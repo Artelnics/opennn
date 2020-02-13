@@ -2356,6 +2356,10 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
             unused_index++;
             unused_variable_index++;
         }
+        else
+        {
+            unused_variable_index++;
+        }
     }
 
     return unused_indices;
@@ -2396,6 +2400,10 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
         {
             used_indices(used_index) = i;
             used_index++;
+            used_variable_index++;
+        }
+        else
+        {
             used_variable_index++;
         }
     }
@@ -2442,6 +2450,10 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             input_index++;
             input_variable_index++;
         }
+        else
+        {
+            input_variable_index++;
+        }
     }
 
     return input_variables_indices;
@@ -2482,6 +2494,10 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
         {
             target_variables_indices(target_index) = i;
             target_index++;
+            target_variable_index++;
+        }
+        else
+        {
             target_variable_index++;
         }
     }
@@ -4378,6 +4394,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
             Tensor<Index, 1> categories_frequencies(categories_number);
             categories_frequencies.setZero();
+            Tensor<type, 1> centers(categories_number);
 
             for(Index j = 0; j < categories_number; j++)
             {
@@ -4389,10 +4406,13 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                     }
                 }
 
+                centers(j) = static_cast<type>(j);
+
                 variable_index++;
             }
 
             histograms(i).frequencies = categories_frequencies;
+            histograms(i).centers = centers;
         }
         else if(columns(i).type == Binary)
         {
@@ -4630,8 +4650,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
 
     const Index instances_number = used_instances_indices.size();
 
-    cout << "1" << endl;
-
     // Count used positive instances
 
     Index positive_instances_number = 0;
@@ -4643,9 +4661,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
         if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
     }
 
-    cout << "2" << endl;
-
-    // Get used positive instances indices
+        // Get used positive instances indices
 
     Tensor<Index, 1> positive_used_instances_indices(positive_instances_number);
     Index positive_instance_index = 0;
@@ -4729,7 +4745,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
 /// Returns a matrix with the data set descriptive statistics.
 /// @param class_index Data set index number to make the descriptive statistics.
 
-Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const Index& class_index) const
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();

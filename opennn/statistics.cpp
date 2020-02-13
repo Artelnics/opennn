@@ -1034,6 +1034,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
 #endif
 
+    const Index size = vector.dimension(0);
+
     Tensor<type, 1> minimums(bins_number);
     Tensor<type, 1> maximums(bins_number);
 
@@ -1041,52 +1043,102 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    const type min = minimum(vector);
-    const type max = maximum(vector);
+    Index unique_values_number = 1;
+    Tensor<type, 1> old_unique_values(1);
+    Tensor<type, 1> unique_values(1);
+    unique_values(0) = vector(0);
+    old_unique_values = unique_values;
 
-    const type length = (max - min) /static_cast<type>(bins_number);
-
-    minimums(0) = min;
-    maximums(0) = min + length;
-    centers(0) = (maximums(0) + minimums(0)) /static_cast<type>(2.0);
-
-    // Calculate bins center
-
-    for(Index i = 1; i < bins_number; i++)
+    for(Index i = 1; i < size; i++)
     {
-        minimums(i) = minimums(i - 1) + length;
-        maximums(i) = maximums(i - 1) + length;
-
-        centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
-    }
-
-    // Calculate bins frequency
-
-    const Index size = vector.dimension(0);
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(isnan(vector(i)))
+        if(std::find(unique_values.data(), unique_values.data()+unique_values.size(), vector(i)) == unique_values.data()+unique_values.size())
         {
-            continue;
+            unique_values_number++;
+
+            unique_values.resize(unique_values_number);
+
+            for(Index j = 0; j < unique_values_number-1; j++) unique_values(j) = old_unique_values(j);
+
+            unique_values(unique_values_number-1) = vector(i);
+
+            old_unique_values = unique_values;
         }
 
-        for(Index j = 0; j < bins_number - 1; j++)
+        if(unique_values_number > bins_number) break;
+    }
+
+    if(unique_values_number <= bins_number)
+    {
+        centers = unique_values;
+        minimums = unique_values;
+        maximums = unique_values;
+
+        frequencies.resize(unique_values_number);
+        frequencies.setZero();
+
+        for(Index i = 0; i < size; i++)
         {
-            if(vector(i) >= minimums(j) && vector(i) < maximums(j))
+            if(isnan(vector(i))) continue;
+
+            for(Index j = 0; j < unique_values_number; j++)
             {
-                frequencies(j)++;
-                break;
+                if(vector(i) == centers(j))
+                {
+                    frequencies(j)++;
+                    break;
+                }
             }
         }
+    }
+    else
+    {
+        const type min = minimum(vector);
+        const type max = maximum(vector);
 
-        if(vector(i) >= minimums(bins_number - 1))
+        const type length = (max - min) /static_cast<type>(bins_number);
+
+        minimums(0) = min;
+        maximums(0) = min + length;
+        centers(0) = (maximums(0) + minimums(0)) /static_cast<type>(2.0);
+
+        // Calculate bins center
+
+        for(Index i = 1; i < bins_number; i++)
         {
-            frequencies(bins_number - 1)++;
+            minimums(i) = minimums(i - 1) + length;
+            maximums(i) = maximums(i - 1) + length;
+
+            centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
+        }
+
+        // Calculate bins frequency
+
+        const Index size = vector.dimension(0);
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(isnan(vector(i)))
+            {
+                continue;
+            }
+
+            for(Index j = 0; j < bins_number - 1; j++)
+            {
+                if(vector(i) >= minimums(j) && vector(i) < maximums(j))
+                {
+                    frequencies(j)++;
+                    break;
+                }
+            }
+
+            if(vector(i) >= minimums(bins_number - 1))
+            {
+                frequencies(bins_number - 1)++;
+            }
         }
     }
 
-    Histogram histogram(bins_number);
+    Histogram histogram;
     histogram.centers = centers;
     histogram.minimums = minimums;
     histogram.maximums = maximums;
@@ -1211,6 +1263,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
 Histogram histogram(const Tensor<bool, 1>& vector)
 {
+    /*
     Tensor<type, 1> minimums(2);
     minimums.setZero();
     Tensor<type, 1> maximums(2);
@@ -1227,6 +1280,8 @@ Histogram histogram(const Tensor<bool, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
+        if(isnan(vector(i))) continue;
+
         for(Index j = 0; j < 2; j++)
         {
             if(static_cast<Index>(vector(i)) == static_cast<Index>(minimums(j)))
@@ -1241,10 +1296,9 @@ Histogram histogram(const Tensor<bool, 1>& vector)
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-
+*/
+    Histogram histogram;
     return histogram;
-
-//    return Histogram();
 }
 
 
@@ -1424,7 +1478,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums(columns_indices_size);
-    maximums.setConstant(-numeric_limits<type>::max());
+    maximums.setConstant(numeric_limits<type>::min());
 
     Tensor<type, 1> sums(columns_indices_size);
     Tensor<type, 1> squared_sums(columns_indices_size);
