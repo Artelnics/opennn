@@ -810,7 +810,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     Tensor<type, 0> training_slope;
 
     type minimum_selection_error = numeric_limits<type>::max();
-    Tensor<type, 1> minimum_selection_error_parameters = parameters;
+    Tensor<type, 1> optimal_selection_parameters = parameters;
 
     results.resize_training_history(maximum_epochs_number+1);
 
@@ -861,7 +861,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = parameters;
+                optimal_selection_parameters = parameters;
             }
         }
 
@@ -1062,7 +1062,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
+        parameters = optimal_selection_parameters;
         parameters_norm = l2_norm(parameters);
 
         neural_network_pointer->set_parameters(parameters);

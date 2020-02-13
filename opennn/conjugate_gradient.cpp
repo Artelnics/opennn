@@ -1285,7 +1285,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     pair<type,type> directional_point(2, 0.0);
 
-    Tensor<type, 1> minimum_selection_error_parameters = parameters;
+    Tensor<type, 1> optimal_selection_parameters = parameters;
     type minimum_selection_error = 0;
 
     bool stop_training = false;
@@ -1353,7 +1353,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             minimum_selection_error = selection_error;
 
-            minimum_selection_error_parameters = parameters;
+            optimal_selection_parameters = parameters;
         }
 
         // Optimization algorithm
@@ -1600,7 +1600,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
+        parameters = optimal_selection_parameters;
         parameters_norm = l2_norm(parameters);
 
         neural_network_pointer->set_parameters(parameters);

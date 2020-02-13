@@ -657,9 +657,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-//   const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-//   const Tensor<Index, 1>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
@@ -676,9 +673,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-    Tensor<type, 1> parameters_increment(parameters_number);
 
     type parameters_norm = 0;
 
@@ -703,7 +697,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     Index selection_error_increases = 0;
 
-    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -714,27 +707,25 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     results.resize_training_history(maximum_epochs_number + 1);
 
-    Tensor<type, 1> gradient_exponential_decay(parameters_number);
-    Tensor<type, 1> square_gradient_exponential_decay(parameters_number);
-
-    Tensor<type, 1> last_gradient_exponential_decay(parameters_number);
-    Tensor<type, 1> last_square_gradient_exponential_decay(parameters_number);
-
     Index iteration_count = 0;
+
+    OptimizationData optimization_data;
 
     bool is_forecasting = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+    if(neural_network_pointer->has_long_short_term_memory_layer()
+    || neural_network_pointer->has_recurrent_layer())
+        is_forecasting = true;
 
     // Main loop
-cout << "1" << endl;
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -753,43 +744,26 @@ cout << "2" << endl;
             const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(0, 0));
 
             training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
-cout << "3" << endl;
+
             // Neural network
 
             neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
 
             // Loss index
-cout << "4" << endl;
-            loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
-cout << "5" << endl;
-            learning_rate = initial_learning_rate*sqrt(static_cast<type>(1.0)
-                            - pow(beta_2, static_cast<type>(iteration_count)))/(static_cast<type>(1.0)
-                                    - pow(beta_1, static_cast<type>(iteration_count)));
 
-            // Loss
+            loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, back_propagation);
 
             loss += back_propagation.loss;
 
             // Gradient
 
-            gradient_exponential_decay = last_gradient_exponential_decay*beta_1 + back_propagation.gradient*(1 - beta_1);
+            update_optimization_data(back_propagation, optimization_data);
 
-            last_gradient_exponential_decay = gradient_exponential_decay;
-
-            square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2
-                                                + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
-
-            last_square_gradient_exponential_decay = square_gradient_exponential_decay;
-
-            // Update parameters
-
-            parameters -= gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
-
-            neural_network_pointer->set_parameters(parameters);
+            neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
         // Gradient
-cout << "6" << endl;
+
         gradient_norm = l2_norm(back_propagation.gradient);
 
         // Loss
@@ -803,12 +777,13 @@ cout << "6" << endl;
 //           selection_error = loss_index_pointer->calculate_error(
 //                       selection_forward_propagation.layers[trainable_layers_number].activations,
 //                       selection_batch.targets_2d);
+
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
             if(epoch == 0)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = parameters;
+                optimization_data.optimal_selection_parameters = optimization_data.parameters;
             }
             else if(epoch != 0 && selection_error > old_selection_error)
             {
@@ -817,7 +792,7 @@ cout << "6" << endl;
             else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = parameters;
+                optimization_data.optimal_selection_parameters = optimization_data.parameters;
             }
         }
 
@@ -903,7 +878,7 @@ cout << "6" << endl;
 
             results.resize_training_history(1+epoch);
 
-            results.final_parameters = parameters;
+            results.final_parameters = optimization_data.parameters;
 
             results.final_parameters_norm = parameters_norm;
 
@@ -916,6 +891,7 @@ cout << "6" << endl;
             results.elapsed_time = elapsed_time;
 
             results.epochs_number = epoch;
+
             break;
         }
         else if(display && epoch % display_period == 0)
@@ -928,7 +904,6 @@ cout << "6" << endl;
 //                << "Learning rate: " << learning_rate<< "\n"
 //                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 //                << "Selection error: " << selection_error << endl;
-
         }
 
         // Update stuff
@@ -940,15 +915,15 @@ cout << "6" << endl;
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
-        parameters_norm = l2_norm(parameters);
+        optimization_data.parameters = optimization_data.optimal_selection_parameters;
+        parameters_norm = l2_norm(optimization_data.parameters);
 
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         selection_error = minimum_selection_error;
     }
 
-    results.final_parameters = parameters;
+    results.final_parameters = optimization_data.parameters;
     results.final_parameters_norm = parameters_norm;
     results.final_training_error = training_error;
     results.final_selection_error = selection_error;
