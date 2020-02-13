@@ -64,14 +64,14 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-        Tensor<type, 2> a(3,3);
+        Tensor<type, 1> a(5);
         a.setConstant(2);
 
-        TensorMap<Tensor<type, 2>> b(a.data(), 2, 2);
+        cout << "a: " << a << endl;
 
-        cout << b << endl;
+        a.resize(6);
 
-        cout << "End" << endl;
+        cout << "a: " << a << endl;
 
         return 0;
     }
