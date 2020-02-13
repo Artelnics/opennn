@@ -111,6 +111,11 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
+   void set_batch_instances_number(const Index& new_batch_instances_number)
+   {
+       batch_instances_number = new_batch_instances_number;
+   }
+
    // Training operators
 
    void set_initial_learning_rate(const type&);
@@ -270,6 +275,9 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   Index batch_instances_number = 1000;
+
 };
 
 }

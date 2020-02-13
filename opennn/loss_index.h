@@ -85,20 +85,18 @@ public:
 
        explicit BackPropagation() {}
 
-       explicit BackPropagation(const LossIndex* loss_index_pointer)
+       explicit BackPropagation(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
        {
-           set(loss_index_pointer);
+           set(new_batch_instances_number, new_loss_index_pointer);
        }
 
        virtual ~BackPropagation();
 
-       void set(const LossIndex* loss_index_pointer)
-       {
-           // Data set
+       void set(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
+       {                      
+           batch_instances_number = new_batch_instances_number;
 
-           DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-           const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
+           loss_index_pointer = new_loss_index_pointer;
 
            // Neural network
 
@@ -139,6 +137,10 @@ public:
            cout << "Gradient:" << endl;
            cout << gradient << endl;
        }
+
+       LossIndex* loss_index_pointer = nullptr;
+
+       Index batch_instances_number = 0;
 
        NeuralNetwork::BackPropagation neural_network;
 

@@ -255,8 +255,6 @@ public:
    Tensor<Index, 1> get_instances_uses_numbers() const;
    Tensor<type, 1> get_instances_uses_percentages() const;
 
-   Index get_batch_instances_number() const {return batch_instances_number;}
-
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;
@@ -320,11 +318,9 @@ public:
 
    // Batches get methods
 
-   inline Index get_batch_instances_number() {return batch_instances_number;}
-
-   Tensor<Index, 2> get_training_batches(const bool& = true) const;
-   Tensor<Index, 2> get_selection_batches(const bool& = true) const;
-   Tensor<Index, 2> get_testing_batches(const bool& = true) const;
+   Tensor<Index, 2> get_training_batches(const Index&, const bool& = true) const;
+   Tensor<Index, 2> get_selection_batches(const Index&, const bool& = true) const;
+   Tensor<Index, 2> get_testing_batches(const Index&, const bool& = true) const;
 
    // Data get methods
 
@@ -446,8 +442,6 @@ public:
 
    void set_testing_to_selection_instances();
    void set_selection_to_testing_instances();
-
-   void set_batch_instances_number(const Index&);
 
    void set_k_fold_cross_validation_instances_uses(const Index&, const Index&);
 
@@ -855,10 +849,6 @@ private:
    // Instances
 
    Tensor<InstanceUse, 1> instances_uses;
-
-   /// Number of batch instances. It is used to optimized the training strategy.
-
-   Index batch_instances_number = 32;
 
    // Variables
 

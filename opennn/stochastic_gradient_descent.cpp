@@ -728,8 +728,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-
     const bool has_selection = data_set_pointer->has_selection();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
@@ -752,7 +750,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Loss index
 
-    LossIndex::BackPropagation back_propagation(loss_index_pointer);
+    LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
 
     type training_error = 0;
 
@@ -1374,7 +1372,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("BatchSize");
 
     buffer.str("");
-    buffer << loss_index_pointer->get_data_set_pointer()->get_batch_instances_number();
+    buffer << batch_instances_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1550,7 +1548,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            loss_index_pointer->get_data_set_pointer()->set_batch_instances_number(new_batch_size != "0");
+            set_batch_instances_number(new_batch_size != "0");
         }
         catch(const logic_error& e)
         {

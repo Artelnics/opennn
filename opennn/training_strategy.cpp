@@ -1168,9 +1168,11 @@ void TrainingStrategy::perform_training_void() const
 
 
 /// Check the time steps and the batch size in forecasting problems
+/// @todo
 
 bool TrainingStrategy::check_forecasting() const
 {
+/*
     const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
     Index timesteps = 0;
 
@@ -1191,6 +1193,8 @@ bool TrainingStrategy::check_forecasting() const
     {
         return false;
     }
+*/
+    return false;
 }
 
 

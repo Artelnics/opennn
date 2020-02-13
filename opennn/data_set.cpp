@@ -949,7 +949,7 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
@@ -960,7 +960,7 @@ Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_insta
 }
 
 
-Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_selection_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_selection_instances_indices();
 
@@ -971,7 +971,7 @@ Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_inst
 }
 
 
-Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_testing_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_testing_instances_indices();
 
@@ -1503,24 +1503,6 @@ void DataSet::split_instances_sequential(const type& training_instances_ratio,
             count_testing++;
         }
         i++;
-    }
-}
-
-
-/// Sets the number of batches.
-
-void DataSet::set_batch_instances_number(const Index& new_batch_instances_number)
-{
-    const Index training_instances_number = get_training_instances_number();
-
-    if(new_batch_instances_number > training_instances_number)
-    {
-        batch_instances_number = training_instances_number;
-
-    }
-    else
-    {
-        batch_instances_number = new_batch_instances_number;
     }
 }
 

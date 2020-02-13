@@ -37,7 +37,6 @@ namespace OpenNN
 ///
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
-
 class StochasticGradientDescent : public OptimizationAlgorithm
 {
 
@@ -137,6 +136,12 @@ public:
    void set_default();
 
    void set_reserve_all_training_history(const bool&);
+
+
+   void set_batch_instances_number(const Index& new_batch_instances_number)
+   {
+       batch_instances_number = new_batch_instances_number;
+   }
 
    //Training operators
 
@@ -317,6 +322,8 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   Index batch_instances_number = 1000;
 };
 
 }

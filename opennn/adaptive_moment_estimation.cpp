@@ -654,12 +654,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//   const Tensor<type, 2>& data = data_set_pointer->get_data();
-
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
-
-    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
 //   const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 //   const Tensor<Index, 1>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
@@ -691,7 +687,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Loss index
 
-    LossIndex::BackPropagation back_propagation(loss_index_pointer);
+    LossIndex::BackPropagation back_propagation(training_instances_number, loss_index_pointer);
 
     type training_error = 0;
 
@@ -1349,7 +1345,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("BatchSize");
 
     buffer.str("");
-    buffer << loss_index_pointer->get_data_set_pointer()->get_batch_instances_number();
+    buffer << batch_instances_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1503,7 +1499,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            loss_index_pointer->get_data_set_pointer()->set_batch_instances_number(new_batch_size != "0");
+            set_batch_instances_number(new_batch_size != "0");
         }
         catch(const logic_error& e)
         {

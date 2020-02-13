@@ -401,8 +401,6 @@ void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_para
 
 void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradient_norm)
 {
-
-
 #ifdef __OPENNN_DEBUG__
 
     if(new_warning_gradient_norm < static_cast<type>(0.0))
@@ -1225,9 +1223,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     if(display)
     {
         cout << "Training with quasi-Newton method...\n";
-        //cout << loss_index_pointer->to_string() << endl;
-        //cout << "Error type: " << loss_index_pointer->get_error_type() << "\n";
-        //cout << "Regularization type: " << loss_index_pointer->get_regularization_type() << "\n";
     }
 
     Results results;
@@ -1245,7 +1240,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
-
 
     // Neural network
 
@@ -1279,7 +1273,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type selection_error = 0;
     type old_selection_error = 0;
 
-    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -1362,7 +1356,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                 minimum_selection_error_parameters = neural_network_pointer->get_parameters();
             }
         }
-
 
         if(epoch == 0
                 || l2_norm(old_parameters - parameters) < numeric_limits<type>::min()
