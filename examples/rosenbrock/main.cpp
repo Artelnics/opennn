@@ -264,8 +264,6 @@ int main(void)
         data_set.set_training();
 //        data_set.split_instances_random();
 
-        data_set.set_batch_instances_number(1000);
-
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
@@ -296,6 +294,10 @@ int main(void)
 //        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.set_device_pointer(&device);
+
+        StochasticGradientDescent* stochastic_gradient_descent_pointer = training_strategy.get_stochastic_gradient_descent_pointer();
+
+        stochastic_gradient_descent_pointer->set_batch_instances_number(1000);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
 //        training_strategy.get_quasi_Newton_method_pointer()->perform_training();
