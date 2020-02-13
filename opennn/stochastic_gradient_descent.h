@@ -43,23 +43,36 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationParameters
+    struct OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationParameters()
+        explicit OptimizationData()
         {
         }
 
-        explicit OptimizationParameters(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        explicit OptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        {
+            set(new_stochastic_gradient_descent_pointer);
+        }
+
+        virtual ~OptimizationData() {}
+
+        void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
             stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
 
-            //stochastic_gradient_descent_pointer->get_neural_network_file_name()
+            LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
+
+            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+            const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+            parameters.resize(parameters_number);
+            parameters_increment.resize(parameters_number);
+            nesterov_increment.resize(parameters_number);
+            last_parameters_increment.resize(parameters_number);
         }
-
-        virtual ~OptimizationParameters() {}
-
 
         void print() const
         {
@@ -69,10 +82,11 @@ public:
 
         Index learning_rate_iteration = 0;
 
-        Tensor<type, 2> parameters_increment;
-        Tensor<type, 2> last_parameters_increment;
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> parameters_increment;
+        Tensor<type, 1> nesterov_increment;
+        Tensor<type, 1> last_parameters_increment;
     };
-
 
    // Constructors
 
@@ -172,59 +186,54 @@ public:
    Tensor<string, 2> to_string_matrix() const;
 
    tinyxml2::XMLDocument* to_XML() const;
+
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_parameters(const LossIndex::BackPropagation& back_propagation,
-                          OptimizationParameters& optimization_parameters,
-                          Tensor<type, 1>& parameters)
+   void update_optimization_data(const LossIndex::BackPropagation& back_propagation,
+                                 OptimizationData& optimization_data)
    {
-/*
-       NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();
-
        type learning_rate = 0;
 
        initial_decay > 0
-               ? learning_rate = initial_learning_rate/(1 + optimization_parameters.learning_rate_iteration*initial_decay)
-                : initial_learning_rate;
+            ? learning_rate = initial_learning_rate/(1 + optimization_data.learning_rate_iteration*initial_decay)
+            : initial_learning_rate;
 
-       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+//       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-       optimization_parameters.parameters_increment.device(thread_pool_device) = back_propagation.gradient*static_cast<type>(-learning_rate);
+       optimization_data.parameters_increment
+               = static_cast<type>(-learning_rate)*back_propagation.gradient;
 
        if(momentum > 0 && !nesterov)
        {
-           optimization_parameters.parameters_increment.device(thread_pool_device) += optimization_parameters.last_parameters_increment*momentum;
+           optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
 
-//           parameters.device(thread_pool_device) = parameters + optimization_parameters.parameters_increment;
+           optimization_data.parameters += optimization_data.parameters_increment;
        }
        else if(momentum > 0 && nesterov)
        {
-//           optimization_parameters.parameters_increment.device(thread_pool_device) += optimization_parameters.last_parameters_increment*momentum;
+           optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
 
-//           optimization_parameters.nesterov_increment.device(thread_pool_device)
-//                   = optimization_parameters.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+           optimization_data.nesterov_increment
+                   = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
-//           parameters.device(thread_pool_device) += nesterov_increment;
+           optimization_data.parameters += optimization_data.nesterov_increment;
        }
        else
        {
-           parameters.device(thread_pool_device) += optimization_parameters.parameters_increment;
+           optimization_data.parameters += optimization_data.parameters_increment;
        }
 
-       optimization_parameters.last_parameters_increment = optimization_parameters.parameters_increment;
+       optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
-       optimization_parameters.learning_rate_iteration++;
-
-       neural_network_pointer->set_parameters(parameters);
-*/
+       optimization_data.learning_rate_iteration++;
    }
 
 
 private:
 
-   // TRAINING OPERATORS
+   // Training operators
 
    /// Initial learning rate
 
@@ -242,7 +251,7 @@ private:
 
    bool nesterov;
 
-   // TRAINING PARAMETERS
+   // Training parameters
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
@@ -299,7 +308,7 @@ private:
 
    bool apply_early_stopping;
 
-   // TRAINING HISTORY
+   // Training history
 
    /// True if the loss history vector is to be reserved, false otherwise.
 
