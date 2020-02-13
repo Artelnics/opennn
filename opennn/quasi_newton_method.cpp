@@ -1548,8 +1548,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << learning_rate <<  "\n"
-                     << "Elapsed time:  " << elapsed_time << endl;
-                /*<< "Elapsed time: " << write_elapsed_time(elapsed_time) << endl*/
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(selection_error > 0)
                 {
@@ -1567,7 +1566,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Training rate: " << learning_rate << "\n"
-                 << "Elapsed time: " << elapsed_time << endl;
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(selection_error > 0)
             {
