@@ -189,7 +189,6 @@ public:
 */
    }
 
-
    string get_error_type() const;
    string get_error_type_text() const;
 
