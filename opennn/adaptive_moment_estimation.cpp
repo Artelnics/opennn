@@ -34,8 +34,6 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_poi
 }
 
 
-
-
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
@@ -577,7 +575,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     LossIndex::BackPropagation back_propagation(training_instances_number, loss_index_pointer);
 
     type selection_error = 0;
-    type old_selection_error = 0;
 
     type training_loss = 0;
     type gradient_norm = 0;
@@ -673,11 +670,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                 minimum_selection_error = selection_error;
                 optimization_data.optimal_selection_parameters = optimization_data.parameters;
             }
-            else if(epoch != 0 && selection_error > old_selection_error)
-            {
-                selection_error_increases++;
-            }
-            else if(selection_error <= minimum_selection_error)
+//            else if(epoch != 0 && selection_error > old_selection_error)
+//            {
+//                selection_error_increases++;
+//            }
+            else if(epoch != 0 && selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
                 optimization_data.optimal_selection_parameters = optimization_data.parameters;
@@ -771,7 +768,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Training loss: " << training_loss << "\n"
-//                << "Batch size: " << batch_instances_number << "\n"
+                 << "Batch size: " << batch_instances_number << "\n"
 //                << "Gradient norm: " << gradient_norm << "\n"
 //                << loss_index_pointer->write_information()
 //                << "Learning rate: " << learning_rate<< "\n"
@@ -781,7 +778,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Update stuff
 
-        old_selection_error = selection_error;
+//        old_selection_error = selection_error;
 
         if(stop_training) break;
     }
