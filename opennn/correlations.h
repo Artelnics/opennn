@@ -107,7 +107,6 @@ struct CorrelationResults
     // Exponential
 
     type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type exponential_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Logarithmic
 
@@ -163,13 +162,11 @@ struct CorrelationResults
     // Correlation methods
 
     CorrelationResults linear_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults logarithmic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
     CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults exponential_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
     CorrelationResults power_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -221,8 +218,11 @@ struct CorrelationResults
 
     type one_way_anova_correlation(const Tensor<type, 2>& ,const Index& , const Tensor<Index, 1>&);
 
+    // Missing values methods
+
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
+    Index count_NAN(const Tensor<type, 1>&);
 }
 
 #endif

@@ -156,41 +156,41 @@ type rank_linear_correlation_missing_values(const Tensor<type, 1>& x, const Tens
 }
 
 
-/// Calculates the correlation between Y and exp(A*X+B).
-/// @param x Vector containing the input values.
-/// @param y Vector containing the target values.
+///// Calculates the correlation between Y and exp(A*X+B).
+///// @param x Vector containing the input values.
+///// @param y Vector containing the target values.
 
-type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-#ifdef __OPENNN_DEBUG__
+//type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+//{
+//#ifdef __OPENNN_DEBUG__
 
-    ostringstream buffer;
+//    ostringstream buffer;
 
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size must be equal to X size.\n";
+//    if(y.size() != x.size())
+//    {
+//        buffer << "OpenNN Exception: Correlations.\n"
+//               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+//               << "Y size must be equal to X size.\n";
 
-        throw logic_error(buffer.str());
-    }
+//        throw logic_error(buffer.str());
+//    }
 
-#endif
-    /*
-        const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
-        const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
+//#endif
+//    /*
+//        const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
+//        const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
 
-        Tensor<type, 1> log_y(y_valid.size());
+//        Tensor<type, 1> log_y(y_valid.size());
 
-        for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
-        {
-            log_y[i] = log(y_valid[i]);
-        }
+//        for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
+//        {
+//            log_y[i] = log(y_valid[i]);
+//        }
 
-        return linear_correlation(x.delete_indices(negative_indices), log_y);
-    */
-    return 0.0;
-}
+//        return linear_correlation(x.delete_indices(negative_indices), log_y);
+//    */
+//    return 0.0;
+//}
 
 
 /// Calculates the correlation between Y and exp(A*X + B).
@@ -198,7 +198,7 @@ type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param y Vector containing the target values.
 /// @param missing Vector with the missing instances indices.
 
-type exponential_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -215,12 +215,51 @@ type exponential_correlation_missing_values(const Tensor<type, 1>& x, const Tens
 
 #endif
 
+    // Fix missing values
+
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vector = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vector.first;
     const Tensor<type, 1> new_y = filter_vector.second;
 
-    return exponential_correlation(new_x, new_y);
+    // Delete negative indices from y
+
+    Index new_y_size = 0;
+
+    for(Index i = 0; i < new_y.size(); i++)
+    {
+        if(new_y(i) >= static_cast<type>(0.0)) new_y_size++;
+    }
+
+    Tensor<type, 1> log_y(new_y_size);
+
+    Index y_index = 0;
+
+    for(Index i = 0; i < new_y.size(); i++)
+    {
+        if(new_y(i) >= static_cast<type>(0.0))
+        {
+            log_y(y_index) = log(new_y(i));
+            y_index++;
+        }
+    }
+
+    // Delete negative indices from x
+
+    Tensor<type, 1> valid_x(new_y_size);
+
+    Index x_index = 0;
+
+    for(Index i = 0; i < new_x.size(); i++)
+    {
+        if(new_x(i) >= static_cast<type>(0.0))
+        {
+            valid_x(x_index) = new_x(i);
+            x_index++;
+        }
+    }
+
+    return linear_correlation(new_x, log_y);
 }
 
 
@@ -1620,80 +1659,6 @@ RegressionResults logistic_regression_missing_values(const Tensor<type, 1>& x, c
 
 CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults "
-               "linear_correlation(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += x[i];
-        s_y += y[i];
-
-        s_xx += x[i] * x[i];
-        s_yy += y[i] * y[i];
-
-        s_xy += x[i] * y[i];
-    }
-
-    CorrelationResults linear_correlation;
-
-    linear_correlation.correlation_type = Linear_correlation;
-
-    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
-            && abs(s_xy) < numeric_limits<type>::min())
-    {
-        linear_correlation.correlation = 1.0;
-    }
-    else
-    {
-        if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
-        {
-            linear_correlation.correlation = 1.0;
-        }
-        else
-        {
-            linear_correlation.correlation =
-                (n * s_xy - s_x * s_y) /
-                sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y));
-        }
-    }
-
-    return linear_correlation;
-}
-
-
-///Calculate the linear correlation between two variables whrn there are missing values.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-CorrelationResults linear_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
     Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
@@ -1935,81 +1900,6 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
 
 CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults "
-               "exponential_regression(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-    /*
-        type s_x = 0;
-        type s_y = 0;
-
-        type s_xx = 0;
-
-        type s_xy = 0;
-
-        for(Index i = 0; i < n; i++) {
-          s_x += x[i];
-
-          s_y += log(y[i]);
-
-          s_xx += x[i] * x[i];
-
-          s_xy += x[i] * log(y[i]);
-        }
-
-        CorrelationResults exponential_correlation;
-
-        exponential_correlation.correlation_type = Exponential_correlation;
-
-        if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
-        {
-            exponential_correlation.correlation = 1.0;
-
-         } else {
-
-            const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
-
-            const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
-
-            Tensor<type, 1> log_y(y_valid.size());
-
-            for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
-            {
-                 log_y[i] = log(y_valid[i]);
-            }
-
-            exponential_correlation.correlation = OpenNN::linear_correlation(x.delete_indices(negative_indices), log_y);
-        }
-
-        return exponential_correlation;
-    */
-    return CorrelationResults();
-}
-
-
-///Calculate the exponential correlation between two variables when there are missing values.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-
     Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
@@ -2059,32 +1949,18 @@ CorrelationResults exponential_correlations_missing_values(const Tensor<type, 1>
     CorrelationResults exponential_correlation;
 
     exponential_correlation.correlation_type = Exponential_correlation;
-    /*
-        if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
-        {
 
-          exponential_correlation.correlation = 1.0;
+    if(s_x == static_cast<type>(0.0) && s_y == 0.0 && s_xx == 0.0 &&  s_xy < numeric_limits<type>::min())
+    {
+        exponential_correlation.correlation = 1.0;
+    }
+    else
+    {
 
-        } else {
+        exponential_correlation.correlation = OpenNN::exponential_correlation(new_vector_x, new_vector_y);
+    }
 
-         const Tensor<Index, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
-         const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
-
-         Tensor<type, 1> log_y(y_valid.size());
-
-         for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
-         {
-             log_y[i] = log(y_valid[i]);
-         }
-
-         exponential_correlation.correlation = exponential_correlation_missing_values(new_vector_x.delete_indices(negative_indices), log_y);
-
-        }
-
-        return exponential_correlation;
-        */
-    return CorrelationResults();
-
+    return exponential_correlation;
 }
 
 
@@ -3931,10 +3807,18 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix,const Index& index,
 
 pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    /*
-    const Index not_NAN_x = x.count_not_NAN();
+    const Index x_NAN_number = count_NAN(x);
 
-    const Index not_NAN_y = y.count_not_NAN();
+    const Index y_NAN_number = count_NAN(y);
+
+    if(x_NAN_number == 0 && y_NAN_number == 0)
+    {
+        return make_pair(x, y);
+    }
+
+    const Index not_NAN_x = x.size() - x_NAN_number;
+
+    const Index not_NAN_y = y.size() - y_NAN_number;
 
     Index new_size;
 
@@ -3955,18 +3839,29 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 
     for(Index i = 0; i < new_vector_x.size() ; i++)
     {
-        if(!::isnan(x[i]) && !::isnan(y[i]))
+        if(!::isnan(x(i)) && !::isnan(y(i)))
         {
-            new_vector_x[index] = x[i];
-            new_vector_y[index] = y[i];
+            new_vector_x(index) = x(i);
+            new_vector_y(index) = y(i);
 
             index++;
         }
     }
 
     return make_pair(new_vector_x, new_vector_y);
-    */
-    return pair <Tensor<type, 1>, Tensor<type, 1>>();
+}
+
+
+Index count_NAN(const Tensor<type, 1>& x)
+{
+    Index NAN_number = 0;
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(::isnan(x(i))) NAN_number++;
+    }
+
+    return NAN_number;
 }
 
 }
