@@ -17,7 +17,12 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = x.size();
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
+
+    const Index n = new_x.size();
 //@todo
 //  if(x.is_constant() || y.is_constant()) return 1.0;
 
@@ -48,13 +53,13 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     for(Index i = 0; i < n; i++)
     {
-        s_x += x[i];
-        s_y += y[i];
+        s_x += new_x(i);
+        s_y += new_y(i);
 
-        s_xx += x[i] * x[i];
-        s_yy += y[i] * y[i];
+        s_xx += new_x(i) * new_x(i);
+        s_yy += new_y(i) * new_y(i);
 
-        s_xy += y[i] * x[i];
+        s_xy += new_y(i) * new_x(i);
     }
 
     type linear_correlation;
@@ -72,7 +77,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
         if(radicand <= static_cast<type>(0.0))
         {
-            return 1;
+            return 1.0;
         }
 
         const type denominator = sqrt(radicand);
@@ -89,22 +94,6 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     return linear_correlation;
 
-}
-
-
-/// Calculates the linear correlation coefficient(R-value) between two
-/// when there are missing values in the data.
-/// @param x Vector containing data.
-/// @param y Vector for computing the linear correlation with this vector.
-
-type linear_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
-
-    return linear_correlation(new_x, new_y);
 }
 
 
@@ -284,40 +273,14 @@ type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-    return linear_correlation(x.log(), y);
-}
-
-
-/// Calculates the correlation between Y and ln(A*X+B).
-/// Takes into account possible missing values.
-/// @param x Vector containing the input values.
-/// @param y Vector containing the target values.
-/// @param missing Vector with the missing instances indices.
-
-type logarithmic_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logarithmic_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
-    return logarithmic_correlation(new_x, new_y);
+    return linear_correlation(x.log(), y);
 }
+
 
 
 /// Calculates the logistic correlation coefficient between inputs and target.
@@ -497,7 +460,7 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "static type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -505,37 +468,12 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-    return linear_correlation(x.log(), y.log());
-}
-
-
-///Calculate the power correlation between two variables.
-/// @param x Vector of the independent variable
-/// @param y Vector of the dependent variable
-
-type power_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
     return linear_correlation(new_x.log(), new_y.log());
-
 }
 
 
@@ -978,13 +916,13 @@ RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, con
 
     for(Index i = 0; i < new_vector_x.size(); i++)
     {
-        s_x += new_vector_x[i];
-        s_y += new_vector_y[i];
+        s_x += new_vector_x(i);
+        s_y += new_vector_y(i);
 
-        s_xx += new_vector_x[i] * new_vector_x[i];
-        s_yy += new_vector_y[i] * new_vector_y[i];
+        s_xx += new_vector_x(i) * new_vector_x(i);
+        s_yy += new_vector_y(i) * new_vector_y(i);
 
-        s_xy += new_vector_x[i] * new_vector_y[i];
+        s_xy += new_vector_x(i) * new_vector_y(i);
     }
 
     RegressionResults linear_regression;
@@ -1738,82 +1676,6 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
 CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults "
-               "logarithmic_regression(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    type s_x = 0;
-    type s_y = 0;
-
-//Unused_d    type s_xx = 0;
-//Unused_d    type s_yy = 0;
-
-//Unused_d    type s_xy = 0;
-
-    Tensor<type, 1> x1(x.size());
-
-    type y1 = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += x[i];
-        s_y += y[i];
-
-        x1[i]= log(x[i]);
-        y1 += y[i];
-    }
-    /*
-         for(Index i = 0; i < n; i++)
-         {
-             s_xx += pow((x1[i] - x1.sum()/x.size()),2);
-
-             s_yy += pow(y[i] - y1/y.size(),2);
-
-             s_xy += (x1(i) - x1.sum()/x.size())*(y(i) - y1/y.size());
-         }
-
-         CorrelationResults logarithmic_correlation;
-
-         logarithmic_correlation.correlation_type = Logarithmic_correlation;
-
-         if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy) < numeric_limits<type>::min()) {
-
-           logarithmic_correlation.correlation = 1.0;
-
-         } else {
-
-           logarithmic_correlation.correlation = linear_correlation(logarithm(x), y);
-        }
-
-         return logarithmic_correlation;
-    */
-    return CorrelationResults();
-}
-
-
-///Calculate the logarithmic correlation between two variables when there are missing values.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
     Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
@@ -1834,63 +1696,61 @@ CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>
     }
 
 #endif
-    /*
-        pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-        const Tensor<type, 1> new_vector_x = filter_vectors.first;
-        const Tensor<type, 1> new_vector_y = filter_vectors.second;
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-        n = new_vector_x.size();
+    const Tensor<type, 1> new_vector_x = filter_vectors.first;
+    const Tensor<type, 1> new_vector_y = filter_vectors.second;
 
-        type s_x = 0;
-        type s_y = 0;
+    n = new_vector_x.size();
 
-        type s_xx = 0;
-        type s_yy = 0;
+    type s_x = 0;
+    type s_y = 0;
 
-        type s_xy = 0;
+    Tensor<type, 0> s_xx;
+    s_xx.setZero();
 
-        Tensor<type, 1> x1(new_vector_x.size());
+    type s_yy = 0;
 
-        type y1 = 0;
+    Tensor<type, 0> s_xy;
+    s_xy.setZero();
 
-        for(Index i = 0; i < new_vector_x.size(); i++)
-        {
-          s_x += new_vector_x[i];
-          s_y += new_vector_y[i];
+    Tensor<type, 1> x1(new_vector_x.size());
 
-          x1[i]= log(new_vector_x[i]);
-          y1 += new_vector_y[i];
-        }
+    type y1 = 0;
 
-         for(Index i = 0; i < new_vector_x.size(); i++)
-         {
-             s_xx += pow((x1[i] - x1.sum() / new_vector_x.size()),2);
+    for(Index i = 0; i < new_vector_x.size(); i++)
+    {
+        s_x += new_vector_x(i);
+        s_y += new_vector_y(i);
 
-             s_yy += pow(new_vector_y[i] - y1 / new_vector_y.size(),2);
+        x1(i)= log(new_vector_x(i));
+        y1 += new_vector_y(i);
+    }
 
-             s_xy += (x1[i] - x1.sum() / new_vector_x.size()) * (new_vector_y[i] - y1/new_vector_y.size());
-         }
+    for(Index i = 0; i < new_vector_x.size(); i++)
+    {
+        s_xx += (x1(i) - x1.sum() / static_cast<type>(new_vector_x.size())).pow(2.0);
 
-         CorrelationResults logarithmic_correlation;
+        s_yy += pow(new_vector_y(i) - y1 / new_vector_y.size(), 2);
 
-         logarithmic_correlation.correlation_type = Logarithmic_correlation;
+        s_xy += (x1(i) - x1.sum() / static_cast<type>(new_vector_x.size())) * (new_vector_y(i) - y1 / static_cast<type>(new_vector_y.size()));
+    }
 
-         if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy) < numeric_limits<type>::min())
-         {
+    CorrelationResults logarithmic_correlation;
 
-           logarithmic_correlation.correlation = 1.0;
+    logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
-         } else
-         {
+    if(s_x == static_cast<type>(0) && s_y == static_cast<type>(0) && s_xx() == static_cast<type>(0) && s_yy == static_cast<type>(0) && s_xy() < numeric_limits<type>::min())
+    {
+        logarithmic_correlation.correlation = 1.0;
+    }
+    else
+    {
+        logarithmic_correlation.correlation = linear_correlation(new_vector_x.log(), new_vector_y);
+    }
 
-           logarithmic_correlation.correlation = linear_correlation_missing_values(logarithm(new_vector_x), new_vector_y);
-
-         }
-
-         return logarithmic_correlation;
-    */
-    return CorrelationResults();
+    return logarithmic_correlation;
 }
 
 
@@ -1950,7 +1810,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
-    if(s_x == static_cast<type>(0.0) && s_y == 0.0 && s_xx == 0.0 &&  s_xy < numeric_limits<type>::min())
+    if((s_x == static_cast<type>(0.0) && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
         exponential_correlation.correlation = 1.0;
     }
@@ -1970,71 +1830,6 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
 CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults "
-               "power_regression(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += log(x[i]);
-        s_y += log(y[i]);
-
-        s_xx += log(x[i]) * log(x[i]);
-
-        s_xy += log(x[i]) * log(y[i]);
-    }
-
-    CorrelationResults power_correlation;
-
-    power_correlation.correlation_type = Power_correlation;
-
-    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
-    {
-        power_correlation.correlation = 1.0;
-
-    }
-    else
-    {
-
-        power_correlation.correlation = linear_correlation(x.log(), y.log());
-    }
-
-    return power_correlation;
-}
-
-
-///Calculate the power correlation between two variables when there are missing values.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-
     Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
@@ -2072,12 +1867,12 @@ CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, c
 
     for(Index i = 0; i < n; i++)
     {
-        s_x += log(new_vector_x[i]);
-        s_y += log(new_vector_y[i]);
+        s_x += log(new_vector_x(i));
+        s_y += log(new_vector_y(i));
 
-        s_xx += log(new_vector_x[i]) * log(new_vector_x[i]);
+        s_xx += log(new_vector_x(i)) * log(new_vector_x(i));
 
-        s_xy += log(new_vector_x[i]) * log(new_vector_y[i]);
+        s_xy += log(new_vector_x(i)) * log(new_vector_y(i));
     }
 
     CorrelationResults power_correlation;
@@ -2088,12 +1883,12 @@ CorrelationResults power_correlations_missing_values(const Tensor<type, 1>& x, c
             && abs(s_xx) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
     {
         power_correlation.correlation = 1.0;
-
     }
     else
     {
+        // Check missing values
 
-        power_correlation.correlation = linear_correlation_missing_values(new_vector_x.log(), new_vector_y.log());
+        power_correlation.correlation = linear_correlation(new_vector_x.log(), new_vector_y.log());
     }
 
     return power_correlation;

@@ -64,6 +64,17 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+
+        Tensor<type, 0> a;
+        a.setZero();
+
+        type b = a();
+
+        cout << "b: " << b << endl;
+
+
+
+
         return 0;
 
     }
