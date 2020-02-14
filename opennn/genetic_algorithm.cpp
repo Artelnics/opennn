@@ -2181,7 +2181,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             cout << "Corresponding training loss: " << current_training_error << endl;
 //            cout << "Generation selection mean = " << mean(loss.chip(1,1)) << endl;
             cout << "Generation selection standard deviation = " << standard_deviation(loss.chip(1,1)) << endl;
-//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
         }
@@ -2254,7 +2254,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 //        cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
-//        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
     return results;

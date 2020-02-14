@@ -197,6 +197,12 @@ public:
 
     virtual Results* perform_inputs_selection() = 0;
 
+    //
+
+    /// Writes the time from seconds in format HH:mm:ss.
+
+    const string write_elapsed_time(const type&) const;
+
 protected:
 
     /// Pointer to a training strategy object.

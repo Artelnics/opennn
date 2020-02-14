@@ -620,6 +620,54 @@ cout << "3" << endl;
        }
    }
 
+   Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
+   {
+       const Index parameters_number = parameters.size();
+
+       Tensor<type, 2> hessian(parameters_number, parameters_number);
+
+           switch(device_pointer->get_type())
+           {
+                case Device::EigenDefault:
+                {
+                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                    hessian.device(*default_device) = static_cast<type>(0.0)*parameters;  //<---
+
+                    return hessian;
+
+                }
+
+                case Device::EigenSimpleThreadPool:
+                {
+                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                   hessian.device(*thread_pool_device) =  static_cast<type>(0.0)*parameters;  //<---
+
+                   return hessian;
+                }
+
+               case Device::EigenGpu:
+               {
+    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                    break;
+               }
+
+                default:
+                {
+                   ostringstream buffer;
+
+                   buffer << "OpenNN Exception: Layer class.\n"
+                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                          << "Unknown device.\n";
+
+                   throw logic_error(buffer.str());
+               }
+           }
+   }
+
+
    Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const
    {
        const Index parameters_number = parameters.size();
@@ -628,7 +676,7 @@ cout << "3" << endl;
 
        const type norm = l2_norm(parameters);
 
-       if(norm == 0.0)
+       if(static_cast<Index>(norm) ==  0)
        {
            gradient.setConstant(0.0);
 
@@ -645,8 +693,6 @@ cout << "3" << endl;
                 gradient.device(*default_device) = parameters/norm;
 
                 return gradient;
-
-                break;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -656,8 +702,6 @@ cout << "3" << endl;
                gradient.device(*thread_pool_device) = parameters/norm;
 
                return gradient;
-
-                break;
             }
 
            case Device::EigenGpu:
@@ -689,7 +733,7 @@ cout << "3" << endl;
 
        const type norm = l2_norm(parameters);
 
-       if(norm == 0.0)
+       if(static_cast<Index>(norm) == 0.0)
        {
            hessian.setConstant(0.0);
 
@@ -707,7 +751,6 @@ cout << "3" << endl;
 
                     return hessian;
 
-                    break;
                 }
 
                 case Device::EigenSimpleThreadPool:
@@ -718,7 +761,6 @@ cout << "3" << endl;
 
                    return hessian;
 
-                    break;
                 }
 
                case Device::EigenGpu:

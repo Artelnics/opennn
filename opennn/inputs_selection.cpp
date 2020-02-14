@@ -1093,6 +1093,49 @@ string InputsSelection::Results::object_to_string() const
     return buffer.str();
 }
 
+/// Writes the time from seconds in format HH:mm:ss.
+
+const string InputsSelection::write_elapsed_time(const type& time) const
+{
+
+#ifdef __OPENNN_DEBUG__
+
+    if(time > static_cast<type>(3600e5))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "Time must be lower than 10e5 seconds.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(time < static_cast<type>(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "Time must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
+    }
+#endif
+
+    int hours = static_cast<int>(time) / 3600;
+    int seconds = static_cast<int>(time) % 3600;
+    int minutes = seconds / 60;
+    seconds = seconds % 60;
+
+    ostringstream elapsed_time;
+
+    elapsed_time << setfill('0') << setw(2) << hours << ":"
+                 << setfill('0') << setw(2) << minutes << ":"
+                 << setfill('0') << setw(2) << seconds << endl;
+
+    return elapsed_time.str();
+}
 
 /// Return the index of uses where is the(input_number)-th input.
 /// @param uses Vector of the uses of the variables.
