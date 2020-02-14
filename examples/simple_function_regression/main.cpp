@@ -31,7 +31,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("D:/Artelnics/opennn/examples/simple_function_regression/data/simple_function_regression.csv", ';', true);
 
         // Variables
@@ -97,7 +97,7 @@ int main(void)
 //        training_strategy_results.save("../data/training_strategy_results.dat");
 
 //        linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-
+*/
         return 0;
     }
     catch(exception& e)

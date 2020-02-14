@@ -28,7 +28,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/breast_cancer.csv",';',true);
 
         data_set.split_instances_random();
@@ -104,7 +104,7 @@ int main(void)
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
         cout << "End" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

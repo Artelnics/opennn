@@ -32,7 +32,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/urinary_inflammations_diagnosis.csv", ';', true);
 
         data_set.print_data_preview();
@@ -117,7 +117,7 @@ int main(void)
 //        model_selection_results.save("../data/model_selection_results.dat");
 
         confusion.save_csv("../data/confusion.csv");
-
+*/
         return 0;
     }
     catch(exception& e)

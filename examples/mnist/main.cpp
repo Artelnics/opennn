@@ -28,7 +28,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/mnist_train.csv", ',', false);
 
         data_set.set_input();

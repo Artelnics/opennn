@@ -32,7 +32,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         //  Load data set
-
+/*
         DataSet data_set;
 
         data_set.set_data_file_name("../../../datasets/pollution.csv");
@@ -112,7 +112,7 @@ int main(void)
         training_strategy_results.save("../data/training_strategy_results.dat");
 
         linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-
+*/
         return 0;
     }
     catch(exception& e)

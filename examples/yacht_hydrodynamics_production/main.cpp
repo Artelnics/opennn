@@ -29,7 +29,7 @@ int main(void)
     {
 
         cout << "OpenNN. Yacht Resistance Production Example." << endl;
-
+/*
         // Neural network
 
         const string neural_network_file_name = "../data/neural_network.xml";
@@ -75,7 +75,7 @@ int main(void)
 
         cout << "Residuary resistance per unit weight of displacement:\n"
                   << residuary_resistance << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

@@ -28,7 +28,7 @@ int main(void)
         cout << "OpenNN. Simple classification example." << endl;
 
         // Data set
-
+/*
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
 
         // Variables
@@ -84,7 +84,7 @@ int main(void)
 //        confusion.save("../data/confusion.dat");
 
         cout << "Bye" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)
