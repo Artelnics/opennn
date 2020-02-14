@@ -1007,7 +1007,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
         }
     }
 
-    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<Index>());
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
     // Calculate quartiles
 
