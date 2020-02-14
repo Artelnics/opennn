@@ -624,7 +624,7 @@ public:
                 {
                     DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                    hessian.device(*default_device) = static_cast<type>(0.0)*parameters;  //<---
+                    hessian.device(*default_device) = hessian.setZero();  //<---
 
                     return hessian;
 
@@ -634,7 +634,7 @@ public:
                 {
                    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                   hessian.device(*thread_pool_device) =  static_cast<type>(0.0)*parameters;  //<---
+                   hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
 
                    return hessian;
                 }
@@ -670,7 +670,7 @@ public:
 
        if(static_cast<Index>(norm) ==  0)
        {
-           gradient.setConstant(0.0);
+           gradient.setZero();
 
            return gradient;
        }
@@ -727,7 +727,7 @@ public:
 
        if(static_cast<Index>(norm) == 0.0)
        {
-           hessian.setConstant(0.0);
+           hessian.setZero();
 
            return hessian;
        }

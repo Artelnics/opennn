@@ -121,6 +121,54 @@ public:
        return minkowski_error(0);
    }
 
+   void calculate_error(BackPropagation& back_propagation) const
+   {
+       Tensor<type, 0> minkowski_error;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       back_propagation.loss = minkowski_error(0);
+   }
+
    /// @todo Virtual method not implemented.
 
    void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -136,7 +184,8 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 /*
-        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
+        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations
+                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 */
    }
 
