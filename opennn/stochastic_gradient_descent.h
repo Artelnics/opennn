@@ -189,7 +189,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_optimization_data(const LossIndex::BackPropagation& back_propagation,
+   void update_iteration(const LossIndex::BackPropagation& back_propagation,
                                  OptimizationData& optimization_data)
    {
        type learning_rate = 0;
