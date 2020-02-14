@@ -254,65 +254,6 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-/// This method calculates the error term gradient for training instances.
-/// It is used for optimization of parameters during training.
-/// Returns the value of the error term gradient.
-
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_gradient() const
-{
-#ifdef __OPENNN_DEBUG__
-
-    check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    // Loss index
-
-    Tensor<type, 1> training_error_gradient(parameters_number);
-    training_error_gradient.setZero();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-        /*
-                const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-
-                const Tensor<type, 2> output_gradient
-                        = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
-
-                const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-                const Tensor<type, 1> batch_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
-
-                #pragma omp critical
-
-                training_error_gradient += batch_gradient;
-        */
-    }
-
-    return training_error_gradient * static_cast<type>(2.0) / training_normalization_coefficient;
-}
-
-
 /// Returns loss vector of the error terms function for the weighted squared error.
 /// It uses the error back-propagation method.
 /// @param outputs Output data.
@@ -386,11 +327,11 @@ LossIndex::SecondOrderLoss WeightedSquaredError::calculate_terms_second_order_lo
 
     // Data set
 
+    SecondOrderLoss terms_second_order_loss(parameters_number);
+/*
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const Index batches_number = training_batches.size();
-
-    SecondOrderLoss terms_second_order_loss(parameters_number);
 
     // Eigen stuff
 
@@ -400,7 +341,7 @@ LossIndex::SecondOrderLoss WeightedSquaredError::calculate_terms_second_order_lo
     {
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-        /*
+
                 const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
                 const Tensor<type, 1> error_terms
@@ -426,8 +367,7 @@ LossIndex::SecondOrderLoss WeightedSquaredError::calculate_terms_second_order_lo
                     terms_second_order_loss.loss += loss(0);
                     terms_second_order_loss.gradient += gradient;
                     terms_second_order_loss.hessian += hessian_approximation;
-                }
-        */
+                }        
     }
 
     terms_second_order_loss.loss /= training_normalization_coefficient;
@@ -440,7 +380,7 @@ LossIndex::SecondOrderLoss WeightedSquaredError::calculate_terms_second_order_lo
 //        terms_second_order_loss.gradient += calculate_regularization_gradient();
 //        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-
+*/
     return terms_second_order_loss;
 }
 

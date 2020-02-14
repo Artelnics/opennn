@@ -974,7 +974,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of iterations reached.\n";
+                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;

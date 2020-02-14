@@ -658,7 +658,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -683,21 +683,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             training_loss += back_propagation.loss;
 
+//            cout << back_propagation.loss << endl;
+
+//            system("pause");
+
             // Optimization algorithm
 
-            update_iteration(back_propagation, optimization_data);
+//            update_iteration(back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
-
-            if(has_selection)
-            {
-            }
         }
 
         // Loss
 
         training_loss /= static_cast<type>(batches_number);
-
+/*
         if(has_selection)
         {
             selection_error = 0;
@@ -727,7 +727,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-
+*/
         // Training history loss index
 
         if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
@@ -741,7 +741,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of iterations reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -791,8 +791,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                  << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                  << "Selection error: " << selection_error << endl;
         }
-
-        // Update stuff
 
         if(stop_training) break;
     }

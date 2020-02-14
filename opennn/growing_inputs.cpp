@@ -361,7 +361,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             end_algorithm = true;
 
-            if(display) cout << "Maximum number of iterations reached." << endl;
+            if(display) cout << "Maximum number of epochs reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumIterations;
         }
@@ -720,7 +720,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             {
                 end = true;
 
-                if(display) cout << "Maximum number of iterations reached." << endl;
+                if(display) cout << "Maximum number of epochs reached." << endl;
 
                 results->stopping_condition = InputsSelection::MaximumIterations;
             }

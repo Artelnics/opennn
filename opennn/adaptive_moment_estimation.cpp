@@ -609,7 +609,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, !is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
