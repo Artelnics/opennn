@@ -1007,7 +1007,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
         }
     }
 
-    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<Index>());
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
     // Calculate quartiles
 
@@ -1096,8 +1096,6 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
     if(vector.dimension(0) == 0 || indices.dimension(0) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
-
-    cout << "quartiles: " << quartiles << endl;
 
     boxplot.minimum = minimum(vector);
     boxplot.first_quartile = quartiles(0);

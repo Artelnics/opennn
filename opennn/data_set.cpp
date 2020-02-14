@@ -4470,15 +4470,6 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         {
             box_plots(i) = box_plot(data.chip(variable_index, 1), used_instances_indices);
 
-
-            cout << "i: " << i << endl;
-            cout << "minimum: " << box_plots(i).minimum << endl;
-            cout << "first_quartile: " << box_plots(i).first_quartile << endl;
-            cout << "median: " << box_plots(i).median << endl;
-            cout << "third_quartile: " << box_plots(i).third_quartile << endl;
-            cout << "maximum: " << box_plots(i).maximum << endl;
-
-
             variable_index++;
         }
         else if(columns(i).type == Categorical)
