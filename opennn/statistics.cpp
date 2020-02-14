@@ -1097,8 +1097,6 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
 
-    cout << "quartiles: " << quartiles << endl;
-
     boxplot.minimum = minimum(vector);
     boxplot.first_quartile = quartiles(0);
     boxplot.median = quartiles(1);
