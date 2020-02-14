@@ -75,7 +75,7 @@ public:
 
    const type& get_minimum_parameters_increment_norm() const;
 
-   const type& get_minimum_loss_increase() const;
+   const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
    const Index& get_maximum_selection_error_increases() const;

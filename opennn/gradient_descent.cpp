@@ -138,7 +138,7 @@ const type& GradientDescent::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.
 
-const type& GradientDescent::get_minimum_loss_increase() const
+const type& GradientDescent::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
@@ -521,15 +521,15 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
 
 /// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
-void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
+void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
 
 
 #ifdef __OPENNN_DEBUG__
 
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
+    if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -544,7 +544,7 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_inc
 
     // Set minimum loss improvement
 
-    minimum_loss_decrease = new_minimum_loss_increase;
+    minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
@@ -1159,7 +1159,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       // Maximum selection error decreases
+       // Maximum selection error increases
 
        labels.push_back("Maximum selection error increases");
 
@@ -1727,11 +1727,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
             {
-                set_minimum_loss_decrease(new_minimum_loss_increase);
+                set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
             catch(const logic_error& e)
             {

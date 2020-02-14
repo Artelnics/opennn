@@ -123,22 +123,6 @@ const type& StochasticGradientDescent::get_error_gradient_norm() const
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
-
-const type& StochasticGradientDescent::get_minimum_parameters_increment_norm() const
-{
-    return minimum_parameters_increment_norm;
-}
-
-
-/// Returns the minimum loss improvement during training.
-
-const type& StochasticGradientDescent::get_minimum_loss_increase() const
-{
-    return minimum_loss_decrease;
-}
-
-
 /// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
@@ -157,14 +141,6 @@ const type& StochasticGradientDescent::get_gradient_norm_goal() const
 }
 
 
-/// Returns the maximum number of selection failures during the training process.
-
-const Index& StochasticGradientDescent::get_maximum_selection_error_increases() const
-{
-    return maximum_selection_error_increases;
-}
-
-
 /// Returns the maximum training time.
 
 const type& StochasticGradientDescent::get_maximum_time() const
@@ -178,14 +154,6 @@ const type& StochasticGradientDescent::get_maximum_time() const
 const bool& StochasticGradientDescent::get_choose_best_selection() const
 {
     return choose_best_selection;
-}
-
-
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& StochasticGradientDescent::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
 }
 
 
@@ -234,15 +202,11 @@ void StochasticGradientDescent::set_default()
 
     // Stopping criteria
 
-    minimum_parameters_increment_norm = 0;
-    minimum_loss_decrease = 0;
     loss_goal = -numeric_limits<type>::max();
     gradient_norm_goal = 0;
-    maximum_selection_error_increases = 1000000;
     maximum_time = 1000.0;
     maximum_epochs_number = 1000;
     choose_best_selection = false;
-    apply_early_stopping = true;
 
     // TRAINING HISTORY
 
@@ -506,62 +470,6 @@ void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maxi
 }
 
 
-/// Sets a new value for the minimum parameters increment norm stopping criterion.
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
-
-void StochasticGradientDescent::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void new_minimum_parameters_increment_norm(const type&) method.\n"
-               << "Minimum parameters increment norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error training rate
-
-    minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
-}
-
-
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
-
-void StochasticGradientDescent::set_minimum_loss_increase(const type& new_minimum_loss_increase)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_minimum_loss_increase(const type&) method.\n"
-               << "Minimum loss improvement must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set minimum loss improvement
-
-    minimum_loss_decrease = new_minimum_loss_increase;
-}
-
-
 /// Sets a new goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 /// @param new_loss_goal Goal value for the loss.
@@ -599,24 +507,6 @@ void StochasticGradientDescent::set_gradient_norm_goal(const type& new_gradient_
 }
 
 
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_increases Maximum number of iterations in which the selection evalutation increases.
-
-void StochasticGradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
-{
-    maximum_selection_error_increases = new_maximum_selection_error_increases;
-}
-
-
-/// Sets a maximum number of iterations for training.
-/// @param new_maximum_iterations_number Maximum number of iterations for training.
-
-//void StochasticGradientDescent::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
-//{
-//   maximum_iterations_number = new_maximum_iterations_number;
-//}
-
-
 /// Sets a new maximum training time.
 /// @param new_maximum_time Maximum training time.
 
@@ -649,15 +539,6 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 void StochasticGradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-void StochasticGradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
 }
 
 
@@ -863,21 +744,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
-        // Stopping Criteria
-
-        if(selection_failures >= maximum_selection_error_increases && apply_early_stopping)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ", iteration " << epoch << ": Maximum selection failures reached.\n"
-                     << "Selection failures: " << selection_failures << endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MaximumSelectionErrorIncreases;
-        }
-
         else if(epoch == maximum_epochs_number)
         {
             if(display)
@@ -1046,7 +912,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       // Maximum selection error decreases
+       // Maximum selection error increases
 
        labels.push_back("Maximum selection error increases");
 
@@ -1150,17 +1016,6 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
     // Warning parameters norm
 
     element = document->NewElement("WarningParametersNorm");
@@ -1205,28 +1060,6 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Minimum parameters increment norm
-
-    element = document->NewElement("MinimumParametersIncrementNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << minimum_parameters_increment_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Minimum loss decrease
-
-    element = document->NewElement("MinimumLossDecrease");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << minimum_loss_decrease;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
     // Loss goal
 
     element = document->NewElement("LossGoal");
@@ -1245,17 +1078,6 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
 
     buffer.str("");
     buffer << gradient_norm_goal;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Maximum selection error decreases
-
-    element = document->NewElement("MaximumSelectionErrorIncreases");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << maximum_selection_error_increases;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1411,39 +1233,6 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.CloseElement();
 
-    // Apply early stopping
-
-    file_stream.OpenElement("ApplyEarlyStopping");
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Minimum parameters increment norm
-
-    file_stream.OpenElement("MinimumParametersIncrementNorm");
-
-    buffer.str("");
-    buffer << minimum_parameters_increment_norm;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Minimum loss decrease
-
-    file_stream.OpenElement("MinimumLossDecrease");
-
-    buffer.str("");
-    buffer << minimum_loss_decrease;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
@@ -1461,17 +1250,6 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     buffer.str("");
     buffer << gradient_norm_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Maximum selection error increases
-
-    file_stream.OpenElement("MaximumSelectionErrorIncreases");
-
-    buffer.str("");
-    buffer << maximum_selection_error_increases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1599,54 +1377,17 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Minimum parameters increment norm
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
-
-        if(element)
-        {
-            const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
     // Minimum loss decrease
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
 
         if(element)
         {
-            const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
             {
-                set_minimum_loss_increase(new_minimum_loss_increase);
+                set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
             catch(const logic_error& e)
             {
@@ -1685,25 +1426,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_gradient_norm_goal(new_gradient_norm_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Maximum selection error increases
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
-
-        if(element)
-        {
-            const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                set_maximum_selection_error_increases(new_maximum_selection_error_increases);
             }
             catch(const logic_error& e)
             {

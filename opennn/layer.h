@@ -285,4 +285,4 @@ protected:
 
 }
 
-#endif // __LAYER_H
+#endif // LAYER_H

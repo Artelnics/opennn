@@ -158,7 +158,7 @@ const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.
 
-const type& ConjugateGradient::get_minimum_loss_increase() const
+const type& ConjugateGradient::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
@@ -577,13 +577,13 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
 
 /// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
-void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
+void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
+    if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -598,7 +598,7 @@ void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_i
 
     // Set minimum loss improvement
 
-    minimum_loss_decrease = new_minimum_loss_increase;
+    minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
@@ -1584,7 +1584,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       // Maximum selection error decreases
+       // Maximum selection error increases
 
        labels.push_back("Maximum selection error increases");
 
@@ -2346,15 +2346,15 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minimum loss decrease
     {
-        const tinyxml2::XMLElement* minimum_loss_increase_element = root_element->FirstChildElement("MinimumLossDecrease");
+        const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
-        if(minimum_loss_increase_element)
+        if(minimum_loss_decrease_element)
         {
-            const type new_minimum_loss_increase = static_cast<type>(atof(minimum_loss_increase_element->GetText()));
+            const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
 
             try
             {
-                set_minimum_loss_decrease(new_minimum_loss_increase);
+                set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
             catch(const logic_error& e)
             {

@@ -101,7 +101,7 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_parameters_increment_norm()
 
 /// Returns the minimum loss improvement during training.
 
-const type& LevenbergMarquardtAlgorithm::get_minimum_loss_increase() const
+const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
@@ -503,13 +503,13 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const ty
 
 
 /// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
-void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
+void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
+    if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -524,7 +524,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
 
     // Set minimum loss improvement
 
-    minimum_loss_decrease = new_minimum_loss_increase;
+    minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
@@ -1145,7 +1145,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       // Maximum selection error decreases
+       // Maximum selection error increases
 
        labels.push_back("Maximum selection error increases");
 
@@ -1389,7 +1389,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     element = document->NewElement("MaximumSelectionErrorIncreases");
     root_element->LinkEndChild(element);
@@ -1578,7 +1578,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
-    // Maximum selection error decreases
+    // Maximum selection error increases
 
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
@@ -1728,15 +1728,15 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Minimum loss decrease
 
-    const tinyxml2::XMLElement* minimum_loss_increase_element = root_element->FirstChildElement("MinimumLossDecrease");
+    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
 
-    if(minimum_loss_increase_element)
+    if(minimum_loss_decrease_element)
     {
-        const type new_minimum_loss_increase = static_cast<type>(atof(minimum_loss_increase_element->GetText()));
+        const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
 
         try
         {
-            set_minimum_loss_decrease(new_minimum_loss_increase);
+            set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
         catch(const logic_error& e)
         {
