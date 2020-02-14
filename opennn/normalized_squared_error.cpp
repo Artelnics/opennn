@@ -361,11 +361,12 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
 
     // Data set
 
+
+    SecondOrderLoss terms_second_order_loss(parameters_number);
+/*
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const Index batches_number = training_batches.size();
-
-    SecondOrderLoss terms_second_order_loss(parameters_number);
 
     // Eigen stuff
 
@@ -375,7 +376,7 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
     {
         const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
         const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-        /*
+
                 const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
                 const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
@@ -405,7 +406,7 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
                     terms_second_order_loss.gradient += gradient;
                     terms_second_order_loss.hessian += hessian_approximation;
                  }
-        */
+
     }
 
     terms_second_order_loss.loss /= normalization_coefficient;
@@ -418,7 +419,7 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
 //        terms_second_order_loss.gradient += calculate_regularization_gradient();
 //        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-
+*/
     return terms_second_order_loss;
 }
 

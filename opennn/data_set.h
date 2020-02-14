@@ -318,9 +318,9 @@ public:
 
    // Batches get methods
 
-   Tensor<Index, 2> get_training_batches(const Index&, const bool& = true) const;
-   Tensor<Index, 2> get_selection_batches(const Index&, const bool& = true) const;
-   Tensor<Index, 2> get_testing_batches(const Index&, const bool& = true) const;
+   Tensor<Index, 2> get_training_batches(const Index&, const bool&) const;
+   Tensor<Index, 2> get_selection_batches(const Index&, const bool&) const;
+   Tensor<Index, 2> get_testing_batches(const Index&, const bool&) const;
 
    // Data get methods
 

@@ -514,7 +514,6 @@ public:
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
    {
-cout << back_propagation.delta << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:

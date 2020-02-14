@@ -963,7 +963,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of iterations reached." << endl;
+            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached." << endl;
 
             stop_training = true;
 

@@ -2148,7 +2148,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             if(display)
             {
-                cout << "Maximum number of iterations reached." << endl;
+                cout << "Maximum number of epochs reached." << endl;
             }
 
             results->stopping_condition = InputsSelection::MaximumIterations;

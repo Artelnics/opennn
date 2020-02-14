@@ -124,13 +124,7 @@ public:
        {
            cout << "Output gradient:" << endl;
            cout << output_gradient << endl;
-/*
-           for(Index i = 0; i < layers_delta.size(); i++)
-           {
-               cout << "Layers delta " << i << ":" << endl;
-               cout << layers_delta[i] << endl;
-           }
-*/
+
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -145,8 +139,6 @@ public:
        NeuralNetwork::BackPropagation neural_network;
 
        Tensor<type, 2> output_gradient;
-
-//       Tensor<Tensor<type, 1>, 1> layers_error_gradient;
 
        type loss;
 
@@ -434,9 +426,9 @@ public:
                                                               back_propagation.neural_network.layers[0]);
 
        Index index = 0;
-cout << "1" << endl;
+
        trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
-cout << "2" << endl;
+
        index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
@@ -445,7 +437,7 @@ cout << "2" << endl;
                    forward_propagation.layers[i-1].activations,
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
-cout << "3" << endl;
+
            trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
