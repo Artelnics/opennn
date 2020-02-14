@@ -56,9 +56,14 @@ public:
 
    // Error methods
 
+   type cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
    type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
-       return 0.0;
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations,
+                                                                    batch.targets_2d);
    }
 
    // Gradient methods
