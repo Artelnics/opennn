@@ -89,7 +89,7 @@ public:
         Index learning_rate_iteration = 0;
 
         Tensor<type, 1> parameters;
-        Tensor<type, 1> optimal_selection_parameters;
+        Tensor<type, 1> minimal_selection_parameters;
 
         Tensor<type, 1> gradient_exponential_decay;
         Tensor<type, 1> square_gradient_exponential_decay;
