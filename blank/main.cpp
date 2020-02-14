@@ -64,24 +64,6 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-        DataSet data_set("C:/OpenNN/blank/data/irisflowers.csv", ',', true);
-
-        data_set.read_csv();
-
-//        data_set.calculate_columns_box_plots();
-
-        Tensor<type, 2> data = data_set.get_data();
-
-        const Tensor<Index, 1> used_instances_indices = data_set.get_used_instances_indices();
-
-        BoxPlot box_plots = box_plot(data.chip(1, 1), used_instances_indices);
-
-        cout << "minimum: " << box_plots.minimum << endl;
-        cout << "first_quartile: " << box_plots.first_quartile << endl;
-        cout << "median: " << box_plots.median << endl;
-        cout << "third_quartile: " << box_plots.third_quartile << endl;
-        cout << "maximum: " << box_plots.maximum << endl;
-
         return 0;
 
     }
