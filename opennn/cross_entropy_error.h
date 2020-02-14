@@ -36,27 +36,21 @@ class CrossEntropyError : public LossIndex
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit CrossEntropyError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
    explicit CrossEntropyError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
 
    explicit CrossEntropyError(DataSet*);
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
-   
-
    explicit CrossEntropyError(const tinyxml2::XMLDocument&);
 
-   // COPY CONSTRUCTOR
-
    CrossEntropyError(const CrossEntropyError&);
+
+   // Destructor
 
    virtual ~CrossEntropyError();
 

@@ -668,7 +668,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             if(epoch == 0)
             {
                 minimum_selection_error = selection_error;
-                optimization_data.optimal_selection_parameters = optimization_data.parameters;
+                optimization_data.minimal_selection_parameters = optimization_data.parameters;
             }
 //            else if(epoch != 0 && selection_error > old_selection_error)
 //            {
@@ -677,7 +677,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             else if(epoch != 0 && selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                optimization_data.optimal_selection_parameters = optimization_data.parameters;
+                optimization_data.minimal_selection_parameters = optimization_data.parameters;
             }
         }
 
@@ -785,7 +785,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     if(choose_best_selection)
     {
-        optimization_data.parameters = optimization_data.optimal_selection_parameters;
+        optimization_data.parameters = optimization_data.minimal_selection_parameters;
         parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);

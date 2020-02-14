@@ -775,7 +775,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     Tensor<type, 1> parameters_increment(parameters_number);
     type parameters_increment_norm;
 
-    Tensor<type, 1> optimal_selection_parameters(parameters_number);
+    Tensor<type, 1> minimal_selection_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -864,7 +864,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             minimum_selection_error = selection_error;
 
-            optimal_selection_parameters = neural_network_pointer->get_parameters();
+            minimal_selection_parameters = neural_network_pointer->get_parameters();
         }
         else if(epoch != 0 && selection_error > old_selection_error)
         {
@@ -874,7 +874,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             minimum_selection_error = selection_error;
 
-            optimal_selection_parameters = neural_network_pointer->get_parameters();
+            minimal_selection_parameters = neural_network_pointer->get_parameters();
         }
 
         // Elapsed time
@@ -1044,7 +1044,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = optimal_selection_parameters;
+        parameters = minimal_selection_parameters;
         parameters_norm = l2_norm(parameters);
 
         neural_network_pointer->set_parameters(parameters);
