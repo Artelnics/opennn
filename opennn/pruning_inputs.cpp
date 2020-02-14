@@ -407,7 +407,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
             cout << "Training loss: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
-//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
         }
@@ -451,7 +451,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         cout << "Optimal number of inputs: " << optimal_columns_indices.size() << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
-//        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
     return results;
