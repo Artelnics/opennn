@@ -943,7 +943,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
 //   dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)
 
-
     if(abs(parameters_dot_gradient(0)) < static_cast<type>(1.0e-50))
     {
         buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"

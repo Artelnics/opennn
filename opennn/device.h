@@ -16,7 +16,7 @@ class Device
 {
     public:
 
-        enum Type{EigenDefault, EigenSimpleThreadPool, EigenGpu, IntelMkl};
+        enum Type{EigenDefault, EigenSimpleThreadPool, EigenGpu};
 
         explicit Device() {}
 
