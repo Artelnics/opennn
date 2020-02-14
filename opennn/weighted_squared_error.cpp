@@ -254,6 +254,73 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 }
 
 
+type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    const Index other_rows_number = y.dimension(0);
+
+    if(other_rows_number != rows_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Metrics functions.\n"
+               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+               << "Other number of rows must be equal to this number of rows.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Index other_columns_number = y.dimension(1);
+
+    if(other_columns_number != columns_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Metrics functions.\n"
+               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+               << "Other number of columns must be equal to this number of columns.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    type weighted_sum_squared_error = 0.0;;
+
+    type error = 0.0;
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        error = x(i) - y(i);
+
+        if(y(i) == 1.0)
+        {
+            weighted_sum_squared_error += positives_weight*(error*error);
+        }
+        else if(y(i) == 0.0)
+        {
+            weighted_sum_squared_error += negatives_weight*(error*error);
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Metrics functions.\n"
+                   << "double calculate_error() method.\n"
+                   << "Other matrix is neither a positive nor a negative.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    return weighted_sum_squared_error;
+}
+
+
 /// Returns loss vector of the error terms function for the weighted squared error.
 /// It uses the error back-propagation method.
 /// @param outputs Output data.

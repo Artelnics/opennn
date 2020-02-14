@@ -115,7 +115,104 @@ public:
        return sum_squared_error(0);
    }
 
+   void calculate_error(BackPropagation& back_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                sum_squared_error.device(*default_device) = back_propagation.errors.square().sum();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       back_propagation.loss = sum_squared_error(0);
+   }
+
    // Gradient methods
+
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  BackPropagation& back_propagation) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const type coefficient = static_cast<type>(2.0);
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 back_propagation.output_gradient.device(*default_device) = coefficient*back_propagation.errors;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+
+             default:
+             {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: Layer class.\n"
+                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                       << "Unknown device.\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
+   }
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -129,25 +226,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const
-   {
-        #ifdef __OPENNN_DEBUG__
-
-        check();
-
-        #endif
-
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
-
-        back_propagation.output_gradient -= batch.targets_2d;
-
-        back_propagation.output_gradient *= 2.0;
-*/
-   }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
