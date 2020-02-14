@@ -69,6 +69,9 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
+
+            parameters = neural_network_pointer->get_parameters();
+
             parameters_increment.resize(parameters_number);
             nesterov_increment.resize(parameters_number);
             last_parameters_increment.resize(parameters_number);
@@ -200,9 +203,8 @@ public:
 
 //       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-       optimization_data.parameters_increment
-               = static_cast<type>(-learning_rate)*back_propagation.gradient;
-
+       optimization_data.parameters_increment = -learning_rate*back_propagation.gradient;
+/*
        if(momentum > 0 && !nesterov)
        {
            optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
@@ -222,6 +224,8 @@ public:
        {
            optimization_data.parameters += optimization_data.parameters_increment;
        }
+*/
+       optimization_data.parameters += optimization_data.parameters_increment;
 
        optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 

@@ -215,7 +215,7 @@ LossIndex::SecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() 
             const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
             const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
-            const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+            const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
 
             const Tensor<type, 1> error_terms
                     = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);

@@ -269,7 +269,7 @@ public:
 
    virtual void calculate_error(BackPropagation&) const {}
 
-   void calculate_back_propagation(const DataSet::Batch& batch,
+   void back_propagate(const DataSet::Batch& batch,
                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation) const
    {

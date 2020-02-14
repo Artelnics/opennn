@@ -9832,20 +9832,25 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances[j];
+            instance = instances[i];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
+    }
 
-//        for(Index j = 0; j < targets_number; j++)
-//        {
-//            variable = targets_pointer(j);
 
-//            targets_2d_pointer(rows_number*j+i) = data_pointer(total_rows*variable+instance);
-//        }
+    for(Index j = 0; j < targets_number; j++)
+    {
+        variable = targets[j];
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+            instance = instances[i];
+
+            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+        }
     }
 }
-
 
 }
 

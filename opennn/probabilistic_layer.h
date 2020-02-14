@@ -197,7 +197,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
+   void forward_propagate(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
