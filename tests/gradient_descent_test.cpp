@@ -121,11 +121,11 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   type minimum_loss_increase = 0.1;
+   type minimum_loss_decrease = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
    gd.set_loss_goal(0.0);
-   gd.set_minimum_loss_decrease(minimum_loss_increase);
+   gd.set_minimum_loss_decrease(minimum_loss_decrease);
    gd.set_gradient_norm_goal(0.0);
    gd.set_maximum_epochs_number(1000);
    gd.set_maximum_time(1000.0);

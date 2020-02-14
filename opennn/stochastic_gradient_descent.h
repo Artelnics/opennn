@@ -116,14 +116,10 @@ public:
 
    // Stopping criteria
 
-   const type& get_minimum_parameters_increment_norm() const;
-   const type& get_minimum_loss_increase() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
    const type& get_maximum_time() const;
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
-   const Index& get_maximum_selection_error_increases() const;
 
    // Reserve training history
 
@@ -161,14 +157,11 @@ public:
 
    // Stopping criteria
 
-   void set_minimum_parameters_increment_norm(const type&);
-   void set_minimum_loss_increase(const type&);
+   void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
-   void set_maximum_selection_error_increases(const Index&);
    void set_maximum_time(const type&);
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -277,14 +270,6 @@ private:
 
    // Stopping criteria
 
-   /// Norm of the parameters increment vector at which training stops.
-
-   type minimum_parameters_increment_norm;
-
-   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
-
-   type minimum_loss_decrease;
-
    /// Goal value for the loss. It is used as a stopping criterion.
 
    type loss_goal;
@@ -292,11 +277,6 @@ private:
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
    type gradient_norm_goal;
-
-   /// Maximum number of iterations at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
-   Index maximum_selection_error_increases;
 
    /// Maximum epochs number
 
@@ -309,10 +289,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection;
-
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
 
    // Training history
 

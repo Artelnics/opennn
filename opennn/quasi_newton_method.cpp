@@ -169,7 +169,7 @@ const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.
 
-const type& QuasiNewtonMethod::get_minimum_loss_increase() const
+const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
@@ -555,13 +555,13 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
 
 
 /// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two epochs.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two epochs.
 
-void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
+void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
+    if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -576,7 +576,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_i
 
     // Set minimum loss improvement
 
-    minimum_loss_decrease = new_minimum_loss_increase;
+    minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
@@ -2301,11 +2301,11 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
             {
-                set_minimum_loss_decrease(new_minimum_loss_increase);
+                set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
             catch(const logic_error& e)
             {
