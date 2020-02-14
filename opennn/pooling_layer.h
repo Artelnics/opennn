@@ -171,9 +171,9 @@ public:
 
     // First order activations
 /*
-    ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
+    ForwardPropagation forward_propagate(const Tensor<type, 2>&);
 */
-    void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
+    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
     {
 /*
         calculate_activations(inputs, forward_propagation.activations);

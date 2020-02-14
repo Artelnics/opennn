@@ -214,7 +214,7 @@ Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2
 }
 
 /*
-Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
+Layer::ForwardPropagation PoolingLayer::forward_propagate(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
 
