@@ -157,7 +157,6 @@ public:
 
    // Stopping criteria
 
-   void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
    void set_maximum_time(const type&);

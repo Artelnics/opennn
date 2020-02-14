@@ -1377,25 +1377,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Minimum loss decrease
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
-
-        if(element)
-        {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_minimum_loss_decrease(new_minimum_loss_decrease);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
     // Loss goal
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
