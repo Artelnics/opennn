@@ -178,16 +178,6 @@ public:
 
            #endif
 
-            #ifdef USE_INTEL_MKL
-
-           case Device::IntelMkl:
-           {
-
-                break;
-           }
-
-            #endif
-
             default:
             {
                ostringstream buffer;
@@ -302,7 +292,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
@@ -401,19 +390,17 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
+
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Layer class.\n"
+              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
    }
+
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,
@@ -506,14 +493,14 @@ public:
        {
             case Device::EigenDefault:
             {
-//                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
                 break;
             }
 
             case Device::EigenSimpleThreadPool:
             {
-//               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 break;
             }
@@ -526,17 +513,15 @@ public:
                 break;
            }
 
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
+
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Layer class.\n"
+              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
    }
 
    // Gradient methods

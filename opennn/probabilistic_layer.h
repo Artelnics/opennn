@@ -168,16 +168,6 @@ public:
 
            #endif
 
-            #ifdef USE_INTEL_MKL
-
-           case Device::IntelMkl:
-           {
-
-                break;
-           }
-
-            #endif
-
             default:
             {
                ostringstream buffer;
@@ -195,10 +185,9 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void forward_propagate(const Tensor<type, 2>& inputs,
-                                      ForwardPropagation& forward_propagation)
+                          ForwardPropagation& forward_propagation)
    {
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
 
