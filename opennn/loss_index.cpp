@@ -730,7 +730,6 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-
 void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -835,7 +834,6 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
 Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
 {
-
     const Index size = tensor.size();
 
     Tensor<type, 2> direct(size, size);
