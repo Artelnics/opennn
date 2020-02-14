@@ -5073,8 +5073,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
                 const CorrelationResults linear_correlation = linear_correlations(input.chip(0,1), target.chip(0,1));
                 const CorrelationResults exponential_correlation = exponential_correlations(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults logarithmic_correlation = logarithmic_correlations(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults power_correlation = power_correlations(input.chip(0,1), target.chip(0,1));
 
                 CorrelationResults strongest_correlation = linear_correlation;
 

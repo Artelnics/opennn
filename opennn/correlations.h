@@ -97,7 +97,6 @@ struct CorrelationResults
     // Linear
 
     type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type linear_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type, 1>&);
 
     // Rank linear
 
@@ -111,7 +110,6 @@ struct CorrelationResults
     // Logarithmic
 
     type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type logarithmic_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Logistic
 
@@ -125,7 +123,6 @@ struct CorrelationResults
     // Power
 
     type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type power_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Time series correlation methods
 
@@ -164,12 +161,10 @@ struct CorrelationResults
     CorrelationResults linear_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults logarithmic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    CorrelationResults logarithmic_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults exponential_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    CorrelationResults power_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
     CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
