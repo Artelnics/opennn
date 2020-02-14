@@ -28,7 +28,7 @@ int main(void)
     try
     {
         cout << "OpenNN. Iris Plant Example." << endl;
-
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
@@ -103,7 +103,7 @@ int main(void)
         confusion.save_csv("../data/confusion.csv");
 
         cout << "Bye" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

@@ -73,8 +73,6 @@ int main(void)
         cout << "b: " << b << endl;
 
 
-
-
         return 0;
 
     }

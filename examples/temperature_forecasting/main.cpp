@@ -30,7 +30,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         //Data Set
-
+/*
         DataSet data_set("../data/temperature.csv", ',', true);
 
         Vector<Descriptives> columns_statistics = data_set.calculate_columns_descriptives();
@@ -123,7 +123,7 @@ int main(void)
 
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
-
+*/
         return 0;
     }
     catch(exception& e)

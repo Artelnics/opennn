@@ -29,7 +29,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/logical_operations.csv", ';', true);
 
         data_set.set_columns_uses({"Input","Input","Target","Target","Target","Target","Target","Target"});
@@ -93,7 +93,7 @@ int main(void)
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << "X = 0 Y = 0" << endl << inputs << " " << outputs << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

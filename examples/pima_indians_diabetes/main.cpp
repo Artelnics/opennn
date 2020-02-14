@@ -28,7 +28,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/pima_indians_diabetes.csv", ';', true);
 
         data_set.split_instances_random(0.60,0.20,0.20);
@@ -109,7 +109,7 @@ int main(void)
 
         confusion.save_csv("../data/confusion.csv");
 //        binary_classification_tests.save("../data/binary_classification_tests.dat");
-
+*/
         cout << "End" << endl;
 
         return 0;

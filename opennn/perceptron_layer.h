@@ -561,13 +561,13 @@ public:
 //       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
-   void insert_parameters(const Index& index, const Tensor<type, 1>& parameters)
+   void insert_parameters(const Tensor<type, 1>& parameters)
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(synaptic_weights.data(), parameters.data() + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-       memcpy(biases.data(), parameters.data() + synaptic_weights.size() + index, static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       memcpy(biases.data(), parameters.data() + synaptic_weights.size(), static_cast<size_t>(biases_number)*sizeof(type));
    }
 
 

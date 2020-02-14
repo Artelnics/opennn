@@ -28,7 +28,7 @@ int main(void)
     try
     {
         cout << "OdsfadfenNN. Airline Passengers Example." << endl;
-
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
@@ -112,7 +112,7 @@ int main(void)
 
 
         cout << "Bye" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

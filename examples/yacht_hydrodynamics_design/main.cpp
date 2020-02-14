@@ -32,7 +32,7 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-
+/*
         DataSet data_set("../data/yachtresistance.csv", ';', true);
 
         data_set.print_data_preview();
@@ -102,7 +102,7 @@ int main(void)
         training_strategy_results.save("../data/training_strategy_results.dat");
 
         linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-
+*/
         return 0;
     }
     catch(exception& e)
