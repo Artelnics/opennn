@@ -2057,7 +2057,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 /*
 
-Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
+Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs)
 {
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();

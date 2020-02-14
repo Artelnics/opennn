@@ -237,7 +237,7 @@ public:
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
-   void calculate_forward_propagation(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation)
+   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation)
    {
 /*
        calculate_combinations(inputs, forward_propagation.combinations);

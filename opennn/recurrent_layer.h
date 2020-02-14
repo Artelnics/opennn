@@ -199,7 +199,7 @@ public:
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation)
+   void forward_propagate(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation)
    {
 /*
        calculate_combinations(inputs, forward_propagation.combinations);

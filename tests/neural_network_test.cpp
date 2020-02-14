@@ -1703,7 +1703,7 @@ void NeuralNetworkTest::test_add_layer()
 }
 
 
-void NeuralNetworkTest::test_calculate_forward_propagation()
+void NeuralNetworkTest::test_forward_propagate()
 {
     int n = omp_get_max_threads();
 
@@ -1764,7 +1764,7 @@ void NeuralNetworkTest::test_calculate_forward_propagation()
 
 //    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_batch_instances_number(), &neural_network);
 
-//    neural_network.calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
+//    neural_network.forward_propagate(thread_pool_device, batch, forward_propagation);
 
 //    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations;
 
@@ -1798,7 +1798,7 @@ void NeuralNetworkTest::run_test_case()
    test_set_parameters_constant();
    test_set_parameters_random();
 
-   test_calculate_forward_propagation();
+   test_forward_propagate();
    test_get_trainable_layers_parameters();
 
 

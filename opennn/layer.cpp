@@ -152,12 +152,12 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<t
 }
 
 /*
-Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type, 2>&)
+Layer::ForwardPropagation Layer::forward_propagate(const Tensor<type, 2>&)
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_forward_propagation(const Tensor<type, 2>&) method.\n"
+           << "forward_propagate(const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

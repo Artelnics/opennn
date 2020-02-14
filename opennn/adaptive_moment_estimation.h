@@ -78,6 +78,13 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
+            minimal_selection_parameters.resize(parameters_number);
+
+            gradient_exponential_decay.resize(parameters_number);
+            square_gradient_exponential_decay.resize(parameters_number);
+
+            last_gradient_exponential_decay.resize(parameters_number);
+            last_square_gradient_exponential_decay.resize(parameters_number);
         }
 
         void print() const
@@ -210,7 +217,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_optimization_data(const LossIndex::BackPropagation& back_propagation,
+   void update_iteration(const LossIndex::BackPropagation& back_propagation,
                                  OptimizationData& optimization_data)
    {
        const type learning_rate =

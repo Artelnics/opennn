@@ -320,7 +320,7 @@ Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inp
 }
 
 /*
-Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
+Layer::ForwardPropagation ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
 
