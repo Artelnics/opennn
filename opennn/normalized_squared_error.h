@@ -126,6 +126,52 @@ public:
        return sum_squared_error(0)/normalization_coefficient;
    }
 
+   void calculate_error(BackPropagation& back_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                sum_squared_error.device(*default_device) = back_propagation.errors.square().sum();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       back_propagation.loss = sum_squared_error(0)/normalization_coefficient;
+   }
+
 
    // Gradient methods
 
