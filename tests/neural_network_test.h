@@ -103,7 +103,7 @@ public:
 
    // Forward propagation
 
-   void test_calculate_forward_propagation();
+   void test_forward_propagate();
 
    // Unit testing methods
 

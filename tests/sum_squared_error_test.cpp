@@ -190,7 +190,7 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
     Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
     Tensor<type, 2> output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
 
-    Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
+    Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
     Tensor<Tensor<type, 2>, 1> layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
@@ -459,7 +459,7 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    outputs = neural_network.calculate_outputs(inputs);
    output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
 
-   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
+   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
    layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 

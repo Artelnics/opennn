@@ -96,6 +96,8 @@ public:
         type old_learning_rate = 0;
 
         type parameters_increment_norm = 0;
+
+        Tensor<type, 0> training_slope;
     };
 
    // Enumerations
@@ -229,7 +231,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_optimization_data(
+   void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
            const LossIndex::BackPropagation& back_propagation,
@@ -239,8 +241,9 @@ public:
 
        if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
        {
-//           optimization_data.training_direction
-//                   = calculate_gradient_descent_training_direction(back_propagation.gradient);
+           optimization_data.training_direction = -back_propagation.gradient;
+
+           optimization_data.training_direction = normalized(optimization_data.training_direction);
        }
        else
        {
@@ -252,16 +255,15 @@ public:
 
        // Calculate loss training_slope
 
-       const Tensor<type, 0> training_slope;// = (back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
+       optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
-       if(training_slope(0) >= 0)
+       if(optimization_data.training_slope(0) >= 0)
        {
            // Reset training direction
 
-//           optimization_data.training_direction
-//                   = calculate_gradient_descent_training_direction(back_propagation.gradient);
+           optimization_data.training_direction = -back_propagation.gradient;
 
            cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
        }
@@ -287,7 +289,7 @@ public:
        {
            // Reset training direction
 
-//           optimization_data.training_direction = calculate_gradient_descent_training_direction(back_propagation.gradient);
+           optimization_data.training_direction = -back_propagation.gradient;
 
            directional_point = learning_rate_algorithm.calculate_directional_point(batch,
                                optimization_data.parameters, forward_propagation,
@@ -304,6 +306,8 @@ public:
 
        optimization_data.parameters += optimization_data.parameters_increment;
 
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
        // Update stuff
 
 //       optimization_data.old_loss = back_propagation.loss;
@@ -311,8 +315,6 @@ public:
 
        optimization_data.old_training_direction = optimization_data.training_direction;
 //       back_propagation.old_learning_rate = learning_rate;
-
-
 
 }
 

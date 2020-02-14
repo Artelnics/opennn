@@ -853,7 +853,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(has_selection)
         {
-//          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+//          neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
 //          selection_error = loss_index_pointer->calculate_error(
 //                      selection_forward_propagation.layers[trainable_layers_number].activations,
@@ -1049,9 +1049,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->set_parameters(parameters);
 
-//       neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+//       neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-//       loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+//       loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
 //       training_loss = training_back_propagation.loss;
 

@@ -448,7 +448,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 /*
-   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.calculate_forward_propagation(inputs);
+   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
@@ -473,7 +473,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 
-   //forward_propagation = nn.calculate_forward_propagation(inputs);
+   //forward_propagation = nn.forward_propagate(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
@@ -503,7 +503,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 
-   forward_propagation = neural_network.calculate_forward_propagation(inputs);
+   forward_propagation = neural_network.forward_propagate(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
@@ -530,7 +530,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 
-//   forward_propagation = nn.calculate_forward_propagation(inputs);
+//   forward_propagation = nn.forward_propagate(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
