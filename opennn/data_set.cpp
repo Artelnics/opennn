@@ -5069,10 +5069,10 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             if(input_type == Numeric && target_type == Numeric)
             {
-                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
 
-                const CorrelationResults linear_correlation = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults linear_correlation = linear_correlations(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults exponential_correlation = exponential_correlations(input.chip(0,1), target.chip(0,1));
                 const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
                 const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
 
@@ -5086,7 +5086,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
