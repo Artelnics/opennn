@@ -315,7 +315,7 @@ protected:
 
    type learning_rate_tolerance;
 
-   type loss_tolerance = 1.0e-3;
+   type loss_tolerance = static_cast<type>(1.0e-3);
 
    /// Big training rate value at which the algorithm displays a warning. 
 
