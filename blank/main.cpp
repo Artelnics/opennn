@@ -49,6 +49,9 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+#include "device.h"
+
+#include <../eigen/unsupported/Eigen/KroneckerProduct>
 
 using namespace OpenNN;
 using namespace std;
@@ -63,13 +66,7 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-
-        Tensor<type, 2> A;
-        Tensor<type, 2> B;
-
-
-//        cout << "b: " << b << endl;
-
+        cout << "End" << endl;
 
         return 0;
 
