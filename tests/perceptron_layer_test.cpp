@@ -202,7 +202,7 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
-   assert_true(biases(0) == static_cast<type>(0.0), LOG);
+   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -264,7 +264,7 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 
    assert_true(synaptic_weights.dimension(0) == 1, LOG);
    assert_true(synaptic_weights.dimension(1) == 1, LOG);
-   assert_true(synaptic_weights(0,0) == static_cast<type>(0.0), LOG);
+   assert_true(synaptic_weights(0,0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -326,7 +326,7 @@ void PerceptronLayerTest::test_get_parameters()
    parameters = perceptron_layer.get_parameters();
 
    assert_true(parameters.size() == 2, LOG);
-   assert_true(parameters(0) == static_cast<type>(1.0), LOG);
+   assert_true(abs(parameters(0) - 1) < numeric_limits<type>::min(), LOG);
 
    // Test
 
