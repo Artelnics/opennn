@@ -645,7 +645,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number);
+        training_loss /= static_cast<type>(batches_number); //  return -nan(inf)
 
         if(has_selection)
         {

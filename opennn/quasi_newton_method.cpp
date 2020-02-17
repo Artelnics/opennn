@@ -760,7 +760,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
 const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & left_matrix, Tensor<type, 1> & right_matrix) const
 {
     // Transform Tensors into Dense matrix
-/*
+
     auto m = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
@@ -776,8 +776,6 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
     TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
 
     return direct_matrix;
-    */
-    return Tensor<type, 2>();
 }
 
 
