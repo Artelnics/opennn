@@ -4571,7 +4571,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
     {
         const Index testing_index = testing_indices(i);
 
-        if(data(testing_index, target_index) == static_cast<type>(0.0))
+        if(data(testing_index, target_index) < numeric_limits<type>::min())
         {
             negatives++;
         }
@@ -4662,7 +4662,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
+        if(abs(data(instance_index, target_index) - 1) < numeric_limits<type>::min()) positive_instances_number++;
     }
 
         // Get used positive instances indices
@@ -4674,7 +4674,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0))
+        if(abs(data(instance_index, target_index) - 1) < numeric_limits<type>::min())
         {
             positive_used_instances_indices(positive_instance_index) = instance_index;
             positive_instance_index++;
@@ -4722,7 +4722,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(0.0)) negative_instances_number++;
+        if(data(instance_index, target_index) < numeric_limits<type>::min()) negative_instances_number++;
     }
 
     // Get used negative instances indices
@@ -4734,7 +4734,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(0.0))
+        if(data(instance_index, target_index) < numeric_limits<type>::min())
         {
             negative_used_instances_indices(negative_instance_index) = instance_index;
             negative_instance_index++;
@@ -4764,7 +4764,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, class_index) == static_cast<type>(1.0)) class_instances_number++;
+        if(abs(data(instance_index, class_index) - 1) < numeric_limits<type>::min()) class_instances_number++;
     }
 
     // Get used class instances indices
@@ -4777,7 +4777,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, class_index) == static_cast<type>(1.0))
+        if(abs(data(instance_index, class_index) - 1) < numeric_limits<type>::min())
         {
             class_used_instances_indices(class_instance_index) = instance_index;
             class_instance_index++;
