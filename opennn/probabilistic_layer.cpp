@@ -640,71 +640,13 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
 Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-    const Tensor<type, 2> biases = get_biases(parameters);
+//    const Tensor<type, 2> biases = get_biases(parameters);
 
-    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
+//    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
 
-    return calculate_outputs(inputs, biases, synaptic_weights);
-}
+//    return calculate_outputs(inputs, biases, synaptic_weights);
 
-
-/// This method processes the input to the probabilistic layer for a given set of biases and synaptic weights in order to obtain a set of outputs which
-/// can be interpreted as probabilities.
-/// This posprocessing is performed according to the probabilistic method to be used.
-/// @param inputs Set of inputs to the probabilistic layer
-/// @param biases Set of biases of the probabilistic layer
-/// @param synaptic_weights Set of synaptic weights of the probabilistic layer
-
-Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs,
-        const Tensor<type, 2>& biases,
-        const Tensor<type, 2>& synaptic_weights) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    const Index inputs_dimensions_number = inputs.rank();
-
-    if(inputs_dimensions_number > 4)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
-               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index inputs_columns_number = inputs.dimension(1);
-
-    const Index inputs_number = get_inputs_number();
-
-    if(inputs_columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
-               << "Size of layer inputs (" << inputs_columns_number << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Index batch_size = inputs.dimension(0);
-    const Index outputs_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(batch_size, outputs_number);
-
-    calculate_combinations(inputs, biases, synaptic_weights, outputs);
-
-    calculate_activations(outputs, outputs);
-
-    return outputs;
+    return Tensor<type, 2>();
 }
 
 
@@ -993,9 +935,9 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
     ostringstream buffer;
 
     buffer.str("");
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
-    */
+
+    // buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
+
     return buffer.str();
 }
 

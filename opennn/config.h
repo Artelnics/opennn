@@ -20,13 +20,6 @@
 
 //#define EIGEN_USE_GPU
 
-//#define USE_INTEL_MKL
-
-
-//#define EIGEN_USE_MKL
-
-//#define EIGEN_USE_GPU
-
 namespace OpenNN
 {
     typedef float type;

@@ -601,63 +601,12 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
-    const Tensor<type, 2> biases = get_biases(parameters);
+//    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
+//    const Tensor<type, 2> biases = get_biases(parameters);
 
-    return calculate_outputs(inputs, biases, synaptic_weights);
-}
+//    return calculate_outputs(inputs, biases, synaptic_weights);
 
-
-Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs,
-        const Tensor<type, 2>& new_biases,
-        const Tensor<type, 2>& new_synaptic_weights) const
-{
-    const Index inputs_dimensions_number = inputs.rank();
-
-#ifdef __OPENNN_DEBUG__
-
-    if(inputs_dimensions_number > 4)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of dimensions (" << inputs_dimensions_number << ") must be less than or equal to 4.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index inputs_columns_number = inputs.dimension(1);
-
-    if(inputs_columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Index batch_size = inputs.dimension(0);
-    const Index outputs_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(batch_size, outputs_number);
-
-    calculate_combinations(inputs, new_biases, new_synaptic_weights, outputs);
-
-    calculate_activations(outputs, outputs);
-
-    return outputs;
+    return Tensor<type, 2>();
 }
 
 
