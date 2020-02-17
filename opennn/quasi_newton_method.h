@@ -78,7 +78,13 @@ public:
             parameters.resize(parameters_number);
             parameters = neural_network_pointer->get_parameters();
 
+            old_parameters.resize(parameters_number);
+
+            parameters_increment.resize(parameters_number);
+
             // Loss index data
+
+            old_gradient.resize(parameters_number);
 
             inverse_hessian.resize(parameters_number, parameters_number);
             inverse_hessian.setZero();
@@ -87,6 +93,8 @@ public:
             old_inverse_hessian.setZero();
 
             // Optimization algorithm data
+
+            training_direction.resize(parameters_number);
 
         }
 

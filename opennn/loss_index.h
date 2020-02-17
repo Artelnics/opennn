@@ -377,17 +377,16 @@ public:
                  return;
             }
 
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: MeanSquaredError class.\n"
-                       << "void calculate_errors() const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
         }
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: MeanSquaredError class.\n"
+               << "void calculate_errors() const method.\n"
+               << "Unknown device.\n";
+
+        throw logic_error(buffer.str());
+
    }
 
    void calculate_error_gradient(const DataSet::Batch& batch,
@@ -610,6 +609,8 @@ public:
                throw logic_error(buffer.str());
            }
        }
+
+       return Tensor<type, 1>();
    }
 
    Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
@@ -657,6 +658,8 @@ public:
                    throw logic_error(buffer.str());
                }
            }
+
+           return Tensor<type, 2>();
    }
 
 
@@ -676,6 +679,9 @@ public:
        }
        else
        {
+       }
+
+
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -714,8 +720,11 @@ public:
                throw logic_error(buffer.str());
            }
        }
-       }
+
+
+
    }
+
 
    Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& parameters) const
    {

@@ -811,7 +811,7 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 2>& tens
 
 
 /// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
-///(DFP) algorithm.
+/// (DFP) algorithm.
 /// @param old_parameters A previous set of parameters.
 /// @param old_gradient The gradient of the error function for that previous set of parameters.
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
@@ -943,7 +943,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
 //   dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)
 
-
     if(abs(parameters_dot_gradient(0)) < static_cast<type>(1.0e-50))
     {
         buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
@@ -961,6 +960,15 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
         throw logic_error(buffer.str());
     }
 
+    // Intentar hacerlo así:
+
+    // Inverse hessian = A
+
+    // Inverse hessian += bT*C
+
+    // Inverse hesains +=
+
+
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
 
     //dot(old_inverse_hessian, gradient_difference);
@@ -976,6 +984,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
        inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
                 /(gradient_dot_gradient(0)); //dot(gradient_difference, hessian_dot_gradient_difference);
     */
+
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
 
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_gradient(0);
@@ -1072,7 +1081,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     // Parameters difference Vector
 
-    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
 
 //   if(absolute_value(parameters_difference) < 1.0e-50)
 //   {
@@ -1086,8 +1094,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 //   }
 
     // Gradient difference Vector
-
-    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
 //   if(absolute_value(gradient_difference) < numeric_limits<type>::min())
 //   {
@@ -1113,34 +1119,24 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     // BGFS Vector
 
+    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
+
+    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
+
     const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
-    //dot(parameters_difference, gradient_difference);
 
     const Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
-    //dot(old_inverse_hessian, gradient_difference);
 
     const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, AT_B);
-    //dot(gradient_difference, hessian_dot_gradient);
 
     const Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
-                                 - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
-
-    // Calculate inverse hessian approximation
+                               - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
 
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-    /*
-       inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
-
-       inverse_hessian_approximation -= direct(hessian_dot_gradient, hessian_dot_gradient)
-       /gradient_dot_hessian_dot_gradient(0);
-
-       inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
-    */
 
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
 
-    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)
-                                     /gradient_dot_hessian_dot_gradient(0);
+    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0);
 
     inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
 

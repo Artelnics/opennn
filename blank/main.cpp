@@ -57,7 +57,6 @@ using namespace chrono;
 using Eigen::MatrixXd;
 using Eigen::Vector3d;
 
-
 int main(void)
 {
     try
@@ -65,12 +64,11 @@ int main(void)
         cout << "Blank application" << endl;
 
 
-        Tensor<type, 0> a;
-        a.setZero();
+        Tensor<type, 2> A;
+        Tensor<type, 2> B;
 
-        type b = a();
 
-        cout << "b: " << b << endl;
+//        cout << "b: " << b << endl;
 
 
         return 0;
