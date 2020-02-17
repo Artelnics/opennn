@@ -966,20 +966,20 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
     const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B); // Ok
 
-//    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix); // Only for exceptions and repeated below
-
-//    const Tensor<type, 0> gradient_dot_hesian_dot_gradient
-//        = gradient_dot_hessian.contract(gradient_difference,AT_B); // Only for exceptions and repeated below
-
-    // Calculates Approximation
-
-    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-
     Tensor<type, 1> hessian_dot_gradient_difference
         = old_inverse_hessian.contract(gradient_difference, A_B); // Ok
 
     Tensor<type, 0> gradient_dot_hessian_dot_gradient
-        = gradient_difference.contract(hessian_dot_gradient_difference, AT_B); // Ok
+        = gradient_difference.contract(hessian_dot_gradient_difference, AT_B); // Ok , auto?
+
+//    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix); // Only for exceptions and repeated above
+
+//    const Tensor<type, 0> gradient_dot_hesian_dot_gradient
+//        = gradient_dot_hessian.contract(gradient_difference,AT_B); // Only for exceptions and repeated above
+
+    // Calculates Approximation
+
+    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian; // TensorMap?
 
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
 
