@@ -5090,15 +5090,15 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlations_missing_values(input, target);
+                correlations(i,j) = karl_pearson_correlation(input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Categorical && target_type == Numeric)
             {

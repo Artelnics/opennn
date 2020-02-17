@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 
 #include "loss_index.h"
 
@@ -31,6 +32,14 @@
 #include "learning_rate_algorithm.h"
 
 #include "tinyxml2.h"
+
+// Eigen Includes
+
+#include <../eigen/unsupported/Eigen/KroneckerProduct>
+
+
+using Eigen::MatrixXd;
+using Eigen::Vector3d;
 
 namespace OpenNN
 {
@@ -252,8 +261,8 @@ public:
                                                            const Tensor<type, 1>&,
                                                            const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> kronecker_product(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    Results perform_training();
 
