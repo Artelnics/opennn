@@ -70,6 +70,8 @@ public:
    {
        Tensor<type, 0> sum_squared_error;
 
+       const Index batch_instances_number = batch.inputs_2d.dimension(0);
+
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        switch(device_pointer->get_type())
@@ -81,7 +83,7 @@ public:
                 sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations
                                                              - batch.targets_2d).square().sum();
 
-                break;
+                return sum_squared_error(0)/static_cast<type>(batch_instances_number);
             }
 
             case Device::EigenSimpleThreadPool:
@@ -91,7 +93,7 @@ public:
                sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations
                                                                 - batch.targets_2d).square().sum();
 
-                break;
+               return sum_squared_error(0)/static_cast<type>(batch_instances_number);
             }
 
            case Device::EigenGpu:
@@ -100,43 +102,16 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
-       const Index batch_instances_number = batch.inputs_2d.dimension(0);
+       ostringstream buffer;
 
-       return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+       buffer << "OpenNN Exception: Layer class.\n"
+              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
    }
-
-
-   type calculate_error(const DataSet::Batch& batch,
-                        const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation) const
-   {
-       const Index instances_number = batch.get_instances_number();
-
-       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations;
-
-       const Tensor<type, 2>& targets = batch.targets_2d;
-
-       Tensor<type, 0> sum_squared_error;
-
-       sum_squared_error = (outputs - targets).square().sum();
-
-       return sum_squared_error(0)/static_cast<type>(instances_number);
-   }
-
 
    // Error terms methods
 
@@ -148,6 +123,8 @@ public:
 
    void calculate_error(BackPropagation& back_propagation) const
    {
+       const Index batch_instances_number = back_propagation.errors.dimension(0);
+
        Tensor<type, 0> sum_squared_error;
 
        switch(device_pointer->get_type())
@@ -158,16 +135,18 @@ public:
 
                 sum_squared_error.device(*default_device) = back_propagation.errors.square().sum();
 
-                break;
+                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
             {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
+                sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
 
-                break;
+                return;
             }
 
            case Device::EigenGpu:
@@ -176,26 +155,20 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
-       const Index batch_instances_number = back_propagation.errors.dimension(0);
+       ostringstream buffer;
 
-       back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+       buffer << "OpenNN Exception: Layer class.\n"
+              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
+
    }
 
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -234,18 +207,15 @@ public:
 
                  break;
             }
-
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: Layer class.\n"
-                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
         }
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "Unknown device.\n";
+
+        throw logic_error(buffer.str());
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;

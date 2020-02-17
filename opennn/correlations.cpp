@@ -1810,7 +1810,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
-    if((s_x == static_cast<type>(0.0) && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
+    if((s_x < numeric_limits<type>::min() && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
     {
         exponential_correlation.correlation = 1.0;
     }
