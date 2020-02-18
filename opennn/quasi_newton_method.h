@@ -35,7 +35,7 @@
 
 // Eigen Includes
 
-#include <../eigen/unsupported/Eigen/KroneckerProduct>
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 
 using Eigen::MatrixXd;

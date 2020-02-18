@@ -623,75 +623,15 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 
     for(Index i = 0; i < n; i ++)
     {
-        const type exponential = exp(-a - b * x[i]);
+        const type exponential = exp(-a - b * x(i));
 
-        sum_a += (2 * exponential) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * y[i] / (1 + exponential)/(1 +exponential);
+        sum_a += (2 * exponential) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * y(i) / (1 + exponential)/(1 +exponential);
 
-        sum_b += (2 * exponential * x[i]) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * x[i] * y[i] / (1 + exponential)/(1 +exponential);
+        sum_b += (2 * exponential * x(i)) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * x(i) * y(i) / (1 + exponential)/(1 +exponential);
     }
 
-    error_gradient[0] = sum_a / n;
-    error_gradient[1] = sum_b / n;
-
-    return error_gradient;
-}
-
-
-///Calculate the gradient of the logistic error function.
-/// @param a Coefficient a of the logistic function.
-/// @param b Coefficient b of the logistic function.
-/// @param x Input vector.
-/// @param y Target vector.
-
-Tensor<type, 1> logistic_error_gradient_missing_values(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: type.\n"
-               << "logistic error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>& "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
-
-    Tensor<type, 1> f_x(new_vector_y.size());
-
-    const type new_n = static_cast<type>(new_vector_x.size());
-
-    Tensor<type, 1> error_gradient(2);
-
-    type sum_a = 0;
-    type sum_b = 0;
-
-    type exponential;
-
-    for(Index i = 0; i < new_n; i ++)
-    {
-        exponential = exp(-a - b * new_vector_x[i]);
-
-        sum_a += (2 * exponential) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * new_vector_y[i] / (1 + exponential)/(1 +exponential);
-
-        sum_b += (2 * exponential * new_vector_x[i]) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * new_vector_x[i] * new_vector_y[i] / (1 + exponential)/(1 +exponential);
-    }
-
-    error_gradient[0] = sum_a / new_n;
-    error_gradient[1] = sum_b / new_n;
+    error_gradient(0) = sum_a / n;
+    error_gradient(1) = sum_b / n;
 
     return error_gradient;
 }
