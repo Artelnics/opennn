@@ -143,10 +143,8 @@ struct CorrelationResults
     // Regression methods
 
     RegressionResults linear_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults linear_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults logarithmic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults exponential_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
     RegressionResults exponential_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);

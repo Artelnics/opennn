@@ -387,7 +387,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-
+/*
    NeuralNetwork neural_network;
 
    Index inputs_number;
