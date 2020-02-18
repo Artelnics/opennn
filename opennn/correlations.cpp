@@ -1006,7 +1006,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 
     ostringstream buffer;
 
-    if(x.size() != y.size();)
+    if(x.size() != y.size())
     {
         buffer << "OpenNN Exception: Vector Template.\n"
                << "RegressionResults "
