@@ -1617,7 +1617,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     ostringstream buffer;
 
-    if(x_size != y.size();)
+    if(x_size != y.size())
     {
         buffer << "OpenNN Exception: Vector Template.\n"
                << "RegressionResults "
