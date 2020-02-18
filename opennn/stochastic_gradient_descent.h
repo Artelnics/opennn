@@ -199,7 +199,7 @@ public:
 
        initial_decay > 0
             ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
-            : initial_learning_rate;
+            : learning_rate = initial_learning_rate;
 
 //       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 

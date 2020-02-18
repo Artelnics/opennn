@@ -1246,13 +1246,23 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
 
+        // Optimization data
+
+        update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+        // Set new parameters
+
+        cout << optimization_data.parameters << endl;
+        neural_network_pointer->set_parameters(optimization_data.parameters);
+
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
         {
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
-
+/*
         if(has_selection)
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
@@ -1268,7 +1278,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-
+*/
         // Training history
 
         if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
@@ -1282,7 +1292,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+       /* if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1294,12 +1304,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else if(epoch != 0 && training_loss - old_training_loss >= minimum_loss_decrease)
+        else */if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss - old_training_loss <<  endl;
+                     << "Loss decrease: " << training_loss - optimization_data.old_training_loss <<  endl;
             }
 
             stop_training = true;
@@ -1387,13 +1397,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_error <<  "\n"
+                     << "Training error: " << training_loss <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-                if(selection_error > 0)
+                if(has_selection)
                 {
                     cout << "Selection error: " << selection_error << endl;
                 }
@@ -1405,21 +1415,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training error: " << training_error << "\n"
+                 << "Training error: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << learning_rate << "\n"
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(selection_error > 0)
+            if(has_selection)
             {
                 cout << "Selection error: " << selection_error << endl;
             }
         }
 
-        // Set new parameters
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         if(stop_training) break;
     }

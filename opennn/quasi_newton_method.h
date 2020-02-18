@@ -37,9 +37,7 @@
 
 #include <../eigen/unsupported/Eigen/KroneckerProduct>
 
-
 using Eigen::MatrixXd;
-using Eigen::Vector3d;
 
 namespace OpenNN
 {
@@ -121,6 +119,8 @@ public:
         Tensor<type, 1> parameters_increment;
 
         // Loss index data
+
+        type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
 
@@ -346,7 +346,7 @@ public:
                 optimization_data.training_direction,
                 initial_learning_rate);
 
-       type learning_rate = directional_point.first;
+       type learning_rate = directional_point.first; // training rate is always zero
 
        // Reset training direction when training rate is 0
 
@@ -365,13 +365,14 @@ public:
            learning_rate = directional_point.first;
        }
 
+       // training rate is always zero
        optimization_data.parameters += optimization_data.training_direction*learning_rate;
 
-//       parameters_increment_norm = l2_norm(parameters_increment);
+//       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
        optimization_data.old_parameters = optimization_data.parameters;
 
-//       old_training_loss = training_loss;
+       optimization_data.old_training_loss = back_propagation.loss;
 
 //       old_selection_error = selection_error;
 
