@@ -66,68 +66,6 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-        Index samples = 6;
-        Index variables = 2;
-
-        // Device
-
-        Device device(Device::EigenSimpleThreadPool);
-
-        // Data set
-
-        Tensor<type, 2> data(samples, variables+1);
-
-        data.setRandom();
-
-        DataSet data_set(data);
-
-        data_set.set_device_pointer(&device);
-
-        data_set.set_training();
-
-        // Neural network
-
-        const Index inputs_number = data_set.get_input_variables_number();
-
-        const Index hidden_neurons_number = variables;
-
-        const Index outputs_number = data_set.get_target_variables_number();
-
-        Tensor<Index, 1> arquitecture(3);
-
-        arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-        neural_network.set_device_pointer(&device);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-
-        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::L2);
-
-        training_strategy.set_device_pointer(&device);
-/*
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(30);
-
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
-
-        training_strategy.set_device_pointer(&device);
-
-        StochasticGradientDescent* stochastic_gradient_descent_pointer
-                = training_strategy.get_stochastic_gradient_descent_pointer();
-
-        stochastic_gradient_descent_pointer->set_batch_instances_number(variables);
-
-        stochastic_gradient_descent_pointer->perform_training();
-*/
-        training_strategy.perform_training();
-//        training_strategy.get_quasi_Newton_method_pointer()->perform_training();
-
         cout << "End" << endl;
 
         return 0;

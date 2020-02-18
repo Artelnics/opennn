@@ -1252,7 +1252,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Set new parameters
 
-        cout << optimization_data.parameters << endl;
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
 
