@@ -3012,37 +3012,49 @@ Index maximal_index(const Tensor<type, 1>& vector)
     return maximal_index;
 }
 
-
 /// Returns the indices of the smallest elements in the vector.
 /// @param number Number of minimal indices to be computed.
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
+    Eigen::Tensor<type, 1> vector_ = vector;
 
     const Index size = vector.dimension(0);
-    /*
-      const std::Tensor<Index, 1> rank = vector.calculate_less_rank();
+    Tensor<Index, 1> minimal_indices(number);
+    Eigen::Tensor<type, 0> maxim = vector.maximum();
 
-      std::Tensor<Index, 1> minimal_indices(number);
+#ifdef __OPENNN_DEBUG__
 
-       #pragma omp parallel for
+if(number > size)
+{
+   ostringstream buffer;
 
-      for(Index i = 0; i < static_cast<Index>(size); i++)
-      {
-        for(Index j = 0; j < number; j++)
-        {
-          if(rank(i) == j)
-          {
-            minimal_indices(j) = i;
-          }
-        }
-      }
+   buffer << "OpenNN Exception: Statitics class.\n"
+          << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Number of minimal indices to be computed must be lower than the size of the imput vector.\n";
 
-      return minimal_indices;
-    */
-    return Tensor<Index, 1>();
+   throw logic_error(buffer.str());
 }
+#endif
 
+    for(Index j = 0; j < number; j++)
+    {
+        Index minimal_index = 0;
+        type minimum = vector_(0);
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(vector_(i) < minimum)
+            {
+                minimal_index = i;
+                minimum = vector_(i);
+            }
+        }
+        vector_(minimal_index) = maxim(0)+1;
+        minimal_indices(j) = minimal_index;
+    }
+      return minimal_indices;
+}
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.

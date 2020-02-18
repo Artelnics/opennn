@@ -611,6 +611,10 @@ public:
 
    void print_top_input_target_columns_correlations(const Index& = 10) const;
 
+   // Inputs-targets regressions
+
+   Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
+
    // Principal components
 
    Tensor<type, 2> calculate_covariance_matrix() const;
