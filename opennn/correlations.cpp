@@ -248,7 +248,7 @@ type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
         }
     }
 
-    return linear_correlation(new_x, log_y);
+    return linear_correlation(valid_x, log_y);
 }
 
 
@@ -809,181 +809,11 @@ type  logistic_error_missing_values
 }
 
 
-///Calculate the coefficients of a linear regression (a, b) and the correlation among the variables even when there are missing values.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults "
-               "linear_regression(const Tensor<type, 1>&) const "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += x[i];
-        s_y += y[i];
-
-        s_xx += x[i] * x[i];
-        s_yy += y[i] * y[i];
-
-        s_xy += x[i] * y[i];
-    }
-
-    RegressionResults linear_regression;
-
-    linear_regression.regression_type = Linear;
-
-    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
-            && abs(s_xy) < numeric_limits<type>::min())
-    {
-        linear_regression.a = 0;
-
-        linear_regression.b = 0;
-
-        linear_regression.correlation = 1.0;
-    }
-    else
-    {
-        linear_regression.a = (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
-
-        linear_regression.b = ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
-
-        if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
-        {
-            linear_regression.correlation = 1.0;
-        }
-        else
-        {
-            linear_regression.correlation =
-                (n * s_xy - s_x * s_y) /
-                sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y));
-        }
-    }
-
-    return linear_regression;
-}
-
-
-///Calculate the coefficients of a linear regression (a, b) and the correlation among the variables
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-RegressionResults linear_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "RegressionResults linear_regression(const Tensor<type, 1>&) const method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
-
-    n = new_vector_x.size();
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < new_vector_x.size(); i++)
-    {
-        s_x += new_vector_x(i);
-        s_y += new_vector_y(i);
-
-        s_xx += new_vector_x(i) * new_vector_x(i);
-        s_yy += new_vector_y(i) * new_vector_y(i);
-
-        s_xy += new_vector_x(i) * new_vector_y(i);
-    }
-
-    RegressionResults linear_regression;
-
-    linear_regression.regression_type = Linear;
-
-    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min() && abs(s_xy) < numeric_limits<type>::min())
-    {
-        linear_regression.a = 0;
-
-        linear_regression.b = 0;
-
-        linear_regression.correlation = 1.0;
-    }
-    else
-    {
-        linear_regression.a =
-            (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
-
-        linear_regression.b =
-            ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
-
-        if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
-        {
-            linear_regression.correlation = 1.0;
-        }
-        else
-        {
-            linear_regression.correlation =
-                (n * s_xy - s_x * s_y) /
-                sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y));
-        }
-    }
-
-    return linear_regression;
-}
-
-
 ///Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
     Index n = y.size();
@@ -1071,7 +901,7 @@ RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>& x
     return logarithmic_regression;
 }
 
-
+/*
 ///Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
@@ -1159,7 +989,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 
     return logarithmic_regression;
 }
-
+*/
 
 ///Calculate the coefficients of a exponential regression (a, b) and the correlation among the variables
 /// @param x Vector of the independent variable.
@@ -1295,36 +1125,35 @@ RegressionResults exponential_regression_missing_values(const Tensor<type, 1>& x
     }
 
     RegressionResults exponential_regression;
-    /*
-        exponential_regression.regression_type = Exponential;
+/*
+    exponential_regression.regression_type = Exponential;
 
-        if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
+    if(s_x == static_cast<type>(0.0) && s_y == static_cast<type>(0.0) && s_xx == static_cast<type>(0.0) &&  s_xy < numeric_limits<type>::min())
+    {
+        exponential_regression.a = 0;
+
+        exponential_regression.b = 0;
+
+        exponential_regression.correlation = 1.0;
+    }
+    else
+    {
+        exponential_regression.b = ((new_size * s_xy) - (s_x * s_y)) /((new_size * s_xx) - (s_x*s_x));
+        exponential_regression.a = exp(s_y/new_size - exponential_regression.b * s_x/new_size);
+
+        const Tensor<Index, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
+        const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
+
+        Tensor<type, 1> log_y(y_valid.size());
+
+        for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
         {
-          exponential_regression.a = 0;
-
-          exponential_regression.b = 0;
-
-          exponential_regression.correlation = 1.0;
-         } else {
-           exponential_regression.b =
-             ((new_size * s_xy) - (s_x * s_y)) /((new_size * s_xx) - (s_x*s_x));
-           exponential_regression.a =
-              exp(s_y/new_size - exponential_regression.b * s_x/new_size);
-
-         const Tensor<Index, 1> negative_indices = new_vector_y.get_indices_less_equal_to(0.0);
-         const Tensor<type, 1> y_valid = new_vector_y.delete_indices(negative_indices);
-
-         Tensor<type, 1> log_y(y_valid.size());
-
-         for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
-         {
-             log_y[i] = log(y_valid[i]);
-         }
-
-         exponential_regression.correlation = exponential_correlation(new_vector_x.delete_indices(negative_indices), log_y);
-
+            log_y[i] = log(y_valid[i]);
         }
-    */
+
+        exponential_regression.correlation = exponential_correlation(new_vector_x.delete_indices(negative_indices), log_y);
+    }
+*/
     return exponential_regression;
 }
 
@@ -1693,15 +1522,13 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
 CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    Index n = y.size();
-
 #ifdef __OPENNN_DEBUG__
 
     const Index x_size = x.size();
 
     ostringstream buffer;
 
-    if(x_size != n)
+    if(x_size != y.size();)
     {
         buffer << "OpenNN Exception: Vector Template.\n"
                << "RegressionResults "
@@ -1716,55 +1543,81 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
-    n = new_vector_x.size();
+    const Index new_size = new_x.size();
 
     type s_x = 0;
     type s_y = 0;
 
-    Tensor<type, 0> s_xx;
-    s_xx.setZero();
+//    Tensor<type, 0> s_xx;
+//    s_xx.setZero();
+
+    type s_xx = 0;
 
     type s_yy = 0;
 
-    Tensor<type, 0> s_xy;
-    s_xy.setZero();
+//    Tensor<type, 0> s_xy;
+//    s_xy.setZero();
 
-    Tensor<type, 1> x1(new_vector_x.size());
+    type s_xy = 0;
 
-    type y1 = 0;
+    type x_sum = 0;
+    type y_sum = 0;
 
-    for(Index i = 0; i < new_vector_x.size(); i++)
+    for(Index i = 0; i < new_size; i++)
     {
-        s_x += new_vector_x(i);
-        s_y += new_vector_y(i);
-
-        x1(i)= log(new_vector_x(i));
-        y1 += new_vector_y(i);
+        x_sum += log(new_x(i));
+        y_sum += new_y(i);
     }
 
-    for(Index i = 0; i < new_vector_x.size(); i++)
+    for(Index i = 0; i < new_size; i++)
     {
-        s_xx += (x1(i) - x1.sum() / static_cast<type>(new_vector_x.size())).pow(2.0);
+        s_x += new_x(i);
 
-        s_yy += pow(new_vector_y(i) - y1 / new_vector_y.size(), 2);
+        s_y += new_y(i);
 
-        s_xy += (x1(i) - x1.sum() / static_cast<type>(new_vector_x.size())) * (new_vector_y(i) - y1 / static_cast<type>(new_vector_y.size()));
+        s_xx += pow(log(new_x(i)) - x_sum / static_cast<type>(new_size), 2);
+
+        s_yy += pow(new_y(i) - y_sum / new_size, 2);
+
+        s_xy += (log(new_x(i)) - x_sum / static_cast<type>(new_size)) * (new_y(i) - y_sum / static_cast<type>(new_size));
     }
 
     CorrelationResults logarithmic_correlation;
 
     logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
-    if(s_x == static_cast<type>(0) && s_y == static_cast<type>(0) && s_xx() == static_cast<type>(0) && s_yy == static_cast<type>(0) && s_xy() < numeric_limits<type>::min())
+    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
+            && abs(s_y - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
+            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
     {
         logarithmic_correlation.correlation = 1.0;
     }
     else
     {
-        logarithmic_correlation.correlation = linear_correlation(new_vector_x.log(), new_vector_y);
+        const type numerator = (new_size * s_xy - s_x * s_y);
+
+        const type radicand = (new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y);
+
+        if(radicand <= static_cast<type>(0.0))
+        {
+            logarithmic_correlation.correlation = 1.0;
+        }
+
+        const type denominator = sqrt(radicand);
+
+        if(denominator < numeric_limits<type>::epsilon())
+        {
+            logarithmic_correlation.correlation = 0;
+        }
+        else
+        {
+            logarithmic_correlation.correlation = numerator / denominator;
+        }
     }
 
     return logarithmic_correlation;
@@ -1800,41 +1653,71 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = filter_vectors.first;
+    const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const  type new_size = static_cast<type>(new_vector_x.size());
+    const  type new_size = static_cast<type>(new_x.size());
+
+    // Sums
 
     type s_x = 0;
     type s_y = 0;
 
     type s_xx = 0;
+    type s_yy = 0;
 
     type s_xy = 0;
 
     for(Index i = 0; i < new_size; i++)
     {
-        s_x += new_vector_x[i];
+        if(new_x(i) > static_cast<type>(0.0) && new_y(i) > static_cast<type>(0.0))
+        {
+            s_x += new_x(i);
 
-        s_y += log(new_vector_y[i]);
+            s_y += log(new_y(i));
 
-        s_xx += new_vector_x[i] * new_vector_x[i];
+            s_xx += new_x(i) * new_x(i);
+            s_yy += new_y(i) * new_y(i);
 
-        s_xy += new_vector_x[i] * log(new_vector_y[i]);
+            s_xy += new_x(i) * log(new_y(i));
+        }
     }
 
     CorrelationResults exponential_correlation;
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
-    if((s_x < numeric_limits<type>::min() && s_y == 0.0 && s_xx == 0.0 &&  s_xy) < numeric_limits<type>::min())
+    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
+            && abs(s_y - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
+            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
     {
         exponential_correlation.correlation = 1.0;
     }
     else
     {
+        exponential_correlation.correlation = OpenNN::exponential_correlation(new_x, new_y);
 
-        exponential_correlation.correlation = OpenNN::exponential_correlation(new_vector_x, new_vector_y);
+        const type numerator = (n * s_xy - s_x * s_y);
+
+        const type radicand = (n * s_xx - s_x * s_x) * (n * s_yy - s_y * s_y);
+
+        if(radicand <= static_cast<type>(0.0))
+        {
+            exponential_correlation.correlation = 1.0;
+        }
+
+        const type denominator = sqrt(radicand);
+
+        if(denominator < numeric_limits<type>::epsilon())
+        {
+            exponential_correlation.correlation = 0;
+        }
+        else
+        {
+            exponential_correlation.correlation = numerator / denominator;
+        }
     }
 
     return exponential_correlation;
