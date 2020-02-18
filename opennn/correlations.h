@@ -147,13 +147,10 @@ struct CorrelationResults
     RegressionResults logarithmic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults exponential_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults exponential_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults power_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults power_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults logistic_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Correlation methods
 
@@ -169,6 +166,7 @@ struct CorrelationResults
 
     CorrelationResults karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
+    ///@todo check
     CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
     CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
