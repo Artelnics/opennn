@@ -297,17 +297,17 @@ public:
                                       ForwardPropagation& forward_propagation)
       {
 
+#ifdef __OPENNN_DEBUG__
+
        const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
-
-#ifdef __OPENNN_DEBUG__
 
        if(inputs_number != inputs.dimension(1))
        {
            ostringstream buffer;
 
            buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                  << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
+                  << "void forward_propagate(const Tensor<type, 2>&,, ForwardPropagation&) method.\n"
                   << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
            throw logic_error(buffer.str());
