@@ -112,7 +112,7 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
 
 const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 {
-    return loss_goal;
+    return training_loss_goal;
 }
 
 
@@ -245,7 +245,7 @@ void LevenbergMarquardtAlgorithm::set_default()
     minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
     minimum_loss_decrease = static_cast<type>(1.0e-9);
-    loss_goal = static_cast<type>(1.0e-3);
+    training_loss_goal = static_cast<type>(1.0e-3);
     gradient_norm_goal = static_cast<type>(1.0e-3);
     maximum_selection_error_increases = 1000;
 
@@ -534,7 +534,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
 
 void LevenbergMarquardtAlgorithm::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -911,7 +911,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss <= loss_goal)
+        else if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1132,7 +1132,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
        labels.push_back("Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 
@@ -1373,7 +1373,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
     root_element->LinkEndChild(element);
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1561,7 +1561,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 

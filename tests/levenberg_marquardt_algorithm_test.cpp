@@ -322,7 +322,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    type old_loss;
    type loss;
    type minimum_parameters_increment_norm;
-   type loss_goal;
+   type training_loss_goal;
    type minimum_loss_decrease;
    type gradient_norm_goal;
    type gradient_norm = 0;
@@ -362,10 +362,10 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    neural_network.set_parameters_random(0.0, 1.0e-3);
 
-   loss_goal = 100.0;
+   training_loss_goal = 100.0;
 
    lma.set_minimum_parameters_increment_norm(0.0);
-   lma.set_loss_goal(loss_goal);
+   lma.set_loss_goal(training_loss_goal);
    lma.set_minimum_loss_decrease(0.0);
    lma.set_gradient_norm_goal(0.0);
    lma.set_maximum_epochs_number(10);
@@ -375,7 +375,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    loss = sum_squared_error.calculate_training_loss();
 
-   assert_true(loss < loss_goal, LOG);
+   assert_true(loss < training_loss_goal, LOG);
 
    // Minimum loss increas
 
