@@ -298,12 +298,6 @@ public:
     {
 #ifdef __OPENNN_DEBUG__
 
-<<<<<<< HEAD
-=======
-#ifdef __OPENNN_DEBUG__
-
-       const Index neurons_number = get_neurons_number();
->>>>>>> 01105a659ae21fdb50b75e7297d00c8dfd7fa8bf
        const Index inputs_number = get_inputs_number();
 
        if(inputs_number != inputs.dimension(1))
@@ -329,11 +323,7 @@ public:
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       Tensor<type, 1> potential_parameters,
-<<<<<<< HEAD
                                       ForwardPropagation& forward_propagation) const
-=======
-                                      ForwardPropagation& forward_propagation)
->>>>>>> 01105a659ae21fdb50b75e7297d00c8dfd7fa8bf
       {
        const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
