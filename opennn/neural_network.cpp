@@ -1780,7 +1780,9 @@ void NeuralNetwork::print_summary() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i+1 << ": " << layers_pointers[i]->get_type_string() << endl;
+        cout << "Layer " << i+1 << ": " << layers_pointers[i]->get_neurons_number()
+             << " " << layers_pointers[i]->get_type_string() << " neurons" << endl;
+
     }
 }
 
