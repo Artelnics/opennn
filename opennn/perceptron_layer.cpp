@@ -177,6 +177,15 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
 
     Tensor<type, 1> parameters(synaptic_weights_vector.size() + biases_vector.size());
 
+    for(Index i = 0; i < biases_vector.size(); i++)
+    {
+        fill_n(parameters.data(), biases_vector.size(), biases_vector(i));
+    }
+    for(Index i = 0; i < synaptic_weights_vector.size(); i++)
+    {
+        fill_n(parameters.data()+ biases_vector.size(), synaptic_weights_vector.size(), synaptic_weights_vector(i));
+    }
+/*
     Index index = 0;
 
     for(Index i = 0; i < synaptic_weights_vector.dimension(0); i++)
@@ -190,7 +199,7 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
     {
         parameters(i + index) = biases_vector(i);
     }
-
+*/
     return parameters;
 }
 
