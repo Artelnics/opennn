@@ -44,6 +44,8 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
         Index samples = 20;
         Index variables = 3;
 

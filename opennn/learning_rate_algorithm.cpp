@@ -425,15 +425,15 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     triplet.A.first = 0;
     triplet.A.second = loss;
-    /*
-       if(training_direction == 0.0 || initial_learning_rate) < numeric_limits<type>::min())
-       {
-           triplet.U = triplet.A;
-           triplet.B = triplet.A;
 
-           return triplet;
-       }
-    */
+    if((training_direction(0)  || initial_learning_rate) < numeric_limits<type>::min())
+    {
+        triplet.U = triplet.A;
+        triplet.B = triplet.A;
+
+        return triplet;
+    }
+
     Index count = 0;
 
     // Right point
@@ -454,7 +454,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.first *= golden_ratio;
 
-        potential_parameters = parameters + training_direction*triplet.B.first;
+        potential_parameters = parameters;// + training_direction*triplet.B.first;
+
+        potential_parameters += training_direction*triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
@@ -469,7 +471,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            potential_parameters = parameters + training_direction*triplet.B.first;
+            potential_parameters = parameters;// + training_direction*triplet.B.first;
+
+            potential_parameters += training_direction*triplet.B.first;
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
@@ -720,8 +724,10 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
             {
                 V.first = calculate_Brent_method_learning_rate(triplet);
             }
-            catch(const logic_error&)
+            catch(const logic_error& e)
             {
+                cerr << e.what() << endl;
+
                 return triplet.minimum();
             }
 
@@ -875,7 +881,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "type calculate__method_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
+               << "type calculate_Brent_method_learning_rate(const Triplet&) const method.\n"
                << "Parabola cannot be constructed.\n";
 
         throw logic_error(buffer.str());
@@ -885,7 +891,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "type calculate_Brent_method_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
+               << "type calculate_Brent_method_learning_rate(const Triplet&) const method.\n"
                << "Parabola does not have a minimum but a maximum.\n";
 
         throw logic_error(buffer.str());

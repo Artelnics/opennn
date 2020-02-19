@@ -365,7 +365,7 @@ public:
            learning_rate = directional_point.first;
        }
 
-       // training rate is always zero
+cout << optimization_data.parameters << endl << optimization_data.training_direction << endl;
        optimization_data.parameters += optimization_data.training_direction*learning_rate;
 
 //       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
@@ -380,7 +380,9 @@ public:
 
        optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
-//       optimization_data.old_learning_rate = learning_rate;
+//       optimization_data.learning_rate = learning_rate;
+
+       optimization_data.old_learning_rate = learning_rate;
 
 
    }
