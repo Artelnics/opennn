@@ -195,9 +195,9 @@ public:
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
 
     // Deltas
 

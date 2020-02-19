@@ -149,7 +149,7 @@ const type& GradientDescent::get_minimum_loss_decrease() const
 
 const type& GradientDescent::get_loss_goal() const
 {
-    return loss_goal;
+    return training_loss_goal;
 }
 
 
@@ -248,7 +248,7 @@ void GradientDescent::set_default()
 
     minimum_loss_decrease = 0;
 
-    loss_goal = -numeric_limits<type>::max();
+    training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000000;
 
@@ -554,7 +554,7 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_dec
 
 void GradientDescent::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -933,7 +933,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(training_loss <= loss_goal)
+        else if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1146,7 +1146,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
        labels.push_back("Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 
@@ -1384,7 +1384,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
     root_element->LinkEndChild(element);
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1560,7 +1560,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 

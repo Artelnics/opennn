@@ -128,16 +128,7 @@ const type& AdaptiveMomentEstimation::get_error_gradient_norm() const
 
 const type& AdaptiveMomentEstimation::get_loss_goal() const
 {
-    return loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-
-const type& AdaptiveMomentEstimation::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
+    return training_loss_goal;
 }
 
 
@@ -203,8 +194,7 @@ void AdaptiveMomentEstimation::set_default()
 
     // Stopping criteria
 
-    loss_goal = -numeric_limits<type>::max();
-    gradient_norm_goal = 0;
+    training_loss_goal = 0;
     maximum_time = 1000.0;
     maximum_epochs_number = 10000;
     choose_best_selection = false;
@@ -419,32 +409,7 @@ void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maxim
 
 void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
-
-void AdaptiveMomentEstimation::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    gradient_norm_goal = new_gradient_norm_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -702,7 +667,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        else if(training_loss <= loss_goal)
+        else if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
@@ -814,7 +779,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
        labels.push_back(" Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 
@@ -981,18 +946,7 @@ tinyxml2::XMLDocument* AdaptiveMomentEstimation::to_XML() const
     root_element->LinkEndChild(element);
 
     buffer.str("");
-    buffer << loss_goal;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Gradient norm goal
-
-    element = document->NewElement("GradientNormGoal");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
+    buffer << training_loss_goal;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1131,18 +1085,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Gradient norm goal
-
-    file_stream.OpenElement("GradientNormGoal");
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1258,25 +1201,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Gradient norm goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
-
-        if(element)
-        {
-            const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_gradient_norm_goal(new_gradient_norm_goal);
             }
             catch(const logic_error& e)
             {
