@@ -9394,21 +9394,23 @@ void DataSet::read_csv_3_simple()
 
     // Read data
 
+    Index j = 0;
+
     while(file.good())
     {
         getline(file, line);
 
         trim(line);
 
+        erase(line, '"');
+
         if(line.empty()) continue;
 
         tokens = get_tokens(line, separator_char);
 
-        for(Index j = 0; j < variables_number; j++)
+        for(j = 0; j < variables_number; j++)
         {
             trim(tokens(j));
-
-            erase(line, '"');
 
             if(tokens(j) == missing_values_label || tokens(j).empty())
             {
@@ -9536,7 +9538,6 @@ void DataSet::read_csv_2_complete()
         }
     }
 
-
     file.close();
 
     const Index instances_number = static_cast<unsigned>(lines_count);
@@ -9605,6 +9606,8 @@ void DataSet::read_csv_3_complete()
 
         trim(line);
 
+        erase(line, '"');
+
         if(line.empty()) continue;
 
         tokens = get_tokens(line, separator_char);
@@ -9612,8 +9615,6 @@ void DataSet::read_csv_3_complete()
         for(Index j = 0; j < columns_number; j++)
         {
             trim(tokens(j));
-
-            erase(line, '"');
 
             if(columns(j).type == Numeric)
             {
