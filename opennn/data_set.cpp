@@ -3484,7 +3484,6 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
     Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
 
     return data.slice(offsets, extents);
-
 }
 
 
@@ -5175,6 +5174,35 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
 }
 
 
+/// Returns true if the data contain missing values.
+
+bool DataSet::has_nan() const
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < data.dimension(1); j++)
+        {
+            if(::isnan(data(i,j))) return true;
+        }
+    }
+
+    return false;
+}
+
+
+/// Returns true if the given row contains missing values.
+
+bool DataSet::has_nan_row(const Index& row_index) const
+{
+    for(Index j = 0; j < data.dimension(1); j++)
+    {
+        if(::isnan(data(row_index,j))) return true;
+    }
+
+    return false;
+}
+
+
 /// Print on screen the information about the missing values in the data set.
 /// <ul>
 /// <li> Total number of missing values.
@@ -5849,27 +5877,27 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 
     Index current_distribution;
     Tensor<string, 1> scaling_methods(used_inputs_number);
-    /*
+
     #pragma omp parallel for private(current_distribution)
 
-        for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
-        {
-            current_distribution = perform_distribution_distance_analysis(data.get_column(used_inputs_indices(i)));
+    for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
+    {
+        current_distribution = perform_distribution_distance_analysis(data.chip(used_inputs_indices(i),1));
 
-            if(current_distribution == 0) // Normal distribution
-            {
-                scaling_methods(i) = "MeanStandardDeviation";
-            }
-            else if(current_distribution == 1) // Uniform distribution
-            {
-                scaling_methods(i) = "MinimumMaximum";
-            }
-            else // Default
-            {
-                scaling_methods(i) = "MinimumMaximum";
-            }
+        if(current_distribution == 0) // Normal distribution
+        {
+            scaling_methods(i) = "MeanStandardDeviation";
         }
-    */
+        else if(current_distribution == 1) // Uniform distribution
+        {
+            scaling_methods(i) = "MinimumMaximum";
+        }
+        else // Default
+        {
+            scaling_methods(i) = "MinimumMaximum";
+        }
+    }
+
     return scaling_methods;
 }
 
@@ -8975,43 +9003,39 @@ void DataSet::numeric_to_categorical(const Index& variable_index)
 void DataSet::impute_missing_values_unuse()
 {
     const Index instances_number = get_instances_number();
-    /*
+
     #pragma omp parallel for
 
-        for(Index i = 0; i <instances_number; i++)
+    for(Index i = 0; i <instances_number; i++)
+    {
+        if(has_nan_row(i))
         {
-            if(data.has_nan_row(i))
-            {
-                set_instance_use(i, "Unused");
-            }
+            set_instance_use(i, "Unused");
         }
-    */
+    }
 }
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
 
 void DataSet::impute_missing_values_mean()
 {
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-    /*
-        const Tensor<type, 1> means = mean_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
-        const Index variables_number = used_columns_indices.size();
-        const Index instances_number = get_instances_number();
+    const Tensor<type, 1> means = mean(data, used_instances_indices, used_columns_indices);
 
-        cout<<"instances number"<< instances_number<<endl;
-        cout<<"rows"<<data.dimension(0)<<endl;
+    const Index instances_number = get_instances_number();
+    const Index variables_number = used_columns_indices.size();
 
-        #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
-        for(Index j = 0; j < variables_number; j++)
+    for(Index j = 0; j < variables_number; j++)
+    {
+        for(Index i = 0 ; i < instances_number - 1 ; i++)
         {
-            for(Index i = 0 ; i < instances_number - 1 ; i++)
-            {
-                if(::isnan(data(i,j))) data(i,j) = means(j);
-            }
+            if(::isnan(data(i,j))) data(i,j) = means(j);
         }
-    */
+    }
 }
 
 
@@ -9019,23 +9043,23 @@ void DataSet::impute_missing_values_mean()
 
 void DataSet::impute_missing_values_median()
 {
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-    /*
-        const Tensor<type, 1> medians = median_missing_values(data, Tensor<Index, 1>(0,1,data.dimension(0)-1),used_columns_indices);
 
-        const Index variables_number = used_columns_indices.size();
-        const Index instances_number = get_instances_number();
+    const Tensor<type, 1> medians = median(data, used_instances_indices, used_columns_indices);
 
-        #pragma omp parallel for schedule(dynamic)
+    const Index variables_number = used_columns_indices.size();
+    const Index instances_number = get_instances_number();
 
-        for(Index j = 0; j < variables_number; j++)
+#pragma omp parallel for schedule(dynamic)
+
+    for(Index j = 0; j < variables_number; j++)
+    {
+        for(Index i = 0 ; i < instances_number ; i++)
         {
-            for(Index i = 0 ; i < instances_number ; i++)
-            {
-                if(::isnan(data(i,j))) data(i,j) = medians(j);
-            }
+            if(::isnan(data(i,j))) data(i,j) = medians(j);
         }
-    */
+    }
 }
 
 
@@ -9051,19 +9075,19 @@ void DataSet::scrub_missing_values()
     {
         impute_missing_values_unuse();
     }
-    break;
+        break;
 
     case Mean:
     {
         impute_missing_values_mean();
     }
-    break;
+        break;
 
     case Median:
     {
         impute_missing_values_median();
     }
-    break;
+        break;
     }
 }
 
