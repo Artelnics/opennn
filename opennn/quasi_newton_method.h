@@ -35,11 +35,9 @@
 
 // Eigen Includes
 
-#include <../eigen/unsupported/Eigen/KroneckerProduct>
-
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 using Eigen::MatrixXd;
-using Eigen::Vector3d;
 
 namespace OpenNN
 {
@@ -120,7 +118,11 @@ public:
 
         Tensor<type, 1> parameters_increment;
 
+        type parameters_increment_norm = 0;
+
         // Loss index data
+
+        type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
 
@@ -284,7 +286,7 @@ public:
    string object_to_string() const;
    Tensor<string, 2> to_string_matrix() const;
 
-   void update_optimization_data(
+   void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
            const LossIndex::BackPropagation& back_propagation,
@@ -365,13 +367,16 @@ public:
            learning_rate = directional_point.first;
        }
 
-       optimization_data.parameters += optimization_data.training_direction*learning_rate;
+       optimization_data.parameters_increment = optimization_data.training_direction*learning_rate;
 
-//       parameters_increment_norm = l2_norm(parameters_increment);
+       optimization_data.parameters += optimization_data.parameters_increment;
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+//       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
        optimization_data.old_parameters = optimization_data.parameters;
 
-//       old_training_loss = training_loss;
+//       optimization_data.old_training_loss = back_propagation.loss;
 
 //       old_selection_error = selection_error;
 
@@ -379,7 +384,9 @@ public:
 
        optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
-//       optimization_data.old_learning_rate = learning_rate;
+       optimization_data.learning_rate = learning_rate;
+
+       optimization_data.old_learning_rate = learning_rate;
 
 
    }

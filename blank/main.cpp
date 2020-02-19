@@ -49,6 +49,9 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+#include "device.h"
+
+#include <../eigen/unsupported/Eigen/KroneckerProduct>
 
 using namespace OpenNN;
 using namespace std;
@@ -63,13 +66,64 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
 
-        Tensor<type, 2> A;
-        Tensor<type, 2> B;
+        Index samples = 1000;
+        Index variables = 10;
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
+        // Data set
+/*
+        Tensor<type, 2> data(samples, variables+1);
+
+        data.setRandom();
+
+        DataSet data_set(data);
+*/
+        DataSet data_set;
+
+        data_set.generate_Rosenbrock_data(samples, variables+1);
+
+        data_set.set_device_pointer(&device);
+
+        data_set.set_training();
+
+        // Neural network
+
+        const Index inputs_number = data_set.get_input_variables_number();
+
+        const Index hidden_neurons_number = variables;
+
+        const Index outputs_number = data_set.get_target_variables_number();
+
+        Tensor<Index, 1> arquitecture(3);
+
+        arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+        neural_network.set_device_pointer(&device);
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+
+        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
+
+        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1);
+
+        training_strategy.set_device_pointer(&device);
+
+        training_strategy.perform_training();
 
 
-//        cout << "b: " << b << endl;
-
+        cout << "End" << endl;
 
         return 0;
 

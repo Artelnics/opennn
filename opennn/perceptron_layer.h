@@ -298,6 +298,12 @@ public:
     {
 #ifdef __OPENNN_DEBUG__
 
+<<<<<<< HEAD
+=======
+#ifdef __OPENNN_DEBUG__
+
+       const Index neurons_number = get_neurons_number();
+>>>>>>> 01105a659ae21fdb50b75e7297d00c8dfd7fa8bf
        const Index inputs_number = get_inputs_number();
 
        if(inputs_number != inputs.dimension(1))
@@ -305,7 +311,7 @@ public:
            ostringstream buffer;
 
            buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                  << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
+                  << "void forward_propagate(const Tensor<type, 2>&,, ForwardPropagation&) method.\n"
                   << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -323,7 +329,11 @@ public:
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       Tensor<type, 1> potential_parameters,
+<<<<<<< HEAD
                                       ForwardPropagation& forward_propagation) const
+=======
+                                      ForwardPropagation& forward_propagation)
+>>>>>>> 01105a659ae21fdb50b75e7297d00c8dfd7fa8bf
       {
        const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
@@ -581,8 +591,8 @@ public:
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(synaptic_weights.data(), parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-       memcpy(biases.data(), parameters.data() + synaptic_weights.size(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(biases.data(), parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
 
@@ -591,9 +601,9 @@ public:
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data() + index, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-       memcpy(gradient.data() + back_propagation.synaptic_weights_derivatives.size() + index,
-              back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index,back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
    }
 
 

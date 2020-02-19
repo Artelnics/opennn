@@ -886,7 +886,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                                 training_direction, initial_learning_rate);
 
         learning_rate = directional_point.first;
-
+// Not ok , learning rate = 0
         if(abs(learning_rate) < numeric_limits<type>::min())
             throw logic_error("Training rate is zero");
 
