@@ -120,7 +120,6 @@ public:
    // Stopping criteria
 
    const type& get_loss_goal() const;
-   const type& get_gradient_norm_goal() const;
    const type& get_maximum_time() const;
    const bool& get_choose_best_selection() const;
 
@@ -161,7 +160,6 @@ public:
    // Stopping criteria
 
    void set_loss_goal(const type&);
-   void set_gradient_norm_goal(const type&);
    void set_maximum_time(const type&);
    void set_choose_best_selection(const bool&);
 
@@ -275,11 +273,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type loss_goal;
-
-   /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
-
-   type gradient_norm_goal;
+   type training_loss_goal = 0;
 
    /// Maximum epochs number
 

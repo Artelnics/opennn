@@ -312,10 +312,10 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    neural_network.set_parameters_constant(3.1415927);
 
-   type loss_goal = 100.0;
+   type training_loss_goal = 100.0;
 
    quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
-   quasi_newton_method.set_loss_goal(loss_goal);
+   quasi_newton_method.set_loss_goal(training_loss_goal);
    quasi_newton_method.set_minimum_loss_decrease(0.0);
    quasi_newton_method.set_gradient_norm_goal(0.0);
    quasi_newton_method.set_maximum_epochs_number(10);
@@ -325,7 +325,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    loss = sum_squared_error.calculate_training_loss();
 
-   assert_true(loss < loss_goal, LOG);
+   assert_true(loss < training_loss_goal, LOG);
 
    // Minimum evaluation improvement
 
