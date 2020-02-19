@@ -365,9 +365,7 @@ public:
            learning_rate = directional_point.first;
        }
 
-cout << optimization_data.parameters << endl << optimization_data.training_direction << endl;
        optimization_data.parameters += optimization_data.training_direction*learning_rate;
-
 //       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
        optimization_data.old_parameters = optimization_data.parameters;

@@ -1253,13 +1253,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
 
-        // Optimization data
 
-        update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
-
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
 
@@ -1305,7 +1299,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else */if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1372,7 +1366,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
-        }
+        }*/
 
         if(epoch != 0 && epoch % save_period == 0)
         {
@@ -1428,6 +1422,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
+        // Optimization data
+
+        update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+        // Set new parameters
+
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
 
         if(stop_training) break;

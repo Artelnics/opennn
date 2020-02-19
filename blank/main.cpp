@@ -69,8 +69,8 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        Index samples = 10;
-        Index variables = 3;
+        Index samples = 100000;
+        Index variables = 100;
 
         // Device
 
@@ -112,6 +112,8 @@ int main(void)
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_learning_rate_method(LearningRateAlgorithm::Fixed);
+
+        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(200);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
