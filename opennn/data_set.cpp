@@ -7739,9 +7739,92 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    /*
-        data.save_csv(data_file_name);
-    */
+    ofstream file(data_file_name.c_str());
+
+    if(!file.is_open())
+    {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix template." << endl
+             << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
+             << "Cannot open matrix data file: " << data_file_name << endl;
+
+      throw logic_error(buffer.str());
+    }
+
+/*
+//    if(row_names.size() != 0 && row_names.size() != rows_number)
+//    {
+//       ostringstream buffer;
+
+//       buffer << "OpenNN Exception: Matrix template." << endl
+//              << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
+//              << "Row names must have size 0 or " << rows_number << "." << endl;
+
+//       throw logic_error(buffer.str());
+//    }
+
+    // Write file
+
+    if(!header.empty() && header != "")
+    {
+       if(!row_names.empty())
+       {
+           file << nameID << separator;
+       }
+
+       for(size_t j = 0; j < columns_number; j++)
+       {
+           file << header[j];
+
+           if(j != columns_number-1)
+           {
+               file << separator;
+
+           }
+       }
+
+       file << endl;
+    }
+*/
+    file.precision(20);
+
+    const Index instances_number = get_instances_number();
+    const Index variables_number = get_variables_number();
+
+    const Tensor<string, 1> variables_names = get_variables_names();
+
+    char separator_char = ',';//get_separator_char();
+
+    for(Index j = 0; j < variables_number; j++)
+    {
+        file << variables_names[j];
+
+        if(j != variables_number-1)
+        {
+            file << separator_char;
+        }
+    }
+
+    file << endl;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+       for(Index j = 0; j < variables_number; j++)
+       {
+           file << data(i,j);
+
+           if(j != variables_number-1)
+           {
+               file << separator_char;
+           }
+       }
+
+       file << endl;
+    }
+
+    file.close();
+
 }
 
 
