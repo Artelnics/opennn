@@ -258,6 +258,7 @@ public:
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;
+   Tensor<Column, 1> get_input_columns() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
 
