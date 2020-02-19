@@ -2160,6 +2160,28 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
 }
 
 
+/// Returns the input columns of the data set.
+
+Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
+{
+    const Index inputs_number = get_input_columns_number();
+
+    Tensor<Column, 1> input_columns(inputs_number);
+    Index input_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Input)
+        {
+            input_columns(input_index) = columns(i);
+            input_index++;
+        }
+    }
+
+    return input_columns;
+}
+
+
 /// Returns the target columns of the data set.
 
 Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
@@ -3158,10 +3180,7 @@ Tensor<type, 2> DataSet::get_input_data() const
 
 Tensor<type, 2> DataSet::get_target_data() const
 {
-    const Index instances_number = get_instances_number();
-
-    Tensor<Index, 1> indices;
-    intialize_sequential_eigen_tensor(indices, 0, 1, instances_number-1);
+    const Tensor<Index, 1> indices = get_used_instances_indices();
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
@@ -3453,11 +3472,18 @@ Tensor<type, 2> DataSet::get_column_data(const Tensor<Index, 1>& variables_indic
 
 Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 {
-    // @todo for categorical with slice
-//    return data.chip(column_index, 1);
+    Index columns_number = 1;
+    const Index rows_number = data.dimension(0);
 
-    return Tensor<type, 2>();
+    if(columns(column_index).type == Categorical)
+    {
+        columns_number = columns(column_index).get_categories_number();
+    }
 
+    Eigen::array<Index, 2> extents = {rows_number, columns_number};
+    Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
+
+    return data.slice(offsets, extents);
 
 }
 
@@ -5100,11 +5126,11 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
-                correlations(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
+                correlations(i,j) = one_way_anova_correlations(input, target.chip(0,1));
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
-                correlations(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
+                correlations(i,j) = one_way_anova_correlations(target, input.chip(0,1));
             }
             else
             {
@@ -5296,10 +5322,12 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
+                // Logistic?
 //                regressions(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
+                // Logistic?
 //                regressions(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
             }
             else
