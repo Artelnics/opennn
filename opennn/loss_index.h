@@ -282,7 +282,7 @@ public:
        calculate_output_gradient(forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
-// Not ok in Adam
+
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 
        // Regularization

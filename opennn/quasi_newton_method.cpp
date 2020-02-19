@@ -761,15 +761,15 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 {
     // Transform Tensors into Dense matrix
 
-    auto m = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    auto m2 = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(m,m2).eval();
+    auto product = kroneckerProduct(ml,mr).eval();
 
     // Matrix into a Tensor
 
@@ -788,15 +788,15 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 {
     // Transform Tensors into Dense matrix
 
-    auto m = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    auto m2 = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(m,m2).eval();
+    auto product = kroneckerProduct(ml,mr).eval();
 
     // Matrix into a Tensor
 
@@ -1187,7 +1187,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type parameters_norm = 0;
 
-    type parameters_increment_norm = 0;
+//    type parameters_increment_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -1196,7 +1196,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type training_loss = 0;
     type training_error = 0;
-    type old_training_loss = 0;
+//    type old_training_loss = 0;
 
     type gradient_norm = 0;
 
@@ -1209,7 +1209,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     Tensor<type, 0> training_slope;
 
-    type learning_rate = 0;
+//    type learning_rate = 0;
 
     Tensor<type, 1> minimal_selection_parameters;
 
@@ -1246,6 +1246,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
 
+        gradient_norm = l2_norm(training_back_propagation.gradient);
+
+        if(display && gradient_norm >= warning_gradient_norm)
+        {
+            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+        }
+
         // Optimization data
 
         update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
@@ -1254,13 +1261,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
+        // Selection error
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-        }
 /*
         if(has_selection)
         {
@@ -1399,7 +1401,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                      << "Training error: " << training_loss <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate <<  "\n"
+                     << "Training rate: " << optimization_data.old_learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
@@ -1417,7 +1419,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                  << "Training error: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << optimization_data.learning_rate << "\n"
+                 << "Training rate: " << optimization_data.old_learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection)
