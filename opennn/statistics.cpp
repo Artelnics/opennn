@@ -2006,8 +2006,8 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     const type mean = descriptives.mean;
     const type standard_deviation = descriptives.standard_deviation;
-    const type minimum = sorted_vector[0];
-    const type maximum = sorted_vector[n-1];
+    const type minimum = sorted_vector(0);
+    const type maximum = sorted_vector(n-1);
 
     #pragma omp parallel for schedule(dynamic)
 
@@ -2021,11 +2021,11 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         Index counter = 0;
 
-        if(vector(i) < sorted_vector[0])
+        if(vector(i) < sorted_vector(0))
         {
             empirical_distribution = 0;
         }
-        else if(vector(i) >= sorted_vector[n-1])
+        else if(vector(i) >= sorted_vector(n-1))
         {
             empirical_distribution = 1.0;
         }
@@ -2050,9 +2050,9 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         #pragma omp critical
         {
-            distances[0] += abs(normal_distribution - empirical_distribution);
-            /*            distances[1] += abs(half_normal_distribution - empirical_distribution); */
-            distances[1] += abs(uniform_distribution - empirical_distribution);
+            distances(0) += abs(normal_distribution - empirical_distribution);
+            /*            distances(1) += abs(half_normal_distribution - empirical_distribution); */
+            distances(1) += abs(uniform_distribution - empirical_distribution);
         }
     }
 

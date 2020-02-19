@@ -308,8 +308,10 @@ public:
  
    Tensor<string, 2> get_information() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
+   void inputs_from_XML(const tinyxml2::XMLDocument&);
+   void layers_from_XML(const tinyxml2::XMLDocument&);
+   void outputs_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML( );

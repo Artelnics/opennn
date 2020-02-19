@@ -781,6 +781,10 @@ public:
 
    // Missing values
 
+   bool has_nan() const;
+
+   bool has_nan_row(const Index&) const;
+
    void print_missing_values_information() const;
 
    void impute_missing_values_unuse();
