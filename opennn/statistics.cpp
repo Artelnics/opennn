@@ -1182,7 +1182,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(vector(i) == centers(j))
+                if(static_cast<Index>(vector(i)) == static_cast<Index>(centers(j)))
                 {
                     frequencies(j)++;
                     break;
@@ -3029,9 +3029,9 @@ if(number > size)
 {
    ostringstream buffer;
 
-   buffer << "OpenNN Exception: Statitics class.\n"
+   buffer << "OpenNN Exception: Statistics class.\n"
           << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index &) \n"
-          << "Number of minimal indices to be computed must be lower than the size of the imput vector.\n";
+          << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
    throw logic_error(buffer.str());
 }
@@ -3056,35 +3056,50 @@ if(number > size)
       return minimal_indices;
 }
 
+
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
 
-Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
+Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
-    /*
-      const Index size = vector.dimension(0);
+    Eigen::Tensor<type, 1> vector_ = vector;
 
-      const Tensor<Index, 1> rank = vector.calculate_greater_rank();
+    const Index size = vector.dimension(0);
+    Tensor<Index, 1> maximal_indices(number);
+    Eigen::Tensor<type, 0> minim = vector.minimum();
 
-      Tensor<Index, 1> maximal_indices(number);
+#ifdef __OPENNN_DEBUG__
 
-      for(Index i = 0; i < size; i++)
-      {
-        for(Index j = 0; j < number; j++)
-        {
-          if(rank(i) == j)
-          {
-            maximal_indices(j) = i;
-          }
-        }
-      }
+if(number > size)
+{
+   ostringstream buffer;
 
-      return maximal_indices;
-    */
+   buffer << "OpenNN Exception: Statistics class.\n"
+          << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
-    return Tensor<Index, 1>();
+   throw logic_error(buffer.str());
 }
+#endif
 
+    for(Index j = 0; j < number; j++)
+    {
+        Index maximal_index = 0;
+        type maximal = vector_(0);
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(vector_(i) > maximal)
+            {
+                maximal_index = i;
+                maximal = vector_(i);
+            }
+        }
+        vector_(maximal_index) = minim(0)-1;
+        maximal_indices(j) = maximal_index;
+    }
+      return maximal_indices;
+}
 
 /// Returns the row and column indices corresponding to the entry with minimum value.
 
