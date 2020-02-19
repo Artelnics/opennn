@@ -163,9 +163,7 @@ struct CorrelationResults
 
     CorrelationResults karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    ///@todo check
     CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
-    CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     // Covariance
 

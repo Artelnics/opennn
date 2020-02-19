@@ -1899,7 +1899,6 @@ CorrelationResults karl_pearson_correlation(const Tensor<type, 2>& x, const Tens
 
 CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -1914,163 +1913,52 @@ CorrelationResults one_way_anova_correlations(const Tensor<type, 2>& matrix, con
     }
 
 #endif
-    const type n = static_cast<type>(matrix.dimension(0));
-
-    Tensor<type, 2> new_matrix(matrix.dimension(0),matrix.dimension(1));
-
-    Tensor<type, 1> number_elements(matrix.dimension(1));
-
-    Tensor<type, 1> groups_average(matrix.dimension(1));
-
-    const Tensor<type, 0> total_average = vector.sum() / n;
-
-    type total_sum_of_squares = 0;
-    type treatment_sum_of_squares = 0;
-//@todo, check
-    for(Index i = 0; i < n; i ++)
-    {
-        for(Index j = 0; j < matrix.dimension(1); j++)
-        {
-            new_matrix(i,j) = matrix(i,j) * vector[i];
-
-            const Tensor<type, 0> column_sum = matrix.chip(j,0).sum();
-
-            number_elements(j) = column_sum(0);
-
-//           number_elements[j] = matrix.calculate_column_sum(j);
-
-            const Tensor<type, 0> new_column_sum = new_matrix.chip(j,0).sum();
-
-            groups_average(j) = new_column_sum(0)/number_elements(j);
-
-//           groups_average[j] = new_matrix.calculate_column_sum(j) / number_elements[j];
-        }
-
-        total_sum_of_squares += pow(vector[i] - total_average(0),2);
-
-    }
-
-    for(Index i = 0; i < matrix.dimension(1); i ++)
-    {
-        treatment_sum_of_squares += number_elements[i] * pow(groups_average[i] - total_average(0),2);
-    }
-
-    CorrelationResults one_way_anova;
-
-    one_way_anova.correlation_type = OneWayAnova_correlation;
-
-    one_way_anova.correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
-
-    return one_way_anova;
-}
-
-///Calculate the one way anova correlation between two variables when there are missing values.
-/// @param x Matrix of the categorical variable.
-/// @param y Vector of the variable numeric variable.
-
-CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(matrix.dimension(0) != vector.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) method.\n"
-               << "Rows of the matrix (" << matrix.dimension(0) << ") must be equal to size of vector (" << vector.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Count NANs
-
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Index x_NAN = 0;
+    type vector_average = 0;
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        if(!::isnan(vector(i)))
         {
-            if(isnan(matrix(i,j)))
-            {
-                x_NAN++;
-                break;
-            }
+            vector_average += vector(i);
         }
     }
 
-    const Index y_NAN = count_NAN(vector);
+    vector_average /= static_cast<type>(rows_number);
 
-    Index new_rows_number;
-    x_NAN <= y_NAN ? new_rows_number = rows_number - y_NAN : new_rows_number = rows_number - x_NAN;
+    Tensor<type, 1> number_elements(columns_number);
+    number_elements.setZero();
 
-    Tensor<type, 2> new_matrix(new_rows_number,matrix.dimension(1));
+    Tensor<type, 1> columns_sums(columns_number);
+    columns_sums.setZero();
 
-    Tensor<type, 1> new_vector(new_rows_number);
+    type total_sum_of_squares = 0;
 
-    Index index = 0;
-/*
-    for(Index i = 0; i < rows_number ; i++)
+    for(Index i = 0; i < rows_number; i ++)
     {
-        if(!::isnan(vector[i]))
+        if(!::isnan(vector(i)))
         {
-            new_vector[index] = vector[i];
-
-            for(Index j = 0; j < matrix1.dimension(1); j++)
+            for(Index j = 0; j < columns_number; j++)
             {
-                if(!::isnan(matrix[i]))
+                if(!::isnan(matrix(i,j)))
                 {
-                    matrix1(index,j) = matrix(i,j);
+                    columns_sums(j) += matrix(i,j) * vector(i);
+
+                    number_elements(j) += matrix(i,j);
                 }
             }
 
-            index++;
+            total_sum_of_squares += pow(vector(i) - vector_average, 2);
         }
     }
 
-    const type n = static_cast<type>(matrix1.dimension(0));
-
-    Tensor<type, 2> new_matrix(matrix1.dimension(0),matrix1.dimension(1));
-
-    Tensor<type, 1> number_elements(matrix1.dimension(1));
-
-    Tensor<type, 1> groups_average(matrix1.dimension(1));
-
-    const Tensor<type, 0> total_average = new_vector.sum() / n;
-
-    type total_sum_of_squares = 0;
     type treatment_sum_of_squares = 0;
 
-    for(Index i = 0; i < n; i ++)
+    for(Index i = 0; i < columns_number; i ++)
     {
-        for(Index j = 0; j < matrix1.dimension(1); j++)
-        {
-            new_matrix(i,j) = matrix1(i,j) * new_vector(i);
-
-            const Tensor<type, 0> column_sum = matrix.chip(j,0).sum();
-
-            number_elements(j) = column_sum(0);
-
-            const Tensor<type, 0> new_column_sum = new_matrix.chip(j,0).sum();
-
-            groups_average(j) = new_column_sum(0)/number_elements(j);
-
-            //           number_elements[j] = matrix1.calculate_column_sum(j);
-
-            //           groups_average[j] = new_matrix.calculate_column_sum(j) / number_elements[j];
-        }
-
-        total_sum_of_squares += pow(new_vector(i) - total_average(0),2);
-    }
-
-    for(Index i = 0; i < matrix1.dimension(1); i ++)
-    {
-        treatment_sum_of_squares += number_elements(i) * pow(groups_average(i) - total_average(0),2);
+        treatment_sum_of_squares += number_elements(i) * pow(columns_sums(i)/number_elements(i) - vector_average, 2);
     }
 
     CorrelationResults one_way_anova;
@@ -2080,9 +1968,6 @@ CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 
     one_way_anova.correlation = sqrt(treatment_sum_of_squares / total_sum_of_squares);
 
     return one_way_anova;
-    */
-
-    return CorrelationResults();
 }
 
 
