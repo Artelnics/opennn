@@ -258,6 +258,7 @@ public:
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;
+   Tensor<Column, 1> get_input_columns() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
 
@@ -611,6 +612,10 @@ public:
 
    void print_top_input_target_columns_correlations(const Index& = 10) const;
 
+   // Inputs-targets regressions
+
+   Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
+
    // Principal components
 
    Tensor<type, 2> calculate_covariance_matrix() const;
@@ -775,6 +780,10 @@ public:
    void numeric_to_categorical(const Index&);
 
    // Missing values
+
+   bool has_nan() const;
+
+   bool has_nan_row(const Index&) const;
 
    void print_missing_values_information() const;
 

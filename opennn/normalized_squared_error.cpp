@@ -218,10 +218,13 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     check();
 
 #endif
-    /*
-       return sum_squared_error(targets, targets_mean);
-    */
-    return 0.0;
+
+//    const Tensor<type, 0> normalization_coefficient = targets.contract(targets_mean, SSE);
+
+//       return sum_squared_error(targets, targets_mean);
+
+    //return normalization_coefficient(0);
+    return 0;
 }
 
 

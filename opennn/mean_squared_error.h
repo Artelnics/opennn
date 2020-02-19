@@ -146,6 +146,8 @@ public:
 
                 sum_squared_error.device(*thread_pool_device) = back_propagation.errors.square().sum();
 
+                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
                 return;
             }
 

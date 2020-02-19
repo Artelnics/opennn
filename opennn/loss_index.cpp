@@ -616,7 +616,7 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
     {
     case L1:
     {
-//            return l1_norm_gradient(parameters);
+        return l1_norm_gradient(parameters);
     }
     case L2:
     {
@@ -644,7 +644,7 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
     {
     case L1:
     {
-//            return l1_norm_hessian(parameters);
+        return l1_norm_hessian(parameters);
     }
     case L2:
     {

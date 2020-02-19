@@ -1182,7 +1182,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(vector(i) == centers(j))
+                if(static_cast<Index>(vector(i)) == static_cast<Index>(centers(j)))
                 {
                     frequencies(j)++;
                     break;
@@ -2006,8 +2006,8 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     const type mean = descriptives.mean;
     const type standard_deviation = descriptives.standard_deviation;
-    const type minimum = sorted_vector[0];
-    const type maximum = sorted_vector[n-1];
+    const type minimum = sorted_vector(0);
+    const type maximum = sorted_vector(n-1);
 
     #pragma omp parallel for schedule(dynamic)
 
@@ -2021,11 +2021,11 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         Index counter = 0;
 
-        if(vector(i) < sorted_vector[0])
+        if(vector(i) < sorted_vector(0))
         {
             empirical_distribution = 0;
         }
-        else if(vector(i) >= sorted_vector[n-1])
+        else if(vector(i) >= sorted_vector(n-1))
         {
             empirical_distribution = 1.0;
         }
@@ -2050,9 +2050,9 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         #pragma omp critical
         {
-            distances[0] += abs(normal_distribution - empirical_distribution);
-            /*            distances[1] += abs(half_normal_distribution - empirical_distribution); */
-            distances[1] += abs(uniform_distribution - empirical_distribution);
+            distances(0) += abs(normal_distribution - empirical_distribution);
+            /*            distances(1) += abs(half_normal_distribution - empirical_distribution); */
+            distances(1) += abs(uniform_distribution - empirical_distribution);
         }
     }
 
@@ -3012,67 +3012,94 @@ Index maximal_index(const Tensor<type, 1>& vector)
     return maximal_index;
 }
 
-
 /// Returns the indices of the smallest elements in the vector.
 /// @param number Number of minimal indices to be computed.
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
+    Eigen::Tensor<type, 1> vector_ = vector;
 
     const Index size = vector.dimension(0);
-    /*
-      const std::Tensor<Index, 1> rank = vector.calculate_less_rank();
+    Tensor<Index, 1> minimal_indices(number);
+    Eigen::Tensor<type, 0> maxim = vector.maximum();
 
-      std::Tensor<Index, 1> minimal_indices(number);
+#ifdef __OPENNN_DEBUG__
 
-       #pragma omp parallel for
+if(number > size)
+{
+   ostringstream buffer;
 
-      for(Index i = 0; i < static_cast<Index>(size); i++)
-      {
-        for(Index j = 0; j < number; j++)
+   buffer << "OpenNN Exception: Statistics class.\n"
+          << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
+
+   throw logic_error(buffer.str());
+}
+#endif
+
+    for(Index j = 0; j < number; j++)
+    {
+        Index minimal_index = 0;
+        type minimum = vector_(0);
+
+        for(Index i = 0; i < size; i++)
         {
-          if(rank(i) == j)
-          {
-            minimal_indices(j) = i;
-          }
+            if(vector_(i) < minimum)
+            {
+                minimal_index = i;
+                minimum = vector_(i);
+            }
         }
-      }
-
+        vector_(minimal_index) = maxim(0)+1;
+        minimal_indices(j) = minimal_index;
+    }
       return minimal_indices;
-    */
-    return Tensor<Index, 1>();
 }
 
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
 
-Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
+Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
-    /*
-      const Index size = vector.dimension(0);
+    Eigen::Tensor<type, 1> vector_ = vector;
 
-      const Tensor<Index, 1> rank = vector.calculate_greater_rank();
+    const Index size = vector.dimension(0);
+    Tensor<Index, 1> maximal_indices(number);
+    Eigen::Tensor<type, 0> minim = vector.minimum();
 
-      Tensor<Index, 1> maximal_indices(number);
+#ifdef __OPENNN_DEBUG__
 
-      for(Index i = 0; i < size; i++)
-      {
-        for(Index j = 0; j < number; j++)
-        {
-          if(rank(i) == j)
-          {
-            maximal_indices(j) = i;
-          }
-        }
-      }
+if(number > size)
+{
+   ostringstream buffer;
 
-      return maximal_indices;
-    */
+   buffer << "OpenNN Exception: Statistics class.\n"
+          << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
-    return Tensor<Index, 1>();
+   throw logic_error(buffer.str());
 }
+#endif
 
+    for(Index j = 0; j < number; j++)
+    {
+        Index maximal_index = 0;
+        type maximal = vector_(0);
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(vector_(i) > maximal)
+            {
+                maximal_index = i;
+                maximal = vector_(i);
+            }
+        }
+        vector_(maximal_index) = minim(0)-1;
+        maximal_indices(j) = maximal_index;
+    }
+      return maximal_indices;
+}
 
 /// Returns the row and column indices corresponding to the entry with minimum value.
 

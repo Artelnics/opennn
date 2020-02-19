@@ -33,8 +33,10 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-        Index samples = 3;
-        Index variables = 2;
+        srand(static_cast<unsigned>(time(nullptr)));
+
+        Index samples = 20;
+        Index variables = 3;
 
         // Device
 
@@ -75,9 +77,13 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
+        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::L2);
 
+<<<<<<< HEAD
         training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
+=======
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(30);
+>>>>>>> 01105a659ae21fdb50b75e7297d00c8dfd7fa8bf
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
