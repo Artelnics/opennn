@@ -1521,7 +1521,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
 void NeuralNetworkTest::test_to_XML()
 {
    cout << "test_to_XML\n";
-
+/*
    NeuralNetwork neural_network;
 
    tinyxml2::XMLDocument* document;
@@ -1533,6 +1533,7 @@ void NeuralNetworkTest::test_to_XML()
    assert_true(document != nullptr, LOG);
 
    delete document;
+   */
 }
 
 

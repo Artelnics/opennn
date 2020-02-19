@@ -1253,7 +1253,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
 
+        // Optimization data
 
+        update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+        // Set new parameters
+
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
 
@@ -1287,12 +1293,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       /* if(parameters_increment_norm <= minimum_parameters_increment_norm)
+       if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << parameters_increment_norm << endl;
+                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
             stop_training = true;
@@ -1366,7 +1372,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
-        }*/
+        }
 
         if(epoch != 0 && epoch % save_period == 0)
         {
@@ -1395,7 +1401,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                      << "Training error: " << training_loss <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << optimization_data.old_learning_rate <<  "\n"
+                     << "Training rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
@@ -1413,7 +1419,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                  << "Training error: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << optimization_data.old_learning_rate << "\n"
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection)
@@ -1422,14 +1428,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-        // Optimization data
-
-        update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
-
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(optimization_data.parameters);
-
+        optimization_data.old_training_loss = training_loss;
 
         if(stop_training) break;
     }
