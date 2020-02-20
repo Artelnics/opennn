@@ -1037,15 +1037,19 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
+    Index index = 0;
+
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
 
         Index layer_parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 
-        const TensorMap< Tensor<type, 1> > layer_parameters(new_parameters.data(), layer_parameters_number);
+        const TensorMap< Tensor<type, 1> > layer_parameters(new_parameters.data() + index, layer_parameters_number);
 
-        trainable_layers_pointers(i)->insert_parameters(layer_parameters);
+        trainable_layers_pointers(i)->insert_parameters(layer_parameters, index);
+
+        index += layer_parameters_number;
     }
 }
 

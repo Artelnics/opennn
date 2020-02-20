@@ -362,6 +362,8 @@ public:
 
        if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
+           cout << "Reset training direction" << endl;
+
            optimization_data.training_direction = -back_propagation.gradient;
 
            optimization_data.training_direction = normalized(optimization_data.training_direction);

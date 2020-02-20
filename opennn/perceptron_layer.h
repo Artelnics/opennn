@@ -145,7 +145,9 @@ public:
        {
            fill_n(combinations.data()+i*batch_instances_number, batch_instances_number, biases(i));
        }
-
+cout << "combinations_::" << combinations << endl;
+cout << "synaptic_::" << synaptic_weights << endl;
+cout << "inputs_::" << inputs << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -578,12 +580,12 @@ public:
    }
 
 
-   void insert_parameters(const Tensor<type, 1>& parameters)
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& index)
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(biases.data(), parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
