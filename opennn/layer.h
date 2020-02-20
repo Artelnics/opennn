@@ -184,7 +184,7 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_parameters(const Tensor<type, 1>&) {}
+    virtual void insert_parameters(const Tensor<type, 1>&, const Index&) {}
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
 

@@ -496,6 +496,7 @@ public:
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
    {
+//       cout << "Delta:" << endl << back_propagation.delta << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -530,12 +531,12 @@ public:
    }
 
 
-   void insert_parameters(const Tensor<type, 1>& parameters)
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(biases.data(), parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
@@ -545,7 +546,7 @@ public:
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data() + index,back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index, back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
