@@ -1235,7 +1235,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-    training_batch.print();
+//    training_batch.print();
 
 //    system("pause");
 
@@ -1329,7 +1329,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else*/ if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1341,7 +1341,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_loss <= training_loss_goal)
+        else*/ if(training_loss <= training_loss_goal)
         {
             if(display)
             {
