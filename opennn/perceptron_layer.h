@@ -123,9 +123,9 @@ public:
    void set_display(const bool&);
 
    // Parameters initialization methods
-   void initialize_biases(const type&);
-   void initialize_synaptic_weights(const type&);
-   void initialize_synaptic_weights_glorot_uniform();
+   void set_biases_constant(const type&);
+   void set_synaptic_weights_constant(const type&);
+   void set_synaptic_weights_constant_glorot_uniform();
 
    void set_parameters_constant(const type&);
 

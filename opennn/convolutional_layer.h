@@ -144,9 +144,9 @@ public:
 
     // Initialization
 
-    void initialize_biases(const type&);
+    void set_biases_constant(const type&);
 
-    void initialize_synaptic_weights(const type&);
+    void set_synaptic_weights_constant(const type&);
 
     void set_parameters_constant(const type&);
 

@@ -252,7 +252,7 @@ void RecurrentLayerTest::test_get_parameters()
 
    recurrent_layer.set(2, 4);
 
-   recurrent_layer.initialize_biases(1.0);
+   recurrent_layer.set_biases_constant(1.0);
 
    recurrent_layer.initialize_input_weights(0.5);
 

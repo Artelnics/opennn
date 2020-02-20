@@ -569,7 +569,7 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the probabilistic layer with a given value.
 /// @param value Biases initialization value.
 
-void ProbabilisticLayer::initialize_biases(const type& value)
+void ProbabilisticLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
@@ -578,13 +578,13 @@ void ProbabilisticLayer::initialize_biases(const type& value)
 /// Initializes the synaptic weights of all the neurons in the probabilistic layer with a given value.
 /// @param value Synaptic weights initialization value.
 
-void ProbabilisticLayer::initialize_synaptic_weights(const type& value)
+void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
 
 
-void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const type& minimum,const type& maximum)
+void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum,const type& maximum)
 {
     synaptic_weights.setRandom();
 }
