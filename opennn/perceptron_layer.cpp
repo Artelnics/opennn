@@ -716,7 +716,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = document.FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
     {
@@ -734,7 +734,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Neurons number
 
-    const tinyxml2::XMLElement* neurons_number_element = document.FirstChildElement("NeuronsNumber");
+    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!neurons_number_element)
     {
@@ -752,7 +752,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Activation function
 
-    const tinyxml2::XMLElement* activation_function_element = document.FirstChildElement("ActivationFunction");
+    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
 
     if(!activation_function_element)
     {
@@ -770,7 +770,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Parameters
 
-    const tinyxml2::XMLElement* parameters_element = document.FirstChildElement("Parameters");
+    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
 
     if(!parameters_element)
     {
@@ -784,8 +784,8 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-//@todo
-//        set_parameters(to_type_vector(parameters_string, ' '));
+
+        set_parameters(to_type_vector(parameters_string, ' '));
     }
 }
 

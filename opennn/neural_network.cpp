@@ -1834,7 +1834,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             if(scaling_element)
             {
-
                 tinyxml2::XMLDocument scaling_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1856,7 +1855,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             if(convolutional_element)
             {
-
                 tinyxml2::XMLDocument convolutional_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1873,12 +1871,11 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer();
 
-            const tinyxml2::XMLElement* perceptron_element = start_element->NextSiblingElement("perceptronLayer");
+            const tinyxml2::XMLElement* perceptron_element = start_element->NextSiblingElement("PerceptronLayer");
             start_element = perceptron_element;
 
             if(perceptron_element)
             {
-
                 tinyxml2::XMLDocument perceptron_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1890,18 +1887,16 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(perceptron_layer);
-
         }
         else if(layers_types(i) == "Pooling")
         {
             PoolingLayer* pooling_layer = new PoolingLayer();
 
-            const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("poolingLayer");
+            const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("PoolingLayer");
             start_element = pooling_element;
 
             if(pooling_element)
             {
-
                 tinyxml2::XMLDocument pooling_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1913,41 +1908,36 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(pooling_layer);
-
         }
         else if(layers_types(i) == "Probabilistic")
         {
             ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
-            const tinyxml2::XMLElement* probabilistic_element = start_element->NextSiblingElement("probabilisticLayer");
+            const tinyxml2::XMLElement* probabilistic_element = start_element->NextSiblingElement("ProbabilisticLayer");
             start_element = probabilistic_element;
 
             if(probabilistic_element)
             {
-
                 tinyxml2::XMLDocument probabilistic_document;
                 tinyxml2::XMLNode* element_clone;
 
                 element_clone = probabilistic_element->DeepClone(&probabilistic_document);
 
                 probabilistic_document.InsertFirstChild(element_clone);
-
                 probabilistic_layer->from_XML(probabilistic_document);
             }
 
             add_layer(probabilistic_layer);
-
         }
         else if(layers_types(i) == "LongShortTermMemory")
         {
             LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
-            const tinyxml2::XMLElement* long_short_term_memory_element = start_element->NextSiblingElement("long_short_term_memoryLayer");
+            const tinyxml2::XMLElement* long_short_term_memory_element = start_element->NextSiblingElement("LongShortTermMemoryLayer");
             start_element = long_short_term_memory_element;
 
             if(long_short_term_memory_element)
             {
-
                 tinyxml2::XMLDocument long_short_term_memory_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1959,18 +1949,16 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(long_short_term_memory_layer);
-
         }
         else if(layers_types(i) == "Recurrent")
         {
             RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
-            const tinyxml2::XMLElement* recurrent_element = start_element->NextSiblingElement("recurrentLayer");
+            const tinyxml2::XMLElement* recurrent_element = start_element->NextSiblingElement("RecurrentLayer");
             start_element = recurrent_element;
 
             if(recurrent_element)
             {
-
                 tinyxml2::XMLDocument recurrent_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -1982,18 +1970,16 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(recurrent_layer);
-
         }
         else if(layers_types(i) == "Unscaling")
         {
             UnscalingLayer* unscaling_layer = new UnscalingLayer();
 
-            const tinyxml2::XMLElement* unscaling_element = start_element->NextSiblingElement("unscalingLayer");
+            const tinyxml2::XMLElement* unscaling_element = start_element->NextSiblingElement("UnscalingLayer");
             start_element = unscaling_element;
 
             if(unscaling_element)
             {
-
                 tinyxml2::XMLDocument unscaling_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -2005,18 +1991,17 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(unscaling_layer);
-
         }
         else if(layers_types(i) == "Bounding")
         {
             BoundingLayer* bounding_layer = new BoundingLayer();
 
-            const tinyxml2::XMLElement* bounding_element = start_element->NextSiblingElement("boundingLayer");
+            const tinyxml2::XMLElement* bounding_element = start_element->NextSiblingElement("BoundingLayer");
+
             start_element = bounding_element;
 
             if(bounding_element)
             {
-
                 tinyxml2::XMLDocument bounding_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -2028,18 +2013,16 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(bounding_layer);
-
         }
         else if(layers_types(i) == "PrincipalComponents")
         {
             PrincipalComponentsLayer* principal_components_layer = new PrincipalComponentsLayer();
 
-            const tinyxml2::XMLElement* principal_components_element = start_element->NextSiblingElement("principal_componentsLayer");
+            const tinyxml2::XMLElement* principal_components_element = start_element->NextSiblingElement("PrincipalComponentsLayer");
             start_element = principal_components_element;
 
             if(principal_components_element)
             {
-
                 tinyxml2::XMLDocument principal_components_document;
                 tinyxml2::XMLNode* element_clone;
 
@@ -2051,7 +2034,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(principal_components_layer);
-
         }
     }
 }
@@ -2072,7 +2054,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Inputs number
+    // Outputs number
 
     const tinyxml2::XMLElement* outputs_number_element = root_element->FirstChildElement("OutputsNumber");
 
@@ -2092,7 +2074,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
         new_outputs_number = static_cast<Index>(atoi(outputs_number_element->GetText()));
     }
 
-    // Inputs names
+    // Outputs names
 
     const tinyxml2::XMLElement* start_element = outputs_number_element;
 
