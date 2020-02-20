@@ -391,8 +391,8 @@ public:
 
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_output_delta(const Tensor<type, 2>& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());
@@ -467,8 +467,8 @@ public:
 
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_hidden_delta_perceptron(Layer* , const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());
@@ -523,7 +523,8 @@ public:
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "void calculate_hidden_delta_probabilistic(Layer* , const Tensor<type, 2>& "
+                 ", const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());
@@ -545,18 +546,18 @@ public:
 
                 back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
 
-                break;
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
-            {
+            {cout << "Device" << endl;
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
                 back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 
-                break;
+                return;
             }
 
            case Device::EigenGpu:
@@ -569,8 +570,8 @@ public:
 
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_error_gradient(const Tensor<type, 2>& , const Layer::ForwardPropagation&, Layer::BackPropagation& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());

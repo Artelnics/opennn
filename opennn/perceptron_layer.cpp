@@ -409,8 +409,8 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(synaptic_weights.data(), new_parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-    memcpy(biases.data(), new_parameters.data() + synaptic_weights_number, static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 
