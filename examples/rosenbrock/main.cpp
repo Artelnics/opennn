@@ -37,10 +37,10 @@ int main(void)
 
         DataSet data_set(100, 11);
 
-        data_set.generate_Rosenbrock_data(1600000, 1001);
+        data_set.generate_Rosenbrock_data(1800000, 1001);
 
         data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_1600000_1000.csv");
+        data_set.set_data_file_name("D:/rosenbrock_1800000_1000.csv");
 
         data_set.save_data();
 /*
