@@ -152,7 +152,8 @@ public:
 
    ///
    /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss, gradient and <i>Hessian</i> methods separately.
+   /// A method returning this structure might be implemented more efficiently than the loss,
+   /// gradient and <i>Hessian</i> methods separately.
 
    struct SecondOrderLoss
    {
@@ -256,7 +257,9 @@ public:
 
    // GRADIENT METHODS
 
-   virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
+   virtual void calculate_output_gradient(const DataSet::Batch&,
+                                          const NeuralNetwork::ForwardPropagation&,
+                                          BackPropagation&) const = 0;
 
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
@@ -356,7 +359,8 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
+                 back_propagation.errors.device(*default_device)
+                         = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                  return;
              }
@@ -365,7 +369,8 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device)
+                        = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                 return;
              }
@@ -379,6 +384,8 @@ public:
         }
    }
 
+   /// @todo Guillermo Change insert_gradient with TensorMap
+
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
@@ -389,24 +396,10 @@ public:
 
        check();
 
-       // Hidden errors size
-
-       /*const Index layers_delta_size = back_propagation.layers_delta.size();
-
-       if(layers_delta_size != trainable_layers_number)
-       {
-          ostringstream buffer;
-
-         buffer << "OpenNN Exception: LossIndex class.\n"
-                << "void calculate_error_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) method.\n"
-                << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
-
-         throw logic_error(buffer.str());
-       }*/
-
        #endif
 
-       const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+       const Tensor<Index, 1> trainable_layers_parameters_number
+               = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
@@ -416,7 +409,8 @@ public:
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0],
+               index, back_propagation.gradient);
 
        index += trainable_layers_parameters_number[0];
 
@@ -427,7 +421,9 @@ public:
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
-           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i],
+                                                         index,
+                                                         back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
        }
@@ -435,7 +431,9 @@ public:
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
+   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&,
+                                                  const Tensor<Layer::ForwardPropagation, 1>&,
+                                                  const Tensor<Tensor<type, 2>, 1>&) const;
 
    // Serialization methods
 
@@ -570,6 +568,7 @@ public:
        return Tensor<type, 1>();
    }
 
+
    Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
    {
        const Index parameters_number = parameters.size();
@@ -622,9 +621,6 @@ public:
            gradient.setZero();
 
            return gradient;
-       }
-       else
-       {
        }
 
        switch(device_pointer->get_type())

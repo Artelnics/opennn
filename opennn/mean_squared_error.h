@@ -90,8 +90,9 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
-                                                                - batch.targets_2d).square().sum();
+               sum_squared_error.device(*thread_pool_device)
+                       = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+                          - batch.targets_2d).square().sum();
 
                return sum_squared_error(0)/static_cast<type>(batch_instances_number);
             }
@@ -103,6 +104,8 @@ public:
                 return sum_squared_error(0);
            }
        }
+
+       return 0;
    }
 
    // Error terms methods
@@ -153,7 +156,7 @@ public:
    }
 
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
+   void calculate_output_gradient(const DataSet::Batch&,
                                   const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
