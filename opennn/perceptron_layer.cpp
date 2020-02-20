@@ -167,16 +167,11 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer:: get_parameters() const
 {
-    cout << "synaptic_weights: " << synaptic_weights << endl;
-    cout << "biases: " << biases << endl;
-
     Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
-    Eigen::array<Index, 1> one_dim_bias{biases.dimension(1)};
+    Eigen::array<Index, 1> one_dim_bias{{biases.dimension(0)*biases.dimension(1)}};
 
     Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
-
-
 
     Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
 
@@ -186,10 +181,12 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
     {
         fill_n(parameters.data()+i, 1, biases_vector(i));
     }
+
     for(Index i = 0; i < synaptic_weights_vector.size(); i++)
     {
         fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
     }
+
 /*
     Index index = 0;
 
