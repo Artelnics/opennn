@@ -104,7 +104,7 @@ public:
    void test_set_parameters_constant();
 
    void test_initialize_biases();    
-   void test_initialize_synaptic_weights();
+   void test_set_synaptic_weights_constant();
    void test_set_parameters_random();
 
    // Combination

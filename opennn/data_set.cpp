@@ -4424,7 +4424,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
             {
                 for(Index k = 0; k < used_instances_number; k++)
                 {
-                    if(data(used_instances_indices(k), variable_index) == 1.0)
+                    if(abs(data(used_instances_indices(k), variable_index) - 1) < numeric_limits<type>::min())
                     {
                         categories_frequencies(j)++;
                     }
@@ -4445,7 +4445,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
             for(Index j = 0; j < used_instances_number; j++)
             {
-                if(data(used_instances_indices(j), variable_index) == 1.0)
+                if(abs(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
                 {
                     binary_frequencies(0)++;
                 }
@@ -4530,7 +4530,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(training_index, target_index) != 1.0)
+        else if(abs(data(training_index, target_index) - 1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 
@@ -4600,7 +4600,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(testing_index, target_index) != static_cast<type>(1.0))
+        else if(abs(data(testing_index, target_index) -1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 
@@ -4975,7 +4975,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     {
         const Index variable_index = variables_indices(i);
 
-        Tensor<type, 1> mean = (data.chip(variable_index,1)).mean();
+        const Tensor<type, 0> mean = data.chip(variable_index,1).mean();
 
         means(i) = mean(0);
     }

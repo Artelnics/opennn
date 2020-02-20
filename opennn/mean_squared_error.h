@@ -80,7 +80,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+                sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
                                                              - batch.targets_2d).square().sum();
 
                 return sum_squared_error(0)/static_cast<type>(batch_instances_number);
@@ -90,7 +90,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
                                                                 - batch.targets_2d).square().sum();
 
                return sum_squared_error(0)/static_cast<type>(batch_instances_number);
@@ -100,17 +100,9 @@ public:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
+                return sum_squared_error(0);
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-              << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
    }
 
    // Error terms methods
@@ -158,19 +150,11 @@ public:
                 break;
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-              << "void calculate_error(BackPropagation& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
-
    }
 
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -210,14 +194,6 @@ public:
                  break;
             }
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation& ) const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;

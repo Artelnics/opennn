@@ -114,9 +114,9 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_biases(const type&);
-   void initialize_synaptic_weights(const type&);
-   void initialize_synaptic_weights_Glorot(const type&,const type&);
+   void set_biases_constant(const type&);
+   void set_synaptic_weights_constant(const type&);
+   void set_synaptic_weights_constant_Glorot(const type&,const type&);
 
    void set_parameters_constant(const type&);
 
@@ -127,14 +127,14 @@ public:
    void calculate_combinations(const Tensor<type, 2>& inputs,
                                const Tensor<type, 2>& biases,
                                const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations) const
+                               Tensor<type, 2>& combinations_2d) const
    {
        const Index batch_instances_number = inputs.dimension(0);
        const Index biases_number = get_neurons_number();
 
        for(Index i = 0; i < biases_number; i++)
        {
-           fill_n(combinations.data(), batch_instances_number, biases(i));
+           fill_n(combinations_2d.data(), batch_instances_number, biases(i));
        }
 
        switch(device_pointer->get_type())
@@ -143,7 +143,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                combinations.device(*default_device) += inputs.contract(synaptic_weights, A_B);
+                combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -152,33 +152,22 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+               combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
 
-           #ifdef EIGEN_USE_GPU
 
            case Device::EigenGpu:
            {
+#ifdef EIGEN_USE_GPU
+
                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+                //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+#endif
 
                 break;
-           }
-
-           #endif
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                      << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
    }
@@ -191,20 +180,20 @@ public:
    void forward_propagate(const Tensor<type, 2>& inputs,
                           ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
+       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_3d);
+       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_3d);
    }
 
    // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
+   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
    {
         #ifdef __OPENNN_DEBUG__
 
-        const Index dimensions_number = combinations.rank();
+        const Index dimensions_number = combinations_2d.rank();
 
         if(dimensions_number != 2)
         {
@@ -212,14 +201,14 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
+                  << "Dimensions of combinations_2d (" << dimensions_number << ") must be 2.\n";
 
            throw logic_error(buffer.str());
         }
 
         const Index neurons_number = get_neurons_number();
 
-        const Index combinations_columns_number = combinations.dimension(1);
+        const Index combinations_columns_number = combinations_2d.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
@@ -227,7 +216,7 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
+                  << "Number of combinations_2d columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
            throw logic_error(buffer.str());
         }
@@ -236,13 +225,13 @@ public:
 
         switch(activation_function)
         {
-            case Binary: binary(combinations, activations); return;
+            case Binary: binary(combinations_2d, activations_2d); return;
 
-            case Logistic: logistic(combinations, activations); return;
+            case Logistic: logistic(combinations_2d, activations_2d); return;
 
-            case Competitive: competitive(combinations, activations); return;
+            case Competitive: competitive(combinations_2d, activations_2d); return;
 
-            case Softmax: softmax(combinations, activations); return;
+            case Softmax: softmax(combinations_2d, activations_2d); return;
         }
 
         ostringstream buffer;
@@ -254,11 +243,11 @@ public:
         throw logic_error(buffer.str());
    }
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 3>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d, Tensor<type, 3>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
-        const Index dimensions_number = combinations.rank();
+        const Index dimensions_number = combinations_2d.rank();
 
         if(dimensions_number != 2)
         {
@@ -266,14 +255,14 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
+                  << "Dimensions of combinations_2d (" << dimensions_number << ") must be 2.\n";
 
            throw logic_error(buffer.str());
         }
 
         const Index neurons_number = get_neurons_number();
 
-        const Index combinations_columns_number = combinations.dimension(1);
+        const Index combinations_columns_number = combinations_2d.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
@@ -281,7 +270,7 @@ public:
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                   << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations columns ("
+                  << "Number of combinations_2d columns ("
                   << combinations_columns_number << ") must be equal to number of neurons ("
                   << neurons_number << ").\n";
 
@@ -304,7 +293,7 @@ public:
 
             case Logistic:
             {
-                    logistic_derivatives(combinations, activations_derivatives); return;
+                    logistic_derivatives(combinations_2d, activations_derivatives); return;
             }
 
             case Competitive:
@@ -319,7 +308,7 @@ public:
 
             case Softmax:
             {
-                softmax_derivatives(combinations, activations_derivatives); return;
+                softmax_derivatives(combinations_2d, activations_derivatives); return;
             }
         }
 

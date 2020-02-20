@@ -937,7 +937,7 @@ void LongShortTermMemoryLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the layer with a given value.
 /// @param value Biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_biases(const type& value)
+void LongShortTermMemoryLayer::set_biases_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -1261,7 +1261,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    // forget activations, input activations, state activations, output activations, state, hidden state
+    // forget activations_2d, input activations_2d, state activations_2d, output activations_2d, state, hidden state
     Tensor<type, 2> activations_states(instances_number,neurons_number,6);
 
     Index forget_activations_index = 0;
@@ -1318,13 +1318,13 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations) const
+Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations_2d.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1332,7 +1332,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
+               << "Number of columns("<< combinations_columns_number <<") of combinations_2d must be equal to number of neurons("<<neurons_number<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1341,40 +1341,40 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     /*
         switch(activation_function)
         {
-            case Linear: return linear(combinations);
+            case Linear: return linear(combinations_2d);
 
-            case Logistic: return logistic(combinations);
+            case Logistic: return logistic(combinations_2d);
 
-            case HyperbolicTangent: return hyperbolic_tangent(combinations);
+            case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
 
-            case Threshold: return threshold(combinations);
+            case Threshold: return threshold(combinations_2d);
 
-            case SymmetricThreshold: return symmetric_threshold(combinations);
+            case SymmetricThreshold: return symmetric_threshold(combinations_2d);
 
-            case RectifiedLinear: return rectified_linear(combinations);
+            case RectifiedLinear: return rectified_linear(combinations_2d);
 
-            case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+            case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
 
-            case SoftPlus: return soft_plus(combinations);
+            case SoftPlus: return soft_plus(combinations_2d);
 
-            case SoftSign: return soft_sign(combinations);
+            case SoftSign: return soft_sign(combinations_2d);
 
-            case HardSigmoid: return hard_sigmoid(combinations);
+            case HardSigmoid: return hard_sigmoid(combinations_2d);
 
-            case ExponentialLinear: return exponential_linear(combinations);
+            case ExponentialLinear: return exponential_linear(combinations_2d);
         }
     */
     return Tensor<type, 2>();
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations) const
+Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.size();
+    const Index combinations_columns_number = combinations_2d.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1382,7 +1382,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_activations(const Tensor<type, 1>&) const method.\n"
-               << "Size of combinations must be equal to number of neurons.\n";
+               << "Size of combinations_2d must be equal to number of neurons.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1391,41 +1391,41 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     /*
         switch(activation_function)
         {
-            case Linear: return linear(combinations);
+            case Linear: return linear(combinations_2d);
 
-            case Logistic: return logistic(combinations);
+            case Logistic: return logistic(combinations_2d);
 
-            case HyperbolicTangent: return hyperbolic_tangent(combinations);
+            case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
 
-            case Threshold: return threshold(combinations);
+            case Threshold: return threshold(combinations_2d);
 
-            case SymmetricThreshold: return symmetric_threshold(combinations);
+            case SymmetricThreshold: return symmetric_threshold(combinations_2d);
 
-            case RectifiedLinear: return rectified_linear(combinations);
+            case RectifiedLinear: return rectified_linear(combinations_2d);
 
-            case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+            case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
 
-            case SoftPlus: return soft_plus(combinations);
+            case SoftPlus: return soft_plus(combinations_2d);
 
-            case SoftSign: return soft_sign(combinations);
+            case SoftSign: return soft_sign(combinations_2d);
 
-            case HardSigmoid: return hard_sigmoid(combinations);
+            case HardSigmoid: return hard_sigmoid(combinations_2d);
 
-            case ExponentialLinear: return exponential_linear(combinations);
+            case ExponentialLinear: return exponential_linear(combinations_2d);
         }
     */
     return Tensor<type, 1>();
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations) const
+Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations_2d) const
 {
     /*
     #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.dimension(2);
+    const Index combinations_columns_number = combinations_2d.dimension(2);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1433,7 +1433,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 
        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
               << "Tensor<type, 2> calculate_recurrent_activations(const Tensor<type, 2>&) const method.\n"
-              << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
+              << "Number of columns("<< combinations_columns_number <<") of combinations_2d must be equal to number of neurons("<<neurons_number<<").\n";
 
        throw logic_error(buffer.str());
     }
@@ -1442,40 +1442,40 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 
     switch(recurrent_activation_function)
     {
-        case Linear: return linear(combinations);
+        case Linear: return linear(combinations_2d);
 
-        case Logistic: return logistic(combinations);
+        case Logistic: return logistic(combinations_2d);
 
-        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+        case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
 
-        case Threshold: return threshold(combinations);
+        case Threshold: return threshold(combinations_2d);
 
-        case SymmetricThreshold: return symmetric_threshold(combinations);
+        case SymmetricThreshold: return symmetric_threshold(combinations_2d);
 
-        case RectifiedLinear: return rectified_linear(combinations);
+        case RectifiedLinear: return rectified_linear(combinations_2d);
 
-        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
 
-        case SoftPlus: return soft_plus(combinations);
+        case SoftPlus: return soft_plus(combinations_2d);
 
-        case SoftSign: return soft_sign(combinations);
+        case SoftSign: return soft_sign(combinations_2d);
 
-        case HardSigmoid: return hard_sigmoid(combinations);
+        case HardSigmoid: return hard_sigmoid(combinations_2d);
 
-        case ExponentialLinear: return exponential_linear(combinations);
+        case ExponentialLinear: return exponential_linear(combinations_2d);
     }
     */
     return Tensor<type, 2>();
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations) const
+Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.size();
+    const Index combinations_columns_number = combinations_2d.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1483,7 +1483,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
-               << "Size of combinations must be equal to number of neurons.\n";
+               << "Size of combinations_2d must be equal to number of neurons.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1492,40 +1492,40 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
     /*
         switch(recurrent_activation_function)
         {
-            case Linear: return linear(combinations);
+            case Linear: return linear(combinations_2d);
 
-            case Logistic: return logistic(combinations);
+            case Logistic: return logistic(combinations_2d);
 
-            case HyperbolicTangent: return hyperbolic_tangent(combinations);
+            case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
 
-            case Threshold: return threshold(combinations);
+            case Threshold: return threshold(combinations_2d);
 
-            case SymmetricThreshold: return symmetric_threshold(combinations);
+            case SymmetricThreshold: return symmetric_threshold(combinations_2d);
 
-            case RectifiedLinear: return rectified_linear(combinations);
+            case RectifiedLinear: return rectified_linear(combinations_2d);
 
-            case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+            case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
 
-            case SoftPlus: return soft_plus(combinations);
+            case SoftPlus: return soft_plus(combinations_2d);
 
-            case SoftSign: return soft_sign(combinations);
+            case SoftSign: return soft_sign(combinations_2d);
 
-            case HardSigmoid: return hard_sigmoid(combinations);
+            case HardSigmoid: return hard_sigmoid(combinations_2d);
 
-            case ExponentialLinear: return exponential_linear(combinations);
+            case ExponentialLinear: return exponential_linear(combinations_2d);
         }
     */
     return Tensor<type, 1>();
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
+Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations_2d.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1533,7 +1533,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
+               << "Number of columns("<< combinations_columns_number <<") of combinations_2d must be equal to number of neurons("<<neurons_number<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1542,27 +1542,27 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
     /*
         switch(activation_function)
         {
-            case Linear: return linear_derivatives(combinations);
+            case Linear: return linear_derivatives(combinations_2d);
 
-            case Logistic: return logistic_derivatives(combinations);
+            case Logistic: return logistic_derivatives(combinations_2d);
 
-            case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
+            case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations_2d);
 
-            case Threshold: return threshold_derivatives(combinations);
+            case Threshold: return threshold_derivatives(combinations_2d);
 
-            case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
+            case SymmetricThreshold: return symmetric_threshold_derivatives(combinations_2d);
 
-            case RectifiedLinear: return rectified_linear_derivatives(combinations);
+            case RectifiedLinear: return rectified_linear_derivatives(combinations_2d);
 
-            case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
+            case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations_2d);
 
-            case SoftPlus: return soft_plus_derivatives(combinations);
+            case SoftPlus: return soft_plus_derivatives(combinations_2d);
 
-            case SoftSign: return soft_sign_derivatives(combinations);
+            case SoftSign: return soft_sign_derivatives(combinations_2d);
 
-            case HardSigmoid: return hard_sigmoid_derivatives(combinations);
+            case HardSigmoid: return hard_sigmoid_derivatives(combinations_2d);
 
-            case ExponentialLinear: return exponential_linear_derivatives(combinations);
+            case ExponentialLinear: return exponential_linear_derivatives(combinations_2d);
         }
     */
     return Tensor<type, 2>();
@@ -1585,7 +1585,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-               << "Size of combinations must be equal to number of neurons.\n";
+               << "Size of combinations_2d must be equal to number of neurons.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1636,7 +1636,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "Tensor<type, 2> calculate_recurrent_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-               << "Size of combinations must be equal to number of neurons.\n";
+               << "Size of combinations_2d must be equal to number of neurons.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2062,7 +2062,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tens
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 2> activations(instances_number,neurons_number);
+    Tensor<type, 2> activations_2d(instances_number,neurons_number);
 
     // forget, input, state, output and tanh(cell_states) derivatives
     Tensor<type, 2> activations_derivatives(instances_number,neurons_number, 5);
@@ -2123,7 +2123,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tens
         hidden_states = output_activations * calculate_activations(cell_states);
         const Tensor<type, 1> hidden_states_derivatives = calculate_activations_derivatives(cell_states);
 
-        activations.set_row(i,hidden_states);
+        activations_2d.set_row(i,hidden_states);
 
         activations_derivatives.embed(forget_activations_index, forget_activations_derivatives);
         activations_derivatives.embed(input_activations_index, input_activations_derivatives);
@@ -2140,7 +2140,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tens
 
     Layer::ForwardPropagation layers;
 
-    layers.activations = activations;
+    layers.activations_2d = activations_2d;
     layers.activations_derivatives = activations_derivatives;
 
     return layers;

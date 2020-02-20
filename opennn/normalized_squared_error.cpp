@@ -144,8 +144,6 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-//
-
     const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
     const Index selection_instances_number = selection_indices.size();
@@ -399,9 +397,9 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
 
                 const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
 
-                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
+                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations_2d, targets);
 
-                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations_2d - targets).divide(error_terms, 0);
 
                 const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 

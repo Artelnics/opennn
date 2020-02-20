@@ -57,8 +57,8 @@ public:
             const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
             const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 
-            layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
             layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
         }
@@ -144,83 +144,19 @@ public:
 
     // Initialization
 
-    void initialize_biases(const type&);
+    void set_biases_constant(const type&);
 
-    void initialize_synaptic_weights(const type&);
+    void set_synaptic_weights_constant(const type&);
 
     void set_parameters_constant(const type&);
 
     // Combinations
 
-    Tensor<type, 2> calculate_image_convolution(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-    Tensor<type, 4> calculate_combinations(const Tensor<type, 4>&) const;
-    Tensor<type, 4> calculate_combinations(const Tensor<type, 4>&, const Tensor<type, 1>&) const;
-
-    void calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
+    void calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
     {
-/*
-        // Inputs
-
-        const Index images_number = inputs.dimension(0);
-        const Index channels_number = get_inputs_channels_number();
-
-        // Filters
-
-        const Index filters_number = get_filters_number();
-        const Index filters_rows_number = get_filters_rows_number();
-        const Index filters_columns_number = get_filters_columns_number();
-
-        // Outputs
-
-        const Index outputs_rows_number = get_outputs_rows_number();
-        const Index outputs_columns_number = get_outputs_columns_number();
-
-        // Convolution loops
-
-//        #pragma omp parallel for
-
-        for(Index image_index = 0; image_index < images_number; image_index++)
-        {
-            for(Index filter_index = 0; filter_index < filters_number; filter_index++)
-            {
-                for(Index output_row_index = 0; output_row_index < outputs_rows_number; output_row_index++)
-                {
-                    for(Index output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
-                    {
-                        type sum = 0;
-
-                        for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-                        {
-                            for(Index filter_row_index = 0; filter_row_index < filters_rows_number; filter_row_index++)
-                            {
-                                const Index row = output_row_index*row_stride + filter_row_index;
-
-                                for(Index filter_column_index = 0; filter_column_index < filters_columns_number; filter_column_index++)
-                                {
-                                    const Index column = output_column_index*column_stride + filter_column_index;
-
-                                    const type image_element = inputs(image_index, channel_index, row, column);
-                                    const type filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
-
-                                    sum += image_element*filter_element;
-                                }
-                            }
-                        }
-
-                        convolutions(image_index, filter_index, output_row_index, output_column_index) = sum + biases[filter_index];
-                    }
-                }
-            }
-        }
-*/
     }
 
     // Activation
-
-    Tensor<type, 4> calculate_activations(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_activations_derivatives(const Tensor<type, 4>&) const;
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
     {
@@ -235,17 +171,14 @@ public:
    // Outputs
 
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
-   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation)
+   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
    {
-/*
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_convolutions(inputs, forward_propagation.combinations_4d);
 
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
-*/
+       calculate_activations_derivatives(forward_propagation.combinations_4d, forward_propagation.activations_derivatives_4d);
    }
 
    // Delta methods
@@ -260,10 +193,6 @@ public:
    // Gradient methods
 
    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-
-   // Padding methods
-
-   Tensor<type, 2> insert_padding(const Tensor<type, 2>&) const;
 
 protected:
 
