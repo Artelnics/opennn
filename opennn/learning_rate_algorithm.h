@@ -107,16 +107,15 @@ public:
 
        inline pair<type,type> minimum() const
        {
-           /*
-           const Tensor<type, 1> losses({A.second, U.second, B.second});
+
+           Tensor<type, 1> losses(3);
+           losses.setValues({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;
            else return B;
-           */
-           return A;
        }
 
        /// Returns true if the length of the interval(A,B) is zero,
