@@ -65,8 +65,8 @@ public:
             const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
             const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
 
-            layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
             layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
         }
@@ -169,16 +169,16 @@ public:
 
     Tensor<type, 2> calculate_max_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
-    // First order activations
+    // First order activations_2d
 /*
     ForwardPropagation forward_propagate(const Tensor<type, 2>&);
 */
     void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
     {
 /*
-        calculate_activations(inputs, forward_propagation.activations);
+        calculate_activations(inputs, forward_propagation.activations_2d);
 
-        calculate_activations_derivatives(forward_propagation.activations, forward_propagation.activations_derivatives);
+        calculate_activations_derivatives(forward_propagation.activations_2d, forward_propagation.activations_derivatives);
 */
     }
 

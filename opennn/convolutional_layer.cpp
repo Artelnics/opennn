@@ -65,7 +65,7 @@ Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inp
 
 
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-        const Tensor<type, 2>& activations,
+        const Tensor<type, 2>& activations_2d,
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
@@ -75,25 +75,25 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_poi
     {
         ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
-        return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
+        return calculate_hidden_delta_convolutional(convolutional_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
     else if(layer_type == Pooling)
     {
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
-        return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
+        return calculate_hidden_delta_pooling(pooling_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
     else if(layer_type == Perceptron)
     {
         PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-        return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
+        return calculate_hidden_delta_perceptron(perceptron_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
     else if(layer_type == Probabilistic)
     {
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
-        return calculate_hidden_delta_probabilistic(probabilistic_layer, activations, activations_derivatives, next_layer_delta);
+        return calculate_hidden_delta_probabilistic(probabilistic_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
 
     return Tensor<type, 2>();
@@ -173,7 +173,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
 
 
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-        const Tensor<type, 2>& activations,
+        const Tensor<type, 2>& activations_2d,
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
@@ -294,7 +294,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                                 for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                                 {
                                     activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
-                                            activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
+                                            activations_2d(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
                                 }
                             }
 

@@ -331,7 +331,7 @@ public:
 
           trainable_layers_pointers[i]
           ->calculate_hidden_delta(previous_layer_pointer,
-                                   forward_propagation.layers[i].activations,
+                                   forward_propagation.layers[i].activations_2d,
                                    forward_propagation.layers[i].activations_derivatives_2d,
                                    back_propagation.neural_network.layers[i+1].delta,
                                    back_propagation.neural_network.layers[i].delta);
@@ -356,7 +356,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                  return;
              }
@@ -365,7 +365,7 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                 return;
              }
@@ -423,7 +423,7 @@ public:
        for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(
-                   forward_propagation.layers[i-1].activations,
+                   forward_propagation.layers[i-1].activations_2d,
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 

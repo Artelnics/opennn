@@ -62,7 +62,7 @@ public:
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations,
+       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
                                                                     batch.targets_2d);
    }
 
@@ -80,8 +80,8 @@ public:
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
 //        back_propagation.output_gradient
-//                = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
-//                + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations*static_cast<type>(-1.0) + static_cast<type>(1.0));
+//                = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations_2d)*static_cast<type>(-1.0)
+//                + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations_2d*static_cast<type>(-1.0) + static_cast<type>(1.0));
    }
 
 

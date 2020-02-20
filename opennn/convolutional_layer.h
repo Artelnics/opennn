@@ -57,8 +57,8 @@ public:
             const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
             const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 
-            layers[i].combinations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
             layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
 */
         }
@@ -174,11 +174,11 @@ public:
 
    void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation)
    {
-//       calculate_convolutions(inputs, forward_propagation.combinations);
+//       calculate_convolutions(inputs, forward_propagation.combinations_2d);
 
-//       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+//       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
 
-//       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives_2d);
+//       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_2d);
    }
 
    // Delta methods
