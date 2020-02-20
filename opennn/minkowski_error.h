@@ -83,8 +83,8 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                minkowski_error.device(*default_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
-                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+//                minkowski_error.device(*default_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
+//                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -93,8 +93,8 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               minkowski_error.device(*thread_pool_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
-                                                                .pow(static_cast<type>(1.0)/minkowski_parameter);
+//               minkowski_error.device(*thread_pool_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
+//                                                                .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -120,8 +120,8 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+//                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+//                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -130,8 +130,8 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
+//               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+//                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -165,7 +165,36 @@ public:
 /*
         back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
                                            - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
+
+        //type minkowski_parameter = 0; /// @todo use class member
 */
+        //back_propagation.errors.abs();
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 //back_propagation.output_gradient.device(*default_device) = back_propagation.errors.abs();
+
+                 break;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                 break;
+             }
+
+            case Device::EigenGpu:
+            {
+ //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+        }
    }
 
    string get_error_type() const;
