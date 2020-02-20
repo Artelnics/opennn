@@ -135,6 +135,7 @@ int main(void)
 
         training_strategy.perform_training();
 
+
         cout << "End" << endl;
 
         return 0;

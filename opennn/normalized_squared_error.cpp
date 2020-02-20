@@ -205,7 +205,6 @@ void NormalizedSquaredError::set_default()
     }
 }
 
-
 /// Returns the normalization coefficient to be used for the loss of the error.
 /// This is measured on the training instances of the data set.
 /// @param targets Matrix with the targets values from dataset.
@@ -213,20 +212,38 @@ void NormalizedSquaredError::set_default()
 
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) const
 {
+
 #ifdef __OPENNN_DEBUG__
 
     check();
 
+    const Index means_number = targets_mean.dimension(0);
+    const Index targets_number = targets.dimension(1);
+
+    if(targets_number != means_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NormalizedquaredError function.\n"
+               << "type calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) function.\n"
+               << " The columns number of targets("<< targets_number <<") must be equal("<< means_number<<").\n";
+
+        throw logic_error(buffer.str());
+    }
 #endif
 
-//    const Tensor<type, 0> normalization_coefficient = targets.contract(targets_mean, SSE);
+    const Index size = targets.dimension(0);
 
-//       return sum_squared_error(targets, targets_mean);
+    type normalization_coefficient = 0;
 
-    //return normalization_coefficient(0);
-    return 0;
+    for(Index i=0; i < size; i++)
+    {
+        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+
+        normalization_coefficient += norm_1(0);
+    }
+    return normalization_coefficient;
 }
-
 
 /// Returns loss vector of the error terms function for the normalized squared error.
 /// It uses the error back-propagation method.
