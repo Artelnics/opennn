@@ -1176,10 +1176,18 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+
+    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1227,6 +1235,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
+    training_batch.print();
+
+//    system("pause");
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         // Neural network
@@ -1240,9 +1252,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
+//        training_forward_propagation.print();
+
+//        system("pause");
+
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+//        training_back_propagation.print();
+
+//        system("pause");
 
         training_loss = training_back_propagation.loss;
 
@@ -1256,6 +1276,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         // Optimization data
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+//        optimization_data.print();
+
+//        system("pause");
 
         // Set new parameters
 
