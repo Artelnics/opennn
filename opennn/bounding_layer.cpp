@@ -834,54 +834,57 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     unsigned index = 0; // Index does not work
 
-    const tinyxml2::XMLElement* start_element = neurons_number_element;
-
-    for(Index i = 0; i < lower_bounds.size(); i++)
+    if(neurons_number > 0)
     {
-        const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
-        start_element = item_element;
+        const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-        if(!item_element)
+        for(Index i = 0; i < lower_bounds.size(); i++)
         {
-            buffer << "OpenNN Exception: BoundingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Item " << i+1 << " is nullptr.\n";
+            const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
+            start_element = item_element;
 
-            throw logic_error(buffer.str());
-        }
-
-        item_element->QueryUnsignedAttribute("Index", &index);
-
-        if(index != i+1)
-        {
-            buffer << "OpenNN Exception: BoundingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Index " << index << " is not correct.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        // Lower bound
-
-        const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
-
-        if(lower_bound_element)
-        {
-            if(lower_bound_element->GetText())
+            if(!item_element)
             {
-                lower_bounds[index-1] = static_cast<type>(atof(lower_bound_element->GetText()));
+                buffer << "OpenNN Exception: BoundingLayer class.\n"
+                       << "void from_XML(const tinyxml2::XMLElement*) method.\n"
+                       << "Item " << i+1 << " is nullptr.\n";
+
+                throw logic_error(buffer.str());
             }
-        }
 
-        // Upper bound
+            item_element->QueryUnsignedAttribute("Index", &index);
 
-        const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
-
-        if(upper_bound_element)
-        {
-            if(upper_bound_element->GetText())
+            if(index != i+1)
             {
-                upper_bounds[index-1] = static_cast<type>(atof(upper_bound_element->GetText()));
+                buffer << "OpenNN Exception: BoundingLayer class.\n"
+                       << "void from_XML(const tinyxml2::XMLElement*) method.\n"
+                       << "Index " << index << " is not correct.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            // Lower bound
+
+            const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
+
+            if(lower_bound_element)
+            {
+                if(lower_bound_element->GetText())
+                {
+                    lower_bounds[index-1] = static_cast<type>(atof(lower_bound_element->GetText()));
+                }
+            }
+
+            // Upper bound
+
+            const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
+
+            if(upper_bound_element)
+            {
+                if(upper_bound_element->GetText())
+                {
+                    upper_bounds[index-1] = static_cast<type>(atof(upper_bound_element->GetText()));
+                }
             }
         }
     }
@@ -912,93 +915,6 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
-    // Control sentence
-//      {
-//         const char* text = bounding_layer_element->GetText();
-
-//         const string string(text);
-
-//         if(string != "BoundingLayer")
-//         {
-//            ostringstream buffer;
-
-//            buffer << "OpenNN Exception: BoundingLayer class.\n"
-//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Unkown root element: " << text << ".\n";
-
-//   	        throw logic_error(buffer.str());
-//         }
-//      }
-
-//  // Lower bounds
-//  {
-//     const tinyxml2::XMLElement* lower_bounds_element = document.FirstChildElement("LowerBounds");
-
-//     if(lower_bounds_element)
-//     {
-//        const char* lower_bounds_text = lower_bounds_element->GetText();
-
-//        if(lower_bounds_text)
-//        {
-//           Tensor<type, 1> new_lower_bounds;
-//           new_lower_bounds.parse(lower_bounds_text);
-
-//           try
-//           {
-//              set_lower_bounds(new_lower_bounds);
-//           }
-//           catch(const logic_error& e)
-//           {
-//              cerr << e.what() << endl;
-//           }
-//        }
-//     }
-//  }
-
-//  // Upper bounds
-//  {
-//     const tinyxml2::XMLElement* upper_bounds_element = document.FirstChildElement("UpperBounds");
-
-//     if(upper_bounds_element)
-//     {
-//        const char* upper_bounds_text = upper_bounds_element->GetText();
-
-//        if(upper_bounds_text)
-//        {
-//           Tensor<type, 1> new_upper_bounds;
-//           new_upper_bounds.parse(upper_bounds_text);
-
-//           try
-//           {
-//              set_upper_bounds(new_upper_bounds);
-//           }
-//           catch(const logic_error& e)
-//           {
-//              cerr << e.what() << endl;
-//           }
-//        }
-//     }
-//  }
-
-//  // Display
-//  {
-//     const tinyxml2::XMLElement* display_element = document.FirstChildElement("Display");
-
-//     if(display_element)
-//     {
-//        string new_display_string = display_element->GetText();
-
-//        try
-//        {
-//           set_display(new_display_string != "0");
-//        }
-//        catch(const logic_error& e)
-//        {
-//           cerr << e.what() << endl;
-//        }
-//     }
-//  }
 }
 
 }

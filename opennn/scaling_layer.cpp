@@ -478,7 +478,6 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
     // Set all descriptives
 
     descriptives = new_descriptives;
-    cout << "adios" << endl;
 }
 
 

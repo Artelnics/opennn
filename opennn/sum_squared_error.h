@@ -104,8 +104,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: SumSquaredError class.\n"
+                      << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -150,8 +150,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: SumSquaredError class.\n"
+                      << "void calculate_error(BackPropagation& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -205,8 +205,8 @@ public:
              {
                 ostringstream buffer;
 
-                buffer << "OpenNN Exception: Layer class.\n"
-                       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                buffer << "OpenNN Exception: SumSquaredError class.\n"
+                       << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,BackPropagation& ) const method.\n"
                        << "Unknown device.\n";
 
                 throw logic_error(buffer.str());
