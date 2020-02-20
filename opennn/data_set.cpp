@@ -5995,13 +5995,10 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_mean_standard_deviation(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2)*(data(i, input_index) - input_statistics.mean) / input_statistics.standard_deviation;
+    }
 }
 
 
@@ -6042,13 +6039,10 @@ Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_ind
 
 void DataSet::scale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_standard_deviation(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2)*(data(i, input_index)) / input_statistics.standard_deviation;
+    }
 }
 
 
@@ -6131,13 +6125,10 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_minimum_maximum(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2.0)*(data(i, input_index)-input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum)-static_cast<type>(1.0);
+    }
 }
 
 
@@ -6303,9 +6294,23 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    /*
-        scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
-    */
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).mean)/(targets_descriptives(j).standard_deviation);
+            }
+        }
+    }
 }
 
 
@@ -6361,8 +6366,23 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
 #endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Index target_variables_number = target_variables_indices.size();
 
-//    scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
+            }
+        }
+    }
 }
 
 
@@ -6403,9 +6423,23 @@ void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_d
 #endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    /*
-        scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
-    */
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(0.5)*(exp(data(i, variable_index)))*(targets_descriptives(j).maximum-targets_descriptives(j).minimum)+ targets_descriptives(j).minimum;
+            }
+        }
+    }
 }
 
 

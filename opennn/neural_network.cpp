@@ -952,16 +952,14 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-
         const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
 
-        for(Index i = 0; i < layer_parameters.size(); i++)
+        for(Index j = 0; j < layer_parameters.size(); j++)
         {
-            parameters(i + position) = layer_parameters(i);
+            parameters(j + position) = layer_parameters(j);
         }
 
         position += layer_parameters.size();
-
     }
 
     return parameters;
@@ -1682,8 +1680,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    cout << "layers" << endl;
-
     // Outputs
 
     {
@@ -2078,8 +2074,6 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     {
         new_outputs_number = static_cast<Index>(atoi(outputs_number_element->GetText()));
     }
-
-    cout << "new_outputs_number: " << new_outputs_number << endl;
 
     // Outputs names
 
