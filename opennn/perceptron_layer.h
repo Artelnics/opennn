@@ -550,7 +550,7 @@ public:
             }
 
             case Device::EigenSimpleThreadPool:
-            {cout << "Device" << endl;
+            {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
