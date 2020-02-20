@@ -1662,6 +1662,8 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
+    cout << "inputs" << endl;
+
     // Layers
 
     {
@@ -1679,6 +1681,8 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             layers_from_XML(layers_document);
         }
     }
+
+    cout << "layers" << endl;
 
     // Outputs
 
@@ -1699,6 +1703,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         }
     }
+    cout << "outputs" << endl;
 
     // Display
     {
@@ -2074,12 +2079,16 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
         new_outputs_number = static_cast<Index>(atoi(outputs_number_element->GetText()));
     }
 
+    cout << "new_outputs_number: " << new_outputs_number << endl;
+
     // Outputs names
 
     const tinyxml2::XMLElement* start_element = outputs_number_element;
 
     if(new_outputs_number > 0)
     {
+        outputs_names.resize(new_outputs_number);
+
         for(Index i = 0; i < new_outputs_number; i++)
         {
             const tinyxml2::XMLElement* output_element = start_element->NextSiblingElement("Output");

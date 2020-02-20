@@ -69,7 +69,6 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         DataSet data_set("C:/Users/Usuario/Documents/rosenbrock_1000000_1000.csv", ',', true);
-        data_set.read_csv();
 
 //        Index samples = 1000;
 //        Index variables = 10;
