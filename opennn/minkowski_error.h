@@ -150,7 +150,7 @@ public:
    /// @todo Virtual method not implemented.
 
    void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation&,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -162,13 +162,10 @@ public:
         const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
-                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 
-        //type minkowski_parameter = 0; /// @todo use class member
-*/
-        //back_propagation.errors.abs();
+//        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
+//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
+
 
         switch(device_pointer->get_type())
         {
@@ -176,7 +173,10 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 //back_propagation.output_gradient.device(*default_device) = back_propagation.errors.abs();
+                 Tensor<type, 0> p_norm = back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(1.0/minkowski_parameter);
+
+                 back_propagation.output_gradient.device(*default_device)
+                         = back_propagation.errors.abs().pow(minkowski_parameter-2.0)/p_norm;
 
                  break;
              }
