@@ -145,9 +145,7 @@ public:
        {
            fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
        }
-cout << "combinations_::" << combinations << endl;
-cout << "synaptic_::" << synaptic_weights << endl;
-cout << "inputs_::" << inputs << endl;
+
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -498,6 +496,7 @@ cout << "inputs_::" << inputs << endl;
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
    {
+//       cout << "Delta:" << endl << back_propagation.delta << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -532,7 +531,7 @@ cout << "inputs_::" << inputs << endl;
    }
 
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& index)
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
@@ -547,7 +546,7 @@ cout << "inputs_::" << inputs << endl;
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data() + index,back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index, back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 

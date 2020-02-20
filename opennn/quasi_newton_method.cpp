@@ -1237,7 +1237,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     training_batch.print();
 
-    system("pause");
+//    system("pause");
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
@@ -1252,17 +1252,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        training_forward_propagation.print();
+//        training_forward_propagation.print();
 
-        system("pause");
+//        system("pause");
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        training_back_propagation.print();
+//        training_back_propagation.print();
 
-        system("pause");
+//        system("pause");
 
         training_loss = training_back_propagation.loss;
 
@@ -1277,9 +1277,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
 
-        optimization_data.print();
+//        optimization_data.print();
 
-        system("pause");
+//        system("pause");
 
         // Set new parameters
 
