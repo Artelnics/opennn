@@ -166,7 +166,6 @@ public:
 //        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
 //                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 
-
         switch(device_pointer->get_type())
         {
              case Device::EigenDefault:
