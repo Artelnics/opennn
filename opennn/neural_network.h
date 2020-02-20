@@ -351,7 +351,7 @@ public:
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
-            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations,
+            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations_2d,
                                                                         forward_propagation.layers[i]);
        }
    }
@@ -379,7 +379,7 @@ public:
 
            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
 
-            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations,
+            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations_2d,
                                                                         potential_parameters,
                                                                         forward_propagation.layers[i]);
 

@@ -55,8 +55,8 @@ public:
 
            const Index neurons_number = long_short_term_memory_layer->get_neurons_number();
 
-           layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].combinations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
            layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
 */
         }
@@ -198,7 +198,7 @@ public:
 
    void set_parameters_random();
 
-   // Long short term memory layer combinations
+   // Long short term memory layer combinations_2d
 
    Tensor<type, 1> calculate_forget_combinations(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_input_combinations(const Tensor<type, 1>&) const;
@@ -207,7 +207,7 @@ public:
 
    Tensor<type, 2> calculate_activations_states(const Tensor<type, 2>&);
 
-   // Long short term memory layer activations
+   // Long short term memory layer activations_2d
 
    Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
    Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;

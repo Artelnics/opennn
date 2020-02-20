@@ -617,7 +617,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
 //           selection_error = loss_index_pointer->calculate_error(
-//                       selection_forward_propagation.layers[trainable_layers_number].activations,
+//                       selection_forward_propagation.layers[trainable_layers_number].activations_2d,
 //                       selection_batch.targets_2d);
 
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);

@@ -408,7 +408,7 @@ void LossIndex::check() const
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number of terms composing the objective.
 /// @param inputs Tensor with inputs.
-/// @param layers_activations vector of tensors with layers activations.
+/// @param layers_activations vector of tensors with layers activations_2d.
 /// @param layers_delta vector of tensors with layers delta.
 
 Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>& inputs,
@@ -462,10 +462,10 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
        for(Index i = 1; i < layers_number; i++)
        {
 
-    //      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
-          for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations).size(); i++)
+    //      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d));
+          for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d).size(); i++)
           {
-              error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations))(i);
+              error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d))(i);
           }
 
           index += layers_parameters_number[i];

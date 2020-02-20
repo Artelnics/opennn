@@ -1767,7 +1767,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
 //    neural_network.forward_propagate(thread_pool_device, batch, forward_propagation);
 
-//    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations;
+//    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
 
 //    assert_true(perceptron_combinations.size() == 5 && perceptron_combinations(0,0) == 3, LOG);
 */

@@ -759,7 +759,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<type, 2> inputs;
-    Tensor<type, 2> activations;
+    Tensor<type, 2> activations_2d;
     Tensor<type, 2> result;
 
     // Test
@@ -784,7 +784,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Threshold);
 
-    activations = convolutional_layer.calculate_activations(inputs);
+    activations_2d = convolutional_layer.calculate_activations(inputs);
 
     result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0;
@@ -804,7 +804,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = 1;
     result(1,1,1,1) = 1;
 
-    assert_true(activations == result, LOG);
+    assert_true(activations_2d == result, LOG);
 
     // Test
 
@@ -828,7 +828,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SymmetricThreshold);
 
-    activations = convolutional_layer.calculate_activations(inputs);
+    activations_2d = convolutional_layer.calculate_activations(inputs);
 
     result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = -1;
@@ -848,7 +848,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = 1;
     result(1,1,1,1) = 1;
 
-    assert_true(activations == result, LOG);
+    assert_true(activations_2d == result, LOG);
 
     // Test
 
@@ -872,7 +872,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
 
-    activations = convolutional_layer.calculate_activations(inputs);
+    activations_2d = convolutional_layer.calculate_activations(inputs);
 
     result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = -0.804416;
@@ -892,22 +892,22 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = 0.976729;
     result(1,1,1,1) = 0.976775;
 
-    assert_true(abs(activations(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-                abs(activations(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-                abs(activations(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-                abs(activations(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-                abs(activations(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-                abs(activations(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-                abs(activations(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-                abs(activations(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-                abs(activations(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-                abs(activations(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-                abs(activations(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-                abs(activations(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-                abs(activations(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-                abs(activations(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-                abs(activations(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-                abs(activations(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+    assert_true(abs(activations_2d(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
+                abs(activations_2d(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
+                abs(activations_2d(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
+                abs(activations_2d(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
+                abs(activations_2d(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
+                abs(activations_2d(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
+                abs(activations_2d(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
+                abs(activations_2d(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
+                abs(activations_2d(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
+                abs(activations_2d(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
+                abs(activations_2d(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
+                abs(activations_2d(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
+                abs(activations_2d(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
+                abs(activations_2d(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
+                abs(activations_2d(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
+                abs(activations_2d(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
 
     // Test
 
@@ -931,7 +931,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
 
-    activations = convolutional_layer.calculate_activations(inputs);
+    activations_2d = convolutional_layer.calculate_activations(inputs);
 
     result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0;
@@ -951,7 +951,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = 2.221;
     result(1,1,1,1) = 2.222;
 
-    assert_true(activations == result, LOG);
+    assert_true(activations_2d == result, LOG);
 
     // Test
 
@@ -975,7 +975,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SoftPlus);
 
-    activations = convolutional_layer.calculate_activations(inputs);
+    activations_2d = convolutional_layer.calculate_activations(inputs);
 
     result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0.284600;
@@ -995,22 +995,22 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = 2.324008;
     result(1,1,1,1) = 2.324910;
 
-    assert_true(abs(activations(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-                abs(activations(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-                abs(activations(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-                abs(activations(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-                abs(activations(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-                abs(activations(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-                abs(activations(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-                abs(activations(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-                abs(activations(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-                abs(activations(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-                abs(activations(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-                abs(activations(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-                abs(activations(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-                abs(activations(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-                abs(activations(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-                abs(activations(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+    assert_true(abs(activations_2d(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
+                abs(activations_2d(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
+                abs(activations_2d(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
+                abs(activations_2d(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
+                abs(activations_2d(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
+                abs(activations_2d(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
+                abs(activations_2d(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
+                abs(activations_2d(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
+                abs(activations_2d(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
+                abs(activations_2d(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
+                abs(activations_2d(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
+                abs(activations_2d(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
+                abs(activations_2d(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
+                abs(activations_2d(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
+                abs(activations_2d(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
+                abs(activations_2d(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
 }
 
 

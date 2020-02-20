@@ -73,7 +73,7 @@ public:
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations;
+       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
 
        const Tensor<type, 2>& targets = batch.targets_2d;
 
@@ -162,7 +162,7 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 /*
-        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations
+        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
                                            - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 */
    }

@@ -78,9 +78,9 @@ public:
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            combinations.resize(batch_instances_number, neurons_number);
+            combinations_2d.resize(batch_instances_number, neurons_number);
 
-            activations.resize(batch_instances_number, neurons_number);
+            activations_2d.resize(batch_instances_number, neurons_number);
 
             activations_derivatives_2d.resize(batch_instances_number, neurons_number);
         }
@@ -89,10 +89,10 @@ public:
         void print() const
         {
             cout << "Combinations: " << endl;
-            cout << combinations << endl;
+            cout << combinations_2d << endl;
 
             cout << "Activations: " << endl;
-            cout << activations << endl;
+            cout << activations_2d << endl;
 
             cout << "Activations derivatives: " << endl;
             cout << activations_derivatives_2d << endl;
@@ -102,11 +102,10 @@ public:
 
         Layer* layer_pointer;
 
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 2> activations;
-
+        Tensor<type, 2> combinations_2d;
+        Tensor<type, 2> activations_2d;
         Tensor<type, 2> activations_derivatives_2d;
+
         Tensor<type, 3> activations_derivatives_3d;
     };
 
