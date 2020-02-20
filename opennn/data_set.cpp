@@ -7052,6 +7052,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
+    cout << "data set from_XML" << endl;
     ostringstream buffer;
 
     // Data set element
@@ -7484,7 +7485,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_method(missing_values_method_element->GetText());
     }
 
-    cout << "missing values mehtod" << endl;
+    cout << "missing values method" << endl;
 
     // Preview data
 
@@ -7544,6 +7545,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             data_file_preview(i) = get_tokens(row_element->GetText(), ' ');
         }
     }
+
+    cout << "preview data" << endl;
 
     // Display
 
@@ -9179,16 +9182,23 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
+    cout << "read_csv_1()" << endl;
+
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
 
+        cout << "read_csv_2_simple()" << endl;
+
         read_csv_3_simple();
+        cout << "read_csv_3_simple()" << endl;
     }
     else
     {
         read_csv_2_complete();
+        cout << "read_csv_2_complete()" << endl;
         read_csv_3_complete();
+        cout << "read_csv_3_complete()" << endl;
     }
 
     /*

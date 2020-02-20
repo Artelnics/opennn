@@ -68,12 +68,15 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        Index samples = 1000;
-        Index variables = 10;
+        DataSet data_set("C:/Users/Usuario/Documents/rosenbrock_1000000_1000.csv", ',', true);
+        data_set.read_csv();
+
+//        Index samples = 1000;
+//        Index variables = 10;
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+//        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 /*
@@ -83,6 +86,7 @@ int main(void)
 
         DataSet data_set(data);
 */
+        /*
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
@@ -122,7 +126,7 @@ int main(void)
 
         training_strategy.perform_training();
 
-
+*/
         cout << "End" << endl;
 
         return 0;

@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "probabilistic_layer.h"
+#include "opennn_strings.h"
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
