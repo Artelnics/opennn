@@ -192,14 +192,6 @@ public:
                  break;
             }
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation& ) const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
    }
 
    // Error terms methods

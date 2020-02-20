@@ -100,17 +100,9 @@ public:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
+                return sum_squared_error(0);
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-              << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
    }
 
    // Error terms methods
@@ -158,15 +150,6 @@ public:
                 break;
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-              << "void calculate_error(BackPropagation& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
-
    }
 
 
@@ -210,14 +193,6 @@ public:
                  break;
             }
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation& ) const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;

@@ -277,17 +277,6 @@ protected:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-                      << "type l2_norm(const Tensor<type, 1>& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return norm(0);
