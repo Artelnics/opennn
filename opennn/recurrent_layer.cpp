@@ -538,7 +538,7 @@ void RecurrentLayer::initialize_hidden_states(const type& value)
 /// Initializes the biases of all the neurons in the layer of neurons with a given value.
 /// @param value Biases initialization value.
 
-void RecurrentLayer::initialize_biases(const type& value)
+void RecurrentLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }

@@ -503,7 +503,7 @@ void PerceptronLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value.
 /// @param value Biases initialization value.
 
-void PerceptronLayer::initialize_biases(const type& value)
+void PerceptronLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
@@ -512,7 +512,7 @@ void PerceptronLayer::initialize_biases(const type& value)
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with a given value.
 /// @param value Synaptic weights initialization value.
 
-void PerceptronLayer::initialize_synaptic_weights(const type& value)
+void PerceptronLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
@@ -520,7 +520,7 @@ void PerceptronLayer::initialize_synaptic_weights(const type& value)
 
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with glorot uniform distribution.
 
-void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
+void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 {
     Index fan_in;
     Index fan_out;

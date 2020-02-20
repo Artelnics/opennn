@@ -937,7 +937,7 @@ void LongShortTermMemoryLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the layer with a given value.
 /// @param value Biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_biases(const type& value)
+void LongShortTermMemoryLayer::set_biases_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);

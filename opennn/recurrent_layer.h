@@ -155,7 +155,7 @@ public:
 
    void initialize_hidden_states(const type&);
 
-   void initialize_biases(const type&);
+   void set_biases_constant(const type&);
 
    void initialize_input_weights(const type&);
    void initialize_recurrent_weights(const type&);

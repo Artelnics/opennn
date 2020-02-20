@@ -607,9 +607,9 @@ void PerceptronLayerTest::test_initialize_biases()
 }
 
 
-void PerceptronLayerTest::test_initialize_synaptic_weights()
+void PerceptronLayerTest::test_set_synaptic_weights_constant()
 {
-   cout << "test_initialize_synaptic_weights\n";
+   cout << "test_set_synaptic_weights_constant\n";
 }
 
 
@@ -719,8 +719,8 @@ void PerceptronLayerTest::test_calculate_combinations()
    // Test
 
    perceptron_layer.set(1,1);
-   perceptron_layer.initialize_biases(1.0);
-   perceptron_layer.initialize_synaptic_weights(2.0);
+   perceptron_layer.set_biases_constant(1.0);
+   perceptron_layer.set_synaptic_weights_constant(2.0);
 
    inputs.resize(1,1);
 
@@ -778,7 +778,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    // Test
 
    perceptron_layer.set(2, 4);
-   perceptron_layer.initialize_biases(1);
+   perceptron_layer.set_biases_constant(1);
    synaptic_weights.resize(2,4);
    synaptic_weights.setConstant(1.0);
 
@@ -803,9 +803,9 @@ void PerceptronLayerTest::test_calculate_combinations()
    PerceptronLayer perceptron_layer_3(1,4);
    Tensor<type,2> combinations_3(10, 4);
 
-   perceptron_layer_3.initialize_biases(1);
+   perceptron_layer_3.set_biases_constant(1);
 
-   perceptron_layer_3.initialize_synaptic_weights(1);
+   perceptron_layer_3.set_synaptic_weights_constant(1);
 
    Tensor<type, 2> inputs_3(10,1);
    inputs_3.setConstant(1);
@@ -1404,7 +1404,7 @@ void PerceptronLayerTest::run_test_case()
 
    test_initialize_biases();
 
-   test_initialize_synaptic_weights();
+   test_set_synaptic_weights_constant();
 
    test_set_parameters_random();
 

@@ -786,22 +786,18 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 /// Initializes the layer's biases to a given value.
 /// @param value The desired value.
 
-void ConvolutionalLayer::initialize_biases(const type& value)
+void ConvolutionalLayer::set_biases_constant(const type& value)
 {
-    /*
         biases.setConstant(value);
-    */
 }
 
 
 /// Initializes the layer's synaptic weights to a given value.
 /// @param value The desired value.
 
-void ConvolutionalLayer::initialize_synaptic_weights(const type& value)
+void ConvolutionalLayer::set_synaptic_weights_constant(const type& value)
 {
-    /*
         synaptic_weights.setConstant(value);
-    */
 }
 
 
@@ -810,9 +806,9 @@ void ConvolutionalLayer::initialize_synaptic_weights(const type& value)
 
 void ConvolutionalLayer::set_parameters_constant(const type& value)
 {
-    initialize_biases(value);
+    set_biases_constant(value);
 
-    initialize_synaptic_weights(value);
+    set_synaptic_weights_constant(value);
 }
 
 

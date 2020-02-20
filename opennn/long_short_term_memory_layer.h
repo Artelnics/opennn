@@ -168,7 +168,7 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_biases(const type&);
+   void set_biases_constant(const type&);
 
    void initialize_forget_biases(const type&);
    void initialize_input_biases(const type&);
