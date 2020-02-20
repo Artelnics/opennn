@@ -113,7 +113,7 @@ int main(void)
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
         neural_network.set_device_pointer(&device);
 
-        cout << "Parameters: " << neural_network.get_parameters() << endl;
+//        cout << "Parameters: " << neural_network.get_parameters() << endl;
 
         // Training strategy
 
@@ -126,6 +126,8 @@ int main(void)
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
         training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1);
+
+        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(4);
 
         training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_learning_rate_method(LearningRateAlgorithm::Fixed);
 
