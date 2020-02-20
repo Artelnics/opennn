@@ -508,8 +508,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: LossIndex class.\n"
+                      << "type l2_norm(const Tensor<type, 1>& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -554,8 +554,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: LossIndex class.\n"
+                      << "type l1_norm(const Tensor<type, 1>& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -602,8 +602,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: LossIndex class.\n"
+                      << "Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -651,8 +651,8 @@ public:
                 {
                    ostringstream buffer;
 
-                   buffer << "OpenNN Exception: Layer class.\n"
-                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   buffer << "OpenNN Exception: LossIndex class.\n"
+                          << "Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& ) const method.\n"
                           << "Unknown device.\n";
 
                    throw logic_error(buffer.str());
@@ -713,8 +713,8 @@ public:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: LossIndex class.\n"
+                      << "Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
@@ -775,8 +775,8 @@ public:
                 {
                    ostringstream buffer;
 
-                   buffer << "OpenNN Exception: Layer class.\n"
-                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                   buffer << "OpenNN Exception: LossIndex class.\n"
+                          << "Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& ) const method.\n"
                           << "Unknown device.\n";
 
                    throw logic_error(buffer.str());

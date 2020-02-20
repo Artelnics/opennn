@@ -34,7 +34,7 @@ int main(void)
         cout << "OpenNN. Rosenbrock Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-
+/*
         DataSet data_set(100, 11);
 
         data_set.generate_Rosenbrock_data(1400000, 1001);
@@ -43,7 +43,7 @@ int main(void)
         data_set.set_data_file_name("D:/rosenbrock_1400000_1000.csv");
 
         data_set.save_data();
-/*
+*/
         Index samples = 20;
         Index variables = 3;
 
@@ -52,12 +52,17 @@ int main(void)
         Device device(Device::EigenSimpleThreadPool);
 
         // Data set
-
+/*
         Tensor<type, 2> data(samples, variables+1);
 
         data.setZero();
 
         DataSet data_set(data);
+        */
+
+        DataSet data_set;
+
+        data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_device_pointer(&device);
 
@@ -100,7 +105,7 @@ int main(void)
         stochastic_gradient_descent_pointer->set_batch_instances_number(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
-*/
+
         cout << "End" << endl;
 
         return 0;

@@ -1201,7 +1201,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type gradient_norm = 0;
 
     type selection_error = numeric_limits<type>::max();
-    type old_selection_error = numeric_limits<type>::max();
+//    type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
