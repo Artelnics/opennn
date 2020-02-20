@@ -67,22 +67,29 @@ int main(void)
         cout << "Blank application" << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
+/*
+        DataSet data_set("C:/Users/Usuario/Documents/rosenbrock_1000000_1000.csv", ',', true);
 
-        Index samples = 1000;
-        Index variables = 10;
+//
 
-        // Device
 
-        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
-/*
+
         Tensor<type, 2> data(samples, variables+1);
 
         data.setRandom();
 
         DataSet data_set(data);
 */
+
+        Index samples = 1000;
+        Index variables = 10;
+
+         // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);

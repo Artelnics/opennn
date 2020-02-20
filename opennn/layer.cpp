@@ -266,7 +266,7 @@ void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_hard_sigmoid_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -331,7 +331,7 @@ void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_hyperbolic_tangent_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -374,7 +374,7 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_logistic_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -417,7 +417,7 @@ void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_linear_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -481,7 +481,7 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_threshold_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -536,7 +536,7 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_symmetric_threshold_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -591,7 +591,7 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_rectified_linear_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -663,7 +663,7 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_scaled_exponential_linear_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -706,7 +706,7 @@ void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_soft_plus_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -772,7 +772,7 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_soft_sign_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -839,7 +839,7 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_exponential_linear_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -882,7 +882,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_logistic_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -925,7 +925,7 @@ void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_threshold_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -971,7 +971,7 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_symmetric_threshold_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1011,7 +1011,7 @@ void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_linear_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1052,7 +1052,7 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_hyperbolic_tangent_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1115,7 +1115,7 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_rectified_linear_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1194,7 +1194,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_scaled_exponential_linear_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1237,7 +1237,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_soft_plus_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1300,7 +1300,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_soft_sign_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1340,7 +1340,7 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_hard_sigmoid_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1426,7 +1426,7 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_exponential_linear_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1469,7 +1469,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) c
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_logistic_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1511,7 +1511,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_softmax_derivatives_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1594,7 +1594,7 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_binary_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1643,7 +1643,7 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_competitive_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());
@@ -1695,7 +1695,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "void calculate_softmax_activation(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Unknown device.\n";
 
         throw logic_error(buffer.str());

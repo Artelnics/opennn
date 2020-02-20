@@ -282,8 +282,8 @@ protected:
             {
                ostringstream buffer;
 
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+                      << "type l2_norm(const Tensor<type, 1>& ) const method.\n"
                       << "Unknown device.\n";
 
                throw logic_error(buffer.str());
