@@ -48,7 +48,8 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
+              LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
 
     /// This structure represents the first order activaions of layers.
 
@@ -195,7 +196,8 @@ public:
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&,
+                                          const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
