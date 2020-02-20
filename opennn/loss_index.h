@@ -259,7 +259,7 @@ public:
 
    // GRADIENT METHODS
 
-   virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
+   virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
 
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
@@ -282,7 +282,7 @@ public:
 
        calculate_error(back_propagation);
 
-       calculate_output_gradient(forward_propagation, back_propagation);
+       calculate_output_gradient(batch, forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -334,7 +334,7 @@ public:
 
           trainable_layers_pointers[i]
           ->calculate_hidden_delta(previous_layer_pointer,
-                                   forward_propagation.layers[i].activations,
+                                   forward_propagation.layers[i].activations_2d,
                                    forward_propagation.layers[i].activations_derivatives_2d,
                                    back_propagation.neural_network.layers[i+1].delta,
                                    back_propagation.neural_network.layers[i].delta);
@@ -359,7 +359,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                  return;
              }
@@ -368,7 +368,7 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                 return;
              }
@@ -379,17 +379,7 @@ public:
 
                  return;
             }
-
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void calculate_errors() const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
-
    }
 
    void calculate_error_gradient(const DataSet::Batch& batch,
@@ -436,7 +426,7 @@ public:
        for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(
-                   forward_propagation.layers[i-1].activations,
+                   forward_propagation.layers[i-1].activations_2d,
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
@@ -506,17 +496,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: LossIndex class.\n"
-                      << "type l2_norm(const Tensor<type, 1>& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return norm(0);
@@ -551,17 +530,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: LossIndex class.\n"
-                      << "type l1_norm(const Tensor<type, 1>& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 
@@ -599,17 +567,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: LossIndex class.\n"
-                      << "Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 
@@ -649,17 +606,6 @@ public:
 
                     break;
                }
-
-                default:
-                {
-                   ostringstream buffer;
-
-                   buffer << "OpenNN Exception: LossIndex class.\n"
-                          << "Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& ) const method.\n"
-                          << "Unknown device.\n";
-
-                   throw logic_error(buffer.str());
-               }
            }
 
            return Tensor<type, 2>();
@@ -683,7 +629,6 @@ public:
        else
        {
        }
-
 
        switch(device_pointer->get_type())
        {
@@ -709,23 +654,9 @@ public:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: LossIndex class.\n"
-                      << "Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
+                return Tensor<type, 1>();
            }
        }
-
-
-
    }
 
 
@@ -743,49 +674,37 @@ public:
 
            return hessian;
        }
-       else
+
+       switch(device_pointer->get_type())
        {
-           switch(device_pointer->get_type())
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+                return hessian;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+               return hessian;
+
+            }
+
+           case Device::EigenGpu:
            {
-                case Device::EigenDefault:
-                {
-                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                    hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-                    return hessian;
-
-                }
-
-                case Device::EigenSimpleThreadPool:
-                {
-                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                   hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-                   return hessian;
-
-                }
-
-               case Device::EigenGpu:
-               {
-    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                    break;
-               }
-
-                default:
-                {
-                   ostringstream buffer;
-
-                   buffer << "OpenNN Exception: LossIndex class.\n"
-                          << "Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& ) const method.\n"
-                          << "Unknown device.\n";
-
-                   throw logic_error(buffer.str());
-               }
+               return hessian;
            }
        }
+
+       return Tensor<type, 2>();
    }
 
 protected:

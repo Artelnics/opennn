@@ -2,7 +2,6 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-
 #include "config.h"
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
@@ -56,11 +55,6 @@ class Device
                     //gpu_device = new GpuDevice();
 
                 break;
-
-                default:
-
-                break;
-
             }
         }
 
@@ -78,7 +72,7 @@ class Device
         DefaultDevice* default_device = nullptr;
 
         SimpleThreadPool* simple_thread_pool = nullptr;
-        NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+//        NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
 
         ThreadPoolDevice* thread_pool_device = nullptr;
 

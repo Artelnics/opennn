@@ -88,8 +88,9 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations
-                                                             - batch.targets_2d).square().sum();
+                sum_squared_error.device(*default_device)
+                        = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+                        - batch.targets_2d).square().sum();
 
                 break;
             }
@@ -98,7 +99,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
                                                                 - batch.targets_2d).square().sum();
 
                 break;
@@ -109,17 +110,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                      << "type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 
@@ -156,17 +146,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                      << "void calculate_error(BackPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        back_propagation.loss = sum_squared_error(0)/normalization_coefficient;
@@ -175,7 +154,8 @@ public:
 
    // Gradient methods
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -184,17 +164,36 @@ public:
 
         #endif
 
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
+        const type coefficient = static_cast<type>(2.0)/normalization_coefficient;
 
-        back_propagation.output_gradient -= batch.targets_2d;
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        back_propagation.output_gradient *= 2.0 / normalization_coefficient;
-*/
+                 back_propagation.output_gradient.device(*default_device) = coefficient*back_propagation.errors;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+        //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+        }
    }
-
-
 
    // Error terms methods
 

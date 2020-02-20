@@ -211,15 +211,15 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     PerceptronLayer* pl0 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
 
-    pl0->initialize_biases(1);
+    pl0->set_biases_constant(1);
 
-    pl0->initialize_synaptic_weights(0);
+    pl0->set_synaptic_weights_constant(0);
 
     PerceptronLayer* pl1 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
 
-    pl1->initialize_biases(3);
+    pl1->set_biases_constant(3);
 
-    pl1->initialize_synaptic_weights(2);
+    pl1->set_synaptic_weights_constant(2);
 
     Tensor<type, 1> parameters = neural_network.get_parameters();
 
@@ -1767,7 +1767,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
 //    neural_network.forward_propagate(thread_pool_device, batch, forward_propagation);
 
-//    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations;
+//    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
 
 //    assert_true(perceptron_combinations.size() == 5 && perceptron_combinations(0,0) == 3, LOG);
 */
