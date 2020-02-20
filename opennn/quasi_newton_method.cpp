@@ -1293,7 +1293,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+       /*if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1305,7 +1305,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+        else*/ if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
