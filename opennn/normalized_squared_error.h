@@ -154,7 +154,8 @@ public:
 
    // Gradient methods
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
