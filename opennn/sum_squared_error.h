@@ -99,17 +99,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: SumSquaredError class.\n"
-                      << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return sum_squared_error(0);
@@ -145,17 +134,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: SumSquaredError class.\n"
-                      << "void calculate_error(BackPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        back_propagation.loss = sum_squared_error(0);
@@ -163,7 +141,7 @@ public:
 
    // Gradient methods
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -200,18 +178,15 @@ public:
 
                  break;
             }
-
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: SumSquaredError class.\n"
-                       << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,BackPropagation& ) const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
         }
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: SumSquaredError class.\n"
+               << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,BackPropagation& ) const method.\n"
+               << "Unknown device.\n";
+
+        throw logic_error(buffer.str());
    }
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
