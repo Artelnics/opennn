@@ -595,7 +595,6 @@ public:
 
        memcpy(gradient.data() + index,back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-
    }
 
 

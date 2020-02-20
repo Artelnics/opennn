@@ -344,7 +344,7 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(neurons_number,1);
+    biases.resize(1,neurons_number);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
@@ -358,7 +358,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number, 1);
+    biases.resize(1, new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -413,6 +413,7 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
     memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
     memcpy(synaptic_weights.data(), new_parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
 }
 
 
