@@ -107,6 +107,14 @@ public:
 
         void print() const
         {
+            cout << "Training Direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Learning rate:" << endl;
+            cout << learning_rate << endl;
+
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
         }
 
         QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;

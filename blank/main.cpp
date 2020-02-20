@@ -83,8 +83,8 @@ int main(void)
         DataSet data_set(data);
 */
 
-        Index samples = 1000;
-        Index variables = 10;
+        Index samples = 7;
+        Index variables = 3;
 
          // Device
 
@@ -113,6 +113,8 @@ int main(void)
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
         neural_network.set_device_pointer(&device);
 
+        cout << "Parameters: " << neural_network.get_parameters() << endl;
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -125,10 +127,11 @@ int main(void)
 
         training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1);
 
+        training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_learning_rate_method(LearningRateAlgorithm::Fixed);
+
         training_strategy.set_device_pointer(&device);
 
         training_strategy.perform_training();
-
 
         cout << "End" << endl;
 

@@ -426,13 +426,13 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     triplet.A.first = 0;
     triplet.A.second = loss;
 
-    if((training_direction(0)  || initial_learning_rate) < numeric_limits<type>::min())
+    /*if((training_direction(0)  || initial_learning_rate) < numeric_limits<type>::min())
     {
         triplet.U = triplet.A;
         triplet.B = triplet.A;
 
         return triplet;
-    }
+    }*/
 
     Index count = 0;
 
