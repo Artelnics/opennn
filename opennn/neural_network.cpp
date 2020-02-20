@@ -952,7 +952,7 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
+        const Tensor<type, 1> layer_parameters = trainable_layers_pointers(i)->get_parameters();
 
         for(Index j = 0; j < layer_parameters.size(); j++)
         {
