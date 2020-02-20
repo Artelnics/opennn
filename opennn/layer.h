@@ -28,7 +28,6 @@
 #include "tinyxml2.h"
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
-//#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
 
 using namespace std;
 using namespace Eigen;
@@ -107,6 +106,10 @@ public:
         Tensor<type, 2> activations_derivatives_2d;
 
         Tensor<type, 3> activations_derivatives_3d;
+
+        Tensor<type, 4> combinations_4d;
+        Tensor<type, 4> activations_4d;
+        Tensor<type, 4> activations_derivatives_4d;
     };
 
 
@@ -195,6 +198,7 @@ public:
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
 
