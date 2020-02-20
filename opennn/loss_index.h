@@ -122,14 +122,17 @@ public:
 
        void print()
        {
-           cout << "Output gradient:" << endl;
-           cout << output_gradient << endl;
+           cout << "Errors:" << endl;
+           cout << errors << endl;
 
            cout << "Loss:" << endl;
            cout << loss << endl;
 
+           cout << "Output gradient:" << endl;
+           cout << output_gradient << endl;
+
            cout << "Gradient:" << endl;
-           cout << gradient << endl;
+           cout << gradient << endl; 
        }
 
        LossIndex* loss_index_pointer = nullptr;
