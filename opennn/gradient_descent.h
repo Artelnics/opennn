@@ -34,11 +34,14 @@
 namespace OpenNN
 {
 
-/// The process of making changes to weights and biases, where the changes are propotyional to derivatives of network error with respect to those weights and biases. This is done to minimize network error.
+/// The process of making changes to weights and biases,
+/// where the changes are propotyional to derivatives of network error with respect to those weights and biases.
+/// This is done to minimize network error.
 
 /// This concrete class represents the gradient descent optimization algorithm[1], used to minimize loss function.
 ///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
+/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 class GradientDescent : public OptimizationAlgorithm
 {

@@ -78,8 +78,10 @@ public:
 
         #endif
 
-        const Tensor<type, 2> targets;
-        const Tensor<type, 2> outputs;
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        const Tensor<type, 2>& targets = batch.targets_2d;
+        const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
 
         switch(device_pointer->get_type())
         {
@@ -98,7 +100,7 @@ public:
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.output_gradient.device(*thread_pool_device) =
-                -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+                    -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
 
                 return;
              }
