@@ -179,14 +179,6 @@ public:
                  break;
             }
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: SumSquaredError class.\n"
-               << "void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,BackPropagation& ) const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
    }
 
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;

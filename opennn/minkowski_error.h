@@ -105,17 +105,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: MinkowskiError class.\n"
-                      << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return minkowski_error(0);
@@ -152,17 +141,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: MinkowskiError class.\n"
-                      << "void calculate_error(BackPropagation& back_propagation) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 

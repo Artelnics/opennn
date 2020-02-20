@@ -166,28 +166,15 @@ public:
                 break;
             }
 
-           #ifdef EIGEN_USE_GPU
-
            case Device::EigenGpu:
            {
+#ifdef EIGEN_USE_GPU
                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+#endif
 
                 break;
-           }
-
-           #endif
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                      << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
    }
@@ -388,14 +375,6 @@ public:
                 break;
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void calculate_output_delta(const Tensor<type, 2>& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
    }
 
 
@@ -464,15 +443,6 @@ public:
                 break;
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void calculate_hidden_delta_perceptron(Layer* , const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
-
    }
 
 
@@ -517,17 +487,7 @@ public:
 
                 break;
            }
-
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_hidden_delta_probabilistic(Layer* , const Tensor<type, 2>& "
-                 ", const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
    }
 
    // Gradient methods
@@ -567,14 +527,6 @@ public:
                 break;
            }
        }
-
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void calculate_error_gradient(const Tensor<type, 2>& , const Layer::ForwardPropagation&, Layer::BackPropagation& ) const method.\n"
-              << "Unknown device.\n";
-
-       throw logic_error(buffer.str());
    }
 
 

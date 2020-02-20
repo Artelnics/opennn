@@ -157,28 +157,17 @@ public:
                 break;
             }
 
-           #ifdef EIGEN_USE_GPU
 
            case Device::EigenGpu:
            {
+#ifdef EIGEN_USE_GPU
+
                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 //combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+#endif
 
                 break;
-           }
-
-           #endif
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                      << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
    }
