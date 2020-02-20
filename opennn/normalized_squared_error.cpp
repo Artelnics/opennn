@@ -144,8 +144,6 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-//
-
     const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
     const Index selection_instances_number = selection_indices.size();
