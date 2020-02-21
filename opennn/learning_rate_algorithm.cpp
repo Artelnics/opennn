@@ -726,7 +726,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
             }
             catch(const logic_error& e)
             {
-                cerr << e.what() << endl;
+//                cerr << e.what() << endl;
 
                 return triplet.minimum();
             }

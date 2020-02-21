@@ -322,13 +322,13 @@ public:
 
        // Optimization algorithm
 
-       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, AT_B);
+       optimization_data.training_direction = optimization_data.inverse_hessian.contract(-back_propagation.gradient, AT_B);
 
        optimization_data.training_direction = normalized(optimization_data.training_direction);
 
        // Calculate training slope
 
-       optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -336,7 +336,7 @@ public:
        {
            //cout << "Training slope is greater than zero." << endl;
 
-           optimization_data.training_direction = back_propagation.gradient;
+           optimization_data.training_direction = -back_propagation.gradient;
 
            optimization_data.training_direction = normalized(optimization_data.training_direction);
        }
@@ -362,7 +362,7 @@ public:
 
        if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
-           optimization_data.training_direction = back_propagation.gradient;
+           optimization_data.training_direction = -back_propagation.gradient;
 
            optimization_data.training_direction = normalized(optimization_data.training_direction);
 
