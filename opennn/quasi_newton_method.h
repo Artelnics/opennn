@@ -322,7 +322,7 @@ public:
 
        // Optimization algorithm
 
-       optimization_data.training_direction = optimization_data.inverse_hessian.contract(-back_propagation.gradient, AT_B);
+       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, AT_B);
 
        optimization_data.training_direction = normalized(optimization_data.training_direction);
 
@@ -336,7 +336,7 @@ public:
        {
            //cout << "Training slope is greater than zero." << endl;
 
-           optimization_data.training_direction = -back_propagation.gradient;
+           optimization_data.training_direction = back_propagation.gradient;
 
            optimization_data.training_direction = normalized(optimization_data.training_direction);
        }
@@ -362,9 +362,7 @@ public:
 
        if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
-           cout << "Reset training direction" << endl;
-
-           optimization_data.training_direction = -back_propagation.gradient;
+           optimization_data.training_direction = back_propagation.gradient;
 
            optimization_data.training_direction = normalized(optimization_data.training_direction);
 
