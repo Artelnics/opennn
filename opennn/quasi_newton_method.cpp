@@ -1235,12 +1235,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-//    training_batch.print();
-
-//    system("pause");
-
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1258,9 +1255,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
 
-        cout << "Loss: " << training_loss << endl;
-        cout << "Parameters: " << optimization_data.parameters << endl;
-
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
@@ -1272,11 +1266,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
 
-//        optimization_data.print();
+        optimization_data.print();
 
-//        system("pause");
-
-        // Set new parameters
+        system("pause");
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
