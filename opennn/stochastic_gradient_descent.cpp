@@ -659,41 +659,41 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         training_loss /= static_cast<type>(batches_number);
 
-//        if(has_selection)
-//        {
-//            selection_error = 0;
+        if(has_selection)
+        {
+            selection_error = 0;
 
-//            for(Index iteration = 0; iteration < batches_number; iteration++)
-//            {
-//                // Data set
+            for(Index iteration = 0; iteration < batches_number; iteration++)
+            {
+                // Data set
 
-//                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
+                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
 
-//                batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+                batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
-//                // Neural network
+                // Neural network
 
-//                neural_network_pointer->forward_propagate(batch, forward_propagation);
+                neural_network_pointer->forward_propagate(batch, forward_propagation);
 
-//                // Loss index
+                // Loss index
 
-//                selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
-//            }
+                selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
+            }
 
-//            selection_error /= static_cast<type>(batches_number);
+            selection_error /= static_cast<type>(batches_number);
 
-//            if(selection_error <= minimum_selection_error)
-//            {
-//                minimum_selection_error = selection_error;
-//                minimal_selection_parameters = optimization_data.parameters;
-//            }
-//        }
+            if(selection_error <= minimum_selection_error)
+            {
+                minimum_selection_error = selection_error;
+                minimal_selection_parameters = optimization_data.parameters;
+            }
+        }
 
         // Training history loss index
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_loss;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping criteria
 
@@ -1226,7 +1226,16 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            set_batch_instances_number(new_batch_size);
+            const Index training_instances_number = loss_index_pointer->get_data_set_pointer()->get_training_instances_number();
+
+            if(new_batch_size > training_instances_number || new_batch_size == 0)
+            {
+                set_batch_instances_number(training_instances_number);
+            }
+            else
+            {
+                set_batch_instances_number(new_batch_size);
+            }
         }
         catch(const logic_error& e)
         {
