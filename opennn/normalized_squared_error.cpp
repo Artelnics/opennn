@@ -119,9 +119,9 @@ void NormalizedSquaredError::set_normalization_coefficient()
         const Tensor<type, 1> targets = data_set_pointer->get_instance_data(training_index, target_variables_indices);
 
         // Normalization coefficient
-
+/*
         new_normalization_coefficient += calculate_normalization_coefficient(targets, training_targets_mean);
-
+*/
     }
 
     normalization_coefficient = new_normalization_coefficient;
@@ -169,9 +169,9 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
         const Tensor<type, 1> targets = data_set_pointer->get_instance_data(selection_index, target_variables_indices);
 
         // Normalization coefficient
-        /*
-               new_selection_normalization_coefficient += sum_squared_error(targets, selection_targets_mean);
-        */
+/*
+        new_selection_normalization_coefficient += calculate_normalization_coefficient(targets, selection_targets_mean);
+*/
     }
 
     selection_normalization_coefficient = new_selection_normalization_coefficient;
