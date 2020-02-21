@@ -83,7 +83,7 @@ public:
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       Tensor<string, 2> write_final_results(const Index&) const;
+       Tensor<string, 2> write_final_results(const Index& = 3) const;
 
        /// Resizes training history variables.
 

@@ -575,51 +575,45 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Inde
 {
     ostringstream buffer;
 
-    Tensor<string, 1> names;
-    Tensor<string, 1> values;
+    Tensor<string, 2> final_results(7, 2);
 
     // Final parameters norm
-    /*
-       names.push_back("Final parameters norm");
 
-       buffer.str("");
-       buffer << setprecision(precision) << final_parameters_norm;
+    final_results(0,0) = "Final parameters norm";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << setprecision(precision) << final_parameters_norm;
 
-       // Final loss
+    final_results(0,1) = buffer.str();
 
-       names.push_back("Final training error");
+    // Final loss
 
-       buffer.str("");
-       buffer << setprecision(precision) << final_training_error;
+    final_results(1,0) = "Final training error";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << setprecision(precision) << final_training_error;
 
-       // Final selection error
+    final_results(1,1) = buffer.str();
 
-    //   const LossIndex* loss_index_pointer = quasi_Newton_method_pointer->get_loss_index_pointer();
+    // Final selection error
 
-    //   if(loss_index_pointer->has_selection())
-    //   {
-           names.push_back("Final selection error");
+    final_results(2,0) = "Final selection error";
 
-           buffer.str("");
-           buffer << setprecision(precision) << final_selection_error;
+    buffer.str("");
+    buffer << setprecision(precision) << final_selection_error;
 
-           values.push_back(buffer.str());
-    //    }
+    final_results(2,1) = buffer.str();
 
-       // Final gradient norm
+    // Final gradient norm
 
-       names.push_back("Final gradient norm");
+    final_results(3,0) = "Final gradient norm";
 
-       buffer.str("");
-       buffer << setprecision(precision) << final_gradient_norm;
+    buffer.str("");
+    buffer << setprecision(precision) << final_gradient_norm;
 
-       values.push_back(buffer.str());
+    final_results(3,1) = buffer.str();
 
-       // Final training rate
+    // Final training rate
 
     //   names.push_back("Final training rate");
 
@@ -628,41 +622,31 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Inde
 
     //   values.push_back(buffer.str());
 
-       // Epochs number
+    // Epochs number
 
-       names.push_back("Epochs number");
+    final_results(4,0) = "Epochs number";
 
-       buffer.str("");
-       buffer << epochs_number;
+    buffer.str("");
+    buffer << epochs_number;
 
-       values.push_back(buffer.str());
+    final_results(4,1) = buffer.str();
 
-       // Elapsed time
+    // Elapsed time
 
-       names.push_back("Elapsed time");
+    final_results(5,0) = "Elapsed time";
 
-       buffer.str("");
-       buffer << write_elapsed_time(elapsed_time);
+    buffer.str("");
+    buffer << setprecision(precision) << elapsed_time;
 
-       values.push_back(buffer.str());
+    final_results(5,1) = buffer.str();
 
-       // Stopping criteria
+    // Stopping criteria
 
-       names.push_back("Stopping criterion");
+    final_results(6,0) = "Stopping criterion";
 
-       values.push_back(write_stopping_condition());
+    final_results(6,1) = write_stopping_condition();
 
-       const Index rows_number = names.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> final_results(rows_number, columns_number);
-
-       final_results.set_column(0, names, "name");
-       final_results.set_column(1, values, "value");
-
-       return final_results;
-    */
-    return Tensor<string, 2>();
+    return final_results;
 }
 
 }
