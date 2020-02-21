@@ -1209,7 +1209,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type gradient_norm = 0;
 
     type selection_error = numeric_limits<type>::max();
-//    type old_selection_error = numeric_limits<type>::max();
+    type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
@@ -1252,19 +1252,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-//        training_forward_propagation.print();
-
-//        system("pause");
-
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-//        training_back_propagation.print();
-
-//        system("pause");
-
         training_loss = training_back_propagation.loss;
+
+        cout << "Loss: " << training_loss << endl;
+        cout << "Parameters: " << optimization_data.parameters << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1287,7 +1282,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Selection error
 
-/*
+
         if(has_selection)
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
@@ -1303,12 +1298,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-*/
+
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 

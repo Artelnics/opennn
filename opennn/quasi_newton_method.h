@@ -377,6 +377,8 @@ public:
 
        optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
 
+       cout << "optimization_data.learning_rate: " << optimization_data.learning_rate << endl;
+
        optimization_data.parameters += optimization_data.parameters_increment;
 
        optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
