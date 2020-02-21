@@ -83,7 +83,7 @@ int main(void)
         DataSet data_set(data);
 */
 
-        Index samples = 7;
+        Index samples = 1000;
         Index variables = 3;
 
          // Device
@@ -119,20 +119,23 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
 //        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1);
 
-        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(40);
+        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(20);
 
-//        training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_learning_rate_method(LearningRateAlgorithm::Fixed);
+//        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_instances_number(variables);
+
+//        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(20);
+
+        training_strategy.get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->set_learning_rate_method(LearningRateAlgorithm::Fixed);
 
         training_strategy.set_device_pointer(&device);
 
         training_strategy.perform_training();
-
 
         cout << "End" << endl;
 

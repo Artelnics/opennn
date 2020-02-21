@@ -397,8 +397,6 @@ public:
 //       optimization_data.learning_rate = learning_rate;
 
        optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-
    }
 
 
