@@ -1144,17 +1144,6 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.CloseElement();
 
-    // Return minimum selection error neural network
-
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
@@ -1233,11 +1222,11 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     if(batch_size_element)
     {
-        string new_batch_size = batch_size_element->GetText();
+        const Index new_batch_size = static_cast<Index>(atoi(batch_size_element->GetText()));
 
         try
         {
-            set_batch_instances_number(new_batch_size != "0");
+            set_batch_instances_number(new_batch_size);
         }
         catch(const logic_error& e)
         {
