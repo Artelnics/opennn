@@ -831,6 +831,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
+
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -991,7 +993,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                      << "Training loss: " << training_loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate << "\n"
+                     << "Training rate: " << optimization_data.learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl;
@@ -1022,7 +1024,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << learning_rate << "\n"
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection) cout << "Selection error: " << selection_error << endl;
