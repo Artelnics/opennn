@@ -956,18 +956,16 @@ Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_numb
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
     return split_instances(training_indices, batch_instances_number);
-
 }
 
 
 Tensor<Index, 2> DataSet::get_selection_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> training_indices = get_selection_instances_indices();
+    Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+    if(shuffle_batches_instances) std::random_shuffle(selection_indices.data(), selection_indices.data() + selection_indices.size());
 
-    return split_instances(training_indices, batch_instances_number);
-
+    return split_instances(selection_indices, batch_instances_number);
 }
 
 
@@ -978,7 +976,6 @@ Tensor<Index, 2> DataSet::get_testing_batches(const Index& batch_instances_numbe
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
     return split_instances(training_indices, batch_instances_number);
-
 }
 
 

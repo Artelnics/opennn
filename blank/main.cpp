@@ -119,7 +119,7 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
