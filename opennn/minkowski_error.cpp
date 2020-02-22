@@ -290,64 +290,6 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 //     }
 //  }
 }
-
-type MinkowskiError::minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const type& minkowski_parameter) const
-{
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index other_rows_number = y.dimension(0);
-
-    if(other_rows_number != rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) method.\n"
-               << "Other number of rows " << other_rows_number << " must be equal to this number of rows " << rows_number << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index other_columns_number = y.dimension(1);
-
-    if(other_columns_number != columns_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) method.\n"
-               << "Other number of columns (" << other_columns_number << ") must be equal to this number of columns (" << columns_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-    /*
-        type minkowski_error = 0;
-        type row_minkowski_error = 0;
-    */
-    Tensor<type, 0> error = (((x - y).abs().pow(minkowski_parameter)).sum()).pow(static_cast<type>(1.0)/ minkowski_parameter);
-
-    return error(0);
-    /*
-        for(Index i = 0; i < rows_number; i++)
-        {
-            row_minkowski_error = 0;
-
-            for(Index j = 0; j < columns_number; j++)
-            {
-                row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
-            }
-
-            minkowski_error += pow(row_minkowski_error, static_cast<type>(1.0) / minkowski_parameter);
-        }
-
-        return minkowski_error;
-    */
-}
 }
 
 

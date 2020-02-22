@@ -386,7 +386,8 @@ void LossIndex::check() const
     {
         buffer << "OpenNN Exception: LossIndex class.\n"
                << "void check() const method.\n"
-               << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+               << "Number of inputs in neural network (" << inputs_number
+               << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -395,7 +396,8 @@ void LossIndex::check() const
     {
         buffer << "OpenNN Exception: LossIndex class.\n"
                << "void check() const method.\n"
-               << "Number of outputs in neural network (" << outputs_number << ") must be equal to number of targets in data set (" << targets_number << ").\n";
+               << "Number of outputs in neural network (" << outputs_number
+               << ") must be equal to number of targets in data set (" << targets_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -406,7 +408,8 @@ void LossIndex::check() const
 /// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number of terms composing the objective.
+/// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns
+/// the number of terms composing the objective.
 /// @param inputs Tensor with inputs.
 /// @param layers_activations vector of tensors with layers activations_2d.
 /// @param layers_delta vector of tensors with layers delta.
@@ -434,8 +437,9 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LossIndex class.\n"
-               << "Tensor<type, 2> calculate_layers_error_Jacobian(const Tensor<Tensor<type, 1>, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
+               << "Tensor<type, 2> calculate_layers_error_Jacobian() method.\n"
+               << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers("
+               << layers_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -479,7 +483,8 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
 /// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 /// The Jacobian elements are the partial derivatives of a single layer term with respect to a single layer parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number of terms composing the objective.
+/// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number
+/// of terms composing the objective.
 /// @param layer_deltas Tensor with layers delta.
 /// @param layer_inputs Tensor with layers inputs.
 
@@ -577,7 +582,8 @@ string LossIndex::write_regularization_method() const
 
 
 /// It calculates the regularization term using through the use of parameters.
-/// Returns the regularization evaluation, according to the respective regularization type used in the loss index expression.
+/// Returns the regularization evaluation, according to the respective regularization type used in the
+/// loss index expression.
 /// @param parameters vector with the parameters to get the regularization term.
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const

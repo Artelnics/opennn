@@ -67,6 +67,8 @@ public:
 
    // loss methods
 
+   /// @todo Check formula
+
    type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> minkowski_error;
@@ -83,8 +85,8 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-//                minkowski_error.device(*default_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
-//                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+                minkowski_error.device(*default_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
+                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -93,8 +95,8 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//               minkowski_error.device(*thread_pool_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
-//                                                                .pow(static_cast<type>(1.0)/minkowski_parameter);
+               minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
+                                                                .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -198,8 +200,6 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
-
-   type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
 
    // Serialization methods
 

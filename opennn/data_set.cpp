@@ -2328,13 +2328,16 @@ Index DataSet::get_unused_variables_number() const
 
 Index DataSet::get_variable_index(const string& name) const
 {
-    const Tensor<string, 1> names = get_variables_names();
-    /*
-        const Index index = names.get_first_index(name);
+    const Index variables_number = get_variables_number();
 
-        return index;
-    */
-    return 0;
+    const Tensor<string, 1> variables_names = get_variables_names();
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+        if(variables_names(i) == name) return i;
+    }
+
+    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
 
@@ -3365,12 +3368,13 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Te
 
 /// Returns the inputs values of a single instance in the data set.
 /// @param instance_index Index of the instance.
+/// @todo Check, delete method?
 
 Tensor<type, 2> DataSet::get_instance_input_data(const Index & instance_index) const
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>({instance_index}), input_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>(instance_index), input_variables_indices);
 }
 
 
@@ -3381,7 +3385,7 @@ Tensor<type, 2> DataSet::get_instance_target_data(const Index & instance_index) 
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>({instance_index}), target_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>(instance_index), target_variables_indices);
 }
 
 
@@ -3394,10 +3398,7 @@ Index DataSet::get_column_index(const string& column_name) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).name == column_name)
-        {
-            return i;
-        }
+        if(columns(i).name == column_name) return i;
     }
 
     ostringstream buffer;
@@ -3747,9 +3748,7 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     set(instances_number, variables_number);
 
     data = new_data;
-    /*
-       if(get_header_line()) set_variables_names(data.get_header());
-    */
+
     display = true;
 
     set_default_columns_uses();
@@ -4562,7 +4561,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(selection_index, target_index) != 1.0)
+        else if(abs(data(selection_index, target_index) - 1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 

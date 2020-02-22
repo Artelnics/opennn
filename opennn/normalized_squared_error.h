@@ -202,10 +202,6 @@ public:
 
    // Squared errors methods
 
-   Tensor<type, 1> calculate_squared_errors() const;
-
-   Tensor<Index, 1> calculate_maximal_errors(const Index& = 10) const;
-
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
    string get_error_type() const;
