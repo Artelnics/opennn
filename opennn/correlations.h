@@ -92,8 +92,6 @@ struct CorrelationResults
 
     CorrelationType correlation_type;
 };
-
-
     // Linear
 
     type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -132,29 +130,24 @@ struct CorrelationResults
     // Logistic error methods
 
     type logistic(const type&, const type&, const type&);
+    Tensor<type, 1> logistic(const Tensor<type, 1>&, const type&, const type&);
 
     type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
     type logistic_error_missing_values(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
-    Tensor<type, 1> logistic_error_gradient_missing_values(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Regression methods
 
     RegressionResults linear_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults linear_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults logarithmic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults logarithmic_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults exponential_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults exponential_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults power_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults power_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    RegressionResults logistic_regression_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Correlation methods
 
@@ -167,13 +160,10 @@ struct CorrelationResults
     CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    CorrelationResults logistic_correlations_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
-    CorrelationResults karl_pearson_correlations_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    CorrelationResults karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
-    CorrelationResults one_way_anova_correlations_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     // Covariance
 
@@ -195,8 +185,7 @@ struct CorrelationResults
     type chi_square_critical_point(const type&, const type&);
 
     type karl_pearson_correlation(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
-    type karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    type karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     //One way ANOVA
 
@@ -218,6 +207,10 @@ struct CorrelationResults
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Index count_NAN(const Tensor<type, 1>&);
+
+    // Other methods
+
+    Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
 }
 
 #endif

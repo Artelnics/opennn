@@ -96,37 +96,16 @@ void NormalizedSquaredError::set_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> training_indices = data_set_pointer->get_training_instances_indices();
-
-    const Index training_instances_number = training_indices.size();
-
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
-
     const Tensor<type, 1> training_targets_mean = data_set_pointer->calculate_training_targets_mean();
 
-    // Normalized squared error stuff
+    //Targets matrix
 
-    type new_normalization_coefficient = 0;
+    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
-    #pragma omp parallel for reduction(+ : new_normalization_coefficient)
+    //Normalization coefficient
 
-    for(Index i = 0; i < static_cast<Index>(training_instances_number); i++)
-    {
-        const Index training_index = training_indices[i];
-
-        // Target vector
-
-        const Tensor<type, 1> targets = data_set_pointer->get_instance_data(training_index, target_variables_indices);
-
-        // Normalization coefficient
-        /*
-               new_normalization_coefficient += sum_squared_error(targets, training_targets_mean);
-        */
-    }
-
-    normalization_coefficient = new_normalization_coefficient;
+    normalization_coefficient = calculate_normalization_coefficient(targets, training_targets_mean);
 }
-
 
 /// Sets the normalization coefficient.
 /// @param new_normalization_coefficient New normalization coefficient to be set.
@@ -144,39 +123,20 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-//
-
     const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
     const Index selection_instances_number = selection_indices.size();
 
     if(selection_instances_number == 0) return;
 
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
-
     const Tensor<type, 1> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
 
-    // Normalized squared error stuff
+    const Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
-    type new_selection_normalization_coefficient = 0;
+    // Normalization coefficient
 
-    #pragma omp parallel for reduction(+ : new_selection_normalization_coefficient)
+    selection_normalization_coefficient = calculate_normalization_coefficient(targets, selection_targets_mean);
 
-    for(Index i = 0; i < static_cast<Index>(selection_instances_number); i++)
-    {
-        const Index selection_index = selection_indices[i];
-
-        // Target vector
-
-        const Tensor<type, 1> targets = data_set_pointer->get_instance_data(selection_index, target_variables_indices);
-
-        // Normalization coefficient
-        /*
-               new_selection_normalization_coefficient += sum_squared_error(targets, selection_targets_mean);
-        */
-    }
-
-    selection_normalization_coefficient = new_selection_normalization_coefficient;
 }
 
 
@@ -205,7 +165,6 @@ void NormalizedSquaredError::set_default()
     }
 }
 
-
 /// Returns the normalization coefficient to be used for the loss of the error.
 /// This is measured on the training instances of the data set.
 /// @param targets Matrix with the targets values from dataset.
@@ -213,17 +172,38 @@ void NormalizedSquaredError::set_default()
 
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) const
 {
+
 #ifdef __OPENNN_DEBUG__
 
     check();
 
-#endif
-    /*
-       return sum_squared_error(targets, targets_mean);
-    */
-    return 0.0;
-}
+    const Index means_number = targets_mean.dimension(0);
+    const Index targets_number = targets.dimension(1);
 
+    if(targets_number != means_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NormalizedquaredError function.\n"
+               << "type calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) function.\n"
+               << " The columns number of targets("<< targets_number <<") must be equal("<< means_number<<").\n";
+
+        throw logic_error(buffer.str());
+    }
+#endif
+
+    const Index size = targets.dimension(0);
+
+    type normalization_coefficient = 0;
+
+    for(Index i=0; i < size; i++)
+    {
+        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+
+        normalization_coefficient += norm_1(0);
+    }
+    return normalization_coefficient;
+}
 
 /// Returns loss vector of the error terms function for the normalized squared error.
 /// It uses the error back-propagation method.
@@ -379,9 +359,9 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
 
                 const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
 
-                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
+                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations_2d, targets);
 
-                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations_2d - targets).divide(error_terms, 0);
 
                 const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 

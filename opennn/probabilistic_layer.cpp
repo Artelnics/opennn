@@ -569,7 +569,7 @@ void ProbabilisticLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the probabilistic layer with a given value.
 /// @param value Biases initialization value.
 
-void ProbabilisticLayer::initialize_biases(const type& value)
+void ProbabilisticLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
@@ -578,13 +578,13 @@ void ProbabilisticLayer::initialize_biases(const type& value)
 /// Initializes the synaptic weights of all the neurons in the probabilistic layer with a given value.
 /// @param value Synaptic weights initialization value.
 
-void ProbabilisticLayer::initialize_synaptic_weights(const type& value)
+void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
 
 
-void ProbabilisticLayer::initialize_synaptic_weights_Glorot(const type& minimum,const type& maximum)
+void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum,const type& maximum)
 {
     synaptic_weights.setRandom();
 }
@@ -816,25 +816,27 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Inputs number
 
-    const tinyxml2::XMLElement* inputs_number_element = document.FirstChildElement("InputsNumber");
+    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
 
     if(!inputs_number_element)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n";
+               << "Inputs number element is nullptr.\n" << inputs_number_element->GetText();
 
         throw logic_error(buffer.str());
     }
 
+    Index new_inputs_number;
+
     if(inputs_number_element->GetText())
     {
-        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
+        new_inputs_number = static_cast<Index>(stoi(inputs_number_element->GetText()));
     }
 
     // Neurons number
 
-    const tinyxml2::XMLElement* neurons_number_element = document.FirstChildElement("NeuronsNumber");
+    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!inputs_number_element)
     {
@@ -845,10 +847,14 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
+    Index new_neurons_number;
+
     if(neurons_number_element->GetText())
     {
-        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
+        new_neurons_number = static_cast<Index>(stoi(neurons_number_element->GetText()));
     }
+
+    set(new_inputs_number, new_neurons_number);
 
     // Activation function
 
@@ -884,8 +890,8 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-//@todo
-//        set_parameters(to_type_vector(parameters_string, ' '));
+
+        set_parameters(to_type_vector(parameters_string, ' '));
     }
 
     // Decision threshold

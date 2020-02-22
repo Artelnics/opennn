@@ -308,8 +308,10 @@ public:
  
    Tensor<string, 2> get_information() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
+   void inputs_from_XML(const tinyxml2::XMLDocument&);
+   void layers_from_XML(const tinyxml2::XMLDocument&);
+   void outputs_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML( );
@@ -345,12 +347,12 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-       trainable_layers_pointers[0]->forward_propagate(batch.inputs_2d, forward_propagation.layers[0]);
+       trainable_layers_pointers[0]->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
-            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations,
-                                                                        forward_propagation.layers[i]);
+            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations_2d,
+                                                                        forward_propagation.layers(i));
        }
    }
 
@@ -365,7 +367,7 @@ public:
 
        const Index parameters_number = trainable_layers_pointers[0]->get_parameters_number();
 
-       TensorMap< Tensor<type, 1> > potential_parameters(parameters.data(), parameters_number);
+       const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
 
        trainable_layers_pointers[0]->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers[0]);
 
@@ -375,11 +377,12 @@ public:
        {
            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 
-           TensorMap< Tensor<type, 1> > potential_parameters(parameters.data() + index, parameters_number);
+           const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
 
-            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations,
+            trainable_layers_pointers[i]->forward_propagate(forward_propagation.layers[i-1].activations_2d,
                                                                         potential_parameters,
                                                                         forward_propagation.layers[i]);
+
             index += parameters_number;
        }       
    }

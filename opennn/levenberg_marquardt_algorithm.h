@@ -34,7 +34,8 @@ namespace OpenNN
 
 /// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1], use to minimize loss function.
 ///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
+/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
@@ -212,7 +213,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type loss_goal;
+   type training_loss_goal;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 

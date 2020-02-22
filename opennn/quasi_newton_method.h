@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 
 #include "loss_index.h"
 
@@ -31,6 +32,12 @@
 #include "learning_rate_algorithm.h"
 
 #include "tinyxml2.h"
+
+// Eigen Includes
+
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
+
+using Eigen::MatrixXd;
 
 namespace OpenNN
 {
@@ -100,6 +107,14 @@ public:
 
         void print() const
         {
+            cout << "Training Direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Learning rate:" << endl;
+            cout << learning_rate << endl;
+
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
         }
 
         QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
@@ -111,7 +126,11 @@ public:
 
         Tensor<type, 1> parameters_increment;
 
+        type parameters_increment_norm = 0;
+
         // Loss index data
+
+        type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
 
@@ -252,8 +271,8 @@ public:
                                                            const Tensor<type, 1>&,
                                                            const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> kronecker_product(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    Results perform_training();
 
@@ -275,7 +294,7 @@ public:
    string object_to_string() const;
    Tensor<string, 2> to_string_matrix() const;
 
-   void update_optimization_data(
+   void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
            const LossIndex::BackPropagation& back_propagation,
@@ -309,7 +328,7 @@ public:
 
        // Calculate training slope
 
-       optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -337,11 +356,11 @@ public:
                 optimization_data.training_direction,
                 initial_learning_rate);
 
-       type learning_rate = directional_point.first;
+       optimization_data.learning_rate = directional_point.first;
 
        // Reset training direction when training rate is 0
 
-       if(abs(learning_rate) < numeric_limits<type>::min())
+       if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
            optimization_data.training_direction = -back_propagation.gradient;
 
@@ -353,16 +372,21 @@ public:
                                optimization_data.training_direction,
                                first_learning_rate);
 
-           learning_rate = directional_point.first;
+           optimization_data.learning_rate = directional_point.first;
        }
 
-       optimization_data.parameters += optimization_data.training_direction*learning_rate;
+       optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
 
-//       parameters_increment_norm = l2_norm(parameters_increment);
+       cout << "optimization_data.learning_rate: " << optimization_data.learning_rate << endl;
+
+       optimization_data.parameters += optimization_data.parameters_increment;
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+//       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
        optimization_data.old_parameters = optimization_data.parameters;
 
-//       old_training_loss = training_loss;
+//       optimization_data.old_training_loss = back_propagation.loss;
 
 //       old_selection_error = selection_error;
 
@@ -370,9 +394,9 @@ public:
 
        optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
-//       optimization_data.old_learning_rate = learning_rate;
+//       optimization_data.learning_rate = learning_rate;
 
-
+       optimization_data.old_learning_rate = optimization_data.learning_rate;
    }
 
 
@@ -425,7 +449,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type loss_goal;
+   type training_loss_goal;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 

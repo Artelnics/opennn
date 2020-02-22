@@ -367,7 +367,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type loss_goal;
+   type training_loss_goal;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 

@@ -221,7 +221,7 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
 
     ProbabilisticLayer probabilistic_layer;
 
-    Tensor<type, 2> combinations;
+    Tensor<type, 2> combinations_2d;
     Tensor<type, 2> derivatives;
 
     NumericalDifferentiation numerical_differentiation;
@@ -234,10 +234,10 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     probabilistic_layer.set(1,1);
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-    combinations.resize(1, 1);
-    combinations.setConstant(0.0);
+    combinations_2d.resize(1, 1);
+    combinations_2d.setConstant(0.0);
 
-//    derivatives = probabilistic_layer.calculate_activations_derivatives(combinations);
+//    derivatives = probabilistic_layer.calculate_activations_derivatives(combinations_2d);
     assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<type>::min(), LOG);
 
     // Test numerical differentiation
@@ -246,16 +246,16 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     {
        probabilistic_layer.set(2, 4);
 
-       combinations.resize(1,4);
-       combinations.setConstant(1.0);
+       combinations_2d.resize(1,4);
+       combinations_2d.setConstant(1.0);
 
        probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-//       activations_derivatives = probabilistic_layer.calculate_activations_derivatives(combinations);
+//       activations_derivatives = probabilistic_layer.calculate_activations_derivatives(combinations_2d);
 
 //       numerical_differentiation.calculate_derivatives(probabilistic_layer,
 //                                                       &ProbabilisticLayer::calculate_activations,
-//                                                       combinations);
+//                                                       combinations_2d);
 
 //       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
     }
