@@ -2073,14 +2073,14 @@ public:
     const XMLConstHandle PreviousSibling() const									{
         return XMLConstHandle(_node ? _node->PreviousSibling() : 0 );
     }
-    const XMLConstHandle PreviousSiblingElement(const char* name = 0 ) const		{
-        return XMLConstHandle(_node ? _node->PreviousSiblingElement(name ) : 0 );
+    const XMLConstHandle PreviousSiblingElement(const char* name = nullptr ) const		{
+        return XMLConstHandle(_node ? _node->PreviousSiblingElement(name ) : nullptr );
     }
     const XMLConstHandle NextSibling() const										{
-        return XMLConstHandle(_node ? _node->NextSibling() : 0 );
+        return XMLConstHandle(_node ? _node->NextSibling() : nullptr );
     }
-    const XMLConstHandle NextSiblingElement(const char* name = 0 ) const			{
-        return XMLConstHandle(_node ? _node->NextSiblingElement(name ) : 0 );
+    const XMLConstHandle NextSiblingElement(const char* name = nullptr ) const			{
+        return XMLConstHandle(_node ? _node->NextSiblingElement(name ) : nullptr );
     }
 
 
@@ -2088,16 +2088,16 @@ public:
         return _node;
     }
     const XMLElement* ToElement() const			{
-        return(_node ? _node->ToElement() : 0 );
+        return(_node ? _node->ToElement() : nullptr );
     }
     const XMLText* ToText() const				{
-        return(_node ? _node->ToText() : 0 );
+        return(_node ? _node->ToText() : nullptr );
     }
     const XMLUnknown* ToUnknown() const			{
-        return(_node ? _node->ToUnknown() : 0 );
+        return(_node ? _node->ToUnknown() : nullptr );
     }
     const XMLDeclaration* ToDeclaration() const	{
-        return(_node ? _node->ToDeclaration() : 0 );
+        return(_node ? _node->ToDeclaration() : nullptr );
     }
 
 private:
@@ -2156,7 +2156,7 @@ public:
 //     	If 'compact' is set to true, then output is created
 //     	with only required whitespace and newlines.
 
-    XMLPrinter(FILE* file=0, bool compact = false, int depth = 0 );
+    XMLPrinter(FILE* file=nullptr, bool compact = false, int depth = 0 );
     virtual ~XMLPrinter()	{}
 
 //      If streaming, write the BOM and declaration.
@@ -2243,7 +2243,7 @@ protected:
     virtual void PrintSpace(int depth );
     void Print(const char* format, ...);
     void Write(const char* data, int size );
-    inline void Write(const char* data )           { Write(data, strlen(data )); }
+    inline void Write(const char* data )           { Write(data, static_cast<int>(strlen(data))); }
     void Putc(char ch );
 
     void SealElementIfJustOpened();
