@@ -87,7 +87,6 @@ public:
    void set_inputs_number(const Index&);
    void set_neurons_number(const Index&);
 
-
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
 
@@ -100,10 +99,6 @@ public:
    void set_display(const bool&);
 
    void set_default();
-
-   
-
-   
 
    // Lower and upper bounds
 

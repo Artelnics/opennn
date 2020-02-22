@@ -56,15 +56,53 @@ public:
 
    // Error methods
 
-   type cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   /// @todo Check formula
 
    type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
-                                                                    batch.targets_2d);
-   }
+       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+       const Tensor<type, 2>& targets = batch.targets_2d;
+
+       const Index rows_number = outputs.dimension(0);
+       const Index columns_number = outputs.dimension(1);
+
+       type cross_entropy_error = 0.0;
+
+       for(Index i = 0; i < rows_number; i++)
+       {
+           for(Index j = 0; j < columns_number; j++)
+           {
+               const type target = targets(i,j);
+               const type output = outputs(i,j);
+
+               if(abs(target) < numeric_limits<type>::min() && abs(output) < numeric_limits<type>::min())
+               {
+                   // Do nothing
+               }
+               else if(abs(target - 1) < numeric_limits<type>::min()
+                    && abs(output - 1) < numeric_limits<type>::min())
+               {
+                   // Do nothing
+               }
+               else if(abs(output) < numeric_limits<type>::min())
+               {
+                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.000000001));
+               }
+               else if(abs(output - 1) < numeric_limits<type>::min())
+               {
+                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.999999999));
+               }
+               else
+               {
+                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(output);
+               }
+           }
+       }
+
+       return cross_entropy_error;
+  }
 
    // Gradient methods
 

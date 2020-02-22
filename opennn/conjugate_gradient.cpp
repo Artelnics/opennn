@@ -1080,11 +1080,11 @@ Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
 Tensor<type, 1> ConjugateGradient::calculate_conjugate_gradient_training_direction
 (const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 1>& old_training_direction) const
 {
+
+#ifdef __OPENNN_DEBUG__
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-#ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 

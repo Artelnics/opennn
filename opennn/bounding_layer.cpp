@@ -517,14 +517,30 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     }
 
 #endif
-    /*
+
        switch(bounding_method)
        {
           case NoBounding: return inputs;
 
-          case Bounding: return lower_upper_bounded(inputs, lower_bounds, upper_bounds);
+          case Bounding:
+           {
+               const Index rows_number = inputs.dimension(0);
+               const Index columns_number = inputs.dimension(1);
+
+               Tensor<type, 2> outputs(rows_number, columns_number);
+
+               for(Index i = 0; i < rows_number; i++)
+               {
+                   for(Index j = 0; j < columns_number; j++)
+                   {
+                       if(inputs(i,j) < lower_bounds(j)) outputs(i,j) = lower_bounds(j);
+                       else if(inputs(i,j) > upper_bounds(j)) outputs(i,j) = upper_bounds(j);
+                       else outputs(i,j) = inputs(i,j);
+                   }
+               }
+           }
        }
-    */
+
     return Tensor<type, 2>();
 }
 
