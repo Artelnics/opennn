@@ -124,7 +124,8 @@ const bool& InputsSelection::get_reserve_selection_error_data() const
 }
 
 
-/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved,
+/// and false otherwise.
 
 const bool& InputsSelection::get_reserve_minimal_parameters() const
 {
@@ -651,7 +652,8 @@ Tensor<Index, 1> InputsSelection::delete_result(const Index& value, const Tensor
 }
 
 
-Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value, const Tensor< Tensor<type, 1>, 1>& old_tensor) const
+Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value,
+                                                           const Tensor< Tensor<type, 1>, 1>& old_tensor) const
 {
     const Index size = old_tensor.size();
 
@@ -665,145 +667,6 @@ Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>
     new_tensor(size) = value;
 
     return new_tensor;
-}
-
-/// Returns the mean of the loss and selection error in trials_number trainings.
-/// @param inputs Vector of the inputs to be trained with.
-
-Tensor<type, 1> InputsSelection::perform_mean_model_evaluation(const Tensor<bool, 1>&inputs)
-{
-    /*
-    #ifdef __OPENNN_DEBUG__
-
-        if(inputs.count_equal_to(true) <= 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: InputsSelection class.\n"
-                   << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-                   << "Number of inputs must be greater or equal than 1.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(trials_number <= 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: InputsSelection class.\n"
-                   << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-                   << "Number of parameters assay must be greater than 0.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-    #endif
-
-        NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
-
-        OptimizationAlgorithm::Results results;
-
-        Tensor<type, 1> mean_final(2);
-        mean_final[0] = 0;
-        mean_final[1] = 0;
-
-        Tensor<type, 1> current_loss(2);
-
-        Tensor<type, 1> final_parameters;
-
-        bool flag_loss = false;
-        bool flag_selection = false;
-
-        for(Index i = 0; i < inputs_history.size(); i++)
-        {
-            if(inputs_history[i] == inputs)
-            {
-                mean_final[0] = training_error_history[i];
-                flag_loss = true;
-            }
-        }
-
-        for(Index i = 0; i < inputs_history.size(); i++)
-        {
-            if(inputs_history[i] == inputs)
-            {
-                mean_final[1] = selection_error_history[i];
-                flag_selection = true;
-            }
-        }
-
-        if(flag_loss && flag_selection)
-        {
-            return mean_final;
-        }
-
-        neural_network->perturbate_parameters(0.001);
-
-        results = training_strategy_pointer->perform_training();
-
-    //    current_loss = get_final_losses(results);
-
-        mean_final[0] = current_loss[0];
-        mean_final[1] = current_loss[1];
-
-        final_parameters.resize(neural_network->get_parameters());
-
-        for(Index i = 1; i < trials_number; i++)
-        {
-            if(display)
-            {
-                cout << "Trial number: " << i << endl;
-                if(i == 1)
-                {
-                    cout << "Training loss: " << mean_final[0] << endl;
-                    cout << "Selection error: " << mean_final[1] << endl;
-                    cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-                }
-                else
-                {
-                    cout << "Training loss: " << current_loss[0] << endl;
-                    cout << "Selection error: " << current_loss[1] << endl;
-                    cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-                }
-            }
-
-            neural_network->set_parameters_random();
-
-            results = training_strategy_pointer->perform_training();
-
-    //        current_loss = get_final_losses(results);
-
-            if(!flag_loss)
-            {
-                mean_final[0] += current_loss[0]/trials_number;
-            }
-
-            if(!flag_selection)
-            {
-                mean_final[1] += current_loss[1]/trials_number;
-            }
-        }
-
-        if(display)
-        {
-            cout << "Trial number: " << trials_number << endl;
-            cout << "Training loss: " << mean_final[0] << endl;
-            cout << "Selection error: " << mean_final[1] << endl;
-            cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-        }
-
-        inputs_history.push_back(inputs);
-
-        training_error_history.push_back(mean_final[0]);
-
-        selection_error_history.push_back(mean_final[1]);
-
-        parameters_history.push_back(final_parameters);
-
-        return mean_final;
-    */
-    return Tensor<type, 1>();
-
 }
 
 

@@ -375,7 +375,8 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population columns("<<new_population.dimension(1)<< ") must be equal to inputs number("<<inputs_number<<").\n";
+               << "Population columns (" << new_population.dimension(1)
+               << ") must be equal to inputs number ("<<inputs_number<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -386,7 +387,8 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population rows("<<new_population.size()<< ") must be equal to population size("<<population_size<<").\n";
+               << "Population rows("<<new_population.size()
+               << ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -428,7 +430,8 @@ void GeneticAlgorithm::set_loss(const Tensor<type, 2>& new_loss)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_loss(const Tensor<type, 2>&&) method.\n"
-               << "Performance rows("<<new_loss.dimension(0)<< ") must be equal to population size("<<population_size<<").\n";
+               << "Performance rows("<<new_loss.dimension(0)
+               << ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -458,7 +461,8 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_fitness(const Tensor<type, 2>&&) method.\n"
-               << "Fitness size("<<new_fitness.size()<< ") must be equal to population size("<<population_size<<").\n";
+               << "Fitness size("<<new_fitness.size()
+               << ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -509,7 +513,8 @@ void GeneticAlgorithm::set_fitness_assignment_method(const FitnessAssignment& ne
 
 
 /// Sets a new method to perform the crossover in the algorithm.
-/// @param new_crossover_method Method to perform the crossover of the selected population(Uniform, OnePoint or TwoPoint).
+/// @param new_crossover_method Method to perform the crossover of the selected population
+/// (Uniform, OnePoint or TwoPoint).
 
 void GeneticAlgorithm::set_crossover_method(const CrossoverMethod& new_crossover_method)
 {
@@ -669,7 +674,8 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_elitism_size(const Index&) method.\n"
-               << "Elitism size("<< new_elitism_size<<") must be lower than the population size("<<population_size<<").\n";
+               << "Elitism size("<< new_elitism_size
+               <<") must be lower than the population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -694,7 +700,8 @@ void GeneticAlgorithm::set_crossover_first_point(const Index& new_crossover_firs
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_crossover_first_point(const Index&) method.\n"
-               << "First crossover point("<< new_crossover_first_point<<") must be lower than the population size("<<population_size<<").\n";
+               << "First crossover point("<< new_crossover_first_point
+               <<") must be lower than the population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -719,7 +726,8 @@ void GeneticAlgorithm::set_crossover_second_point(const Index& new_crossover_sec
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_crossover_second_point(const Index&) method.\n"
-               << "Second crossover point("<< new_crossover_second_point<<") must be lower than the population size("<<population_size<<").\n";
+               << "Second crossover point("<< new_crossover_second_point
+               <<") must be lower than the population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -730,7 +738,8 @@ void GeneticAlgorithm::set_crossover_second_point(const Index& new_crossover_sec
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_crossover_second_point(const Index&) method.\n"
-               << "Second crossover point("<< new_crossover_second_point<<") must be greater than the first point("<<crossover_first_point<<").\n";
+               << "Second crossover point("<< new_crossover_second_point
+               <<") must be greater than the first point("<<crossover_first_point<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -2175,7 +2184,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(display)
         {
             cout << "Generation: " << epoch << endl;
-            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << " " << endl;
+            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
+                 << " " << endl;
 //            cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
             cout << "Generation optimum selection error: " << current_selection_error << endl;
             cout << "Corresponding training loss: " << current_training_error << endl;
@@ -2802,7 +2812,8 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 }
 
 
-/// Serializes the genetic algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the genetic algorithm object into a XML document of the TinyXML library without keep the DOM
+/// tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const

@@ -283,7 +283,8 @@ void GradientDescent::set_default()
 /// <li> Training direction norm.
 /// <li> Training rate.
 /// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
+/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
+/// false otherwise.
 
 void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
@@ -589,7 +590,8 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation
+/// increases.
 
 void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
@@ -626,7 +628,8 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network
+///  with the minimum selection error, false otherwise.
 
 void GradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
 {
@@ -635,7 +638,8 @@ void GradientDescent::set_choose_best_selection(const bool& new_choose_best_sele
 
 
 /// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
+/// false otherwise.
 
 void GradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -718,7 +722,8 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
     {
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "Size of gradient(" << gradient_size
+               << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -768,7 +773,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
 
-    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indeces_vector,
+                        DataSet::tensor_to_vector(inputs_indices),
+                        DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -797,11 +804,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Learning rate
 
-//    type initial_learning_rate = 0;
     type learning_rate = 0;
     type old_learning_rate = 0;
-
-    pair<type,type> directional_point(2, 0.0);
 
     bool stop_training = false;
 
@@ -1486,7 +1490,8 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 }
 
 
-/// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the gradient descent object into a XML document of the TinyXML library
+/// without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -1637,7 +1642,8 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     // Learning rate algorithm
     {
-        const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+        const tinyxml2::XMLElement* learning_rate_algorithm_element
+                = root_element->FirstChildElement("LearningRateAlgorithm");
 
         if(learning_rate_algorithm_element)
         {
@@ -1654,7 +1660,8 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element
+            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
     if(choose_best_selection_element)
     {

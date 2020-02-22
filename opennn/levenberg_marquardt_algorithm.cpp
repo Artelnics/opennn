@@ -479,7 +479,8 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const type& new_error_
 /// Sets a new value for the minimum parameters increment norm stopping criterion.
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
 
-void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
+void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(
+        const type& new_minimum_parameters_increment_norm)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -566,9 +567,11 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the
+/// selection evalutation increases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(
+        const Index& new_maximum_selection_error_increases)
 {
     maximum_selection_error_increases = new_maximum_selection_error_increases;
 }
@@ -610,7 +613,8 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network with
+/// the minimum selection error, false otherwise.
 
 void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choose_best_selection)
 {
@@ -619,7 +623,8 @@ void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choo
 
 
 /// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria
+/// has to be taken in account, false otherwise.
 
 void LevenbergMarquardtAlgorithm::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -743,7 +748,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
+    const Index selection_instances_number
+            = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
     const bool has_selection = data_set_pointer->has_selection();
 
@@ -814,7 +820,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
 //         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
 
-//         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
+//         parameters_increment
+//            = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,
+//                                                   terms_second_order_loss.gradient*(-1.0));
 
 //         const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
             /*
@@ -1491,7 +1499,8 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 }
 
 
-/// Serializes the Levenberg Marquardt algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the Levenberg Marquardt algorithm object into a XML document of the TinyXML library
+/// without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -1656,7 +1665,8 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Damping parameter factor
 
-    const tinyxml2::XMLElement* damping_parameter_factor_element = root_element->FirstChildElement("DampingParameterFactor");
+    const tinyxml2::XMLElement* damping_parameter_factor_element
+            = root_element->FirstChildElement("DampingParameterFactor");
 
     if(damping_parameter_factor_element)
     {
@@ -1674,7 +1684,8 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element
+            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
     if(choose_best_selection_element)
     {
@@ -1710,11 +1721,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Minimum parameters increment norm
 
-    const tinyxml2::XMLElement* minimum_parameters_increment_norm_element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
+    const tinyxml2::XMLElement* minimum_parameters_increment_norm_element
+            = root_element->FirstChildElement("MinimumParametersIncrementNorm");
 
     if(minimum_parameters_increment_norm_element)
     {
-        const type new_minimum_parameters_increment_norm = static_cast<type>(atof(minimum_parameters_increment_norm_element->GetText()));
+        const type new_minimum_parameters_increment_norm
+                = static_cast<type>(atof(minimum_parameters_increment_norm_element->GetText()));
 
         try
         {
@@ -1782,11 +1795,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Maximum selection error increases
 
-    const tinyxml2::XMLElement* maximum_selection_error_increases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+    const tinyxml2::XMLElement* maximum_selection_error_increases_element
+            = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
     if(maximum_selection_error_increases_element)
     {
-        const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
+        const Index new_maximum_selection_error_increases
+                = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
 
         try
         {
@@ -1836,7 +1851,8 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Reserve training error history
 
-    const tinyxml2::XMLElement* reserve_training_error_history_element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
+    const tinyxml2::XMLElement* reserve_training_error_history_element
+            = root_element->FirstChildElement("ReserveTrainingErrorHistory");
 
     if(reserve_training_error_history_element)
     {
@@ -1854,7 +1870,8 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Reserve selection error history
 
-    const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
+    const tinyxml2::XMLElement* reserve_selection_error_history_element
+            = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
     if(reserve_selection_error_history_element)
     {

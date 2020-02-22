@@ -212,7 +212,8 @@ void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_poi
 /// Sets a new training rate method to be used for training.
 /// @param new_learning_rate_method Training rate method.
 
-void LearningRateAlgorithm::set_learning_rate_method(const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
+void LearningRateAlgorithm::set_learning_rate_method(
+        const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
 {
     learning_rate_method = new_learning_rate_method;
 }
@@ -358,7 +359,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         ostringstream buffer;
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Tensor<type, 1> calculate_directional_point(const type&, const Tensor<type, 1>&, const type&) const method.\n"
+               << "Tensor<type, 1> calculate_directional_point() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -371,7 +372,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         ostringstream buffer;
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-               << "Tensor<type, 1> calculate_directional_point(const type&, const Tensor<type, 1>&, const type&) const method.\n"
+               << "Tensor<type, 1> calculate_directional_point() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -626,7 +627,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
             else if(abs(V.first - triplet.U.first) < numeric_limits<type>::min())
             {
                 buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                       << "Tensor<type, 1> calculate_golden_section_directional_point(type, const Tensor<type, 1>, type) const method.\n"
+                       << "Tensor<type, 1> calculate_golden_section_directional_point() const method.\n"
                        << "Both interior points have the same ordinate.\n";
 
                 cout << buffer.str() << endl;
@@ -636,7 +637,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
             else
             {
                 buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                       << "Tensor<type, 1> calculate_golden_section_directional_point(type, const Tensor<type, 1>, type) const method.\n"
+                       << "Tensor<type, 1> calculate_golden_section_directional_point() const method.\n"
                        << "Unknown set:\n"
                        << "A = (" << triplet.A.first << "," << triplet.A.second << ")\n"
                        << "B = (" << triplet.B.first << "," << triplet.B.second << ")\n"
@@ -724,10 +725,8 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
             {
                 V.first = calculate_Brent_method_learning_rate(triplet);
             }
-            catch(const logic_error& e)
+            catch(const logic_error&)
             {
-//                cerr << e.what() << endl;
-
                 return triplet.minimum();
             }
 
@@ -770,7 +769,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
             else
             {
                 buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                       << "Tensor<type, 1> calculate_Brent_method_directional_point(type, const Tensor<type, 1>, type) const method.\n"
+                       << "Tensor<type, 1> calculate_Brent_method_directional_point() const method.\n"
                        << "Unknown set:\n"
                        << "A = (" << triplet.A.first << "," << triplet.A.second << ")\n"
                        << "B = (" << triplet.B.first << "," << triplet.B.second << ")\n"
@@ -845,7 +844,8 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Training rate(" << learning_rate << ") is less than triplet left point(" << triplet.A.first << ").\n";
+               << "Training rate(" << learning_rate << ") is less than triplet left point("
+               << triplet.A.first << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -856,7 +856,8 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Training rate(" << learning_rate << ") is greater than triplet right point(" << triplet.B.first << ").\n";
+               << "Training rate(" << learning_rate << ") is greater than triplet right point("
+               << triplet.B.first << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -874,7 +875,8 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 {
     const type c = -(triplet.A.second*(triplet.U.first-triplet.B.first)
                      + triplet.U.second*(triplet.B.first-triplet.A.first)
-                     + triplet.B.second*(triplet.A.first-triplet.U.first))/((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
+                     + triplet.B.second*(triplet.A.first-triplet.U.first))
+            /((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
 
     if(abs(c) < numeric_limits<type>::min())
     {
@@ -899,7 +901,8 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 
     const type b = (triplet.A.second*(triplet.U.first*triplet.U.first-triplet.B.first*triplet.B.first)
                     + triplet.U.second*(triplet.B.first*triplet.B.first-triplet.A.first*triplet.A.first)
-                    + triplet.B.second*(triplet.A.first*triplet.A.first-triplet.U.first*triplet.U.first))/((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
+                    + triplet.B.second*(triplet.A.first*triplet.A.first-triplet.U.first*triplet.U.first))
+            /((triplet.A.first-triplet.U.first)*(triplet.U.first-triplet.B.first)*(triplet.B.first-triplet.A.first));
 
     const type Brent_method_learning_rate = -b/(static_cast<type>(2.0)*c);
 
@@ -908,7 +911,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "type calculate_parabola_minimal_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
+               << "type calculate_parabola_minimal_learning_rate() const method.\n"
                << "Brent method training rate is not inside interval.\n"
                << "Interval:(" << triplet.A.first << "," << triplet.B.first << ")\n"
                << "Brent method training rate: " << Brent_method_learning_rate << endl;
@@ -1011,7 +1014,8 @@ tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
 }
 
 
-/// Serializes the learning rate algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the learning rate algorithm object into a XML document of the TinyXML library
+/// without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const

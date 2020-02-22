@@ -83,7 +83,8 @@ void IncrementalNeurons::set_default()
 }
 
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm in the model order selection process.
+/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm
+/// in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
 
 void IncrementalNeurons::set_step(const Index& new_step)
@@ -107,7 +108,8 @@ void IncrementalNeurons::set_step(const Index& new_step)
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
                << "void set_step(const Index&) method.\n"
-               << "New_step must be less than the distance between maximum_order and minimum_order(" << maximum_order-minimum_order << ").\n";
+               << "New_step must be less than the distance between maximum_order and minimum_order("
+               << maximum_order-minimum_order << ").\n";
 
         throw logic_error(buffer.str());
     }*/
@@ -210,7 +212,8 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         {
             neural_network->set_parameters_random();
 
-            const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
+            const OptimizationAlgorithm::Results optimization_algorithm_results
+                    = training_strategy_pointer->perform_training();
 
             const type current_training_error_trial = optimization_algorithm_results.final_training_error;
             const type current_selection_error_trial = optimization_algorithm_results.final_selection_error;
@@ -228,7 +231,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                 cout << "Trial number: " << i << endl;
                 cout << "Training error: " << current_training_error_trial << endl;
                 cout << "Selection error: " << current_selection_error_trial << endl;
-                cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl << endl;
+                cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl;
             }
         }
 
@@ -708,7 +711,8 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 }
 
 
-/// Serializes the incremental order object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the incremental order object into a XML document of the TinyXML library without
+/// keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
