@@ -238,7 +238,7 @@ void ConjugateGradientTest::test_perform_training()
    type old_loss;
    type loss;
 
-   type loss_goal;
+   type training_loss_goal;
 
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
@@ -278,10 +278,10 @@ void ConjugateGradientTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   loss_goal = 0.1;
+   training_loss_goal = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
-   conjugate_gradient.set_loss_goal(loss_goal);
+   conjugate_gradient.set_loss_goal(training_loss_goal);
    conjugate_gradient.set_minimum_loss_decrease(0.0);
    conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
@@ -291,7 +291,7 @@ void ConjugateGradientTest::test_perform_training()
 
 //   loss = sum_squared_error.calculate_training_loss();
 
-   assert_true(loss < loss_goal, LOG);
+   assert_true(loss < training_loss_goal, LOG);
 
    // Minimum evaluation improvement
 

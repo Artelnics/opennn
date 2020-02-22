@@ -28,7 +28,6 @@
 #include "tinyxml2.h"
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
-//#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
 
 using namespace std;
 using namespace Eigen;
@@ -49,7 +48,8 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
+              LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
 
     /// This structure represents the first order activaions of layers.
 
@@ -78,9 +78,9 @@ public:
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            combinations.resize(batch_instances_number, neurons_number);
+            combinations_2d.resize(batch_instances_number, neurons_number);
 
-            activations.resize(batch_instances_number, neurons_number);
+            activations_2d.resize(batch_instances_number, neurons_number);
 
             activations_derivatives_2d.resize(batch_instances_number, neurons_number);
         }
@@ -89,10 +89,10 @@ public:
         void print() const
         {
             cout << "Combinations: " << endl;
-            cout << combinations << endl;
+            cout << combinations_2d << endl;
 
             cout << "Activations: " << endl;
-            cout << activations << endl;
+            cout << activations_2d << endl;
 
             cout << "Activations derivatives: " << endl;
             cout << activations_derivatives_2d << endl;
@@ -102,12 +102,15 @@ public:
 
         Layer* layer_pointer;
 
-        Tensor<type, 2> combinations;
-
-        Tensor<type, 2> activations;
-
+        Tensor<type, 2> combinations_2d;
+        Tensor<type, 2> activations_2d;
         Tensor<type, 2> activations_derivatives_2d;
+
         Tensor<type, 3> activations_derivatives_3d;
+
+        Tensor<type, 4> combinations_4d;
+        Tensor<type, 4> activations_4d;
+        Tensor<type, 4> activations_derivatives_4d;
     };
 
 
@@ -181,7 +184,7 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_parameters(const Tensor<type, 1>&) {}
+    virtual void insert_parameters(const Tensor<type, 1>&, const Index&) {}
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
 
@@ -193,11 +196,13 @@ public:
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&,
+                                          const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
 
     // Deltas
 

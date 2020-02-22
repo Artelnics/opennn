@@ -72,44 +72,43 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-    const string new_string = get_trimmed(str);
+//    const string new_string = get_trimmed(str);
 
-    const Index tokens_number = count_tokens(new_string, separator);
+    const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
-    string::size_type lastPos = new_string.find_first_not_of(separator, 0);
+    string::size_type lastPos = str.find_first_not_of(separator, 0);
 
     // Find first "non-delimiter"
 
     Index index = 0;
 
-    string::size_type pos = new_string.find_first_of(separator, lastPos);
+    string::size_type pos = str.find_first_of(separator, lastPos);
 
     while(string::npos != pos || string::npos != lastPos)
     {
         // Found a token, add it to the vector
 
-        tokens[index] = new_string.substr(lastPos, pos - lastPos);
+        tokens[index] = str.substr(lastPos, pos - lastPos);
 
         // Skip delimiters. Note the "not_of"
 
-        lastPos = new_string.find_first_not_of(separator, pos);
+        lastPos = str.find_first_not_of(separator, pos);
 
         // Find next "non-delimiter"
 
-        pos = new_string.find_first_of(separator, lastPos);
+        pos = str.find_first_of(separator, lastPos);
 
         index++;
     }
 
-    for(Index i = 0; i < tokens.size(); i++)
-    {
-        trim(tokens[i]);
-    }
-
+//    for(Index i = 0; i < tokens.size(); i++)
+//    {
+//        trim(tokens[i]);
+//    }
 
     return tokens;
 }

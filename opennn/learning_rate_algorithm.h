@@ -107,16 +107,15 @@ public:
 
        inline pair<type,type> minimum() const
        {
-           /*
-           const Tensor<type, 1> losses({A.second, U.second, B.second});
+
+           Tensor<type, 1> losses(3);
+           losses.setValues({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;
            else return B;
-           */
-           return A;
        }
 
        /// Returns true if the length of the interval(A,B) is zero,
@@ -315,7 +314,7 @@ protected:
 
    type learning_rate_tolerance;
 
-   type loss_tolerance = 1.0e-3;
+   type loss_tolerance = static_cast<type>(1.0e-3);
 
    /// Big training rate value at which the algorithm displays a warning. 
 
@@ -356,4 +355,3 @@ protected:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

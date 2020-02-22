@@ -122,14 +122,17 @@ public:
 
        void print()
        {
-           cout << "Output gradient:" << endl;
-           cout << output_gradient << endl;
+           cout << "Errors:" << endl;
+           cout << errors << endl;
 
            cout << "Loss:" << endl;
            cout << loss << endl;
 
+           cout << "Output gradient:" << endl;
+           cout << output_gradient << endl;
+
            cout << "Gradient:" << endl;
-           cout << gradient << endl;
+           cout << gradient << endl; 
        }
 
        LossIndex* loss_index_pointer = nullptr;
@@ -152,7 +155,8 @@ public:
 
    ///
    /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss, gradient and <i>Hessian</i> methods separately.
+   /// A method returning this structure might be implemented more efficiently than the loss,
+   /// gradient and <i>Hessian</i> methods separately.
 
    struct SecondOrderLoss
    {
@@ -256,7 +260,9 @@ public:
 
    // GRADIENT METHODS
 
-   virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
+   virtual void calculate_output_gradient(const DataSet::Batch&,
+                                          const NeuralNetwork::ForwardPropagation&,
+                                          BackPropagation&) const = 0;
 
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
@@ -279,10 +285,10 @@ public:
 
        calculate_error(back_propagation);
 
-       calculate_output_gradient(forward_propagation, back_propagation);
+       calculate_output_gradient(batch, forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
-// Not ok in Adam
+
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 
        // Regularization
@@ -331,7 +337,7 @@ public:
 
           trainable_layers_pointers[i]
           ->calculate_hidden_delta(previous_layer_pointer,
-                                   forward_propagation.layers[i].activations,
+                                   forward_propagation.layers[i].activations_2d,
                                    forward_propagation.layers[i].activations_derivatives_2d,
                                    back_propagation.neural_network.layers[i+1].delta,
                                    back_propagation.neural_network.layers[i].delta);
@@ -356,7 +362,8 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                 back_propagation.errors.device(*default_device)
+                         = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                  return;
              }
@@ -365,7 +372,8 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device)
+                        = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
 
                 return;
              }
@@ -376,18 +384,10 @@ public:
 
                  return;
             }
-
         }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "void calculate_errors() const method.\n"
-               << "Unknown device.\n";
-
-        throw logic_error(buffer.str());
-
    }
+
+   /// @todo Guillermo Change insert_gradient with TensorMap
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -399,24 +399,10 @@ public:
 
        check();
 
-       // Hidden errors size
-
-       /*const Index layers_delta_size = back_propagation.layers_delta.size();
-
-       if(layers_delta_size != trainable_layers_number)
-       {
-          ostringstream buffer;
-
-         buffer << "OpenNN Exception: LossIndex class.\n"
-                << "void calculate_error_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, BackPropagation&) method.\n"
-                << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
-
-         throw logic_error(buffer.str());
-       }*/
-
        #endif
 
-       const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+       const Tensor<Index, 1> trainable_layers_parameters_number
+               = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
@@ -426,18 +412,21 @@ public:
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0],
+               index, back_propagation.gradient);
 
        index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(
-                   forward_propagation.layers[i-1].activations,
+                   forward_propagation.layers[i-1].activations_2d,
                    forward_propagation.layers[i-1],
                    back_propagation.neural_network.layers[i]);
 
-           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i],
+                                                         index,
+                                                         back_propagation.gradient);
 
            index += trainable_layers_parameters_number[i];
        }
@@ -445,7 +434,9 @@ public:
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<Tensor<type, 2>, 1>&) const;
+   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&,
+                                                  const Tensor<Layer::ForwardPropagation, 1>&,
+                                                  const Tensor<Tensor<type, 2>, 1>&) const;
 
    // Serialization methods
 
@@ -503,17 +494,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return norm(0);
@@ -548,17 +528,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 
@@ -597,21 +566,11 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        return Tensor<type, 1>();
    }
+
 
    Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
    {
@@ -646,17 +605,6 @@ public:
 
                     break;
                }
-
-                default:
-                {
-                   ostringstream buffer;
-
-                   buffer << "OpenNN Exception: Layer class.\n"
-                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                          << "Unknown device.\n";
-
-                   throw logic_error(buffer.str());
-               }
            }
 
            return Tensor<type, 2>();
@@ -677,10 +625,6 @@ public:
 
            return gradient;
        }
-       else
-       {
-       }
-
 
        switch(device_pointer->get_type())
        {
@@ -706,23 +650,9 @@ public:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
+                return Tensor<type, 1>();
            }
        }
-
-
-
    }
 
 
@@ -740,49 +670,37 @@ public:
 
            return hessian;
        }
-       else
+
+       switch(device_pointer->get_type())
        {
-           switch(device_pointer->get_type())
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+                return hessian;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+               return hessian;
+
+            }
+
+           case Device::EigenGpu:
            {
-                case Device::EigenDefault:
-                {
-                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                    hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-                    return hessian;
-
-                }
-
-                case Device::EigenSimpleThreadPool:
-                {
-                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                   hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-                   return hessian;
-
-                }
-
-               case Device::EigenGpu:
-               {
-    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                    break;
-               }
-
-                default:
-                {
-                   ostringstream buffer;
-
-                   buffer << "OpenNN Exception: Layer class.\n"
-                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                          << "Unknown device.\n";
-
-                   throw logic_error(buffer.str());
-               }
+               return hessian;
            }
        }
+
+       return Tensor<type, 2>();
    }
 
 protected:

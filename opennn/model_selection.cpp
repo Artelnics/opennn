@@ -1179,7 +1179,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
                   neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
                   const type selection_error = loss_index_pointer->calculate_error(
-                              selection_forward_propagation.layers[trainable_layers_number].activations,
+                              selection_forward_propagation.layers[trainable_layers_number].activations_2d,
                               selection_batch.targets_2d);
 
 

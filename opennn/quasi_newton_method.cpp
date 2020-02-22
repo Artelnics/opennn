@@ -180,7 +180,7 @@ const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 
 const type& QuasiNewtonMethod::get_loss_goal() const
 {
-    return loss_goal;
+    return training_loss_goal;
 }
 
 
@@ -346,7 +346,7 @@ void QuasiNewtonMethod::set_default()
     minimum_parameters_increment_norm = 0;
 
     minimum_loss_decrease = 0;
-    loss_goal = -numeric_limits<type>::max();
+    training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000000;
 
@@ -586,7 +586,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_d
 
 void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -757,56 +757,53 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
 }
 
 
-Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
+const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & left_matrix, Tensor<type, 1> & right_matrix) const
 {
-    const Index size = tensor.size();
+    // Transform Tensors into Dense matrix
 
-    Tensor<type, 2> direct(size, size);
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+            (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    #pragma omp parallel for
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+            (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
-    for(Index i = 0; i < size; i++)
-    {
-        for(Index j = 0; j < size; j++)
-        {
-            direct(i, j) = tensor(i) * other_tensor(j);
-        }
-    }
+    // Kronecker Product
 
-    return direct;
+    auto product = kroneckerProduct(ml,mr).eval();
+
+    // Matrix into a Tensor
+
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
+
+    return direct_matrix;
 }
 
-Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 2>& tensor, const Tensor<type, 2>& other_tensor) const
+
+/// This method calculates the kronecker product between two matrix.
+/// Its return a direct matrix.
+/// @param left_matrix Matrix to be porudct.
+/// @param right_matrix Matrix to be product.
+
+const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix) const
 {
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
+    // Transform Tensors into Dense matrix
 
-    const Index other_rows_number = tensor.dimension(0);
-    const Index other_columns_number = tensor.dimension(1);
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+            (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    Tensor<type, 2> direct(rows_number*other_rows_number, columns_number*other_columns_number);
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+            (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
-    #pragma omp parallel for
+    // Kronecker Product
 
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            for(Index k = 0; k < other_rows_number; k++)
-            {
-                const Index alpha = other_rows_number*i+k;
+    auto product = kroneckerProduct(ml,mr).eval();
 
-                for(Index l = 0; l < other_columns_number; l++)
-                {
-                    const Index beta = other_columns_number*j+l;
+    // Matrix into a Tensor
 
-                    direct(alpha,beta) = tensor(i,j)*other_tensor(k,l);
-                }
-            }
-        }
-    }
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
 
-    return direct;
+    return direct_matrix;
+
 }
 
 
@@ -896,8 +893,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
     // Parameters difference Vector
 
-    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
-
     /*
        if(parameters_difference.abs() < numeric_limits<type>::min())
        {
@@ -909,9 +904,9 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
        }
 
        // Gradient difference Vector
-     */
-    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
-    /*
+
+
+
        if(gradient_difference.abs() < 1.0e-50)
        {
           buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
@@ -928,16 +923,9 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
                  << "Old inverse hessian matrix is zero.\n";
 
           throw logic_error(buffer.str());
-       }*/
+       }
 
-    // Dots
 
-    const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
-
-    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix);
-
-    const Tensor<type, 0> gradient_dot_hesian_dot_gradient
-        = gradient_dot_hessian.contract(gradient_difference,AT_B);
 
 //   const type parameters_dot_gradient = dot(parameters_difference, gradient_difference);
 
@@ -959,7 +947,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
         throw logic_error(buffer.str());
     }
-
+*/
     // Intentar hacerlo así:
 
     // Inverse hessian = A
@@ -968,28 +956,41 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
     // Inverse hesains +=
 
+    // Dots
 
-    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
+    Tensor<type, 1> parameters_difference = parameters - old_parameters;
 
-    //dot(old_inverse_hessian, gradient_difference);
+    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
-    const Tensor<type, 1> hessian_dot_gradient_difference
-        = old_inverse_hessian.contract(gradient_difference, A_B);
+    const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B); // Ok
 
-    const Tensor<type, 0> gradient_dot_gradient
-        = gradient_difference.contract(hessian_dot_gradient_difference, AT_B);
+    Tensor<type, 1> hessian_dot_gradient_difference
+        = old_inverse_hessian.contract(gradient_difference, A_B); // Ok
+
+    Tensor<type, 0> gradient_dot_hessian_dot_gradient
+        = gradient_difference.contract(hessian_dot_gradient_difference, AT_B); // Ok , auto?
+
+//    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix); // Only for exceptions and repeated above
+
+//    const Tensor<type, 0> gradient_dot_hesian_dot_gradient
+//        = gradient_dot_hessian.contract(gradient_difference,AT_B); // Only for exceptions and repeated above
+
+    // Calculates Approximation
+
+    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian; // TensorMap?
+
+    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
+
+    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
+
+    return inverse_hessian_approximation;
+
     /*
        inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 
        inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
                 /(gradient_dot_gradient(0)); //dot(gradient_difference, hessian_dot_gradient_difference);
     */
-
-    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
-
-    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_gradient(0);
-
-    return inverse_hessian_approximation;
 }
 
 
@@ -1119,26 +1120,28 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     // BGFS Vector
 
-    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
+    Tensor<type, 1> parameters_difference = parameters - old_parameters;
 
     const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
     const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
 
-    const Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
+    Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
 
     const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, AT_B);
 
-    const Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
+    Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
                                - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
+
+    // Calculates Approximation
 
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
 
-    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
+    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
 
-    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0);
+    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
 
-    inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
+    inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
 
     return inverse_hessian_approximation;
 }
@@ -1173,10 +1176,18 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+
+    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1184,7 +1195,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type parameters_norm = 0;
 
-    type parameters_increment_norm = 0;
+//    type parameters_increment_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -1193,7 +1204,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type training_loss = 0;
     type training_error = 0;
-    type old_training_loss = 0;
+//    type old_training_loss = 0;
 
     type gradient_norm = 0;
 
@@ -1206,7 +1217,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     Tensor<type, 0> training_slope;
 
-    type learning_rate = 0;
+//    type learning_rate = 0;
 
     Tensor<type, 1> minimal_selection_parameters;
 
@@ -1226,6 +1237,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1250,6 +1262,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
 
+        // Optimization data
+
+        update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+        optimization_data.print();
+
+        system("pause");
+
+        neural_network_pointer->set_parameters(optimization_data.parameters);
+
+        // Selection error
+
+
         if(has_selection)
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
@@ -1268,9 +1293,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 
@@ -1279,31 +1304,31 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+       /*if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << parameters_increment_norm << endl;
+                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else if(epoch != 0 && training_loss - old_training_loss >= minimum_loss_decrease)
+        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss - old_training_loss <<  endl;
+                     << "Loss decrease: " << training_loss - optimization_data.old_training_loss <<  endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_loss <= loss_goal)
+        else*/ if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1384,13 +1409,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_error <<  "\n"
+                     << "Training error: " << training_loss <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate <<  "\n"
+                     << "Training rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-                if(selection_error > 0)
+                if(has_selection)
                 {
                     cout << "Selection error: " << selection_error << endl;
                 }
@@ -1402,21 +1427,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training error: " << training_error << "\n"
+                 << "Training error: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << learning_rate << "\n"
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(selection_error > 0)
+            if(has_selection)
             {
                 cout << "Selection error: " << selection_error << endl;
             }
         }
 
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(optimization_data.parameters);
+        optimization_data.old_training_loss = training_loss;
 
         if(stop_training) break;
     }
@@ -1619,7 +1642,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << loss_goal;
+        buffer << training_loss_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -1842,7 +1865,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1983,7 +2006,7 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
        labels.push_back("Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 

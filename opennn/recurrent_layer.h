@@ -56,8 +56,8 @@ public:
 
            const Index neurons_number = recurrent_layer->get_neurons_number();
 
-           layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].combinations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
            layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
 */
         }
@@ -155,7 +155,7 @@ public:
 
    void initialize_hidden_states(const type&);
 
-   void initialize_biases(const type&);
+   void set_biases_constant(const type&);
 
    void initialize_input_weights(const type&);
    void initialize_recurrent_weights(const type&);
@@ -165,13 +165,13 @@ public:
 
    void set_parameters_random();
 
-   // neuron layer combinations
+   // neuron layer combinations_2d
 
    Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&);
 
-   void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations)
+   void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations_2d)
    {
    }
 
@@ -180,7 +180,7 @@ public:
 
    Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   // neuron layer activations
+   // neuron layer activations_2d
 
    Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
 
@@ -202,11 +202,11 @@ public:
    void forward_propagate(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation)
    {
 /*
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation.combinations_2d);
 
-       //calculate_activations(combinations, forward_propagation.activations);
+       //calculate_activations(combinations_2d, forward_propagation.activations_2d);
 
-       //calculate_activations_derivatives(combinations, layers.activations_derivatives);
+       //calculate_activations_derivatives(combinations_2d, layers.activations_derivatives);
 */
    }
 

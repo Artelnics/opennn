@@ -128,16 +128,7 @@ const type& StochasticGradientDescent::get_error_gradient_norm() const
 
 const type& StochasticGradientDescent::get_loss_goal() const
 {
-    return loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-
-const type& StochasticGradientDescent::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
+    return training_loss_goal;
 }
 
 
@@ -202,8 +193,7 @@ void StochasticGradientDescent::set_default()
 
     // Stopping criteria
 
-    loss_goal = -numeric_limits<type>::max();
-    gradient_norm_goal = 0;
+    training_loss_goal = 0;
     maximum_time = 1000.0;
     maximum_epochs_number = 1000;
     choose_best_selection = false;
@@ -476,34 +466,7 @@ void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maxi
 
 void StochasticGradientDescent::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
-
-void StochasticGradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set gradient norm goal
-
-    gradient_norm_goal = new_gradient_norm_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -677,6 +640,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
 
+            //neural_network_pointer->print_summary();
+
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
@@ -693,7 +658,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         // Loss
 
         training_loss /= static_cast<type>(batches_number);
-/*
+
         if(has_selection)
         {
             selection_error = 0;
@@ -723,17 +688,26 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-*/
+
         // Training history loss index
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_loss;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping criteria
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        if(training_loss <= training_loss_goal)
+        {
+            if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
+
+            stop_training = true;
+
+            results.stopping_condition = MaximumEpochsNumber;
+        }
 
         if(epoch == maximum_epochs_number)
         {
@@ -858,7 +832,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
        labels.push_back(" Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 
@@ -1025,18 +999,7 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
     root_element->LinkEndChild(element);
 
     buffer.str("");
-    buffer << loss_goal;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Gradient norm goal
-
-    element = document->NewElement("GradientNormGoal");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
+    buffer << training_loss_goal;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1181,34 +1144,12 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.CloseElement();
 
-    // Return minimum selection error neural network
-
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Gradient norm goal
-
-    file_stream.OpenElement("GradientNormGoal");
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1281,11 +1222,20 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     if(batch_size_element)
     {
-        string new_batch_size = batch_size_element->GetText();
+        const Index new_batch_size = static_cast<Index>(atoi(batch_size_element->GetText()));
 
         try
         {
-            set_batch_instances_number(new_batch_size != "0");
+            const Index training_instances_number = loss_index_pointer->get_data_set_pointer()->get_training_instances_number();
+
+            if(new_batch_size > training_instances_number || new_batch_size == 0)
+            {
+                set_batch_instances_number(training_instances_number);
+            }
+            else
+            {
+                set_batch_instances_number(new_batch_size);
+            }
         }
         catch(const logic_error& e)
         {
@@ -1347,25 +1297,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Gradient norm goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
-
-        if(element)
-        {
-            const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_gradient_norm_goal(new_gradient_norm_goal);
             }
             catch(const logic_error& e)
             {

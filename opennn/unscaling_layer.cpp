@@ -983,10 +983,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        const tinyxml2::XMLElement* statistics_element = start_element->NextSiblingElement("Descriptives");
-        start_element = statistics_element;
+        const tinyxml2::XMLElement* descriptives_element = start_element->NextSiblingElement("Descriptives");
+        start_element = descriptives_element;
 
-        if(!statistics_element)
+        if(!descriptives_element)
         {
             buffer << "OpenNN Exception: UnscalingLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
@@ -995,7 +995,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw logic_error(buffer.str());
         }
 
-        statistics_element->QueryUnsignedAttribute("Index", &index);
+        descriptives_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
         {
@@ -1008,7 +1008,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Minimum
 
-        const tinyxml2::XMLElement* minimum_element = statistics_element->FirstChildElement("Minimum");
+        const tinyxml2::XMLElement* minimum_element = descriptives_element->FirstChildElement("Minimum");
 
         if(!minimum_element)
         {
@@ -1021,12 +1021,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(minimum_element->GetText())
         {
-            descriptives[i].minimum = static_cast<type>(atof(minimum_element->GetText()));
+            descriptives(i).minimum = static_cast<type>(atof(minimum_element->GetText()));
         }
 
         // Maximum
 
-        const tinyxml2::XMLElement* maximum_element = statistics_element->FirstChildElement("Maximum");
+        const tinyxml2::XMLElement* maximum_element = descriptives_element->FirstChildElement("Maximum");
 
         if(!maximum_element)
         {
@@ -1039,12 +1039,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(maximum_element->GetText())
         {
-            descriptives[i].maximum = static_cast<type>(atof(maximum_element->GetText()));
+            descriptives(i).maximum = static_cast<type>(atof(maximum_element->GetText()));
         }
 
         // Mean
 
-        const tinyxml2::XMLElement* mean_element = statistics_element->FirstChildElement("Mean");
+        const tinyxml2::XMLElement* mean_element = descriptives_element->FirstChildElement("Mean");
 
         if(!mean_element)
         {
@@ -1057,12 +1057,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(mean_element->GetText())
         {
-            descriptives[i].mean = static_cast<type>(atof(mean_element->GetText()));
+            descriptives(i).mean = static_cast<type>(atof(mean_element->GetText()));
         }
 
         // Standard deviation
 
-        const tinyxml2::XMLElement* standard_deviation_element = statistics_element->FirstChildElement("StandardDeviation");
+        const tinyxml2::XMLElement* standard_deviation_element = descriptives_element->FirstChildElement("StandardDeviation");
 
         if(!standard_deviation_element)
         {
@@ -1075,7 +1075,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(standard_deviation_element->GetText())
         {
-            descriptives[i].standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
+            descriptives(i).standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
         }
 
         // Unscaling method

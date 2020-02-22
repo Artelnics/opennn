@@ -83,7 +83,7 @@ public:
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       Tensor<string, 2> write_final_results(const Index&) const;
+       Tensor<string, 2> write_final_results(const Index& = 3) const;
 
        /// Resizes training history variables.
 
@@ -276,17 +276,6 @@ protected:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 

@@ -291,7 +291,7 @@ void LongShortTermMemoryLayerTest::test_get_biases()
 
    long_short_term_memory_layer.set(inputs_number,neurons_number);
 
-   long_short_term_memory_layer.initialize_biases(0.0);
+   long_short_term_memory_layer.set_biases_constant(0.0);
 
    assert_true(long_short_term_memory_layer.get_biases().size() == 12, LOG);
    assert_true(long_short_term_memory_layer.get_biases().dimension(0) == neurons_number, LOG);
@@ -570,7 +570,7 @@ void LongShortTermMemoryLayerTest::test_initialize_biases()
 
 void LongShortTermMemoryLayerTest::test_initialize_weights()
 {
-   cout << "test_initialize_synaptic_weights\n";
+   cout << "test_set_synaptic_weights_constant\n";
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
@@ -689,8 +689,8 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    long_short_term_memory_layer.set(4, 2);
 
-   long_short_term_memory_layer.initialize_biases(2.0);
-   long_short_term_memory_layer.initialize_biases(1.0);
+   long_short_term_memory_layer.set_biases_constant(2.0);
+   long_short_term_memory_layer.set_biases_constant(1.0);
    long_short_term_memory_layer.initialize_recurrent_weights(-0.5);
 
    parameters = long_short_term_memory_layer.get_parameters();
@@ -808,7 +808,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    inputs.resize({3,1}, 1.0);
 
-   long_short_term_memory_layer.initialize_biases(0.0);
+   long_short_term_memory_layer.set_biases_constant(0.0);
    long_short_term_memory_layer.initialize_weights(1.0);
    long_short_term_memory_layer.initialize_recurrent_weights(1.0);
 

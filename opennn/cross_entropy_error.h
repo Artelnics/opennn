@@ -62,13 +62,14 @@ public:
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations,
+       return cross_entropy_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
                                                                     batch.targets_2d);
    }
 
    // Gradient methods
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -79,9 +80,38 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-//        back_propagation.output_gradient
-//                = (batch.targets_2d/forward_propagation.layers[trainable_layers_number-1].activations)*static_cast<type>(-1.0)
-//                + (batch.targets_2d*static_cast<type>(-1.0) + static_cast<type>(1.0))/(forward_propagation.layers[trainable_layers_number-1].activations*static_cast<type>(-1.0) + static_cast<type>(1.0));
+        const Tensor<type, 2>& targets = batch.targets_2d;
+        const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 back_propagation.output_gradient.device(*default_device) =
+                         -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                back_propagation.output_gradient.device(*thread_pool_device) =
+                    -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+        //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+        }
    }
 
 
