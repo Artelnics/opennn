@@ -83,7 +83,7 @@ int main(void)
         DataSet data_set(data);
 */
 
-        Index samples = 1000;
+        Index samples = 10;
         Index variables = 3;
 
          // Device
@@ -112,6 +112,10 @@ int main(void)
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, arquitecture);
         neural_network.set_device_pointer(&device);
+
+//        ProbabilisticLayer* probabilistic_layer_pointer = neural_network.get_probabilistic_layer_pointer();
+
+//        probabilistic_layer_pointer->set_activation_function("Softmax");
 
         // Training strategy
 

@@ -180,11 +180,13 @@ public:
    void forward_propagate(const Tensor<type, 2>& inputs,
                           ForwardPropagation& forward_propagation) const
    {
+       cout << "1" << endl;
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
-
+       cout << "2" << endl;
        calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
-
+       cout << "3" << endl;
        calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_3d);
+       cout << "4" << endl;
    }
 
    // Activations
