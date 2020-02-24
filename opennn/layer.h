@@ -84,7 +84,14 @@ public:
 
             activations_2d.resize(batch_instances_number, neurons_number);
 
-            activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            if(layer_pointer->get_type() == Perceptron)
+            {
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            }
+            else
+            {
+                activations_derivatives_3d.resize(batch_instances_number, neurons_number, neurons_number);
+            }
         }
 
 
@@ -96,11 +103,17 @@ public:
             cout << "Activations: " << endl;
             cout << activations_2d << endl;
 
-            cout << "Activations derivatives: " << endl;
-            cout << activations_derivatives_2d << endl;
+            if(layer_pointer->get_type() == Perceptron)
+            {
+                cout << "Activations derivatives: " << endl;
+                cout << activations_derivatives_2d << endl;
+            }
+            else
+            {
+                cout << "Activations derivatives 3d:" << endl;
+                cout << activations_derivatives_3d << endl;
+            }
 
-            cout << "Activations derivatives 3d:" << endl;
-            cout << activations_derivatives_3d << endl;
         }
 
         Index batch_instances_number = 0;
