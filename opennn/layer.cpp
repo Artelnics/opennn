@@ -1164,6 +1164,8 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 
 void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
 {
+    Tensor<type, 2> expression(x.dimension(0), x.dimension(1));
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
@@ -1179,7 +1181,11 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) c
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        y.device(*thread_pool_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
+        expression.device(*thread_pool_device) = x.exp().square() / ((static_cast<type>(1.0) + x.exp()).square());
+
+        TensorMap< Tensor<type, 3> > y_1(expression.data(), x.dimension(0), x.dimension(1), 1);
+
+        y = y_1;
 
         break;
     }
@@ -1230,7 +1236,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
         buffer << "OpenNN Exception: Functions.\n"
                << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x must be equal to number of rows in d.\n";
+               << "Number of rows in x("<<x.dimension(0)<<") must be equal to number of rows in y("<<y.dimension(0)<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1241,28 +1247,30 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
     const Index columns_number = x.dimension(1);
 
+    Tensor<type, 2> softmax_values;
+
+    softmax(x, softmax_values);
+
     #pragma omp parallel for
 
     for(Index i = 0; i < n; i ++)
     {
-        /*
-                const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).chip(i, 0));
+        const Tensor<type, 1> softmax_vector = softmax_values.chip(i,0);
 
-                for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < columns_number; k++)
+            {
+                if(j == k)
                 {
-                    for(Index k = 0; k < columns_number; k++)
-                    {
-                        if(j == k)
-                        {
-                            y(j,k,i) = softmax_values[j]*(1.0 - softmax_values[j]);
-                        }
-                        else
-                        {
-                            y(j,k,i) = -softmax_values[j] * softmax_values[k];
-                        }
-                    }
+                    y(j,k,i) = softmax_vector(j)*(1.0 - softmax_vector(j));
                 }
-        */
+                else
+                {
+                    y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
+                }
+            }
+        }
     }
 }
 

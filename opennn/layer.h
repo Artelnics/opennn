@@ -98,6 +98,9 @@ public:
 
             cout << "Activations derivatives: " << endl;
             cout << activations_derivatives_2d << endl;
+
+            cout << "Activations derivatives 3d:" << endl;
+            cout << activations_derivatives_3d << endl;
         }
 
         Index batch_instances_number = 0;
