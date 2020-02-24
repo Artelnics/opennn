@@ -1041,7 +1041,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
+        if(trainable_layers_pointers(i)->get_type() == Layer::Pooling) continue;
 
         Index layer_parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 

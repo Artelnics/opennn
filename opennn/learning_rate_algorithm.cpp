@@ -420,6 +420,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 {
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
     Triplet triplet;
 
     // Left point
@@ -446,7 +448,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
     count++;
 
@@ -458,11 +460,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         potential_parameters = parameters + training_direction*triplet.B.first;
 
-//        potential_parameters += training_direction*triplet.B.first;
-
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -475,11 +475,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             potential_parameters = parameters + training_direction*triplet.B.first;
 
-//            potential_parameters += training_direction*triplet.B.first;
-
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             count++;
         }
@@ -490,11 +488,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         potential_parameters = parameters + training_direction*triplet.U.first;
 
-//        potential_parameters += training_direction*triplet.U.first;
-
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -506,11 +502,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             potential_parameters = parameters + training_direction*triplet.U.first;
 
-//            potential_parameters += training_direction*triplet.U.first;
-
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             if(triplet.U.first - triplet.A.first <= loss_tolerance)
             {
@@ -712,22 +706,18 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
     try
     {
-        cout << "Try" << endl;
         Triplet triplet = calculate_bracketing_triplet(batch,
                           parameters, forward_propagation,
                           loss,
                           training_direction, initial_learning_rate);
 
         Index count = 0;
-cout << "before if" << endl;
+
         if(triplet.A == triplet.B) return triplet.A;
-cout << "after if" << endl;
 
         pair<type, type> V;
 
         // Reduce the interval
-
-        cout << "Learning rate tolerance: " << learning_rate_tolerance << endl;
 
         while(abs(triplet.B.second - triplet.A.second) > learning_rate_tolerance)
         {

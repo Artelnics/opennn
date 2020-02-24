@@ -331,8 +331,8 @@ public:
 
 #endif
 
-       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data(), inputs_number, neurons_number);
-       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data() + neurons_number*inputs_number, neurons_number, 1);
+       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
 

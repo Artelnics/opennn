@@ -92,6 +92,7 @@ public:
             // Loss index data
 
             old_gradient.resize(parameters_number);
+            old_gradient.setZero();
 
             inverse_hessian.resize(parameters_number, parameters_number);
             inverse_hessian.setZero();
@@ -322,13 +323,13 @@ public:
 
        // Optimization algorithm
 
-       optimization_data.training_direction = optimization_data.inverse_hessian.contract(-back_propagation.gradient, AT_B);
+       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, AT_B);
 
-       optimization_data.training_direction = normalized(optimization_data.training_direction);
+       optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
 
        // Calculate training slope
 
-       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = (-1)*normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -336,9 +337,9 @@ public:
        {
            //cout << "Training slope is greater than zero." << endl;
 
-           optimization_data.training_direction = -back_propagation.gradient;
+           optimization_data.training_direction = back_propagation.gradient;
 
-           optimization_data.training_direction = normalized(optimization_data.training_direction);
+           optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
        }
 
        // Get initial training rate
@@ -348,14 +349,6 @@ public:
        optimization_data.epoch == 0
                ? initial_learning_rate = first_learning_rate
                : initial_learning_rate = optimization_data.old_learning_rate;
-
-       cout << "Initial learning rate: " << initial_learning_rate << endl;
-
-       cout << "Parameters: " << optimization_data.parameters << endl;
-//       forward_propagation.print();
-       cout << "Loss: " << back_propagation.loss << endl;
-       cout << "Direction: " << optimization_data.training_direction << endl;
-       cout << "Initial learning rate: " << initial_learning_rate << endl;
 
        pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                 batch,
@@ -371,9 +364,9 @@ public:
 
        if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
-           optimization_data.training_direction = -back_propagation.gradient;
+           optimization_data.training_direction = back_propagation.gradient;
 
-           optimization_data.training_direction = normalized(optimization_data.training_direction);
+           optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
 
            directional_point = learning_rate_algorithm.calculate_directional_point(batch,
                                optimization_data.parameters, forward_propagation,
@@ -385,8 +378,6 @@ public:
        }
 
        optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
-
-       cout << "optimization_data.learning_rate: " << optimization_data.learning_rate << endl;
 
        optimization_data.parameters += optimization_data.parameters_increment;
 

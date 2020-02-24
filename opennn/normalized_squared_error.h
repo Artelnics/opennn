@@ -90,7 +90,7 @@ public:
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
                 sum_squared_error.device(*default_device)
-                        = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+                        = (forward_propagation.layers(trainable_layers_number-1).activations_2d
                         - batch.targets_2d).square().sum();
 
                 break;
@@ -100,7 +100,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers(trainable_layers_number-1).activations_2d
                                                                 - batch.targets_2d).square().sum();
 
                 break;
