@@ -110,7 +110,7 @@ int main(void)
 
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, arquitecture);
         neural_network.set_device_pointer(&device);
 
         // Training strategy
