@@ -26,10 +26,6 @@
 
 #include "tinyxml2.h"
 
-// Eigen includes
-
-
-
 namespace OpenNN
 {
 

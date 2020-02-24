@@ -2979,7 +2979,7 @@ type f_snedecor_critical_point(const Tensor<string, 2>& matrix, const type& alph
 
         f_x = static_cast<type>(pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), static_cast<type>(0.5)) / (x * beta));
 
-        p_1 = p_0 + step * static_cast<type>(f_x);
+        p_1 = p_0 + step * f_x;
 
         p_0 = p_1;
     }
