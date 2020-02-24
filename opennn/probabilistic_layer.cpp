@@ -187,35 +187,36 @@ const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 /// Returns the biases from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
 
-Tensor<type, 2> ProbabilisticLayer::get_biases(const Tensor<type, 1>& parameters) const
+Tensor<type, 2> ProbabilisticLayer::get_biases(Tensor<type, 1>& parameters) const
 {
-    const Index biases_number = biases.size();
-
-    Tensor<type, 2> bias_tensor(biases_number, 1);
+    const Index neurons_number = get_neurons_number();
+/*
+    Tensor<type, 2> bias_tensor(1, biases_number);
 
     Index index = parameters.size()-1;
 
     for(Index i = 0; i < biases_number; i++)
     {
-        bias_tensor(i, 0) = parameters(index);
+        bias_tensor(0, i) = parameters(index);
 
         index--;
     }
+    */
+    const TensorMap < Tensor<type, 2> > bias_tensor(parameters.data(),  1, neurons_number);
 
     return bias_tensor;
-
-//    return parameters.get_last(biases_number);
 }
 
 
 /// Returns the synaptic weights from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
 
-Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
+Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parameters) const
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
-
+    const Index biases_number = get_biases().size();
+/*
     const Index synaptic_weights_number = synaptic_weights.size();
 
     Tensor<type, 2> synaptic_weights_tensor(inputs_number, neurons_number);
@@ -224,11 +225,10 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(const Tensor<type, 1>& 
     {
         synaptic_weights_tensor(i) = parameters(i);
     }
+*/
+    const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_number, neurons_number);
 
     return  synaptic_weights_tensor;
-    /*
-        return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
-    */
 }
 
 
@@ -247,30 +247,38 @@ Index ProbabilisticLayer::get_parameters_number() const
 Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
 
-    const Index synaptic_weights_number = synaptic_weights.size();
+//    Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
-    const Index biases_number = biases.size();
+//    Eigen::array<Index, 1> one_dim_bias{{biases.dimension(0)*biases.dimension(1)}};
 
-    Tensor<type, 1> parameters(synaptic_weights_number+biases_number);
+//    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
 
-    for(Index i = 0; i < synaptic_weights_number-1; i++)
+//    Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
+
+    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+/*
+    for(Index i = 0; i < biases_vector.size(); i++)
     {
-        parameters(i) = synaptic_weights(i);
+        fill_n(parameters.data()+i, 1, biases_vector(i));
     }
 
-    Index index = 0;
-
-    for(Index i = synaptic_weights_number; i < synaptic_weights_number+biases_number; i++)
+    for(Index i = 0; i < synaptic_weights_vector.size(); i++)
     {
-        parameters(i) = biases(index);
+        fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
+    }
+*/
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        fill_n(parameters.data()+i, 1, biases(i));
+    }
 
-        index++;
+    for(Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        fill_n(parameters.data()+ biases.size() +i, 1, synaptic_weights(i));
     }
 
     return parameters;
-    /*
-        return synaptic_weights.to_vector().assemble(biases);
-    */
+
 }
 
 
@@ -293,7 +301,7 @@ void ProbabilisticLayer::set()
 
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
-    biases.resize(new_neurons_number, 1);
+    biases.resize(1, new_neurons_number);
 
     biases.setRandom();
 
@@ -324,7 +332,7 @@ void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(neurons_number, 1);
+    biases.resize(1, neurons_number);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
@@ -334,7 +342,7 @@ void ProbabilisticLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number, 1);
+    biases.resize(1, new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -378,24 +386,11 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
 #endif
 
-    for(Index i = 0; i < inputs_number*neurons_number-1; i++)
-    {
-        synaptic_weights(i) = new_parameters(i);
-    }
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
-    Index index = 0;
-
-    for(Index j = inputs_number*neurons_number; j < parameters_number; j++)
-    {
-        biases(index) = new_parameters(j);
-
-        index++;
-    }
-    /*
-       synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
-
-       biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
-    */
+    memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 
@@ -584,7 +579,7 @@ void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 }
 
 
-void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum,const type& maximum)
+void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum, const type& maximum)
 {
     synaptic_weights.setRandom();
 }

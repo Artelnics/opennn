@@ -102,8 +102,8 @@ public:
    const Tensor<type, 2>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_biases(Tensor<type, 1>&) const;
+   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
 
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
@@ -134,7 +134,7 @@ public:
 
        for(Index i = 0; i < biases_number; i++)
        {
-           fill_n(combinations_2d.data(), batch_instances_number, biases(i));
+           fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
        }
 
        switch(device_pointer->get_type())
@@ -178,7 +178,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
    void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation& forward_propagation)
+                          ForwardPropagation& forward_propagation) const
    {
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
