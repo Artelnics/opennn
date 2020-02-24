@@ -843,7 +843,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         if(display && parameters_norm >= warning_parameters_norm)
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
-cout << "forward_propagate" << endl;
+
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         training_forward_propagation.print();
