@@ -323,6 +323,75 @@ public:
 
    }
 
+   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+                               const Tensor<type, 2>& output_gradient,
+                               Tensor<type, 2>& output_delta) const
+   {
+       const Index neurons_number = get_neurons_number();
+
+       if(neurons_number == 1)
+       {
+
+           switch(device_pointer->get_type())
+           {
+                case Device::EigenDefault:
+                {
+                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                    output_delta.device(*default_device) = activations_derivatives*output_gradient;
+
+                    return;
+                }
+
+                case Device::EigenSimpleThreadPool:
+                {
+                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                   output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+                   return;
+                }
+
+               case Device::EigenGpu:
+               {
+    //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                    break;
+               }
+           }
+       }
+       else
+       {
+           switch(device_pointer->get_type())
+           {
+                case Device::EigenDefault:
+                {
+                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                    output_delta.device(*default_device) = activations_derivatives*output_gradient;
+
+                    return;
+                }
+
+                case Device::EigenSimpleThreadPool:
+                {
+                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                   output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+                   return;
+                }
+
+               case Device::EigenGpu:
+               {
+    //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                    break;
+               }
+           }
+       }
+   }
+
    // Expression methods
 
    string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;

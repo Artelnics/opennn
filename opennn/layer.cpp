@@ -1181,7 +1181,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) c
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        expression.device(*thread_pool_device) = x.exp().square() / ((static_cast<type>(1.0) + x.exp()).square());
+        expression.device(*thread_pool_device) = x.exp() / ((static_cast<type>(1.0) + x.exp()).square());
 
         TensorMap< Tensor<type, 3> > y_1(expression.data(), x.dimension(0), x.dimension(1), 1);
 
