@@ -324,20 +324,20 @@ public:
 
         // Output layer
 
-        if(trainable_layers_pointers(trainable_layers_number-1)->get_type() == Layer::Perceptron)
-        {
+       /* if(trainable_layers_pointers(trainable_layers_number-1)->get_type() == Layer::Perceptron)
+        {*/
         trainable_layers_pointers(trainable_layers_number-1)
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_2d,
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-        }
+       /* }
         else
         {
             trainable_layers_pointers(trainable_layers_number-1)
             ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_3d,
                                      back_propagation.output_gradient,
                                      back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-        }
+        }*/
 
       // Hidden layers
 
@@ -731,7 +731,7 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight;
+   type regularization_weight = static_cast<type>(0.001);
 
    /// Display messages to screen. 
 
