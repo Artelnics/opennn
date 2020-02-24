@@ -343,15 +343,24 @@ public:
 
        // Get initial training rate
 
-       type initial_learning_rate = 0;
+       type initial_learning_rate;
 
        optimization_data.epoch == 0
                ? initial_learning_rate = first_learning_rate
                : initial_learning_rate = optimization_data.old_learning_rate;
 
+       cout << "Initial learning rate: " << initial_learning_rate << endl;
+
+       cout << "Parameters: " << optimization_data.parameters << endl;
+//       forward_propagation.print();
+       cout << "Loss: " << back_propagation.loss << endl;
+       cout << "Direction: " << optimization_data.training_direction << endl;
+       cout << "Initial learning rate: " << initial_learning_rate << endl;
+
        pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                 batch,
-                optimization_data.parameters, forward_propagation,
+                optimization_data.parameters,
+                forward_propagation,
                 back_propagation.loss,
                 optimization_data.training_direction,
                 initial_learning_rate);
@@ -480,11 +489,11 @@ private:
 
    /// True if the training error history vector is to be reserved, false otherwise.
 
-   bool reserve_training_error_history;
+   bool reserve_training_error_history = true;
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_error_history;
+   bool reserve_selection_error_history = false;
 
 };
 
