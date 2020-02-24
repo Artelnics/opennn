@@ -395,7 +395,10 @@ public:
             break;
 
             case Probabilistic:
-           break;
+
+            calculate_hidden_delta_probabilistic(next_layer_pointer, activations_derivatives, next_layer_delta, hidden_delta);
+
+            break;
 
        default:
 
@@ -447,7 +450,6 @@ public:
 
 
    void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                             const Tensor<type, 2>&,
                                              const Tensor<type, 2>& activations_derivatives,
                                              const Tensor<type, 2>& next_layer_delta,
                                              Tensor<type, 2>& hidden_delta) const
@@ -496,7 +498,6 @@ public:
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
    {
-//       cout << "Delta:" << endl << back_propagation.delta << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:

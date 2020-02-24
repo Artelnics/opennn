@@ -948,13 +948,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
         throw logic_error(buffer.str());
     }
 */
-    // Intentar hacerlo así:
-
-    // Inverse hessian = A
-
-    // Inverse hessian += bT*C
-
-    // Inverse hesains +=
 
     // Dots
 
