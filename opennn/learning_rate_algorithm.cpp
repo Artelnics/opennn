@@ -427,13 +427,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     triplet.A.first = 0;
     triplet.A.second = loss;
 
-    /*if((training_direction(0)  || initial_learning_rate) < numeric_limits<type>::min())
+    if(std::all_of(training_direction.data(), training_direction.data()+training_direction.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); })
+    || (initial_learning_rate - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         triplet.U = triplet.A;
         triplet.B = triplet.A;
 
         return triplet;
-    }*/
+    }
 
     Index count = 0;
 
@@ -455,9 +456,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.first *= golden_ratio;
 
-        potential_parameters = parameters;// + training_direction*triplet.B.first;
+        potential_parameters = parameters + training_direction*triplet.B.first;
 
-        potential_parameters += training_direction*triplet.B.first;
+//        potential_parameters += training_direction*triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
@@ -472,9 +473,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            potential_parameters = parameters;// + training_direction*triplet.B.first;
+            potential_parameters = parameters + training_direction*triplet.B.first;
 
-            potential_parameters += training_direction*triplet.B.first;
+//            potential_parameters += training_direction*triplet.B.first;
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
@@ -489,6 +490,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         potential_parameters = parameters + training_direction*triplet.U.first;
 
+//        potential_parameters += training_direction*triplet.U.first;
+
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
         triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
@@ -502,6 +505,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
 
             potential_parameters = parameters + training_direction*triplet.U.first;
+
+//            potential_parameters += training_direction*triplet.U.first;
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
@@ -689,7 +694,8 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
 pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point(
     const DataSet::Batch& batch,
-    const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+    const Tensor<type, 1>& parameters,
+    NeuralNetwork::ForwardPropagation& forward_propagation,
     const type& loss,
     const Tensor<type, 1>& training_direction,
     const type& initial_learning_rate) const
@@ -706,18 +712,22 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
     try
     {
+        cout << "Try" << endl;
         Triplet triplet = calculate_bracketing_triplet(batch,
                           parameters, forward_propagation,
                           loss,
                           training_direction, initial_learning_rate);
 
         Index count = 0;
-
+cout << "before if" << endl;
         if(triplet.A == triplet.B) return triplet.A;
+cout << "after if" << endl;
 
         pair<type, type> V;
 
         // Reduce the interval
+
+        cout << "Learning rate tolerance: " << learning_rate_tolerance << endl;
 
         while(abs(triplet.B.second - triplet.A.second) > learning_rate_tolerance)
         {
@@ -788,6 +798,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
     }
     catch(range_error& e) // Interval is of length 0
     {
+        cout << "Interval is of length 0" << endl;
         cerr << e.what() << endl;
 
         pair<type, type> A;
@@ -798,6 +809,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
     }
     catch(const logic_error& e)
     {
+        cout << "Other exception" << endl;
         cerr << e.what() << endl;
 
         pair<type, type> X;

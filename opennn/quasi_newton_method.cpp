@@ -1177,17 +1177,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
 
-    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1255,6 +1255,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
 
+        cout << "Inital loss: " << training_loss << endl;
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
@@ -1268,12 +1270,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         optimization_data.print();
 
-        system("pause");
-
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
-
 
         if(has_selection)
         {
@@ -1293,7 +1292,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
+        /// @todo check: calculate training error instead of training loss?
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_loss;
 
         if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
@@ -1304,31 +1304,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       /*if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss - optimization_data.old_training_loss <<  endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumLossDecrease;
-        }
-        else*/ if(training_loss <= training_loss_goal)
+        if(training_loss <= training_loss_goal)
         {
             if(display)
             {

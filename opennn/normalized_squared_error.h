@@ -59,6 +59,7 @@ public:
    // Get methods
 
     type get_normalization_coefficient() const;
+    type get_selection_normalization_coefficient() const;
 
    // Set methods
 

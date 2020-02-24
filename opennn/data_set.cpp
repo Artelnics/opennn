@@ -5002,7 +5002,6 @@ Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) co
 
 Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 {
-
     const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
@@ -5015,14 +5014,11 @@ Tensor<type, 1> DataSet::calculate_training_targets_mean() const
 
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
-    /*
-        const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-        const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-        return mean_missing_values(data, selection_indices, target_variables_indices);
-    */
-    return Tensor<type, 1>();
+    return mean(data, selection_indices, target_variables_indices);
 }
 
 
@@ -10066,17 +10062,17 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
 
 void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets)
 {
-    const Index rows_number = instances.size();
-    const Index inputs_number = inputs.size();
-    const Index targets_number = targets.size();
+    const Index rows_number = static_cast<Index>(instances.size());
+    const Index inputs_number = static_cast<Index>(inputs.size());
+    const Index targets_number = static_cast<Index>(targets.size());
 
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
 
-    const Index* instances_pointer = instances.data();
-    const Index* inputs_pointer = inputs.data();
-    const Index* targets_pointer = targets.data();
+//    const Index* instances_pointer = instances.data();
+//    const Index* inputs_pointer = inputs.data();
+//    const Index* targets_pointer = targets.data();
 
     const type* data_pointer = data.data();
     type* inputs_2d_pointer = inputs_2d.data();
@@ -10087,24 +10083,23 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 
     for(Index j = 0; j < inputs_number; j++)
     {
-        variable = inputs[j];
+        variable = inputs[static_cast<size_t>(j)];
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances[i];
+            instance = instances[static_cast<size_t>(i)];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
     }
 
-
     for(Index j = 0; j < targets_number; j++)
     {
-        variable = targets[j];
+        variable = targets[static_cast<size_t>(j)];
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances[i];
+            instance = instances[static_cast<size_t>(i)];
 
             targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
