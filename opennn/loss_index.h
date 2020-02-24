@@ -324,23 +324,23 @@ public:
 
         // Output layer
 
-        trainable_layers_pointers[trainable_layers_number-1]
-        ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives_2d,
+        trainable_layers_pointers(trainable_layers_number-1)
+        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_2d,
                                  back_propagation.output_gradient,
-                                 back_propagation.neural_network.layers[trainable_layers_number-1].delta);
+                                 back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
       // Hidden layers
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
       {
-          Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
+          Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
 
-          trainable_layers_pointers[i]
+          trainable_layers_pointers(i)
           ->calculate_hidden_delta(previous_layer_pointer,
-                                   forward_propagation.layers[i].activations_2d,
-                                   forward_propagation.layers[i].activations_derivatives_2d,
-                                   back_propagation.neural_network.layers[i+1].delta,
-                                   back_propagation.neural_network.layers[i].delta);
+                                   forward_propagation.layers(i).activations_2d,
+                                   forward_propagation.layers(i).activations_derivatives_2d,
+                                   back_propagation.neural_network.layers(i+1).delta,
+                                   back_propagation.neural_network.layers(i).delta);
       }
    }
 
@@ -363,7 +363,7 @@ public:
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
                  back_propagation.errors.device(*default_device)
-                         = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
+                         = forward_propagation.layers(trainable_layers_number-1).activations_2d - batch.targets_2d;
 
                  return;
              }
@@ -373,7 +373,7 @@ public:
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.errors.device(*thread_pool_device)
-                        = forward_propagation.layers[trainable_layers_number-1].activations_2d - batch.targets_2d;
+                        = forward_propagation.layers(trainable_layers_number-1).activations_2d - batch.targets_2d;
 
                 return;
              }
@@ -406,29 +406,29 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-       trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs_2d,
-                                                              forward_propagation.layers[0],
-                                                              back_propagation.neural_network.layers[0]);
+       trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
+                                                              forward_propagation.layers(0),
+                                                              back_propagation.neural_network.layers(0));
 
        Index index = 0;
 
-       trainable_layers_pointers[0]->insert_gradient(back_propagation.neural_network.layers[0],
+       trainable_layers_pointers(0)->insert_gradient(back_propagation.neural_network.layers(0),
                index, back_propagation.gradient);
 
-       index += trainable_layers_parameters_number[0];
+       index += trainable_layers_parameters_number(0);
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
-           trainable_layers_pointers[i]->calculate_error_gradient(
-                   forward_propagation.layers[i-1].activations_2d,
-                   forward_propagation.layers[i-1],
-                   back_propagation.neural_network.layers[i]);
+           trainable_layers_pointers(i)->calculate_error_gradient(
+                   forward_propagation.layers(i-1).activations_2d,
+                   forward_propagation.layers(i-1),
+                   back_propagation.neural_network.layers(i));
 
-           trainable_layers_pointers[i]->insert_gradient(back_propagation.neural_network.layers[i],
+           trainable_layers_pointers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                                          index,
                                                          back_propagation.gradient);
 
-           index += trainable_layers_parameters_number[i];
+           index += trainable_layers_parameters_number(i);
        }
    }
 

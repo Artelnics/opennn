@@ -1170,6 +1170,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -1179,8 +1180,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
     const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
 
     training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1241,14 +1244,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         training_loss = training_back_propagation.loss;
-
-        cout << "Inital loss: " << training_loss << endl;
+        training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1260,8 +1263,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         // Optimization data
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
-
-        optimization_data.print();
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
@@ -1285,9 +1286,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Training history
 
-        /// @todo check: calculate training error instead of training loss?
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_loss;
-
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
         if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
@@ -1363,7 +1362,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
-
             results.final_training_error = training_error;
             results.final_selection_error = selection_error;
 
@@ -1378,7 +1376,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_loss <<  "\n"
+                     << "Training error: " << training_error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << optimization_data.learning_rate <<  "\n"
@@ -1396,7 +1394,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training error: " << training_loss << "\n"
+                 << "Training error: " << training_error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Training rate: " << optimization_data.learning_rate << "\n"
