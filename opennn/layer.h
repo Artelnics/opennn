@@ -27,6 +27,8 @@
 #include "device.h"
 #include "tinyxml2.h"
 
+//Eigen includes
+
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;

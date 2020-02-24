@@ -25,6 +25,8 @@
 #include "data_set.h"
 #include "neural_network.h"
 
+//Eigen includes
+
 namespace OpenNN
 {
 

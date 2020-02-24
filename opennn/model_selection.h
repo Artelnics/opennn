@@ -28,6 +28,8 @@
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
 
+//Eigen includes
+
 namespace OpenNN
 {
 

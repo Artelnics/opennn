@@ -209,6 +209,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
         normalization_coefficient += norm_1(0);
     }
+
     return normalization_coefficient;
 }
 
