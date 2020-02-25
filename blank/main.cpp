@@ -86,31 +86,11 @@ int main(void)
         data.setRandom();
 
         DataSet data_set(data);
+*/
 
-
-
-        Eigen::Tensor<float, 3, ColMajor> a(2, 3, 4);
-        a.setValues({{{0.0f, 1.0f, 2.0f, 3.0f},
-                      {7.0f, 6.0f, 5.0f, 4.0f},
-                      {8.0f, 9.0f, 10.0f, 11.0f}},
-                     {{12.0f, 13.0f, 14.0f, 15.0f},
-                      {19.0f, 18.0f, 17.0f, 16.0f},
-                      {20.0f, 21.0f, 22.0f, 23.0f}}});
-
-        cout << a << endl;
-
-        TensorMap < Tensor<type, 2> > slice(a.data()+6, 2, 3);
-
-        cout << slice << endl;
-
-        Eigen::Tensor<int, 2> b(2, 3);
-        b.setValues({{1, 2, 3}, {6, 5, 4}});
-
-        cout << b << endl;
-
-        Index samples = 1000;
+        Index samples = 10;
         Index variables = 3;
-/*
+
          // Device
 
         Device device(Device::EigenSimpleThreadPool);
@@ -118,6 +98,11 @@ int main(void)
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
+
+        Tensor<string, 1> uses(variables+1);
+        uses.setValues({"Input", "Input", "Target", "Target"});
+
+        data_set.set_columns_uses(uses);
 
         data_set.set_device_pointer(&device);
 
@@ -135,7 +120,7 @@ int main(void)
 
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, arquitecture);
         neural_network.set_device_pointer(&device);
 
         // Training strategy
@@ -144,9 +129,11 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::L2);
+
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_instances_number(1);
 
 //        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1);
 
@@ -161,7 +148,7 @@ int main(void)
         training_strategy.set_device_pointer(&device);
 
         training_strategy.perform_training();
-*/
+
         cout << "End" << endl;
 
         return 0;

@@ -1247,23 +1247,28 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
     const Index columns_number = x.dimension(1);
 
+    const Index neurons_number = get_neurons_number();
+
     Tensor<type, 2> softmax_values;
+    softmax_values.resize(n, columns_number);
 
     softmax(x, softmax_values);
 
 //    Tensor<type, 1> softmax_vector(columns_number);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
-    for(Index i = 0; i < n; i ++)
+    for(Index i = 0; i < columns_number; i ++)
     {
+        for(Index l = 0; l < n; l++)
+        {
 //        softmax_vector = softmax_values.chip(i,0);
-
         for(Index j = 0; j < columns_number; j++)
         {
             for(Index k = 0; k < columns_number; k++)
             {
-                y(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
+                y(j,k,i) = -softmax_values(l,j) * softmax_values(l,k);
+//                y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
 /*
                 if(j == k)
                 {
@@ -1276,11 +1281,12 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 */
             }         
         }
+      }
     }
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < n; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         for(Index j = 0; j < columns_number; j++) y(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
     }
@@ -1373,13 +1379,17 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    Tensor<type, 0> sum;
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
     {
         DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        y.device(*default_device) = x.exp() / (x.exp().sum());
+        sum.device(*default_device) = (x.exp()).sum();
+
+        y.device(*default_device) = x.exp() / sum(0);
 
         break;
     }
@@ -1388,7 +1398,9 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        y.device(*thread_pool_device) = x.exp() / (x.exp().sum());
+        sum.device(*thread_pool_device) = (x.exp()).sum();
+
+        y.device(*thread_pool_device) = x.exp() / sum(0);
 
         break;
     }
