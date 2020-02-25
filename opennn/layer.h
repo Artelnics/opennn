@@ -224,9 +224,9 @@ public:
 
     // Deltas
 
-    virtual void calculate_output_delta(const Tensor<type, 2>&,
-                                const Tensor<type, 2>&,
-                                Tensor<type, 2>&) const {}
+    virtual void calculate_output_delta(ForwardPropagation&,
+                                        const Tensor<type, 2>&,
+                                        Tensor<type, 2>&) const {}
 
     virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,

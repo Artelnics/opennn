@@ -276,7 +276,7 @@ public:
    virtual void calculate_error(BackPropagation&) const {}
 
    void back_propagate(const DataSet::Batch& batch,
-                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                   NeuralNetwork::ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation) const
    {
        // Loss index
@@ -313,7 +313,7 @@ public:
 
    // Delta methods
 
-   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_layers_delta(NeuralNetwork::ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -324,20 +324,10 @@ public:
 
         // Output layer
 
-       /* if(trainable_layers_pointers(trainable_layers_number-1)->get_type() == Layer::Perceptron)
-        {*/
         trainable_layers_pointers(trainable_layers_number-1)
-        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_2d,
+        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-       /* }
-        else
-        {
-            trainable_layers_pointers(trainable_layers_number-1)
-            ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_3d,
-                                     back_propagation.output_gradient,
-                                     back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-        }*/
 
       // Hidden layers
 

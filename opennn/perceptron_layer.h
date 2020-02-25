@@ -344,7 +344,7 @@ public:
 
    // Delta methods
 
-   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+   void calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
    {
@@ -354,7 +354,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                output_delta.device(*default_device) = activations_derivatives*output_gradient;
+                output_delta.device(*default_device) = forward_propagation.activations_2d*output_gradient;
 
                 return;
             }
@@ -363,7 +363,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+               output_delta.device(*thread_pool_device) = forward_propagation.activations_2d*output_gradient;
 
                return;
             }
