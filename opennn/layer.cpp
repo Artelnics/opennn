@@ -1251,16 +1251,20 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
     softmax(x, softmax_values);
 
+//    Tensor<type, 1> softmax_vector(columns_number);
+
     #pragma omp parallel for
 
     for(Index i = 0; i < n; i ++)
     {
-        const Tensor<type, 1> softmax_vector = softmax_values.chip(i,0);
+//        softmax_vector = softmax_values.chip(i,0);
 
         for(Index j = 0; j < columns_number; j++)
         {
             for(Index k = 0; k < columns_number; k++)
             {
+                y(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
+/*
                 if(j == k)
                 {
                     y(j,k,i) = softmax_vector(j)*(1.0 - softmax_vector(j));
@@ -1269,8 +1273,16 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
                 {
                     y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
                 }
-            }
+*/
+            }         
         }
+    }
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        for(Index j = 0; j < columns_number; j++) y(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
     }
 }
 
