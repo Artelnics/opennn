@@ -642,15 +642,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             //neural_network_pointer->print_summary();
 
-            forward_propagation.print();
-            system("pause");
-
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
-
-            back_propagation.print();
-            system("pause");
 
             training_loss += back_propagation.loss;
 
