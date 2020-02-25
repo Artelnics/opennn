@@ -127,6 +127,7 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS  += -openmp
+QMAKE_LFLAGS += -Werror=old-style-cast -cp_nocstylecasts -cp_c2staticcasts
 }
 
 unix:!macx{
