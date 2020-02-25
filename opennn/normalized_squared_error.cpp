@@ -205,7 +205,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     for(Index i = 0; i < size; i++)
     {
-        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+        const Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
 
         normalization_coefficient += norm_1(0);
     }

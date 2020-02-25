@@ -67,6 +67,11 @@ int main(void)
         cout << "Blank application" << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
+
+
+
+
+
 /*
         DataSet data_set("C:/Users/Usuario/Documents/rosenbrock_1000000_1000.csv", ',', true);
 
@@ -82,7 +87,7 @@ int main(void)
 
         DataSet data_set(data);
 
-*/
+
 
         Eigen::Tensor<float, 3, ColMajor> a(2, 3, 4);
         a.setValues({{{0.0f, 1.0f, 2.0f, 3.0f},
