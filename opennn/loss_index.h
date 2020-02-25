@@ -280,7 +280,7 @@ public:
                                    BackPropagation& back_propagation) const
    {
        // Loss index
-
+// Not ok in probabilistic with two probabilistic neurons
        calculate_errors(batch, forward_propagation, back_propagation);
 
        calculate_error(back_propagation);
