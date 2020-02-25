@@ -67,6 +67,11 @@ int main(void)
         cout << "Blank application" << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
+
+
+
+
+
 /*
         DataSet data_set("C:/Users/Usuario/Documents/rosenbrock_1000000_1000.csv", ',', true);
 
@@ -81,7 +86,7 @@ int main(void)
         data.setRandom();
 
         DataSet data_set(data);
-*/
+
 
         Index samples = 1000;
         Index variables = 3;
@@ -136,7 +141,7 @@ int main(void)
         training_strategy.set_device_pointer(&device);
 
         training_strategy.perform_training();
-
+*/
         cout << "End" << endl;
 
         return 0;
