@@ -10,8 +10,6 @@
 
 TEMPLATE = subdirs
 
-CONFIG += ordereds
-
 CONFIG(release, debug|release) {
 DEFINES += NDEBUG
 }
@@ -22,3 +20,5 @@ SUBDIRS += tests
 SUBDIRS += examples
 
 SUBDIRS += blank
+
+CONFIG += ordered
