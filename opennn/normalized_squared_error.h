@@ -114,6 +114,9 @@ public:
            }
        }
 
+       const Index batch_instances_number = batch.get_instances_number();
+       const Index total_instances_number = data_set_pointer->get_used_instances_number();
+
        return sum_squared_error(0)/normalization_coefficient;
    }
 
