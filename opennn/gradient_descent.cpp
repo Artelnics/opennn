@@ -763,6 +763,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
 
@@ -772,8 +773,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
     const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> selection_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
 
     training_batch.fill(training_instances_indeces_vector,
+                        DataSet::tensor_to_vector(inputs_indices),
+                        DataSet::tensor_to_vector(target_indices));
+
+    selection_batch.fill(selection_instances_indeces_vector,
                         DataSet::tensor_to_vector(inputs_indices),
                         DataSet::tensor_to_vector(target_indices));
 
