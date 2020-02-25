@@ -8,7 +8,10 @@
 
 QT = core# Do not use qt
 
+TARGET = blank
+
 TEMPLATE = app
+
 CONFIG += console
 CONFIG += c++11
 
@@ -16,7 +19,6 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = blank
 
 DESTDIR = "$$PWD/bin"
 
