@@ -4998,16 +4998,6 @@ Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) co
 }
 
 
-Tensor<type, 1> DataSet::calculate_used_targets_mean() const
-{
-    const Tensor<Index, 1> used_indices = get_used_instances_indices();
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    return mean(data, used_indices, target_variables_indices);
-}
-
-
 /// Returns the mean values of the target variables on the training
 
 Tensor<type, 1> DataSet::calculate_training_targets_mean() const

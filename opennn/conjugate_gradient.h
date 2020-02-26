@@ -237,7 +237,6 @@ public:
            const LossIndex::BackPropagation& back_propagation,
            OptimizationData& optimization_data)
    {
-
        const Index parameters_number = optimization_data.parameters.dimension(0);
 
        if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)

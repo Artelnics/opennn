@@ -276,11 +276,11 @@ public:
    virtual void calculate_error(BackPropagation&) const {}
 
    void back_propagate(const DataSet::Batch& batch,
-                                   NeuralNetwork::ForwardPropagation& forward_propagation,
+                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation) const
    {
        // Loss index
-// Not ok in probabilistic with two probabilistic neurons
+
        calculate_errors(batch, forward_propagation, back_propagation);
 
        calculate_error(back_propagation);
@@ -313,7 +313,7 @@ public:
 
    // Delta methods
 
-   void calculate_layers_delta(NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -325,7 +325,7 @@ public:
         // Output layer
 
         trainable_layers_pointers(trainable_layers_number-1)
-        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1).activations_derivatives_2d,
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
@@ -721,7 +721,7 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight = static_cast<type>(0.001);
+   type regularization_weight;
 
    /// Display messages to screen. 
 
