@@ -1234,6 +1234,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
+
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1252,6 +1253,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
         training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
+
+        cout << "First training error: " << training_error << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
