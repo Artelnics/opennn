@@ -88,7 +88,7 @@ int main(void)
         DataSet data_set(data);
 */
 
-        Index samples = 10;
+        Index samples = 100;
         Index variables = 3;
 
          // Device
