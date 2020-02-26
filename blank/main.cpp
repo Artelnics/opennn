@@ -123,7 +123,7 @@ int main(void)
         NeuralNetwork neural_network(NeuralNetwork::Classification, arquitecture);
         neural_network.set_device_pointer(&device);
 
-        // Training strategy
+        // Training strategyy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
