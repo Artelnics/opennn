@@ -344,38 +344,38 @@ public:
 
    // Delta methods
 
-   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                               const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const
-   {
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+   void calculate_output_delta(ForwardPropagation& forward_propagation,
+                                  const Tensor<type, 2>& output_gradient,
+                                  Tensor<type, 2>& output_delta) const
+      {
+          switch(device_pointer->get_type())
+          {
+               case Device::EigenDefault:
+               {
+                   DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                output_delta.device(*default_device) = activations_derivatives*output_gradient;
+                   output_delta.device(*default_device) = forward_propagation.activations_2d*output_gradient;
 
-                return;
-            }
+                   return;
+               }
 
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+               case Device::EigenSimpleThreadPool:
+               {
+                  ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+                  output_delta.device(*thread_pool_device) = forward_propagation.activations_2d*output_gradient;
 
-               return;
-            }
+                  return;
+               }
 
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+              case Device::EigenGpu:
+              {
+   //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
-           }
-       }
-   }
+                   break;
+              }
+          }
+      }
 
 
    void calculate_hidden_delta(Layer* next_layer_pointer,

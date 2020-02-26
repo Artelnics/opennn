@@ -8,7 +8,7 @@
 
 TEMPLATE = subdirs
 
-CONFIG += ordered
+CONFIG += ordereds
 
 #SUBDIRS += simple_function_regression
 #SUBDIRS += simple_pattern_recognition

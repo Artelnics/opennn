@@ -1230,13 +1230,13 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
 #ifdef __OPENNN_DEBUG__
 
-    if(x.dimension(0) != y.dimension(0))
+    if(x.dimension(0) != y.dimension(2))
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: Functions.\n"
+        buffer << "OpenNN Exception: Layer Class.\n"
                << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<<x.dimension(0)<<") must be equal to number of rows in y("<<y.dimension(0)<<").\n";
+               << "Number of rows in x("<<x.dimension(0)<<") must be equal to number of rows in y("<<y.dimension(2)<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1244,7 +1244,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 #endif
 
     const Index n = x.dimension(0);
-
     const Index columns_number = x.dimension(1);
 
     Tensor<type, 2> softmax_values;
@@ -1256,16 +1255,14 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
 //    #pragma omp parallel for
 
-    for(Index i = 0; i < columns_number; i ++)
+    for(Index i = 0; i < n; i ++)
     {
-        for(Index l = 0; l < n; l++)
-        {
 //        softmax_vector = softmax_values.chip(i,0);
         for(Index j = 0; j < columns_number; j++)
         {
             for(Index k = 0; k < columns_number; k++)
             {
-                y(j,k,i) = -softmax_values(l,j) * softmax_values(l,k);
+                y(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
 /*
                 if(j == k)
                 {
@@ -1278,12 +1275,11 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 */
             }
         }
-      }
     }
 
 //    #pragma omp parallel for
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < n; i++)
     {
         for(Index j = 0; j < columns_number; j++) y(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
     }
