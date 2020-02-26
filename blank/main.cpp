@@ -68,6 +68,8 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        DataSet data;
+
 
 
 

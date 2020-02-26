@@ -579,6 +579,7 @@ public:
 
    Descriptives calculate_inputs_descriptives(const Index&) const;
 
+   Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_training_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
    Tensor<type, 1> calculate_testing_targets_mean() const;
