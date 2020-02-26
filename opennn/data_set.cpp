@@ -3826,9 +3826,9 @@ void DataSet::set(const Index& new_instances_number,
     data_file_name = "";
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
-    /*
-       data.resize(new_instances_number, new_variables_number);
-    */
+
+    data.resize(new_instances_number, new_variables_number);
+
     columns.resize(new_variables_number);
 
     for(Index i = 0; i < new_variables_number; i++)

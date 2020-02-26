@@ -1248,7 +1248,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Loss index
 
+        cout << "Back propagation -------------------------------------" << endl;
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        cout << "End Back propagation -------------------------------------" << endl;
 
         training_loss = training_back_propagation.loss;
         training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
