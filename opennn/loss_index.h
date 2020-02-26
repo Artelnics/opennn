@@ -721,7 +721,7 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight;
+   type regularization_weight = static_cast<type>(0.01);
 
    /// Display messages to screen. 
 
