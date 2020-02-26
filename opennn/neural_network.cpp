@@ -803,7 +803,7 @@ void NeuralNetwork::set_device_pointer(Device* new_device_pointer)
 
     for(Index i = 0; i < layers_number; i++)
     {
-        layers_pointers[i]->set_device_pointer(new_device_pointer);
+        layers_pointers(i)->set_device_pointer(new_device_pointer);
     }
 }
 

@@ -833,7 +833,7 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-    //return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
+//    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
     return Tensor<type, 1>();
 }
