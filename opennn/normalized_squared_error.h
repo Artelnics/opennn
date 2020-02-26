@@ -59,15 +59,11 @@ public:
    // Get methods
 
     type get_normalization_coefficient() const;
-    type get_selection_normalization_coefficient() const;
 
    // Set methods
 
     void set_normalization_coefficient();
     void set_normalization_coefficient(const type&);
-
-    void set_selection_normalization_coefficient();
-    void set_selection_normalization_coefficient(const type&);
 
     void set_default();
 
@@ -228,8 +224,6 @@ private:
    /// Coefficient of normalization for the calculation of the training error.
 
    type normalization_coefficient;
-
-   type selection_normalization_coefficient;
 };
 
 }
