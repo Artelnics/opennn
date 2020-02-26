@@ -18,6 +18,7 @@
 
 #include "../../opennn/opennn.h"
 
+
 using namespace OpenNN;
 
 int main(void)
@@ -29,22 +30,28 @@ int main(void)
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
-/*
+
         DataSet data_set("../data/logical_operations.csv", ';', true);
 
-        data_set.set_columns_uses({"Input","Input","Target","Target","Target","Target","Target","Target"});
+        Tensor<string, 1> uses(8);
+        uses.setValues({"Input","Input","Target","Target","Target","Target","Target","Target"});
 
+        data_set.set_columns_uses(uses);
+/*
         const Vector<string> inputs_names = data_set.get_input_variables_names();
         const Vector<string> targets_names = data_set.get_target_variables_names();
-
+*/
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {2, 6, 6});
+        Tensor<Index, 1> architecture(3);
+        architecture.setValues({2, 6, 6});
 
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+/*
         neural_network.set_inputs_names(inputs_names);
 
         neural_network.set_outputs_names(targets_names);
-
+*/
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -61,39 +68,39 @@ int main(void)
 
         // Print results to screen
 
-        Tensor<double> inputs(Vector<size_t>({1,2}), 0.0);
-        Tensor<double> outputs(Vector<size_t>({6}), 0.0);
+        Tensor<type, 2> inputs(1,2);
+        Tensor<type, 2> outputs(1,6);
 
         cout << "X Y AND OR NAND NOR XOR XNOR" << endl;
 
-        inputs[0] = 1.0;
-        inputs[1] = 1.0;
+        inputs(0,0) = 1.0;
+        inputs(0,1) = 1.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout <<"X = 1 Y = 1" << endl << inputs << " " << outputs << endl;
 
-        inputs[0] = 1.0;
-        inputs[1] = 0.0;
+        inputs(0,0) = 1.0;
+        inputs(0,1) = 0.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << "X = 1 Y = 0" << endl << inputs << " " << outputs << endl;
 
-        inputs[0] = 0.0;
-        inputs[1] = 1.0;
+        inputs(0,0) = 0.0;
+        inputs(0,1) = 1.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << "X = 0 Y = 1" << endl << inputs << " " << outputs << endl;
 
-        inputs[0] = 0.0;
-        inputs[1] = 0.0;
+        inputs(0,0) = 0.0;
+        inputs(0,1) = 0.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << "X = 0 Y = 0" << endl << inputs << " " << outputs << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

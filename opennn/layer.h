@@ -90,7 +90,7 @@ public:
             }
             else
             {
-                activations_derivatives_3d.resize(batch_instances_number, neurons_number, neurons_number);
+                activations_derivatives_3d.resize(neurons_number, neurons_number, batch_instances_number);
             }
         }
 
@@ -224,7 +224,7 @@ public:
 
     // Deltas
 
-    virtual void calculate_output_delta(const Tensor<type, 2>&,
+    virtual void calculate_output_delta(ForwardPropagation&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
 
