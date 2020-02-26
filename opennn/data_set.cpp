@@ -3854,7 +3854,6 @@ void DataSet::set(const Index& new_instances_number,
     split_instances_random();
 
     display = true;
-
 }
 
 
@@ -8733,6 +8732,8 @@ void DataSet::generate_constant_data(const Index& instances_number, const Index&
 void DataSet::generate_random_data(const Index& instances_number, const Index& variables_number)
 {
     set(instances_number, variables_number);
+
+    data.setRandom();
     /*
         data.setRandom(0.0, 1.0);
     */

@@ -17,7 +17,6 @@ NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest(void)
 {
 }
 
-/*
 void NormalizedSquaredErrorTest::test_constructor(void)
 {
    cout << "test_constructor\n";
@@ -53,7 +52,49 @@ void NormalizedSquaredErrorTest::test_destructor(void)
    cout << "test_destructor\n";
 }
 
+void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient(void)
+{
+   cout << "test_calculate_normalization_coefficient\n";
 
+   NeuralNetwork neural_network;
+   DataSet data_set;
+   NormalizedSquaredError nse(&neural_network, &data_set);
+
+   Index instances_number = 4;
+   Index inputs_number = 4;
+   Index outputs_number = 4;    //targets_number or means_number
+
+   Tensor<type, 1> targets_mean(outputs_number);
+   Tensor<type, 2> targets(instances_number, outputs_number);
+
+   // Test
+
+   data_set.generate_random_data(instances_number, inputs_number+outputs_number);
+
+   Tensor<string, 1> uses(8);
+   uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
+
+   data_set.set_columns_uses(uses);
+
+   targets = data_set.get_target_data();
+   targets_mean = data_set.calculate_training_targets_mean();
+
+   Tensor<Index, 1> architecture(2);
+   architecture.setValues({inputs_number, outputs_number});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
+
+
+//   data_set.set(instances_number, inputs_number, outputs_number);
+//   data_set.set_data_random();
+
+   type normalization_coefficient = nse.calculate_normalization_coefficient(targets, targets_mean);
+
+   assert_true(normalization_coefficient > 0, LOG);
+}
+
+/*
 void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 {
    cout << "test_calculate_training_error\n";
@@ -509,12 +550,15 @@ void NormalizedSquaredErrorTest::test_from_XML(void)
 void NormalizedSquaredErrorTest::run_test_case(void)
 {
    cout << "Running normalized squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
 
+   test_calculate_normalization_coefficient();
+
+/*
    // Get methods
 
    // Set methods

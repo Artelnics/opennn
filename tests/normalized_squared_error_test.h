@@ -40,6 +40,8 @@ public:
  
    // Normalization coefficient
 
+   void test_calculate_normalization_coefficient(void);
+
    void test_calculate_training_normalization_coefficient(void);   
    void test_calculate_selection_normalization_coefficient(void);   
 
