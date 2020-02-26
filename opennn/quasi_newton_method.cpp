@@ -1282,12 +1282,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
                 minimal_selection_parameters = optimization_data.parameters;
             }
+
+            if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
 
         // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
-        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 

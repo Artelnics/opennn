@@ -178,6 +178,8 @@ public:
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
+   virtual void set_reserve_selection_error_history(const bool&) = 0;
+
    // Training methods
 
    virtual void check() const;
