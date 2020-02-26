@@ -117,7 +117,7 @@ public:
        const Index batch_instances_number = batch.get_instances_number();
        const Index total_instances_number = data_set_pointer->get_used_instances_number();
 
-       return sum_squared_error(0)/normalization_coefficient;
+       return sum_squared_error(0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
    }
 
    void calculate_error(BackPropagation& back_propagation) const
@@ -152,7 +152,9 @@ public:
            }
        }
 
-       back_propagation.loss = sum_squared_error(0)/normalization_coefficient;
+       const Index total_instances_number = data_set_pointer->get_used_instances_number();
+
+       back_propagation.loss = sum_squared_error(0)/(static_cast<type>(back_propagation.batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
    }
 
 
@@ -168,7 +170,10 @@ public:
 
         #endif
 
-        const type coefficient = static_cast<type>(2.0)/normalization_coefficient;
+        const Index batch_instances_number = batch.get_instances_number();
+        const Index total_instances_number = data_set_pointer->get_used_instances_number();
+
+        const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
 
         switch(device_pointer->get_type())
         {
