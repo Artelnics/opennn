@@ -15,6 +15,9 @@ pip-selfcheck.json
 .AppleDouble
 .LSOverride
 
+#Blank
+/blank/main.cpp
+
 # Icon must end with two \r
 Icon
 
@@ -226,6 +229,5 @@ Makefile*
 ![Ee]xamples/yacht_hydrodynamics_production
 ![Ee]xamples/rosenbrock
 
-/blank/main.cpp
 
 # Created by .ignore support plugin (hsz.mobi)
