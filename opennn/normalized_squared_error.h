@@ -59,11 +59,15 @@ public:
    // Get methods
 
     type get_normalization_coefficient() const;
+    type get_selection_normalization_coefficient() const;
 
    // Set methods
 
     void set_normalization_coefficient();
     void set_normalization_coefficient(const type&);
+
+    void set_selection_normalization_coefficient();
+    void set_selection_normalization_coefficient(const type&);
 
     void set_default();
 
@@ -110,10 +114,7 @@ public:
            }
        }
 
-       const Index batch_instances_number = batch.get_instances_number();
-       const Index total_instances_number = data_set_pointer->get_used_instances_number();
-
-       return sum_squared_error(0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+       return sum_squared_error(0)/normalization_coefficient;
    }
 
    void calculate_error(BackPropagation& back_propagation) const
@@ -148,9 +149,7 @@ public:
            }
        }
 
-       const Index total_instances_number = data_set_pointer->get_used_instances_number();
-
-       back_propagation.loss = sum_squared_error(0)/(static_cast<type>(back_propagation.batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+       back_propagation.loss = sum_squared_error(0)/normalization_coefficient;
    }
 
 
@@ -166,10 +165,7 @@ public:
 
         #endif
 
-        const Index batch_instances_number = batch.get_instances_number();
-        const Index total_instances_number = data_set_pointer->get_used_instances_number();
-
-        const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+        const type coefficient = static_cast<type>(2.0)/normalization_coefficient;
 
         switch(device_pointer->get_type())
         {
@@ -224,6 +220,8 @@ private:
    /// Coefficient of normalization for the calculation of the training error.
 
    type normalization_coefficient;
+
+   type selection_normalization_coefficient;
 };
 
 }
