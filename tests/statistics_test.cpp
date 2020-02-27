@@ -280,7 +280,7 @@ void StatisticsTest::test_calculate_maximal_centers()
     Tensor<type, 1> centers_1(4);
     centers_1.setValues({1,2,3,4});
     Tensor<Index, 1> frecuencies_1(4);
-    frecuencies_1.setValues({1,1,2,1});
+    frecuencies_1.setValues({2,2,1,2});
 
     Histogram histogram_1(centers_1,frecuencies_1);
 
@@ -312,7 +312,6 @@ void StatisticsTest::test_calculate_bin()
     bin = histogram.calculate_bin(vector[2]);
     assert_true(bin == 2, LOG);
 }
-
 
 void StatisticsTest::test_calculate_frequency()
 {
@@ -1430,7 +1429,7 @@ void StatisticsTest::run_test_case()
    test_calculate_maximum_frequency();
    test_calculate_most_populated_bin();
    test_calculate_minimal_centers();
-//   test_calculate_maximal_centers();
+   test_calculate_maximal_centers();
 //   test_calculate_bin();
 //   test_calculate_frequency();
 //   test_calculate_histogram();
