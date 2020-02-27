@@ -74,26 +74,35 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
     cout << "test_set_standard_deviation\n";
 
     //Test 0
-
     Descriptives descriptives(-4.0 ,5.0 ,0.0 ,1.0);
-
     assert_true(descriptives.has_mean_zero_standard_deviation_one() == true, LOG);
-
     //Test 1
-
     Descriptives descriptives_1(-4.0 ,5.0 ,1.0 ,1.0);
-
     assert_true(descriptives_1.has_mean_zero_standard_deviation_one() == false, LOG);
-
+    //Test 2
+    Descriptives descriptives_2(-4.0 ,5.0 ,0.0 ,2.0);
+    assert_true(descriptives_2.has_mean_zero_standard_deviation_one() == false, LOG);
+    //Test 3
+    Descriptives descriptives_3(-4.0 ,5.0 ,2.0 ,2.0);
+    assert_true(descriptives_3.has_mean_zero_standard_deviation_one() == false, LOG);
 }
 
 void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 {
     cout << "test_set_has_minimum_minus_one_maximum_one\n";
 
-    Descriptives descriptives(-1.0 ,1.0 ,3.0 ,2.0);
-
-    assert_true(descriptives.has_minimum_minus_one_maximum_one(), LOG);
+    //Test_0
+    Descriptives descriptives(-1.0 ,1.0 ,0.0 ,1.0);
+    assert_true(descriptives.has_minimum_minus_one_maximum_one() == true, LOG);
+    //Test_1
+    Descriptives descriptives_1(-2.0 ,1.0 ,0.0 ,1.0);
+    assert_true(descriptives_1.has_minimum_minus_one_maximum_one() == false, LOG);
+    //Test_2
+    Descriptives descriptives_2(-1.0 ,2.0 ,0.0 ,1.0);
+    assert_true(descriptives_2.has_minimum_minus_one_maximum_one() == false, LOG);
+    //Test_3
+    Descriptives descriptives_3(-2.0 ,2.0 ,0.0 ,1.0);
+    assert_true(descriptives_3.has_minimum_minus_one_maximum_one() == false, LOG);
 }
 
 void StatisticsTest::test_get_bins_number()
@@ -127,9 +136,9 @@ void StatisticsTest::test_count_empty_bins()
 
     //  Test 1
 
-    Tensor<type, 1> centers_1(4);             //Center values for the bins.
+    Tensor<type, 1> centers_1(4);
     centers_1.setValues({1,2,3,4});
-    Tensor<Index, 1> frecuencies_1(4);             //Number of variates in each bin.
+    Tensor<Index, 1> frecuencies_1(4);
     frecuencies_1.setValues({1,0,1,1});
 
     Histogram histogram_1(centers_1,frecuencies_1);
@@ -159,7 +168,6 @@ void StatisticsTest::test_calculate_minimum_frequency()
     Histogram histogram_1(centers_1,frecuencies_1);
 
     assert_true(histogram_1.calculate_minimum_frequency() == 0, LOG);
-
 }
 
 void StatisticsTest::test_calculate_maximum_frequency()
@@ -170,13 +178,13 @@ void StatisticsTest::test_calculate_maximum_frequency()
 /*
     Histogram histogram;
 
-    assert_true(histogram.calculate_minimum_frequency() == 1, LOG);
+    assert_true(histogram.calculate_maximum_frequency() == 0, LOG);
 */
     //Test 1
 
-    Tensor<type, 1> centers_1(4);             //Center values for the bins.
+    Tensor<type, 1> centers_1(4);
     centers_1.setValues({1,2,3,4});
-    Tensor<Index, 1> frecuencies_1(4);        //Number of variates in each bin.
+    Tensor<Index, 1> frecuencies_1(4);
     frecuencies_1.setValues({1,0,1,1});
 
     Histogram histogram_1(centers_1,frecuencies_1);
@@ -184,25 +192,33 @@ void StatisticsTest::test_calculate_maximum_frequency()
     assert_true(histogram_1.calculate_maximum_frequency() == 1, LOG);
 }
 
-/*
-void StatisticsTest::test_calculate_most_populated_bin()
+void StatisticsTest::test_calculate_most_populated_bin()  //<-- Calculates de first index ?
 {
     cout << "test_calculate_most_populated_bin\n";
 
-    Tensor<type, 1> values({1, 2, 3, 4, 5, 5, 5, 5});
+    //  Test 0
 
     Histogram histogram;
 
-    histogram = OpenNN::histogram(values, 5);
+    assert_true(histogram.calculate_most_populated_bin() == 0, LOG);
 
-    assert_true(histogram.calculate_most_populated_bin() == 4, LOG);
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({11,12,13,14});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_most_populated_bin() == 3, LOG);
 }
-
 
 void StatisticsTest::test_calculate_minimal_centers()
 {
     cout << "test_calculate_minimal_centers\n";
 
+/*
     Histogram histogram;
 
     Tensor<type, 1> vector({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 1, 4, 7});
@@ -215,14 +231,33 @@ void StatisticsTest::test_calculate_minimal_centers()
     assert_true((histogram.calculate_minimal_centers()[1] - solution[1]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[2] - solution[2]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[3] - solution[3]) < 1.0e-7, LOG);
+*/
 
+    //  Test 0
+/*
+    Histogram histogram;
+
+    assert_true(static_cast<Index>(histogram.calculate_minimal_centers()(0)) == 0, LOG);
+*/
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({1,1,2,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(0)) == 1, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(1)) == 2, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(2)) == 4, LOG);
 }
-
 
 void StatisticsTest::test_calculate_maximal_centers()
 {
     cout << "test_calculate_maximal_centers\n";
 
+/*
     Histogram histogram;
 
     Tensor<type, 1> vector({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 8, 8, 1, 4, 7});
@@ -232,9 +267,29 @@ void StatisticsTest::test_calculate_maximal_centers()
     Tensor<type, 1> solution({2.75, 3.45, 4.85, 5.55});
 
     assert_true((histogram.calculate_minimal_centers()[0] - 1.35) < 1.0e-7, LOG);
+*/
+
+    //  Test 0
+/*
+    Histogram histogram;
+
+    assert_true(static_cast<Index>(histogram.calculate_maximal_centers()(0)) == 0, LOG);
+*/
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({1,1,2,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(0)) == 1, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(1)) == 2, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(2)) == 4, LOG);
 }
 
-
+/*
 void StatisticsTest::test_calculate_bin()
 {
     cout << "test_calculate_bin\n";
@@ -1373,8 +1428,8 @@ void StatisticsTest::run_test_case()
    test_count_empty_bins();
    test_calculate_minimum_frequency();
    test_calculate_maximum_frequency();
-//   test_calculate_most_populated_bin();
-//   test_calculate_minimal_centers();
+   test_calculate_most_populated_bin();
+   test_calculate_minimal_centers();
 //   test_calculate_maximal_centers();
 //   test_calculate_bin();
 //   test_calculate_frequency();
