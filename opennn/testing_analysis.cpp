@@ -1503,15 +1503,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
 
     Index target_index = 0;
     Index output_index = 0;
-    /*
-        for(Index i = 0; i < rows_number; i++)
-        {
-            target_index = maximal_index(targets.chip(i, 0));
-            output_index = maximal_index(outputs.chip(i, 0));
 
-            confusion(target_index,output_index)++;
-        }
-    */
+    for(Index i = 0; i < rows_number; i++)
+    {
+        target_index = maximal_index(targets.chip(i, 0));
+        output_index = maximal_index(outputs.chip(i, 0));
+
+        confusion(target_index,output_index)++;
+    }
+
     return confusion;
 }
 
