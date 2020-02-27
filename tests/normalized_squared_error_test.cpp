@@ -196,7 +196,6 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
 
-
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
 
@@ -208,34 +207,30 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
-
    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
 
-batch.print();
    neural_network.forward_propagate(batch, forward_propagation);
-
-   forward_propagation.print();
 
    nse.set_device_pointer(&device);
 
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
-   const Tensor<type,1> gradient = training_back_propagation.gradient;
+   error_gradient = training_back_propagation.gradient;
 
-   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-   assert_true(std::all_of(gradient.data(), gradient.data()+gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
+   assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
+   assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
 }
 
    neural_network.set();
-/*
+
    // Test perceptron and probabilistic
 {
    instances_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   hidden_neurons = 2;
+   inputs_number = 5;
+   hidden_neurons = 7;
+   outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
@@ -243,25 +238,47 @@ batch.print();
 
    data_set.set_training();
 
+   DataSet::Batch batch(instances_number, &data_set);
+
+   const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set.get_training_instances_indices());
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
+
    hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
-   probabilistic_layer->set(outputs_number, outputs_number);
+//   probabilistic_layer->set(outputs_number, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
    neural_network.add_layer(output_perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
+//   neural_network.add_layer(probabilistic_layer);
+
+   neural_network.set_device_pointer(&device);
 
    neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
 
-   error_gradient = nse.calculate_training_error_gradient();
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+
+   nse.set_device_pointer(&device);
+
+   nse.back_propagate(batch, forward_propagation, training_back_propagation);
+   error_gradient = training_back_propagation.gradient;
 
    numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
-}
+   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+/*
    neural_network.set();
 
    // Test lstm
