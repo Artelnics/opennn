@@ -18,7 +18,7 @@ TestingAnalysisTest::~TestingAnalysisTest()
 {
 }
 
-/*
+
 void TestingAnalysisTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -108,7 +108,7 @@ void TestingAnalysisTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
@@ -373,14 +373,19 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     assert_true(error_data_maximal[0] == 0 , LOG);
 }
 
-
+*/
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
 
+   // Device
+   Device device(Device::EigenSimpleThreadPool);
+
    NeuralNetwork neural_network;
+   neural_network.set_device_pointer(&device);
 
    DataSet data_set;
+   data_set.set_device_pointer(&device);
 
    Tensor<type, 2> data;
 
@@ -390,15 +395,18 @@ void TestingAnalysisTest::test_linear_regression()
 
     // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   Tensor<Index, 1> architecture(2);
+   architecture.setValues({1, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
-   data_set.set(1,1,1);
-
-   data_set.set_testing();
+   data_set.set(1,2);
 
    data_set.initialize_data(0.0);
+
+   data_set.set_testing();
 
    linear_regression = ta.linear_regression();
 
@@ -410,7 +418,10 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 {
    cout << "test_print_linear_regression_correlation\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1,1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -421,7 +432,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
    data_set.initialize_data(0.0);
 
    TestingAnalysis ta(&neural_network, &data_set);
-//   ta.print_linear_regression_correlations();
+   ta.print_linear_regression_correlations();
 }
 
 
@@ -429,7 +440,10 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 {
     cout << "test_get_linear_regression_correlations_std\n";
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1,1,1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
     neural_network.set_parameters_constant(0.0);
 
@@ -444,7 +458,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
     Tensor<type, 1> correlations = ta.get_linear_regression_correlations_std();
 
     assert_true(correlations.size() == 1, LOG);
-    assert_true(correlations[0] == 1.0 , LOG);
+    assert_true(correlations(0) == 1.0 , LOG);
 }
 
 void TestingAnalysisTest::test_save_linear_regression()
@@ -473,7 +487,10 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
     neural_network.set_parameters_constant(0.0);
 
@@ -483,8 +500,11 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     linear_regression_analysis = ta.perform_linear_regression_analysis();
 
+    Tensor<type, 1> test(1);
+    test.setValues({0});
+
     assert_true(linear_regression_analysis.size() == 1 , LOG);
-    assert_true(linear_regression_analysis[0].targets == Tensor<type, 1>{0} , LOG);
+    assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
     assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
 }
 
@@ -500,7 +520,7 @@ void TestingAnalysisTest::test_save_linear_regression_analysis()
    cout << "test_save_linear_regression_analysis\n";
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_confusion()
 {
    cout << "test_calculate_confusion\n";
@@ -1392,7 +1412,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 void TestingAnalysisTest::run_test_case()
 {
    cout << "Running testing analysis test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -1413,7 +1433,7 @@ void TestingAnalysisTest::run_test_case()
    test_set_display();
 
    // Error data methods
-
+/*
    test_calculate_error_data();
    test_calculate_percentage_error_data();
    test_calculate_error_data_statistics();
@@ -1425,7 +1445,7 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_histograms();
 
    test_calculate_maximal_errors();
-
+*/
    // Linear regression analysis methodsta
 
 
@@ -1439,7 +1459,7 @@ void TestingAnalysisTest::run_test_case()
 
    test_perform_linear_regression();
 
-
+/*
    // Binary classification test methods
 
    test_calculate_binary_classification_test();
