@@ -354,7 +354,7 @@ public:
                {
                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                   output_delta.device(*default_device) = forward_propagation.activations_2d*output_gradient;
+                   output_delta.device(*default_device) = forward_propagation.activations_derivatives_2d*output_gradient;
 
                    return;
                }
@@ -363,7 +363,7 @@ public:
                {
                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                  output_delta.device(*thread_pool_device) = forward_propagation.activations_2d*output_gradient;
+                  output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
 
                   return;
                }
