@@ -761,7 +761,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 {
 //    TensorMap< Tensor<type, 2> > left_matri(left_matrix.data(), left_matrix.dimension(0), 1);
     // Transform Tensors into Dense matrix
-cout << "pre" << endl;
+
     auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0), 1);
 cout << "ml" << endl;
@@ -774,7 +774,7 @@ cout << "mr" << endl;
 cout << "product" << endl;
     // Matrix into a Tensor
 
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
 cout << "direct" << endl;
     return direct_matrix;
 }
@@ -1140,6 +1140,7 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
 cout << "5" << endl;
 cout << "Parameters difference: " << parameters_difference << endl;
+cout << inverse_hessian_approximation.dimension(0) << endl;
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
 cout << "6" << endl;
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
