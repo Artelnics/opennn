@@ -48,6 +48,7 @@ public:
 
    // Maximun
    void test_set_maximum();
+   void test_maximum();
    void test_maximum_missing_values();
    void test_maximum_matrix();
 
