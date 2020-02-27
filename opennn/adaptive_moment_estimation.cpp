@@ -599,8 +599,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             loss_index_pointer->back_propagate(training_batch, training_forward_propagation, back_propagation);
 
-            back_propagation.print();
-            system("pause");
             training_loss += back_propagation.loss;
 
             // Gradient
@@ -612,7 +610,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number); //  return -nan(inf)
+        training_loss /= static_cast<type>(batches_number);
 
         if(has_selection)
         {

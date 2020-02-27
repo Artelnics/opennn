@@ -1171,13 +1171,25 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const bool has_selection = data_set_pointer->has_selection();
-
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+
+    const bool has_selection = data_set_pointer->has_selection();
+
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
+
+    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+
 
     // Neural network
 
@@ -1221,6 +1233,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
+
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1277,7 +1291,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         // Optimization algorithm
 
-
+        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Training history
 
@@ -1294,6 +1308,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         // Stopping Criteria       
 
         if(epoch != 0) training_loss_decrease = training_back_propagation.loss - old_training_loss;
+        old_training_loss = training_back_propagation.loss;
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
@@ -1311,7 +1326,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
+        /*else if(epoch != 0 && training_loss_decrease <= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1322,7 +1337,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
-        }
+        }*/
 
         else if(training_back_propagation.loss <= training_loss_goal)
         {
@@ -1429,7 +1444,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                  << "Training loss: " << training_back_propagation.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << information
-                 << "Training rate: " << learning_rate << "\n";
+                 << "Training rate: " << optimization_data.learning_rate << "\n";
 //                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection)
