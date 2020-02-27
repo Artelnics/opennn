@@ -78,6 +78,8 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
+            parameters = neural_network_pointer->get_parameters();
+
             minimal_selection_parameters.resize(parameters_number);
 
             gradient_exponential_decay.resize(parameters_number);
@@ -90,11 +92,16 @@ public:
             last_gradient_exponential_decay.setZero();
 
             last_square_gradient_exponential_decay.resize(parameters_number);
-            last_gradient_exponential_decay.setZero();
+            last_square_gradient_exponential_decay.setZero();
         }
 
         void print() const
         {
+            cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
+
+            cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
+
+            cout << "Parmeters:" << endl << parameters << endl;
         }
 
         AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
@@ -243,8 +250,6 @@ public:
        optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
        // Update parameters
-
-       cout << optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon) << endl;
 
        optimization_data.parameters -= optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
    }

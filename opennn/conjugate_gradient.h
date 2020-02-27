@@ -93,6 +93,7 @@ public:
 
         Index epoch = 0;
 
+        type learning_rate = 0;
         type old_learning_rate = 0;
 
         type parameters_increment_norm = 0;
@@ -283,9 +284,9 @@ public:
             optimization_data.training_direction,
             initial_learning_rate);
 
-       type learning_rate = directional_point.first;
+       optimization_data.learning_rate = directional_point.first;
 
-       if(optimization_data.epoch != 0 && abs(learning_rate) < numeric_limits<type>::min())
+       if(optimization_data.epoch != 0 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
        {
            // Reset training direction
 
@@ -297,10 +298,10 @@ public:
                                optimization_data.training_direction,
                                first_learning_rate);
 
-           learning_rate = directional_point.first;
+           optimization_data.learning_rate = directional_point.first;
        }
 
-       optimization_data.parameters_increment = optimization_data.training_direction*learning_rate;
+       optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
 
        optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
@@ -314,7 +315,7 @@ public:
        optimization_data.old_gradient = back_propagation.gradient;
 
        optimization_data.old_training_direction = optimization_data.training_direction;
-//       back_propagation.old_learning_rate = learning_rate;
+       optimization_data.old_learning_rate = optimization_data.learning_rate;
 
 }
 
