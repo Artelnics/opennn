@@ -214,7 +214,7 @@ void StatisticsTest::test_calculate_most_populated_bin()  //<-- Calculates de fi
     assert_true(histogram_1.calculate_most_populated_bin() == 3, LOG);
 }
 
-void StatisticsTest::test_calculate_minimal_centers()    //<-- Should be Index type ?
+void StatisticsTest::test_calculate_minimal_centers()
 {
     cout << "test_calculate_minimal_centers\n";
 
@@ -253,7 +253,7 @@ void StatisticsTest::test_calculate_minimal_centers()    //<-- Should be Index t
     assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(2)) == 4, LOG);
 }
 
-void StatisticsTest::test_calculate_maximal_centers()    //<-- Should be Index type ?
+void StatisticsTest::test_calculate_maximal_centers()
 {
     cout << "test_calculate_maximal_centers\n";
 
@@ -538,24 +538,24 @@ void StatisticsTest::test_standard_deviation()
 {
    cout << "test_standard_deviation\n";
 
-
    // Test 0
 /*
    Tensor<type, 1> vector;
    assert_true(static_cast<Index>(standard_deviation(vector)) == 0, LOG);
 */
+
    // Test 1 , 2
-/*
+
    Tensor<type, 1> vector_1(4);
-   vector_1.setValues({2,4,8,8});
+   vector_1.setValues({2,4,8,10});
 
    Tensor<type, 1> vector_2(4);
-   vector_2.setValues({-1,-4,-6,-8});
+   vector_2.setValues({-11,-11,-11,-11});
 
-   assert_true(static_cast<Index>(standard_deviation(vector_1)) == -1, LOG);
+   assert_true(static_cast<Index>(standard_deviation(vector_1)) == static_cast<Index>(sqrt(10)), LOG);
+   assert_true(static_cast<Index>(standard_deviation(vector_2)) == 0, LOG);
 
-
-
+/*
    Tensor<type, 1> vector;
 
    type standard_deviation;
@@ -574,16 +574,32 @@ void StatisticsTest::test_standard_deviation()
    standard_deviation = OpenNN::standard_deviation(vector);
 
    assert_true(abs(standard_deviation-1.4142) < 1.0e-3, LOG);
-
-   */
+*/
 
 }
 
-/*
 void StatisticsTest::test_calculate_median()
 {
     cout << "test_calculate_median\n";
 
+    // Test 0
+ /*
+    Tensor<type, 1> vector;
+    assert_true(static_cast<Index>(median(vector)) == 0, LOG);
+ */
+
+    // Test 1 , 2
+
+    Tensor<type, 1> vector_1(4);
+    vector_1.setValues({2,4,8,10});
+
+    Tensor<type, 1> vector_2(4);
+    vector_2.setValues({-11,-11,-11,-11});
+
+    assert_true(static_cast<Index>(median(vector_1)) == 6, LOG);
+    assert_true(static_cast<Index>(median(vector_2)) == -11, LOG);
+
+    /*
     Tensor<type, 1> vector;
     vector.resize(4);
     vector[0] = 1.0;
@@ -601,9 +617,10 @@ void StatisticsTest::test_calculate_median()
     vector[4] = 5.0;
 
     assert_true(abs(median(vector) - 3.0) < 1.0e-3, LOG);
+    */
 }
 
-
+/*
 void StatisticsTest::test_calculate_median_missing_values()
 {
     cout << "test_calculate_median_missing_values\n";
@@ -629,8 +646,9 @@ void StatisticsTest::test_calculate_median_missing_values()
     assert_true(abs(median_missing_values(vector) - 2.0) < 1.0e-3, LOG);
     assert_true(median_missing_values(matrix) == solution, LOG);
 }
+*/
 
-
+/*
 void  StatisticsTest::test_standard_deviation_missing_values()
 {
     cout << "test_standard_deviation_missing_values\n";
@@ -663,11 +681,30 @@ void  StatisticsTest::test_standard_deviation_missing_values()
 
     assert_true(abs(OpenNN::standard_deviation(vector_1) - OpenNN::standard_deviation_missing_values(vector)) < 1.0e-3 , LOG);
  }
-
+*/
 
 void StatisticsTest::test_variance()
 {
     cout << "test_variance\n";
+
+    // Test 0
+ /*
+    Tensor<type, 1> vector;
+    assert_true(static_cast<Index>(variance(vector)) == 0, LOG);
+ */
+
+    // Test 1 , 2
+
+    Tensor<type, 1> vector_1(4);
+    vector_1.setValues({2,4,8,10});
+
+    Tensor<type, 1> vector_2(4);
+    vector_2.setValues({-11,-11,-11,-11});
+
+//    assert_true(static_cast<Index>(variance(vector_1)) == 10, LOG);
+    assert_true(static_cast<Index>(variance(vector_2)) == 0, LOG);
+
+/*
     Tensor<type, 1> vector;
     vector.resize(1);
     vector[0] = 1;
@@ -679,9 +716,10 @@ void StatisticsTest::test_variance()
     vector[1] = 1.0;
     vector[2] = 2.0;
     assert_true(abs(variance(vector) - 0.333333333) < 1.0e-6, LOG);
+    */
 }
 
-
+/*
 void StatisticsTest::test_calculate_variance_missing_values()
 {
     cout << "test_calculate_variance_missing_values";
@@ -1493,27 +1531,27 @@ void StatisticsTest::run_test_case()
    test_calculate_mean();
 //   test_weighted_mean();
 //   test_calculate_mean_missing_values();
-/*
+
    // Mean binary
-   test_means_binary_columns();
-   test_means_binary_columns_missing_values();
+//   test_means_binary_columns();
+//   test_means_binary_columns_missing_values();
 
    // Median
    test_calculate_median();
-   test_calculate_median_missing_values();
+//   test_calculate_median_missing_values();
 
    // Variance
    test_variance();
-   test_calculate_variance_missing_values();
+//   test_calculate_variance_missing_values();
 
    // Assymetry
-   test_calculate_asymmetry();
-   test_calculate_asymmetry_missing_values();
+//   test_calculate_asymmetry();
+//   test_calculate_asymmetry_missing_values();
 
    // Kurtosis
-   test_calculate_kurtosis();
-   test_calculate_kurtosis_missing_values();
-*/
+//   test_calculate_kurtosis();
+//   test_calculate_kurtosis_missing_values();
+
    // Standard deviation
    test_standard_deviation();
 //  test_standard_deviation_missing_values();
