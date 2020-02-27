@@ -763,18 +763,18 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 
     auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
-
+cout << "ml" << endl;
     auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
-
+cout << "mr" << endl;
     // Kronecker Product
 
     auto product = kroneckerProduct(ml,mr).eval();
-
+cout << "product" << endl;
     // Matrix into a Tensor
 
     TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
-
+cout << "direct" << endl;
     return direct_matrix;
 }
 
@@ -1119,23 +1119,32 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
 
+    cout << "1" << endl;
+
     Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
 
+    cout << "2" << endl;
+
     const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, AT_B);
+
+    cout << "3" << endl;
 
     Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
                                - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
 
+    cout << "4" << endl;
+
     // Calculates Approximation
 
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-
+cout << "5" << endl;
+cout << "Parameters difference: " << parameters_difference << endl;
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
-
+cout << "6" << endl;
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
-
+cout << "7" << endl;
     inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
-
+cout << "8" << endl;
     return inverse_hessian_approximation;
 }
 
@@ -1248,11 +1257,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Loss index
 
-        cout << "Back propagation -------------------------------------" << endl;
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        cout << "End Back propagation -------------------------------------" << endl;
 
         training_loss = training_back_propagation.loss;
         training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
