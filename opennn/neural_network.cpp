@@ -1391,14 +1391,17 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     Tensor<type, 1> inputs(inputs_number);
 
     inputs = point;
-    /*
-        for(Index i = 0; i < points_number; i++)
-        {
-            inputs[direction] = minimum + (maximum-minimum)*i/static_cast<type>(points_number-1);
 
-            directional_inputs.set_row(i, inputs);
+    for(Index i = 0; i < points_number; i++)
+    {
+        inputs(direction) = minimum + (maximum-minimum)*static_cast<type>(i)/static_cast<type>(points_number-1);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            directional_inputs(i,j) = inputs(j);
         }
-    */
+    }
+
     return directional_inputs;
 }
 
