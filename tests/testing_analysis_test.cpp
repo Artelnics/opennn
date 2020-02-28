@@ -379,38 +379,40 @@ void TestingAnalysisTest::test_linear_regression()
    cout << "test_linear_regression\n";
 
    // Device
+
    Device device(Device::EigenSimpleThreadPool);
 
-   NeuralNetwork neural_network;
-   neural_network.set_device_pointer(&device);
+   // DataSet
 
    DataSet data_set;
-   data_set.set_device_pointer(&device);
-
-   Tensor<type, 2> data;
-
-   TestingAnalysis ta(&neural_network, &data_set);
-
-   Tensor<RegressionResults, 1> linear_regression;
-
-    // Test
-
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({1, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
-
-   neural_network.set_parameters_constant(0.0);
-
    data_set.set(1,2);
+
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
    data_set.set_testing();
 
-   linear_regression = ta.linear_regression();
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
 
    assert_true(linear_regression.size() == 1, LOG);
+   assert_true(linear_regression(0).a == 0, LOG);
+   assert_true(linear_regression(0).b == 0, LOG);
+   assert_true(linear_regression(0).correlation == 1, LOG);
 }
 
 
@@ -418,21 +420,36 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 {
    cout << "test_print_linear_regression_correlation\n";
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1,1,1});
+   // Device
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   Device device(Device::EigenSimpleThreadPool);
 
-   neural_network.set_parameters_constant(0.0);
+   // DataSet
 
-   DataSet data_set(1,1,1);
+   DataSet data_set;
+   data_set.set(1,2);
 
-   data_set.set_testing();
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
-   TestingAnalysis ta(&neural_network, &data_set);
-   ta.print_linear_regression_correlations();
+   data_set.set_testing();
+
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   testing_analysis.print_linear_regression_correlations();
 }
 
 
@@ -440,22 +457,36 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 {
     cout << "test_get_linear_regression_correlations_std\n";
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({1,1,1});
+    // Device
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    Device device(Device::EigenSimpleThreadPool);
 
-    neural_network.set_parameters_constant(0.0);
+    // DataSet
 
-    DataSet data_set(1,1,1);
+    DataSet data_set;
+    data_set.set(1,2);
 
-    data_set.set_testing();
+    data_set.set_device_pointer(&device);
 
     data_set.initialize_data(0.0);
 
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set_testing();
 
-    Tensor<type, 1> correlations = ta.get_linear_regression_correlations_std();
+    // Neural Network
+
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<type, 1> correlations = testing_analysis.get_linear_regression_correlations_std();
 
     assert_true(correlations.size() == 1, LOG);
     assert_true(correlations(0) == 1.0 , LOG);
@@ -479,26 +510,40 @@ void TestingAnalysisTest::test_perform_linear_regression()
 {
     cout << "test_perform_linear_regression\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
+
+    data_set.set_device_pointer(&device);
+
+    data_set.initialize_data(0.0);
+
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> linear_regression_analysis;
 
     // Test
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
-
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
-    data_set.initialize_data(0.0);
-
-    linear_regression_analysis = ta.perform_linear_regression_analysis();
+    linear_regression_analysis = testing_analysis.perform_linear_regression_analysis();
 
     Tensor<type, 1> test(1);
     test.setValues({0});
@@ -520,7 +565,7 @@ void TestingAnalysisTest::test_save_linear_regression_analysis()
    cout << "test_save_linear_regression_analysis\n";
 }
 
-/*
+
 void TestingAnalysisTest::test_calculate_confusion()
 {
    cout << "test_calculate_confusion\n";
@@ -535,12 +580,10 @@ void TestingAnalysisTest::test_calculate_confusion()
    Tensor<type, 2> actual;
    Tensor<type, 2> predicted;
 
-   Matrix<Index> confusion;
-
    // Test
 
-   actual.set(4, 3);
-   predicted.set(4, 3);
+   actual.resize(4, 3);
+   predicted.resize(4, 3);
 
    actual(0,0) = 1; actual(0,1) = 0; actual(0,2) = 0;
    actual(1,0) = 0; actual(1,1) = 1; actual(1,2) = 0;
@@ -552,10 +595,15 @@ void TestingAnalysisTest::test_calculate_confusion()
    predicted(2,0) = 0; predicted(2,1) = 1; predicted(2,2) = 0;
    predicted(3,0) = 0; predicted(3,1) = 0; predicted(3,2) = 1;
 
-   confusion = ta.calculate_confusion_multiple_classification(actual.to_tensor(), predicted.to_tensor());
+   Tensor<Index, 2> confusion = ta.calculate_confusion_multiple_classification(actual, predicted);
 
-   assert_true(confusion.sum() == 4, LOG);
-   assert_true(confusion.get_diagonal().sum() == 4, LOG);
+   Tensor<Index, 0> sum = confusion.sum();
+
+   assert_true(sum(0) == 4, LOG);
+   assert_true(confusion(0,0) == 1, LOG);
+   assert_true(confusion(1,1) == 2, LOG);
+   assert_true(confusion(2,2) == 1, LOG);
+   assert_true(confusion(0,2) == 0, LOG);
 }
 
 
@@ -563,19 +611,36 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1,1});
+   // Device
 
-   neural_network.set_parameters_constant(0.0);
+   Device device(Device::EigenSimpleThreadPool);
 
-   DataSet data_set(1,1,1);
+   // DataSet
 
-   data_set.set_testing();
+   DataSet data_set;
+   data_set.set(1,2);
+
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
-   TestingAnalysis ta(&neural_network, &data_set);
+   data_set.set_testing();
 
-   Tensor<type, 1> binary = ta.calculate_binary_classification_tests();
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
 }
@@ -633,19 +698,19 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.0;
-    outputs[1] = 0.0;
-    outputs[2] = 1.0;
-    outputs[3] = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
     roc_curve = ta.calculate_roc_curve(targets, outputs);
 
@@ -665,19 +730,19 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 1.0;
-    targets[2] = 1.0;
-    targets[3] = 0.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 1.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 0.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.12;
-    outputs[1] = 0.78;
-    outputs[2] = 0.84;
-    outputs[3] = 0.99;
+    outputs(0,0) = 0.12;
+    outputs(1,0) = 0.78;
+    outputs(2,0) = 0.84;
+    outputs(3,0) = 0.99;
 
     roc_curve = ta.calculate_roc_curve(targets, outputs);
 
@@ -696,7 +761,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_area_under_curve()
 {
     cout << "test_calculate_area_under_curve\n";
@@ -1459,7 +1524,7 @@ void TestingAnalysisTest::run_test_case()
 
    test_perform_linear_regression();
 
-/*
+
    // Binary classification test methods
 
    test_calculate_binary_classification_test();
@@ -1473,7 +1538,7 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_Wilcoxon_parameter();
 
    test_calculate_roc_curve();
-   test_calculate_area_under_curve();
+/*   test_calculate_area_under_curve();
    test_calculate_optimal_threshold();
 
    // Lift chart methods
