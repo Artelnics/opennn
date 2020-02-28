@@ -538,6 +538,8 @@ Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                        else outputs(i,j) = inputs(i,j);
                    }
                }
+
+               return outputs;
            }
        }
 

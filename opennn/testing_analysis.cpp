@@ -268,7 +268,9 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
     // Calculate regression parameters
 
     const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+
     const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     return linear_regression(targets,outputs);
@@ -1500,6 +1502,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
     const Index columns_number = targets.dimension(1);
 
     Tensor<Index, 2> confusion(columns_number, columns_number);
+    confusion.setZero();
 
     Index target_index = 0;
     Index output_index = 0;
@@ -1766,56 +1769,67 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         points_number = testing_instances_number;
         step_size = 1;
     }
-    /*
-        const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
 
-        const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-        const Tensor<Index, 1> columns_output_indices(1,0);
-        const Tensor<Index, 1> columns_targets_indices(1,1);
-
-        const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
-        const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
-
-        Tensor<type, 2> roc_curve(points_number+1, 3, 0.0);
-
-        const Index step_s = step_size;
-
-         #pragma omp parallel for schedule(dynamic)
-
-        for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    {
+        for(Index j = 0; j < targets.dimension(0); j++)
         {
-            Index positives = 0;
-            Index negatives = 0;
+            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
+            else targets_outputs(j,i) = outputs(j,i);
+        }
+    }
+/*
+    Tensor<type, 2> sorted_targets_outputs(targets_outputs.dimension(0), targets_outputs.dimension(1));
 
-            const Index current_index = i*step_s;
+//    sort(sorted_targets_outputs.data())
 
-            const type threshold = sorted_outputs(current_index, 0);
+    const Tensor<Index, 1> columns_output_indices(1,0);
+    const Tensor<Index, 1> columns_targets_indices(1,1);
 
-            for(Index j = 0; j < static_cast<Index>(current_index); j++)
-            {
-                 if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) == 1.0)
-                 {
-                     positives++;
-                 }
-                 if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0)) < numeric_limits<type>::min())
-                 {
-                     negatives++;
-                 }
-            }
+    const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
+    const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
 
-            roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
-            roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
-            roc_curve(i,2) = static_cast<type>(threshold);
+    Tensor<type, 2> roc_curve(points_number+1, 3, 0.0);
+
+    const Index step_s = step_size;
+
+     #pragma omp parallel for schedule(dynamic)
+
+    for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    {
+        Index positives = 0;
+        Index negatives = 0;
+
+        const Index current_index = i*step_s;
+
+        const type threshold = sorted_outputs(current_index, 0);
+
+        for(Index j = 0; j < static_cast<Index>(current_index); j++)
+        {
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) == 1.0)
+             {
+                 positives++;
+             }
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0)) < numeric_limits<type>::min())
+             {
+                 negatives++;
+             }
         }
 
-        roc_curve(points_number, 0) = 1.0;
-        roc_curve(points_number, 1) = 1.0;
-        roc_curve(points_number, 2) = 1.0;
+        roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
+        roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
+        roc_curve(i,2) = static_cast<type>(threshold);
+    }
 
-        return roc_curve;
+    roc_curve(points_number, 0) = 1.0;
+    roc_curve(points_number, 1) = 1.0;
+    roc_curve(points_number, 2) = 1.0;
+
+    return roc_curve;
     */
-    return Tensor<type, 2>();
+    return Tensor<type, 2> ();
 }
 
 
