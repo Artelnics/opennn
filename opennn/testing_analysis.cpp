@@ -1780,18 +1780,23 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             else targets_outputs(j,i) = outputs(j,i);
         }
     }
+
+    // Sort by ascending values
+//    const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
+
 /*
-    Tensor<type, 2> sorted_targets_outputs(targets_outputs.dimension(0), targets_outputs.dimension(1));
-
-//    sort(sorted_targets_outputs.data())
-
     const Tensor<Index, 1> columns_output_indices(1,0);
     const Tensor<Index, 1> columns_targets_indices(1,1);
 
     const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
     const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
+*/
+    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
+    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
 
-    Tensor<type, 2> roc_curve(points_number+1, 3, 0.0);
+    Tensor<type, 2> roc_curve(points_number+1, 3);
+    roc_curve.setZero();
 
     const Index step_s = step_size;
 
@@ -1812,7 +1817,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
              {
                  positives++;
              }
-             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0)) < numeric_limits<type>::min())
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) < numeric_limits<type>::min())
              {
                  negatives++;
              }
@@ -1828,8 +1833,6 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     roc_curve(points_number, 2) = 1.0;
 
     return roc_curve;
-    */
-    return Tensor<type, 2> ();
 }
 
 
