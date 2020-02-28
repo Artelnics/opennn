@@ -296,6 +296,10 @@ public:
    void save(const string&) const;
    void load(const string&);
 
+   bool contains(const Tensor<type, 1>&, const type&) const;
+   Tensor<type, 2> delete_row(const Tensor<type, 2>& , const Index&) const;
+
+
 
 private: 
 
