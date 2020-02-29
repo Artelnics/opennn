@@ -268,7 +268,9 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
     // Calculate regression parameters
 
     const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+
     const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     return linear_regression(targets,outputs);
@@ -1500,18 +1502,19 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
     const Index columns_number = targets.dimension(1);
 
     Tensor<Index, 2> confusion(columns_number, columns_number);
+    confusion.setZero();
 
     Index target_index = 0;
     Index output_index = 0;
-    /*
-        for(Index i = 0; i < rows_number; i++)
-        {
-            target_index = maximal_index(targets.chip(i, 0));
-            output_index = maximal_index(outputs.chip(i, 0));
 
-            confusion(target_index,output_index)++;
-        }
-    */
+    for(Index i = 0; i < rows_number; i++)
+    {
+        target_index = maximal_index(targets.chip(i, 0));
+        output_index = maximal_index(outputs.chip(i, 0));
+
+        confusion(target_index,output_index)++;
+    }
+
     return confusion;
 }
 
@@ -1766,56 +1769,70 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         points_number = testing_instances_number;
         step_size = 1;
     }
-    /*
-        const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
 
-        const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-        const Tensor<Index, 1> columns_output_indices(1,0);
-        const Tensor<Index, 1> columns_targets_indices(1,1);
-
-        const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
-        const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
-
-        Tensor<type, 2> roc_curve(points_number+1, 3, 0.0);
-
-        const Index step_s = step_size;
-
-         #pragma omp parallel for schedule(dynamic)
-
-        for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    {
+        for(Index j = 0; j < targets.dimension(0); j++)
         {
-            Index positives = 0;
-            Index negatives = 0;
+            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
+            else targets_outputs(j,i) = outputs(j,i);
+        }
+    }
 
-            const Index current_index = i*step_s;
+    // Sort by ascending values
+//    const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
 
-            const type threshold = sorted_outputs(current_index, 0);
+/*
+    const Tensor<Index, 1> columns_output_indices(1,0);
+    const Tensor<Index, 1> columns_targets_indices(1,1);
 
-            for(Index j = 0; j < static_cast<Index>(current_index); j++)
-            {
-                 if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) == 1.0)
-                 {
-                     positives++;
-                 }
-                 if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0)) < numeric_limits<type>::min())
-                 {
-                     negatives++;
-                 }
-            }
+    const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
+    const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
+*/
+    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
+    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
 
-            roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
-            roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
-            roc_curve(i,2) = static_cast<type>(threshold);
+    Tensor<type, 2> roc_curve(points_number+1, 3);
+    roc_curve.setZero();
+
+    const Index step_s = step_size;
+
+     #pragma omp parallel for schedule(dynamic)
+
+    for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    {
+        Index positives = 0;
+        Index negatives = 0;
+
+        const Index current_index = i*step_s;
+
+        const type threshold = sorted_outputs(current_index, 0);
+
+        for(Index j = 0; j < static_cast<Index>(current_index); j++)
+        {
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) == 1.0)
+             {
+                 positives++;
+             }
+             if(sorted_outputs(static_cast<unsigned>(j),0) < threshold && sorted_targets(static_cast<unsigned>(j),0) < numeric_limits<type>::min())
+             {
+                 negatives++;
+             }
         }
 
-        roc_curve(points_number, 0) = 1.0;
-        roc_curve(points_number, 1) = 1.0;
-        roc_curve(points_number, 2) = 1.0;
+        roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
+        roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
+        roc_curve(i,2) = static_cast<type>(threshold);
+    }
 
-        return roc_curve;
-    */
-    return Tensor<type, 2>();
+    roc_curve(points_number, 0) = 1.0;
+    roc_curve(points_number, 1) = 1.0;
+    roc_curve(points_number, 2) = 1.0;
+
+    return roc_curve;
 }
 
 
@@ -1996,16 +2013,31 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
         points_number = testing_instances_number;
         step_size = 1;
     }
-    /*
-        const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
 
-        const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-        const Tensor<Index, 1> columns_output_indices(0, 1, columns_number - 1);
-        const Tensor<Index, 1> columns_targets_indices(columns_number, 1, 2*columns_number - 1);
+    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    {
+        for(Index j = 0; j < targets.dimension(0); j++)
+        {
+            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
+            else targets_outputs(j,i) = outputs(j,i);
+        }
+    }
 
-        const Tensor<type, 2> sorted_targets = (sorted_targets_outputs.get_submatrix_columns(columns_targets_indices)).to_tensor();
-        const Tensor<type, 2> sorted_outputs = (sorted_targets_outputs.get_submatrix_columns(columns_output_indices)).to_tensor();
+    // Sort by ascending values
+//    const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
+
+/*
+    const Tensor<Index, 1> columns_output_indices(1,0);
+    const Tensor<Index, 1> columns_targets_indices(1,1);
+
+    const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(columns_targets_indices);
+    const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
+*/
+    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
+    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
 
         const Tensor<type, 2> roc_curve = calculate_roc_curve(sorted_targets, sorted_outputs);
 
@@ -2034,8 +2066,6 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
         }
 
         return optimal_threshold;
-    */
-    return 0.0;
 }
 
 
@@ -2067,42 +2097,53 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
         step_size = 1;
     }
-    /*
-        const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
 
-        const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_ascending(0);
+    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-        const Tensor<Index, 1> columns_output_indices(0, 1, columns_number - 1);
-
-        const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
-
-        type threshold = 0;
-        type optimal_threshold = 0.5;
-
-        type minimun_distance = numeric_limits<type>::max();
-        type distance;
-
-        Index current_index;
-
-        for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    {
+        for(Index j = 0; j < targets.dimension(0); j++)
         {
-            current_index = i*step_size;
-
-            threshold = sorted_outputs(current_index, 0);
-
-            distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
-
-            if(distance < minimun_distance)
-            {
-                optimal_threshold = threshold;
-
-                minimun_distance = distance;
-            }
+            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
+            else targets_outputs(j,i) = outputs(j,i);
         }
+    }
 
-        return optimal_threshold;
-    */
-    return 0.0;
+    // Sort by ascending values
+    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
+
+    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
+
+//    const Tensor<Index, 1> columns_output_indices(0, 1, columns_number - 1);
+
+//    const Tensor<type, 2> sorted_outputs = sorted_targets_outputs.get_submatrix_columns(columns_output_indices);
+
+    type threshold = 0;
+    type optimal_threshold = 0.5;
+
+    type minimun_distance = numeric_limits<type>::max();
+    type distance;
+
+    Index current_index;
+
+    for(Index i = 0; i < points_number; i++)
+    {
+        current_index = i*step_size;
+
+        threshold = sorted_outputs(current_index, 0);
+
+        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
+
+        if(distance < minimun_distance)
+        {
+            optimal_threshold = threshold;
+
+            minimun_distance = distance;
+        }
+    }
+
+    return optimal_threshold;
+
 }
 
 
@@ -2199,52 +2240,66 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     }
 
     const Index rows_number = targets.dimension(0);
-    /*
-        const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
+/*
+    const Tensor<type, 2> targets_outputs = (outputs.to_matrix()).assemble_columns(targets.to_matrix());
 
-        const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_descending(0);
+    const Tensor<type, 2> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-        const Tensor<Index, 1> target_variables_indices(1,1);
+    const Tensor<Index, 1> target_variables_indices(1,1);
 
-        const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
+    const Tensor<type, 2> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
+*/
+    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-        const Index points_number = 21;
-        const type percentage_increment = 0.05;
-
-        Tensor<type, 2> cumulative_gain(points_number, 2);
-
-        cumulative_gain(0,0) = 0;
-        cumulative_gain(0,1) = 0;
-
-        Index positives = 0;
-
-        type percentage = 0;
-
-        Index maximum_index;
-
-        for(Index i = 0; i < points_number - 1; i++)
+    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    {
+        for(Index j = 0; j < targets.dimension(0); j++)
         {
-            percentage += percentage_increment;
+            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
+            else targets_outputs(j,i) = outputs(j,i);
+        }
+    }
 
-            positives = 0;
+    // Sort by ascending values
+    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
 
-            maximum_index = static_cast<Index>(percentage*rows_number);
+    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
-            for(Index j = 0; j < maximum_index; j++)
+    const Index points_number = 21;
+    const type percentage_increment = 0.05;
+
+    Tensor<type, 2> cumulative_gain(points_number, 2);
+
+    cumulative_gain(0,0) = 0;
+    cumulative_gain(0,1) = 0;
+
+    Index positives = 0;
+
+    type percentage = 0;
+
+    Index maximum_index;
+
+    for(Index i = 0; i < points_number - 1; i++)
+    {
+        percentage += percentage_increment;
+
+        positives = 0;
+
+        maximum_index = static_cast<Index>(percentage*rows_number);
+
+        for(Index j = 0; j < maximum_index; j++)
+        {
+            if(sorted_targets(j, 0) == 1.0)
             {
-                if(sorted_targets(j, 0) == 1.0)
-                {
-                     positives++;
-                }
+                 positives++;
             }
-
-            cumulative_gain(i + 1, 0) = percentage;
-            cumulative_gain(i + 1, 1) = static_cast<type>(positives)/static_cast<type>(total_positives);
         }
 
-        return cumulative_gain;
-    */
-    return Tensor<type, 2>();
+        cumulative_gain(i + 1, 0) = percentage;
+        cumulative_gain(i + 1, 1) = static_cast<type>(positives)/static_cast<type>(total_positives);
+    }
+
+    return cumulative_gain;
 }
 
 
@@ -2596,8 +2651,6 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 
 Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    cout << "Calibration plot" << endl;
-
     const Index rows_number = targets.dimension(0);
 
     const Index points_number = 10;
@@ -2660,20 +2713,20 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
     // Subtracts calibration plot rows with value -1
 
     Index points_number_subtracted = 0;
-    /*
-        while(calibration_plot.get_column(0).contains(-1))
-         {
-             for(Index i = 1; i < points_number - points_number_subtracted+1; i++)
-             {
-                 if(abs(calibration_plot(i, 0) + 1.0) < numeric_limits<type>::min())
-                 {
-                     calibration_plot = calibration_plot.delete_row(i);
 
-                     points_number_subtracted++;
-                 }
+    while(contains(calibration_plot.chip(0,1), -1))
+     {
+         for(Index i = 1; i < points_number - points_number_subtracted+1; i++)
+         {
+             if(abs(calibration_plot(i, 0) + 1.0) < numeric_limits<type>::min())
+             {
+                 calibration_plot = delete_row(calibration_plot, i);
+
+                 points_number_subtracted++;
              }
          }
-    */
+     }
+
     return calibration_plot;
 }
 
@@ -2789,16 +2842,21 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_instances(const Tensor
     const Index rows_number = targets.dimension(0);
 
     Tensor<Index, 1> true_positives_indices;
-    /*
-        for(Index i = 0; i < rows_number; i++)
-        {
-            if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
-            {
-                true_positives_indices.push_back(testing_indices[i]);
-            }
-        }
 
-      */
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        Tensor<Index, 1> copy;
+        if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
+        {
+            true_positives_indices.resize(index+1);
+//            true_positives_indices.push_back(testing_indices[i]);
+            memcpy(true_positives_indices.data()+index, testing_indices.data()+i, static_cast<size_t>(1)*sizeof(Index));
+            index++;
+        }
+    }
+
     return true_positives_indices;
 }
 
@@ -3649,6 +3707,68 @@ void TestingAnalysis::load(const string& file_name)
     }
 
     from_XML(document);
+}
+
+bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value) const
+{
+//    Vector<T> copy(*this);
+    Tensor<type, 1> copy(tensor);
+
+    type* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return(it != (copy.data()+copy.size()));
+}
+
+Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const Index& row_index) const
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+   #ifdef __OPENNN_DEBUG__
+
+   if(row_index > rows_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "Matrix<T> delete_row(const size_t&) const.\n"
+             << "Index of row must be less than number of rows.\n"
+             << "row index: " << row_index << "rows_number" << rows_number << "\n";
+
+      throw logic_error(buffer.str());
+   }
+   else if(rows_number < 2)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "Matrix<T> delete_row(const size_t&) const.\n"
+             << "Number of rows must be equal or greater than two.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
+
+   for(Index i = 0; i < row_index; i++)
+   {
+      for(Index j = 0; j < columns_number; j++)
+      {
+        new_matrix(i,j) = tensor(i,j);
+      }
+   }
+
+   for(Index i = row_index+1; i < rows_number; i++)
+   {
+      for(Index j = 0; j < columns_number; j++)
+      {
+         new_matrix(i-1,j) = tensor(i,j);
+      }
+   }
+
+
+   return new_matrix;
 }
 
 }

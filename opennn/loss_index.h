@@ -264,6 +264,11 @@ public:
                                           const NeuralNetwork::ForwardPropagation&,
                                           BackPropagation&) const = 0;
 
+   // Numerical differentiation
+
+   type calculate_eta() const;
+   type calculate_h(const type&) const;
+
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
    // ERROR TERMS METHODS
@@ -274,6 +279,17 @@ public:
    virtual type calculate_error(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&) const = 0;
 
    virtual void calculate_error(BackPropagation&) const {}
+
+   type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
+   {
+       const Index instances_number = batch.get_instances_number();
+
+       NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+
+       neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
+
+       return calculate_error(batch, forward_propagation);
+   }
 
    void back_propagate(const DataSet::Batch& batch,
                                    NeuralNetwork::ForwardPropagation& forward_propagation,

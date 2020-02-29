@@ -18,7 +18,7 @@ TestingAnalysisTest::~TestingAnalysisTest()
 {
 }
 
-/*
+
 void TestingAnalysisTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -108,7 +108,7 @@ void TestingAnalysisTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
@@ -373,36 +373,46 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     assert_true(error_data_maximal[0] == 0 , LOG);
 }
 
-
+*/
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
 
-   NeuralNetwork neural_network;
+   // Device
+
+   Device device(Device::EigenSimpleThreadPool);
+
+   // DataSet
 
    DataSet data_set;
+   data_set.set(1,2);
 
-   Tensor<type, 2> data;
-
-   TestingAnalysis ta(&neural_network, &data_set);
-
-   Tensor<RegressionResults, 1> linear_regression;
-
-    // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
-
-   neural_network.set_parameters_constant(0.0);
-
-   data_set.set(1,1,1);
-
-   data_set.set_testing();
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
-   linear_regression = ta.linear_regression();
+   data_set.set_testing();
+
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
 
    assert_true(linear_regression.size() == 1, LOG);
+   assert_true(linear_regression(0).a == 0, LOG);
+   assert_true(linear_regression(0).b == 0, LOG);
+   assert_true(linear_regression(0).correlation == 1, LOG);
 }
 
 
@@ -410,18 +420,36 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 {
    cout << "test_print_linear_regression_correlation\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
+   // Device
 
-   neural_network.set_parameters_constant(0.0);
+   Device device(Device::EigenSimpleThreadPool);
 
-   DataSet data_set(1,1,1);
+   // DataSet
 
-   data_set.set_testing();
+   DataSet data_set;
+   data_set.set(1,2);
+
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
-   TestingAnalysis ta(&neural_network, &data_set);
-//   ta.print_linear_regression_correlations();
+   data_set.set_testing();
+
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   testing_analysis.print_linear_regression_correlations();
 }
 
 
@@ -429,22 +457,39 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 {
     cout << "test_get_linear_regression_correlations_std\n";
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
+    // Device
 
-    neural_network.set_parameters_constant(0.0);
+    Device device(Device::EigenSimpleThreadPool);
 
-    DataSet data_set(1,1,1);
+    // DataSet
 
-    data_set.set_testing();
+    DataSet data_set;
+    data_set.set(1,2);
+
+    data_set.set_device_pointer(&device);
 
     data_set.initialize_data(0.0);
 
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set_testing();
 
-    Tensor<type, 1> correlations = ta.get_linear_regression_correlations_std();
+    // Neural Network
+
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<type, 1> correlations = testing_analysis.get_linear_regression_correlations_std();
 
     assert_true(correlations.size() == 1, LOG);
-    assert_true(correlations[0] == 1.0 , LOG);
+    assert_true(correlations(0) == 1.0 , LOG);
 }
 
 void TestingAnalysisTest::test_save_linear_regression()
@@ -465,26 +510,46 @@ void TestingAnalysisTest::test_perform_linear_regression()
 {
     cout << "test_perform_linear_regression\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
+
+    data_set.set_device_pointer(&device);
+
+    data_set.initialize_data(0.0);
+
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> linear_regression_analysis;
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    linear_regression_analysis = testing_analysis.perform_linear_regression_analysis();
 
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
-    data_set.initialize_data(0.0);
-
-    linear_regression_analysis = ta.perform_linear_regression_analysis();
+    Tensor<type, 1> test(1);
+    test.setValues({0});
 
     assert_true(linear_regression_analysis.size() == 1 , LOG);
-    assert_true(linear_regression_analysis[0].targets == Tensor<type, 1>{0} , LOG);
+    assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
     assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
 }
 
@@ -515,12 +580,10 @@ void TestingAnalysisTest::test_calculate_confusion()
    Tensor<type, 2> actual;
    Tensor<type, 2> predicted;
 
-   Matrix<Index> confusion;
-
    // Test
 
-   actual.set(4, 3);
-   predicted.set(4, 3);
+   actual.resize(4, 3);
+   predicted.resize(4, 3);
 
    actual(0,0) = 1; actual(0,1) = 0; actual(0,2) = 0;
    actual(1,0) = 0; actual(1,1) = 1; actual(1,2) = 0;
@@ -532,10 +595,15 @@ void TestingAnalysisTest::test_calculate_confusion()
    predicted(2,0) = 0; predicted(2,1) = 1; predicted(2,2) = 0;
    predicted(3,0) = 0; predicted(3,1) = 0; predicted(3,2) = 1;
 
-   confusion = ta.calculate_confusion_multiple_classification(actual.to_tensor(), predicted.to_tensor());
+   Tensor<Index, 2> confusion = ta.calculate_confusion_multiple_classification(actual, predicted);
 
-   assert_true(confusion.sum() == 4, LOG);
-   assert_true(confusion.get_diagonal().sum() == 4, LOG);
+   Tensor<Index, 0> sum = confusion.sum();
+
+   assert_true(sum(0) == 4, LOG);
+   assert_true(confusion(0,0) == 1, LOG);
+   assert_true(confusion(1,1) == 2, LOG);
+   assert_true(confusion(2,2) == 1, LOG);
+   assert_true(confusion(0,2) == 0, LOG);
 }
 
 
@@ -543,19 +611,36 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1,1});
+   // Device
 
-   neural_network.set_parameters_constant(0.0);
+   Device device(Device::EigenSimpleThreadPool);
 
-   DataSet data_set(1,1,1);
+   // DataSet
 
-   data_set.set_testing();
+   DataSet data_set;
+   data_set.set(1,2);
+
+   data_set.set_device_pointer(&device);
 
    data_set.initialize_data(0.0);
 
-   TestingAnalysis ta(&neural_network, &data_set);
+   data_set.set_testing();
 
-   Tensor<type, 1> binary = ta.calculate_binary_classification_tests();
+   // Neural Network
+
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   neural_network.set_device_pointer(&device);
+
+   // Testing Analysis
+
+   TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+   Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
 }
@@ -613,19 +698,19 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.0;
-    outputs[1] = 0.0;
-    outputs[2] = 1.0;
-    outputs[3] = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
     roc_curve = ta.calculate_roc_curve(targets, outputs);
 
@@ -635,7 +720,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve(0, 0) <= numeric_limits<type>::min(), LOG);
     assert_true(roc_curve(0, 1) <= numeric_limits<type>::min(), LOG);
     assert_true(roc_curve(1, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(1, 1) <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(1, 1)-1 <= numeric_limits<type>::min(), LOG);
     assert_true(roc_curve(2, 0) <= numeric_limits<type>::min(), LOG);
     assert_true(roc_curve(2, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
     assert_true(roc_curve(3, 0) <= numeric_limits<type>::min(), LOG);
@@ -645,19 +730,19 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 1.0;
-    targets[2] = 1.0;
-    targets[3] = 0.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 1.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 0.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.12;
-    outputs[1] = 0.78;
-    outputs[2] = 0.84;
-    outputs[3] = 0.99;
+    outputs(0,0) = static_cast<type>(0.12);
+    outputs(1,0) = static_cast<type>(0.78);
+    outputs(2,0) = static_cast<type>(0.84);
+    outputs(3,0) = static_cast<type>(0.99);
 
     roc_curve = ta.calculate_roc_curve(targets, outputs);
 
@@ -693,19 +778,19 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.0;
-    outputs[1] = 0.0;
-    outputs[2] = 1.0;
-    outputs[3] = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
     area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
@@ -713,39 +798,19 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.0;
-    outputs[1] = 1.0;
-    outputs[2] = 0.0;
-    outputs[3] = 1.0;
-
-    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
-
-    assert_true(area_under_curve == 0.5, LOG);
-
-    // Test
-
-    targets.set(Tensor<Index, 1>{4,1});
-
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
-
-    outputs.set(Tensor<Index, 1>{4,1});
-
-    outputs[0] = 0.78;
-    outputs[1] = 0.84;
-    outputs[2] = 0.12;
-    outputs[3] = 0.99;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 1.0;
+    outputs(2,0) = 0.0;
+    outputs(3,0) = 1.0;
 
     area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
@@ -753,19 +818,39 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 1.0;
-    outputs[1] = 1.0;
-    outputs[2] = 0.0;
-    outputs[3] = 0.0;
+    outputs(0,0) = static_cast<type>(0.78);
+    outputs(1,0) = static_cast<type>(0.84);
+    outputs(2,0) = static_cast<type>(0.12);
+    outputs(3,0) = static_cast<type>(0.99);
+
+    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+
+    assert_true(area_under_curve == 0.5, LOG);
+
+    // Test
+
+    targets.resize(4,1);
+
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
+
+    outputs.resize(4,1);
+
+    outputs(0,0) = 1.0;
+    outputs(1,0) = 1.0;
+    outputs(2,0) = 0.0;
+    outputs(3,0) = 0.0;
 
     area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
@@ -790,19 +875,19 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.0;
-    outputs[1] = 0.0;
-    outputs[2] = 1.0;
-    outputs[3] = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
     optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
@@ -810,19 +895,19 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 0.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 1.0;
-    outputs[1] = 1.0;
-    outputs[2] = 0.0;
-    outputs[3] = 0.0;
+    outputs(0,0) = 1.0;
+    outputs(1,0) = 1.0;
+    outputs(2,0) = 0.0;
+    outputs(3,0) = 0.0;
 
     optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
@@ -830,21 +915,21 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{5,1});
+    targets.resize(5,1);
 
-    targets[0] = 0.0;
-    targets[1] = 1.0;
-    targets[2] = 0.0;
-    targets[3] = 1.0;
-    targets[4] = 0.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 1.0;
+    targets(2,0) = 0.0;
+    targets(3,0) = 1.0;
+    targets(4,0) = 0.0;
 
-    outputs.set(Tensor<Index, 1>{5,1});
+    outputs.resize(5,1);
 
-    outputs[0] = 0.33;
-    outputs[1] = 0.14;
-    outputs[2] = 0.12;
-    outputs[3] = 0.62;
-    outputs[4] = 0.85;
+    outputs(0,0) = static_cast<type>(0.33);
+    outputs(1,0) = static_cast<type>(0.14);
+    outputs(2,0) = static_cast<type>(0.12);
+    outputs(3,0) = static_cast<type>(0.62);
+    outputs(4,0) = static_cast<type>(0.85);
 
     optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
@@ -864,25 +949,23 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
-    Tensor<type, 2> cumulative_gain;
-
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 1.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 0.0;
+    targets(0,0) = 1.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 0.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.67;
-    outputs[1] = 0.98;
-    outputs[2] = 0.78;
-    outputs[3] = 0.45;
+    outputs(0,0) = static_cast<type>(0.67);
+    outputs(1,0) = static_cast<type>(0.98);
+    outputs(2,0) = static_cast<type>(0.78);
+    outputs(3,0) = static_cast<type>(0.45);
 
-    cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
+    Tensor<type, 2> cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
 
     assert_true(cumulative_gain.dimension(1) == 2, LOG);
     assert_true(cumulative_gain.dimension(0) == 21, LOG);
@@ -911,19 +994,19 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     // Test
 
-    targets.set(Tensor<Index, 1>{4,1});
+    targets.resize(4,1);
 
-    targets[0] = 1.0;
-    targets[1] = 0.0;
-    targets[2] = 1.0;
-    targets[3] = 0.0;
+    targets(0,0) = 1.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 0.0;
 
-    outputs.set(Tensor<Index, 1>{4,1});
+    outputs.resize(4,1);
 
-    outputs[0] = 0.67;
-    outputs[1] = 0.87;
-    outputs[2] = 0.99;
-    outputs[3] = 0.88;
+    outputs(0,0) = static_cast<type>(0.67);
+    outputs(1,0) = static_cast<type>(0.87);
+    outputs(2,0) = static_cast<type>(0.99);
+    outputs(3,0) = static_cast<type>(0.88);
 
     cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
 
@@ -950,7 +1033,7 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     // Test
 
-    targets.set(10, 1);
+    targets.resize(10, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 0.0;
@@ -963,20 +1046,20 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
     targets(8, 0) = 1.0;
     targets(9, 0) = 0.0;
 
-    outputs.set(10, 1);
+    outputs.resize(10, 1);
 
-    outputs(0, 0) = 0.09;
-    outputs(1, 0) = 0.19;
-    outputs(2, 0) = 0.29;
-    outputs(3, 0) = 0.39;
-    outputs(4, 0) = 0.49;
-    outputs(5, 0) = 0.59;
-    outputs(6, 0) = 0.58;
-    outputs(7, 0) = 0.79;
-    outputs(8, 0) = 0.89;
-    outputs(9, 0) = 0.99;
+    outputs(0, 0) = static_cast<type>(0.09);
+    outputs(1, 0) = static_cast<type>(0.19);
+    outputs(2, 0) = static_cast<type>(0.29);
+    outputs(3, 0) = static_cast<type>(0.39);
+    outputs(4, 0) = static_cast<type>(0.49);
+    outputs(5, 0) = static_cast<type>(0.59);
+    outputs(6, 0) = static_cast<type>(0.58);
+    outputs(7, 0) = static_cast<type>(0.79);
+    outputs(8, 0) = static_cast<type>(0.89);
+    outputs(9, 0) = static_cast<type>(0.99);
 
-    calibration_plot = ta.calculate_calibration_plot(targets.to_tensor(), outputs.to_tensor());
+    calibration_plot = ta.calculate_calibration_plot(targets, outputs);
 
     assert_true(calibration_plot.dimension(1) == 2, LOG);
     assert_true(calibration_plot.dimension(0) == 11, LOG);
@@ -999,65 +1082,69 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Tensor<Index, 1> testing_indices(0, 1, 3);
+    Tensor<Index, 1> testing_indices(4);
+    testing_indices.setValues({0, 1, 2, 3});
+
     const type threshold = 0.5;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 1, LOG);
     assert_true(true_positives_indices[0] == 1, LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 0.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 1.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_positives_indices.empty(), LOG);
+    Tensor<bool, 0> not_empty = true_positives_indices.any();
+
+    assert_true(!not_empty(0), LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 1.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 1.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 4, LOG);
     assert_true(true_positives_indices[0] == 0, LOG);
@@ -1066,7 +1153,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     assert_true(true_positives_indices[3] == 3, LOG);
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_false_positive_instances()
 {
     cout << "test_calculate_false_positive_instaces\n";
@@ -1392,7 +1479,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 void TestingAnalysisTest::run_test_case()
 {
    cout << "Running testing analysis test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -1413,7 +1500,7 @@ void TestingAnalysisTest::run_test_case()
    test_set_display();
 
    // Error data methods
-
+/*
    test_calculate_error_data();
    test_calculate_percentage_error_data();
    test_calculate_error_data_statistics();
@@ -1425,7 +1512,7 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_histograms();
 
    test_calculate_maximal_errors();
-
+*/
    // Linear regression analysis methodsta
 
 
@@ -1468,7 +1555,7 @@ void TestingAnalysisTest::run_test_case()
    // Binary classification rates
 
    test_calculate_true_positive_instances();
-   test_calculate_false_positive_instances();
+/*   test_calculate_false_positive_instances();
    test_calculate_false_negative_instances();
    test_calculate_true_negative_instances();
 

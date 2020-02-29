@@ -846,17 +846,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        training_forward_propagation.print();
-
-        system("pause");
-
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        training_back_propagation.print();
-
-        system("pause");
 
         training_loss = training_back_propagation.loss;
 

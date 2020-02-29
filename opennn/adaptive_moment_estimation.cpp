@@ -512,7 +512,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
+//    const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
@@ -523,7 +523,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set_pointer->has_selection();
 
-    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
     // Neural network
@@ -537,10 +537,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Loss index
 
-    LossIndex::BackPropagation back_propagation(training_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
 
     type training_loss = 0;
-    type selection_error = 0;
+    type selection_error = numeric_limits<type>::max();
 
     // Optimization algorithm
 
@@ -558,7 +558,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     Index iteration_count = 0;
 
-    OptimizationData optimization_data;
+    OptimizationData optimization_data(this);
 
     bool is_forecasting = false;
 
@@ -570,7 +570,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, !is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -610,7 +610,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number); //  return -nan(inf)
+        training_loss /= static_cast<type>(batches_number);
 
         if(has_selection)
         {

@@ -78,17 +78,30 @@ public:
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
             parameters.resize(parameters_number);
+            parameters = neural_network_pointer->get_parameters();
+
             minimal_selection_parameters.resize(parameters_number);
 
             gradient_exponential_decay.resize(parameters_number);
+            gradient_exponential_decay.setZero();
+
             square_gradient_exponential_decay.resize(parameters_number);
+            square_gradient_exponential_decay.setZero();
 
             last_gradient_exponential_decay.resize(parameters_number);
+            last_gradient_exponential_decay.setZero();
+
             last_square_gradient_exponential_decay.resize(parameters_number);
+            last_square_gradient_exponential_decay.setZero();
         }
 
         void print() const
         {
+            cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
+
+            cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
+
+            cout << "Parmeters:" << endl << parameters << endl;
         }
 
         AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
@@ -218,6 +231,7 @@ public:
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
                                  OptimizationData& optimization_data)
    {
+
        const type learning_rate =
                initial_learning_rate*sqrt(static_cast<type>(1.0)
                - pow(beta_2, static_cast<type>(optimization_data.iteration)))/(static_cast<type>(1.0)
@@ -247,7 +261,7 @@ private:
 
    /// Initial learning rate
 
-   type initial_learning_rate;
+   type initial_learning_rate = static_cast<type>(0.001);
 
    /// Learning rate decay over each update.
 
