@@ -89,6 +89,10 @@ public:
 
        void resize_training_history(const Index&);
 
+       /// Resizes the training and selection error history keeping the values.
+
+       void resize_error_history(const Index&);
+
        /// Writes final results of the training.
 /*
        Tensor<string, 2> write_final_results(const Index& precision = 3) const;

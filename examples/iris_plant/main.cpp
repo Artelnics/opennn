@@ -28,28 +28,39 @@ int main(void)
     try
     {
         cout << "OpenNN. Iris Plant Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
-        data_set.set_columns_uses({"Input","Input","Input","Input","Target"});
+        Tensor<string, 1> uses(5);
+        uses.setValues({"Input","Input","Input","Input","Target"});
+        data_set.set_columns_uses(uses);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Vector<string> input_columns_names = data_set.get_input_columns_names();
-        const Vector<string> target_columns_names = data_set.get_target_columns_names();
+        const Tensor<string, 1> input_columns_names = data_set.get_input_columns_names();
+        const Tensor<string, 1> target_columns_names = data_set.get_target_columns_names();
 
         data_set.split_instances_random();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {4, 6, 3});
+        Tensor<Index, 1> architecture(3);
+        architecture.setValues({4, 6, 3});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
 
@@ -64,6 +75,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
@@ -86,7 +98,7 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         cout << "Confusion: " << endl;
         cout << confusion << endl;
@@ -100,10 +112,10 @@ int main(void)
 
         training_strategy.save("../data/training_strategy.xml");
 
-        confusion.save_csv("../data/confusion.csv");
+//        confusion.save_csv("../data/confusion.csv");
 
         cout << "Bye" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

@@ -762,10 +762,9 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
     // Transform Tensors into Dense matrix
 
     auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
-            (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
-
+            (left_matrix.data(),left_matrix.dimension(0), 1);
     auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
-            (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
+            (right_matrix.data(),right_matrix.dimension(0), 1);
 
     // Kronecker Product
 
@@ -773,7 +772,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 
     // Matrix into a Tensor
 
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
 
     return direct_matrix;
 }
@@ -1200,7 +1199,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type training_loss = 0;
     type training_error = 0;
-//    type old_training_loss = 0;
 
     type gradient_norm = 0;
 
@@ -1212,8 +1210,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     // Optimization algorithm
 
     Tensor<type, 0> training_slope;
-
-//    type learning_rate = 0;
 
     Tensor<type, 1> minimal_selection_parameters;
 
@@ -1248,11 +1244,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Loss index
 
-        cout << "Back propagation -------------------------------------" << endl;
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        cout << "End Back propagation -------------------------------------" << endl;
 
         training_loss = training_back_propagation.loss;
         training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
@@ -1290,18 +1282,50 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
 
+        cout << "epoch: " << epoch << endl;
+        cout << "training error: " << training_error << endl;
+
+        cout << "selection error: " << selection_error << endl;
+        cout << "----------------------" << endl;
+
         // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
+
+        cout << "history: " << results.training_error_history(0) << endl;
+
+
 
         // Stopping Criteria
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        //parameters_increment_norm = optimization_data.parameters
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+        {
+            if(display)
+            {
+               cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+                    << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
+            }
 
-        if(training_loss <= training_loss_goal)
+            stop_training = true;
+
+            results.stopping_condition = MinimumParametersIncrementNorm;
+        }
+        else if(epoch != 0 && (training_loss-optimization_data.old_training_loss) >= minimum_loss_decrease)
+        {
+            if(display)
+            {
+               cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                    << "Loss decrease: " << training_loss-optimization_data.old_training_loss <<  endl;
+            }
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumLossDecrease;
+        }
+        else if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1376,7 +1400,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.epochs_number = epoch;
 
-            results.resize_training_history(epoch+1);
+            results.resize_error_history(epoch+1);
 
             if(display)
             {
@@ -1431,6 +1455,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //selection_error = minimum_selection_error;
     }
+
+    cout << "history: " << results.training_error_history(0) << endl;
 
     return results;
 }

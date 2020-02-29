@@ -303,6 +303,10 @@ public:
    {
        const Index parameters_number = optimization_data.parameters.dimension(0);
 
+       cout << "Epoch: " << optimization_data.epoch << endl;
+       cout << "l2_norm(optimization_data.old_parameters - optimization_data.parameters): " << l2_norm(optimization_data.old_parameters - optimization_data.parameters) << endl;
+       cout << "l2_norm(optimization_data.old_gradient - back_propagation.gradient): " << l2_norm(optimization_data.old_gradient - back_propagation.gradient) << endl;
+
        if(optimization_data.epoch == 0
        || l2_norm(optimization_data.old_parameters - optimization_data.parameters) < numeric_limits<type>::min()
        || l2_norm(optimization_data.old_gradient - back_propagation.gradient) < numeric_limits<type>::min())
@@ -323,13 +327,13 @@ public:
 
        // Optimization algorithm
 
-       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, AT_B);
+       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
 
-       optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
+       optimization_data.training_direction = -normalized(optimization_data.training_direction);
 
        // Calculate training slope
 
-       optimization_data.training_slope = (-1)*normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -337,9 +341,7 @@ public:
        {
            //cout << "Training slope is greater than zero." << endl;
 
-           optimization_data.training_direction = back_propagation.gradient;
-
-           optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
+           optimization_data.training_direction = -normalized(back_propagation.gradient);
        }
 
        // Get initial training rate
@@ -379,22 +381,15 @@ public:
 
        optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
 
+       optimization_data.old_parameters = optimization_data.parameters;
+
        optimization_data.parameters += optimization_data.parameters_increment;
 
        optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-//       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-       optimization_data.old_parameters = optimization_data.parameters;
-
-//       optimization_data.old_training_loss = back_propagation.loss;
-
-//       old_selection_error = selection_error;
 
        optimization_data.old_gradient = back_propagation.gradient;
 
        optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
-
-//       optimization_data.learning_rate = learning_rate;
 
        optimization_data.old_learning_rate = optimization_data.learning_rate;
    }

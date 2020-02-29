@@ -2337,7 +2337,7 @@ Index DataSet::get_variable_index(const string& name) const
         if(variables_names(i) == name) return i;
     }
 
-    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
+    //hrow exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
 

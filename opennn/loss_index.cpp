@@ -826,17 +826,66 @@ LossIndex::BackPropagation::~BackPropagation()
 
 Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
 {
+    const Index instances_number = data_set_pointer->get_training_instances_number();
 
-    NumericalDifferentiation numerical_differentiation;
+    DataSet::Batch batch(instances_number, data_set_pointer);
 
-    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+    const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set_pointer->get_training_instances_indices());
+    const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+
+    batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-//    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
+    const Index parameters_number = parameters.size();
 
-    return Tensor<type, 1>();
+    type h;
+    Tensor<type, 1> parameters_forward(parameters);
+    Tensor<type, 1> parameters_backward(parameters);
+
+    type error_forward;
+    type error_backward;
+
+    Tensor<type, 1> numerical_gradient(parameters_number);
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+       h = calculate_h(parameters(i));
+
+       parameters_forward(i) += h;
+       error_forward = calculate_error(batch, parameters_forward);
+       parameters_forward(i) -= h;
+
+       parameters_backward(i) -= h;
+       error_backward = calculate_error(batch, parameters_backward);
+       parameters_backward(i) += h;
+
+       numerical_gradient(i) = (error_forward - error_backward)/(static_cast<type>(2.0)*h);
+    }
+
+    return numerical_gradient;
 }
+
+
+type LossIndex::calculate_eta() const
+{
+    const Index precision_digits = 6;
+
+    return pow(static_cast<type>(10.0), static_cast<type>(-1.0*precision_digits));
+}
+
+
+/// Calculates a proper step size for computing the derivatives, as a function of the inputs point value.
+/// @param x Input value.
+
+type LossIndex::calculate_h(const type& x) const
+{
+    const type eta = calculate_eta();
+
+    return sqrt(eta)*(static_cast<type>(1.0) + abs(x));
+}
+
 
 Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
 {
