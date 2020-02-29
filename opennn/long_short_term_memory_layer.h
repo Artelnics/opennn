@@ -103,8 +103,8 @@ public:
    Tensor<type, 2> get_output_recurrent_weights() const;
 
    Tensor<type, 2> get_biases() const;
-   Tensor<type, 2> get_weights() const;
-   Tensor<type, 2> get_recurrent_weights() const;
+   Tensor<type, 3> get_weights() const;
+   Tensor<type, 3> get_recurrent_weights() const;
 
    Index get_timesteps() const;
 
