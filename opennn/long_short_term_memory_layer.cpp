@@ -211,21 +211,19 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
 /// Dimension(1) is the number of neurons to the layer.
 /// Dimension(2) is 4.
 
-Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
+Tensor<type, 3> LongShortTermMemoryLayer::get_weights() const
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
-    /*
-        Tensor<type, 2> weights(inputs_number,neurons_number,4);
 
-        weights.set_matrix(0, forget_weights);
-        weights.set_matrix(1, input_weights);
-        weights.set_matrix(2, state_weights);
-        weights.set_matrix(3, output_weights);
+        Tensor<type, 3> weights(inputs_number,neurons_number,4);
+
+//        weights.set_matrix(0, forget_weights);
+//        weights.set_matrix(1, input_weights);
+//        weights.set_matrix(2, state_weights);
+//        weights.set_matrix(3, output_weights);
 
         return weights;
-    */
-    return Tensor<type, 2>();
 }
 
 
@@ -235,20 +233,18 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
 /// Dimension(1) is the number of neurons to the layer.
 /// Dimension(2) is 4.
 
-Tensor<type, 2> LongShortTermMemoryLayer::get_recurrent_weights() const
+Tensor<type, 3> LongShortTermMemoryLayer::get_recurrent_weights() const
 {
     const Index neurons_number = get_neurons_number();
-    /*
+
         Tensor<type, 2> recurrent_weights(neurons_number, neurons_number, 4);
 
-        recurrent_weights.set_matrix(0, forget_recurrent_weights);
-        recurrent_weights.set_matrix(1, input_recurrent_weights);
-        recurrent_weights.set_matrix(2, state_recurrent_weights);
-        recurrent_weights.set_matrix(3, output_recurrent_weights);
+//        recurrent_weights.set_matrix(0, forget_recurrent_weights);
+//        recurrent_weights.set_matrix(1, input_recurrent_weights);
+//        recurrent_weights.set_matrix(2, state_recurrent_weights);
+//        recurrent_weights.set_matrix(3, output_recurrent_weights);
 
         return recurrent_weights;
-    */
-    return Tensor<type, 2>();
 }
 
 
@@ -262,12 +258,12 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_biases() const
     const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> biases(neurons_number,4);
-    /*
-        biases.set_column(0,forget_biases);
-        biases.set_column(1,input_biases);
-        biases.set_column(2, state_biases);
-        biases.set_column(3, output_biases);
-    */
+
+//        biases.set_column(0,forget_biases);
+//        biases.set_column(1,input_biases);
+//        biases.set_column(2, state_biases);
+//        biases.set_column(3, output_biases);
+
     return biases;
 }
 
@@ -286,13 +282,12 @@ Index LongShortTermMemoryLayer::get_timesteps() const
 
 Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 {
-    /*
-        Tensor<type, 2> weights = get_weights();
-        Tensor<type, 2> recurrent_weights = get_recurrent_weights();
-        Tensor<type, 2> biases = get_biases();
+    const Tensor<type, 3> weights = get_weights();
+    const Tensor<type, 3> recurrent_weights = get_recurrent_weights();
+    const Tensor<type, 2> biases = get_biases();
 
-        return weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
-    */
+    //    return weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
+
     return Tensor<type, 1>();
 }
 
