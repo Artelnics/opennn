@@ -3059,6 +3059,7 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
+/// @todo david
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
