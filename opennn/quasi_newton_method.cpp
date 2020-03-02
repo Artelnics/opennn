@@ -1266,6 +1266,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {
+            selection_error = 0;
+
+            // Neural Network
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+
+            // Loss Index
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
             if(selection_error > old_selection_error)
