@@ -516,9 +516,9 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
 
         for(Index i = 0; i < rows_indices_size; i++)
         {
-            row_index = used_rows_indices(j);
+            row_index = used_rows_indices(i);
 
-            column(i) = matrix(i,j);
+            column(i) = matrix(row_index,column_index);
         }
 
         maximums(j) = maximum(column);
@@ -1745,7 +1745,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
         {
             row_index = used_rows_indices(j);
 
-            column(i) = matrix(i,j);
+            column(i) = matrix(row_index,column_index);
         }
 
         minimums(j) = minimum(column);

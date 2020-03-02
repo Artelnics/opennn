@@ -822,9 +822,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
         {
             for(Index j = 0; j < neurons_number; j++)
             {
-//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
-                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
-
+                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
                 {
                     if(display)
                     {
@@ -844,7 +842,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MinimumMaximum)
                     {
-                        outputs(i,j) = static_cast<type>(2.0)*(inputs(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
+                        outputs(i,j) = static_cast<type>(2)*(inputs(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
@@ -870,6 +868,8 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     }
     else if(inputs.rank() == 4)
     {
+        /*
+
         const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
@@ -902,9 +902,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 Index row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
                 Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
 
-//                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
-
-                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<type>::min())
+                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
                 {
                     if(display)
                     {
@@ -918,37 +916,38 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 }
                 else
                 {
-                    /*
-                       if(scaling_methods(j) == NoScaling)
-                       {
-                           outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
-                       }
-                       else if(scaling_methods(j) == MinimumMaximum)
-                       {
-                           outputs(i, channel_index, row_index, column_index) = 2.0*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - 1.0;
-                       }
-                       else if(scaling_methods(j) == MeanStandardDeviation)
-                       {
-                           outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
-                       }
-                       else if(scaling_methods(j) == StandardDeviation)
-                       {
-                           outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
-                       }
-                       else
-                       {
-                           ostringstream buffer;
 
-                           buffer << "OpenNN Exception: ScalingLayer class\n"
-                                  << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                                  << "Unknown scaling method.\n";
+                    if(scaling_methods(j) == NoScaling)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
+                    }
+                    else if(scaling_methods(j) == MinimumMaximum)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = static_cast<type>(2)*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
+                    }
+                    else if(scaling_methods(j) == MeanStandardDeviation)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
+                    }
+                    else if(scaling_methods(j) == StandardDeviation)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
+                    }
+                    else
+                    {
+                        ostringstream buffer;
 
-                           throw logic_error(buffer.str());
-                       }
-                    */
+                        buffer << "OpenNN Exception: ScalingLayer class\n"
+                               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                               << "Unknown scaling method.\n";
+
+                        throw logic_error(buffer.str());
+                    }
+
                 }
             }
         }
+        */
     }
 
     return outputs;

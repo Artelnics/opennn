@@ -271,6 +271,7 @@ public:
    Index get_used_columns_number() const;
 
    Index get_column_index(const string&) const;
+   Index get_column_index(const Index&) const;
 
    Tensor<Index, 1> get_input_columns_indices() const;
    Tensor<Index, 1> get_target_columns_indices() const;

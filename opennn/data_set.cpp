@@ -3411,6 +3411,39 @@ Index DataSet::get_column_index(const string& column_name) const
 }
 
 
+/// Returns the index of the column to which a variable index belongs.
+/// @param variable_index Index of the variable to be found.
+
+Index DataSet::get_column_index(const Index& variable_index) const
+{
+    const Index columns_number = get_columns_number();
+
+    Index total_variables_number = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            total_variables_number += columns(i).get_categories_number();
+        }
+        else
+        {
+            total_variables_number++;
+        }
+
+        if((variable_index+1) <= total_variables_number) return i;
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: DataSet class.\n"
+           << "Index get_column_index(const type&) const method.\n"
+           << "Cannot find variable index: " << variable_index << ".\n";
+
+    throw logic_error(buffer.str());
+}
+
+
 /// Returns the indices of a variable in the data set.
 /// Note that the number of variables does not have to equal the number of columns in the data set,
 /// because OpenNN recognizes the categorical columns, separating these categories into variables of the data set.
@@ -4931,11 +4964,15 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 }
 
 
+/// Returns a vector containing the minimums of the input variables.
+
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
     return columns_minimums(data, get_used_instances_indices(), get_input_variables_indices());
 }
 
+
+/// Returns a vector containing the minimums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
@@ -4943,11 +4980,16 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 }
 
 
+
+/// Returns a vector containing the maximums of the input variables.
+
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
     return columns_maximums(data, get_used_instances_indices(), get_input_variables_indices());
 }
 
+
+/// Returns a vector containing the maximums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
@@ -7889,6 +7931,9 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
+
+    cout << "Columns number: " << columns_number << endl;
+    cout << "Rows number: " << rows_number << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
