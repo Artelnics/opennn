@@ -617,15 +617,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-    const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
-
     // Main loop
 
     for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
-//        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-//        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
