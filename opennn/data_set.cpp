@@ -7932,9 +7932,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
-    cout << "Columns number: " << columns_number << endl;
-    cout << "Rows number: " << rows_number << endl;
-
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -9264,23 +9261,17 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    cout << "read_csv_1()" << endl;
-
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
 
-        cout << "read_csv_2_simple()" << endl;
-
         read_csv_3_simple();
-        cout << "read_csv_3_simple()" << endl;
     }
     else
     {
         read_csv_2_complete();
-        cout << "read_csv_2_complete()" << endl;
+
         read_csv_3_complete();
-        cout << "read_csv_3_complete()" << endl;
     }
 
     /*
@@ -9344,6 +9335,8 @@ void DataSet::read_csv_1()
 
     const char separator_char = get_separator_char();
 
+    cout << "Setting data file preview..." << endl;
+
     Index lines_number = 3;
 /// @todo if has columns names, 4 lines and save the last one
     data_file_preview.resize(lines_number);
@@ -9388,6 +9381,8 @@ void DataSet::read_csv_1()
 
     // Set rows labels and columns names
 
+    cout << "Setting rows labels..." << endl;
+
     if(contains_substring(data_file_preview(0)(0), "id"))
     {
         has_rows_labels = true;
@@ -9412,6 +9407,8 @@ void DataSet::read_csv_1()
 
     // Columns names
 
+    cout << "Setting columns names..." << endl;
+
     if(has_columns_names)
     {
         set_columns_names(data_file_preview(0));
@@ -9422,6 +9419,8 @@ void DataSet::read_csv_1()
     }
 
     // Columns types
+
+    cout << "Setting columns types..." << endl;
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -9485,6 +9484,8 @@ void DataSet::read_csv_2_simple()
     Index instances_count = 0;
 
     Index tokens_count;
+
+    cout << "Setting data dimensions..." << endl;
 
     while(file.good())
     {
@@ -9571,6 +9572,8 @@ void DataSet::read_csv_3_simple()
 
     Index j = 0;
 
+    cout << "Reading data..." << endl;
+
     while(file.good())
     {
         getline(file, line);
@@ -9600,7 +9603,11 @@ void DataSet::read_csv_3_simple()
         instance_index++;
     }
 
+    cout << "Data read succesfully..." << endl;
+
     // Check Binary
+
+    cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 
@@ -9660,6 +9667,8 @@ void DataSet::read_csv_2_complete()
 
     // Read data
 
+    cout << "Setting data dimensions..." << endl;
+
     while(file.good())
     {
         getline(file, line);
@@ -9699,6 +9708,8 @@ void DataSet::read_csv_2_complete()
 
         lines_count++;
     }
+
+    cout << "Setting categories..." << endl;
 
     for(unsigned j = 0; j < columns_number; j++)
     {
@@ -9774,6 +9785,8 @@ void DataSet::read_csv_3_complete()
     }
 
     // Read data
+
+    cout << "Reading data..." << endl;
 
     while(file.good())
     {
@@ -9863,6 +9876,8 @@ void DataSet::read_csv_3_complete()
 
         instance_index++;
     }
+
+    cout << "Data read succesfully..." << endl;
 
     // Read header
     /*
