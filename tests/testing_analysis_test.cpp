@@ -108,33 +108,48 @@ void TestingAnalysisTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-/*
+
 void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
 
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor<Tensor<type, 2>, 1> error_data;
+    data_set.set_device_pointer(&device);
+
+    data_set.initialize_data(0.0);
+
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_constant(0.0);
+    Tensor<type, 3> error_data= testing_analysis.calculate_error_data();
 
-    data_set.set(1, 1, 1);
-    data_set.initialize_data(0.0);
-    data_set.set_testing();
-
-    error_data = ta.calculate_error_data();
-
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data[0].dimension(0) == 1, LOG);
-    assert_true(error_data[0].dimension(1) == 3, LOG);
-    assert_true(error_data[0] == 0.0, LOG);
+    assert_true(error_data.size() == 3, LOG);
+    assert_true(error_data.dimension(0) == 1, LOG);
+    assert_true(error_data.dimension(1) == 3, LOG);
+    assert_true(static_cast<double>(error_data(0,0,0)) == 0.0, LOG);
 }
 
 
@@ -142,28 +157,44 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
     cout << "test_calculate_percentage_error_data\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
 
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor<Tensor<type, 1>, 1> error_data;
+    data_set.set_device_pointer(&device);
+
+    data_set.initialize_data(0.0);
+
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<type, 2> error_data;
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.initialize_data(0.0);
-    data_set.set_testing();
-
-    error_data = ta.calculate_percentage_error_data();
+    error_data = testing_analysis.calculate_percentage_error_data();
 
     assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data[0].size() == 1, LOG);
-    assert_true(error_data[0].get_first() == 0.0, LOG);
-    assert_true(error_data[0] == 0.0, LOG);
+    assert_true(error_data.dimension(1) == 1, LOG);
+    assert_true(static_cast<double>(error_data(0,0)) == 0.0, LOG);
 }
 
 
@@ -175,32 +206,42 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
 {
     cout << "test_calculate_absolute_error_statistics\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
 
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor<Descriptives, 1> error_data;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
+    data_set.set_testing();
 
-    error_data = ta.calculate_absolute_errors_statistics();
+    // Neural Network
 
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_statistics();
 
     assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data[0].minimum == 0.0, LOG);
-    assert_true(error_data[0].maximum == 0.0, LOG);
-    assert_true(error_data[0].mean == 0.0, LOG);
-    assert_true(error_data[0].standard_deviation == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 
 }
 
@@ -208,61 +249,86 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
 {
     cout << "test_calculate_percentage_error_statistics\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
 
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor<Descriptives, 1> error_data;
+    data_set.set_device_pointer(&device);
 
-    // Test
+    data_set.initialize_data(0.0);
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
-    data_set.initialize_data(1.0);
+    neural_network.set_device_pointer(&device);
 
-    error_data = ta.calculate_percentage_errors_statistics();
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_statistics();
 
     assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data[0].standard_deviation == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
 
 void TestingAnalysisTest::test_calculate_error_data_statistics()
 {
     cout << "test_calculate_error_data_statistics\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor< Tensor<Descriptives, 1>, 1> error_data_statistics;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
-    error_data_statistics = ta.calculate_error_data_statistics();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = testing_analysis.calculate_error_data_statistics();
 
     assert_true(error_data_statistics.size() == 1, LOG);
     assert_true(error_data_statistics[0].size() == 3, LOG);
-    assert_true(error_data_statistics[0][0].minimum == 0.0, LOG);
-    assert_true(error_data_statistics[0][0].maximum == 0.0, LOG);
-    assert_true(error_data_statistics[0][0].mean == 0.0, LOG);
-    assert_true(error_data_statistics[0][0].standard_deviation == 0.0, LOG);
-    assert_true(error_data_statistics[0][2].minimum == 0.0, LOG);
-    assert_true(error_data_statistics[0][2].maximum == 0.0, LOG);
-    assert_true(error_data_statistics[0][2].mean == 0.0, LOG);
-    assert_true(error_data_statistics[0][2].standard_deviation == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][0].minimum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][0].maximum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][0].mean) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][0].standard_deviation) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][2].minimum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][2].mean) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0, LOG);
 
 }
 
@@ -271,23 +337,36 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 {
     cout << "test_print_error_data_statistics\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor< Tensor<Descriptives, 1>, 1> error_data_statistics;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
-//    ta.print_error_data_statistics();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    testing_analysis.print_error_data_statistics();
 
 
 }
@@ -296,23 +375,36 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 {
     cout << "test_calculate_error_data_statistics_matrices\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor< Tensor<type, 2>, 1> error_data_statistics;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
-    error_data_statistics = ta.calculate_error_data_statistics_matrices();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<Tensor<type, 2>, 1> error_data_statistics = testing_analysis.calculate_error_data_statistics_matrices();
 
     assert_true(error_data_statistics.size() == 1, LOG);
     assert_true(error_data_statistics[0].dimension(0) == 2, LOG);
@@ -324,23 +416,36 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 {
     cout << "test_calculate_error_data_histograms\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(1,2);
 
-    Tensor<Histogram, 1> error_data_histograms;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 3);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
-    error_data_histograms = ta.calculate_error_data_histograms();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+    Tensor<Histogram, 1> error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
     assert_true(error_data_histograms.size() == 1, LOG);
     assert_true(error_data_histograms[0].get_bins_number() == 10, LOG);
@@ -351,29 +456,43 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 {
     cout << "test_calculate_maximal_errors\n";
 
-    NeuralNetwork neural_network;
+    // Device
+
+    Device device(Device::EigenSimpleThreadPool);
+
+    // DataSet
+
     DataSet data_set;
-    TestingAnalysis ta(&neural_network, &data_set);
+    data_set.set(4,2);
 
-    Tensor<Tensor<Index, 1>, 1> error_data_maximal;
+    data_set.set_device_pointer(&device);
 
-    // Test
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//    nn.construct_unscaling_layer();
-    neural_network.set_parameters_constant(0.0);
-
-    data_set.set(1, 1, 1);
-    data_set.set_testing();
     data_set.initialize_data(0.0);
 
-    error_data_maximal = ta.calculate_maximal_errors();
+    data_set.set_testing();
+
+    // Neural Network
+
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
+
+    neural_network.set_device_pointer(&device);
+
+    // Testing Analysis
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+/*
+    Tensor<Tensor<Index, 1>, 1> error_data_maximal = testing_analysis.calculate_maximal_errors(2);
 
     assert_true(error_data_maximal.size() == 1, LOG);
-    assert_true(error_data_maximal[0] == 0 , LOG);
+    assert_true(error_data_maximal[0](0) == 0 , LOG);
+    */
 }
 
-*/
+
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
@@ -410,9 +529,9 @@ void TestingAnalysisTest::test_linear_regression()
    Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
 
    assert_true(linear_regression.size() == 1, LOG);
-   assert_true(linear_regression(0).a == 0, LOG);
-   assert_true(linear_regression(0).b == 0, LOG);
-   assert_true(linear_regression(0).correlation == 1, LOG);
+   assert_true(static_cast<double>(linear_regression(0).a) == 0.0, LOG);
+   assert_true(static_cast<double>(linear_regression(0).b) == 0.0, LOG);
+   assert_true(static_cast<double>(linear_regression(0).correlation) == 1.0, LOG);
 }
 
 
@@ -1124,7 +1243,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 
     true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
-    Tensor<bool, 0> not_empty = true_positives_indices.any();
+    const Tensor<bool, 0> not_empty = true_positives_indices.any();
 
     assert_true(!not_empty(0), LOG);
 
@@ -1153,7 +1272,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     assert_true(true_positives_indices[3] == 3, LOG);
 }
 
-/*
+
 void TestingAnalysisTest::test_calculate_false_positive_instances()
 {
     cout << "test_calculate_false_positive_instaces\n";
@@ -1170,45 +1289,46 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Tensor<Index, 1> testing_indices(0, 1, 3);
+    Tensor<Index, 1> testing_indices(4);
+    testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets.to_tensor(), outputs.to_tensor(),testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 1, LOG);
     assert_true(false_positives_indices[0] == 2, LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 0.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 1.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets.to_tensor(), outputs.to_tensor(),testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 4, LOG);
     assert_true(false_positives_indices[0] == 0, LOG);
@@ -1218,23 +1338,27 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 1.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 1.0;
     outputs(1, 0) = 0.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets.to_tensor(), outputs.to_tensor(),testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
 
-    assert_true(false_positives_indices.empty(), LOG);
+    const Tensor<bool, 0> not_empty = false_positives_indices.any();
+
+    assert_true(!not_empty(0), LOG);
+
+//    assert_true(false_positives_indices.empty(), LOG);
 }
 
 
@@ -1254,65 +1378,70 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 0.0;
 
-    const Tensor<Index, 1> testing_indices(0, 1, 3);
+    Tensor<Index, 1> testing_indices(4);
+    testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 1, LOG);
     assert_true(false_negatives_indices[0] == 3, LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 1.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
-    assert_true(false_negatives_indices.empty(), LOG);
+//    assert_true(false_negatives_indices.empty(), LOG);
+
+    const Tensor<bool, 0> not_empty = false_negatives_indices.any();
+
+    assert_true(!not_empty(0), LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 1.0;
     targets(2, 0) = 1.0;
     targets(3, 0) = 1.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 0.0;
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 4, LOG);
     assert_true(false_negatives_indices[0] == 0, LOG);
@@ -1338,24 +1467,25 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 0.0;
     targets(2, 0) = 0.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 0.0;
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    const Tensor<Index, 1> testing_indices(0, 1, 3);
+    Tensor<Index, 1> testing_indices(4);
+    testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 4, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1365,41 +1495,43 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 1.0;
     targets(1, 0) = 0.0;
     targets(2, 0) = 1.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_negatives_indices.empty(), LOG);
+    const Tensor<bool, 0> not_empty = true_negatives_indices.any();
+
+    assert_true(!not_empty(0), LOG);
 
     // Test
 
-    targets.set(4, 1);
+    targets.resize(4, 1);
 
     targets(0, 0) = 0.0;
     targets(1, 0) = 0.0;
     targets(2, 0) = 1.0;
     targets(3, 0) = 0.0;
 
-    outputs.set(4, 1);
+    outputs.resize(4, 1);
 
     outputs(0, 0) = 0.0;
     outputs(1, 0) = 1.0;
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets.to_tensor(), outputs.to_tensor(), testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 1, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1409,7 +1541,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
     cout << "test_calculate_multiple_classification_rates\n";
-
+/*
     NeuralNetwork neural_network;
     DataSet data_set;
 
@@ -1420,8 +1552,8 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     // Test
 
-    targets.set(9, 3);
-    outputs.set(9, 3);
+    targets.resize(9, 3);
+    outputs.resize(9, 3);
 
     targets(0,0) = 1; targets(0,1) = 0; targets(0,2) = 0;
     targets(1,0) = 0; targets(1,1) = 1; targets(1,2) = 0;
@@ -1443,9 +1575,10 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     outputs(7,0) = 0; outputs(7,0) = 0; outputs(7,2) = 1;
     outputs(8,0) = 1; outputs(8,1) = 0; outputs(8,2) = 0;
 
-    const Tensor<Index, 1> testing_indices(0, 1, 8);
+    Tensor<Index, 1> testing_indices(9);
+    testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
-    Matrix< Tensor<Index, 1> > multiple_classification_rates = ta.calculate_multiple_classification_rates(targets.to_tensor(), outputs.to_tensor(), testing_indices);
+    Tensor< Tensor<Index, 1>, 2 > multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0).size() == 1, LOG);
     assert_true(multiple_classification_rates(0,0)[0] == 0, LOG);
@@ -1473,8 +1606,9 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     assert_true(multiple_classification_rates(2,2).size() == 1, LOG);
     assert_true(multiple_classification_rates(2,2)[0] == 2, LOG);
+    */
 }
-*/
+
 
 void TestingAnalysisTest::run_test_case()
 {
@@ -1500,19 +1634,19 @@ void TestingAnalysisTest::run_test_case()
    test_set_display();
 
    // Error data methods
-/*
+
    test_calculate_error_data();
    test_calculate_percentage_error_data();
    test_calculate_error_data_statistics();
    test_calculate_absolute_errors_statistics();
    test_calculate_percentage_errors_statistics();
-   test_calculate_error_data_statistics_matrices();
+//   test_calculate_error_data_statistics_matrices();
    test_print_error_data_statistics();
 
    test_calculate_error_data_histograms();
 
    test_calculate_maximal_errors();
-*/
+
    // Linear regression analysis methodsta
 
 
@@ -1555,14 +1689,14 @@ void TestingAnalysisTest::run_test_case()
    // Binary classification rates
 
    test_calculate_true_positive_instances();
-/*   test_calculate_false_positive_instances();
+   test_calculate_false_positive_instances();
    test_calculate_false_negative_instances();
    test_calculate_true_negative_instances();
 
    // Multiple classification rates
 
    test_calculate_multiple_classification_rates();
-*/
+
    cout << "End of testing analysis test case.\n";
 }
 

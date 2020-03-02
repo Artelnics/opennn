@@ -400,7 +400,7 @@ void TestingAnalysis::perform_linear_regression_analysis_void() const
 /// The number of rows in each matrix is the number of testing instances in the data set.
 /// The number of columns is the number of outputs in the neural network.
 
-Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
+Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
     // Data set
 
@@ -457,32 +457,27 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
 
     // Error data
 
-    Tensor<Tensor<type, 2>, 1> error_data(outputs_number);
+    Tensor<type, 3> error_data(testing_instances_number, 3, outputs_number);
 
-    Tensor<type, 1> targets_vector(testing_instances_number);
-    Tensor<type, 1> outputs_vector(testing_instances_number);
+//    Tensor<type, 1> targets_vector(testing_instances_number);
+//    Tensor<type, 1> outputs_vector(testing_instances_number);
 
-    Tensor<type, 1> difference_absolute_value(testing_instances_number);
+    // Absolute error
 
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        error_data[i].resize(testing_instances_number, 3);
+   Tensor<type, 2> difference_absolute_value = (targets - outputs).abs();
 
-        // Absolute error
-        /*
-               difference_absolute_value = (targets - outputs).abs();
-
-               error_data[i].set_column(0, difference_absolute_value, "");
-
-               // Relative error
-
-               error_data[i].set_column(1, difference_absolute_value/abs(outputs_maximum[i]-outputs_minimum[i]), "");
-
-               // Percentage error
-
-               error_data[i].set_column(2, difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]), "");
-        */
-    }
+   for(Index i = 0; i < outputs_number; i++)
+   {
+       for(Index j = 0; j < testing_instances_number; j++)
+       {
+           // Absolute error
+           error_data(j,0,i) = difference_absolute_value(j,i);
+           // Relative error
+           error_data(j,1,i) = difference_absolute_value(j,i)/abs(outputs_maximum(i)-outputs_minimum(i));
+           // Percentage error
+           error_data(j,2,i) = (difference_absolute_value(j,i)*static_cast<type>(100.0))/abs(outputs_maximum(i)-outputs_minimum(i));
+       }
+   }
 
     return error_data;
 }
@@ -491,7 +486,7 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data() const
 /// Calculates the percentege errors between the outputs from a neural network and the testing instances in a data set.
 /// The number of rows in each matrix is the number of testing instances in the data set.
 
-Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_percentage_error_data() const
+Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
     // Data set
 
@@ -540,7 +535,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_percentage_error_data() co
     }
 
 #endif
-    /*
+
        const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
        const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
@@ -548,29 +543,22 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_percentage_error_data() co
 
        // Error data
 
-       Tensor<Tensor<type, 1>, 1> error_data(outputs_number);
+       Tensor<type, 2> error_data(testing_instances_number, outputs_number);
 
-       Tensor<type, 1> targets_vector(testing_instances_number);
-       Tensor<type, 1> outputs_vector(testing_instances_number);
+//       Tensor<type, 1> targets_vector(testing_instances_number);
+//       Tensor<type, 1> outputs_vector(testing_instances_number);
 
-       Tensor<type, 1> difference_absolute_value(testing_instances_number);
+       Tensor<type, 2> difference_absolute_value = (targets - outputs).abs();
 
-       for(Index i = 0; i < outputs_number; i++)
+       for(Index i = 0; i < testing_instances_number; i++)
        {
-           error_data[i].set(testing_instances_number, 0.0);
-
-           // Absolute error
-
-           difference_absolute_value = absolute_value(targets - outputs);
-
-           // Percentage error
-
-           error_data[i].set(difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]));
-        }
+           for(Index j = 0; j < outputs_number; j++)
+           {
+               error_data(i,j) = (difference_absolute_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
+           }
+       }
 
        return error_data;
-    */
-    return Tensor<Tensor<type, 1>, 1>();
 }
 
 
@@ -596,10 +584,8 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics() 
 Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
-    /*
-        return descriptives(absolute_value(targets.to_matrix() - outputs.to_matrix()));
-    */
-    return Tensor<Descriptives, 1>();
+    const Tensor<type, 2> diff = (targets-outputs).abs();
+    return descriptives(diff);
 }
 
 
@@ -626,10 +612,9 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics(
 Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
-    /*
-        return descriptives(absolute_value(outputs.to_matrix() - targets.to_matrix())*100.0/targets.to_matrix());
-    */
-    return Tensor<Descriptives, 1>();
+    const Tensor<type, 2> diff = (static_cast<type>(100)*(targets-outputs).abs())/targets;
+
+    return descriptives(diff);
 }
 
 
@@ -647,15 +632,25 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_statist
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
+    const Index testing_instances_number = data_set_pointer->get_testing_instances_number();
+
     // Testing analysis stuff
 
     Tensor<Tensor<Descriptives, 1>, 1> _descriptives(outputs_number);
 
-    const Tensor<Tensor<type, 2>, 1> error_data = calculate_error_data();
+    Tensor<type, 3> error_data = calculate_error_data();
+
+    Index index = 0;
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        _descriptives[i] = descriptives(error_data[i]);
+        TensorMap< Tensor<type, 2> > matrix_error(error_data.data()+index, testing_instances_number, 3);
+
+        Tensor<type, 2> matrix(matrix_error);
+
+        _descriptives[i] = descriptives(matrix);
+
+        index += testing_instances_number*3;
     }
 
     return _descriptives;
@@ -664,8 +659,6 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_statist
 
 void TestingAnalysis::print_error_data_statistics() const
 {
-
-
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
@@ -720,7 +713,7 @@ Tensor<Tensor<type, 2>, 1> TestingAnalysis::calculate_error_data_statistics_matr
 
 Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
 {
-    const Tensor<Tensor<type, 1>, 1> error_data = calculate_percentage_error_data();
+    const Tensor<type, 2> error_data = calculate_percentage_error_data();
 
     const Index outputs_number = error_data.size();
 
@@ -728,7 +721,7 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Inde
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        histograms[i] = histogram_centered(error_data[i], 0.0, bins_number);
+        histograms[i] = histogram_centered(error_data.chip(0,i), 0.0, bins_number);
     }
 
     return histograms;
@@ -740,15 +733,22 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Inde
 
 Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Index& instances_number) const
 {
-    const Tensor<Tensor<type, 2>, 1> error_data = calculate_error_data();
+    Tensor<type, 3> error_data = calculate_error_data();
 
-    const Index outputs_number = error_data.size();
+    const Index outputs_number = error_data.dimension(2);
+    const Index testing_instances_number = error_data.dimension(0);
 
-    Tensor<Tensor<Index, 1>, 1> maximal_errors(outputs_number);
+    Tensor<Tensor<Index, 1>, 1> maximal_errors;
+
+    Index index = 0;
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        maximal_errors[i] = maximal_indices(error_data[i].chip(0,1), instances_number);
+        TensorMap< Tensor<type, 2> > matrix_error(error_data.data()+index, testing_instances_number, 3);
+
+        maximal_errors[i] = maximal_indices(matrix_error.chip(0,1), instances_number);
+
+        index += testing_instances_number*3;
     }
 
     return maximal_errors;
@@ -832,12 +832,12 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
     Tensor<type, 1> errors(4);
 
     // Results
-    /*
-        errors[0] = sum_squared_error(outputs, targets);
-        errors[1] = errors[0]/training_instances_number;
-        errors[2] = sqrt(errors[1]);
+
+//        errors[0] = (outputs-targets).square().sum().sqrt();sum_squared_error(outputs, targets);
+//        errors[1] = errors[0]/training_instances_number;
+//        errors[2] = sqrt(errors[1]);
     //    errors[3] = calculate_testing_normalized_squared_error(targets, outputs);
-    */
+
     return errors;
 }
 
@@ -2266,7 +2266,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
     const Index points_number = 21;
-    const type percentage_increment = 0.05;
+    const type percentage_increment = static_cast<type>(0.05);
 
     Tensor<type, 2> cumulative_gain(points_number, 2);
 
@@ -2841,7 +2841,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_instances(const Tensor
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> true_positives_indices;
+    Tensor<Index, 1> true_positives_indices_copy(rows_number);
 
     Index index = 0;
 
@@ -2850,12 +2850,15 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_instances(const Tensor
         Tensor<Index, 1> copy;
         if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
         {
-            true_positives_indices.resize(index+1);
 //            true_positives_indices.push_back(testing_indices[i]);
-            memcpy(true_positives_indices.data()+index, testing_indices.data()+i, static_cast<size_t>(1)*sizeof(Index));
+            true_positives_indices_copy(index) = testing_indices(i);
             index++;
         }
     }
+
+    Tensor<Index, 1> true_positives_indices(index);
+
+    memcpy(true_positives_indices.data(), true_positives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
 
     return true_positives_indices;
 }
@@ -2873,16 +2876,24 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_instances(const Tenso
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_positives_indices;
-    /*
-        for(Index i = 0; i < rows_number; i++)
+    Tensor<Index, 1> false_positives_indices_copy(rows_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
         {
-            if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-            {
-                false_positives_indices.push_back(testing_indices[i]);
-            }
+//            false_positives_indices.push_back(testing_indices[i]);
+            false_positives_indices_copy(index) = testing_indices(i);
+            index++;
         }
-    */
+    }
+
+    Tensor<Index, 1> false_positives_indices(index);
+
+    memcpy(false_positives_indices.data(), false_positives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+
     return false_positives_indices;
 }
 
@@ -2899,16 +2910,24 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_instances(const Tenso
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_negatives_indices;
-    /*
-        for(Index i = 0; i < rows_number; i++)
+    Tensor<Index, 1> false_negatives_indices_copy(rows_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
         {
-            if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-            {
-                false_negatives_indices.push_back(testing_indices[i]);
-            }
+//            false_negatives_indices.push_back(testing_indices[i]);
+            false_negatives_indices_copy(index) = testing_indices(i);
+            index++;
         }
-    */
+    }
+
+    Tensor<Index, 1> false_negatives_indices(index);
+
+    memcpy(false_negatives_indices.data(), false_negatives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+
     return false_negatives_indices;
 }
 
@@ -2923,18 +2942,26 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_instances(const Tenso
 Tensor<Index, 1> TestingAnalysis::calculate_true_negative_instances(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs,
         const Tensor<Index, 1>& testing_indices, const type& decision_threshold) const
 {
-    Tensor<Index, 1> true_negatives_indices;
-
     const Index rows_number = targets.dimension(0);
-    /*
-        for(Index i = 0; i < rows_number; i++)
+
+    Tensor<Index, 1> true_negatives_indices_copy(rows_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
         {
-            if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
-            {
-                true_negatives_indices.push_back(testing_indices[i]);
-            }
+//            true_negatives_indices.push_back(testing_indices[i]);
+            true_negatives_indices_copy(index) = testing_indices(i);
+            index++;
         }
-    */
+    }
+
+    Tensor<Index, 1> true_negatives_indices(index);
+
+    memcpy(true_negatives_indices.data(), true_negatives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+
     return true_negatives_indices;
 }
 
@@ -3007,6 +3034,7 @@ Tensor<Tensor<Index, 1>, 2> TestingAnalysis::calculate_multiple_classification_r
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = outputs.dimension(1);
+    const Index indices_size = testing_indices.size();
 
     Tensor<Tensor<Index, 1>, 2> multiple_classification_rates(rows_number, columns_number);
 
@@ -3017,9 +3045,8 @@ Tensor<Tensor<Index, 1>, 2> TestingAnalysis::calculate_multiple_classification_r
     {
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
-        /*
-                multiple_classification_rates(target_index, output_index).push_back(testing_indices[i]);
-        */
+
+//       multiple_classification_rates(target_index, output_index).push_back(testing_indices[i]);
     }
 
     return multiple_classification_rates;

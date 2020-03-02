@@ -66,7 +66,8 @@ int main(void)
 
         data_set.set_device_pointer(&device);
 
-        data_set.set_training();
+//        data_set.set_training();
+        data_set.split_instances_random();
 
         // Neural network
 
@@ -102,7 +103,8 @@ int main(void)
         StochasticGradientDescent* stochastic_gradient_descent_pointer
                 = training_strategy.get_stochastic_gradient_descent_pointer();
 
-        stochastic_gradient_descent_pointer->set_batch_instances_number(variables);
+        stochastic_gradient_descent_pointer->set_batch_instances_number(5);
+        stochastic_gradient_descent_pointer->set_batch_size(5);
 
         stochastic_gradient_descent_pointer->perform_training();
 

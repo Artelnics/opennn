@@ -836,7 +836,7 @@ Index NeuralNetwork::get_inputs_number() const
 {
     if(layers_pointers.dimension(0) != 0)
     {
-        return layers_pointers[0]->get_inputs_number();
+        return layers_pointers(0)->get_inputs_number();
     }
 
     return 0;
