@@ -10138,7 +10138,6 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
             count++;
         }
     }
-cout << batches << endl;
     return batches;
 }
 
