@@ -10107,11 +10107,20 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
 }
 
 
-Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, const Index & batch_size) const
+Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, const Index & new_batch_size) const
 {
-    const Index training_instances_number = training_indices.dimension(0);
+    const Index instances_number = instances_indices.dimension(0);
 
-    const Index batches_number =  training_instances_number / batch_size;
+    Index batches_number;
+    Index batch_size = new_batch_size;
+
+//    const Index batches_number =  instances_number / batch_size;
+    if(instances_number < batch_size)
+    {
+        batches_number = 1;
+        batch_size = instances_number;
+    }
+    else batches_number = instances_number / batch_size;
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -10121,12 +10130,12 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
     {
         for(Index j = 0; j < batch_size; ++j)
         {
-            batches(i,j) = training_indices(count);
+            batches(i,j) = instances_indices(count);
 
             count++;
         }
     }
-
+cout << batches << endl;
     return batches;
 }
 

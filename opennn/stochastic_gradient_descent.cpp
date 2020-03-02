@@ -617,11 +617,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+    const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
+
     // Main loop
 
     for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+//        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+//        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -661,13 +665,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection)
         {
+            const Index selection_batches_number = selection_batches.dimension(0);
+
             selection_error = 0;
 
-            for(Index iteration = 0; iteration < batches_number; iteration++)
+            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
                 // Data set
 
-                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
+                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
 
                 batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
@@ -741,7 +747,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                      << loss_index_pointer->write_information()
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_error << endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl << endl;
             }
 
             results.resize_training_history(1 + epoch);
@@ -755,13 +761,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch << ":\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()
                  << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl << endl;
         }
 
         if(stop_training) break;

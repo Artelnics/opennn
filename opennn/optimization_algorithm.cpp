@@ -549,7 +549,7 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
 
     elapsed_time << setfill('0') << setw(2) << hours << ":"
                  << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds << endl;
+                 << setfill('0') << setw(2) << seconds;
 
     return elapsed_time.str();
 }
