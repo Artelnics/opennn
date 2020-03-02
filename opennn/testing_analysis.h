@@ -161,8 +161,8 @@ public:
 
    // Error data methods
 
-   Tensor<Tensor<type, 2>, 1> calculate_error_data() const;
-   Tensor<Tensor<type, 1>, 1> calculate_percentage_error_data() const;
+   Tensor<type, 3> calculate_error_data() const;
+   Tensor<type, 2> calculate_percentage_error_data() const;
 
    Tensor<Descriptives, 1> calculate_absolute_errors_statistics() const;
    Tensor<Descriptives, 1> calculate_absolute_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -298,7 +298,6 @@ public:
 
    bool contains(const Tensor<type, 1>&, const type&) const;
    Tensor<type, 2> delete_row(const Tensor<type, 2>& , const Index&) const;
-
 
 
 private: 
