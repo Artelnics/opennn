@@ -773,7 +773,6 @@ type asymmetry(const Tensor<type, 1>& vector)
 
 }
 
-
 /// Returns the kurtosis of the elements in the vector.
 /// @param vector
 
@@ -1074,7 +1073,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
 
-    if(vector.dimension(0) == 0 || vector.dimension(1) == 0) return boxplot;
+    if(vector.dimension(0) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
