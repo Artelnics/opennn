@@ -3411,6 +3411,39 @@ Index DataSet::get_column_index(const string& column_name) const
 }
 
 
+/// Returns the index of the column to which a variable index belongs.
+/// @param variable_index Index of the variable to be found.
+
+Index DataSet::get_column_index(const Index& variable_index) const
+{
+    const Index columns_number = get_columns_number();
+
+    Index total_variables_number = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            total_variables_number += columns(i).get_categories_number();
+        }
+        else
+        {
+            total_variables_number++;
+        }
+
+        if((variable_index+1) <= total_variables_number) return i;
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: DataSet class.\n"
+           << "Index get_column_index(const type&) const method.\n"
+           << "Cannot find variable index: " << variable_index << ".\n";
+
+    throw logic_error(buffer.str());
+}
+
+
 /// Returns the indices of a variable in the data set.
 /// Note that the number of variables does not have to equal the number of columns in the data set,
 /// because OpenNN recognizes the categorical columns, separating these categories into variables of the data set.
@@ -4931,11 +4964,15 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
 }
 
 
+/// Returns a vector containing the minimums of the input variables.
+
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
     return columns_minimums(data, get_used_instances_indices(), get_input_variables_indices());
 }
 
+
+/// Returns a vector containing the minimums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
@@ -4943,11 +4980,16 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 }
 
 
+
+/// Returns a vector containing the maximums of the input variables.
+
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
     return columns_maximums(data, get_used_instances_indices(), get_input_variables_indices());
 }
 
+
+/// Returns a vector containing the maximums of the target variables.
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
@@ -9222,23 +9264,17 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    cout << "read_csv_1()" << endl;
-
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
 
-        cout << "read_csv_2_simple()" << endl;
-
         read_csv_3_simple();
-        cout << "read_csv_3_simple()" << endl;
     }
     else
     {
         read_csv_2_complete();
-        cout << "read_csv_2_complete()" << endl;
+
         read_csv_3_complete();
-        cout << "read_csv_3_complete()" << endl;
     }
 
     /*
@@ -9302,6 +9338,8 @@ void DataSet::read_csv_1()
 
     const char separator_char = get_separator_char();
 
+    cout << "Setting data file preview..." << endl;
+
     Index lines_number = 3;
 /// @todo if has columns names, 4 lines and save the last one
     data_file_preview.resize(lines_number);
@@ -9346,6 +9384,8 @@ void DataSet::read_csv_1()
 
     // Set rows labels and columns names
 
+    cout << "Setting rows labels..." << endl;
+
     if(contains_substring(data_file_preview(0)(0), "id"))
     {
         has_rows_labels = true;
@@ -9370,6 +9410,8 @@ void DataSet::read_csv_1()
 
     // Columns names
 
+    cout << "Setting columns names..." << endl;
+
     if(has_columns_names)
     {
         set_columns_names(data_file_preview(0));
@@ -9380,6 +9422,8 @@ void DataSet::read_csv_1()
     }
 
     // Columns types
+
+    cout << "Setting columns types..." << endl;
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -9443,6 +9487,8 @@ void DataSet::read_csv_2_simple()
     Index instances_count = 0;
 
     Index tokens_count;
+
+    cout << "Setting data dimensions..." << endl;
 
     while(file.good())
     {
@@ -9529,6 +9575,8 @@ void DataSet::read_csv_3_simple()
 
     Index j = 0;
 
+    cout << "Reading data..." << endl;
+
     while(file.good())
     {
         getline(file, line);
@@ -9558,7 +9606,11 @@ void DataSet::read_csv_3_simple()
         instance_index++;
     }
 
+    cout << "Data read succesfully..." << endl;
+
     // Check Binary
+
+    cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 
@@ -9618,6 +9670,8 @@ void DataSet::read_csv_2_complete()
 
     // Read data
 
+    cout << "Setting data dimensions..." << endl;
+
     while(file.good())
     {
         getline(file, line);
@@ -9657,6 +9711,8 @@ void DataSet::read_csv_2_complete()
 
         lines_count++;
     }
+
+    cout << "Setting categories..." << endl;
 
     for(unsigned j = 0; j < columns_number; j++)
     {
@@ -9732,6 +9788,8 @@ void DataSet::read_csv_3_complete()
     }
 
     // Read data
+
+    cout << "Reading data..." << endl;
 
     while(file.good())
     {
@@ -9821,6 +9879,8 @@ void DataSet::read_csv_3_complete()
 
         instance_index++;
     }
+
+    cout << "Data read succesfully..." << endl;
 
     // Read header
     /*
@@ -10050,11 +10110,20 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
 }
 
 
-Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, const Index & batch_size) const
+Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, const Index & new_batch_size) const
 {
-    const Index training_instances_number = training_indices.dimension(0);
+    const Index instances_number = instances_indices.dimension(0);
 
-    const Index batches_number =  training_instances_number / batch_size;
+    Index batches_number;
+    Index batch_size = new_batch_size;
+
+//    const Index batches_number =  instances_number / batch_size;
+    if(instances_number < batch_size)
+    {
+        batches_number = 1;
+        batch_size = instances_number;
+    }
+    else batches_number = instances_number / batch_size;
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -10064,12 +10133,12 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
     {
         for(Index j = 0; j < batch_size; ++j)
         {
-            batches(i,j) = training_indices(count);
+            batches(i,j) = instances_indices(count);
 
             count++;
         }
     }
-
+cout << batches << endl;
     return batches;
 }
 

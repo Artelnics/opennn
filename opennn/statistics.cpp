@@ -516,9 +516,9 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
 
         for(Index i = 0; i < rows_indices_size; i++)
         {
-            row_index = used_rows_indices(j);
+            row_index = used_rows_indices(i);
 
-            column(i) = matrix(i,j);
+            column(i) = matrix(row_index,column_index);
         }
 
         maximums(j) = maximum(column);
@@ -772,7 +772,6 @@ type asymmetry(const Tensor<type, 1>& vector)
     return numerator/denominator;
 
 }
-
 
 /// Returns the kurtosis of the elements in the vector.
 /// @param vector
@@ -1074,7 +1073,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
 
-    if(vector.dimension(0) == 0 || vector.dimension(1) == 0) return boxplot;
+    if(vector.dimension(0) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
@@ -1745,7 +1744,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
         {
             row_index = used_rows_indices(j);
 
-            column(i) = matrix(i,j);
+            column(i) = matrix(row_index,column_index);
         }
 
         minimums(j) = minimum(column);
@@ -3060,6 +3059,7 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
+/// @todo david
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
