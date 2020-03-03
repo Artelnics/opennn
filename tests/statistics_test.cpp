@@ -1159,7 +1159,7 @@ void StatisticsTest::test_calculate_maximal_indices()
 
     // Test 2
     Tensor<type, 1> vector_2(4);
-    vector_2.setValues({1,1,1,0});
+    vector_2.setValues({1,1,1,1});
 
     assert_true(maximal_indices(vector_2, 4)[0] == 0, LOG);
     assert_true(maximal_indices(vector_2, 4)[1] == 1, LOG);
@@ -1338,74 +1338,94 @@ void StatisticsTest::test_descriptives_missing_values()
 }
 */
 
-void StatisticsTest::test_calculate_means_binary_column()
+void StatisticsTest::test_calculate_means_binary_column() //<--- EXC(Negative numb)
 {
     cout << "test_calculate_means_binary_column";
-/*
+
+    //Test 0
+    Tensor<type, 2> matrix;
+
+    assert_true(static_cast<Index>(means_binary_column(matrix)(0)) == 0, LOG);
+
     //Test 1
     Tensor<type, 2> matrix_1(4,2);
-    matrix_1.setValues({{1,1},{1,1},{1,1},{0,0}});
+    matrix_1.setValues({{0,1},{1,1},{0,0},{1,0}});
 
-    Tensor<type, 2> matrix(3,2);
-    matrix(0,0) = 1;
-    matrix(0,1) = 1;
-    matrix(0,2) = 1;
-    matrix(0,3) = 1;
-    matrix(1,0) = 1;
-    matrix(1,1) = 1;
-    matrix(1,2) = 0;
-    matrix(1,3) = 0;
-    Tensor<type, 1> solution({1.0, 1.0});
+    Tensor<type, 1> solution(2);
+    solution.setValues({0.5, 0.5});
 
-    assert_true(means_binary_column(matrix_1) == solution, LOG);*/
+    assert_true(static_cast<Index>(means_binary_column(matrix_1)(0)) == static_cast<Index>(solution(0)), LOG);
+    assert_true(static_cast<Index>(means_binary_column(matrix_1)(1)) == static_cast<Index>(solution(1)), LOG);
+
+    /*
+        Tensor<type, 2> matrix(3,2);
+        matrix(0,0) = 1;
+        matrix(0,1) = 1;
+        matrix(0,2) = 1;
+        matrix(0,3) = 1;
+        matrix(1,0) = 1;
+        matrix(1,1) = 1;
+        matrix(1,2) = 0;
+        matrix(1,3) = 0;
+        Tensor<type, 1> solution(2);
+        solution.setValues({1.0, 1.0});*/
 }
 
-/*
-void StatisticsTest::test_means_binary_columns()
+void StatisticsTest::test_means_binary_columns() //<--- EXC(Negative numb)
 {
     cout << "test_means_binary_columns\n";
 
-    Tensor<type, 2> matrix(3,3);
-    matrix(0,0) = 1.0;
-    matrix(0,1) = 0.0;
-    matrix(0,2) = 7.0;
-    matrix(1,0) = 1.0;
-    matrix(1,1) = 1.0;
-    matrix(1,2) = 8.0;
-    matrix(2,0) = 0.0;
-    matrix(2,1) = 0.0;
-    matrix(2,2) = 5.0;
-    Tensor<type, 1> solution({7.5, 8});
+    //Test 0
+    Tensor<type, 2> matrix(2,2);
+    matrix.setZero();
+
+    assert_true(static_cast<Index>(means_binary_columns(matrix)(0)) == 0, LOG);
+
+    //Test 1
+    Tensor<type, 2> matrix_1(3,3);
+    matrix_1.setValues({{1,0,5},{1,0,1},{0,1,7}});
+
+    Tensor<type, 1> solution(2);
+    solution.setValues({3, 7});
+
+    assert_true(static_cast<Index>(means_binary_columns(matrix_1)(0)) == static_cast<Index>(solution(0)), LOG);
+    assert_true(static_cast<Index>(means_binary_columns(matrix_1)(1)) == static_cast<Index>(solution(1)), LOG);
+
+/*
+        Tensor<type, 2> matrix(3,3);
+        matrix(0,0) = 1.0;
+        matrix(0,1) = 0.0;
+        matrix(0,2) = 7.0;
+        matrix(1,0) = 1.0;
+        matrix(1,1) = 1.0;
+        matrix(1,2) = 8.0;
+        matrix(2,0) = 0.0;
+        matrix(2,1) = 0.0;
+        matrix(2,2) = 5.0;
+        Tensor<type, 1> solution({7.5, 8});
 
     Tensor<type, 1> means;
     means.set(matrix.dimension(1));
     means = means_binary_columns(matrix);
     assert_true(means == solution, LOG);
+    */
 }
-
 
 void StatisticsTest::test_weighted_mean()
 {
     cout << "test_weighted_mean\n";
+/*
+    //Test 1
+    Tensor<type, 1> vector_1(4);
+    vector.setValues({1,1,1,1});
 
-    Tensor<type, 1> vector;
-    vector.resize(4);
-    vector[0] = 1;
-    vector[1] = 1;
-    vector[2] = 1;
-    vector[3] = 1;
+    Tensor<type, 1> weights_1(4);
+    weights.setValues({0.25,0.25,0.25,0.25});
 
-    Tensor<type, 1> weights;
-    weights.set(4);
-    weights[0] = 0.25;
-    weights[1] = 0.25;
-    weights[2] = 0.25;
-    weights[3] = 0.25;
-
-    assert_true(weighted_mean(vector, weights) == 1.0, LOG);
+    assert_true(static_cast<Index>(weighted_mean(vector_1, weights_1)) == 1, LOG);*/
 }
 
-
+/*
 void StatisticsTest::test_calculate_mean_missing_values()
 {
     cout << "test_calculate_mean_missing_values\n";
@@ -1419,37 +1439,40 @@ void StatisticsTest::test_calculate_mean_missing_values()
 
     assert_true(mean_missing_values(vector) == 1.0, LOG);
 }
-
+*/
 
 void StatisticsTest::test_percentiles()
 {
     cout << "test_percentiles\n";
-
-    Tensor<type, 1> vector(20);
-
-    vector.initialize_sequential();
+/*
+    //Test 1
+    Tensor<type, 1> vector(10);
+    vector.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
     Tensor<type, 1> percentiles = OpenNN::percentiles(vector);
 
-    Tensor<type, 1> solution({2.5,4.5,6.5,8.5,10.5,12.5,14.5,16.5,18.5,19});
+    Tensor<type, 1> solution(10);
+    solution.setValues({2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5, 16.5, 18.5, 19});
 
-    assert_true((percentiles[0] - solution[0]) < 1.0e-7, LOG);
-    assert_true((percentiles[1] - solution[1]) < 1.0e-7, LOG);
-    assert_true((percentiles[2] - solution[2]) < 1.0e-7, LOG);
-    assert_true((percentiles[3] - solution[3]) < 1.0e-7, LOG);
-    assert_true((percentiles[4] - solution[4]) < 1.0e-7, LOG);
-    assert_true((percentiles[5] - solution[5]) < 1.0e-7, LOG);
-    assert_true((percentiles[6] - solution[6]) < 1.0e-7, LOG);
-    assert_true((percentiles[7] - solution[7]) < 1.0e-7, LOG);
-    assert_true((percentiles[8] - solution[8]) < 1.0e-7, LOG);
-    assert_true((percentiles[9] - solution[9]) < 1.0e-7, LOG);
+    cout << endl;
+    cout << percentiles << endl;
+
+    assert_true(static_cast<Index>(percentiles[0]) == static_cast<Index>(solution[0]), LOG);
+    assert_true(static_cast<Index>(percentiles[1]) == static_cast<Index>(solution[1]), LOG);
+    assert_true(static_cast<Index>(percentiles[2]) == static_cast<Index>(solution[2]), LOG);
+    assert_true(static_cast<Index>(percentiles[3]) == static_cast<Index>(solution[3]), LOG);
+    assert_true(static_cast<Index>(percentiles[4]) == static_cast<Index>(solution[4]), LOG);
+    assert_true(static_cast<Index>(percentiles[5]) == static_cast<Index>(solution[5]), LOG);
+    assert_true(static_cast<Index>(percentiles[6]) == static_cast<Index>(solution[6]), LOG);
+    assert_true(static_cast<Index>(percentiles[7]) == static_cast<Index>(solution[7]), LOG);
+    assert_true(static_cast<Index>(percentiles[8]) == static_cast<Index>(solution[8]), LOG);
+    assert_true(static_cast<Index>(percentiles[9]) == static_cast<Index>(solution[9]), LOG);*/
 }
-
 
 void StatisticsTest::test_percentiles_missing_values()
 {
     cout << "test_percentiles_missing_values\n";
-
+/*
     Tensor<type, 1> vector(21);
 
     vector.initialize_sequential();
@@ -1469,11 +1492,10 @@ void StatisticsTest::test_percentiles_missing_values()
     assert_true((percentiles[6] - solution[6]) < 1.0e-7, LOG);
     assert_true((percentiles[7] - solution[7]) < 1.0e-7, LOG);
     assert_true((percentiles[8] - solution[8]) < 1.0e-7, LOG);
-    assert_true((percentiles[9] - solution[9]) < 1.0e-7, LOG);
+    assert_true((percentiles[9] - solution[9]) < 1.0e-7, LOG);*/
 }
 
-
-
+/*
 void StatisticsTest::test_means_binary_columns_missing_values()
 {
     cout << "calculate_means_binary_columns_missing_values\n";
@@ -1495,21 +1517,20 @@ void StatisticsTest::test_means_binary_columns_missing_values()
     Tensor<type, 1> solution({7.5, 8});
     assert_true(means_binary_columns_missing_values(matrix) == solution, LOG);
 }
+*/
 
-
-void StatisticsTest::test_means_by_categories()
+void StatisticsTest::test_means_by_categories() //<---
 {
     cout << "test_means_by_categories\n";
-
+/*
     Tensor<type, 2> matrix({Tensor<type, 1>({1,2,3,1,2,3}),Tensor<type, 1>({6,2,3,12,2,3})});
 
     Tensor<type, 1> solution({9.0, 2.0, 3.0});
 
-    assert_true(means_by_categories(matrix) == solution, LOG);
+    assert_true(means_by_categories(matrix) == solution, LOG);*/
 }
 
-
-
+/*
 void StatisticsTest::test_means_by_categories_missing_values()
 {
     cout << "test_means_by_categories_missing_values\n";
@@ -1555,12 +1576,12 @@ void StatisticsTest::run_test_case()
    // Mean
      test_set_mean();
      test_calculate_mean();
-//   test_weighted_mean();
+     test_weighted_mean();
 //   test_calculate_mean_missing_values();
 
    // Mean binary
    test_calculate_means_binary_column();
-//   test_means_binary_columns();
+   test_means_binary_columns();
 //   test_means_binary_columns_missing_values();
 
    // Median
@@ -1622,11 +1643,11 @@ void StatisticsTest::run_test_case()
 //   test_calculate_norm();
 
    // Percentiles
-//   test_percentiles();
+   test_percentiles();
 //   test_percentiles_missing_values();
 
    // Means by categories
-//  test_means_by_categories();
+   test_means_by_categories();
 //   test_means_by_categories_missing_values();
 
    cout << "End of descriptives test case.\n";

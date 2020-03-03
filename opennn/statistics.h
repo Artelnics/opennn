@@ -306,6 +306,7 @@ struct Histogram
 
      // Means binary
      Tensor<type, 1> means_binary_column(const Tensor<type, 2>&);
+     Tensor<type, 1> means_binary_columns(const Tensor<type, 2>&);
 
      // Mean weights
      type weighted_mean(const Tensor<type, 1>&, const Tensor<type, 1>&);

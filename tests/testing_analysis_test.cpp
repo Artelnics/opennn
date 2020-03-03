@@ -484,12 +484,12 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     // Testing Analysis
 
     TestingAnalysis testing_analysis(&neural_network, &data_set);
-/*
+
     Tensor<Tensor<Index, 1>, 1> error_data_maximal = testing_analysis.calculate_maximal_errors(2);
 
     assert_true(error_data_maximal.size() == 1, LOG);
     assert_true(error_data_maximal[0](0) == 0 , LOG);
-    */
+
 }
 
 
