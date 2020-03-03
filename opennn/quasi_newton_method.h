@@ -303,10 +303,6 @@ public:
    {
        const Index parameters_number = optimization_data.parameters.dimension(0);
 
-       cout << "Epoch: " << optimization_data.epoch << endl;
-       cout << "l2_norm(optimization_data.old_parameters - optimization_data.parameters): " << l2_norm(optimization_data.old_parameters - optimization_data.parameters) << endl;
-       cout << "l2_norm(optimization_data.old_gradient - back_propagation.gradient): " << l2_norm(optimization_data.old_gradient - back_propagation.gradient) << endl;
-
        if(optimization_data.epoch == 0
        || l2_norm(optimization_data.old_parameters - optimization_data.parameters) < numeric_limits<type>::min()
        || l2_norm(optimization_data.old_gradient - back_propagation.gradient) < numeric_limits<type>::min())
