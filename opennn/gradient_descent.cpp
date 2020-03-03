@@ -763,19 +763,20 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
 
-    training_batch.fill(training_instances_indeces_vector,
-                        DataSet::tensor_to_vector(inputs_indices),
-                        DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -860,9 +861,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         if(display && gradient_norm >= warning_gradient_norm)
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-/*
+
         if(has_selection)
         {
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
             if(epoch == 0)
@@ -879,7 +882,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                 minimal_selection_parameters = parameters;
             }
         }
-*/
+
         // Optimization algorithm
 
         update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);

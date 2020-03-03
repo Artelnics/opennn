@@ -524,7 +524,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+    DataSet::Batch selection_batch(batch_instances_number, data_set_pointer);
 
     // Neural network
 
@@ -621,7 +621,28 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //                       selection_forward_propagation.layers[trainable_layers_number].activations_2d,
 //                       selection_batch.targets_2d);
 
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            const Index selection_batches_number = selection_batches.dimension(0);
+
+            selection_error = 0;
+
+            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
+            {
+                // Data set
+
+                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
+
+                selection_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+
+                // Neural network
+
+                neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+
+                // Loss index
+
+                selection_error += loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            }
+
+            selection_error /= static_cast<type>(batches_number);
 
             if(epoch == 0)
             {
@@ -692,7 +713,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_error << endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
             results.resize_training_history(1+epoch);
@@ -720,7 +741,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //                << "Learning rate: " << learning_rate<< "\n"
                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
 
         }
 

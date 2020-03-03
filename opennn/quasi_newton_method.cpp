@@ -1268,9 +1268,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             selection_error = 0;
 
-            // Neural Network
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-
             // Loss Index
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
@@ -1288,19 +1285,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
 
-        cout << "epoch: " << epoch << endl;
-        cout << "training error: " << training_error << endl;
-
-        cout << "selection error: " << selection_error << endl;
-        cout << "----------------------" << endl;
-
         // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
-
-        cout << "history: " << results.training_error_history(0) << endl;
-
-
 
         // Stopping Criteria
 

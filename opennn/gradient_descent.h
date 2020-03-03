@@ -260,18 +260,20 @@ public:
 
        // Training slope
 
-       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+//       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
-//       training_slope = (back_propagation.gradient/gradient_norm).contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
-       /*if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
-           throw logic_error("Training slope is equal or greater than zero");*/
+       if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
+           throw logic_error("Training slope is equal or greater than zero");
 
        // Get initial learning_rate
 
        type initial_learning_rate = 0;
 
-       optimization_data.epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = optimization_data.old_learning_rate;
+       optimization_data.epoch == 0
+               ? initial_learning_rate = first_learning_rate
+               : initial_learning_rate = optimization_data.old_learning_rate;
 
        pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                                batch,
