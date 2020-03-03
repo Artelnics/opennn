@@ -1734,15 +1734,15 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     Index row_index;
     Index column_index;
 
-    Tensor<type, 1> column(rows_indices_size);
-
     for(Index j = 0; j < columns_indices_size; j++)
     {
         column_index = used_columns_indices(j);
 
+        Tensor<type, 1> column(rows_indices_size);
+
         for(Index i = 0; i < rows_indices_size; i++)
         {
-            row_index = used_rows_indices(j);
+            row_index = used_rows_indices(i);
 
             column(i) = matrix(row_index,column_index);
         }

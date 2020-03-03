@@ -615,7 +615,7 @@ Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<t
     {
         for(Index j = 0; j < neurons_number; j++)
         {
-            if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<type>::min())
+            if(descriptives(j).maximum - descriptives(j).minimum < numeric_limits<type>::min())
             {
                 if(display)
                 {
@@ -629,7 +629,7 @@ Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<t
             }
             else
             {
-                outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+                outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
             }
         }
     }
