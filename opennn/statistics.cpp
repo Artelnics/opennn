@@ -3059,7 +3059,6 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
-/// @todo david
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
@@ -3376,11 +3375,12 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 ///Returns a vector with the percentiles of a vector given.
 
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
-{
-    /*
+{/*
       const Index size = vector.dimension(0);
 
-      const Tensor<Index, 1> sorted_vector = vector.sort_ascending_indices();
+      Tensor<type, 1> sorted_vector(vector);
+
+      sort(sorted_vector.data(), sorted_vector.data() + size, less<type>());
 
       Tensor<type, 1> percentiles(10);
 
@@ -3411,11 +3411,10 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
         percentiles[9] = maximum(vector);
       }
 
-      return percentiles;
-    */
+      return percentiles;*/
+
     return Tensor<type, 1>();
 }
-
 
 Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
 {

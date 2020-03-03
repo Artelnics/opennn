@@ -738,7 +738,7 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
     const Index outputs_number = error_data.dimension(2);
     const Index testing_instances_number = error_data.dimension(0);
 
-    Tensor<Tensor<Index, 1>, 1> maximal_errors;
+    Tensor<Tensor<Index, 1>, 1> maximal_errors(instances_number);
 
     Index index = 0;
 
