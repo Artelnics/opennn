@@ -5401,6 +5401,11 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 // Logistic?
 //                regressions(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
             }
+            else if(input_type == Binary && target_type == Categorical)
+            {
+
+                // ?
+            }
             else
             {
                 ostringstream buffer;
