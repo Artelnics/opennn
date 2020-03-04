@@ -132,7 +132,11 @@ Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& par
 
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({synaptic_weights_number}));
+    const Index parameters_size = parameters.size();
+
+    const Index start_synaptic_weights_number = (parameters_size - synaptic_weights_number);
+
+    Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({start_synaptic_weights_number}), Eigen::array<Eigen::Index, 1>({synaptic_weights_number}));
 
     Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
 
@@ -141,18 +145,13 @@ Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& par
 }
 
 
-
 Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
     const Index biases_number = biases.size();
 
-    const Index parameters_size = parameters.size();
+    Tensor<type,1> new_biases(biases_number);  
 
-    const Index start_bias = (parameters_size - biases_number);
-
-    Tensor<type,1> new_biases(biases_number);
-
-    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({start_bias}), Eigen::array<Eigen::Index, 1>({biases_number}));
+    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({biases_number}));
 
     Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
 
