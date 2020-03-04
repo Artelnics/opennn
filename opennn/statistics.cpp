@@ -1709,6 +1709,11 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(columns_indices.dimension(0) == 0)
     {
         used_columns_indices.resize(columns_number);
+
+        for (Index i = 0; i < columns_number; i++)
+        {
+            used_columns_indices(i) = i;
+        }
     }
     else
     {
@@ -1720,6 +1725,11 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(rows_indices.dimension(0) == 0)
     {
         used_rows_indices.resize(rows_number);
+
+        for (Index i = 0; i < rows_number; i++)
+        {
+            used_rows_indices(i) = i;
+        }
     }
     else
     {
@@ -3185,20 +3195,20 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 /// Returns a matrix in which each of the columns contain the maximal indices of each of the columns of the
 /// original matrix.
 
-Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Index& maximum_indices)
+Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Index& maximum_number)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Index, 2> maximal_columns_indices(maximum_indices, columns_number);
-
+    Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
+cout << "a" << endl;
     Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
-
+cout << "Minimums: " << columns_minimums << endl;
     for(Index j = 0; j < columns_number; j++)
-    {
+    {cout << "j: " << j << endl;
         Tensor<type, 1> column = matrix.chip(j,1);
 
-        for(Index i = 0; i < maximum_indices; i++)
+        for(Index i = 0; i < maximum_number; i++)
         {
             Index maximal_index = 0;
             type maximal = column(0);

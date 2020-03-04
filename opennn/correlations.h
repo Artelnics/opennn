@@ -86,6 +86,20 @@ struct CorrelationResults
 
     virtual ~CorrelationResults() {}
 
+    string write_correlation_type()
+    {
+        switch (correlation_type)
+        {
+            case Linear_correlation: return "Linear";
+            case Logistic_correlation: return "Logistic";
+            case Logarithmic_correlation: return "Logarithmic";
+            case Exponential_correlation: return "Exponential";
+            case Power_correlation: return "Power";
+            case KarlPearson_correlation: return "Karl-Pearson";
+            case OneWayAnova_correlation: return "One-way Anova";
+        }
+    }
+
     /// Correlation coefficient.
 
     type correlation = static_cast<type>(NAN);

@@ -5203,17 +5203,17 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
     const Index rows_number = correlations.dimension(0);
     const Index columns_number = correlations.dimension(1);
 
-    Tensor<type, 2> correlations_type(rows_number, columns_number);
+    Tensor<type, 2> correlations_values(rows_number, columns_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            correlations_type(i,j) = correlations(i,j).correlation;
+            correlations_values(i,j) = correlations(i,j).correlation;
         }
     }
 
-    return correlations_type;
+    return correlations_values;
 }
 
 
