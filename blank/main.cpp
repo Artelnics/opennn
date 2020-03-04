@@ -66,6 +66,7 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
         Index samples = 20;
@@ -120,6 +121,8 @@ int main(void)
 //        model_selection.perform_neurons_selection();
 
         training_strategy.perform_training();
+*/
+
 
         cout << "End" << endl;
 
