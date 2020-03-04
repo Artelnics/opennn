@@ -9030,6 +9030,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
     const Index instances_number = get_instances_number();
 
     Tensor<type, 1> filtered_indices(instances_number);
+    filtered_indices.setZero();
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
 
@@ -9054,10 +9055,23 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             }
         }
     }
-    /*
-        return filtered_indices.get_indices_greater_than(0.5);
-    */
-    return Tensor<Index, 1>();
+
+    Index filtered_instances_number =
+            static_cast<Index>(std::count_if(filtered_indices.data(), filtered_indices.data()+filtered_indices.size(), [](type value) {return value > static_cast<type>(0.5);}));
+
+    Tensor<Index, 1> filtered_instances_indices(filtered_instances_number);
+    Index index = 0;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(filtered_indices(i) > static_cast<type>(0.5))
+        {
+            filtered_instances_indices(index) = i;
+            index++;
+        }
+    }
+
+    return filtered_instances_indices;
 }
 
 
