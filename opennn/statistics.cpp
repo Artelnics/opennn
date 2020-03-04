@@ -3375,76 +3375,80 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 ///Returns a vector with the percentiles of a vector given.
 
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
-{/*
-      const Index size = vector.dimension(0);
+{
+    const Index size = vector.dimension(0);
 
-      Tensor<type, 1> sorted_vector(vector);
+#ifdef __OPENNN_DEBUG__
 
-      sort(sorted_vector.data(), sorted_vector.data() + size, less<type>());
+    if(size < 10)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: vector Template.\n"
+               << "Tensor<type, 1> percentiles(const Tensor<type, 1>& vector) method.\n"
+               << "Size must be greater than 10.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+      Index new_size = 0;
+
+      for(Index i = 0; i < size; i++)
+      {
+          if(!::isnan(vector(i)))
+          {
+              new_size++;
+          }
+      }
+
+      Index index = 0;
+      Tensor<type, 1> new_vector(new_size);
+
+      for(Index i = 0; i < size; i++)
+      {
+          if(!::isnan(vector(i)))
+          {
+              new_vector(index) = vector(i);
+              index++;
+          }
+      }
+
+      Tensor<type, 1> sorted_vector(new_vector);
+
+      sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
       Tensor<type, 1> percentiles(10);
 
-      if(size % 2 == 0)
+      if(new_size % 2 == 0)
       {
-        percentiles[0] = (sorted_vector[size * 1 / 10] + sorted_vector[size * 1 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[1] = (sorted_vector[size * 2 / 10] + sorted_vector[size * 2 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[2] = (sorted_vector[size * 3 / 10] + sorted_vector[size * 3 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[3] = (sorted_vector[size * 4 / 10] + sorted_vector[size * 4 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[4] = (sorted_vector[size * 5 / 10] + sorted_vector[size * 5 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[5] = (sorted_vector[size * 6 / 10] + sorted_vector[size * 6 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[6] = (sorted_vector[size * 7 / 10] + sorted_vector[size * 7 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[7] = (sorted_vector[size * 8 / 10] + sorted_vector[size * 8 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[8] = (sorted_vector[size * 9 / 10] + sorted_vector[size * 9 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[9] = maximum(vector);
+        percentiles[0] = (sorted_vector[new_size * 1 / 10] + sorted_vector[new_size * 1 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[1] = (sorted_vector[new_size * 2 / 10] + sorted_vector[new_size * 2 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[2] = (sorted_vector[new_size * 3 / 10] + sorted_vector[new_size * 3 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[3] = (sorted_vector[new_size * 4 / 10] + sorted_vector[new_size * 4 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[4] = (sorted_vector[new_size * 5 / 10] + sorted_vector[new_size * 5 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[5] = (sorted_vector[new_size * 6 / 10] + sorted_vector[new_size * 6 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[6] = (sorted_vector[new_size * 7 / 10] + sorted_vector[new_size * 7 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[7] = (sorted_vector[new_size * 8 / 10] + sorted_vector[new_size * 8 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[8] = (sorted_vector[new_size * 9 / 10] + sorted_vector[new_size * 9 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[9] = maximum(new_vector);
       }
       else
       {
-        percentiles[0] = static_cast<type>(sorted_vector[size * 1 / 10]);
-        percentiles[1] = static_cast<type>(sorted_vector[size * 2 / 10]);
-        percentiles[2] = static_cast<type>(sorted_vector[size * 3 / 10]);
-        percentiles[3] = static_cast<type>(sorted_vector[size * 4 / 10]);
-        percentiles[4] = static_cast<type>(sorted_vector[size * 5 / 10]);
-        percentiles[5] = static_cast<type>(sorted_vector[size * 6 / 10]);
-        percentiles[6] = static_cast<type>(sorted_vector[size * 7 / 10]);
-        percentiles[7] = static_cast<type>(sorted_vector[size * 8 / 10]);
-        percentiles[8] = static_cast<type>(sorted_vector[size * 9 / 10]);
-        percentiles[9] = maximum(vector);
+        percentiles[0] = static_cast<type>(sorted_vector[new_size * 1 / 10]);
+        percentiles[1] = static_cast<type>(sorted_vector[new_size * 2 / 10]);
+        percentiles[2] = static_cast<type>(sorted_vector[new_size * 3 / 10]);
+        percentiles[3] = static_cast<type>(sorted_vector[new_size * 4 / 10]);
+        percentiles[4] = static_cast<type>(sorted_vector[new_size * 5 / 10]);
+        percentiles[5] = static_cast<type>(sorted_vector[new_size * 6 / 10]);
+        percentiles[6] = static_cast<type>(sorted_vector[new_size * 7 / 10]);
+        percentiles[7] = static_cast<type>(sorted_vector[new_size * 8 / 10]);
+        percentiles[8] = static_cast<type>(sorted_vector[new_size * 9 / 10]);
+        percentiles[9] = maximum(new_vector);
       }
 
-      return percentiles;*/
-
-    return Tensor<type, 1>();
-}
-
-Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
-{
-    const Index size = x.size();
-
-    Index new_size = 0;
-
-    for(Index i = 0; i < size ; i++)
-    {
-        if(!::isnan(x(i)))
-        {
-            new_size++;
-        }
-    }
-
-    Tensor<type, 1> new_x(new_size);
-
-    Index index = 0;
-
-    for(Index i = 0; i < size ; i++)
-    {
-        if(!::isnan(x(i)))
-        {
-            new_x[index] = x(i);
-
-            index++;
-        }
-    }
-
-    return percentiles(new_x);
+      return percentiles;
 }
 
 
