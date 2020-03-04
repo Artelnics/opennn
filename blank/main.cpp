@@ -66,64 +66,6 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
-/*
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        Index samples = 20;
-        Index variables = 3;
-
-        // Device
-
-        Device device(Device::EigenSimpleThreadPool);
-
-        // Data set
-
-        DataSet data_set;
-
-        data_set.generate_Rosenbrock_data(samples, variables+1);
-
-        data_set.set_device_pointer(&device);
-
-//        data_set.set_training();
-        data_set.split_instances_random();
-
-        // Neural network
-
-        const Index inputs_number = data_set.get_input_variables_number();
-
-        const Index hidden_neurons_number = variables;
-
-        const Index outputs_number = data_set.get_target_variables_number();
-
-        Tensor<Index, 1> arquitecture(3);
-
-        arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-        neural_network.set_device_pointer(&device);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-
-        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
-
-        training_strategy.set_device_pointer(&device);
-
-        // Model Selection
-
-//        ModelSelection model_selection(&training_strategy);
-
-//        model_selection.perform_neurons_selection();
-
-        training_strategy.perform_training();
-*/
-
-
         cout << "End" << endl;
 
         return 0;
