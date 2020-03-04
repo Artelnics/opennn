@@ -582,6 +582,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
+    Tensor<Index, 2> training_batches(data_set_pointer->get_training_batches(batch_instances_number, false).dimension(0), batch_instances_number);
+    Tensor<Index, 2> selection_batches(data_set_pointer->get_selection_batches(batch_instances_number, false).dimension(0), batch_instances_number);
+
+    const Index batches_number = training_batches.dimension(0);
+    const Index selection_batches_number = selection_batches.dimension(0);
+
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -619,15 +625,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
-
-        const Index batches_number = training_batches.dimension(0);
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         training_loss = 0;
-        selection_error = 0;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
@@ -660,9 +662,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         training_loss /= static_cast<type>(batches_number);
 
+        selection_error = 0;
+
         if(has_selection)
         {
-            const Index selection_batches_number = selection_batches.dimension(0);
+            selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
             selection_error = 0;
 
@@ -758,7 +762,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ":\n"
+            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()

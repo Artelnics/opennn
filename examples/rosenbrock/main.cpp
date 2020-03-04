@@ -34,40 +34,43 @@ int main(void)
         cout << "OpenNN. Rosenbrock Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-/*
-        DataSet data_set(100, 11);
 
-        data_set.generate_Rosenbrock_data(1800000, 1001);
+        Index samples = 1000000;
+        Index variables = 1000;
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
+        // Data Set
+
+        // Generate Data and Save
+/*
+        DataSet data_set;
+
+        data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_separator(DataSet::Comma);
         data_set.set_data_file_name("D:/rosenbrock_1800000_1000.csv");
 
         data_set.save_data();
 */
-        Index samples = 20;
-        Index variables = 3;
 
-        // Device
+        // Read Data
 
-        Device device(Device::EigenSimpleThreadPool);
+//        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
 
-        // Data set
-/*
-        Tensor<type, 2> data(samples, variables+1);
-
-        data.setZero();
-
-        DataSet data_set(data);
-        */
+        // Generate Data
 
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
+
+
         data_set.set_device_pointer(&device);
 
-//        data_set.set_training();
-        data_set.split_instances_random();
+        data_set.set_training();
 
         // Neural network
 
@@ -103,8 +106,8 @@ int main(void)
         StochasticGradientDescent* stochastic_gradient_descent_pointer
                 = training_strategy.get_stochastic_gradient_descent_pointer();
 
-        stochastic_gradient_descent_pointer->set_batch_instances_number(5);
-        stochastic_gradient_descent_pointer->set_batch_size(5);
+//        stochastic_gradient_descent_pointer->set_batch_instances_number(5);
+        stochastic_gradient_descent_pointer->set_batch_size(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
 
