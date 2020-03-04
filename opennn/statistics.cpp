@@ -3172,13 +3172,52 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
             if(matrix(i,j) > maximum)
             {
                 maximum = matrix(i,j);
-                maximal_indices[0] = i;
-                maximal_indices[1] = j;
+                maximal_indices(0) = i;
+                maximal_indices(1) = j;
             }
         }
     }
 
     return maximal_indices;
+}
+
+
+/// Returns a matrix in which each of the columns contain the maximal indices of each of the columns of the
+/// original matrix.
+
+Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Index& maximum_indices)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    Tensor<Index, 2> maximal_columns_indices(maximum_indices, columns_number);
+
+    Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        Tensor<type, 1> column = matrix.chip(j,1);
+
+        for(Index i = 0; i < maximum_indices; i++)
+        {
+            Index maximal_index = 0;
+            type maximal = column(0);
+
+            for(Index k = 0; k < rows_number; k++)
+            {
+                if(column(k) > maximal)
+                {
+                    maximal_index = k;
+                    maximal = column(k);
+                }
+            }
+
+            column(maximal_index) = columns_minimums(j)-static_cast<type>(1);
+            maximal_columns_indices(i,j) = maximal_index;
+        }
+    }
+
+    return maximal_columns_indices;
 }
 
 
