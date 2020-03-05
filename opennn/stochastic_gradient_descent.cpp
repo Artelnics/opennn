@@ -716,7 +716,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
 
