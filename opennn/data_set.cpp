@@ -192,7 +192,7 @@ void DataSet::Column::set_use(const string& new_column_use)
     {
         set_use(Time);
     }
-    else if(new_column_use == "UnusedVariable")
+    else if(new_column_use == "Unused")
     {
         set_use(UnusedVariable);
     }
@@ -5145,8 +5145,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 CorrelationResults strongest_correlation = linear_correlation;
 
                 if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = exponential_correlation;
-                else if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = logarithmic_correlation;
-                else if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = power_correlation;
+                if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = logarithmic_correlation;
+                if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = power_correlation;
 
                 correlations(i,j) = strongest_correlation;
             }
@@ -5370,8 +5370,8 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 RegressionResults strongest_regression = linear_regression;
 
                 if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = exponential_regression;
-                else if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
-                else if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
+                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
+                if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
 
                 regressions(i,j) = strongest_regression;
             }

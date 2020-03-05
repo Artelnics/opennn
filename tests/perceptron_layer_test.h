@@ -73,10 +73,6 @@ public:
    void test_set();
    void test_set_default();
 
-   // Architecture
-
-   void test_set_size();
-
    // Parameters
 
    void test_set_biases();
