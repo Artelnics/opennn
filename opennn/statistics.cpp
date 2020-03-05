@@ -3201,11 +3201,15 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Ind
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
-cout << "a" << endl;
+
     Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
-cout << "Minimums: " << columns_minimums << endl;
+
+    cout << "Matrix: " << matrix << endl;
+
+    cout << "Columns_minimums: " << columns_minimums << endl;
+
     for(Index j = 0; j < columns_number; j++)
-    {cout << "j: " << j << endl;
+    {
         Tensor<type, 1> column = matrix.chip(j,1);
 
         for(Index i = 0; i < maximum_number; i++)
@@ -3215,7 +3219,7 @@ cout << "Minimums: " << columns_minimums << endl;
 
             for(Index k = 0; k < rows_number; k++)
             {
-                if(column(k) > maximal)
+                if(column(k) > maximal && !::isnan(column(k)))
                 {
                     maximal_index = k;
                     maximal = column(k);
