@@ -643,8 +643,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
 
-            //neural_network_pointer->print_summary();
-
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
@@ -666,6 +664,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection)
         {
+/*
             selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
             selection_error = 0;
@@ -685,6 +684,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 // Loss index
 
                 selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
+
             }
 
             selection_error /= static_cast<type>(batches_number);
@@ -694,6 +694,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 minimum_selection_error = selection_error;
                 minimal_selection_parameters = optimization_data.parameters;
             }
+*/
         }
 
         // Training history loss index
