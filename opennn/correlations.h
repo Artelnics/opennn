@@ -55,6 +55,20 @@ struct RegressionResults
 
     virtual ~RegressionResults() {}
 
+    string write_regression_type() const
+    {
+        switch (regression_type)
+        {
+            case Linear: return "Linear";
+            case Logistic: return "Logistic";
+            case Logarithmic: return "Logarithmic";
+            case Exponential: return "Exponential";
+            case Power: return "Power";
+            case KarlPearson: return "KarlPearson";
+            case OneWayAnova: return "OneWayAnova";
+        }
+    }
+
     /// Independent coefficient of the logistic function.
 
     type a = static_cast<type>(NAN);
@@ -86,7 +100,7 @@ struct CorrelationResults
 
     virtual ~CorrelationResults() {}
 
-    string write_correlation_type()
+    string write_correlation_type() const
     {
         switch (correlation_type)
         {
@@ -98,6 +112,8 @@ struct CorrelationResults
             case KarlPearson_correlation: return "Karl-Pearson";
             case OneWayAnova_correlation: return "One-way Anova";
         }
+
+        return "";
     }
 
     /// Correlation coefficient.

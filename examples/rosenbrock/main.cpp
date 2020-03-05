@@ -35,7 +35,7 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        Index samples = 1000000;
+        Index samples = 700000;
         Index variables = 1000;
 
         // Device
@@ -45,16 +45,16 @@ int main(void)
         // Data Set
 
         // Generate Data and Save
-/*
+
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_1800000_1000.csv");
+        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
 
         data_set.save_data();
-*/
+
 
         // Read Data
 
@@ -62,15 +62,18 @@ int main(void)
 
         // Generate Data
 
-        DataSet data_set;
+//        DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(samples, variables+1);
+//        data_set.generate_Rosenbrock_data(samples, variables+1);
 
 
 
         data_set.set_device_pointer(&device);
 
         data_set.set_training();
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
 
@@ -86,6 +89,10 @@ int main(void)
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
         neural_network.set_device_pointer(&device);
+
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
         // Training strategy
 
