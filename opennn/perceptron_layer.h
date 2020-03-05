@@ -143,7 +143,7 @@ public:
 
        for(Index i = 0; i < biases_number; i++)
        {
-           fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
+           fill_n(combinations_2d.data() + i*batch_instances_number, batch_instances_number, biases(i));
        }
 
        switch(device_pointer->get_type())
@@ -154,7 +154,7 @@ public:
 
                 combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
 
-                break;
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -163,7 +163,7 @@ public:
 
                combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
-                break;
+                return;
             }
 
            case Device::EigenGpu:
@@ -174,7 +174,7 @@ public:
                 //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
 #endif
 
-                break;
+                return;
            }
        }
    }

@@ -26,8 +26,6 @@
 
 //#define EIGEN_USE_GPU
 
-
-
 namespace OpenNN
 {
     typedef float type;
