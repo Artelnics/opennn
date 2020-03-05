@@ -782,60 +782,71 @@ void PerceptronLayerTest::test_calculate_activations()
    assert_true(activations_2d.dimension(1) == 2, LOG);
    assert_true(activations_2d(0,0) == 10.0, LOG); //2*2 +2*2 +2
 
-   // Test
-/*
+   // Test 3
+
    perceptron_layer.set(2, 2);
    parameters.resize(6);
 
    parameters.setConstant(0.0);
 
    combinations_2d.resize(1,2);
-
    combinations_2d.setConstant(0.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   activations_2d= perceptron_layer.calculate_activations(combinations_2d);
+
+   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
 
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 2, LOG);
    assert_true(activations_2d(0,0) == 0.0, LOG);
-*/
-   // Test
-/*
+
+   // Test 4
+
    perceptron_layer.set(1, 2);
    parameters.resize(4);
-   perceptron_layer.set_parameters_constant(0.0);
 
-   combinations_2d.resize(2,2);
+   parameters.setConstant(0.0);
 
+   combinations_2d.resize(1,2);
    combinations_2d.setConstant(0.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   activations_2d = perceptron_layer.calculate_activations(combinations_2d);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 2, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-//   assert_true(activations_2d == 1.0 , LOG);
-*/
-   // Test
+   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
 /*
-   perceptron_layer.set(1, 2);
-   perceptron_layer.set_parameters_constant(0.0);
+   cout << combinations_2d << endl;
+   cout << "------------" << endl;
+   cout << activations_2d << endl;
+*/
+   assert_true(activations_2d.rank() == 2, LOG);
+   assert_true(activations_2d.dimension(0) == 1, LOG);
+   assert_true(activations_2d.dimension(1) == 2, LOG);
+   assert_true(activations_2d(0,0) == 1.0 , LOG);
 
-   combinations_2d.resize(2,2);
+   // Test 5
 
+   perceptron_layer.set(2, 2);
+   parameters.resize(6);
+
+   parameters.setConstant(0.0);
+
+   combinations_2d.resize(1,2);
    combinations_2d.setConstant(-2.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   activations_2d = perceptron_layer.calculate_activations(combinations_2d);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 2, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-//   assert_true(activations_2d == -1.0, LOG);
+   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+/*
+      cout << combinations_2d << endl;
+      cout << "------------" << endl;
+      cout << activations_2d << endl;
 */
+   assert_true(activations_2d.rank() == 2, LOG);
+   assert_true(activations_2d.dimension(0) == 1, LOG);
+   assert_true(activations_2d.dimension(1) == 2, LOG);
+   assert_true(activations_2d(0,0) == -1.0, LOG);
+
    // Test
 /*
    perceptron_layer.set(1, 2);
