@@ -44,7 +44,7 @@ class Device
                 {
                     const int n = omp_get_max_threads();
 
-                    simple_thread_pool = new NonBlockingThreadPool(n);
+                    simple_thread_pool = new SimpleThreadPool(n);
 
                     thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
                 }
@@ -71,7 +71,7 @@ class Device
 
         DefaultDevice* default_device = nullptr;
 
-        NonBlockingThreadPool* simple_thread_pool = nullptr;
+        SimpleThreadPool* simple_thread_pool = nullptr;
 //        NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
 
         ThreadPoolDevice* thread_pool_device = nullptr;

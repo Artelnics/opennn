@@ -625,6 +625,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
+    vector<Index> batch_indices_vector;
+
     for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
         training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
@@ -635,7 +637,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             // Data set
 
-            const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
+            batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
 
             batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
@@ -664,7 +666,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection)
         {
-/*
             selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
             selection_error = 0;
@@ -673,7 +674,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
+                batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
 
                 batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
@@ -694,7 +695,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 minimum_selection_error = selection_error;
                 minimal_selection_parameters = optimization_data.parameters;
             }
-*/
         }
 
         // Training history loss index
@@ -706,6 +706,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         // Stopping criteria
 
         time(&current_time);
+
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(training_loss <= training_loss_goal)
