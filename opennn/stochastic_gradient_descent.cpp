@@ -577,8 +577,10 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Index training_instances_number = training_instances_indices.size();
+
+    Tensor<Index, 1> batch_instances_indices(batch_instances_number);
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
@@ -600,7 +602,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
 
-    type training_loss = 0;
+    type training_loss = numeric_limits<type>::max();
 
     type selection_error = numeric_limits<type>::max();
 
@@ -627,7 +629,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
-//        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         training_loss = 0;
 
@@ -679,7 +681,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 // Loss index
 
                 selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
-
             }
 
             selection_error /= static_cast<type>(batches_number);

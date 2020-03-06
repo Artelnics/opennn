@@ -87,9 +87,9 @@ public:
 
            neural_network_pointer = new_neural_network_pointer;
 
-           const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
            const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           const Index trainable_layers_number = trainable_layers_pointers.size();
 
            layers.resize(trainable_layers_number);
 
@@ -143,9 +143,9 @@ public:
 
            neural_network_pointer = new_neural_network_pointer;
 
-           const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
            const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           const Index trainable_layers_number = trainable_layers_pointers.size();
 
            layers.resize(trainable_layers_number);
 
@@ -343,9 +343,9 @@ public:
    void forward_propagate(const DataSet::Batch& batch,
                                       ForwardPropagation& forward_propagation) const
    {
-       const Index trainable_layers_number = get_trainable_layers_number();
-
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
 
        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
 
@@ -361,9 +361,9 @@ public:
                                       Tensor<type, 1>& parameters,
                                       ForwardPropagation& forward_propagation) const
    {                       
-       const Index trainable_layers_number = get_trainable_layers_number();
-
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
 
        const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
 

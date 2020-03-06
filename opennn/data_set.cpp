@@ -10219,30 +10219,33 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
     type* inputs_2d_pointer = inputs_2d.data();
     type* targets_2d_pointer = targets_2d.data();
 
-    Index instance = 0;
+    Index rows_number_j = 0;
+    Index total_rows_variable = 0;
+
     Index variable = 0;
 
     for(Index j = 0; j < inputs_number; j++)
     {
-        variable = inputs(j);
+        variable = inputs[j];
+
+        rows_number_j = rows_number*j;
+        total_rows_variable = total_rows*variable;
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances(i);
-
-            inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
 
     for(Index j = 0; j < targets_number; j++)
     {
-        variable = targets(j);
+        variable = targets[j];
+        rows_number_j = rows_number*j;
+        total_rows_variable = total_rows*variable;
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances(i);
-
-            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+            targets_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
 }

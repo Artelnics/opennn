@@ -487,7 +487,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 
         // Synaptic weights
 
-        const Index synaptic_weights_number = get_synaptic_weights().size();
+        const Index synaptic_weights_number = get_synaptic_weights_number();
 
         for(Index gradient_index = 0; gradient_index < synaptic_weights_number; gradient_index++)
         {

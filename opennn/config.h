@@ -26,6 +26,10 @@
 
 //#define EIGEN_USE_GPU
 
+//#define EIGEN_MALLOC_ALREADY_ALIGNED 1
+
+//#define EIGEN_UNROLLING_LIMIT 1000
+
 namespace OpenNN
 {
     typedef float type;

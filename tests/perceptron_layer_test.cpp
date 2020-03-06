@@ -36,7 +36,7 @@ void PerceptronLayerTest::test_constructor()
     assert_true(perceptron_layer_2.get_activation_function() == PerceptronLayer::Linear, LOG);
     assert_true(perceptron_layer_2.get_inputs_number() == 10, LOG);
     assert_true(perceptron_layer_2.get_neurons_number() == 3, LOG);
-    assert_true(perceptron_layer_2.get_biases().size() == 3, LOG);
+    assert_true(perceptron_layer_2.get_biases_number() == 3, LOG);
     assert_true(perceptron_layer_2.get_parameters_number() == 33, LOG);
 
     // Copy constructor
@@ -352,7 +352,7 @@ void PerceptronLayerTest::test_set_biases()
 
     perceptron_layer.set_biases(biases);
 
-    assert_true(perceptron_layer.get_biases().size() == 4, LOG);
+    assert_true(perceptron_layer.get_biases_number() == 4, LOG);
 
     assert_true(abs(perceptron_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
     assert_true(abs(perceptron_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);

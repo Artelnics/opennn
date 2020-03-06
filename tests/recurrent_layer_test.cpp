@@ -44,7 +44,7 @@ void RecurrentLayerTest::test_constructor()
 
     assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
 
-    assert_true(recurrent_layer.get_biases().size() == 1, LOG);
+    assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
     //Test
 
@@ -55,7 +55,7 @@ void RecurrentLayerTest::test_constructor()
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
 
-    assert_true(recurrent_layer.get_biases().size() == 3, LOG);
+    assert_true(recurrent_layer.get_biases_number() == 3, LOG);
 }
 
 

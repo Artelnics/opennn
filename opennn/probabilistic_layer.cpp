@@ -74,6 +74,18 @@ Index ProbabilisticLayer::get_neurons_number() const
 }
 
 
+Index ProbabilisticLayer::get_biases_number() const
+{
+    return biases.size();
+}
+
+
+Index ProbabilisticLayer::get_synaptic_weights_number() const
+{
+    return synaptic_weights.size();
+}
+
+
 /// Returns the decision threshold.
 
 const type& ProbabilisticLayer::get_decision_threshold() const
@@ -215,7 +227,7 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parame
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
-    const Index biases_number = get_biases().size();
+    const Index biases_number = get_biases_number();
 /*
     const Index synaptic_weights_number = synaptic_weights.size();
 
