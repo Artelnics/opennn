@@ -772,11 +772,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
-    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
-
-//    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
-//    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
 
     // Neural network
 

@@ -513,13 +513,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
 //    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+//    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+//    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
+//    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
     const bool has_selection = data_set_pointer->has_selection();
 
@@ -567,7 +567,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         is_forecasting = true;
 
     // Main loop
-/*
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
@@ -588,9 +588,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             // Data set
 
-            const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
-
-            training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -629,9 +627,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
-
-                selection_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+                selection_batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
@@ -767,7 +763,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     results.final_training_error = training_loss;
     results.final_selection_error = selection_error;
     results.elapsed_time = elapsed_time;
-*/
+
     return results;
 }
 
