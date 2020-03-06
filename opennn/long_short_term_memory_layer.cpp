@@ -1479,7 +1479,6 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
 
 
-
 Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& combination) const
 {
 #ifdef __OPENNN_DEBUG__

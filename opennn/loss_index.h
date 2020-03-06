@@ -369,6 +369,7 @@ public:
         check();
 
         #endif
+
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
         switch(device_pointer->get_type())

@@ -53,6 +53,9 @@ int main(void)
         data_set.set_separator(DataSet::Comma);
         data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
 */
+//        data_set.set_separator(DataSet::Comma);
+//        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
+
 //        data_set.save_data();
 
 

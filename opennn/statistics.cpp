@@ -3125,37 +3125,11 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(matrix(i,j) < minimum)
+            if(!::isnan(matrix(i,j))  && matrix(i,j) < minimum)
             {
                 minimum = matrix(i,j);
-                minimal_indices[0] = i;
-                minimal_indices[1] = j;
-            }
-        }
-    }
-
-    return minimal_indices;
-}
-
-
-Tensor<Index, 1> minimal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    type minimum = numeric_limits<type>::max();
-
-    Tensor<Index, 1> minimal_indices(2);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            if(abs(matrix(i,j) - value_to_omit) < numeric_limits<type>::min() && matrix(i,j) < minimum)
-            {
-                minimum = matrix(i,j);
-                minimal_indices[0] = i;
-                minimal_indices[1] = j;
+                minimal_indices(0) = i;
+                minimal_indices(1) = j;
             }
         }
     }
@@ -3179,7 +3153,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(matrix(i,j) > maximum)
+            if(!::isnan(matrix(i,j)) && matrix(i,j) > maximum)
             {
                 maximum = matrix(i,j);
                 maximal_indices(0) = i;
@@ -3203,10 +3177,6 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Ind
     Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
 
     Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
-
-    cout << "Matrix: " << matrix << endl;
-
-    cout << "Columns_minimums: " << columns_minimums << endl;
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -3234,31 +3204,6 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Ind
     return maximal_columns_indices;
 }
 
-
-Tensor<Index, 1> maximal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    type maximum = -numeric_limits<type>::max();
-
-    Tensor<Index, 1> maximum_indices(2);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            if(abs(matrix(i,j) - value_to_omit) < numeric_limits<type>::min() && matrix(i,j) > maximum)
-            {
-                maximum = matrix(i,j);
-                maximum_indices[0] = i;
-                maximum_indices[1] = j;
-            }
-        }
-    }
-
-    return maximum_indices;
-}
 
 type strongest(const Tensor<type, 1>& vector)
 {

@@ -600,7 +600,7 @@ public:
 
    // Inputs correlations
 
-   Tensor<type, 2> calculate_inputs_correlations() const;
+   Tensor<type, 2> calculate_input_columns_correlations() const;
 
    void print_inputs_correlations() const;
 
