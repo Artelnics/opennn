@@ -1047,7 +1047,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
         const TensorMap< Tensor<type, 1> > layer_parameters(new_parameters.data() + index, trainable_layers_parameters_numbers(i));
 
-        trainable_layers_pointers(i)->insert_parameters(layer_parameters, index);
+        trainable_layers_pointers(i)->set_parameters(layer_parameters);
 
         index += trainable_layers_parameters_numbers(i);
     }

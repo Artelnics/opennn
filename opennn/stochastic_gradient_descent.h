@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 #include "loss_index.h"
 #include "mean_squared_error.h"
 #include "optimization_algorithm.h"
@@ -205,10 +206,41 @@ public:
             ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
             : learning_rate = initial_learning_rate;
 
-//       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+           switch(device_pointer->get_type())
+           {
+           case Device::EigenDefault:
+           {
+               DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-       optimization_data.parameters_increment = -learning_rate*back_propagation.gradient;
+               optimization_data.parameters_increment.device(*default_device) = -learning_rate*back_propagation.gradient;
+
+               optimization_data.parameters.device(*default_device) += optimization_data.parameters_increment;
+
+               break;
+           }
+
+           case Device::EigenSimpleThreadPool:
+           {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               optimization_data.parameters_increment.device(*thread_pool_device) = -learning_rate*back_propagation.gradient;
+
+               optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+
+               break;
+           }
+
+           case Device::EigenGpu:
+           {
+               //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+               //y.device(gpu_device) = x.tanh();
+
+               break;
+           }
+           }
 /*
+
        if(momentum > 0 && !nesterov)
        {
            optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
@@ -228,9 +260,9 @@ public:
        {
            optimization_data.parameters += optimization_data.parameters_increment;
        }
-*/
-       optimization_data.parameters += optimization_data.parameters_increment;
 
+       optimization_data.parameters += optimization_data.parameters_increment;
+*/
        optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
        optimization_data.iteration++;

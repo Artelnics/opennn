@@ -532,16 +532,6 @@ public:
    }
 
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
-
-
    void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
    {
        const Index biases_number = get_biases_number();
