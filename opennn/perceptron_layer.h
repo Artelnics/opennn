@@ -279,6 +279,58 @@ public:
         }
    }
 
+
+   void calculate_first_order_activations(const Tensor<type, 2>& combinations_2d,
+                                          Tensor<type, 2>& activations,
+                                          Tensor<type, 2>& activations_derivatives) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        const Index neurons_number = get_neurons_number();
+
+        const Index combinations_columns_number = combinations_2d.dimension(1);
+
+        if(combinations_columns_number != neurons_number)
+        {
+           ostringstream buffer;
+
+           buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                  << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                  << "Number of combinations_2d columns (" << combinations_columns_number
+                  << ") must be equal to number of neurons (" << neurons_number << ").\n";
+
+           throw logic_error(buffer.str());
+        }
+
+        #endif
+
+        switch(activation_function)
+        {
+            case Linear: first_order_linear(combinations_2d, activations, activations_derivatives); return;
+
+            case Logistic: first_order_logistic(combinations_2d, activations, activations_derivatives); return;
+
+            case HyperbolicTangent: first_order_hyperbolic_tangent(combinations_2d, activations, activations_derivatives); return;
+
+            case Threshold: first_order_threshold(combinations_2d, activations, activations_derivatives); return;
+
+            case SymmetricThreshold: first_order_symmetric_threshold(combinations_2d, activations, activations_derivatives); return;
+
+            case RectifiedLinear: first_order_rectified_linear(combinations_2d, activations, activations_derivatives); return;
+
+            case ScaledExponentialLinear: first_order_scaled_exponential_linear(combinations_2d, activations, activations_derivatives); return;
+
+            case SoftPlus: first_order_soft_plus(combinations_2d, activations, activations_derivatives); return;
+
+            case SoftSign: first_order_soft_sign(combinations_2d, activations, activations_derivatives); return;
+
+            case HardSigmoid: first_order_hard_sigmoid(combinations_2d, activations, activations_derivatives); return;
+
+            case ExponentialLinear: first_order_exponential_linear(combinations_2d, activations, activations_derivatives); return;
+        }
+   }
+
+
    // Perceptron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
@@ -307,9 +359,9 @@ public:
 
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_2d);
+       calculate_first_order_activations(forward_propagation.combinations_2d,
+                                         forward_propagation.activations_2d,
+                                         forward_propagation.activations_derivatives_2d);
    }
 
 

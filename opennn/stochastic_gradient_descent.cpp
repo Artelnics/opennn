@@ -645,7 +645,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch, forward_propagation);
+//            neural_network_pointer->forward_propagate(batch, forward_propagation);
 
             // Loss
 

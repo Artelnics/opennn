@@ -284,10 +284,6 @@ void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
 
     case Device::EigenGpu:
     {
-        //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        //y.device(gpu_device) = x.tanh();
-
         return;
     }
     }
@@ -1296,6 +1292,107 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     }
 }
+
+
+void Layer::first_order_hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+void Layer::first_order_hyperbolic_tangent(const Tensor<type, 2>& combinations,
+                                           Tensor<type, 2>& activations,
+                                           Tensor<type, 2>& activations_derivatives) const
+{
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        activations.device(*default_device) = combinations.tanh();
+
+        activations_derivatives.device(*default_device) = 1 - activations.square();
+
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        activations.device(*thread_pool_device) = combinations.tanh();
+
+        activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
+
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+        return;
+    }
+    }
+
+}
+
+
+void Layer::first_order_logistic(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_linear(const Tensor<type, 2>& combinations,
+                               Tensor<type, 2>& activations,
+                               Tensor<type, 2>& activations_derivatives) const
+{
+    activations = combinations;
+
+    activations_derivatives.setConstant(1.0);
+}
+
+
+void Layer::first_order_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
+
+void Layer::first_order_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const
+{
+
+}
+
 
 }
 
