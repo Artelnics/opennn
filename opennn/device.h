@@ -1,3 +1,10 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   D E V I C E   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #ifndef DEVICE_H
 #define DEVICE_H
