@@ -292,7 +292,6 @@ struct Histogram
      // Minimal indices
      Index minimal_index(const Tensor<type, 1>&);
      Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index &);
-     Tensor<Index, 1> minimal_indices_omit(const Tensor<type, 2>&, const type&);
      Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
 
      // Maximal indices
@@ -300,7 +299,6 @@ struct Histogram
      Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index &);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
      Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
-     Tensor<Index, 1> maximal_indices_omit(const Tensor<type, 2>&, const type&);
      Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
      type column_minimum(const Index&);
      type column_maximum(const Index&);
