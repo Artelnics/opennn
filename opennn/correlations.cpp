@@ -1529,9 +1529,9 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
 CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    Index n = y.size();
-
 #ifdef __OPENNN_DEBUG__
+
+    Index n = y.size();
 
     const Index x_size = x.size();
 

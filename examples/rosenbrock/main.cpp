@@ -35,7 +35,7 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 10000;
+        const Index samples = 1000000;
         const Index variables = 1000;
 
         // Device
@@ -50,8 +50,8 @@ int main(void)
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
-        data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
+//        data_set.set_separator(DataSet::Comma);
+//        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
 
 //        data_set.save_data();
 
