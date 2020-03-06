@@ -625,8 +625,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
-    vector<Index> batch_indices_vector;
-
     for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
 //        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
@@ -637,27 +635,23 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             // Data set
 
-//            batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
-
-//            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
-
-//            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
-//            neural_network_pointer->forward_propagate(batch, forward_propagation);
+            neural_network_pointer->forward_propagate(batch, forward_propagation);
 
             // Loss
 
-//            loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
+            loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
 
-//            training_loss += back_propagation.loss;
+            training_loss += back_propagation.loss;
 
             // Optimization algorithm
 
-//            update_iteration(back_propagation, optimization_data);
+            update_iteration(back_propagation, optimization_data);
 
-//            neural_network_pointer->set_parameters(optimization_data.parameters);
+            neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
         // Loss
@@ -665,7 +659,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         training_loss /= static_cast<type>(batches_number);
 
         selection_error = 0;
-/*
+
         if(has_selection)
         {
             selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
@@ -676,9 +670,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
-
-                batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+                batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
@@ -698,7 +690,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-*/
+
         // Training history loss index
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_loss;
@@ -710,7 +702,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-/*
+
         if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
@@ -719,7 +711,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-*/
+
         if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
@@ -728,7 +720,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-/*
+
         else if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
@@ -742,7 +734,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             neural_network_pointer->save(neural_network_file_name);
         }
-*/
+
         if(stop_training)
         {
             if(display)
