@@ -57,7 +57,7 @@ struct RegressionResults
 
     string write_regression_type() const
     {
-        switch (regression_type)
+        switch(regression_type)
         {
             case Linear: return "Linear";
             case Logistic: return "Logistic";
@@ -102,7 +102,7 @@ struct CorrelationResults
 
     string write_correlation_type() const
     {
-        switch (correlation_type)
+        switch(correlation_type)
         {
             case Linear_correlation: return "Linear";
             case Logistic_correlation: return "Logistic";
