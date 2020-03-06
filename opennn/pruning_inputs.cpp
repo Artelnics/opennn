@@ -227,23 +227,23 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 //    const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
-    Tensor<type, 1> correlations_ascending(total_correlations.size());
+    Tensor<type, 1> correlations_ascending(total_correlations);
 
-    sort(correlations_ascending.data(), correlations_ascending.data() +  correlations_ascending.size(), less<int>());
+    sort(correlations_ascending.data(), correlations_ascending.data() +  correlations_ascending.size(), less<type>());
 
     Tensor<Index, 1> correlations_ascending_indices(total_correlations.size());
+    correlations_ascending_indices.setZero();
 
     for(Index i = 0; i < total_correlations.size(); i++)
     {
         for(Index j = 0; j < correlations_ascending.size(); j++)
         {
-            if(static_cast<Index>(total_correlations(i)) == static_cast<Index>( correlations_ascending(j)))
+            if(correlations_ascending(i) == total_correlations(j))
             {
                 correlations_ascending_indices(i) = j;
             }
         }
     }
-
 
 //    data_set_pointer->set_input_columns_unused();
 
@@ -293,7 +293,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
         else
         {
-            column_index = correlations_ascending_indices[epoch];
+            column_index = correlations_ascending_indices[epoch-1];
 
             column_name = used_columns_names[column_index];
 

@@ -216,21 +216,22 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 //    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
+    const Tensor<type, 1> total_correlations = (correlations.sum(rows_sum)).abs();
 
 //    const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
 
     Tensor<type, 1> correlations_descending(total_correlations);
 
-    sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<int>());
+    sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<type>());
 
     Tensor<Index, 1> correlations_descending_indices(total_correlations.size());
+    correlations_descending_indices.setZero();
 
     for(Index i = 0; i < total_correlations.size(); i++)
     {
         for(Index j = 0; j < correlations_descending.size(); j++)
         {
-            if(static_cast<Index>(total_correlations(i)) == static_cast<Index>(correlations_descending(j)))
+            if(total_correlations(i) == correlations_descending(j))
             {
                 correlations_descending_indices(i) = j;
             }
