@@ -629,7 +629,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
-        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+//        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         training_loss = 0;
 
@@ -637,21 +637,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             // Data set
 
-            batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
+//            batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
 
-            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+//            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
 //            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
-//            neural_network_pointer->forward_propagate(batch, forward_propagation);
+            neural_network_pointer->forward_propagate(batch, forward_propagation);
 
             // Loss
 
 //            loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
 
-            training_loss += back_propagation.loss;
+//            training_loss += back_propagation.loss;
 
             // Optimization algorithm
 

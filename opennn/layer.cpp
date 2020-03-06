@@ -773,19 +773,13 @@ void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
 
 void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-//    Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
-//    ones.setConstant(1.0);
-
-    y.setConstant(1.0);
-
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
     {
         DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-//        y.device(*default_device) = x.constant(1.0) - x.tanh().square();
-        y.device(*default_device) -= x.tanh().square();
+        y.device(*default_device) = 1 - x.tanh().square();
 
         return;
     }
@@ -794,8 +788,7 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-//        y.device(*thread_pool_device) = x.constant(1.0) - x.tanh().square();
-        y.device(*thread_pool_device) -= x.tanh().square();
+        y.device(*thread_pool_device) = 1 - x.tanh().square();
 
         return;
     }
