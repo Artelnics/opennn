@@ -386,7 +386,7 @@ public:
    {
        const Type next_layer_type = next_layer_pointer->get_type();
 
-       switch (next_layer_type)
+       switch(next_layer_type)
        {
             case Perceptron:
 
