@@ -415,7 +415,7 @@ type rank_logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 }
 
 
-///Calculate the power correlation between two variables.
+/// Calculates the power correlation between two variables.
 /// @param x Vector of the independent variable
 /// @param y Vector of the dependent variable
 
@@ -445,6 +445,146 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     }
 
     return linear_correlation(x.log(), y.log());
+}
+
+
+///Calculate the Karl Pearson correlation between two variables.
+/// @param x Matrix of the variable X.
+/// @param y Matrix of the variable Y.
+
+type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
+{
+#ifdef  __OPENNN_DEBUG__
+
+    if(x.dimension(1) == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Correlation class."
+               << "type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+               << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(y.dimension(1) == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Correlation class."
+               << "type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+               << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(x.dimension(0) != y.dimension(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Correlation class."
+               << "type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+               << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const Index rows_number = x.dimension(0);
+    const Index x_columns_number = x.dimension(1);
+    const Index y_columns_number = y.dimension(1);
+
+    Index x_NAN = 0;
+    Index y_NAN = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(isnan(x(i, 0)))
+        {
+            x_NAN++;
+        }
+        if(isnan(x(i, 0)))
+        {
+            y_NAN++;
+        }
+    }
+
+    Tensor<type, 2> new_x;
+    Tensor<type, 2> new_y;
+
+    Index new_rows_number;
+    x_NAN >= y_NAN ? new_rows_number = rows_number-x_NAN : new_rows_number = rows_number-y_NAN;
+
+    if(x_NAN > 0 || y_NAN > 0)
+    {
+        new_x.resize(new_rows_number, x_columns_number);
+        new_y.resize(new_rows_number, y_columns_number);
+
+        Index row_index = 0;
+        Index x_column_index = 0;
+        Index y_column_index = 0;
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+            if(!::isnan(x(i,0)) && !::isnan(y(i,0)))
+            {
+                for(Index j = 0; j < x_columns_number; j++)
+                {
+                        new_x(row_index, x_column_index) = x(i,j);
+                        x_column_index++;
+                }
+
+                for(Index j = 0; j < x_columns_number; j++)
+                {
+                        new_x(row_index, y_column_index) = y(i,j);
+                        y_column_index++;
+                }
+
+                row_index++;
+                x_column_index = 0;
+                y_column_index = 0;
+            }
+        }
+    }
+    else
+    {
+        new_x = x;
+        new_y = y;
+    }
+
+    const Index new_size = new_x.dimension(0);
+
+    Tensor<Index, 2> contingency_table(new_x.dimension(1),new_y.dimension(1));
+
+    for(Index i = 0; i < new_x.dimension(1); i ++)
+    {
+        for(Index j = 0; j < new_y.dimension(1); j ++)
+        {
+            Index count = 0;
+
+            for(Index k = 0; k < new_size; k ++)
+            {
+                if(abs(new_x(k,i) + new_y(k,j) - static_cast<type>(2.0)) <= static_cast<type>(0.0001))
+                {
+                    count ++;
+
+                    contingency_table(i,j) = count;
+                }
+            }
+        }
+    }
+
+    Index k;
+
+    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
+    else k = y.dimension(1);
+
+    const type chi_squared = chi_square_test(contingency_table.cast<type>());
+
+    const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
+
+    return sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 }
 
 
@@ -1609,7 +1749,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-CorrelationResults karl_pearson_correlation(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
 #ifdef  __OPENNN_DEBUG__
 
@@ -1618,7 +1758,7 @@ CorrelationResults karl_pearson_correlation(const Tensor<type, 2>& x, const Tens
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Correlation class."
-               << "type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+               << "type karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
                << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
 
         throw logic_error(buffer.str());
@@ -1629,7 +1769,7 @@ CorrelationResults karl_pearson_correlation(const Tensor<type, 2>& x, const Tens
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Correlation class."
-               << "type karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
+               << "type karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
                << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
 
         throw logic_error(buffer.str());
@@ -2266,207 +2406,6 @@ type karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string, 1
         const Tensor<Index, 0> k = categories.minimum();
 
         return sqrt(k(0)/(k(0)-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
-    */
-    return 0.0;
-}
-
-
-///Calculate the karl_pearson_coefficient between two categorical variables.
-/// It shows the realtionship between the two varibles.
-/// @param x First variable
-/// @param y Second variable
-
-type karl_pearson_correlations(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
-{
-    const Index n = x.dimension(0);
-
-#ifdef  __OPENNN_DEBUG__
-
-    if(x.dimension(1) == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template."
-               << "Index karl_pearson_correlation_missing_values const method.\n"
-               << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(y.dimension(1) == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template."
-               << "Index karl_pearson_correlation_missing_values const method.\n"
-               << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(n != y.dimension(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix template."
-               << "Index karl_pearson_correlation const method.\n"
-               << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<Index, 2> contingency_table(x.dimension(1),y.dimension(1));
-
-    for(Index i = 0; i < x.dimension(1); i ++)
-    {
-        for(Index j = 0; j < y.dimension(1); j ++)
-        {
-            Index count = 0;
-
-            for(Index k = 0; k < n; k ++)
-            {
-                if(abs(x(k,i) + y(k,j) - static_cast<type>(2)) <= static_cast<type>(1e-4))
-                {
-                    count ++;
-
-                    contingency_table(i,j) = count;
-                }
-            }
-        }
-    }
-
-    Index k;
-
-    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
-    else k = y.dimension(1);
-
-    const type chi_squared = chi_square_test(contingency_table.cast<type>());
-
-    const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
-
-    const type karl_pearson_correlation = sqrt(k / (k - static_cast<type>(1.0))) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
-
-    return karl_pearson_correlation;
-}
-
-
-///Calculate the karl_pearson_coefficient between two cualitative variable. It shows the realtionship between the two varibles.
-/// @param x First variable
-/// @param y Second variable
-
-type karl_pearson_correlation_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
-{
-    Index n = x.dimension(0);
-
-#ifdef  __OPENNN_DEBUG__
-
-    if(x.dimension(1) == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Correlation class."
-               << "type karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-               << "Number of columns("<< x.dimension(1) <<") must be greater than zero.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(y.dimension(1) == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Correlation class."
-               << "type karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-               << "Number of columns("<< y.dimension(1) <<") must be greater than zero.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(n != y.dimension(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Correlation class."
-               << "type karl_pearson_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&) method.\n"
-               << "Number of rows of the two variables must be equal\t"<< x.dimension(0) <<"!=" << y.dimension(0) << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-    /*
-        const Index NAN_x = x.count_rows_with_nan();
-
-        const Index NAN_y = y.count_rows_with_nan();
-
-        Index new_size;
-
-        if(NAN_x <= NAN_y )
-        {
-            new_size = n - NAN_y;
-        }
-        else
-        {
-            new_size = n - NAN_x;
-        }
-
-        Tensor<type, 2> new_x(new_size,x.dimension(1));
-
-        Tensor<type, 2> new_y(new_size,y.dimension(1));
-
-        const Tensor<Index, 1> nan_indices_x = x.get_nan_indices();
-
-        const Tensor<Index, 1> nan_indices_y = y.get_nan_indices();
-
-        for(Index i = 0; i < nan_indices_x.size(); i++)
-        {
-
-            new_x = x.delete_rows(nan_indices_x);
-            new_y = y.delete_rows(nan_indices_x);
-        }
-
-        for(Index j = 0; j < nan_indices_y.size(); j++)
-        {
-            new_x = x.delete_rows(nan_indices_y);
-            new_y = y.delete_rows(nan_indices_y);
-        }
-
-        n = new_x.dimension(0);
-
-        Tensor<Index, 2> contingency_table(new_x.dimension(1),new_y.dimension(1));
-
-        for(Index i = 0; i < new_x.dimension(1); i ++)
-        {
-            for(Index j = 0; j < new_y.dimension(1); j ++)
-            {
-                Index count = 0;
-
-                for(Index k = 0; k < n; k ++)
-                {
-                    if(abs(new_x(k,i) + new_y(k,j) - 2) <= 0.0001)
-                    {
-                        count ++;
-
-                        contingency_table(i,j) = count;
-                    }
-                }
-            }
-        }
-
-        Index k;
-
-        if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
-        else k = y.dimension(1);
-
-        const type chi_squared = chi_square_test(contingency_table.cast<type>());
-
-        const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
-
-        const type karl_pearson_correlation = sqrt(k / (k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
-
-        return karl_pearson_correlation;
     */
     return 0.0;
 }

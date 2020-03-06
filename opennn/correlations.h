@@ -154,6 +154,10 @@ struct CorrelationResults
 
     type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
+    // Karl Pearson
+
+    type karl_pearson_correlation(const Tensor<type,2>&, const Tensor<type,2>&);
+
     // Time series correlation methods
 
     Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
@@ -193,7 +197,7 @@ struct CorrelationResults
 
     CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
@@ -215,9 +219,6 @@ struct CorrelationResults
     type chi_square_test(const Tensor<type, 2>&);
 
     type chi_square_critical_point(const type&, const type&);
-
-    type karl_pearson_correlation(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    type karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     //One way ANOVA
 
