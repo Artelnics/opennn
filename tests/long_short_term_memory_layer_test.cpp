@@ -293,7 +293,7 @@ void LongShortTermMemoryLayerTest::test_get_biases()
 
    long_short_term_memory_layer.set_biases_constant(0.0);
 
-   assert_true(long_short_term_memory_layer.get_biases().size() == 12, LOG);
+   assert_true(long_short_term_memory_layer.get_biases_number() == 12, LOG);
    assert_true(long_short_term_memory_layer.get_biases().dimension(0) == neurons_number, LOG);
    assert_true(long_short_term_memory_layer.get_biases().dimension(1) == 4, LOG);
    

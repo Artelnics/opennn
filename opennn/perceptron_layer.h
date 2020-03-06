@@ -357,7 +357,10 @@ public:
 
 #endif
 
-       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
+       calculate_combinations(inputs,
+                              biases,
+                              synaptic_weights,
+                              forward_propagation.combinations_2d);
 
        calculate_first_order_activations(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
@@ -395,9 +398,9 @@ public:
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_2d);
+       calculate_first_order_activations(forward_propagation.combinations_2d,
+                                         forward_propagation.activations_2d,
+                                         forward_propagation.activations_derivatives_2d);
    }
 
 
@@ -429,8 +432,6 @@ public:
 
               case Device::EigenGpu:
               {
-   //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
                    break;
               }
           }
@@ -480,7 +481,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
                 hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
 
@@ -491,7 +492,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -523,7 +524,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
                 hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
 
@@ -534,7 +535,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -550,7 +551,6 @@ public:
        }
    }
 
-   // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
@@ -594,14 +594,17 @@ public:
    }
 
 
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
+   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data() + index, back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index,
+              back_propagation.biases_derivatives.data(),
+              static_cast<size_t>(biases_number)*sizeof(type));
 
-       memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(),
+       memcpy(gradient.data() + index + biases_number,
+              back_propagation.synaptic_weights_derivatives.data(),
               static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 

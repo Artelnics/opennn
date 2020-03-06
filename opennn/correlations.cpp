@@ -2933,7 +2933,7 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 {
     Index new_size = 0;
 
-    for(Index i = 0; i < x.size() ; i++)
+    for(Index i = 0; i < x.size(); i++)
     {
         if(!::isnan(x(i)) && !::isnan(y(i)))
         {
@@ -2952,7 +2952,7 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 
     Index index = 0;
 
-    for(Index i = 0; i < x.size() ; i++)
+    for(Index i = 0; i < x.size(); i++)
     {
         if(!::isnan(x(i)) && !::isnan(y(i)))
         {

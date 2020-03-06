@@ -310,7 +310,7 @@ public:
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
-       {      
+       {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
            back_propagation.loss += regularization_weight*calculate_regularization(parameters);
@@ -372,14 +372,16 @@ public:
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
         switch(device_pointer->get_type())
         {
              case Device::EigenDefault:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.errors.device(*default_device)
-                         = forward_propagation.layers(trainable_layers_number-1).activations_2d - batch.targets_2d;
+                 back_propagation.errors.device(*default_device) = outputs - targets;
 
                  return;
              }
@@ -388,8 +390,7 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.errors.device(*thread_pool_device)
-                        = forward_propagation.layers(trainable_layers_number-1).activations_2d - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
                 return;
              }
@@ -403,7 +404,6 @@ public:
         }
    }
 
-   /// @todo Guillermo Change insert_gradient with TensorMap
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -417,10 +417,10 @@ public:
 
        #endif
 
+       const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
        const Tensor<Index, 1> trainable_layers_parameters_number
                = neural_network_pointer->get_trainable_layers_parameters_numbers();
-
-       const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
                                                               forward_propagation.layers(0),

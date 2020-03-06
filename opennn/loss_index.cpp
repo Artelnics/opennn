@@ -588,22 +588,13 @@ string LossIndex::write_regularization_method() const
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
-
     switch(regularization_method)
     {
-    case L1:
-    {
-        return l1_norm(parameters);
-    }
-    case L2:
-    {
-        return l2_norm(parameters);
+        case L1: return l1_norm(parameters);
 
-    }
-    case NoRegularization:
-    {
-        return 0.0;
-    }
+        case L2: return l2_norm(parameters);
+
+        case NoRegularization: return 0.0;
     }
 
     return 0.0;
@@ -620,18 +611,11 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
 {
     switch(regularization_method)
     {
-    case L1:
-    {
-        return l1_norm_gradient(parameters);
-    }
-    case L2:
-    {
-        return l2_norm_gradient(parameters);
-    }
-    case NoRegularization:
-    {
-        return Tensor<type, 1>(parameters.size()).setConstant(0.0);
-    }
+    case L1: return l1_norm_gradient(parameters);
+
+    case L2: return l2_norm_gradient(parameters);
+
+    case NoRegularization: return Tensor<type, 1>(parameters.size()).setConstant(0.0);
     }
 
     return Tensor<type, 1>();

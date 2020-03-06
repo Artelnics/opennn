@@ -68,6 +68,10 @@ public:
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
+   Index get_biases_number() const;
+   Index get_synaptic_weights_number() const;
+
+
    const type& get_decision_threshold() const;
 
    const ActivationFunction& get_activation_function() const;
@@ -501,21 +505,27 @@ public:
 
    void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
    {
-       const Index biases_number = get_biases().size();
-       const Index synaptic_weights_number = get_synaptic_weights().size();
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
 
        memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
        memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
    // calculate error gradient
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient)
-   {
-       const Index biases_number = get_biases().size();
-       const Index synaptic_weights_number = get_synaptic_weights().size();
 
-       memcpy(gradient.data() + index, back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+   {
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
+
+       memcpy(gradient.data() + index,
+              back_propagation.biases_derivatives.data(),
+              static_cast<size_t>(biases_number)*sizeof(type));
+
+       memcpy(gradient.data() + index + biases_number,
+              back_propagation.synaptic_weights_derivatives.data(),
+              static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
    // Expression methods

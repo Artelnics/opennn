@@ -812,7 +812,7 @@ void CorrelationsTest::test_chi_square_critical_point()
     type crit_point;
     type solution = static_cast<type>(14.067);
 
-    crit_point = chi_square_critical_point(static_cast<type>(0.05),7) ;
+    crit_point = chi_square_critical_point(static_cast<type>(0.05),7);
 
     assert_true(crit_point - solution <= static_cast<type>(0.01), LOG);
 }

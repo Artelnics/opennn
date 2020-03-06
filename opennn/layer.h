@@ -202,7 +202,7 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
