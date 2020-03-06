@@ -1135,7 +1135,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
         buffer << "OpenNN Exception: Layer Class.\n"
                << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<<x.dimension(0)<<") must be equal to number of rows in y("<<y.dimension(2)<<").\n";
+               << "Number of rows in x("<< x.dimension(0)
+               << ") must be equal to number of rows in y(" <<y.dimension(2)<< ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1145,8 +1146,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
     const Index n = x.dimension(0);
     const Index columns_number = x.dimension(1);
 
-    Tensor<type, 2> softmax_values;
-    softmax_values.resize(n, columns_number);
+    Tensor<type, 2> softmax_values(n, columns_number);
 
     softmax(x, softmax_values);
 
@@ -1276,7 +1276,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        sum.device(*default_device) = (x.exp()).sum();
+        sum.device(*default_device) = x.exp().sum();
 
         y.device(*default_device) = x.exp() / sum(0);
 
@@ -1287,7 +1287,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        sum.device(*thread_pool_device) = (x.exp()).sum();
+        sum.device(*thread_pool_device) = x.exp().sum();
 
         y.device(*thread_pool_device) = x.exp() / sum(0);
 
