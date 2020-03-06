@@ -567,7 +567,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         is_forecasting = true;
 
     // Main loop
-
+/*
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
@@ -767,7 +767,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     results.final_training_error = training_loss;
     results.final_selection_error = selection_error;
     results.elapsed_time = elapsed_time;
-
+*/
     return results;
 }
 

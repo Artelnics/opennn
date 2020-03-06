@@ -775,8 +775,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
     const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
 
-    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
-    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+//    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+//    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 

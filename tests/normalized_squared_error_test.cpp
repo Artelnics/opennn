@@ -147,7 +147,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 {
    cout << "test_calculate_training_error_gradient\n";
-
+/*
    Device device(Device::EigenSimpleThreadPool);
 
    NeuralNetwork neural_network;

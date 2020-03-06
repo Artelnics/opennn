@@ -35,7 +35,7 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 10000;
+        const Index samples = 1000000;
         const Index variables = 1000;
 
         // Device
@@ -45,14 +45,14 @@ int main(void)
         // Data Set
 
         // Generate Data and Save
-
+/*
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_separator(DataSet::Comma);
         data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
-
+*/
 //        data_set.save_data();
 
 
@@ -62,9 +62,9 @@ int main(void)
 
         // Generate Data
 
-//        DataSet data_set;
+        DataSet data_set;
 
-//        data_set.generate_Rosenbrock_data(samples, variables+1);
+        data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_device_pointer(&device);
 
@@ -102,7 +102,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(2);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
