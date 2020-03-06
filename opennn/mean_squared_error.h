@@ -199,6 +199,7 @@ public:
         }
    }
 
+
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
    // Serialization methods

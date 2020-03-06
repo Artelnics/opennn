@@ -122,15 +122,15 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-//                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-//                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
 
             case Device::EigenSimpleThreadPool:
             {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+//               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
 //               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
 //                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
@@ -148,6 +148,7 @@ public:
 
        back_propagation.loss = minkowski_error(0);
    }
+
 
    /// @todo Virtual method not implemented.
 
@@ -174,26 +175,26 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 Tensor<type, 0> p_norm = back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(1.0/minkowski_parameter);
+                 const Tensor<type, 0> p_norm = back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
 
                  back_propagation.output_gradient.device(*default_device)
-                         = back_propagation.errors.abs().pow(minkowski_parameter-2.0)/p_norm;
+                         = back_propagation.errors.abs().pow(minkowski_parameter-2)/p_norm;
 
-                 break;
+                 return;
              }
 
              case Device::EigenSimpleThreadPool:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                 break;
+                 return;
              }
 
             case Device::EigenGpu:
             {
  //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                 break;
+                 return;
             }
         }
    }
