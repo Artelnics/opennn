@@ -781,11 +781,16 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 {
     if(layers_pointers.dimension(0) == 0) return;
-    /*
-        const Index new_inputs_number = inputs.count_equal_to(true);
 
-        set_inputs_number(new_inputs_number);
-    */
+    Index new_inputs_number = 0;
+
+    for(Index i = 0; i < inputs.dimension(0); i++)
+    {
+        if(inputs(i) == true) new_inputs_number++;
+    }
+
+    set_inputs_number(new_inputs_number);
+
 }
 
 
