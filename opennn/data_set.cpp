@@ -443,13 +443,13 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Target");
     }
-    else if (column_use == Time)
+    else if (column_use == UnusedVariable)
     {
-        file_stream.PushText("Time");
+        file_stream.PushText("Unused");
     }
     else
     {
-        file_stream.PushText("Unused");
+        file_stream.PushText("Time");
     }
 
     file_stream.CloseElement();
@@ -4210,7 +4210,7 @@ void DataSet::set_instances_number(const Index& new_instances_number)
 
 Tensor<string, 1> DataSet::unuse_constant_columns()
 {
-    const Index columns_number = get_columns_number();
+    const Index columns_number = data.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -4227,18 +4227,49 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
 #endif
 
-    Tensor<string, 1> constant_columns;
+    Tensor<string, 1> constant_columns(0);
+
+    Index variable_index = 0;
 
     for(Index i = 0; i < columns_number; i++)
     {
-        /*
-              if(get_variable_use(i) == Input && data.is_column_constant(i))
-              {
-                 set_column_use(i, DataSet::UnusedVariable);
+        if(columns(i).column_use == Input)
+        {
+            if(columns(i).type == Categorical)
+            {
+                const Index categories_number = columns(i).categories.size();
 
-                 constant_columns.push_back(columns(i).name);
-              }
-        */
+                bool is_constant = true;
+
+                for(Index j = 0; j < categories_number; j++)
+                {
+                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1));
+
+                    if((column_standard_deviation - 0) > std::numeric_limits<type>::min())
+                    {
+                        is_constant = false;
+                        break;
+                    }
+                }
+
+                if(is_constant) columns(i).set_use(UnusedVariable);
+
+                constant_columns = push_back(constant_columns, columns(i).name);
+            }
+            else
+            {
+                const type column_standard_deviation = standard_deviation(data.chip(variable_index,1));
+
+                if((column_standard_deviation - 0) < std::numeric_limits<type>::min())
+                {
+                    columns(i).set_use(UnusedVariable);
+
+                    constant_columns = push_back(constant_columns, columns(i).name);
+                }
+            }
+        }
+
+        columns(i).type == Categorical ? variable_index += columns(i).categories.size() : variable_index++;
     }
 
     return constant_columns;
@@ -4384,7 +4415,7 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
 {
     Tensor<Index, 1> unused_columns;
 
-    const Tensor<RegressionResults, 2> correlations; //= calculate_input_target_columns_correlations();
+    const Tensor<RegressionResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -4400,7 +4431,8 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
             if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).correlation) < minimum_correlation)
             {
                 columns(index).column_use = UnusedVariable;
-                //unused_columns.push_back(index);
+
+                push_back(unused_columns, index);
             }
         }
     }
@@ -10111,6 +10143,38 @@ Index DataSet::count_nan() const
     }
 
     return nan_number;
+}
+
+
+Tensor<Index, 1> DataSet::push_back(const Tensor<Index, 1>& old_vector, const Index& new_string) const
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<Index, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
+}
+
+
+Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const string& new_string) const
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<string, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
 }
 
 

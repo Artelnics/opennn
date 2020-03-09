@@ -804,6 +804,9 @@ public:
 
    // Eigen methods
 
+   Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
+   Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
+
    void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
 
    Tensor<Index, 2> split_instances(Tensor<Index, 1>&, const Index&) const;
