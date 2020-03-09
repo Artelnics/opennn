@@ -4312,14 +4312,14 @@ Tensor<Index, 1> DataSet::unuse_repeated_instances()
         for(Index j = static_cast<Index>(i+1); j < instances_number; j++)
         {
             instance_j = get_instance_data(j);
-            /*
-                      if(get_instance_use(j) != UnusedInstance && instance_j == instance_i)
-                      {
-                          set_instance_use(j, UnusedInstance);
 
-                          repeated_instances.push_back(j);
-                      }
-            */
+            if(get_instance_use(j) != UnusedInstance
+                    && instance_j.data() == instance_i.data())
+            {
+                set_instance_use(j, UnusedInstance);
+
+                repeated_instances = push_back(repeated_instances, j);
+            }
         }
     }
 
@@ -4432,7 +4432,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
             {
                 columns(index).set_use(UnusedVariable);
 
-                push_back(unused_columns, columns(index).name);
+                unused_columns = push_back(unused_columns, columns(index).name);
             }
         }
     }
