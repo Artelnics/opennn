@@ -353,7 +353,7 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        const Tensor<bool, 2> if_sentence = x > x.constant(0);
+        const Tensor<bool, 2> if_sentence = x >= x.constant(0);
 
         Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
         ones.setConstant(1);
