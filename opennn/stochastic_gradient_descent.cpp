@@ -575,7 +575,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const bool has_selection = data_set_pointer->has_selection();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    cout << "input_variables_indices" << input_variables_indices << endl;
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();

@@ -1927,6 +1927,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 #endif
 
     GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
+//    Results results;
 
     if(display)
     {
@@ -2005,7 +2006,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     {cout << "1" << endl;
         if(epoch != 0)
         {
-            evolve_population();
+//            evolve_population();
             cout << "2" << endl;
         }
 cout << "3.0" << endl;
@@ -2032,10 +2033,6 @@ cout << "5 " << endl;
             if(current_inputs(k) == true) count_inputs++;
         }
 
-        /*if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
-             optimum_selection_error > current_selection_error) ||
-               (abs(optimum_selection_error - current_selection_error) < tolerance &&
-                 optimal_inputs.count_equal_to(true) < current_inputs.count_equal_to(true)))*/
         if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
                 optimum_selection_error > current_selection_error) ||
                 (abs(optimum_selection_error - current_selection_error) < tolerance &&
@@ -2049,6 +2046,7 @@ cout << "5 " << endl;
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
 /*
         if(reserve_generation_mean)
         {
@@ -2138,7 +2136,7 @@ cout << "5 " << endl;
 
             cout << endl;
         }
-cout <<"end" <<end_algortihm << endl;
+
         if(end_algortihm == true) break;
     }
 cout <<"skip" << endl;
