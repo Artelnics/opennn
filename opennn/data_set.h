@@ -544,7 +544,7 @@ public:
 
    Tensor<Index, 1> unuse_non_significant_input_columns();
 
-   Tensor<Index, 1> unuse_uncorrelated_columns(const type& = 0.25);
+   Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
 
    Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
