@@ -4411,11 +4411,11 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const type& missing_rati
 /// @param minimum_correlation Minimum correlation between variables.
 /// @param nominal_variables vector containing the classes of each categorical variable.
 
-Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correlation)
+Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correlation)
 {
-    Tensor<Index, 1> unused_columns;
+    Tensor<string, 1> unused_columns;
 
-    const Tensor<RegressionResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -4430,9 +4430,9 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
         {
             if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).correlation) < minimum_correlation)
             {
-                columns(index).column_use = UnusedVariable;
+                columns(index).set_use(UnusedVariable);
 
-                push_back(unused_columns, index);
+                push_back(unused_columns, columns(index).name);
             }
         }
     }
