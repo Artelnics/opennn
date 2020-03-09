@@ -35,8 +35,8 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 10;
+        const Index variables = 4;
 
         // Device
 
@@ -71,7 +71,8 @@ int main(void)
 
         data_set.set_device_pointer(&device);
 
-        data_set.set_training();
+//        data_set.set_training();
+        data_set.split_instances_random();
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
@@ -105,7 +106,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1000);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(variables);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
@@ -116,7 +117,13 @@ int main(void)
 
         stochastic_gradient_descent_pointer->set_batch_size(variables);
 
-        stochastic_gradient_descent_pointer->perform_training();
+//        stochastic_gradient_descent_pointer->perform_training();
+
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
+
+        model_selection.perform_inputs_selection();
 
         cout << "End" << endl;
 
