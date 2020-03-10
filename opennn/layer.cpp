@@ -1322,7 +1322,10 @@ void Layer::first_order_hyperbolic_tangent(const Tensor<type, 2>& combinations,
 
         activations.device(*thread_pool_device) = combinations.tanh();
 
-        activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
+        activations_derivatives.setConstant(1);
+
+        //        activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
+        activations_derivatives.device(*thread_pool_device) -= activations.square();
 
         return;
     }

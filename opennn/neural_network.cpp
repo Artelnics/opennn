@@ -384,8 +384,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
-                && layers_pointers[i]->get_type() != Layer::Unscaling
-                && layers_pointers[i]->get_type() != Layer::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Unscaling
+        && layers_pointers[i]->get_type() != Layer::Bounding)
         {
             trainable_layers_pointers[trainable_layer_index] = layers_pointers[i];
             trainable_layer_index++;
@@ -1106,7 +1106,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
                 && layers_pointers[i]->get_type() != Layer::Bounding)
         {
             count++;
-        }
+        }               
     }
 
     return count;
