@@ -30,24 +30,33 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
-/*
+
         DataSet data_set("D:/Artelnics/opennn/examples/simple_function_regression/data/simple_function_regression.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
         // Variables
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
 //        data_set.set_training();
         data_set.split_instances_random(0.6,0.1,0.3);
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-        // Neural network        
+        // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2, 1});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({1, 2, 1});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -97,7 +106,7 @@ int main(void)
 //        training_strategy_results.save("../data/training_strategy_results.dat");
 
 //        linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-*/
+
         return 0;
     }
     catch(exception& e)

@@ -544,7 +544,7 @@ public:
 
    Tensor<Index, 1> unuse_non_significant_input_columns();
 
-   Tensor<Index, 1> unuse_uncorrelated_columns(const type& = 0.25);
+   Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
 
    Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
@@ -803,6 +803,9 @@ public:
    Index count_nan() const;
 
    // Eigen methods
+
+   Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
+   Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
    void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
 

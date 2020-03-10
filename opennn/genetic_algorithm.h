@@ -92,6 +92,14 @@ public:
 
         string object_to_string() const;
 
+        inline void resize_history(const Index& new_size)
+        {
+            generation_optimum_loss_history.resize(new_size);
+            generation_minimum_selection_history.resize(new_size);
+            generation_mean_history.resize(new_size);
+            generation_standard_deviation_history.resize(new_size);
+        }
+
         /// Values of the minimum loss in each generation.
 
         Tensor<type, 1> generation_optimum_loss_history;
@@ -238,6 +246,22 @@ public:
     // Utilities
 
     type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    static vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor)
+    {
+        const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+        vector<bool> new_vector(static_cast<size_t>(size));
+
+        for(size_t i = 0; i < size; i++)
+        {
+            new_vector[i] = tensor(static_cast<Index>(i));
+        }
+
+        return new_vector;
+    }
+
+    bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
 
     // Serialization methods
 

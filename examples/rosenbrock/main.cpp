@@ -35,8 +35,8 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 10;
+        const Index variables = 4;
 
         // Device
 
@@ -71,7 +71,8 @@ int main(void)
 
         data_set.set_device_pointer(&device);
 
-        data_set.set_training();
+//        data_set.set_training();
+        data_set.split_instances_random();
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
@@ -105,7 +106,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1000);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(variables);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 

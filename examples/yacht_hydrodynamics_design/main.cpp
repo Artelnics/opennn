@@ -31,27 +31,36 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
-/*
+
         DataSet data_set("../data/yachtresistance.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
         data_set.print_data_preview();
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
         data_set.split_instances_random();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_neurons_number = 30;
-        const size_t outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_neurons_number = 30;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_outputs_names(targets_names);
 
@@ -70,6 +79,7 @@ int main(void)
 //        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
@@ -102,7 +112,7 @@ int main(void)
         training_strategy_results.save("../data/training_strategy_results.dat");
 
         linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-*/
+
         return 0;
     }
     catch(exception& e)

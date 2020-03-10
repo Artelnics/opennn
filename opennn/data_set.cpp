@@ -443,13 +443,13 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Target");
     }
-    else if (column_use == Time)
+    else if (column_use == UnusedVariable)
     {
-        file_stream.PushText("Time");
+        file_stream.PushText("Unused");
     }
     else
     {
-        file_stream.PushText("Unused");
+        file_stream.PushText("Time");
     }
 
     file_stream.CloseElement();
@@ -4210,7 +4210,7 @@ void DataSet::set_instances_number(const Index& new_instances_number)
 
 Tensor<string, 1> DataSet::unuse_constant_columns()
 {
-    const Index columns_number = get_columns_number();
+    const Index columns_number = data.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
 
@@ -4227,18 +4227,49 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
 #endif
 
-    Tensor<string, 1> constant_columns;
+    Tensor<string, 1> constant_columns(0);
+
+    Index variable_index = 0;
 
     for(Index i = 0; i < columns_number; i++)
     {
-        /*
-              if(get_variable_use(i) == Input && data.is_column_constant(i))
-              {
-                 set_column_use(i, DataSet::UnusedVariable);
+        if(columns(i).column_use == Input)
+        {
+            if(columns(i).type == Categorical)
+            {
+                const Index categories_number = columns(i).categories.size();
 
-                 constant_columns.push_back(columns(i).name);
-              }
-        */
+                bool is_constant = true;
+
+                for(Index j = 0; j < categories_number; j++)
+                {
+                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1));
+
+                    if((column_standard_deviation - 0) > std::numeric_limits<type>::min())
+                    {
+                        is_constant = false;
+                        break;
+                    }
+                }
+
+                if(is_constant) columns(i).set_use(UnusedVariable);
+
+                constant_columns = push_back(constant_columns, columns(i).name);
+            }
+            else
+            {
+                const type column_standard_deviation = standard_deviation(data.chip(variable_index,1));
+
+                if((column_standard_deviation - 0) < std::numeric_limits<type>::min())
+                {
+                    columns(i).set_use(UnusedVariable);
+
+                    constant_columns = push_back(constant_columns, columns(i).name);
+                }
+            }
+        }
+
+        columns(i).type == Categorical ? variable_index += columns(i).categories.size() : variable_index++;
     }
 
     return constant_columns;
@@ -4281,14 +4312,14 @@ Tensor<Index, 1> DataSet::unuse_repeated_instances()
         for(Index j = static_cast<Index>(i+1); j < instances_number; j++)
         {
             instance_j = get_instance_data(j);
-            /*
-                      if(get_instance_use(j) != UnusedInstance && instance_j == instance_i)
-                      {
-                          set_instance_use(j, UnusedInstance);
 
-                          repeated_instances.push_back(j);
-                      }
-            */
+            if(get_instance_use(j) != UnusedInstance
+                    && std::equal(instance_i.data(), instance_i.data()+instance_i.size(), instance_j.data()))
+            {
+                set_instance_use(j, UnusedInstance);
+
+                repeated_instances = push_back(repeated_instances, j);
+            }
         }
     }
 
@@ -4380,11 +4411,11 @@ Tensor<string, 1> DataSet::unuse_columns_missing_values(const type& missing_rati
 /// @param minimum_correlation Minimum correlation between variables.
 /// @param nominal_variables vector containing the classes of each categorical variable.
 
-Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correlation)
+Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correlation)
 {
-    Tensor<Index, 1> unused_columns;
+    Tensor<string, 1> unused_columns;
 
-    const Tensor<RegressionResults, 2> correlations; //= calculate_input_target_columns_correlations();
+    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -4399,8 +4430,9 @@ Tensor<Index, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correla
         {
             if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).correlation) < minimum_correlation)
             {
-                columns(index).column_use = UnusedVariable;
-                //unused_columns.push_back(index);
+                columns(index).set_use(UnusedVariable);
+
+                unused_columns = push_back(unused_columns, columns(index).name);
             }
         }
     }
@@ -4511,17 +4543,26 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 {
     Index used_columns_number = get_used_columns_number();
+
+    Index columns_number = get_columns_number();
+
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
 
     Tensor<BoxPlot, 1> box_plots(used_columns_number);
 
+    Index used_column_index = 0;
     Index variable_index = 0;
 
-    for(Index i = 0; i < used_columns_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == Numeric || columns(i).type == Binary)
         {
-            box_plots(i) = box_plot(data.chip(variable_index, 1), used_instances_indices);
+            if(columns(i).column_use != UnusedVariable)
+            {
+                box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_instances_indices);
+
+                used_column_index++;
+            }
 
             variable_index++;
         }
@@ -8571,64 +8612,75 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
     const Index instances_number = get_used_instances_number();
     const Tensor<Index, 1> instances_indices = get_used_instances_indices();
 
-    const Index variables_number = get_used_variables_number();
-    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
-
-    type interquartile_range;
+    const Index columns_number = get_columns_number();
+    const Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
     Tensor<Tensor<Index, 1>, 1> return_values(2);
 
     return_values(0) = Tensor<Index, 1>(instances_number);
-    return_values(1) = Tensor<Index, 1>(variables_number);
+    return_values(1) = Tensor<Index, 1>(used_columns_number);
 
-    Index variable_index;
+    return_values(0).setZero();
+    return_values(1).setZero();
 
-    Tensor<BoxPlot, 1> box_plots(variables_number);
-    /*
-        for(Index i = 0; i < variables_number; i++)
+    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
+
+    Index used_column_index = 0;
+    Index variable_index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == UnusedVariable && columns(i).type == Categorical)
         {
-            variable_index = used_variables_indices(i);
-
-            if(is_binary_variable(variable_index)) continue;
-
-            box_plots(i) = box_plot(data.chip(variable_index,1));
+            variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).column_use == UnusedVariable) // Numeric, Binary or DateTime
+        {
+            variable_index++;
+            continue;
         }
 
-        for(Index i = 0; i < variables_number; i++)
+        if(columns(i).type == Categorical || columns(i).type == Binary || columns(i).type == DateTime)
         {
-            variable_index = used_variables_indices(i);
+            used_column_index++;
+            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else // Numeric
+        {
+            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
 
-            if(is_binary_variable(variable_index)) continue;
-
-            const BoxPlot variable_box_plot = box_plots(i);
-
-            if(abs(variable_box_plot(3) - variable_box_plot(1)) < numeric_limits<type>::epsilon())
+            if(interquartile_range < numeric_limits<type>::epsilon())
             {
+                used_column_index++;
+                variable_index++;
                 continue;
             }
-            else
+
+            Index columns_outliers = 0;
+
+            for(Index j = 0; j < instances_number; j++)
             {
-                interquartile_range = abs((variable_box_plot(3) - variable_box_plot(1)));
-            }
+                const Tensor<type, 1> instance = get_instance_data(instances_indices(static_cast<Index>(j)));
 
-            Index variables_outliers = 0;
-
-            for(Index j = 0; j < static_cast<Index>(instances_number); j++)
-            {
-                const Tensor<type, 1> instance = get_instance(instances_indices(static_cast<Index>(j)));
-
-                if(instance(variable_index) <(variable_box_plot(1) - cleaning_parameter*interquartile_range) ||
-                   instance(variable_index) >(variable_box_plot(3) + cleaning_parameter*interquartile_range))
+                if(instance(variable_index) <(box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
+                        instance(variable_index) >(box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
                 {
-                        return_values(0)(static_cast<Index>(j)) = 1;
+                    return_values(0)(static_cast<Index>(j)) = 1;
 
-                        variables_outliers++;
+                    columns_outliers++;
                 }
             }
 
-            return_values(1)(i) = variables_outliers;
+            return_values(1)(used_column_index) = columns_outliers;
+
+            used_column_index++;
+            variable_index++;
         }
-    */
+    }
+
     return return_values;
 }
 
@@ -10111,6 +10163,38 @@ Index DataSet::count_nan() const
     }
 
     return nan_number;
+}
+
+
+Tensor<Index, 1> DataSet::push_back(const Tensor<Index, 1>& old_vector, const Index& new_string) const
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<Index, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
+}
+
+
+Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const string& new_string) const
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<string, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
 }
 
 
