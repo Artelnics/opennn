@@ -117,13 +117,7 @@ int main(void)
 
         stochastic_gradient_descent_pointer->set_batch_size(variables);
 
-//        stochastic_gradient_descent_pointer->perform_training();
-
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
-
-        model_selection.perform_inputs_selection();
+        stochastic_gradient_descent_pointer->perform_training();
 
         cout << "End" << endl;
 
