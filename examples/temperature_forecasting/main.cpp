@@ -29,13 +29,18 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         //Data Set
-/*
+
         DataSet data_set("../data/temperature.csv", ',', true);
+        data_set.set_device_pointer(&device);
 
-        Vector<Descriptives> columns_statistics = data_set.calculate_columns_descriptives();
+        Tensor<Descriptives, 1> columns_statistics = data_set.calculate_columns_descriptives();
 
-        Vector<Histogram> columns_histograms = data_set.calculate_columns_histograms();
+        Tensor<Histogram, 1> columns_histograms = data_set.calculate_columns_histograms();
 
         cout << "Converting to time series" << endl;
 
@@ -51,18 +56,22 @@ int main(void)
 
         data_set.split_instances_sequential();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
 
         cout << "Neural network" << endl;
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_perceptrons_number = 6;
-        const size_t outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_perceptrons_number = 6;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {inputs_number, hidden_perceptrons_number, outputs_number});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({inputs_number, hidden_perceptrons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Forecasting, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
@@ -93,11 +102,11 @@ int main(void)
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
-        Vector< Vector<double> > error_autocorrelation = testing_analysis.calculate_error_autocorrelation();
+  /*      Vector< Vector<double> > error_autocorrelation = testing_analysis.calculate_error_autocorrelation();
         Vector< Vector<double> > error_crosscorrelation = testing_analysis.calculate_inputs_errors_cross_correlation();
         Vector< Matrix<double> > error_data = testing_analysis.calculate_error_data();
         Vector< Vector<Descriptives> > error_data_statistics = testing_analysis.calculate_error_data_statistics();
-
+*/
         // Save results
 
         data_set.save("../data/data_set.xml");
@@ -111,11 +120,11 @@ int main(void)
         training_strategy_results.save("../data/training_strategy_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
-        error_autocorrelation.save("../data/error_autocorrelation.dat");
+    /*    error_autocorrelation.save("../data/error_autocorrelation.dat");
         error_crosscorrelation.save("../data/error_crosscorrelation.dat");
         error_data.save("../data/error_data.dat");
 //        error_data_statistics.save("../data/error_data_statistics.dat");
-
+*/
         // Deployment
 
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
@@ -123,7 +132,7 @@ int main(void)
 
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
-*/
+
         return 0;
     }
     catch(exception& e)

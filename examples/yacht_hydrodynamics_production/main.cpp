@@ -29,12 +29,17 @@ int main(void)
     {
 
         cout << "OpenNN. Yacht Resistance Production Example." << endl;
-/*
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Neural network
 
         const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
+        neural_network.set_device_pointer(&device);
 
         double longitudinal_position_center_buoyancy;
         double prismatic_coefficient;
@@ -61,7 +66,7 @@ int main(void)
         cout << "Enter Froude number (0.125-0.45):" << endl;
         cin >> Froude_number;
 
-        Tensor<double> inputs(6);
+        Tensor<type, 1> inputs(6);
         inputs[0] = longitudinal_position_center_buoyancy;
         inputs[1] = prismatic_coefficient;
         inputs[2] = length_displacement_ratio;
@@ -69,13 +74,13 @@ int main(void)
         inputs[4] = lenght_beam_ratio;
         inputs[5] = Froude_number;
 
-        Tensor<double> outputs = neural_network.calculate_outputs(inputs);
+        Tensor<type, 1> outputs = neural_network.calculate_outputs(inputs);
 
         double residuary_resistance = outputs[0];
 
         cout << "Residuary resistance per unit weight of displacement:\n"
                   << residuary_resistance << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

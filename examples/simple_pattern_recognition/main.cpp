@@ -27,22 +27,31 @@ int main(void)
     {
         cout << "OpenNN. Simple classification example." << endl;
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
-/*
+
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
         // Variables
 
         data_set.set_training();
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {2, 2, 1});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({2, 2, 1});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
 
@@ -66,9 +75,9 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-        Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         // Save results
 
@@ -80,11 +89,11 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
 //        training_strategy_results.save("../data/training_strategy_results.dat");
 
-        binary_classification_tests.save("../data/binary_classification_tests.dat");
+//        binary_classification_tests.save("../data/binary_classification_tests.dat");
 //        confusion.save("../data/confusion.dat");
 
         cout << "Bye" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)
