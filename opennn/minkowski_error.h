@@ -69,7 +69,9 @@ public:
 
    /// @todo Check formula
 
-   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        const LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> minkowski_error;
 
