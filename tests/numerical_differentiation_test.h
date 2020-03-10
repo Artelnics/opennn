@@ -92,9 +92,39 @@ public:
 private:
 
    // Constant methods
-/*
-   type f1(const type&) const;
-   type f2(const Tensor<type, 1>&) const;
+
+   type f1(const type& var_x) const
+   {
+       return var_x;
+   }
+
+   type f1_1(const type& var_x) const
+   {
+       return pow(var_x,2);
+   }
+
+   type f1_2(const type& var_x) const
+   {
+       return pow(var_x,3);
+   }
+
+
+   Tensor<type,1> f2(const Tensor<type,1>& vect_x) const
+   {
+       return vect_x.square();
+   }
+
+   Tensor<type,2> f3(const Tensor<type,2>& vect_x) const
+   {
+       return vect_x.square();
+   }
+
+   Tensor<type,1> f4(const Index& cte, const Tensor<type,1>& vect_x) const
+   {
+       return vect_x.square();
+   }
+
+   /*   type f2(const Tensor<type, 1>&) const;
    Tensor<type, 1> f3(const Tensor<type, 1>&) const;
    type f7(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const;
 
