@@ -28,30 +28,39 @@ int main(void)
     try
     {
         cout << "OpenNN. Airfoil Self-Noise Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
         data_set.split_instances_random();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-        data_set.set_batch_instances_number(100);
+//        data_set.set_batch_instances_number(100);
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_neurons_number = 100;
-        const size_t outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_neurons_number = 100;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -67,6 +76,11 @@ int main(void)
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
+
+//        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+
+//        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(20);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
@@ -93,7 +107,7 @@ int main(void)
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 
         cout << "End" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

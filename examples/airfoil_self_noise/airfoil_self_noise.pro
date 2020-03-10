@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   A I R F O I L   S E L F   N O I S E   P R O J E C T                                           #
 #                                                                                                 #
