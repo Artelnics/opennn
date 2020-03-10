@@ -87,11 +87,13 @@ public:
 
    type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
 
-   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        const LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
+       const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
                                                                     batch.targets_2d);
 
        const Index instances_number = batch.targets_2d.size();

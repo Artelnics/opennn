@@ -58,7 +58,9 @@ public:
 
    /// @todo Check formula
 
-   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        const LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
