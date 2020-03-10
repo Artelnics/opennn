@@ -261,6 +261,8 @@ public:
         return new_vector;
     }
 
+    bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
+
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;

@@ -1271,13 +1271,13 @@ void GeneticAlgorithm::calculate_rank_fitness()
 void GeneticAlgorithm::evolve_population()
 {
     Index zero_ocurrences;
-cout << "1.0" << endl;
+
     perform_selection();
-cout << "1.1" << endl;
+
     perform_crossover();
-cout << "1,2" << endl;
+
     perform_mutation();
-cout << "1,3" << endl;
+
     for(Index i = 0; i < population.dimension(0); i++)
     {
         zero_ocurrences = 0;
@@ -1368,33 +1368,36 @@ void GeneticAlgorithm::perform_selection()
     }
 
     // Natural selection
-
-    while(static_cast<Index>(population_vector_copy.size()) < elitism_size
-          && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
+cout << "1.0.0" << endl;
+    while(static_cast<Index>(population_vector_copy.size()) < elitism_size && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
     {
         selected_index = maximal_index(fitness_copy);
 
-        const Tensor<bool, 1> selected_population_column = population.chip(selected_index,0);
+        const Tensor<bool, 1> selected_population_row = population.chip(selected_index,0);
 
         bool contains = false;
 
-        for(size_t k = 0; k < population_vector_copy.size(); k++)
+        for(size_t i = 0; i < population_vector_copy.size(); i++)
         {
-            for(Index l = 0; l < selected_population_column.size(); l++)
+            for(Index j = 0; j < selected_population_row.size(); j++)
             {
-                if(population_vector_copy[k][static_cast<size_t>(l)] != selected_population_column(l)) contains = false;
-                else contains = true;
+                if(population_vector_copy[i][static_cast<size_t>(j)] == selected_population_row(j)) contains = true;
+                else contains = false;
             }
         }
 
         if(!contains)
         {
-            selected_population(selected_index) = true;
+            selected_population[selected_index] = true;
 
-            population_vector_copy.push_back(tensor_to_vector(population.chip(selected_index,0)));
+            population_vector_copy.push_back(tensor_to_vector(selected_population_row));
         }
 
         fitness_copy[selected_index] = -1;
+
+        Tensor<type, 0> stop = fitness_copy.mean();
+
+        if(stop(0) == -1.) break;
     }
 
     // Roulette wheel
@@ -1402,7 +1405,6 @@ void GeneticAlgorithm::perform_selection()
     while(static_cast<Index>(population_vector_copy.size()) != selected_population_size)
     {
         random = sum(0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
-//        random = calculate_random_uniform(0.,sum);
 
         for(Index k = 0; k < fitness_sum.size(); k++)
         {
@@ -1443,6 +1445,7 @@ void GeneticAlgorithm::perform_selection()
             population(static_cast<Index>(i),static_cast<Index>(j)) = population_vector_copy[i][j];
         }
     }
+
 }
 
 
@@ -1855,12 +1858,10 @@ void GeneticAlgorithm::perform_mutation()
 
     type random;
 
-    for(Index i = selected_population_size; i < population.size(); i++)
+    for(Index i = selected_population_size; i < population.dimension(0); i++)
     {
         for(Index j = 0; j < population.dimension(1); j++)
         {
-//            random = calculate_random_uniform(0.,1.);
-
             random = static_cast<type>(1.0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
             if(random <= mutation_rate)
@@ -1958,6 +1959,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     Tensor<DataSet::VariableUse, 1> current_uses;
     Tensor<type, 0> current_mean;
     type current_standard_deviation;
+    Tensor<type, 1> current_parameters;
 
 //    type previous_minimum_selection_error = 1e10;
 
@@ -2003,17 +2005,16 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 //    results->resize_history(maximum_epochs_number+1);
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {cout << "1" << endl;
+    {
         if(epoch != 0)
         {
-//            evolve_population();
-            cout << "2" << endl;
+            evolve_population();
         }
-cout << "3.0" << endl;
+
         evaluate_population();
-cout << "3" << endl;
+
         minimal_index = get_optimal_individual_index();
-cout << "4" << endl;
+
         current_mean = loss.chip(1,1).mean();
 
         current_standard_deviation = standard_deviation(loss.chip(1,1));
@@ -2024,9 +2025,11 @@ cout << "4" << endl;
 
         current_training_error = loss(minimal_index,0);
 
+        current_parameters = neural_network_pointer->get_parameters();
+
         Index count_optimal = 0;
         Index count_inputs = 0;
-cout << "5 " << endl;
+
         for(Index k = 0; k < optimal_inputs.size(); k++)
         {
             if(optimal_inputs(k) == true) count_optimal++;
@@ -2042,6 +2045,7 @@ cout << "5 " << endl;
             optimum_training_error = current_training_error;
             optimum_selection_error = current_selection_error;
             optimal_generation = epoch;
+            optimal_parameters = current_parameters;
         }
 
         time(&current_time);
@@ -2139,9 +2143,9 @@ cout << "5 " << endl;
 
         if(end_algortihm == true) break;
     }
-cout <<"skip" << endl;
+
     // Save results
-    /*
+ /*
         results->inputs_data.set(inputs_history);
 
         if(reserve_error_data)
@@ -2160,12 +2164,13 @@ cout <<"skip" << endl;
         {
             results->minimal_parameters = optimal_parameters;
         }
-
+*/
     results->optimal_inputs = optimal_inputs;
     results->final_selection_error = optimum_selection_error;
     results->final_training_error = optimum_training_error;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
+    results->minimal_parameters = optimal_parameters;
 
     Index original_index;
 
@@ -2207,7 +2212,7 @@ cout <<"skip" << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-*/
+
     return results;
 }
 
@@ -3645,6 +3650,34 @@ type GeneticAlgorithm::euclidean_distance(const Tensor<type, 1>& tensor, const T
 
     return sqrt(distance);
 }
+
+bool GeneticAlgorithm::contains(const vector<vector<bool>>&values, const vector<bool>&values_2) const
+{
+
+  if(values.empty()) {
+    return false;
+  }
+
+  vector<bool> copy(values_2);
+
+  const size_t values_size = values.size();
+
+  for(size_t i = 0; i < values_size; i++)
+  {
+  for(size_t j = 0; j < values[i].size(); j++)
+  {
+      typename vector<bool>::iterator it = find(copy.begin(), copy.end(), values[i][j]);
+
+      if(it != copy.end())
+      {
+          return true;
+      }
+  }
+  }
+
+  return false;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
