@@ -8,7 +8,6 @@
 
 #include "perceptron_layer_test.h"
 
-
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {
 }
