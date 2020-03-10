@@ -33,32 +33,39 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
 
         DataSet data_set("../data/logical_operations.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
         Tensor<string, 1> uses(8);
         uses.setValues({"Input","Input","Target","Target","Target","Target","Target","Target"});
 
         data_set.set_columns_uses(uses);
-/*
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
-*/
+
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+
         // Neural network
 
         Tensor<Index, 1> architecture(3);
         architecture.setValues({2, 6, 6});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-/*
+        neural_network.set_device_pointer(&device);
+
         neural_network.set_inputs_names(inputs_names);
 
         neural_network.set_outputs_names(targets_names);
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.perform_training();
 

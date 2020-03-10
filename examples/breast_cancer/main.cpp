@@ -27,20 +27,29 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
-/*
+
         DataSet data_set("../data/breast_cancer.csv",';',true);
+        data_set.set_device_pointer(&device);
 
         data_set.split_instances_random();
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {9, 3, 1});
+        Tensor<Index, 1> neural_netowrk_architecture(3);
+        neural_netowrk_architecture.setValues({9, 3, 1});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_netowrk_architecture);
+        neural_network.set_device_pointer(&device);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
@@ -51,6 +60,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
 
@@ -79,12 +89,12 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         cout << "Confusion: " << endl;
         cout << confusion << endl;
 
-        Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
         cout << "Binary classification tests: " << endl;
         cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;
@@ -104,7 +114,7 @@ int main(void)
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
         cout << "End" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)
