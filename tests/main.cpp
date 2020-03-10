@@ -107,7 +107,7 @@ int main()
          tests_failed_count += data_set_test.get_tests_failed_count();
       }
 
-      else if(test == "numerical_differentiation" || test == "")
+      else if(test == "numerical_differentiation" || test == "ndf")
       {
          NumericalDifferentiationTest test_numerical_differentiation;
          test_numerical_differentiation.run_test_case();

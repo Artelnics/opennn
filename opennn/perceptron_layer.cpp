@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+    //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P E R C E P T R O N   L A Y E R   C L A S S
@@ -612,12 +612,16 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-//    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
-//    const Tensor<type, 2> biases = get_biases(parameters);
+    const Index batch_size = inputs.dimension(0);
+    const Index outputs_number = get_neurons_number();
 
-//    return calculate_outputs(inputs, biases, synaptic_weights);
+    Tensor<type, 2> outputs(batch_size, outputs_number);
+    Tensor<type, 2> combinations(batch_size, outputs_number);
 
-    return Tensor<type, 2>();
+    calculate_combinations(inputs, get_biases(parameters), get_synaptic_weights(parameters), combinations);
+    calculate_activations(combinations, outputs);
+
+    return outputs;
 }
 
 

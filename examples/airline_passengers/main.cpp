@@ -28,12 +28,17 @@ int main(void)
     try
     {
         cout << "OdsfadfenNN. Airline Passengers Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 
         DataSet data_set("../data/airline_passengers_simple.csv", ',', true);
+        data_set.set_device_pointer(&device);
 
         data_set.print_columns_types();
 
@@ -42,25 +47,30 @@ int main(void)
 
         data_set.transform_time_series();
 
-        data_set.set_batch_instances_number(1);
+//        data_set.set_batch_instances_number(1);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
         // Instances
 
         data_set.split_instances_sequential();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_neurons_number = 4;
-        const size_t outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_neurons_number = 4;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {inputs_number, hidden_neurons_number, outputs_number});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Forecasting, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
+
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
@@ -112,7 +122,7 @@ int main(void)
 
 
         cout << "Bye" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

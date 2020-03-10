@@ -28,26 +28,35 @@ int main(void)
     try
     {
         cout << "OpenNN. Leukemia Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
 
         // Data set
 
         DataSet data_set("../data/leukemia.csv", ';', false);
+        data_set.set_device_pointer(&devive);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t targets_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index targets_number = data_set.get_target_variables_number();
 
         data_set.split_instances_random();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {inputs_number, targets_number});
+        Tensor<Index, 1> neural_network_architecture(2);
+        neural_network_architecture.setValues({inputs_number, targets_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
 
@@ -62,6 +71,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
 
@@ -96,7 +106,7 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         // Save results
 
@@ -109,7 +119,7 @@ int main(void)
 //        model_selection.save("../data/model_selection.xml");
 //        model_selection_results.save("../data/model_selection_results.dat");
 
-        confusion.save_csv("../data/confusion.csv");
+//        confusion.save_csv("../data/confusion.csv");
 
         cout << "Bye" << endl;
 */

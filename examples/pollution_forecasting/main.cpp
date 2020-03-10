@@ -31,13 +31,19 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         //  Load data set
-/*
+
         DataSet data_set;
 
         data_set.set_data_file_name("../../../datasets/pollution.csv");
         data_set.set_separator(',');
         data_set.set_has_columns_names(true);
+        data_set.set_device_pointer(&device);
+
         size_t lags_number = 2;
         size_t steps_ahead = 1;
 
@@ -54,28 +60,31 @@ int main(void)
 
         // Autocorrelations
 
-        const Matrix<double> autocorrelations = data_set.calculate_autocorrelations();
+//        const Matrix<double> autocorrelations = data_set.calculate_autocorrelations();
 
-        const Matrix<Vector<double>> cross_correlations = data_set.calculate_cross_correlations();
+//        const Matrix<Vector<double>> cross_correlations = data_set.calculate_cross_correlations();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_input_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        const size_t outputs_number = data_set.get_target_variables_number();
+        Tensor<Index, 1> neural_network_architecture(2);
+        neural_network_architecture.setValues({inputs_number, outputs_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
 
         neural_network.print_summary();
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
@@ -112,7 +121,7 @@ int main(void)
         training_strategy_results.save("../data/training_strategy_results.dat");
 
         linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-*/
+
         return 0;
     }
     catch(exception& e)

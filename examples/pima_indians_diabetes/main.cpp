@@ -27,20 +27,28 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
-/*
+
         DataSet data_set("../data/pima_indians_diabetes.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
         data_set.split_instances_random(0.60,0.20,0.20);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {8, 6, 1});
+        Tensor<Index, 1> neural_network_architecture(3);
+        neural_network_architecture.setValues({8, 6, 1});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
 
         neural_network.set_inputs_names(inputs_names);
 
@@ -55,7 +63,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
@@ -74,9 +82,9 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
         cout << "Confusion:"<< endl << confusion << endl;
 
@@ -107,9 +115,9 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
 //        training_strategy_results.save("../data/training_strategy_results.dat");
 
-        confusion.save_csv("../data/confusion.csv");
+//        confusion.save_csv("../data/confusion.csv");
 //        binary_classification_tests.save("../data/binary_classification_tests.dat");
-*/
+
         cout << "End" << endl;
 
         return 0;

@@ -56,8 +56,6 @@ public:
 
    void test_get_parameters_number();
    void test_get_parameters();
-   void test_calculate_parameters_norm();
-   void test_get_perceptrons_parameters();
 
    // Activation functions
 
@@ -99,7 +97,6 @@ public:
 
    void test_set_parameters_constant();
 
-   void test_initialize_biases();    
    void test_set_synaptic_weights_constant();
    void test_set_parameters_random();
 
