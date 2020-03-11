@@ -65,7 +65,7 @@ int main(void)
 
         cout << "Enter Froude number (0.125-0.45):" << endl;
         cin >> Froude_number;
-
+/*
         Tensor<type, 1> inputs(6);
         inputs[0] = longitudinal_position_center_buoyancy;
         inputs[1] = prismatic_coefficient;
@@ -80,7 +80,7 @@ int main(void)
 
         cout << "Residuary resistance per unit weight of displacement:\n"
                   << residuary_resistance << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

@@ -38,7 +38,7 @@ int main(void)
         // Data set
 
         DataSet data_set("../data/leukemia.csv", ';', false);
-        data_set.set_device_pointer(&devive);
+        data_set.set_device_pointer(&device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -122,7 +122,7 @@ int main(void)
 //        confusion.save_csv("../data/confusion.csv");
 
         cout << "Bye" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

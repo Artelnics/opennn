@@ -38,9 +38,9 @@ int main(void)
         DataSet data_set("../data/temperature.csv", ',', true);
         data_set.set_device_pointer(&device);
 
-        Tensor<Descriptives, 1> columns_statistics = data_set.calculate_columns_descriptives();
+//        Tensor<Descriptives, 1> columns_statistics = data_set.calculate_columns_descriptives();
 
-        Tensor<Histogram, 1> columns_histograms = data_set.calculate_columns_histograms();
+//        Tensor<Histogram, 1> columns_histograms = data_set.calculate_columns_histograms();
 
         cout << "Converting to time series" << endl;
 
