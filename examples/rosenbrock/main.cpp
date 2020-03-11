@@ -106,7 +106,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(variables);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
