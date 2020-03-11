@@ -76,11 +76,12 @@ int main(void)
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(5);
+
         training_strategy.set_device_pointer(&device);
-
-//        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-
-//        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(20);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 

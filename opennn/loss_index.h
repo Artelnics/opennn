@@ -106,9 +106,7 @@ public:
 
            const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-           // First order loss
-
-           errors.resize(batch_instances_number, outputs_number);
+           // First order los
 
            loss = 0;
 
@@ -122,8 +120,6 @@ public:
 
        void print()
        {
-           cout << "Errors:" << endl;
-           cout << errors << endl;
 
            cout << "Loss:" << endl;
            cout << loss << endl;
@@ -144,8 +140,6 @@ public:
        Tensor<type, 2> output_gradient;
 
        type loss;
-
-       Tensor<type, 2> errors;
 
        Tensor<type, 1> gradient;
    };
@@ -291,6 +285,7 @@ public:
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
        return calculate_error(batch, forward_propagation);
+//       return 0;
    }
 
    void back_propagate(const DataSet::Batch& batch,
@@ -299,9 +294,11 @@ public:
    {
        // Loss index
 
-       calculate_errors(batch, forward_propagation, back_propagation);
+//       calculate_errors(batch, forward_propagation, back_propagation);
 
-       calculate_error(back_propagation);
+//       calculate_error(back_propagation);
+
+       back_propagation.loss = calculate_error(batch, forward_propagation, back_propagation);
 
        calculate_output_gradient(batch, forward_propagation, back_propagation);
 
@@ -361,7 +358,7 @@ public:
                                    back_propagation.neural_network.layers(i).delta);
       }
    }
-
+/*
    void calculate_errors(const DataSet::Batch& batch,
                          const NeuralNetwork::ForwardPropagation& forward_propagation,
                          BackPropagation& back_propagation) const
@@ -405,7 +402,7 @@ public:
             }
         }
    }
-
+*/
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,

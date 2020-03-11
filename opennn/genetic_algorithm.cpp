@@ -1337,8 +1337,7 @@ void GeneticAlgorithm::perform_selection()
 
     vector<vector<bool>> population_vector_copy;
 
-    Tensor<bool, 1> selected_population(population.size());
-
+    Tensor<bool, 1> selected_population(population.dimension(0));
     selected_population.setConstant(false);
 
     Index selected_index = 0;
@@ -1368,7 +1367,7 @@ void GeneticAlgorithm::perform_selection()
     }
 
     // Natural selection
-cout << "1.0.0" << endl;
+
     while(static_cast<Index>(population_vector_copy.size()) < elitism_size && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
     {
         selected_index = maximal_index(fitness_copy);
@@ -1395,9 +1394,9 @@ cout << "1.0.0" << endl;
 
         fitness_copy[selected_index] = -1;
 
-        Tensor<type, 0> stop = fitness_copy.mean();
+//        Tensor<type, 0> stop = fitness_copy.mean();
 
-        if(stop(0) == -1.) break;
+//        if(stop(0) == -1.) break;
     }
 
     // Roulette wheel

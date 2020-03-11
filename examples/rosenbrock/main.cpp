@@ -35,8 +35,8 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 100;
+        const Index variables = 10;
 
         // Device
 
@@ -71,8 +71,8 @@ int main(void)
 
         data_set.set_device_pointer(&device);
 
-        data_set.set_training();
-//        data_set.split_instances_random();
+//        data_set.set_training();
+        data_set.split_instances_random();
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();

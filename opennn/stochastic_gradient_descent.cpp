@@ -578,7 +578,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Index training_instances_number = training_instances_indices.size();
+//    const Index training_instances_number = training_instances_indices.size();
 
     Tensor<Index, 1> batch_instances_indices(batch_instances_number);
 
@@ -632,7 +632,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
-//        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         training_loss = 0;
 
@@ -640,7 +640,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             // Data set
 
-//            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -656,7 +656,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             update_iteration(back_propagation, optimization_data);
 
-//            neural_network_pointer->set_parameters(optimization_data.parameters);
+            neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
         // Loss
@@ -686,7 +686,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
             }
 
-            selection_error /= static_cast<type>(batches_number);
+            selection_error /= static_cast<type>(selection_batches_number);
 
             if(selection_error <= minimum_selection_error)
             {
@@ -716,9 +716,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        if(epoch == maximum_epochs_number-1)
+        if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -762,7 +762,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
+            cout << "Epoch " << epoch << "/"<<maximum_epochs_number << ":\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()

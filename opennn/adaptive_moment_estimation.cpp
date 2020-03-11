@@ -635,7 +635,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
                 // Loss index
 
-                selection_error += loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+                selection_error += loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, back_propagation);
             }
 
             selection_error /= static_cast<type>(batches_number);

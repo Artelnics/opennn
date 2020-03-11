@@ -68,7 +68,7 @@ public:
 
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        const LossIndex::BackPropagation& ) const
    {
        Tensor<type, 0> sum_squared_error;
 
@@ -76,13 +76,18 @@ public:
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       const Tensor<type, 2>& errors = back_propagation.errors;
+       const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+       const Tensor<type, 2>& targets = batch.targets_2d;
+
+       Tensor<type, 2> errors(batch_instances_number, outputs.dimension(1));
 
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                errors.device(*default_device) = outputs - targets;
 
                 sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
 
@@ -92,6 +97,8 @@ public:
             case Device::EigenSimpleThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               errors.device(*thread_pool_device) = outputs - targets;
 
                sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
@@ -116,7 +123,7 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
-
+/*
    void calculate_error(BackPropagation& back_propagation) const
    {
        const Index batch_instances_number = back_propagation.errors.dimension(0);
@@ -157,10 +164,10 @@ public:
            }
        }
    }
+*/
 
-
-   void calculate_output_gradient(const DataSet::Batch&,
-                                  const NeuralNetwork::ForwardPropagation&,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -173,13 +180,22 @@ public:
 
         const type coefficient = static_cast<type>(2.0)/static_cast<type>(instances_number);
 
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
         switch(device_pointer->get_type())
         {
              case Device::EigenDefault:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 back_propagation.output_gradient.device(*default_device) = coefficient*back_propagation.errors;
+                 errors.device(*default_device) = outputs - targets;
+
+                 back_propagation.output_gradient.device(*default_device) = coefficient*errors;
 
                  return;
              }
@@ -188,7 +204,9 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
+                errors.device(*thread_pool_device) = outputs - targets;
+
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
 
                 return;
              }
