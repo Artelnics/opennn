@@ -799,6 +799,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     type gradient_norm = 0;
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
     // Learning rate
 

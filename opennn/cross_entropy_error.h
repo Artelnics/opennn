@@ -140,7 +140,7 @@ public:
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.output_gradient.device(*thread_pool_device) =
-                    -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+                        -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
 
                 return;
              }

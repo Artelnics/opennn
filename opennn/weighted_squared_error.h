@@ -24,6 +24,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
+#include "device.h"
 
 namespace OpenNN
 {
@@ -89,7 +90,7 @@ public:
 
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        const LossIndex::BackPropagation& ) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -102,7 +103,7 @@ public:
    }
 
    void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation&,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -112,10 +113,45 @@ public:
         #endif
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations_2d-batch.targets_2d)
-                *((batch.targets_2d-static_cast<type>(1.0))*(static_cast<type>(-1.0))*negatives_weight + batch.targets_2d*positives_weight);
-*/
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 errors.device(*default_device) = outputs - targets;
+
+                 back_propagation.output_gradient.device(*default_device) = errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                errors.device(*thread_pool_device) = outputs - targets;
+
+                back_propagation.output_gradient.device(*thread_pool_device) =errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+        }
+
+//        back_propagation.output_gradient = (outputs-targets)*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
    }
 
 

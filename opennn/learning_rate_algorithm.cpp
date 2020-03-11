@@ -448,7 +448,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation)
+            + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
     count++;
 
@@ -462,7 +463,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation)
+                + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -477,7 +479,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation)
+                    + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             count++;
         }
@@ -490,7 +493,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation)
+                + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -504,7 +508,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation)
+                    + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             if(triplet.U.first - triplet.A.first <= loss_tolerance)
             {

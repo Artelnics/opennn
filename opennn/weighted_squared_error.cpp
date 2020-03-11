@@ -289,19 +289,29 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 
 #endif
 
-    type weighted_sum_squared_error = 0.0;;
+//    type weighted_sum_squared_error = 0.0;
 
-    type error = 0.0;
+    const Tensor<bool, 2> if_sentence = x == x.constant(0);
 
+    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+    f_1 = (x - y).square()*positives_weight;
+
+    f_2 = (x - y).square()*negatives_weight;
+
+    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, f_2)).sum();
+/*
     for(Index i = 0; i < x.size(); i++)
     {
         error = x(i) - y(i);
 
-        if(y(i) == 1.0)
+        if(static_cast<double>(y(i)) == 1.0)
         {
             weighted_sum_squared_error += positives_weight*(error*error);
         }
-        else if(y(i) == 0.0)
+        else if(static_cast<double>(y(i)) == 0.0)
         {
             weighted_sum_squared_error += negatives_weight*(error*error);
         }
@@ -316,8 +326,8 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
             throw logic_error(buffer.str());
         }
     }
-
-    return weighted_sum_squared_error;
+*/
+    return weighted_sum_squared_error(0);
 }
 
 
