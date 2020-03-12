@@ -764,12 +764,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     training_batch.fill(training_instances_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
 
-
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -790,6 +791,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     Index selection_failures = 0;
 
     type gradient_norm = 0;
+
+    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
     LossIndex::SecondOrderLoss terms_second_order_loss;
 
@@ -839,7 +843,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
 //             parameters_increment
 //                = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,
-                                                       terms_second_order_loss.gradient*(-1.0));
+//                                                       terms_second_order_loss.gradient*(-1.0));
 
              const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 
@@ -879,9 +883,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-          selection_error = loss_index_pointer->calculate_error(
-                      selection_forward_propagation.layers[trainable_layers_number].activations_2d,
-                      selection_batch.targets_2d);
+          selection_error = loss_index_pointer->calculate_error(selection_batch,
+                                                                selection_forward_propagation,
+                                                                selection_back_propagation);
         }
 
         if(epoch == 0)
@@ -937,10 +941,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(training_loss <= training_loss_goal)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
-            }
+            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
             stop_training = true;
 
@@ -962,10 +963,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
-            }
+            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
 
             stop_training = true;
 
@@ -1073,11 +1071,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->set_parameters(parameters);
 
-//       neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-//       loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-//       training_loss = training_back_propagation.loss;
+        training_loss = training_back_propagation.loss;
 
         selection_error = minimum_selection_error;
     }

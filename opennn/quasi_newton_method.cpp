@@ -1253,7 +1253,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Optimization data
 
-        update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
@@ -1264,6 +1264,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             selection_error = 0;
 
             // Loss Index
+
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_error > old_selection_error)
