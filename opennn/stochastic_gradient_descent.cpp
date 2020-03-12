@@ -629,10 +629,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
     batch.fill(training_batches.chip(0,0), input_variables_indices, target_variables_indices);
+//    Tensor<Index, 1> batch_indices(batch_instances_number);
+//    Index index = 0;
+//    memcpy(batch_indices.data(), training_instances_indices.data() + index, static_cast<size_t>(batch_instances_number)*sizeof(Index));
 
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
         training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
+
+//        random_shuffle(training_instances_indices.data(), training_instances_indices.data() + training_instances_indices.size());
 
         training_loss = 0;
 
@@ -641,6 +646,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             // Data set
 
             batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+//            batch.fill(batch_indices, input_variables_indices, target_variables_indices);
 
             // Neural network
 
