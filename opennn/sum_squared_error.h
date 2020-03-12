@@ -114,44 +114,7 @@ public:
 
        return sum_squared_error(0);
    }
-/*
-   void calculate_error(BackPropagation& back_propagation) const
-   {
-       Tensor<type, 0> sum_squared_error;
 
-       const Tensor<type, 2>& errors = back_propagation.errors;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       back_propagation.loss = sum_squared_error(0);
-   }
-*/
    // Gradient methods
 
    void calculate_output_gradient(const DataSet::Batch& batch,
