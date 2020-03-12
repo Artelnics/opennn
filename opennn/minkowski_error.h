@@ -67,8 +67,6 @@ public:
 
    // loss methods
 
-   /// @todo Check formula
-
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         const LossIndex::BackPropagation& back_propagation) const
@@ -188,7 +186,7 @@ public:
                  const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
 
                  back_propagation.output_gradient.device(*default_device)
-                         = errors.abs().pow(minkowski_parameter-2)/p_norm;
+                         = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
 
                  return;
              }
@@ -202,7 +200,7 @@ public:
                 const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 back_propagation.output_gradient.device(*thread_pool_device)
-                        = errors.abs().pow(minkowski_parameter-2)/p_norm;
+                        = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
 
                  return;
              }
