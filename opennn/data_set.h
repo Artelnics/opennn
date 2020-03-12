@@ -556,6 +556,8 @@ public:
 
    // Descriptives methods
 
+   void set_variables_descriptives();
+
    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
@@ -901,6 +903,7 @@ private:
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
 
+   Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
