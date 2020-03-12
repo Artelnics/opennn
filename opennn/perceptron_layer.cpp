@@ -382,7 +382,7 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
 
-void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
+void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -406,11 +406,11 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     memcpy(biases.data(),
-           new_parameters.data(),
+           new_parameters.data() + index,
            static_cast<size_t>(biases_number)*sizeof(type));
 
     memcpy(synaptic_weights.data(),
-           new_parameters.data() + biases_number,
+           new_parameters.data() + biases_number + index,
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 
 }

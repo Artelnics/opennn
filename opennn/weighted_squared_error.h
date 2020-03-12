@@ -90,7 +90,7 @@ public:
 
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& ) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -98,6 +98,8 @@ public:
                                                                     batch.targets_2d);
 
        const Index instances_number = batch.targets_2d.size();
+
+       back_propagation.loss = error/instances_number;
 
        return error/instances_number;
    }

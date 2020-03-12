@@ -68,7 +68,7 @@ public:
 
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& ) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
 
@@ -91,7 +91,9 @@ public:
 
                 sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
 
-                return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+                return back_propagation.loss;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -102,7 +104,9 @@ public:
 
                sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
-               return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+               back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+               return back_propagation.loss;
             }
 
            case Device::EigenGpu:
