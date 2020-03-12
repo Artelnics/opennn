@@ -1203,6 +1203,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -1244,7 +1245,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         training_loss = training_back_propagation.loss;
-        training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
+        training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1266,7 +1267,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             selection_error = 0;
 
             // Loss Index
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_error > old_selection_error)
             {

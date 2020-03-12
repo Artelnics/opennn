@@ -198,7 +198,7 @@ public:
     virtual Tensor<type, 1> get_parameters() const;
     virtual Index get_parameters_number() const;
 
-    virtual void set_parameters(const Tensor<type, 1>&);
+    virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
     void set_device_pointer(Device*);
 
