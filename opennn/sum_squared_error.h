@@ -67,7 +67,7 @@ public:
 
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
 
@@ -109,6 +109,8 @@ public:
                 break;
            }
        }
+
+       back_propagation.loss = sum_squared_error(0);
 
        return sum_squared_error(0);
    }

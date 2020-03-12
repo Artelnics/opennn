@@ -67,11 +67,9 @@ public:
 
    // loss methods
 
-   /// @todo Check formula
-
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> minkowski_error;
 
@@ -111,6 +109,8 @@ public:
                 break;
            }
        }
+
+       back_propagation.loss = minkowski_error(0);
 
        return minkowski_error(0);
    }
@@ -153,8 +153,6 @@ public:
    }
 */
 
-   /// @todo Virtual method not implemented.
-
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
@@ -165,7 +163,7 @@ public:
 
         #endif
 
-//        const Index training_instances_number = data_set_pointer->get_training_instances_number();
+        const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -188,7 +186,10 @@ public:
                  const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
 
                  back_propagation.output_gradient.device(*default_device)
-                         = errors.abs().pow(minkowski_parameter-2)/p_norm;
+                         = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
+
+                 back_propagation.output_gradient.device(*default_device) =
+                         back_propagation.output_gradient/static_cast<type>(training_instances_number);
 
                  return;
              }
@@ -202,7 +203,10 @@ public:
                 const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 back_propagation.output_gradient.device(*thread_pool_device)
-                        = errors.abs().pow(minkowski_parameter-2)/p_norm;
+                        = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
+
+                back_propagation.output_gradient.device(*thread_pool_device) =
+                        back_propagation.output_gradient/static_cast<type>(training_instances_number);
 
                  return;
              }

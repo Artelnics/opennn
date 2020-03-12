@@ -79,7 +79,7 @@ public:
      
    type calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
 
@@ -126,7 +126,9 @@ public:
        const Index batch_instances_number = batch.get_instances_number();
        const Index total_instances_number = data_set_pointer->get_instances_number();
 
-       return sum_squared_error(0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+       back_propagation.loss = sum_squared_error(0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+
+       return back_propagation.loss;
    }
 /*
    void calculate_error(BackPropagation& back_propagation) const
