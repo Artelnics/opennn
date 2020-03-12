@@ -372,7 +372,7 @@ void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synapti
 }
 
 
-void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
+void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -401,8 +401,8 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    memcpy(biases.data(), new_parameters.data() + index, static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 
