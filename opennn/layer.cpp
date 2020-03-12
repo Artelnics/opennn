@@ -92,7 +92,7 @@ void Layer::set_parameters_random()
 }
 
 
-void Layer::set_parameters(const Tensor<type, 1>&)
+void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
     ostringstream buffer;
 

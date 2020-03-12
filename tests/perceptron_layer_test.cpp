@@ -503,7 +503,7 @@ void PerceptronLayerTest::test_set_parameters()
 
     parameters_2.setValues({11,12,21,22});
 
-    perceptron_layer.set_parameters(parameters_2);
+//    perceptron_layer.set_parameters(parameters_2);
 
     assert_true(perceptron_layer.get_biases()(0) - parameters_2(0) < static_cast<type>(1e-5), LOG);
     assert_true(perceptron_layer.get_synaptic_weights()(0) - parameters_2(2)  < static_cast<type>(1e-5), LOG);
@@ -1149,7 +1149,7 @@ void PerceptronLayerTest::test_calculate_outputs()
    perceptron_layer.set(4, 2);
    parameters.resize(10);
    parameters.setValues({-1,2,-3,4,-5,6,-7,8,-9,10});
-   perceptron_layer.set_parameters(parameters);
+//   perceptron_layer.set_parameters(parameters);
 
    inputs.resize(1,4);
    inputs.setValues({{4,-3,2,-1}});
