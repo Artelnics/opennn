@@ -145,8 +145,6 @@ public:
 
 
    /// This structure contains second order information about the loss function (loss, gradient and Hessian).
-
-   ///
    /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
    /// A method returning this structure might be implemented more efficiently than the loss,
    /// gradient and <i>Hessian</i> methods separately.
