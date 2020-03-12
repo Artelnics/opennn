@@ -272,7 +272,7 @@ public:
 
    virtual type calculate_error(const DataSet::Batch&,
                                 const NeuralNetwork::ForwardPropagation&,
-                                const BackPropagation& = LossIndex::BackPropagation()) const = 0;
+                                BackPropagation&) const = 0;
 
    virtual void calculate_error(BackPropagation&) const {}
 
@@ -284,8 +284,8 @@ public:
 
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
-       return calculate_error(batch, forward_propagation);
-//       return 0;
+//       return calculate_error(batch, forward_propagation);
+       return 0;
    }
 
    void back_propagate(const DataSet::Batch& batch,
@@ -298,7 +298,7 @@ public:
 
 //       calculate_error(back_propagation);
 
-       back_propagation.loss = calculate_error(batch, forward_propagation, back_propagation);
+       calculate_error(batch, forward_propagation, back_propagation);
 
        calculate_output_gradient(batch, forward_propagation, back_propagation);
 

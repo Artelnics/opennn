@@ -683,7 +683,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 // Loss index
 
-                selection_error += loss_index_pointer->calculate_error(batch, forward_propagation);
+                selection_error += loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+
+//                selection_error += back_propagation.loss;
             }
 
             selection_error /= static_cast<type>(selection_batches_number);
