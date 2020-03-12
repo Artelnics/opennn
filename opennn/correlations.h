@@ -141,11 +141,6 @@ struct CorrelationResults
 
     type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    // Logistic
-
-    type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type logistic_correlation_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
-
     // Rank Logistic
 
     type rank_logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -166,10 +161,9 @@ struct CorrelationResults
     // Logistic error methods
 
     type logistic(const type&, const type&, const type&);
-    Tensor<type, 1> logistic(const Tensor<type, 1>&, const type&, const type&);
+    Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
     type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type logistic_error_missing_values(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 

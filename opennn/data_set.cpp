@@ -5515,11 +5515,11 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             }
             else if(type_i == Numeric && type_j == Binary)
             {
-                correlations(i,j) = logistic_correlation(input_i.chip(0,1), input_j.chip(0,1));
+                correlations(i,j) = logistic_correlations(input_i.chip(0,1), input_j.chip(0,1)).correlation;
             }
             else if(type_i == Binary && type_j == Numeric)
             {
-                correlations(i,j) = logistic_correlation(input_j.chip(0,1), input_i.chip(0,1));
+                correlations(i,j) = logistic_correlations(input_j.chip(0,1), input_i.chip(0,1)).correlation;
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
