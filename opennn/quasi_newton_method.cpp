@@ -1152,10 +1152,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Start training
 
-    if(display)
-    {
-        cout << "Training with quasi-Newton method...\n";
-    }
+    if(display) cout << "Training with quasi-Newton method...\n";
 
     Results results;
 

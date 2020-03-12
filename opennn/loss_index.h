@@ -164,6 +164,14 @@ public:
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 
+       void sum_hessian_diagonal(const type& value)
+       {
+           const Index parameters_number = gradient.size();
+
+           for(Index i = 0; i < parameters_number; i++)
+               hessian(i,i) += value;
+       }
+
        type loss;
        Tensor<type, 1> gradient;
        Tensor<type, 2> hessian;
@@ -290,10 +298,6 @@ public:
                                    BackPropagation& back_propagation) const
    {
        // Loss index
-
-//       calculate_errors(batch, forward_propagation, back_propagation);
-
-//       calculate_error(back_propagation);
 
        calculate_error(batch, forward_propagation, back_propagation);
 
