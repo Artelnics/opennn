@@ -1120,34 +1120,37 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// Returns a string with the expression of the unscaling process with the none method.
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @todo
 
 string UnscalingLayer::write_none_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
     buffer.str("");
-    /*
-        if(outputs_names.size() > 1)
-        {
-            buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
-        }
-        else
-        {
-            buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
-        }
-    */
+
+    if(outputs_names.size() > 1)
+    {
+//        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+//        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
+    }
+
     return buffer.str();
 }
 
+
+/// @todo
 
 string UnscalingLayer::write_none_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
     buffer.str("");
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = " << inputs_names.vector_to_string(',') << ";\n";
-    */
+
+//    buffer << outputs_names.vector_to_string(',') << " = " << inputs_names.vector_to_string(',') << ";\n";
+
     return buffer.str();
 }
 
