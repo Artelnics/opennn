@@ -195,7 +195,7 @@ public:
 
    // Squared errors methods
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;

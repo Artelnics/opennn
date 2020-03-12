@@ -120,7 +120,6 @@ public:
 
        void print()
        {
-
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -316,7 +315,7 @@ public:
        }
    }
 
-   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
+   virtual void calculate_terms_second_order_loss(SecondOrderLoss&) const {}
 
    // Regularization methods
 
