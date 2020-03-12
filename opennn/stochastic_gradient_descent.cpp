@@ -578,17 +578,19 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-//    const Index training_instances_number = training_instances_indices.size();
+
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     Tensor<Index, 1> batch_instances_indices(batch_instances_number);
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
-    Tensor<Index, 2> training_batches(data_set_pointer->get_training_batches(batch_instances_number, false).dimension(0), batch_instances_number);
-    Tensor<Index, 2> selection_batches(data_set_pointer->get_selection_batches(batch_instances_number, false).dimension(0), batch_instances_number);
+    const Index training_batches_number = training_instances_number/batch_instances_number;
+    const Index selection_batches_number = selection_instances_number/batch_instances_number;
 
-    const Index batches_number = training_batches.dimension(0);
-    const Index selection_batches_number = selection_batches.dimension(0);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_instances_number);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_instances_number);
 
     // Neural network
 
@@ -621,32 +623,25 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     results.resize_training_history(maximum_epochs_number + 1);
 
-    bool is_forecasting = false;
+    bool shuffle = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+//    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Main loop
 
-    training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-    batch.fill(training_batches.chip(0,0), input_variables_indices, target_variables_indices);
-//    Tensor<Index, 1> batch_indices(batch_instances_number);
-//    Index index = 0;
-//    memcpy(batch_indices.data(), training_instances_indices.data() + index, static_cast<size_t>(batch_instances_number)*sizeof(Index));
-
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
-        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-
-//        random_shuffle(training_instances_indices.data(), training_instances_indices.data() + training_instances_indices.size());
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, shuffle);
 
         training_loss = 0;
 
-        for(Index iteration = 0; iteration < batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
 
-            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
-//            batch.fill(batch_indices, input_variables_indices, target_variables_indices);
+            batch_instances_indices = training_batches.chip(iteration, 0);
+
+            batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -667,13 +662,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number);
+        training_loss /= static_cast<type>(training_batches_number);
 
         selection_error = 0;
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
+            selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, false);
 
             selection_error = 0;
 
@@ -681,7 +676,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+                batch_instances_indices = training_batches.chip(iteration,0);
+
+                batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
 
                 // Neural network
 
@@ -691,7 +688,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 selection_error += loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-//                selection_error += back_propagation.loss;
+                selection_error += back_propagation.loss;
             }
 
             selection_error /= static_cast<type>(selection_batches_number);

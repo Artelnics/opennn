@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <ctime>
 #include <exception>
+#include <random>
 #include <regex>
 #include <map>
 #include <stdlib.h>
