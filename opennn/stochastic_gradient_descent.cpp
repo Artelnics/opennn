@@ -641,13 +641,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         training_loss = 0;
 
-        Index index = 0;
-
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
-
-            index += batch_instances_number;
 
             batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 //            batch.fill(batch_indices, input_variables_indices, target_variables_indices);
