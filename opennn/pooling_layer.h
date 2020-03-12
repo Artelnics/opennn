@@ -173,7 +173,7 @@ public:
 /*
     ForwardPropagation forward_propagate(const Tensor<type, 2>&);
 */
-    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
+    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&)
     {
 /*
         calculate_activations(inputs, forward_propagation.activations_2d);
