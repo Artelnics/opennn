@@ -130,46 +130,6 @@ public:
 
        return back_propagation.loss;
    }
-/*
-   void calculate_error(BackPropagation& back_propagation) const
-   {
-       Tensor<type, 0> sum_squared_error;
-
-//       const Tensor<type, 2>& errors = back_propagation.errors;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       const Index total_instances_number = data_set_pointer->get_instances_number();
-
-       back_propagation.loss = sum_squared_error(0)/(static_cast<type>(back_propagation.batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
-   }
-*/
 
    // Gradient methods
 

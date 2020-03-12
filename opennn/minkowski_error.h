@@ -114,44 +114,6 @@ public:
 
        return minkowski_error(0);
    }
-/*
-   void calculate_error(BackPropagation& back_propagation) const
-   {
-       Tensor<type, 0> minkowski_error;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-//               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-//               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-//                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       back_propagation.loss = minkowski_error(0);
-   }
-*/
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,

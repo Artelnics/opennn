@@ -274,8 +274,6 @@ public:
                                 const NeuralNetwork::ForwardPropagation&,
                                 BackPropagation&) const = 0;
 
-   virtual void calculate_error(BackPropagation&) const {}
-
    type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
    {
        const Index instances_number = batch.get_instances_number();
