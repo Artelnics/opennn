@@ -1191,7 +1191,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Loss index
 
-    type training_loss = 0;
     type training_error = 0;
 
     type gradient_norm = 0;
@@ -1225,6 +1224,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
+
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1235,13 +1235,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        training_loss = training_back_propagation.loss;
         training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
@@ -1262,6 +1260,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         if(has_selection)
         {
             selection_error = 0;
+
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             // Loss Index
 
@@ -1302,19 +1302,20 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else if(epoch != 0 && (training_loss-optimization_data.old_training_loss) >= minimum_loss_decrease)
+        else if(epoch != 0 &&
+                training_back_propagation.loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_loss-optimization_data.old_training_loss <<  endl;
+                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_loss <= training_loss_goal)
+        else if(training_back_propagation.loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1424,7 +1425,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-        optimization_data.old_training_loss = training_loss;
+        optimization_data.old_training_loss = training_back_propagation.loss;
 
         if(stop_training) break;
     }

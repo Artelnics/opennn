@@ -949,11 +949,16 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle) const
 {
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+//    if(shuffle) std ::shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+//    std::shuffle(training_indices.data(), training_indices.data() + training_indices.size(), rng);
+
 
     return split_instances(training_indices, batch_instances_number);
 }
@@ -10458,7 +10463,11 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
         batches_number = 1;
         batch_size = instances_number;
     }
-    else batches_number = instances_number / batch_size;
+    else
+    {
+        batches_number = instances_number / batch_size;
+    }
+
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -10473,6 +10482,7 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
             count++;
         }
     }
+
     return batches;
 }
 
