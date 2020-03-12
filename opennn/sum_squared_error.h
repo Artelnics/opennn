@@ -182,7 +182,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
 
 private:
 

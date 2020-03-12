@@ -142,7 +142,7 @@ Tensor<type, 1> MeanSquaredError::calculate_training_error_terms(const Tensor<ty
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss() const
+void MeanSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -222,7 +222,6 @@ LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss()
 //        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
 */
-    return terms_second_order_loss;
 }
 
 

@@ -260,7 +260,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_training_error_terms(const Ten
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_loss() const
+void NormalizedSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -339,7 +339,6 @@ LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_
 //        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
 */
-    return terms_second_order_loss;
 }
 
 

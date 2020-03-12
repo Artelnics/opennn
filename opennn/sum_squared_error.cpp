@@ -182,7 +182,7 @@ Tensor<type, 1> SumSquaredError::calculate_squared_errors() const
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-LossIndex::SecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() const
+void SumSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -251,7 +251,6 @@ LossIndex::SecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() 
 
         return terms_second_order_loss;
     */
-    return LossIndex::SecondOrderLoss();
 }
 
 

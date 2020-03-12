@@ -1159,7 +1159,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     Results results;
 
-    results.resize_training_history(1+maximum_epochs_number);
+    results.resize_training_history(maximum_epochs_number);
 
     // Data set
 
@@ -1225,7 +1225,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
         // Neural network

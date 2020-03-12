@@ -742,7 +742,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     Results results;
 
-    results.resize_training_history(1+maximum_epochs_number);
+    results.resize_training_history(maximum_epochs_number);
 
     // Data set
 
@@ -776,6 +776,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     type gradient_norm = 0;
 
+    LossIndex::SecondOrderLoss terms_second_order_loss;
+
     // Training strategy stuff
 
     Tensor<type, 1> parameters_increment(parameters_number);
@@ -792,7 +794,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         // Neural network
 
@@ -805,7 +807,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Loss index
 
-        LossIndex::SecondOrderLoss terms_second_order_loss = loss_index_pointer->calculate_terms_second_order_loss();
+        loss_index_pointer->calculate_terms_second_order_loss(terms_second_order_loss);
 
         training_loss = terms_second_order_loss.loss;
 
