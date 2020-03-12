@@ -23,8 +23,6 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     const Tensor<type, 1> new_y = filter_vectors.second;
 
     const Index n = new_x.size();
-//@todo
-//  if(x.is_constant() || y.is_constant()) return 1.0;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -121,8 +119,6 @@ type rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-//    if(x.is_constant() || y.is_constant()) return 1;
-
     const Tensor<type, 1> ranks_x = less_rank_with_ties(x);
     const Tensor<type, 1> ranks_y = less_rank_with_ties(y);
 
@@ -146,43 +142,6 @@ type rank_linear_correlation_missing_values(const Tensor<type, 1>& x, const Tens
 
     return rank_linear_correlation(new_x, new_y);
 }
-
-
-///// Calculates the correlation between Y and exp(A*X+B).
-///// @param x Vector containing the input values.
-///// @param y Vector containing the target values.
-
-//type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-//{
-//#ifdef __OPENNN_DEBUG__
-
-//    ostringstream buffer;
-
-//    if(y.size() != x.size())
-//    {
-//        buffer << "OpenNN Exception: Correlations.\n"
-//               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-//               << "Y size must be equal to X size.\n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//#endif
-//    /*
-//        const Tensor<Index, 1> negative_indices = y.get_indices_less_equal_to(0.0);
-//        const Tensor<type, 1> y_valid = y.delete_indices(negative_indices);
-
-//        Tensor<type, 1> log_y(y_valid.size());
-
-//        for(Index i = 0; i < static_cast<Index>(log_y.size()); i++)
-//        {
-//            log_y[i] = log(y_valid[i]);
-//        }
-
-//        return linear_correlation(x.delete_indices(negative_indices), log_y);
-//    */
-//    return 0.0;
-//}
 
 
 /// Calculates the correlation between Y and exp(A*X + B).
@@ -250,157 +209,6 @@ type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 }
 
 
-
-/// Calculates the logistic correlation coefficient between inputs and target.
-/// It uses SGD method.
-/// @param x Matrix containing inputs data.
-/// @param y Vector for computing the linear correlation with the x vector.
-
-type logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 1> scaled_x(x);
-    /*    scale_minimum_maximum(scaled_x);
-
-
-        const Index epochs_number = 50000;
-        const type learning_rate = static_cast<type>(0.01);
-        const type momentum = 0.9;
-
-        const type error_goal = 1.0e-8;
-        const type gradient_norm_goal = 1.0e-8;
-
-        type error;
-
-        Tensor<type, 1> coefficients({0.0, 0.0});
-        Tensor<type, 1> gradient(2, 0.0);
-        Tensor<type, 1> increment(2, 0.0);
-
-        Tensor<type, 1> last_increment(2, 0.0);
-
-        for(Index i = 0; i < epochs_number; i++)
-        {
-            error = logistic_error(coefficients[0], coefficients[1], x, y);
-
-            gradient = logistic_error_gradient(coefficients[0], coefficients[1], x, y);
-
-            increment = gradient*(-learning_rate);
-
-            increment += last_increment*momentum;
-
-            coefficients += increment;
-
-            if(error < error_goal) break;
-
-            if(l2_norm(gradient) < gradient_norm_goal) break;
-
-            last_increment = increment;
-        }
-
-        RegressionResults regression_results;
-        regression_results.regression_type = Logistic;
-        regression_results.a = coefficients[0];
-        regression_results.b = coefficients[1];
-        regression_results.correlation = linear_correlation(logistic_function(x,regression_results.a,regression_results.b), y);
-
-        return regression_results.correlation;
-    */
-    return 0.0;
-}
-
-
-/// Calculates the logistic correlation coefficient between inputs and target.
-/// It uses SGD method.
-/// @param x Matrix containing inputs data.
-/// @param y Vector for computing the linear correlation with the x vector.
-
-type logistic_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-    /*
-        pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-        const Tensor<type, 1> new_x = filter_vectors.first;
-        const Tensor<type, 1> new_y = filter_vectors.second;
-
-        Tensor<type, 1> scaled_x(new_x);
-        scale_minimum_maximum(scaled_x);
-
-
-        const Index epochs_number = 50000;
-        const type learning_rate = static_cast<type>(0.01);
-        const type momentum = 0.9;
-
-        const type error_goal = 1.0e-8;
-        const type gradient_norm_goal = 1.0e-8;
-
-        type error;
-
-        Tensor<type, 1> coefficients({0.0, 0.0});
-        Tensor<type, 1> gradient(2, 0.0);
-        Tensor<type, 1> increment(2, 0.0);
-
-        Tensor<type, 1> last_increment(2, 0.0);
-
-        for(Index i = 0; i < epochs_number; i++)
-        {
-            error = logistic_error(coefficients[0], coefficients[1], new_x, new_y);
-
-            gradient = logistic_error_gradient(coefficients[0], coefficients[1], new_x, new_y);
-
-            increment = gradient*(-learning_rate);
-
-            increment += last_increment*momentum;
-
-            coefficients += increment;
-
-            if(error < error_goal) break;
-
-            if(l2_norm(gradient) < gradient_norm_goal) break;
-
-            last_increment = increment;
-
-        }
-
-        RegressionResults regression_results;
-        regression_results.regression_type = Logistic;
-        regression_results.a = coefficients[0];
-        regression_results.b = coefficients[1];
-        regression_results.correlation = linear_correlation(logistic_function(new_x,regression_results.a,regression_results.b), new_y);
-
-        return regression_results.correlation;
-    */
-    return 0.0;
-}
-
-
 /// Calculates the logistic correlation coefficient between two vectors.
 /// It uses non-parametric Spearman Rank-Order method.
 /// It uses a Neural Network to compute the logistic function approximation.
@@ -411,7 +219,7 @@ type rank_logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 {
     const Tensor<type, 1> x_new = less_rank_with_ties(x);
 
-    return logistic_correlation_missing_values(x_new, y);
+    return logistic_correlations(x_new, y).correlation;
 }
 
 
@@ -811,55 +619,6 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 }
 
 
-///Calculate the error of the logistic function when there are missing values.
-
-type  logistic_error_missing_values
-(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    const Index n = y.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: type.\n"
-               << "logistic error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>& "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
-
-    Tensor<type, 1> f_x(new_vector_y.size());
-
-    const type new_n = static_cast<type>(new_vector_x.size());
-
-    type difference = 0;
-
-    type error = 0;
-
-    for(Index i = 0; i < new_n; i ++)
-    {
-        f_x[i] = logistic(a, b, new_vector_x[i]);
-
-        difference += pow(f_x[i] - new_vector_y[i],2);
-    }
-
-    return error = difference/new_n;
-}
-
-
 ///Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
@@ -908,15 +667,6 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
         s_xy += new_x(i) * new_y(i);
     }
-
-    cout << "************" << endl;
-    cout << "s_x: " << s_x << endl;
-    cout << "s_y: " << s_y << endl;
-    cout << "s_xx: " << s_xx << endl;
-    cout << "s_yy: " << s_yy << endl;
-    cout << "s_xy: " << s_xy << endl;
-    cout << "************" << endl;
-
 
     RegressionResults linear_regression;
 
@@ -1142,8 +892,6 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const Index new_size = new_x.size();
-
     Tensor<type, 1> scaled_x(new_x);
     scale_minimum_maximum(scaled_x);
 
@@ -1185,59 +933,9 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     regression_results.a = coefficients(0);
     regression_results.b = coefficients(1);
 
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
     const Tensor<type, 1> logistic_x = logistic(regression_results.a,regression_results.b, new_x);
 
-    for(Index i = 0; i < new_size; i++)
-    {
-        s_x += logistic_x(i);
-        s_y += new_y(i);
-
-        s_xx += logistic_x(i) * logistic_x(i);
-        s_yy += new_y(i) * new_y(i);
-
-        s_xy += new_y(i) * logistic_x(i);
-    }
-
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
-    {
-        regression_results.correlation = 1.0;
-    }
-    else
-    {
-        const type numerator = (new_size * s_xy - s_x * s_y);
-
-        const type radicand = (new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y);
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            regression_results.correlation = 1.0;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            regression_results.correlation = 0;
-        }
-        else
-        {
-            regression_results.correlation = numerator / denominator;
-        }
-    }
-
-    return regression_results;
+    regression_results.correlation = linear_correlation(logistic_x, new_y);
 }
 
 
@@ -1549,33 +1247,7 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
     }
 
 #endif
-/*
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
-
-    n = new_vector_x.size();
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += log(new_vector_x(i));
-        s_y += log(new_vector_y(i));
-
-        s_xx += log(new_vector_x(i)) * log(new_vector_x(i));
-        s_yy += log(new_vector_y(i)) * log(new_vector_y(i));
-
-        s_xy += log(new_vector_x(i)) * log(new_vector_y(i));
-    }
-*/
     CorrelationResults power_correlation;
 
     power_correlation.correlation_type = Power_correlation;
@@ -1583,40 +1255,6 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
     power_correlation.correlation = OpenNN::power_correlation(x, y);
 
     return power_correlation;
-/*
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
-    {
-        power_correlation.correlation = 1.0;
-    }
-    else
-    {
-        const type numerator = (n * s_xy - s_x * s_y);
-
-        const type radicand = (n * s_xx - s_x * s_x) * (n * s_yy - s_y * s_y);
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            power_correlation.correlation = 1.0;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            power_correlation.correlation = 0;
-        }
-        else
-        {
-            power_correlation.correlation = numerator / denominator;
-        }
-    }
-
-    return power_correlation;
-*/
 }
 
 
@@ -1691,55 +1329,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     const Tensor<type, 1> logistic_x = logistic(coefficients(0), coefficients(1), new_x);
 
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        s_x += logistic_x(i);
-        s_y += new_y(i);
-
-        s_xx += logistic_x(i) * logistic_x(i);
-        s_yy += new_y(i) * new_y(i);
-
-        s_xy += new_y(i) * logistic_x(i);
-    }
-
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
-    {
-        logistic_correlations.correlation = 1.0;
-    }
-    else
-    {
-        const type numerator = (new_size * s_xy - s_x * s_y);
-
-        const type radicand = (new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y);
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            logistic_correlations.correlation = 1;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            logistic_correlations.correlation = 0;
-        }
-        else
-        {
-            logistic_correlations.correlation = numerator / denominator;
-        }
-    }
+    logistic_correlations.correlation = linear_correlation(logistic_x, new_y);
 
     return logistic_correlations;
 }
