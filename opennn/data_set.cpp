@@ -4685,6 +4685,21 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 }
 
 
+/// Set the variables descriptives member with the descriptives of the variables.
+/// The size of this vector is four. The subvectors are:
+/// <ul>
+/// <li> Minimum.
+/// <li> Maximum.
+/// <li> Mean.
+/// <li> Standard deviation.
+/// </ul>
+
+void DataSet::set_variables_descriptives()
+{
+    variables_descriptives = descriptives(data);
+}
+
+
 /// Returns a vector of vectors containing some basic descriptives of all the variables in the data set.
 /// The size of this vector is four. The subvectors are:
 /// <ul>
@@ -7011,6 +7026,83 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Descriptives
+
+    file_stream.OpenElement("Descriptives");
+
+    const Index variables_number = get_variables_number();
+
+    // Variables number
+    {
+        file_stream.OpenElement("VariablesNumber");
+
+        buffer.str("");
+        buffer << variables_number;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+        file_stream.OpenElement("Descriptive");
+
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+        // Minimum
+
+        file_stream.OpenElement("Minimum");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).minimum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Minimum
+
+        file_stream.OpenElement("Maximum");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).maximum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Mean
+
+        file_stream.OpenElement("Mean");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).mean;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Standard deviation
+
+        file_stream.OpenElement("StandardDeviation");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).standard_deviation;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Close descriptive element
+
+        file_stream.CloseElement();
+    }
+
+    // Close descriptives
+
+    file_stream.CloseElement();
+
     // Instances
 
     file_stream.OpenElement("Instances");
@@ -7129,6 +7221,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
+
     // Missing values
 
     file_stream.CloseElement();
@@ -7524,6 +7617,143 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
                     columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
                 }
+            }
+        }
+    }
+
+    // Descriptives
+
+    const tinyxml2::XMLElement* descriptives_element = data_set_element->FirstChildElement("Descriptives");
+
+    if(!columns_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Descriptives element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Variables number
+
+    const tinyxml2::XMLElement* variables_number_element = columns_element->FirstChildElement("VariablesNumber");
+
+    if(!columns_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Variables number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    Index new_variables_number = 0;
+
+    if(variables_number_element->GetText())
+    {
+        new_variables_number = static_cast<Index>(atoi(variables_number_element->GetText()));
+    }
+
+    // Descriptives
+
+    variables_descriptives.resize(new_variables_number);
+
+    start_element = variables_number_element;
+
+    if(new_variables_number > 0)
+    {
+        for(Index i = 0; i < new_variables_number; i++)
+        {
+            const tinyxml2::XMLElement* descriptive_element = start_element->NextSiblingElement("Descriptive");
+            start_element = descriptive_element;
+
+            if(descriptive_element->Attribute("Item") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Descriptive item number (" << i+1 << ") does not match (" << descriptive_element->Attribute("Item") << ").\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            // Minimum
+
+            const tinyxml2::XMLElement* minimum_element = descriptive_element->FirstChildElement("Minimum");
+
+            if(!minimum_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Minium element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(minimum_element->GetText())
+            {
+                const type new_minimum = static_cast<type>(atof(minimum_element->GetText()));
+
+                variables_descriptives(i).minimum = new_minimum;
+            }
+
+            // Maximum
+
+            const tinyxml2::XMLElement* maximum_element = descriptive_element->FirstChildElement("Maximum");
+
+            if(!maximum_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Maximum element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(maximum_element->GetText())
+            {
+                const type new_maximum = static_cast<type>(atof(maximum_element->GetText()));
+
+                variables_descriptives(i).maximum = new_maximum;
+            }
+
+            // Mean
+
+            const tinyxml2::XMLElement* mean_element = descriptive_element->FirstChildElement("Mean");
+
+            if(!mean_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Mean element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(mean_element->GetText())
+            {
+                const type new_mean = static_cast<type>(atof(mean_element->GetText()));
+
+                variables_descriptives(i).mean = new_mean;
+            }
+
+            // Standard deviation
+
+            const tinyxml2::XMLElement* standard_deviation_element = descriptive_element->FirstChildElement("StandardDeviation");
+
+            if(!standard_deviation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Standard deviation element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(standard_deviation_element->GetText())
+            {
+                const type new_standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
+
+                variables_descriptives(i).standard_deviation = new_standard_deviation;
             }
         }
     }
