@@ -136,7 +136,7 @@ public:
 
     void set_padding_option(const PaddingOption&);
 
-    void set_parameters(const Tensor<type, 1>&);
+    void set_parameters(const Tensor<type, 1>&, const Index& index);
 
     void set_row_stride(const Index&);
 
