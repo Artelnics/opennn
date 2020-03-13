@@ -291,17 +291,22 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 
 //    type weighted_sum_squared_error = 0.0;
 
-    const Tensor<bool, 2> if_sentence = x == x.constant(0);
+    const Tensor<bool, 2> if_sentence = x == x.constant(1);
+    const Tensor<bool, 2> else_sentence = x == x.constant(0);
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
     Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
 
+    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
+
     f_1 = (x - y).square()*positives_weight;
 
     f_2 = (x - y).square()*negatives_weight;
 
-    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, f_2)).sum();
+    f_3 = x.constant(0);
+
+    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 /*
     for(Index i = 0; i < x.size(); i++)
     {

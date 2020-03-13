@@ -1173,31 +1173,31 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
         training_strategy_pointer->perform_training();
 
         data_set_pointer->set_testing_to_selection_instances();
-        /*
-                const type current_error = loss_index_pointer->calculate_selection_error();
+/*
+        const type current_error = loss_index_pointer->calculate_selection_error();
 
-                  neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+          neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-                  const type selection_error = loss_index_pointer->calculate_error(
-                              selection_forward_propagation.layers[trainable_layers_number].activations_2d,
-                              selection_batch.targets_2d);
+          const type selection_error = loss_index_pointer->calculate_error(
+                      selection_forward_propagation.layers[trainable_layers_number].activations_2d,
+                      selection_batch.targets_2d);
 
 
-                if(i == 0 || current_error < minimum_error)
-                {
-                    minimum_error = current_error;
-                    minimum_error_parameters = neural_network_pointer->get_parameters();
-                }
+        if(i == 0 || current_error < minimum_error)
+        {
+            minimum_error = current_error;
+            minimum_error_parameters = neural_network_pointer->get_parameters();
+        }
 
-                neural_network_ensemble[i].set(*neural_network_pointer);
-                cross_validation_error += current_error;
+        neural_network_ensemble[i].set(*neural_network_pointer);
+        cross_validation_error += current_error;
 
-                if(display)
-                {
-                    cout << "Iteration: " << i << "/" << k << endl;
-                    cout << "Current error: " << current_error << endl;
-                }
-         */
+        if(display)
+        {
+            cout << "Iteration: " << i << "/" << k << endl;
+            cout << "Current error: " << current_error << endl;
+        }
+ */
     }
 
     if(display)
@@ -1360,67 +1360,84 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_positives_cross_validation() co
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const Index target_index = data_set_pointer->get_target_variables_indices()[0];
-    /*
-        const Tensor<Index, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
+/*
+    const Tensor<Index, 1> positives_instances_indices = data_set_pointer->get_variable_data(target_index).get_indices_greater_than(0.5);
 
-        const Index positives_instances_number = positives_instances_indices.size();
+    const Index positives_instances_number = positives_instances_indices.size();
 
-        data_set_pointer->split_instances_random(1,0,0);
+    data_set_pointer->split_instances_random(1,0,0);
 
-        Tensor<type, 1> minimum_error_parameters;
-        type minimum_error = 1.0;
+    Tensor<type, 1> minimum_error_parameters;
+    type minimum_error = 1.0;
 
-        Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
-        type cross_validation_error = 0;
+    Tensor<NeuralNetwork, 1> neural_network_ensemble(positives_instances_number);
+    type cross_validation_error = 0;
 
-        for(Index i = 0; i < positives_instances_number; i++)
+    for(Index i = 0; i < positives_instances_number; i++)
+    {
+        const Index current_selection_instance_index = positives_instances_indices[i];
+        const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
+        const type targets = current_selection_instance[target_index];
+        const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
+
+        data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
+        neural_network_pointer->set_parameters_random();
+
+        training_strategy_pointer->perform_training();
+
+        const type outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
+
+        const type current_error = abs(targets-outputs);
+        const type current_loss = loss_index_pointer->calculate_training_loss();
+
+        if(i == 0 || current_error < minimum_error)
         {
-            const Index current_selection_instance_index = positives_instances_indices[i];
-            const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
-            const type targets = current_selection_instance[target_index];
-            const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
-
-            data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
-            neural_network_pointer->set_parameters_random();
-
-            training_strategy_pointer->perform_training();
-
-            const type outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_tensor({1}))(0,0);
-
-            const type current_error = abs(targets-outputs);
-            const type current_loss = loss_index_pointer->calculate_training_loss();
-
-            if(i == 0 || current_error < minimum_error)
-            {
-                minimum_error = current_error;
-                minimum_error_parameters = neural_network_pointer->get_parameters();
-            }
-
-            data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Training);
-
-            neural_network_ensemble[i].set(*neural_network_pointer);
-            cross_validation_error += current_error;
-
-            if(display)
-            {
-                cout << "Iteration: " << i+1 << "/" << positives_instances_number << endl;
-                cout << "instance index: " << current_selection_instance_index << endl;
-                cout << "Output data: " << outputs << endl;
-                cout << "Current loss: " << current_loss << endl;
-                cout << "Current error: " << current_error << endl;
-            }
+            minimum_error = current_error;
+            minimum_error_parameters = neural_network_pointer->get_parameters();
         }
+
+        data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Training);
+
+        neural_network_ensemble[i].set(*neural_network_pointer);
+        cross_validation_error += current_error;
 
         if(display)
         {
-            cout << "Cross validation error: " << cross_validation_error/positives_instances_number << endl;
+            cout << "Iteration: " << i+1 << "/" << positives_instances_number << endl;
+            cout << "instance index: " << current_selection_instance_index << endl;
+            cout << "Output data: " << outputs << endl;
+            cout << "Current loss: " << current_loss << endl;
+            cout << "Current error: " << current_error << endl;
         }
+    }
 
-        data_set_pointer->set_instances_uses(original_uses);
-        neural_network_pointer->set_parameters(minimum_error_parameters);
+    if(display)
+    {
+        cout << "Cross validation error: " << cross_validation_error/positives_instances_number << endl;
+    }
 
-        return neural_network_ensemble;
-    */
+    data_set_pointer->set_instances_uses(original_uses);
+    neural_network_pointer->set_parameters(minimum_error_parameters);
+
+    return neural_network_ensemble;
+*/
     return Tensor<NeuralNetwork, 1>();
 }
 }
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
