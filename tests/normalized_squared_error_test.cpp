@@ -190,11 +190,11 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    DataSet::Batch batch(instances_number, &data_set);
 
-   const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set.get_training_instances_indices());
+   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
    const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-   batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
+   batch.fill(instances_indices, input_indices, target_indices);
 
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
@@ -240,11 +240,11 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    DataSet::Batch batch(instances_number, &data_set);
 
-   const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set.get_training_instances_indices());
+   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
    const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-   batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
+   batch.fill(instances_indices, input_indices, target_indices);
 
    hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);

@@ -35,12 +35,33 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        vector<double> v(1000000000);
 
-        // Device
+/*
 
-        Device device(Device::EigenSimpleThreadPool);
+        std::vector<int> v(1000000, 1);
+
+        Tensor<Index, 1> w(1000000);
+        w.setConstant(1);
+
+        for(size_t i = 0; i < 1000; i++)
+        {
+            v[i] = i;
+            w[i] = i;
+        }
+
+        for(size_t i = 0; i < 10; i++)
+        {
+//            std::random_shuffle(v.data(), v.data()+v.size());
+        }
+
+        for(size_t i = 0; i < 1000; i++)
+        {
+//            cout << v[i] << endl;
+        }
+*/
+
+/*
 
         // Data Set
 
@@ -64,6 +85,13 @@ int main(void)
 //        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
 
         // Generate Data
+
+        const Index samples = 1000000;
+        const Index variables = 1000;
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
 
         DataSet data_set;
 

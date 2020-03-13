@@ -753,8 +753,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
