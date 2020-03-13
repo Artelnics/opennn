@@ -10489,13 +10489,14 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
 
 void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
 {
+    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+//    inputs_2d = data_set_pointer->get_subtensor_data(instances, inputs);
+//    targets_2d = data_set_pointer->get_subtensor_data(instances, targets);
 
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
     const Index targets_number = targets.size();
-
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
 
@@ -10508,32 +10509,23 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
 
     Index variable = 0;
 
-//    #pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
-
     for(int j = 0; j < inputs_number; j++)
     {
         variable = inputs[j];
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
 
-//        #pragma omp parallel for
-
         for(int i = 0; i < rows_number; i++)
         {
-            //            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
             inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
-
-    //#pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
 
     for(int j = 0; j < targets_number; j++)
     {
         variable = targets[j];
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
-
-//        #pragma omp parallel for
 
         for(int i = 0; i < rows_number; i++)
         {

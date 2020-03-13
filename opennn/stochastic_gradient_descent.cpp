@@ -652,11 +652,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             sort(batch_instances_indices.data(), batch_instances_indices.data() + batch_instances_indices.size());
 
-            //for(int i = 0; i < 100; i++)
+
+
+//            cout << batch_instances_indices << endl;system("pause");
 
             batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
-
-
 
             // Neural network
 
