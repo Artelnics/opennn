@@ -1174,8 +1174,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -1184,12 +1184,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-//    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
-//    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
-
     training_batch.fill(training_instances_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
-
 
     // Neural network
 

@@ -222,8 +222,7 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets);
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+       void fill(Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
        Index instances_number = 0;
 
@@ -367,20 +366,6 @@ public:
    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
-
-   static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
-   {
-       const size_t size = static_cast<size_t>(tensor.dimension(0));
-
-       vector<Index> new_vector(static_cast<size_t>(size));
-
-       for(size_t i = 0; i < size; i++)
-       {
-           new_vector[i] = tensor(static_cast<Index>(i));
-       }
-
-       return new_vector;
-   }
 
    // Members get methods
 

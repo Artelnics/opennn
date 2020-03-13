@@ -10487,49 +10487,7 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
 }
 
 
-void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets)
-{
-    const Index rows_number = static_cast<Index>(instances.size());
-    const Index inputs_number = static_cast<Index>(inputs.size());
-    const Index targets_number = static_cast<Index>(targets.size());
-
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
-
-    const Index total_rows = data.dimension(0);
-
-    const type* data_pointer = data.data();
-    type* inputs_2d_pointer = inputs_2d.data();
-    type* targets_2d_pointer = targets_2d.data();
-
-    Index instance = 0;
-    Index variable = 0;
-
-    for(Index j = 0; j < inputs_number; j++)
-    {
-        variable = inputs[static_cast<size_t>(j)];
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            instance = instances[static_cast<size_t>(i)];
-
-            inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
-    }
-
-    for(Index j = 0; j < targets_number; j++)
-    {
-        variable = targets[static_cast<size_t>(j)];
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            instance = instances[static_cast<size_t>(i)];
-
-            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
-    }
-}
-
-void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
+void DataSet::Batch::fill(Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
 {
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
@@ -10538,6 +10496,8 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
+
+    std::sort(instances.data(), instances.data() + instances.size());
 
     const type* data_pointer = data.data();
     type* inputs_2d_pointer = inputs_2d.data();
@@ -10548,12 +10508,13 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
 
     Index variable = 0;
 
+    #pragma omp parallel for// private(variable, rows_number_j, total_rows_variable)
+
     for(Index j = 0; j < inputs_number; j++)
     {
-        variable = inputs[j];
-
-        rows_number_j = rows_number*j;
-        total_rows_variable = total_rows*variable;
+        const Index variable = inputs[j];
+        const Index rows_number_j = rows_number*j;
+        const Index total_rows_variable = total_rows*variable;
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -10561,11 +10522,13 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
         }
     }
 
+    #pragma omp parallel for// private(variable, rows_number_j, total_rows_variable)
+
     for(Index j = 0; j < targets_number; j++)
     {
-        variable = targets[j];
-        rows_number_j = rows_number*j;
-        total_rows_variable = total_rows*variable;
+        const Index variable = targets[j];
+        const Index rows_number_j = rows_number*j;
+        const Index total_rows_variable = total_rows*variable;
 
         for(Index i = 0; i < rows_number; i++)
         {

@@ -814,11 +814,11 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
     DataSet::Batch batch(instances_number, data_set_pointer);
 
-    const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set_pointer->get_training_instances_indices());
+    Tensor<Index, 1> instances_indices = data_set_pointer->get_training_instances_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
+    batch.fill(instances_indices, input_indices, target_indices);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 

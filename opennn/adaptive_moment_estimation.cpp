@@ -518,9 +518,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-//    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-//    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
-
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
@@ -588,7 +585,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             // Data set
 
-            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+//            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -627,7 +624,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                selection_batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+//                selection_batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
