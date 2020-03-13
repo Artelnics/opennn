@@ -667,6 +667,8 @@ public:
                 return Tensor<type, 1>();
            }
        }
+
+       return Tensor<type, 1>();
    }
 
 

@@ -972,7 +972,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
       perceptron_layer.set_parameters_constant(1);
 
       combinations_2d.resize(1,4);
-      combinations_2d.setValues({{1.56, -0.68, 0.91, -1.99}});
+      combinations_2d.setValues({{1.56f, -0.68f, 0.91f, -1.99f}});
 
       activations_derivatives.resize(1,4);
       activations_derivatives.setZero();
