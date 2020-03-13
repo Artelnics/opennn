@@ -4713,18 +4713,77 @@ Tensor<Descriptives, 1> DataSet::get_input_variables_descriptives() const
 
     Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
 
+    Index variable_index = 0;
+    Index input_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Input)
+        {
+            if(columns(i).type != Categorical)
+            {
+                input_variables_descriptives(input_index) = variables_descriptives(variable_index);
+
+                variable_index++;
+                input_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < columns(i).get_categories_number(); j++)
+                {
+                    input_variables_descriptives(input_index) = variables_descriptives(variable_index);
+
+                    variable_index++;
+                    input_index++;
+                }
+            }
+        }
+        else
+        {
+            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
+        }
+    }
+
     return input_variables_descriptives;
-
-
 }
 
 
 Tensor<Descriptives, 1> DataSet::get_target_variables_descriptives() const
 {
-
     const Index target_variables_number = get_target_variables_number();
 
     Tensor<Descriptives, 1> target_variables_descriptives(target_variables_number);
+
+    Index variable_index = 0;
+    Index target_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Target)
+        {
+            if(columns(i).type != Categorical)
+            {
+                target_variables_descriptives(target_index) = variables_descriptives(variable_index);
+
+                variable_index++;
+                target_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < columns(i).get_categories_number(); j++)
+                {
+                    target_variables_descriptives(target_index) = variables_descriptives(variable_index);
+
+                    variable_index++;
+                    target_index++;
+                }
+            }
+        }
+        else
+        {
+            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
+        }
+    }
 
     return target_variables_descriptives;
 
