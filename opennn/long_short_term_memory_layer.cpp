@@ -1479,7 +1479,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& combination) const
+Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& /*combination*/) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1499,10 +1499,10 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
     }
 
 #endif
-
+/*
     switch(activation_function)
     {
-        /*
+
                 case Linear: return linear_derivatives(combination);
 
                 case Logistic: return logistic_derivatives(combination);
@@ -1524,9 +1524,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
                 case HardSigmoid: return hard_sigmoid_derivatives(combination);
 
                 case ExponentialLinear: return exponential_linear_derivatives(combination);
-        */
-    }
 
+    }
+*/
     return Tensor<type, 1>();
 }
 
