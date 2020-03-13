@@ -9138,17 +9138,17 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
     */
     data.setRandom();
 
-    type rosenbrock;
+    #pragma omp parallel for
 
     for(Index i = 0; i < instances_number; i++)
     {
-        rosenbrock = 0;
+        type rosenbrock = 0;
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
             rosenbrock +=
-                (1.0 - data(i,j))*(1.0 - data(i,j))
-                + 100.0*(data(i,j+1)-data(i,j)*data(i,j))*
+                (1 - data(i,j))*(1 - data(i,j))
+                + 100*(data(i,j+1)-data(i,j)*data(i,j))*
                 (data(i,j+1)-data(i,j)*data(i,j));
         }
 
@@ -10487,8 +10487,10 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
 }
 
 
-void DataSet::Batch::fill(Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
+void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
 {
+
+
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
     const Index targets_number = targets.size();
@@ -10496,8 +10498,6 @@ void DataSet::Batch::fill(Tensor<Index, 1>& instances, const Tensor<Index, 1>& i
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
-
-    std::sort(instances.data(), instances.data() + instances.size());
 
     const type* data_pointer = data.data();
     type* inputs_2d_pointer = inputs_2d.data();
@@ -10508,29 +10508,34 @@ void DataSet::Batch::fill(Tensor<Index, 1>& instances, const Tensor<Index, 1>& i
 
     Index variable = 0;
 
-    #pragma omp parallel for// private(variable, rows_number_j, total_rows_variable)
+//    #pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
 
-    for(Index j = 0; j < inputs_number; j++)
+    for(int j = 0; j < inputs_number; j++)
     {
-        const Index variable = inputs[j];
-        const Index rows_number_j = rows_number*j;
-        const Index total_rows_variable = total_rows*variable;
+        variable = inputs[j];
+        rows_number_j = rows_number*j;
+        total_rows_variable = total_rows*variable;
 
-        for(Index i = 0; i < rows_number; i++)
+//        #pragma omp parallel for
+
+        for(int i = 0; i < rows_number; i++)
         {
+            //            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
             inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
 
-    #pragma omp parallel for// private(variable, rows_number_j, total_rows_variable)
+    //#pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
 
-    for(Index j = 0; j < targets_number; j++)
+    for(int j = 0; j < targets_number; j++)
     {
-        const Index variable = targets[j];
-        const Index rows_number_j = rows_number*j;
-        const Index total_rows_variable = total_rows*variable;
+        variable = targets[j];
+        rows_number_j = rows_number*j;
+        total_rows_variable = total_rows*variable;
 
-        for(Index i = 0; i < rows_number; i++)
+//        #pragma omp parallel for
+
+        for(int i = 0; i < rows_number; i++)
         {
             targets_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }

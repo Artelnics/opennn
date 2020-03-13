@@ -632,8 +632,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
-        random_shuffle(training_instances_indices.data(),
-                       training_instances_indices.data() + training_instances_indices.size());
+//        random_shuffle(training_instances_indices.data(),
+//                       training_instances_indices.data() + training_instances_indices.size());
 
 //        training_batches = data_set_pointer->get_training_batches(batch_instances_number, shuffle);
 
@@ -650,11 +650,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                    training_instances_indices.data(),
                    static_cast<size_t>(batch_instances_number)*sizeof(Index));
 
-            for(int i = 0; i < 2; i++)
+            sort(batch_instances_indices.data(), batch_instances_indices.data() + batch_instances_indices.size());
+
+            //for(int i = 0; i < 100; i++)
+
             batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
 
-            for(int i = 0; i < 1000; i++)
-            batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
+
 
             // Neural network
 
