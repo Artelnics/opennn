@@ -543,6 +543,8 @@ public:
    // Descriptives methods
 
    void set_variables_descriptives();
+   Tensor<Descriptives, 1> get_input_variables_descriptives() const;
+   Tensor<Descriptives, 1> get_target_variables_descriptives() const;
 
    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
