@@ -162,10 +162,28 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
     const Tensor<type, 2> input_weights = get_input_weights();
     const Tensor<type, 2> recurrent_weights = get_recurrent_weights();
     const Tensor<type, 1> biases = get_biases();
+
+    Tensor<type, 1> parameters(input_weights.size() + recurrent_weights.size() + biases.size());
+
+    for(Index i = 0; i < input_weights.size(); i++)
+    {
+        fill_n(parameters.data()+i, 1, input_weights(i));
+    }
+
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        fill_n(parameters.data()+ input_weights.size() +i, 1, biases(i));
+    }
+
+    for(Index i = 0; i < recurrent_weights.size(); i++)
+    {
+        fill_n(parameters.data()+ input_weights.size() + biases.size() +i, 1, recurrent_weights(i));
+    }
+
+    return parameters;
     /*
         return input_weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases);
     */
-    return Tensor<type, 1>();
 }
 
 
@@ -181,13 +199,21 @@ const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_functio
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
 
-Tensor<type, 1> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
+Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
     const Index biases_number = get_biases_number();
+    const Index input_weights_number = get_input_weights_number();
+
+    Tensor<type,1> new_biases(biases_number);
+
+    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({input_weights_number}), Eigen::array<Eigen::Index, 1>({biases_number}));
+
+    Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
+
+    return new_biases.reshape(two_dim);
     /*
         return parameters.get_last(biases_number);
     */
-    return Tensor<type, 1>();
 }
 
 
@@ -200,13 +226,16 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
+    const Index input_weights_number = get_input_weights_number();
 
-    const Index input_weights_number = input_weights.size();
+    Tensor<type, 1> new_inputs_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({input_weights_number}));
+
+    Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
+
+    return new_inputs_weights.reshape(two_dim);
     /*
         return parameters.get_first(input_weights_number).to_matrix(inputs_number, neurons_number);
     */
-    return Tensor<type, 2>();
-
 }
 
 
@@ -218,13 +247,20 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
 Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
 {
     const Index neurons_number = get_neurons_number();
-
-    const Index weights_number = input_weights.size();
     const Index recurrent_weights_number = recurrent_weights.size();
+
+    const Index parameters_size = parameters.size();
+
+    const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
+
+    Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({start_recurrent_weights_number}), Eigen::array<Eigen::Index, 1>({recurrent_weights_number}));
+
+    Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
+
+    return new_synaptic_weights.reshape(two_dim);
     /*
         return parameters.get_subvector(weights_number, weights_number + recurrent_weights_number - 1 ).to_matrix(neurons_number, neurons_number);
     */
-    return Tensor<type, 2>();
 }
 
 
@@ -409,15 +445,12 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
 
-void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters)
+void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index parameters_number = get_parameters_number();
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
+
+    const Index parameters_number = get_parameters_number();
 
     const Index new_parameters_size = new_parameters.size();
 
@@ -433,6 +466,9 @@ void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     }
 
 #endif
+    const Index inputs_wieghts_number = get_input_weights_number();
+    const Index biases_number = get_biases_number();
+    const Index recurrent_weights_number = get_recurrent_weights_number();
     /*
        input_weights = new_parameters.get_subvector(0, inputs_number * neurons_number -1) .to_matrix(inputs_number, neurons_number);
 
@@ -440,6 +476,17 @@ void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
        biases = new_parameters.get_last(neurons_number);
     */
+    memcpy(input_weights.data(),
+           new_parameters.data() + index,
+           static_cast<size_t>(inputs_wieghts_number)*sizeof(type));
+
+    memcpy(biases.data(),
+           new_parameters.data() + inputs_wieghts_number + index,
+           static_cast<size_t>(biases_number)*sizeof(type));
+
+    memcpy(recurrent_weights.data(),
+           new_parameters.data() + inputs_wieghts_number + biases_number + index,
+           static_cast<size_t>(recurrent_weights_number)*sizeof(type));
 }
 
 
@@ -562,7 +609,7 @@ void RecurrentLayer::initialize_recurrent_weights(const type& value)
 }
 
 
-void RecurrentLayer::initialize_input_weights_Glorot(const type& minimum,const type& maximum)
+void RecurrentLayer::initialize_input_weights_Glorot(const type& /*minimum*/,const type& /*maximum*/)
 {
     input_weights.setRandom();
 }
@@ -616,11 +663,15 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     }
 
 #endif
+//    const Tensor<type, 1> inputs_dot_inputs_weights = inputs.contract(input_weights, A_B);
+//    const Tensor<type, 1> hidden_states_dot_recurrent_weights = hidden_states.contract(recurrent_weights, A_B);
+
+    return inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
+
+//    return inputs_dot_inputs_weights + biases.chip(0,0) + hidden_states_dot_recurrent_weights;
     /*
         return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
     */
-
-    return Tensor<type, 1>();
 }
 
 
@@ -653,17 +704,17 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
-        /*
-                const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+/*
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-                const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
+        const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
 
-                const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
 
-                hidden_states = activations_2d;
+        hidden_states = activations_2d;
 
-                outputs.set_row(i, combinations_2d);
-        */
+        outputs.set_row(i, combinations_2d);
+*/
     }
 
     return outputs;
@@ -703,16 +754,18 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
 #endif
 
     const Tensor<type, 2> new_input_weights = get_input_weights(parameters);
-    const Tensor<type, 2> new_recurent_weights = get_recurrent_weights(parameters);
-    const Tensor<type, 1> new_biases = get_biases(parameters);
+    const Tensor<type, 2> new_recurrent_weights = get_recurrent_weights(parameters);
+    const Tensor<type, 2> new_biases = get_biases(parameters);
+
+    return inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
     /*
         return dot(inputs, new_input_weights) + new_biases + dot(hidden_states,new_recurent_weights);
     */
-    return Tensor<type, 1>();
 }
 
 
-Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_input_weights, const Tensor<type, 2>& new_recurrent_weights) const
+Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs, const Tensor<type, 1>& new_biases,
+                                                       const Tensor<type, 2>& new_input_weights, const Tensor<type, 2>& new_recurrent_weights) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -782,13 +835,15 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
 #endif
 
     Tensor<type, 1> combinations_2d(get_neurons_number());
+
+    combinations_2d = inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
     /*
         combinations_2d = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
     */
     return combinations_2d ;
 }
 
-
+/*
 Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -812,7 +867,7 @@ Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& com
 
     switch(activation_function)
     {
-        /*
+
                 case Linear: return linear(combinations_2d);
 
                 case Logistic: return logistic(combinations_2d);
@@ -834,46 +889,45 @@ Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& com
                 case HardSigmoid: return hard_sigmoid(combinations_2d);
 
                 case ExponentialLinear: return exponential_linear(combinations_2d);
-        */
+
     }
 
     return Tensor<type, 1>();
 }
-
-
-Tensor<type, 2> RecurrentLayer::calculate_activations(const Tensor<type, 2>& combinations_2d) const
+*/
+/*
+Tensor<type, 2> RecurrentLayer::calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
 {
     switch(activation_function)
     {
-        /*
-                case Linear: return linear(combinations_2d);
+        case Linear: return linear(combinations_2d, activations_2d);
 
-                case Logistic: return logistic(combinations_2d);
+        case Logistic: return logistic(combinations_2d, activations_2d);
 
-                case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
+        case HyperbolicTangent: return hyperbolic_tangent(combinations_2d, activations_2d);
 
-                case Threshold: return threshold(combinations_2d);
+        case Threshold: return threshold(combinations_2d, activations_2d);
 
-                case SymmetricThreshold: return symmetric_threshold(combinations_2d);
+        case SymmetricThreshold: return symmetric_threshold(combinations_2d, activations_2d);
 
-                case RectifiedLinear: return rectified_linear(combinations_2d);
+        case RectifiedLinear: return rectified_linear(combinations_2d, activations_2d);
 
-                case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d, activations_2d);
 
-                case SoftPlus: return soft_plus(combinations_2d);
+        case SoftPlus: return soft_plus(combinations_2d, activations_2d);
 
-                case SoftSign: return soft_sign(combinations_2d);
+        case SoftSign: return soft_sign(combinations_2d, activations_2d);
 
-                case HardSigmoid: return hard_sigmoid(combinations_2d);
+        case HardSigmoid: return hard_sigmoid(combinations_2d, activations_2d);
 
-                case ExponentialLinear: return exponential_linear(combinations_2d);
-        */
+        case ExponentialLinear: return exponential_linear(combinations_2d, activations_2d);
+
     }
 
     return Tensor<type, 2>();
 }
-
-
+*/
+/*
 Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -897,7 +951,7 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
 
     switch(activation_function)
     {
-        /*
+
                 case Linear: return linear_derivatives(combinations_2d);
 
                 case Logistic: return logistic_derivatives(combinations_2d);
@@ -919,12 +973,12 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
                 case HardSigmoid: return hard_sigmoid_derivatives(combinations_2d);
 
                 case ExponentialLinear: return exponential_linear_derivatives(combinations_2d);
-        */
+
     }
 
     return Tensor<type, 2> ();
 }
-
+*/
 void RecurrentLayer::update_hidden_states(const Tensor<type, 1>& inputs)
 {
     /*
