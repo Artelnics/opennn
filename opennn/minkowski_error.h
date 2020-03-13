@@ -67,7 +67,7 @@ public:
 
    // loss methods
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const
    {
@@ -112,7 +112,7 @@ public:
 
        back_propagation.loss = minkowski_error(0);
 
-       return minkowski_error(0);
+       return;
    }
 
    void calculate_output_gradient(const DataSet::Batch& batch,
