@@ -1269,7 +1269,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+
+            selection_error = selection_back_propagation.loss;
 
             if(epoch == 0)
             {
