@@ -1018,17 +1018,17 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
-        /*
-                const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+/*
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-                const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
+        const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
 
-                const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
 
-                outputs.set_row(i, activations_2d);
+        outputs.set_row(i, activations_2d);
 
-                hidden_states = activations_2d;
-        */
+        hidden_states = activations_2d;
+*/
     }
 
     return outputs;

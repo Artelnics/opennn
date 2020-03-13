@@ -1317,29 +1317,29 @@ type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2
     Tensor<type, 1> outputs_row(outputs_number);
 
     type cross_entropy_error = 0;
-    /*
-         #pragma omp parallel for reduction(+:cross_entropy_error)
+/*
+     #pragma omp parallel for reduction(+:cross_entropy_error)
 
-        for(Index i = 0; i < testing_instances_number; i++)
+    for(Index i = 0; i < testing_instances_number; i++)
+    {
+        outputs_row = outputs.chip(i, 0);
+        targets_row = targets.chip(i, 0);
+
+        for(Index j = 0; j < outputs_number; j++)
         {
-            outputs_row = outputs.chip(i, 0);
-            targets_row = targets.chip(i, 0);
-
-            for(Index j = 0; j < outputs_number; j++)
+            if(outputs_row[j]) < numeric_limits<type>::min())
             {
-                if(outputs_row[j]) < numeric_limits<type>::min())
-                {
-                    outputs_row[j] = 1.0e-6;
-                }
-                else if(outputs_row[j] == 1.0)
-                {
-                    outputs_row[j] = 0.numeric_limits<type>::max();
-                }
-
-                cross_entropy_error -= targets_row[j]*log(outputs_row[j]) + (1.0 - targets_row[j])*log(1.0 - outputs_row[j]);
+                outputs_row[j] = 1.0e-6;
             }
+            else if(outputs_row[j] == 1.0)
+            {
+                outputs_row[j] = 0.numeric_limits<type>::max();
+            }
+
+            cross_entropy_error -= targets_row[j]*log(outputs_row[j]) + (1.0 - targets_row[j])*log(1.0 - outputs_row[j]);
         }
-    */
+    }
+*/
     return cross_entropy_error/static_cast<type>(testing_instances_number);
 }
 
