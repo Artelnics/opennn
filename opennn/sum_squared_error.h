@@ -65,7 +65,7 @@ public:
 
    // Error methods
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const
    {
@@ -112,7 +112,7 @@ public:
 
        back_propagation.loss = sum_squared_error(0);
 
-       return sum_squared_error(0);
+       return;
    }
 
    // Gradient methods
