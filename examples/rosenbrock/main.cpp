@@ -33,39 +33,44 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        vector<int> ar = { 10, 20, 30, 40, 50 };
+
+            // Declaring iterator to a vector
+            vector<int>::iterator ptr = ar.begin();
+
+            // Using advance() to increment iterator position
+            // points to 4
+            advance(ptr, 3);
+
+            // Displaying iterator position
+            cout << "The position of iterator after advancing is : ";
+            cout << *ptr << " ";
+
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
-        vector<double> v(1000000000);
+        MatrixXf M1 = MatrixXf::Random(3,8);
 
+        vector<Index> rows(1,1);
+
+//        cout <<M1(1,rows) << endl;
 /*
+        cout << "Column major input:" << endl << M1 << "\n";
 
-        std::vector<int> v(1000000, 1);
+        Map<MatrixXf, 0, OuterStride<> > M2(M1.data(), M1.rows(), (M1.cols()+2)/3, OuterStride<>(M1.outerStride()*3));
 
-        Tensor<Index, 1> w(1000000);
-        w.setConstant(1);
+        cout << "1 column over 3:" << endl << M2 << "\n";
 
-        for(size_t i = 0; i < 1000; i++)
-        {
-            v[i] = i;
-            w[i] = i;
-        }
+        typedef Matrix<float,Dynamic,Dynamic,RowMajor> RowMajorMatrixXf;
+        RowMajorMatrixXf M3(M1);
+        cout << "Row major input:" << endl << M3 << "\n";
 
-        for(size_t i = 0; i < 10; i++)
-        {
-//            std::random_shuffle(v.data(), v.data()+v.size());
-        }
-
-        for(size_t i = 0; i < 1000; i++)
-        {
-//            cout << v[i] << endl;
-        }
-*/
-
-/*
+        Map<RowMajorMatrixXf,0,Stride<Dynamic,3> > M4(M3.data(), M3.rows(), (M3.cols()+2)/3,
+                                                      Stride<Dynamic,3>(M3.outerStride(),3));
+        cout << "1 column over 3:" << endl << M4 << "\n";
 
         // Data Set
-
-        // Generate Data and Save
+*/
 /*
         DataSet data_set;
 
