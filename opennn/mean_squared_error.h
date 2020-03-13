@@ -66,7 +66,7 @@ public:
 
    // Error methods
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const
    {
@@ -93,7 +93,7 @@ public:
 
                 back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 
-                return back_propagation.loss;
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -106,18 +106,18 @@ public:
 
                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 
-               return back_propagation.loss;
+               return;
             }
 
            case Device::EigenGpu:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                return sum_squared_error(0);
+                return ;
            }
        }
 
-       return 0;
+       return       ;
    }
 
    // Error terms methods

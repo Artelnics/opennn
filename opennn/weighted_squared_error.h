@@ -88,7 +88,7 @@ public:
 
    type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const
    {
@@ -101,7 +101,7 @@ public:
 
        back_propagation.loss = error/instances_number;
 
-       return error/instances_number;
+       return;
    }
 
    void calculate_output_gradient(const DataSet::Batch& batch,

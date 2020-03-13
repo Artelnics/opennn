@@ -56,7 +56,7 @@ public:
 
    // Error methods
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const
    {
@@ -103,7 +103,7 @@ public:
 
        back_propagation.loss = cross_entropy_error;
 
-       return cross_entropy_error;
+       return;
   }
 
    // Gradient methods
