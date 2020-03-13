@@ -4,10 +4,6 @@
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-//#pragma warning( push )
-//#pragma warning(disable:4267)
-//#pragma warning( pop )
-
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 
 // For numeric limits
