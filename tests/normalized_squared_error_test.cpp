@@ -167,14 +167,14 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
 //   ScalingLayer* scaling_layer = new ScalingLayer();
 
-   RecurrentLayer* recurrent_layer = new RecurrentLayer();
+//   RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
+//   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
    PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    // Test trivial
 {
