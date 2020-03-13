@@ -33,9 +33,15 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+
+
         srand(static_cast<unsigned>(time(nullptr)));
 
-        vector<double> v(1000000000);
+        std::vector<int> rows{1,2};
+        std::vector<int> columns{3, 4};
+        MatrixXi A = MatrixXi::Random(4,6);
+        cout << "Initial matrix A:\n" << A << "\n\n";
+//        cout << "A(all,ind):\n" << A({1,2},{1,2}) << "\n\n";
 
 /*
 
@@ -85,7 +91,7 @@ int main(void)
 //        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
 
         // Generate Data
-
+/*
         const Index samples = 1000000;
         const Index variables = 1000;
 
@@ -146,7 +152,7 @@ int main(void)
         stochastic_gradient_descent_pointer->set_batch_size(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
-
+*/
         cout << "End" << endl;
 
         return 0;
