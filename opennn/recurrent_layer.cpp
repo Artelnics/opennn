@@ -80,7 +80,7 @@ Index RecurrentLayer::get_neurons_number() const
 
 /// Returns the hidden states of the layer.
 
-Tensor<type, 1> RecurrentLayer::get_hidden_states() const
+Tensor<type, 2> RecurrentLayer::get_hidden_states() const
 {
     return hidden_states;
 }
@@ -107,7 +107,7 @@ Index RecurrentLayer::get_timesteps() const
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
 
-Tensor<type, 1> RecurrentLayer::get_biases() const
+Tensor<type, 2> RecurrentLayer::get_biases() const
 {
     return biases;
 }
@@ -161,7 +161,7 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 {
     const Tensor<type, 2> input_weights = get_input_weights();
     const Tensor<type, 2> recurrent_weights = get_recurrent_weights();
-    const Tensor<type, 1> biases = get_biases();
+    const Tensor<type, 2> biases = get_biases();
 
     Tensor<type, 1> parameters(input_weights.size() + recurrent_weights.size() + biases.size());
 
@@ -335,13 +335,13 @@ void RecurrentLayer::set()
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
 
-    biases.resize(new_neurons_number);
+    biases.resize(1, new_neurons_number);
 
     input_weights.resize(new_inputs_number, new_neurons_number);
 
     recurrent_weights.resize(new_neurons_number, new_neurons_number);
 
-    hidden_states.resize(new_neurons_number); // memory
+    hidden_states.resize(1, new_neurons_number); // memory
 
     hidden_states.setConstant(0.0);
 
@@ -411,7 +411,7 @@ void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number);
+    biases.resize(1, new_neurons_number);
 
     input_weights.resize(inputs_number, new_neurons_number);
 
@@ -425,7 +425,7 @@ void RecurrentLayer::set_timesteps(const Index & new_timesteps)
 }
 
 
-void RecurrentLayer::set_biases(const Tensor<type, 1>& new_biases)
+void RecurrentLayer::set_biases(const Tensor<type, 2>& new_biases)
 {
     biases = new_biases;
 }
@@ -979,13 +979,14 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
     return Tensor<type, 2> ();
 }
 */
-void RecurrentLayer::update_hidden_states(const Tensor<type, 1>& inputs)
+void RecurrentLayer::update_hidden_states(const Tensor<type, 2>& inputs)
 {
-    /*
-        const Tensor<type, 1> combinations_2d = calculate_combinations(inputs);
+    Tensor<type, 2> combinations_2d(inputs.dimension(0), inputs.dimension(1));
 
-        hidden_states = calculate_activations(combinations_2d);
-    */
+    calculate_combinations(inputs, combinations_2d);
+
+    calculate_activations(combinations_2d, hidden_states);
+
 }
 
 
