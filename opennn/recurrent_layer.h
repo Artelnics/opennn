@@ -85,13 +85,13 @@ public:
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
-   Tensor<type, 1> get_hidden_states() const;
+   Tensor<type, 2> get_hidden_states() const;
 
    // Parameters
 
    Index get_timesteps()const;
 
-   Tensor<type, 1> get_biases() const;
+   Tensor<type, 2> get_biases() const;
    Tensor<type, 2> get_input_weights() const;
    Tensor<type, 2> get_recurrent_weights() const;
 
@@ -134,7 +134,7 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_biases(const Tensor<type, 1>&);
+   void set_biases(const Tensor<type, 2>&);
 
    void set_input_weights(const Tensor<type, 2>&);
 
@@ -173,6 +173,7 @@ public:
 
    void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations_2d)
    {
+       combinations_2d = inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
    }
 
 
@@ -291,7 +292,7 @@ if(combinations_columns_number != neurons_number)
 
    // neuron layer outputs
 
-   void update_hidden_states(const Tensor<type, 1>&);
+   void update_hidden_states(const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -339,7 +340,7 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 1> biases;
+   Tensor<type, 2> biases;
 
    Tensor<type, 2> input_weights;
 
@@ -351,7 +352,7 @@ protected:
 
    ActivationFunction activation_function = HyperbolicTangent;
 
-   Tensor<type, 1> hidden_states;
+   Tensor<type, 2> hidden_states;
 
    /// Display messages to screen.
 

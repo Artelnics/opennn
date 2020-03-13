@@ -879,8 +879,9 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 /// Sets the synaptic weights and biases to the given values.
 /// @param new_parameters A vector containing the synaptic weights and biases, in this order.
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters)
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& /*new_parameters*/, const Index& )
 {
+    /*
     const Index synaptic_weights_number = synaptic_weights.size();
 
     const Index parameters_number = get_parameters_number();
@@ -889,7 +890,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters)
     const Index filters_channels_number = get_filters_channels_number();
     const Index filters_rows_number = get_filters_rows_number();
     const Index filters_columns_number = get_filters_columns_number();
-    /*
+
         synaptic_weights = new_parameters.get_subvector(0, synaptic_weights_number-1).to_tensor({filters_number, filters_channels_number, filters_rows_number, filters_columns_number});
 
         biases = new_parameters.get_subvector(synaptic_weights_number, parameters_number-1);
