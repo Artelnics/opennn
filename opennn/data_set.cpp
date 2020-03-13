@@ -4707,6 +4707,30 @@ void DataSet::set_variables_descriptives()
 }
 
 
+Tensor<Descriptives, 1> DataSet::get_input_variables_descriptives() const
+{
+    const Index input_variables_number = get_input_variables_number();
+
+    Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
+
+    return input_variables_descriptives;
+
+
+}
+
+
+Tensor<Descriptives, 1> DataSet::get_target_variables_descriptives() const
+{
+
+    const Index target_variables_number = get_target_variables_number();
+
+    Tensor<Descriptives, 1> target_variables_descriptives(target_variables_number);
+
+    return target_variables_descriptives;
+
+}
+
+
 /// Returns a vector of vectors containing some basic descriptives of all the variables in the data set.
 /// The size of this vector is four. The subvectors are:
 /// <ul>
@@ -7643,7 +7667,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Variables number
 
-    const tinyxml2::XMLElement* variables_number_element = columns_element->FirstChildElement("VariablesNumber");
+    const tinyxml2::XMLElement* variables_number_element = descriptives_element->FirstChildElement("VariablesNumber");
 
     if(!columns_number_element)
     {
