@@ -95,9 +95,9 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
             "1 0\n";
 
 //    data.parse(str);
-    data.setValues({{-1,0},{-0.9,0},{-0.9,0},{-0.7,0},{-0.6,0},{-0.5,0},{-0.4,0},
-                    {-0.3,0},{-0.2,0},{-0.1,0},{0.0,0},{0.1,0},{0.2,0},{0.3,0},{0.4,0},
-                   {0.5,0},{0.6,0},{0.7,0},{0.8,0},{0.9,0},{1,0}});
+    data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
+                    {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
+                   {0.5f,0},{0.6f,0},{0.7f,0},{0.8f,0},{0.9f,0},{1,0}});
 
     data_set.set(data);
 
@@ -120,7 +120,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
 
     io.set_trials_number(1);
 //    io.set_maximum_order(7);
-    io.set_selection_error_goal(1.0e-3);
+    io.set_selection_error_goal(1.0e-3f);
     io.set_display(false);
 
     results = io.perform_neurons_selection();
@@ -155,9 +155,10 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
             "1 1\n";
 
 //    data.parse(str);
-    data.setValues({{-1,1},{-0.9, -0.9},{-0.9,-0.8},{-0.7,-0.7},{-0.6,-0.6},{-0.5,-0.5},{-0.4,-0.4},
-                    {-0.3,-0.3},{-0.2,-0.2},{-0.1,-0.1},{0.0,0.0},{0.1,0.1},{0.2,0.2},{0.3,0.3},{0.4,0.4},
-                   {0.5,0.5},{0.6,0.6},{0.7,0.7},{0.8,0.8},{0.9,0.9},{1,1}});
+    data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
+                    {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
+                   {0.5,0.5},{0.6f,0.6f},{0.7f,0.7f},{0.8f,0.8f},{0.9f,0.9f},{1,1}});
+
     data_set.set(data);
 
     neural_network.set(NeuralNetwork::Approximation, architecture);

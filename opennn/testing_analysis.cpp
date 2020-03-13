@@ -1281,6 +1281,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 type TestingAnalysis::calculate_testing_normalized_squared_error(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
+/*
     const Index testing_instances_number = targets.dimension(0);
 
     const Tensor<type, 1> testing_targets_mean = mean(targets);
@@ -1288,7 +1289,7 @@ type TestingAnalysis::calculate_testing_normalized_squared_error(const Tensor<ty
     type normalization_coefficient = 0;
 
 //#pragma omp parallel for reduction(+:sum_squared_error, normalization_coefficient)
-    /*
+
         type sum_squared_error = sum_squared_error(outputs, targets);
 
         for(Index i = 0; i < static_cast<Index>(testing_instances_number); i++)
@@ -1354,6 +1355,7 @@ type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type
         const Tensor<type, 2>& outputs,
         const Tensor<type, 1>& weights) const
 {
+/*
     const Index testing_instances_number = targets.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
@@ -1393,7 +1395,7 @@ type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type
 
     type error = 0;
     type sum_squared_error = 0;
-    /*
+
         for(Index i = 0; i < testing_instances_number; i++)
         {
             if(targets(i,0) == 1.0)
