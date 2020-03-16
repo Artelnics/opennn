@@ -9268,21 +9268,21 @@ void DataSet::generate_inputs_selection_data(const Index& instances_number, cons
 void DataSet::generate_sum_data(const Index& instances_number, const Index& variables_number)
 {
     set(instances_number,variables_number);
-    /*
-        data.setRandom(0.0, 1.0);
 
-        for(Index i = 0; i < instances_number; i++)
+    data.setRandom();
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        for(Index j = 0; j < variables_number-1; j++)
         {
-            for(Index j = 0; j < variables_number-1; j++)
-            {
-                data(i,variables_number-1) += data(i,j);
-            }
+            data(i,variables_number-1) += data(i,j);
         }
+    }
 
-        set_default();
+    set_default();
 
-        scale_data_mean_standard_deviation();
-    */
+    scale_data_mean_standard_deviation();
+
 }
 
 

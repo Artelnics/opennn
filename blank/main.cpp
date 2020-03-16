@@ -66,6 +66,18 @@ int main(void)
     {
         cout << "Blank application" << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
+        DataSet data_set;
+
+        data_set.generate_sum_data(10, 2);
+
+        data_set.print_data();
+
         cout << "End" << endl;
 
         return 0;
