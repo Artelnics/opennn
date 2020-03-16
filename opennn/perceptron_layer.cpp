@@ -384,6 +384,7 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
+    /*
 #ifdef __OPENNN_DEBUG__
 
     const Index new_parameters_size = new_parameters.size();
@@ -401,7 +402,7 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     }
 
 #endif
-
+*/
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
