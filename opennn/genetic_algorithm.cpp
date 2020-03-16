@@ -395,16 +395,9 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
 #endif
 
-//    population.resize(0,0);
-
     population.setZero();
 
     population = new_population;
-
-//    copy(new_population.data(), new_population.data() + new_population.size(), population.data());
-
-//    population.set(new_population);
-
 }
 
 
@@ -440,13 +433,7 @@ void GeneticAlgorithm::set_loss(const Tensor<type, 2>& new_loss)
 
 #endif
 
-//    loss.resize(0, 0);
-
-//    loss = new_loss;
     copy(new_loss.data(), new_loss.data() + new_loss.size(), loss.data());
-    /*
-        loss.set(new_loss);
-    */
 }
 
 
@@ -485,14 +472,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 #endif
 
-//    fitness.resize(0);
-
-//    fitness = new_fitness;
-
     copy(new_fitness.data(), new_fitness.data() + new_fitness.size(), fitness.data());
-    /*
-        fitness.set(new_fitness);
-    */
 }
 
 
@@ -1013,8 +993,6 @@ void GeneticAlgorithm::initialize_weighted_population()
         {
             random = sum(0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
-//            random = calculate_random_uniform(0.,sum);
-
             for(Index k = 0; k < correlations_sum.size(); k++)
             {
                 if(k == 0 && random < correlations_sum[0])
@@ -1062,8 +1040,6 @@ void GeneticAlgorithm::initialize_weighted_population()
         }
         else
         {
-//            population[i] = inputs;
-
             for(Index k = 0; k < population.dimension(0); k++)
             {
                 population(k,i) = inputs(k);
@@ -1145,8 +1121,6 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set_pointer->set_columns_uses(current_uses);
 
-//        data_set_pointer->set_variables_uses(current_uses);
-
         neural_network_pointer->set_inputs_number(current_inputs);
 
         // Training Neural networks
@@ -1222,7 +1196,6 @@ void GeneticAlgorithm::calculate_rank_fitness()
 {
 
     const Tensor<type, 1> column = loss.chip(1,1);
-//            calculate_greater_rank();
 
     const Index column_size = column.size();
 
@@ -1238,7 +1211,6 @@ void GeneticAlgorithm::calculate_rank_fitness()
     {
         for(Index j = 0; j < column_size; j++)
         {
-//            if(previous_rank.contains(j)) continue;
             for(Index k = 0; k < previous_rank.size(); k++)
             {
                 if(previous_rank(k) == j) continue;
@@ -1374,18 +1346,19 @@ void GeneticAlgorithm::perform_selection()
 
         const Tensor<bool, 1> selected_population_row = population.chip(selected_index,0);
 
-        bool contains = false;
+        Index count = 0;
 
         for(size_t i = 0; i < population_vector_copy.size(); i++)
         {
+            count = 0;
+
             for(Index j = 0; j < selected_population_row.size(); j++)
             {
-                if(population_vector_copy[i][static_cast<size_t>(j)] == selected_population_row(j)) contains = true;
-                else contains = false;
+                if(population_vector_copy[i][static_cast<size_t>(j)] == selected_population_row(j)) count++;
             }
         }
 
-        if(!contains)
+        if(count < selected_population_row.size())
         {
             selected_population[selected_index] = true;
 
@@ -1509,9 +1482,9 @@ void GeneticAlgorithm::perform_1point_crossover()
 
     Index first_point = crossover_first_point;
 
-    Tensor<bool, 2> new_population;
+    vector<vector<bool>> new_population;
 
-    while(new_population.size() < population_size)
+    while(static_cast<Index>(new_population.size()) < population_size)
     {
         parent1_index = static_cast<Index>(rand())%selected_population;
 
@@ -1563,50 +1536,25 @@ void GeneticAlgorithm::perform_1point_crossover()
             }
         }
 
-//        new_population.push_back(offspring1);
-        const Index new_population_inputs =  new_population.dimension(1);
-        const Index new_population_size = new_population.dimension(0);
+        new_population.push_back(tensor_to_vector(offspring1));
 
-        const Tensor<bool, 2> old_population(new_population);
-
-        new_population.resize(new_population_size, new_population_inputs+1);
-
-        for(Index i = 0; i < new_population_inputs; i++)
+        if(static_cast<Index>(new_population.size()) != population_size)
         {
-            for(Index j = 0; j < new_population_size; j++)
-            {
-                new_population(j,i) = old_population(j,i);
-            }
-        }
-
-        for(Index i = 0; i < new_population_size; i++)
-        {
-            new_population(i, new_population_inputs) = offspring1(i);
-        }
-
-        if(new_population.size() != population_size)
-        {
-//            new_population.push_back(offspring2);
-            const Tensor<bool, 2> old_population(new_population);
-
-            new_population.resize(new_population_size, new_population_inputs+1);
-
-            for(Index i = 0; i < new_population_inputs; i++)
-            {
-                for(Index j = 0; j < new_population_size; j++)
-                {
-                    new_population(j,i) = old_population(j,i);
-                }
-            }
-
-            for(Index i = 0; i < new_population_size; i++)
-            {
-                new_population(i, new_population_inputs) = offspring2(i);
-            }
+            new_population.push_back(tensor_to_vector(offspring2));
         }
     }
 
-    set_population(new_population);
+    Tensor<bool, 2> population_copy(static_cast<Index>(new_population.size()), static_cast<Index>(new_population[0].size()));
+
+    for(size_t i = 0; i < new_population.size(); i++)
+    {
+        for(size_t j = 0; j < new_population[0].size(); j++)
+        {
+            population_copy(static_cast<Index>(i),static_cast<Index>(j)) = new_population[i][j];
+        }
+    }
+
+    set_population(population_copy);
 }
 
 
@@ -1631,9 +1579,9 @@ void GeneticAlgorithm::perform_2point_crossover()
     Index first_point = crossover_first_point;
     Index second_point = crossover_second_point;
 
-    Tensor<bool, 2> new_population;
+    vector<vector<bool>> new_population;
 
-    while(new_population.size() < population_size)
+    while(static_cast<Index>(new_population.size()) < population_size)
     {
         parent1_index = static_cast<Index>(rand())%selected_population;
         parent2_index = static_cast<Index>(rand())%selected_population;
@@ -1693,51 +1641,25 @@ void GeneticAlgorithm::perform_2point_crossover()
             }
         }
 
-//        new_population.push_back(offspring1);
-        const Index new_population_inputs =  new_population.dimension(1);
-        const Index new_population_size = new_population.dimension(0);
+        new_population.push_back(tensor_to_vector(offspring1));
 
-        const Tensor<bool, 2> old_population(new_population);
-
-        new_population.resize(new_population_size, new_population_inputs+1);
-
-        for(Index i = 0; i < new_population_inputs; i++)
+        if(static_cast<Index>(new_population.size()) < population_size)
         {
-            for(Index j = 0; j < new_population_size; j++)
-            {
-                new_population(j,i) = old_population(j,i);
-            }
-        }
-
-        for(Index i = 0; i < new_population_size; i++)
-        {
-            new_population(i, new_population_inputs) = offspring1(i);
-        }
-
-        if(new_population.size() < population_size)
-        {
-//            new_population.push_back(offspring2);
-
-            const Tensor<bool, 2> old_population(new_population);
-
-            new_population.resize(new_population_size, new_population_inputs+1);
-
-            for(Index i = 0; i < new_population_inputs; i++)
-            {
-                for(Index j = 0; j < new_population_size; j++)
-                {
-                    new_population(j,i) = old_population(j,i);
-                }
-            }
-
-            for(Index i = 0; i < new_population_size; i++)
-            {
-                new_population(i, new_population_inputs) = offspring2(i);
-            }
+            new_population.push_back(tensor_to_vector(offspring2));
         }
     }
 
-    set_population(new_population);
+    Tensor<bool, 2> population_copy(static_cast<Index>(new_population.size()), static_cast<Index>(new_population[0].size()));
+
+    for(size_t i = 0; i < new_population.size(); i++)
+    {
+        for(size_t j = 0; j < new_population[0].size(); j++)
+        {
+            population_copy(static_cast<Index>(i),static_cast<Index>(j)) = new_population[i][j];
+        }
+    }
+
+    set_population(population_copy);
 
 }
 
@@ -1797,7 +1719,6 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
         for(Index i = 0; i < inputs_number; i++)
         {
-//            random_uniform = calculate_random_uniform(0.,1.);
             random_uniform = static_cast<type>(1.0)*static_cast<type>(rand() /(RAND_MAX + 1.0));
 
             if(random_uniform > static_cast<type>(0.5))
@@ -1927,7 +1848,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 #endif
 
     GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
-//    Results results;
 
     if(display)
     {
@@ -1941,8 +1861,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-//    const Index targets_number = data_set_pointer->get_target_variables_number();
 
     // Neural network
 
@@ -1959,8 +1877,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     Tensor<type, 0> current_mean;
     type current_standard_deviation;
     Tensor<type, 1> current_parameters;
-
-//    type previous_minimum_selection_error = 1e10;
 
     type optimum_selection_error = 1e10;
     type optimum_training_error = 0;
@@ -1990,8 +1906,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(original_uses(i) == DataSet::Input) count++;
     }
 
-//    optimal_inputs.resize(original_uses.count_equal_to(DataSet::Input),0);
-
     optimal_inputs.resize(count);
     optimal_inputs.setConstant(0);
 
@@ -2000,8 +1914,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     time(&beginning_time);
 
     initialize_population();
-
-//    results->resize_history(maximum_epochs_number+1);
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
@@ -2124,16 +2036,17 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         // Print results
 
         data_set_pointer->set_columns_uses(current_uses);
+        Tensor<type, 0> mean = loss.chip(1,1).mean();
 
         if(display)
         {
             cout << "Generation: " << epoch+1 << endl;
             cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
                  << " " << endl;
-//            cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
+            cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
             cout << "Generation optimum selection error: " << current_selection_error << endl;
             cout << "Corresponding training loss: " << current_training_error << endl;
-//            cout << "Generation selection mean = " << mean(loss.chip(1,1)) << endl;
+            cout << "Generation selection mean = " << mean(0) << endl;
             cout << "Generation selection standard deviation = " << standard_deviation(loss.chip(1,1)) << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -2144,26 +2057,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     }
 
     // Save results
- /*
-        results->inputs_data.set(inputs_history);
 
-        if(reserve_error_data)
-        {
-            results->loss_data.set(training_error_history);
-        }
-
-        if(reserve_selection_error_data)
-        {
-            results->selection_error_data.set(selection_error_history);
-        }
-
-        optimal_parameters = get_parameters_inputs(optimal_inputs);
-
-        if(reserve_minimal_parameters)
-        {
-            results->minimal_parameters = optimal_parameters;
-        }
-*/
     results->optimal_inputs = optimal_inputs;
     results->final_selection_error = optimum_selection_error;
     results->final_training_error = optimum_training_error;
@@ -2206,7 +2100,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     {
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal generation: " << optimal_generation << endl;
-//        cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
+        cout << "Optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
