@@ -1481,6 +1481,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 
 Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& /*combination*/) const
 {
+/*
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
@@ -1499,7 +1500,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
     }
 
 #endif
-/*
+
     switch(activation_function)
     {
 
