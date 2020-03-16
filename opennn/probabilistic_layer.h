@@ -71,7 +71,6 @@ public:
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
 
-
    const type& get_decision_threshold() const;
 
    const ActivationFunction& get_activation_function() const;

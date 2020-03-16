@@ -40,8 +40,13 @@ public:
 
    // Get methods
 
+   void test_get_biases();
+   void test_get_synaptic_weights();
+   void test_get_parameters();
+
    // Probabilistic layer
 
+   void test_get_inputs_number();
    void test_get_neurons_number();
 
    // Output variables probabilistic postprocessing
