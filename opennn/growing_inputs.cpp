@@ -214,12 +214,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-//    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
-
     const Tensor<type, 1> total_correlations = (correlations.sum(rows_sum)).abs();
-
-//    const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
-
+cout << total_correlations << endl;
     Tensor<type, 1> correlations_descending(total_correlations);
 
     sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<type>());
