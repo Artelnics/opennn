@@ -32,10 +32,12 @@ void PerceptronLayerTest::test_constructor()
     // ARCHITECTURE CONSTRUCTOR
 
     PerceptronLayer perceptron_layer_2(10, 3, PerceptronLayer::Linear);
+
     assert_true(perceptron_layer_2.get_activation_function() == PerceptronLayer::Linear, LOG);
     assert_true(perceptron_layer_2.get_inputs_number() == 10, LOG);
     assert_true(perceptron_layer_2.get_neurons_number() == 3, LOG);
     assert_true(perceptron_layer_2.get_biases_number() == 3, LOG);
+    assert_true(perceptron_layer_2.get_synaptic_weights_number() == 30, LOG);
     assert_true(perceptron_layer_2.get_parameters_number() == 33, LOG);
 
     // Copy constructor
@@ -232,10 +234,11 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 0, LOG);
+   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
 
    // Test 1
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(0);
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
@@ -981,6 +984,10 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
       perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_derivatives);
 /*
+      numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+
+      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f1, 0.0);
+
       numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d, numerical_activation_derivative);
 
 //      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);

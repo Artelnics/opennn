@@ -206,12 +206,10 @@ public:
 	  const Tensor<type, 1> y_backward = (t.*f)(x_backward);
 
 	  const Tensor<type, 1> y = (t.*f)(x);
-/*
+
       const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
-*/
-      return Tensor<type, 1>();
    }
 
 
