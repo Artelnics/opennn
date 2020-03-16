@@ -557,13 +557,11 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 {
     Results results;
-
 #ifdef __OPENNN_DEBUG__
 
     check();
 
 #endif
-
     // Start training
 
     if(display) cout << "Training with stochastic gradient descent...\n";
@@ -652,8 +650,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             sort(batch_instances_indices.data(), batch_instances_indices.data() + batch_instances_indices.size());
 
-
-
 //            cout << batch_instances_indices << endl;system("pause");
 
             batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
@@ -691,7 +687,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                batch_instances_indices = training_batches.chip(iteration,0);
+                batch_instances_indices = selection_batches.chip(iteration,0);
 
                 batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
 
