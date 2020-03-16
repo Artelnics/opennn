@@ -1082,7 +1082,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training() const
     case STOCHASTIC_GRADIENT_DESCENT:
     {
         stochastic_gradient_descent_pointer->set_display(display);
-cout << "hiho" << endl;
+
         results = stochastic_gradient_descent_pointer->perform_training();
 
     }
