@@ -134,12 +134,6 @@ public:
 
     void destruct_inputs_selection();
 
-    // Cross validation methods
-
-    Tensor<NeuralNetwork, 1> perform_k_fold_cross_validation(const Index& = 4) const;
-    Tensor<NeuralNetwork, 1> perform_random_cross_validation(const Index& = 4, const type& = 0.25) const;
-    Tensor<NeuralNetwork, 1> perform_positives_cross_validation() const;
-
     // Model selection methods
 
     void check() const;
