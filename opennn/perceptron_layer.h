@@ -280,7 +280,7 @@ public:
    }
 
 
-   void calculate_first_order_activations(const Tensor<type, 2>& combinations_2d,
+   void calculate_derivatives_activations(const Tensor<type, 2>& combinations_2d,
                                           Tensor<type, 2>& activations,
                                           Tensor<type, 2>& activations_derivatives) const
    {
@@ -306,27 +306,27 @@ public:
 
         switch(activation_function)
         {
-            case Linear: first_order_linear(combinations_2d, activations, activations_derivatives); return;
+            case Linear: derivatives_linear(combinations_2d, activations, activations_derivatives); return;
 
-            case Logistic: first_order_logistic(combinations_2d, activations, activations_derivatives); return;
+            case Logistic: derivatives_logistic(combinations_2d, activations, activations_derivatives); return;
 
-            case HyperbolicTangent: first_order_hyperbolic_tangent(combinations_2d, activations, activations_derivatives); return;
+            case HyperbolicTangent: derivatives_hyperbolic_tangent(combinations_2d, activations, activations_derivatives); return;
 
-            case Threshold: first_order_threshold(combinations_2d, activations, activations_derivatives); return;
+            case Threshold: derivatives_threshold(combinations_2d, activations, activations_derivatives); return;
 
-            case SymmetricThreshold: first_order_symmetric_threshold(combinations_2d, activations, activations_derivatives); return;
+            case SymmetricThreshold: derivatives_symmetric_threshold(combinations_2d, activations, activations_derivatives); return;
 
-            case RectifiedLinear: first_order_rectified_linear(combinations_2d, activations, activations_derivatives); return;
+            case RectifiedLinear: derivatives_rectified_linear(combinations_2d, activations, activations_derivatives); return;
 
-            case ScaledExponentialLinear: first_order_scaled_exponential_linear(combinations_2d, activations, activations_derivatives); return;
+            case ScaledExponentialLinear: derivatives_scaled_exponential_linear(combinations_2d, activations, activations_derivatives); return;
 
-            case SoftPlus: first_order_soft_plus(combinations_2d, activations, activations_derivatives); return;
+            case SoftPlus: derivatives_soft_plus(combinations_2d, activations, activations_derivatives); return;
 
-            case SoftSign: first_order_soft_sign(combinations_2d, activations, activations_derivatives); return;
+            case SoftSign: derivatives_soft_sign(combinations_2d, activations, activations_derivatives); return;
 
-            case HardSigmoid: first_order_hard_sigmoid(combinations_2d, activations, activations_derivatives); return;
+            case HardSigmoid: derivatives_hard_sigmoid(combinations_2d, activations, activations_derivatives); return;
 
-            case ExponentialLinear: first_order_exponential_linear(combinations_2d, activations, activations_derivatives); return;
+            case ExponentialLinear: derivatives_exponential_linear(combinations_2d, activations, activations_derivatives); return;
         }
    }
 
@@ -362,7 +362,7 @@ public:
                               synaptic_weights,
                               forward_propagation.combinations_2d);
 
-       calculate_first_order_activations(forward_propagation.combinations_2d,
+       calculate_derivatives_activations(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
                                          forward_propagation.activations_derivatives_2d);
    }
@@ -398,7 +398,7 @@ public:
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_first_order_activations(forward_propagation.combinations_2d,
+       calculate_derivatives_activations(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
                                          forward_propagation.activations_derivatives_2d);
    }
