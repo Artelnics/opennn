@@ -5505,7 +5505,8 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
     Index input_variable_index = 0;
     Index target_variable_index = 0;
 
-#pragma omp parallel for
+    //@todo check pragma, if uncommented, for does not work well.
+//#pragma omp parallel for
 
     for(Index i = 0; i < input_columns_number; i++)
     {
