@@ -173,7 +173,7 @@ public:
    Tensor<Tensor<Descriptives, 1>, 1> calculate_error_data_statistics() const;
    void print_error_data_statistics() const;
 
-   Tensor<Tensor<type, 2>, 1> calculate_error_data_statistics_matrices() const;
+//   Tensor<Tensor<type, 2>, 1> calculate_error_data_statistics_matrices() const;
 
    Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
 
@@ -272,9 +272,9 @@ public:
 
    // Multiple classification rates
 
-   Tensor<Tensor<Index, 1>, 2> calculate_multiple_classification_rates() const;
+   Tensor<Index, 2> calculate_multiple_classification_rates() const;
 
-   Tensor<Tensor<Index, 1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
+   Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
    // Forecasting methods
 
@@ -313,6 +313,8 @@ private:
    /// Display messages to screen.
    
    bool display;
+
+   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }

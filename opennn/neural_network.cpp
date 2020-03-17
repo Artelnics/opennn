@@ -1018,7 +1018,7 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
 void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 {
-
+/*
 #ifdef __OPENNN_DEBUG__
 
     const Index size = new_parameters.size();
@@ -1037,7 +1037,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
     }
 
 #endif
-
+*/
     const Index trainable_layers_number = get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();

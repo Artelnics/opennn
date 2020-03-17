@@ -2108,10 +2108,6 @@ Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
     }
 
     return columns_mean;
-
-//   return matrix.calculate_columns_sum()/static_cast<type>(rows_number);
-
-//    return Tensor<type, 1>();
 }
 
 
