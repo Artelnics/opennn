@@ -647,7 +647,7 @@ void DataSet::transform_columns_time_series()
 
     Tensor<Column, 1> new_columns;
 
-    if(has_time_variables())
+    if(has_time_columns())
     {
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
@@ -1772,11 +1772,12 @@ Tensor<string, 1> DataSet::get_variables_names() const
     {
         if(columns(i).type == Categorical)
         {
-            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
+            for(Index j = 0; j < columns(i).categories.size(); j++)
             {
-                variables_names(i + index) = (columns(i).categories_uses)(i);
-            }
-            index += columns(i).categories.size();
+                variables_names(index) = columns(i).categories(j);
+
+                index++;
+            }            
         }
         else
         {
@@ -3734,6 +3735,12 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
     }
 
     return column;
+}
+
+
+Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
+{
+    return data_file_preview;
 }
 
 
@@ -8336,7 +8343,7 @@ void DataSet::transform_time_series()
 
     delete_unused_instances();
 
-    if(has_time_variables())
+    if(has_time_columns())
     {
 //        OpenNN::transform_time_series(data, lags_number, steps_ahead, time_index);
     }
@@ -9657,7 +9664,7 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    if(!has_time_variables() && !has_categorical_variables())
+    if(!has_time_columns() && !has_categorical_columns())
     {
         read_csv_2_simple();
 
@@ -9733,8 +9740,8 @@ void DataSet::read_csv_1()
 
     cout << "Setting data file preview..." << endl;
 
-    Index lines_number = 3;
-/// @todo if has columns names, 4 lines and save the last one
+    Index lines_number = has_columns_names ? 4 : 3;
+
     data_file_preview.resize(lines_number);
 
     string line;
@@ -9847,7 +9854,7 @@ void DataSet::read_csv_2_simple()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_2_simple() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -9902,7 +9909,7 @@ void DataSet::read_csv_2_simple()
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_csv() method.\n"
+                   << "void read_csv_2_simple() method.\n"
                    << "Line " << line_number << ": Size of tokens("
                    << tokens_count << ") is not equal to number of columns("
                    << columns_number << ").\n";
@@ -9934,7 +9941,7 @@ void DataSet::read_csv_3_simple()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_2_simple() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -9999,6 +10006,10 @@ void DataSet::read_csv_3_simple()
         instance_index++;
     }
 
+    const Index data_file_preview_index = has_columns_names ? 3 : 2;
+
+    data_file_preview(data_file_preview_index) = tokens;
+
     cout << "Data read succesfully..." << endl;
 
     // Check Binary
@@ -10020,7 +10031,7 @@ void DataSet::read_csv_2_complete()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_2_complete() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -10146,7 +10157,7 @@ void DataSet::read_csv_3_complete()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_3_complete() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -10210,14 +10221,14 @@ void DataSet::read_csv_3_complete()
                 {
                     try
                     {
-                        data(instance_index, j) = stod(tokens(j));
+                        data(instance_index, j) = static_cast<type>(stod(tokens(j)));
                     }
                     catch (invalid_argument)
                     {
                         ostringstream buffer;
 
                         buffer << "OpenNN Exception: DataSet class.\n"
-                               << "void read_csv() method.\n"
+                               << "void read_csv_3_complete() method.\n"
                                << "Instance " << instance_index << "; Invalid number: " << tokens(j) << "\n";
 
                         throw logic_error(buffer.str());
@@ -10272,6 +10283,10 @@ void DataSet::read_csv_3_complete()
 
         instance_index++;
     }
+
+    const Index data_file_preview_index = has_columns_names ? 3 : 2;
+
+    data_file_preview(data_file_preview_index) = tokens;
 
     cout << "Data read succesfully..." << endl;
 
@@ -10375,7 +10390,7 @@ void DataSet::check_separators(const string& line) const
 }
 
 
-bool DataSet::has_categorical_variables() const
+bool DataSet::has_categorical_columns() const
 {
     const Index variables_number = columns.size();
 
@@ -10388,7 +10403,7 @@ bool DataSet::has_categorical_variables() const
 }
 
 
-bool DataSet::has_time_variables() const
+bool DataSet::has_time_columns() const
 {
     const Index variables_number = columns.size();
 
