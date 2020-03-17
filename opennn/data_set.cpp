@@ -5489,17 +5489,23 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions() const
+Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressions() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
 
+    const Index input_variables_number = get_input_variables_number();
+    const Index target_variables_number = get_target_variables_number();
+
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
+    Tensor<RegressionResults, 2> regressions(input_variables_number, target_variables_number);
 
-#pragma omp parallel for
+    Index input_variable_index = 0;
+    Index target_variable_index = 0;
+
+//#pragma omp parallel for
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5526,11 +5532,17 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
                 if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
 
-                regressions(i,j) = strongest_regression;
+                regressions(input_variable_index,target_variable_index) = strongest_regression;
+
+                input_variable_index++;
+                target_variable_index++;
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                regressions(i,j) = linear_regression(input.chip(0,1), target.chip(0,1));
+                regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(0,1));
+
+                input_variable_index++;
+                target_variable_index++;
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
@@ -5538,11 +5550,17 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                regressions(i,j) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+
+                input_variable_index++;
+                target_variable_index++;
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                regressions(i,j) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+
+                input_variable_index++;
+                target_variable_index++;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -5551,13 +5569,21 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
-                // Logistic?
-//                regressions(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
+                for(Index k = 0; k < target.dimension(1); k++)
+                {
+                    regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(k,1));
+
+                    target_variable_index++;
+                }
             }
             else if(input_type == Binary && target_type == Categorical)
             {
+                for(Index k = 0; k < target.dimension(1); k++)
+                {
+                    regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(k,1));
 
-                // ?
+                    target_variable_index++;
+                }
             }
             else
             {
@@ -5570,9 +5596,12 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 throw logic_error(buffer.str());
             }
         }
+
+        input_variable_index += columns(i).type == Categorical ? columns(i).get_categories_number() : 1;
+        target_variable_index = 0;
     }
 
-return regressions;
+    return regressions;
 }
 
 
