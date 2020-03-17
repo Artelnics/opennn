@@ -1467,7 +1467,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 {
 
     const Index inputs_number = population.dimension(1);
-    const Index selected_population = population.size();
+    const Index selected_population = population.dimension(0);
 
     Index parent1_index;
     Tensor<bool, 1> parent1(inputs_number);
@@ -1564,7 +1564,7 @@ void GeneticAlgorithm::perform_2point_crossover()
 {
 
     const Index inputs_number = population.dimension(1);
-    const Index selected_population = population.size();
+    const Index selected_population = population.dimension(0);
 
     Index parent1_index;
     Tensor<bool, 1> parent1(inputs_number);
