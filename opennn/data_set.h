@@ -365,6 +365,8 @@ public:
    Tensor<type, 1> get_variable_data(const Index&, const Tensor<Index, 1>&) const;
    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
+   Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
+
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
    // Members get methods
@@ -507,8 +509,8 @@ public:
 
    bool has_data() const;
 
-   bool has_categorical_variables() const;
-   bool has_time_variables() const;
+   bool has_categorical_columns() const;
+   bool has_time_columns() const;
 
    bool has_selection() const;
 
