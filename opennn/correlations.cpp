@@ -936,6 +936,8 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     const Tensor<type, 1> logistic_x = logistic(regression_results.a,regression_results.b, new_x);
 
     regression_results.correlation = linear_correlation(logistic_x, new_y);
+
+    return regression_results;
 }
 
 
