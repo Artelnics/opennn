@@ -5505,7 +5505,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
     Index input_variable_index = 0;
     Index target_variable_index = 0;
 
-//#pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5534,36 +5534,34 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
 
                 regressions(input_variable_index,target_variable_index) = strongest_regression;
 
-                input_variable_index++;
                 target_variable_index++;
             }
             else if(input_type == Binary && target_type == Binary)
             {
                 regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(0,1));
 
-                input_variable_index++;
                 target_variable_index++;
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
+                //@todo what to do?
 //                regressions(i,j) = karl_pearson_correlation(input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
 
-                input_variable_index++;
                 target_variable_index++;
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
 
-                input_variable_index++;
                 target_variable_index++;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
+                // @todo
                 // Logistic?
 //                regressions(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
             }
