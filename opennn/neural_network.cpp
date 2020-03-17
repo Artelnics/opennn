@@ -1025,13 +1025,13 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
     const Index parameters_number = get_parameters_number();
 
-    if(size != parameters_number)
+    if(size < parameters_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+               << "Size (" << size << ") must be grater or equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
