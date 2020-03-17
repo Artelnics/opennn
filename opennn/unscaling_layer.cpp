@@ -105,14 +105,18 @@ Tensor<type, 2> UnscalingLayer::get_descriptives_matrix() const
 {
     const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 2> statistics_matrix(neurons_number, 4);
+    Tensor<type, 2> descriptives_matrix(neurons_number, 4);
 
     for(Index i = 0; i < neurons_number; i++)
     {
-//        statistics_matrix.set_row(i, descriptives[i].to_vector());
+
+        descriptives_matrix(i,0) = descriptives(i).minimum;
+        descriptives_matrix(i,1) = descriptives(i).maximum;
+        descriptives_matrix(i,2) = descriptives(i).mean;
+        descriptives_matrix(i,3) = descriptives(i).standard_deviation;
     }
 
-    return statistics_matrix;
+    return descriptives_matrix;
 }
 
 

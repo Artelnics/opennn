@@ -114,12 +114,15 @@ Tensor<type, 2> ScalingLayer::get_descriptives_matrix() const
     const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> statistics_matrix(neurons_number, 4);
-    /*
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            statistics_matrix.set_row(i, descriptives[i].to_vector());
-        }
-    */
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        statistics_matrix(i,0) = descriptives(i).minimum;
+        statistics_matrix(i,1) = descriptives(i).maximum;
+        statistics_matrix(i,2) = descriptives(i).standard_deviation;
+        statistics_matrix(i,3) = descriptives(i).mean;
+    }
+
     return statistics_matrix;
 }
 
