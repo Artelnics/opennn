@@ -43,6 +43,7 @@ public:
    void test_get_biases();
    void test_get_synaptic_weights();
    void test_get_parameters();
+   void test_get_decision_threshold();
 
    // Probabilistic layer
 
@@ -61,6 +62,11 @@ public:
    void test_set();
 
    void test_set_default();
+
+   void test_set_biases();
+   void test_set_synaptic_weights();
+   void test_set_parameters();
+   void test_set_decision_threshold();
 
    // Display messages
 

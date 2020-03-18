@@ -253,6 +253,16 @@ void ProbabilisticLayerTest::test_get_parameters()
    assert_true(abs(new_parameters(7) + 22) < static_cast<type>(1e-5), LOG);
    }
 
+void ProbabilisticLayerTest::test_get_decision_threshold()
+{
+   cout << "test_get_decision_threshold\n";
+
+   ProbabilisticLayer probabilistic_layer;
+   probabilistic_layer.set_decision_threshold(0.5);
+
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
+   }
+
 
 void ProbabilisticLayerTest::test_set()
 {
@@ -263,6 +273,79 @@ void ProbabilisticLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
 }
+
+void ProbabilisticLayerTest::test_set_biases()
+{
+
+   cout << "test_set_biases\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+    Tensor<type, 2> biases(1, 4);
+
+    // Test 0
+    probabilistic_layer.set(1, 4);
+
+    biases.setZero();
+
+    probabilistic_layer.set_biases(biases);
+
+    assert_true(probabilistic_layer.get_biases_number() == 4, LOG);
+
+    assert_true(abs(probabilistic_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_synaptic_weights()
+{
+   cout << "test_set_synaptic_weights\n";
+
+    ProbabilisticLayer probabilistic_layer(1, 2);
+
+    Tensor<type, 2> synaptic_weights(2, 1);
+
+    // Test 0
+    synaptic_weights.setZero();
+
+    probabilistic_layer.set_synaptic_weights(synaptic_weights);
+
+    assert_true(probabilistic_layer.get_synaptic_weights().size() == 2, LOG);
+
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_parameters()
+{
+  cout << "test_set_parameters\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+    //Test
+    probabilistic_layer.set(1, 2);
+
+    Tensor<type, 1> parameters_2(4);
+
+    parameters_2.setValues({11,12,21,22});
+
+    probabilistic_layer.set_parameters(parameters_2);
+
+    assert_true(probabilistic_layer.get_biases()(0) - parameters_2(0) < static_cast<type>(1e-5), LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters_2(2)  < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_decision_threshold()
+{
+   cout << "test_set_decision_threshold\n";
+
+   ProbabilisticLayer probabilistic_layer;
+   probabilistic_layer.set_decision_threshold(static_cast<type>(0.7));
+
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.7)) < static_cast<type>(1e-5), LOG);
+}
+
+
+
 
 void ProbabilisticLayerTest::test_get_display()
 {
@@ -517,6 +600,7 @@ void ProbabilisticLayerTest::run_test_case()
    test_get_biases();
    test_get_synaptic_weights();
    test_get_parameters();
+   test_get_decision_threshold();
 
    // Layer architecture
 
@@ -532,6 +616,11 @@ void ProbabilisticLayerTest::run_test_case()
    test_set();
 
    test_set_default();
+
+   test_set_biases();
+   test_set_synaptic_weights();
+   test_set_parameters();
+   test_set_decision_threshold();
 
    // Display messages
 
