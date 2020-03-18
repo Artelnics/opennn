@@ -539,15 +539,16 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 
     for(Index i = 0; i < n; i ++)
     {
-        const type exponential = exp(-a - b * x(i));
+        const type logistic_x = logistic(a, b, x(i));
 
-        sum_a += (2 * exponential) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * y(i) / (1 + exponential)/(1 +exponential);
+        const type logistic_error = logistic_x - y(i);
 
-        sum_b += (2 * exponential * x(i)) /  (1 + exponential)/(1 + exponential)/(1 + exponential) - 2 * exponential * x(i) * y(i) / (1 + exponential)/(1 +exponential);
+        sum_a += 2*logistic_error*logistic_x*(logistic_x-1);
+        sum_b += 2*logistic_error*logistic_x*(logistic_x-1)*(-x(i));
     }
 
-    error_gradient(0) = sum_a / n;
-    error_gradient(1) = sum_b / n;
+    error_gradient(0) = sum_a;
+    error_gradient(1) = sum_b;
 
     return error_gradient;
 }
@@ -610,7 +611,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 
     for(Index i = 0; i < x.size(); i ++)
     {
-        error = logistic(a, b, x[i]) - y[i];
+        error = logistic(a, b, x(i)) - y(i);
 
         sum_squared_error += error*error;
     }

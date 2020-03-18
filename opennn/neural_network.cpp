@@ -1098,9 +1098,9 @@ Index NeuralNetwork::get_trainable_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() != Layer::Scaling
-                && layers_pointers[i]->get_type() != Layer::Unscaling
-                && layers_pointers[i]->get_type() != Layer::Bounding)
+        if(layers_pointers(i)->get_type() != Layer::Scaling
+                && layers_pointers(i)->get_type() != Layer::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Bounding)
         {
             count++;
         }               
@@ -1108,6 +1108,43 @@ Index NeuralNetwork::get_trainable_layers_number() const
 
     return count;
 }
+
+
+Index NeuralNetwork::get_perceptron_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Perceptron)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+Index NeuralNetwork::get_probabilistic_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Probabilistic)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
 
 
 /// Initializes all the neural and the independent parameters with a given value.
@@ -1509,8 +1546,6 @@ string NeuralNetwork::object_to_string() const
     return buffer.str();
 }
 
-
-///@todo rest of the layers and add layer type to the information vector
 /// For each layer: inputs, neurons, activation function
 
 Tensor<string, 2> NeuralNetwork::get_information() const
@@ -1538,6 +1573,76 @@ Tensor<string, 2> NeuralNetwork::get_information() const
         else
         {
             //@todo rest of the layers
+        }
+    }
+
+    return information;
+}
+
+
+/// For each perceptron layer: inputs, neurons, activation function
+
+Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Index perceptron_layers_number = get_perceptron_layers_number();
+
+    Tensor<string, 2> information(perceptron_layers_number, 3);
+
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    Index perceptron_layer_index = 0;
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        const string layer_type = trainable_layers_pointers(i)->get_type_string();
+
+        if(layer_type == "Perceptron")
+        {
+            information(perceptron_layer_index,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
+            information(perceptron_layer_index,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+
+            PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers_pointers(i));
+
+            information(perceptron_layer_index,2) = perceptron_layer->write_activation_function();
+
+            perceptron_layer_index++;
+        }
+    }
+
+    return information;
+}
+
+
+/// For each probabilistic layer: inputs, neurons, activation function
+
+Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Index probabilistic_layers_number = get_probabilistic_layers_number();
+
+    Tensor<string, 2> information(probabilistic_layers_number, 3);
+
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    Index probabilistic_layer_index = 0;
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        const string layer_type = trainable_layers_pointers(i)->get_type_string();
+
+        if(layer_type == "Probabilistic")
+        {
+            information(probabilistic_layer_index,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
+            information(probabilistic_layer_index,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+
+            ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
+
+            information(probabilistic_layer_index,2) = probabilistic_layer->write_activation_function();
+
+            probabilistic_layer_index++;
         }
     }
 
