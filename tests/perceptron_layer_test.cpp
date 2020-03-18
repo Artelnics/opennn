@@ -505,7 +505,7 @@ void PerceptronLayerTest::test_set_parameters()
 
     parameters_2.setValues({11,12,21,22});
 
-//    perceptron_layer.set_parameters(parameters_2);
+    perceptron_layer.set_parameters(parameters_2);
 
     assert_true(perceptron_layer.get_biases()(0) - parameters_2(0) < static_cast<type>(1e-5), LOG);
     assert_true(perceptron_layer.get_synaptic_weights()(0) - parameters_2(2)  < static_cast<type>(1e-5), LOG);
