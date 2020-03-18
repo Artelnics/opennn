@@ -1221,7 +1221,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -1307,7 +1307,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
         else if(epoch != 0 &&
-                training_back_propagation.loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+                (training_back_propagation.loss - optimization_data.old_training_loss) >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1449,8 +1449,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //selection_error = minimum_selection_error;
     }
-
-    cout << "history: " << results.training_error_history(0) << endl;
 
     return results;
 }

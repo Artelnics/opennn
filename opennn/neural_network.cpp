@@ -1200,7 +1200,6 @@ Descriptives NeuralNetwork::calculate_parameters_descriptives() const
     const Tensor<type, 1> parameters = get_parameters();
 
     return descriptives(parameters);
-
 }
 
 
