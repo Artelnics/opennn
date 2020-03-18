@@ -254,6 +254,9 @@ public:
 
    Index get_trainable_layers_number() const;
 
+   Index get_perceptron_layers_number() const;
+   Index get_probabilistic_layers_number() const;
+
    // Architecture
 
    Index get_inputs_number() const;
@@ -307,6 +310,8 @@ public:
    string object_to_string() const;
  
    Tensor<string, 2> get_information() const;
+   Tensor<string, 2> get_perceptron_layers_information() const;
+   Tensor<string, 2> get_probabilistic_layer_information() const;
 
    virtual void from_XML(const tinyxml2::XMLDocument&);
    void inputs_from_XML(const tinyxml2::XMLDocument&);
