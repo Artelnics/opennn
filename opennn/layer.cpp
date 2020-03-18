@@ -8,6 +8,8 @@
 
 #include "layer.h"
 
+#include "statistics.h"
+
 namespace OpenNN
 {
 
@@ -1213,7 +1215,7 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 }
 
 
-/// @todo
+/// @todo exception with several maximum indices
 
 void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
@@ -1221,14 +1223,38 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
     case Device::EigenDefault:
     {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        const Index rows_number = x.dimension(0);
+
+        y.setZero();
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+        Index maximal_index_ = maximal_index(x.chip(i,0));
+        y(i,maximal_index_) = 1;
+        }
+
+        y.device(*default_device) = y;
 
         break;
     }
 
     case Device::EigenSimpleThreadPool:
     {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        const Index rows_number = x.dimension(0);
+
+        y.setZero();
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+        Index maximal_index_ = maximal_index(x.chip(i,0));
+        y(i,maximal_index_) = 1;
+        }
+
+        y.device(*thread_pool_device) = y;
 
         break;
     }
@@ -1241,17 +1267,7 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     }
     }
 
-    const Index rows_number = x.dimension(0);
-    /*
-        #pragma omp parallel for
 
-        for(Index i = 0; i < rows_number; i++)
-        {
-            const Index maximal_index = OpenNN::maximal_index(x.get_matrix(0).chip(i, 0));
-
-            y(i, maximal_index) = 1;
-        }
-    */
 }
 
 
