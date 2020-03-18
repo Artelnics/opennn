@@ -1243,11 +1243,11 @@ void GeneticAlgorithm::calculate_rank_fitness()
 void GeneticAlgorithm::evolve_population()
 {
     Index zero_ocurrences;
-
+cout <<"selection" << endl;
     perform_selection();
-
+cout << "crossover" << endl;
     perform_crossover();
-
+cout << "mutation" << endl;
     perform_mutation();
 
     for(Index i = 0; i < population.dimension(0); i++)
@@ -1916,7 +1916,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     initialize_population();
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {
+    {cout << "1" << endl;
         if(epoch != 0)
         {
             evolve_population();

@@ -21,7 +21,7 @@ ProbabilisticLayerTest::~ProbabilisticLayerTest()
 }
 
 
-void ProbabilisticLayerTest::test_constructor() //<---
+void ProbabilisticLayerTest::test_constructor()
 {
    cout << "test_constructor\n";
 
@@ -254,7 +254,6 @@ void ProbabilisticLayerTest::test_get_parameters()
    }
 
 
-
 void ProbabilisticLayerTest::test_set()
 {
    cout << "test_set\n";
@@ -274,8 +273,6 @@ void ProbabilisticLayerTest::test_set_display()
 {
    cout << "test_set_display\n";
 }
-
-
 
 
 void ProbabilisticLayerTest::test_calculate_outputs()
@@ -324,7 +321,19 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     assert_true(static_cast<Index >(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
     assert_true(static_cast<Index >(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
 
-/*
+    // Test 1_2
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+
+    Tensor<type,2>outputs_2 = probabilistic_layer.calculate_outputs(inputs);
+
+    assert_true(outputs.rank() == 2, LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 4, LOG);
+    assert_true(static_cast<Index >(outputs_2(0,0)) == 1, LOG);
+    assert_true(static_cast<Index >(outputs_2(1,0)) == 0, LOG);
+    assert_true(static_cast<Index >(outputs_2(2,0)) == 0, LOG);
+
     // Test 2
 
     Tensor<type, 2> biases_2(1, 4);
@@ -335,85 +344,43 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     synaptic_weights.resize(2, 4);
     synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
 
-    perceptron_layer.set_synaptic_weights(synaptic_weights);
-    perceptron_layer.set_biases(biases);
+    probabilistic_layer.set_synaptic_weights(synaptic_weights);
+    probabilistic_layer.set_biases(biases);
 
     inputs.resize(1, 2);
     inputs.setConstant(1);
 
-    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-    outputs = perceptron_layer.calculate_outputs(inputs);
+    outputs = probabilistic_layer.calculate_outputs(inputs);
+
+    Tensor<type,1>perceptron_sol_3(4);
+    perceptron_sol.setValues({7,-5,1,7});
+
+    div = perceptron_sol.exp().sum();
+    sol_ = perceptron_sol.exp() / div(0);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index >(outputs(0,0)) == 1, LOG);
-    assert_true(static_cast<Index >(outputs(1,0)) == 0, LOG);
-    assert_true(static_cast<Index >(outputs(2,0)) == 1, LOG);
+    assert_true(static_cast<Index >(outputs(0,0)) == static_cast<Index >(sol_(0)), LOG);
+    assert_true(static_cast<Index >(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
+    assert_true(static_cast<Index >(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
 
    // Test  3
 
-   perceptron_layer.set(3, 2);
-   perceptron_layer.set_parameters_constant(0.0);
+   probabilistic_layer.set(3, 2);
+   probabilistic_layer.set_parameters_constant(0.0);
 
    inputs.resize(1,3);
    inputs.setConstant(0.0);
 
-   outputs = perceptron_layer.calculate_outputs(inputs);
+   outputs = probabilistic_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
-
-   // Test 4
-
-   perceptron_layer.set(4, 2);
-   parameters.resize(10);
-   parameters.setValues({-1,2,-3,4,-5,6,-7,8,-9,10});
-//   perceptron_layer.set_parameters(parameters);
-
-   inputs.resize(1,4);
-   inputs.setValues({{4,-3,2,-1}});
-
-   outputs = perceptron_layer.calculate_outputs(inputs);
-
-   assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0,0) + 1) < static_cast<type>(1e-5), LOG);
-
-   // Test 5
-
-   inputs.resize(1,1);
-   inputs.setConstant((3.0));
-
-   perceptron_layer.set(1, 1);
-
-   perceptron_layer.set_parameters_constant(-2.0);
-
-   outputs = perceptron_layer.calculate_outputs(inputs);
-
-   parameters.resize(2);
-
-   parameters.setConstant(1.0);
-
-   Tensor<type,2>potential_outputs = perceptron_layer.calculate_outputs(inputs, parameters);
-
-   assert_true(abs(outputs(0,0) - potential_outputs(0,0)) > static_cast<type>(1e-3), LOG);
-
-   // Test 6
-
-   perceptron_layer.set(1, 1);
-
-   inputs.resize(1,1);
-   inputs.setRandom();
-
-   parameters = perceptron_layer.get_parameters();
-
-   assert_true(abs(perceptron_layer.calculate_outputs(inputs)(0,0) - perceptron_layer.calculate_outputs(inputs, parameters)(0,0)) < static_cast<type>(1e-3), LOG);
-*/
+   assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
 }
 
 /*

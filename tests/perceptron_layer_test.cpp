@@ -234,7 +234,7 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 0, LOG);
-   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
+//   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
 
    // Test 1
    perceptron_layer.set(1, 1);
@@ -242,8 +242,7 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
-   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
-
+//   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
 
    cout << "test_get_biases_with_parameters\n";
 
@@ -1156,7 +1155,7 @@ void PerceptronLayerTest::test_calculate_outputs()
    perceptron_layer.set(4, 2);
    parameters.resize(10);
    parameters.setValues({-1,2,-3,4,-5,6,-7,8,-9,10});
-//   perceptron_layer.set_parameters(parameters);
+   perceptron_layer.set_parameters(parameters);
 
    inputs.resize(1,4);
    inputs.setValues({{4,-3,2,-1}});
