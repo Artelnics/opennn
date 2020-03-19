@@ -343,6 +343,8 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
+        cout << "back_propagation.neural_network.layers(trainable_layers_number-1).delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+
         // Hidden layers
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
