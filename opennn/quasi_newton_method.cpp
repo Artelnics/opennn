@@ -1238,24 +1238,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Loss index
 
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
         loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
         training_error = training_back_propagation.loss;
-
-        gradient_norm = l2_norm(training_back_propagation.gradient);
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-        }
-
-        // Optimization data
-
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
-        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
 
@@ -1284,6 +1269,21 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
+
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        gradient_norm = l2_norm(training_back_propagation.gradient);
+
+        if(display && gradient_norm >= warning_gradient_norm)
+        {
+            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+        }
+
+        // Optimization data
+
+        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Training history
 
