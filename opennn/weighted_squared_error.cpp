@@ -389,7 +389,7 @@ Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tenso
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-void WeightedSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const
+void WeightedSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -409,7 +409,7 @@ void WeightedSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOr
 
     // Data set
 
-    SecondOrderLoss terms_second_order_loss(parameters_number);
+//    SecondOrderLoss terms_second_order_loss(parameters_number);
 /*
     const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 

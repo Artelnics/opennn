@@ -795,7 +795,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
     LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
-    LossIndex::SecondOrderLoss terms_second_order_loss;
+    LossIndex::SecondOrderLoss terms_second_order_loss(training_instances_number, parameters_number);
 
     // Training strategy stuff
 
@@ -824,9 +824,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << "." << endl;
         }
 
+        // Neural Network
+
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+
         // Loss index
 
-        loss_index_pointer->calculate_terms_second_order_loss(terms_second_order_loss);
+        loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
 
         training_loss = terms_second_order_loss.loss;
 
@@ -841,9 +845,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
              terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
 
-//             parameters_increment
-//                = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,
-//                                                       terms_second_order_loss.gradient*(-1.0));
+             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
 
              const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 
@@ -884,8 +886,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
           loss_index_pointer->calculate_error(selection_batch,
-                                                                selection_forward_propagation,
-                                                                selection_back_propagation);
+                                              selection_forward_propagation,
+                                              selection_back_propagation);
 
           selection_error = selection_back_propagation.loss;
         }
@@ -1912,7 +1914,7 @@ Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decompositio
 {
     const Index n = A.dimension(0);
 
-    VectorXd x(n);
+    Tensor<type, 1> x(n);
 
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
 
@@ -1920,11 +1922,9 @@ Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decompositio
 
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
-//    x_eigen = A_eigen.col .colPivHouseholderQr().solve(b_eigen);
+    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
 
-//    return x;
-
-    return Tensor<type, 1>();
+    return x;
 }
 
 }

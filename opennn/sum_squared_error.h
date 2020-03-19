@@ -182,7 +182,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
 
 private:
 

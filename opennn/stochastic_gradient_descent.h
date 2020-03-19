@@ -92,6 +92,20 @@ public:
         Tensor<type, 1> last_parameters_increment;
     };
 
+    static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
+    {
+        const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+        vector<Index> new_vector(static_cast<size_t>(size));
+
+        for(size_t i = 0; i < size; i++)
+        {
+            new_vector[i] = tensor(static_cast<Index>(i));
+        }
+
+        return new_vector;
+    }
+
    // Constructors
 
    explicit StochasticGradientDescent(); 

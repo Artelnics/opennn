@@ -414,9 +414,10 @@ void LossIndex::check() const
 /// @param layers_activations vector of tensors with layers activations_2d.
 /// @param layers_delta vector of tensors with layers delta.
 
-Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>& inputs,
-        const Tensor<Layer::ForwardPropagation, 1>& forward_propagation,
-        const Tensor<Tensor<type, 2>, 1>& layers_delta) const
+void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
+                                                          const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                          const BackPropagation& back_propagation,
+                                                          SecondOrderLoss& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -425,7 +426,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
 #endif
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
+/*
 #ifdef __OPENNN_DEBUG__
 
     // Hidden errors size
@@ -445,37 +446,36 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
     }
 
 #endif
-
+*/
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     const Index instances_number = data_set_pointer->get_instances_number();
 
     const Tensor<Index, 1> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
+    const Tensor<type, 2>& inputs = batch.inputs_2d;
+
     Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
     Index index = 0;
 
-//   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
-    for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[0], inputs).size(); i++)
+    for(Index i = 0; i < calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs).size(); i++)
     {
-        error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[0], inputs))(i);
+        error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs))(i);
     }
 
     index += layers_parameters_number[0];
-    /*
-       for(Index i = 1; i < layers_number; i++)
-       {
 
-    //      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d));
-          for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d).size(); i++)
-          {
-              error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations_2d))(i);
-          }
+   for(Index i = 1; i < layers_number; i++)
+   {
+      for(Index i = 0; i < calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta, forward_propagation.layers(i-1).activations_2d).size(); i++)
+      {
+          error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta, forward_propagation.layers(i-1).activations_2d))(i);
+      }
 
-          index += layers_parameters_number[i];
-       }
-    */
-    return error_Jacobian;
+      index += layers_parameters_number[i];
+   }
+
+    second_order_loss.error_Jacobian = error_Jacobian;
 }
 
 
