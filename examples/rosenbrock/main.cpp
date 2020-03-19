@@ -44,7 +44,7 @@ int main(void)
 
             // Displaying iterator position
             cout << "The position of iterator after advancing is : ";
-            cout << *ptr << " ";
+            cout << *ptr << " " << endl;
 
 /*
         srand(static_cast<unsigned>(time(nullptr)));
@@ -54,7 +54,7 @@ int main(void)
         vector<Index> rows(1,1);
 
 //        cout <<M1(1,rows) << endl;
-/*
+
         cout << "Column major input:" << endl << M1 << "\n";
 
         Map<MatrixXf, 0, OuterStride<> > M2(M1.data(), M1.rows(), (M1.cols()+2)/3, OuterStride<>(M1.outerStride()*3));
@@ -71,28 +71,26 @@ int main(void)
 
         // Data Set
 */
+
+        const Index samples = 400000;
+        const Index variables = 1000;
 /*
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
-*/
-//        data_set.set_separator(DataSet::Comma);
-//        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
+        data_set.set_data_file_name("D:/rosenbrock_400000_100.csv");
 
-//        data_set.save_data();
+
+        data_set.save_data();
 
 
         // Read Data
 
 //        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
-
+*/
         // Generate Data
-
-        const Index samples = 1000000;
-        const Index variables = 1000;
 
         // Device
 

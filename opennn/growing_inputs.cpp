@@ -218,7 +218,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     Tensor<type, 1> correlations_descending(total_correlations);
 
-    sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), std::greater<type>());
+    sort(correlations_descending.data(), correlations_descending.data() + correlations_descending.size(), greater<type>());
 
     Tensor<Index, 1> correlations_descending_indices(total_correlations.size());
     correlations_descending_indices.setZero();

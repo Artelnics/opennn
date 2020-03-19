@@ -27,6 +27,10 @@
 #include "optimization_algorithm.h"
 #include "tinyxml2.h"
 
+// Eigen includes
+
+#include <../eigen/Eigen/Dense>
+
 namespace OpenNN
 {
 

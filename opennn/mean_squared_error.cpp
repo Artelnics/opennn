@@ -142,7 +142,10 @@ Tensor<type, 1> MeanSquaredError::calculate_training_error_terms(const Tensor<ty
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-void MeanSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const
+void MeanSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& batch,
+                                                         NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                         LossIndex::BackPropagation& back_propagation,
+                                                         LossIndex::SecondOrderLoss& terms_second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -162,11 +165,13 @@ void MeanSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderL
 
     // Data set
 
-    SecondOrderLoss terms_second_order_loss(parameters_number);
-/*
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+//    SecondOrderLoss terms_second_order_loss(parameters_number);
 
+    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch.instances_number, !is_forecasting);
+/*
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
+
+    const type gradient_coefficient = static_cast<type>(2.0)/static_cast<type>(training_instances_number);
 
     const Index batches_number = training_batches.size();
 
@@ -176,38 +181,53 @@ void MeanSquaredError::calculate_terms_second_order_loss(LossIndex::SecondOrderL
 
     for(Index i = 0; i < batches_number; i++)
     {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
+//        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
+//        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
 
-                const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
+//                neural_network_pointer->forward_propagate(batch, forward_propagation);
 
-                const Tensor<type, 1> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations_2d, targets);
+        const Tensor<type, 2> error_terms = forward_propagation.layers(layers_number-1).activations_2d - batch.targets_2d;
 
-                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations_2d - targets).divide(error_terms, 0);
+//        const Tensor<type, 0> loss = error_terms.contract(error_terms, SSE);
 
-                const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+//        const Tensor<type, 2> output_gradient = (forward_propagation.layers[layers_number-1].activations_2d - batch.targets_2d);//.divide(error_terms, 0);
+//        const Tensor<type, 2> output_gradient = error_terms*gradient_coefficient;
 
-                const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+//        const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-        //        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+        // First Order
 
-                //dot(error_terms, error_terms);
+        calculate_error(batch, forward_propagation, back_propagation);
+        calculate_output_gradient(batch, forward_propagation, back_propagation);
+        calculate_layers_delta(forward_propagation, back_propagation);
 
-                const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
+        // Second Order
 
-                //dot(error_terms_Jacobian_transpose, error_terms);
+        calculate_Jacobian_gradient(batch, forward_propagation, terms_second_order_loss);
+        calculate_hessian_approximation(terms_second_order_loss);
+//        const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation);
+//        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, AT_B);
+//        Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, AT_B);
 
-                const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);
+//        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-                Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_transpose_matrix);// = error_terms_Jacobian.dot(error_terms_Jacobian);
-                //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+        //dot(error_terms, error_terms);
 
-                #pragma omp critical
-                {
-                    terms_second_order_loss.loss += loss(0);
-                    terms_second_order_loss.gradient += gradient;
-                    terms_second_order_loss.hessian += hessian_approximation;
-                 }
+//        const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);
+
+        //dot(error_terms_Jacobian_transpose, error_terms);
+
+//        const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, AT_B);
+
+//        Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, AT_B);// = error_terms_Jacobian.dot(error_terms_Jacobian);
+        //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+
+        #pragma omp critical
+        {
+            terms_second_order_loss.loss += back_propagation.loss;
+//            terms_second_order_loss.gradient += gradient;
+//            terms_second_order_loss.hessian += hessian_approximation;
+         }
 
     }
 
