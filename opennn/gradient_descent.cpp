@@ -792,7 +792,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     type selection_error = 0;
     type old_selection_error = 0;
 
-    type training_loss = 0;
+    type training_error = 0;
     type old_training_loss = 0;
     type training_loss_decrease = -numeric_limits<type>::max();
 
@@ -832,7 +832,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -847,18 +847,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Loss index
 
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        training_loss = training_back_propagation.loss;
-
-        if(epoch != 0) training_loss_decrease = training_loss - old_training_loss;
-
-        gradient_norm = l2_norm(training_back_propagation.gradient);
-
-        if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
-
-        if(display && gradient_norm >= warning_gradient_norm)
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+        loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+        training_error = training_back_propagation.loss;
 
         if(has_selection)
         {
@@ -883,6 +873,17 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             }
         }
 
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        if(epoch != 0) training_loss_decrease = training_back_propagation.loss - old_training_loss;
+
+        gradient_norm = l2_norm(training_back_propagation.gradient);
+
+        if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
+
+        if(display && gradient_norm >= warning_gradient_norm)
+            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+
         // Optimization algorithm
 
         update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
@@ -894,9 +895,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Training history loss index
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 
@@ -926,7 +927,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(training_loss <= training_loss_goal)
+        else if(training_back_propagation.loss <= training_loss_goal)
         {
             if(display)
             {
@@ -997,7 +998,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_loss << "\n"
+                     << "Training error: " << training_error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << optimization_data.learning_rate << "\n"
@@ -1006,13 +1007,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_error << endl;
             }
 
-            results.resize_training_history(1+epoch);
+            results.resize_error_history(1+epoch);
 
             results.final_parameters = parameters;
 
             results.final_parameters_norm = parameters_norm;
 
-            results.final_training_error = training_loss;
+            results.final_training_error = training_error;
 
             results.final_selection_error = selection_error;
 
@@ -1028,7 +1029,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << training_loss << "\n"
+                 << "Training error: " << training_error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Training rate: " << optimization_data.learning_rate << "\n"
@@ -1045,7 +1046,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Update stuff
 
-        old_training_loss = training_loss;
+        old_training_loss = training_back_propagation.loss;
         old_selection_error = selection_error;
 
         old_learning_rate = learning_rate;
@@ -1066,7 +1067,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     results.final_parameters = parameters;
     results.final_parameters_norm = parameters_norm;
 
-    results.final_training_error = training_loss;
+    results.final_training_error = training_error;
     results.final_selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
