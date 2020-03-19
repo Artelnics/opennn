@@ -458,22 +458,26 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     Index index = 0;
 
-    for(Index i = 0; i < calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs).size(); i++)
+    Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
+
+    for(Index i = 0; i < error_layer.size(); i++)
     {
-        error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs))(i);
+        error_Jacobian(i + index) = error_layer(i);
     }
 
     index += layers_parameters_number[0];
 
-   for(Index i = 1; i < layers_number; i++)
-   {
-      for(Index i = 0; i < calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta, forward_propagation.layers(i-1).activations_2d).size(); i++)
-      {
-          error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta, forward_propagation.layers(i-1).activations_2d))(i);
-      }
+    for(Index i = 1; i < layers_number; i++)
+    {
+        const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta, forward_propagation.layers(i-1).activations_2d);
 
-      index += layers_parameters_number[i];
-   }
+        for(Index i = 0; i < error_layer.size(); i++)
+        {
+            error_Jacobian(i + index) = error_layer(i);
+        }
+
+        index += layers_parameters_number[i];
+    }
 
     second_order_loss.error_Jacobian = error_Jacobian;
 }
