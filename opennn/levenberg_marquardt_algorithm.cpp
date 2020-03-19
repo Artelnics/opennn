@@ -883,9 +883,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-          loss_index_pointer->calculate_error(selection_batch,
-                                                                selection_forward_propagation,
-                                                                selection_back_propagation);
+          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
           selection_error = selection_back_propagation.loss;
         }
@@ -916,12 +914,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(reserve_training_error_history)
         {
-            results.training_error_history[epoch] = training_loss;
+            results.training_error_history(epoch) = training_loss;
         }
 
         if(reserve_selection_error_history)
         {
-            results.selection_error_history[epoch] = selection_error;
+            results.selection_error_history(epoch) = selection_error;
         }
 
         // Stopping Criteria

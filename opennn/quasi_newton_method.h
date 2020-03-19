@@ -103,7 +103,6 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
-
         }
 
         void print() const
