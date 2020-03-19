@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "perceptron_layer_test.h"
+#include "perceptron_layer.h"
 
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {
@@ -911,7 +912,7 @@ void PerceptronLayerTest::test_calculate_activations()
    assert_true(abs(activations_2d(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_activations_derivatives()
+void PerceptronLayerTest::test_calculate_derivatives_activations()
 {
 
    cout << "test_calculate_activation_derivative\n";
@@ -924,7 +925,6 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
    Tensor<type, 2> activations_derivatives(1,1);
-   Tensor<type, 1> numerical_activation_derivative(1);
 
    Device device(Device::EigenSimpleThreadPool);
    perceptron_layer.set_device_pointer(&device);
@@ -976,22 +976,37 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
       combinations_2d.resize(1,4);
       combinations_2d.setValues({{1.56f, -0.68f, 0.91f, -1.99f}});
 
+      activations_2d.resize(1,4);
+
       activations_derivatives.resize(1,4);
       activations_derivatives.setZero();
 
-      perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+      perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
 
-      perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_derivatives);
+      perceptron_layer.calculate_derivatives_activations(combinations_2d, activations_2d, activations_derivatives);
+
+      numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
+
+      Index dummy_index = 0;
 /*
-      numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+      Tensor<type, 2> numerical_activation_derivative(1,4);
+      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, dummy_index, combinations_2d, activations_2d);
+*/
+/*
+      cout << combinations_2d << endl;
+      cout << "------------" << endl;
+      cout << activations_2d << endl;
+      cout << "------------" << endl;
+      cout << "-----NUMERICAL-------" << endl;
+      cout << numerical_activation_derivative << endl;
+      cout << "------------" << endl;
+      cout << "------METHOD------" << endl;
+      cout << activations_derivatives << endl;*/
+      /*
+      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
+*/
 
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f1, 0.0);
-
-      numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d, numerical_activation_derivative);
-
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-
-
+/*
       perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
 
       activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
@@ -1305,7 +1320,7 @@ void PerceptronLayerTest::run_test_case()
 
    test_calculate_activations();
 
-   test_calculate_activations_derivatives();
+   test_calculate_derivatives_activations();
 
 
    // Outputs

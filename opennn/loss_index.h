@@ -106,7 +106,7 @@ public:
 
            const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-           // First order los
+           // First order loss
 
            loss = 0;
 
@@ -381,6 +381,8 @@ public:
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
+
+        cout << "back_propagation.neural_network.layers(trainable_layers_number-1).delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 

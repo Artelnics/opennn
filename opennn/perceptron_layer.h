@@ -230,7 +230,6 @@ public:
         }
    }
 
-
    void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__

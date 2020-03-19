@@ -107,7 +107,7 @@ public:
    // Activation
 
    void test_calculate_activations();
-   void test_calculate_activations_derivatives();
+   void test_calculate_derivatives_activations();
 
    // Outputs
 
