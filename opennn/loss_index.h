@@ -106,7 +106,7 @@ public:
 
            const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-           // First order los
+           // First order loss
 
            loss = 0;
 
