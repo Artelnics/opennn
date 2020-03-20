@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R       
+//   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -297,7 +297,8 @@ public:
 
             case Logistic:
             {
-                    logistic_derivatives(combinations_2d, activations_derivatives); return;
+                    logistic_derivatives(combinations_2d, activations_derivatives);
+                    return;
             }
 
             case Competitive:
@@ -549,7 +550,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   
+
 protected:
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs

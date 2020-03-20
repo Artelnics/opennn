@@ -294,17 +294,17 @@ protected:
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
 
-    void derivatives_hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_logistic(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void derivatives_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
 
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
