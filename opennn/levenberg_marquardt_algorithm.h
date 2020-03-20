@@ -29,7 +29,7 @@
 
 // Eigen includes
 
-#include <../eigen/Eigen/Dense>
+#include "../eigen/Eigen/Dense"
 
 namespace OpenNN
 {
