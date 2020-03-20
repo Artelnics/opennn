@@ -326,6 +326,9 @@ public:
 
    }
 
+
+
+
    void calculate_output_delta(ForwardPropagation& forward_propagation,
                                   const Tensor<type, 2>& output_gradient,
                                   Tensor<type, 2>& output_delta) const
