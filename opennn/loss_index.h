@@ -285,11 +285,17 @@ public:
    {
        const Index instances_number = batch.get_instances_number();
 
+       // Neural Network
+
        NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
 
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
-//       return calculate_error(batch, forward_propagation);
+       // Loss Index
+
+//       calculate_error(batch, forward_propagation, back_propagation);
+
+//       return back_propagation.loss;
        return 0;
    }
 
@@ -329,7 +335,9 @@ public:
        // First Order
 
        calculate_error(batch, forward_propagation, back_propagation);
+
        calculate_output_gradient(batch, forward_propagation, back_propagation);
+
        calculate_layers_delta(forward_propagation, back_propagation);
 
        // Second Order
@@ -341,7 +349,7 @@ public:
        calculate_hessian_approximation(second_order_loss);
 
        // Loss
-cout << "Losss" << back_propagation.loss << endl;
+
        second_order_loss.loss = back_propagation.loss;
 
        // Regularization
