@@ -253,7 +253,10 @@ public:
 
         #endif
 
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
         const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        Tensor<type, 2> dot(parameters_number, parameters_number);
 
         const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
 
@@ -273,10 +276,10 @@ public:
              case Device::EigenSimpleThreadPool:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-cout << "hessian" << endl;
-                second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-cout <<"post" << endl;
-                second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+
+                dot.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+                second_order_loss.hessian.device(*thread_pool_device) = coefficient*dot;
 
                 return;
              }
