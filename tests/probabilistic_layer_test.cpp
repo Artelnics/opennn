@@ -532,6 +532,33 @@ void ProbabilisticLayerTest::test_calculate_activations()
 void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 {
     cout << "test_calculate_derivatives_activations\n";
+
+    NumericalDifferentiation numerical_differentiation;
+    ProbabilisticLayer probabilistic_layer;
+
+    Tensor<type, 2> combinations_2d(2,2);
+    Tensor<type, 2> activations_2d(2,2);
+    Tensor<type, 2> activations_derivatives(1,2);
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set(1,2);
+
+    combinations_2d.resize(1,2);
+    combinations_2d.setValues({{1, 0}});
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+
+    Tensor<type, 2> numerical_activation_derivative(1,2);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(probabilistic_layer, &ProbabilisticLayer::calculate_activations, 0, combinations_2d);
+
+    cout << "-----NUMERICAL------" << endl;
+    cout << numerical_activation_derivative << endl;
+    cout << "-----METHOD------" << endl ;
+    cout << activations_derivatives << endl;
+
 /*
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;

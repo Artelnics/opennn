@@ -328,6 +328,39 @@ public:
    }
 
 
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
+                                          Tensor<type, 2>& activations,
+                                          Tensor<type, 2>& activations_derivatives) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        const Index neurons_number = get_neurons_number();
+
+        const Index combinations_columns_number = combinations_2d.dimension(1);
+
+        if(combinations_columns_number != neurons_number)
+        {
+           ostringstream buffer;
+
+           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                  << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                  << "Number of combinations_2d columns (" << combinations_columns_number
+                  << ") must be equal to number of neurons (" << neurons_number << ").\n";
+
+           throw logic_error(buffer.str());
+        }
+
+        #endif
+
+        switch(activation_function)
+        {
+
+            case Logistic: logistic_derivatives(combinations_2d, activations, activations_derivatives); return;
+
+            case Softmax: softmax_derivatives(combinations_2d, activations, activations_derivatives); return;
+
+       }
+   }
 
 
    void calculate_output_delta(ForwardPropagation& forward_propagation,
