@@ -915,7 +915,7 @@ void PerceptronLayerTest::test_calculate_activations()
 void PerceptronLayerTest::test_calculate_derivatives_activations()
 {
 
-   cout << "test_calculate_activation_derivative\n";
+   cout << "test_calculate_derivatives_activations\n";
 
    NumericalDifferentiation numerical_differentiation;
    PerceptronLayer perceptron_layer;

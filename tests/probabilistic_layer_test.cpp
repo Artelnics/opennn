@@ -464,7 +464,16 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG);
+   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG); // @todo -> should be 1
+
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+
+   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+
+   assert_true(activations_2d.rank() == 2, LOG);
+   assert_true(activations_2d.dimension(0) == 1, LOG);
+   assert_true(activations_2d.dimension(1) == 1, LOG);
+   assert_true(activations_2d(0,0) - static_cast<type>(0.5) < static_cast<type>(1e-5), LOG);
 
    // Test 2
 
@@ -520,23 +529,21 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(abs(activations_2d(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_activation_derivatives()
+void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 {
-    cout << "test_calculate_activation_derivatives\n";
-/*
-    ProbabilisticLayer probabilistic_layer;
+    cout << "test_calculate_derivatives_activations\n";
 
+    NumericalDifferentiation numerical_differentiation;
+    ProbabilisticLayer probabilistic_layer;
 
     Tensor<type, 1> parameters(1);
     Tensor<type, 2> inputs(1,1);
     Tensor<type, 2> combinations_2d(1,1);
-    Tensor<type, 3> activations_derivatives(1,1,1);
-    Tensor<type, 2> numerical_activation_derivative;
+    Tensor<type, 2> activations_2d(1,1);
+    Tensor<type, 2> activations_derivatives(1,1);
 
     Device device(Device::EigenSimpleThreadPool);
     probabilistic_layer.set_device_pointer(&device);
-
-    numerical_differentiation_tests = true;
 
     // Test 1
 
@@ -548,21 +555,22 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
     combinations_2d.setConstant(1);
 
     activations_derivatives.setZero();
+/*
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
+    probabilistic_layer.calculate_derivatives_activations(combinations_2d, activations_2d, activations_derivatives);
+
+    assert_true(activations_derivatives.rank() == 2, LOG);
+    assert_true(activations_derivatives.dimension(0) == 1, LOG);
+    assert_true(activations_derivatives.dimension(1) == 1, LOG);
+    assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-5), LOG);
+
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d,activations_derivatives);
-
-
-       cout << combinations_2d << endl;
-       cout << "------------" << endl;
-       cout << activations_derivatives << endl;
-       cout << "------------" << endl;
-       cout << "------------" << endl;
-
-
-//       assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<type>::min(), LOG);
-
-    // Test numerical differentiation
+    probabilistic_layer.calculate_derivatives_activations(combinations_2d, activations_2d, activations_derivatives);
+    assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-3), LOG);
+ */
 
     if(numerical_differentiation_tests)
     {
@@ -581,7 +589,7 @@ void ProbabilisticLayerTest::test_calculate_activation_derivatives()
 
 //       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
     }
-    */
+
 }
 
 //----------------------------------
@@ -803,7 +811,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_calculate_combinations();
    test_calculate_activations();
-   test_calculate_activation_derivatives()      ;
+   test_calculate_derivatives_activations()      ;
 
    test_calculate_outputs();
 

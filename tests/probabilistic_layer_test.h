@@ -85,7 +85,7 @@ public:
 
    void test_calculate_combinations();
    void test_calculate_activations();
-   void test_calculate_activation_derivatives();
+   void test_calculate_derivatives_activations();
 
    void test_calculate_outputs();
 
