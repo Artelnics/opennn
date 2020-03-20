@@ -331,17 +331,17 @@ public:
        calculate_error(batch, forward_propagation, back_propagation);
        calculate_output_gradient(batch, forward_propagation, back_propagation);
        calculate_layers_delta(forward_propagation, back_propagation);
-cout << "first Order" << endl;
+
        // Second Order
 
        calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-       cout << "error_terms" << endl;
-       calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-       cout << "Jacobian" << endl;
-       calculate_hessian_approximation(second_order_loss);
-cout << "Second Order" << endl;
-       // Loss
 
+       calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
+
+       calculate_hessian_approximation(second_order_loss);
+
+       // Loss
+cout << "Losss" << back_propagation.loss << endl;
        second_order_loss.loss = back_propagation.loss;
 
        // Regularization
@@ -743,6 +743,7 @@ protected:
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
+   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
