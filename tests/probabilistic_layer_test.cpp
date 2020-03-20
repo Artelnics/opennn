@@ -532,7 +532,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 {
     cout << "test_calculate_derivatives_activations\n";
-
+/*
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;
 
@@ -555,7 +555,7 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     combinations_2d.setConstant(1);
 
     activations_derivatives.setZero();
-/*
+
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
     probabilistic_layer.calculate_derivatives_activations(combinations_2d, activations_2d, activations_derivatives);
 
@@ -570,7 +570,7 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     probabilistic_layer.calculate_derivatives_activations(combinations_2d, activations_2d, activations_derivatives);
     assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-3), LOG);
- */
+
 
     if(numerical_differentiation_tests)
     {
@@ -589,7 +589,7 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 
 //       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
     }
-
+*/
 }
 
 //----------------------------------
