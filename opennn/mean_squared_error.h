@@ -231,7 +231,7 @@ public:
 
                 expression.device(*thread_pool_device) = coefficient*expression;
 
-                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(expression.size())*sizeof(type));
+                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(parameters_number)*sizeof(type));
 
                 return;
              }
