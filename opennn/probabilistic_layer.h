@@ -407,6 +407,10 @@ public:
 
            Tensor<type, 3> activations_derivatives = forward_propagation.activations_derivatives_3d;
 
+           cout << "Activations derivatives: " << activations_derivatives << endl;
+
+           cout << "output_gradient: " << output_gradient << endl;
+
            const Index items_number = output_gradient.dimension(1);
 
            const Index rows_number = activations_derivatives.dimension(0);

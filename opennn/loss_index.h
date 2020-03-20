@@ -120,6 +120,9 @@ public:
 
        void print()
        {
+           cout << "Error:" << endl;
+           cout << error << endl;
+
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -137,6 +140,8 @@ public:
        NeuralNetwork::BackPropagation neural_network;
 
        Tensor<type, 2> output_gradient;
+
+       type error;
 
        type loss;
 
@@ -319,7 +324,7 @@ public:
        {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
+           back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
@@ -392,7 +397,7 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-        cout << "back_propagation.neural_network.layers(trainable_layers_number-1).delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 
