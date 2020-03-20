@@ -161,7 +161,7 @@ public:
        SecondOrderLoss() {}
 
        SecondOrderLoss(const Index& parameters_number, const Index& instances_number)
-       {
+       {cout << "parameters" << parameters_number << endl;
            loss = 0;           
            gradient = Tensor<type, 1>(parameters_number);
            error_Jacobian = Tensor<type, 2>(instances_number, parameters_number);
@@ -397,7 +397,7 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 
