@@ -896,23 +896,23 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
           selection_error = selection_back_propagation.loss;
-        }
 
-        if(epoch == 1)
-        {
-            minimum_selection_error = selection_error;
+          if(epoch == 1)
+          {
+              minimum_selection_error = selection_error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
-        }
-        else if(epoch != 0 && selection_error > old_selection_error)
-        {
-            selection_failures++;
-        }
-        else if(selection_error <= minimum_selection_error)
-        {
-            minimum_selection_error = selection_error;
+              minimal_selection_parameters = neural_network_pointer->get_parameters();
+          }
+          else if(epoch != 0 && selection_error > old_selection_error)
+          {
+              selection_failures++;
+          }
+          else if(selection_error <= minimum_selection_error)
+          {
+              minimum_selection_error = selection_error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
+              minimal_selection_parameters = neural_network_pointer->get_parameters();
+          }
         }
 
         // Elapsed time

@@ -161,7 +161,7 @@ public:
        SecondOrderLoss() {}
 
        SecondOrderLoss(const Index& parameters_number, const Index& instances_number)
-       {cout << "parameters" << parameters_number << endl;
+       {
            loss = 0;           
            gradient = Tensor<type, 1>(parameters_number);
            error_Jacobian = Tensor<type, 2>(instances_number, parameters_number);
