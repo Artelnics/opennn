@@ -198,6 +198,7 @@ public:
         const Tensor<type, 2>& targets = batch.targets_2d;
 
         Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+        Tensor<type, 2> expression(outputs.dimension(0), outputs.dimension(1));
 
         const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -209,7 +210,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 errors.device(*default_device) = outputs - targets;
+                 errors.device(*default_device) = (outputs - targets).square();
 
                  second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, AT_B);
 
@@ -222,11 +223,16 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                errors.device(*thread_pool_device) = outputs - targets;
+                errors.device(*thread_pool_device) = (outputs - targets).square();
 
-                second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B);
+//                second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
 
-                second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
+//                second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+                expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
+
+                expression.device(*thread_pool_device) = coefficient*expression;
+
+                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(expression.size())*sizeof(type));
 
                 return;
              }
