@@ -770,7 +770,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -827,11 +827,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-
+cout << "1" << endl;
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
-
+cout << "2" << endl;
         training_loss = terms_second_order_loss.loss;
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
@@ -850,7 +850,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 //             const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 //             const type new_loss = loss_index_pointer->calculate_error(training_batch, new_parameters);
              Tensor<type, 1> new_parameters = parameters + parameters_increment;
-
+cout << "3" << endl;
              neural_network_pointer->forward_propagate(training_batch, new_parameters, training_forward_propagation);
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);

@@ -47,6 +47,90 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
+    struct OptimizationData
+    {
+        /// Default constructor.
+
+        explicit OptimizationData()
+        {
+        }
+
+        explicit OptimizationData(LevenbergMarquardtAlgorithm* new_quasi_newton_method_pointer)
+        {
+            set(new_quasi_newton_method_pointer);
+        }
+
+        virtual ~OptimizationData() {}
+
+        void set(LevenbergMarquardtAlgorithm* new_quasi_newton_method_pointer)
+        {
+            levenberg_marquardt_algotihm_pointer = new_quasi_newton_method_pointer;
+
+            LossIndex* loss_index_pointer = levenberg_marquardt_algotihm_pointer->get_loss_index_pointer();
+
+            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+            const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+            // Neural network data
+
+            parameters.resize(parameters_number);
+            parameters = neural_network_pointer->get_parameters();
+
+            old_parameters.resize(parameters_number);
+
+            parameters_increment.resize(parameters_number);
+
+            // Loss index data
+
+            old_gradient.resize(parameters_number);
+            old_gradient.setZero();
+
+            inverse_hessian.resize(parameters_number, parameters_number);
+            inverse_hessian.setZero();
+
+            old_inverse_hessian.resize(parameters_number, parameters_number);
+            old_inverse_hessian.setZero();
+
+            // Optimization algorithm data
+
+        }
+
+        void print() const
+        {
+
+
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
+        }
+
+        LevenbergMarquardtAlgorithm* levenberg_marquardt_algotihm_pointer = nullptr;
+
+        // Neural network data
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> old_parameters;
+
+        Tensor<type, 1> parameters_increment;
+
+        type parameters_increment_norm = 0;
+
+        // Loss index data
+
+        type old_training_loss = 0;
+        type training_loss_decrease = 0;
+
+        Tensor<type, 1> old_gradient;
+
+        Tensor<type, 2> inverse_hessian;
+        Tensor<type, 2> old_inverse_hessian;
+
+        // Optimization algorithm data
+
+        Index epoch = 0;
+
+    };
+
    // Constructors
 
    explicit LevenbergMarquardtAlgorithm();
@@ -167,6 +251,81 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
    
    Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+
+   void update_epoch(
+           NeuralNetwork* neural_network_pointer,
+           LossIndex* loss_index_pointer,
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           LossIndex::BackPropagation& back_propagation,
+           LossIndex::SecondOrderLoss& terms_second_order_loss,
+           OptimizationData& optimization_data)
+   {
+       const Index parameters_number = optimization_data.parameters.dimension(0);
+
+       type training_loss = back_propagation.loss;
+
+       do
+       {
+            terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
+
+            optimization_data.parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
+
+            Tensor<type, 1> new_parameters = optimization_data.parameters + optimization_data.parameters_increment;
+
+            neural_network_pointer->forward_propagate(batch, new_parameters, forward_propagation);
+
+            loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+
+            const type new_loss = back_propagation.loss;
+
+            if(new_loss <= training_loss) // succesfull step
+            {
+                set_damping_parameter(damping_parameter/damping_parameter_factor);
+
+                optimization_data.parameters += optimization_data.parameters_increment;
+
+                neural_network_pointer->set_parameters(optimization_data.parameters);
+
+                training_loss = new_loss;
+
+               break;
+            }
+            else
+            {
+                terms_second_order_loss.sum_hessian_diagonal(-damping_parameter);
+
+                set_damping_parameter(damping_parameter*damping_parameter_factor);
+            }
+       }
+       while(damping_parameter < maximum_damping_parameter);
+
+
+       if(optimization_data.epoch == 1)
+       {
+           optimization_data.training_loss_decrease = 0;
+       }
+       else
+       {
+           optimization_data.training_loss_decrease = training_loss - optimization_data.old_training_loss;
+       }
+
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+       optimization_data.old_parameters = optimization_data.parameters;
+
+       optimization_data.parameters += optimization_data.parameters_increment;
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+       optimization_data.old_training_loss = training_loss;
+
+       optimization_data.old_gradient = back_propagation.gradient;
+
+       optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
+
+   }
 
 private:
 
