@@ -40,6 +40,7 @@ int main(void)
 
             // Using advance() to increment iterator position
             // points to 4
+
             advance(ptr, 3);
 
             // Displaying iterator position
