@@ -3248,6 +3248,35 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 }
 
 
+
+/// Returns a matrix with training instances and input variables.
+/// The number of rows is the number of training
+/// The number of columns is the number of input variables.
+
+Tensor<type, 2, RowMajor> DataSet::get_training_input_data_row_major() const
+{
+    const Tensor<Index, 1> training_indices = get_training_instances_indices();
+
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    return get_subtensor_data_row_major(training_indices, input_variables_indices);
+}
+
+
+/// Returns a tensor with training instances and target variables.
+/// The number of rows is the number of training
+/// The number of columns is the number of target variables.
+
+Tensor<type, 2, RowMajor> DataSet::get_training_target_data_row_major() const
+{
+    const Tensor<Index, 1> training_indices = get_training_instances_indices();
+
+    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
+
+    return get_subtensor_data_row_major(training_indices, target_variables_indices);
+}
+
+
 /// Returns a tensor with selection instances and input variables.
 /// The number of rows is the number of selection
 /// The number of columns is the number of input variables.
@@ -3750,6 +3779,32 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
     const Index columns_number = columns_indices.size();
 
     Tensor<type, 2> subtensor(rows_indices.size(), columns_indices.size());
+
+    Index row_index;
+    Index column_index;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        row_index = rows_indices(i);
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            column_index = columns_indices(j);
+
+            subtensor(i, j) = data(row_index, column_index);
+        }
+    }
+
+    return subtensor;
+}
+
+
+Tensor<type, 2, RowMajor> DataSet::get_subtensor_data_row_major(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    Tensor<type, 2, RowMajor> subtensor(rows_indices.size(), columns_indices.size());
 
     Index row_index;
     Index column_index;
@@ -10615,7 +10670,9 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
 }
 
 
-void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
+void DataSet::Batch::fill(const Tensor<Index, 1>& instances,
+                          const Tensor<Index, 1>& inputs,
+                          const Tensor<Index, 1>& targets)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
@@ -10661,6 +10718,26 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
         }
     }
 }
+
+
+void DataSet::Batch::fill(const Tensor<Index, 1>& instances_indices,
+          Tensor<type, 2, RowMajor>& input_data, Tensor<type, 2, RowMajor>& tarjet_data)
+{
+    const Index batch_instances_number = instances_indices.size();
+
+    const Index inputs_number = data_set_pointer->get_input_variables_number();
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    Tensor<type, 2, RowMajor> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2, RowMajor> targets(batch_instances_number, targets_number);
+
+    for(Index i = 0; i < batch_instances_number; i++)
+    {
+
+    }
+
+}
+
 
 }
 
