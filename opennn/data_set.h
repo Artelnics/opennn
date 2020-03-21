@@ -222,7 +222,9 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+       void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+
+       void fill(const Tensor<Index, 1>&, Tensor<type, 2, RowMajor>&, Tensor<type, 2, RowMajor>&);
 
        Index instances_number = 0;
 
@@ -344,6 +346,9 @@ public:
    Tensor<type, 2> get_training_input_data() const;
    Tensor<type, 2> get_training_target_data() const;
 
+   Tensor<type, 2, RowMajor> get_training_input_data_row_major() const;
+   Tensor<type, 2, RowMajor> get_training_target_data_row_major() const;
+
    Tensor<type, 2> get_selection_input_data() const;
    Tensor<type, 2> get_selection_target_data() const;
 
@@ -368,6 +373,7 @@ public:
    Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
+   Tensor<type, 2, RowMajor> get_subtensor_data_row_major(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
    // Members get methods
 
