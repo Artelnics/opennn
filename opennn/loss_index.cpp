@@ -448,7 +448,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 #endif
 */
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-    const Index instances_number = data_set_pointer->get_instances_number();
+    const Index instances_number = data_set_pointer->get_training_instances_number();
 
     const Tensor<Index, 1> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
