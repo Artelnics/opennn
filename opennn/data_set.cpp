@@ -968,7 +968,6 @@ Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_numb
         Index batches_number;
         Index batch_size = batch_instances_number;
 
-    //    const Index batches_number =  instances_number / batch_size;
         if(instances_number < batch_size)
         {
             batches_number = 1;
