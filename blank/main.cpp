@@ -102,12 +102,12 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        get_batches();
+//        get_batches();
 		
         // Data Set
-/*
-        const Index samples = 1000;
-        const Index variables = 8;
+
+        const Index samples = 2000;
+        const Index variables = 20;
 
         Device device(Device::EigenSimpleThreadPool);
 
@@ -158,7 +158,6 @@ int main(void)
 
         training_strategy.perform_training();
 
-*/
         cout << "Bye Blank Application" << endl;
 
         return 0;
