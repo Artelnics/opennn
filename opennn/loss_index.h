@@ -391,7 +391,7 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 

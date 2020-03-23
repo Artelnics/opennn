@@ -795,7 +795,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
     LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
-    LossIndex::SecondOrderLoss terms_second_order_loss(training_instances_number, parameters_number);
+    LossIndex::SecondOrderLoss terms_second_order_loss(parameters_number, training_instances_number);
 
     // Training strategy stuff
 
@@ -834,6 +834,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         training_loss = terms_second_order_loss.loss;
 
+        // Update epoch
+
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
@@ -847,7 +849,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
 
-             const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
+             Tensor<type, 1> new_parameters = parameters + parameters_increment;
+
+             neural_network_pointer->forward_propagate(training_batch, new_parameters, training_forward_propagation);
+
+             loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+
+             const type new_loss = training_back_propagation.loss;
 
              if(new_loss <= training_loss) // succesfull step
              {
@@ -872,7 +880,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         parameters_increment_norm = l2_norm(parameters_increment);
 
-        if(epoch == 0)
+        if(epoch == 1)
         {
             training_loss_decrease = 0;
         }
@@ -926,7 +934,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Stopping Criteria
 
-        parameters_increment_norm = 0;
+//        parameters_increment_norm = 0;
 
         if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
