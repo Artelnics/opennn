@@ -782,7 +782,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     // Loss index
 
     type training_loss = 0;
-    type old_training_loss = 0;
+//    type old_training_loss = 0;
     type training_loss_decrease = 0;
 
     type selection_error = 0;
@@ -795,12 +795,14 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
     LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
-    LossIndex::SecondOrderLoss terms_second_order_loss(training_instances_number, parameters_number);
+    LossIndex::SecondOrderLoss terms_second_order_loss(parameters_number, training_instances_number);
 
     // Training strategy stuff
 
+    OptimizationData optimization_data(this);
+
     Tensor<type, 1> parameters_increment(parameters_number);
-    type parameters_increment_norm;
+//    type parameters_increment_norm;
 
     Tensor<type, 1> minimal_selection_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
@@ -815,9 +817,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
+
         // Neural network
 
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
         {
@@ -827,13 +831,17 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-cout << "1" << endl;
+
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
-cout << "2" << endl;
-        training_loss = terms_second_order_loss.loss;
 
+//        training_loss = terms_second_order_loss.loss;
+
+        // Update data
+
+        update_epoch(neural_network_pointer, loss_index_pointer, training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss, optimization_data);
+/*
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
@@ -847,10 +855,8 @@ cout << "2" << endl;
 
              parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
 
-//             const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
-//             const type new_loss = loss_index_pointer->calculate_error(training_batch, new_parameters);
              Tensor<type, 1> new_parameters = parameters + parameters_increment;
-cout << "3" << endl;
+
              neural_network_pointer->forward_propagate(training_batch, new_parameters, training_forward_propagation);
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
@@ -888,7 +894,7 @@ cout << "3" << endl;
         {
             training_loss_decrease = training_loss - old_training_loss;
         }
-
+*/
         if(has_selection)
         {
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -936,12 +942,12 @@ cout << "3" << endl;
 
 //        parameters_increment_norm = 0;
 
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum parameters increment norm reached("<< minimum_parameters_increment_norm<<").\n"
-                     << "Parameters increment norm: " << parameters_increment_norm << endl;
+                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
             stop_training = true;
@@ -949,7 +955,7 @@ cout << "3" << endl;
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss <= training_loss_goal)
+        else if(optimization_data.old_training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
@@ -958,7 +964,7 @@ cout << "3" << endl;
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 1 && optimization_data.training_loss_decrease >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -971,7 +977,7 @@ cout << "3" << endl;
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
+        else if(optimization_data.gradient_norm <= gradient_norm_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
 
@@ -1024,8 +1030,8 @@ cout << "3" << endl;
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_loss << "\n"
-                     << "Gradient norm: " << gradient_norm << "\n"
+                     << "Training loss: " << optimization_data.old_training_loss << "\n"
+                     << "Gradient norm: " << optimization_data.gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -1056,8 +1062,8 @@ cout << "3" << endl;
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << training_loss << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
+                 << "Training loss: " << optimization_data.old_training_loss << "\n"
+                 << "Gradient norm: " << optimization_data.gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -1070,7 +1076,7 @@ cout << "3" << endl;
 
         // Update stuff
 
-        old_training_loss = training_loss;
+//        old_training_loss = training_loss;
         old_selection_error = selection_error;
     }
 

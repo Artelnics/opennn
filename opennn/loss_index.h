@@ -346,13 +346,13 @@ public:
        calculate_layers_delta(forward_propagation, back_propagation);
 
        // Second Order
-cout << "First Order" << endl;
+
        calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-cout << "terms" << endl;
+
        calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-cout <<"jacobian" << endl;
+
        calculate_hessian_approximation(second_order_loss);
-cout << "Second" << endl;
+
        // Loss
 
        second_order_loss.loss = back_propagation.loss;
