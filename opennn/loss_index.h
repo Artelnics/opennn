@@ -334,7 +334,9 @@ public:
        // First Order
 
        calculate_error(batch, forward_propagation, back_propagation);
+
        calculate_output_gradient(batch, forward_propagation, back_propagation);
+
        calculate_layers_delta(forward_propagation, back_propagation);
 
        // Second Order
@@ -346,7 +348,7 @@ public:
        calculate_hessian_approximation(second_order_loss);
 
        // Loss
-cout << "Losss" << back_propagation.loss << endl;
+
        second_order_loss.loss = back_propagation.loss;
 
        // Regularization

@@ -575,8 +575,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-//    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    vector<Index> training_instances_indices = tensor_to_vector(data_set_pointer->get_training_instances_indices());
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+//    vector<Index> training_instances_indices = tensor_to_vector(data_set_pointer->get_training_instances_indices());
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
@@ -623,7 +623,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     results.resize_training_history(maximum_epochs_number + 1);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
 //    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
@@ -631,28 +631,31 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
-        std::shuffle(training_instances_indices.begin(), training_instances_indices.end(), default_random_engine(NULL));
-//                       training_instances_indices.data() + training_instances_indices.size());
+//        std::shuffle(training_instances_indices.begin(), training_instances_indices.end(), default_random_engine(NULL));
+//        random_shuffle(training_instances_indices.data(), training_instances_indices.data() + training_instances_indices.size());
 
-//        training_batches = data_set_pointer->get_training_batches(batch_instances_number, shuffle);
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, shuffle);
 
         training_loss = 0;
-Index index = 0;
+
+        Index index = 0;
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
-
-//            batch_instances_indices = training_batches.chip(iteration, 0);
-//            batch_instances_indices = training_batches.slice({0}, batch_instances_number);
-
+/*
             memcpy(batch_instances_indices.data(),
                    training_instances_indices.data() + index,
                    static_cast<size_t>(batch_instances_number)*sizeof(Index));
             index += batch_instances_number;
 
+
             sort(batch_instances_indices.data(), batch_instances_indices.data() + batch_instances_indices.size(), less<Index>());
 
             batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
+*/
+
+            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
             // Neural network
 /*
