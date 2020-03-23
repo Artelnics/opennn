@@ -232,6 +232,60 @@ public:
        Tensor<type, 2> targets_2d;
    };
 
+   struct MiniBatch
+   {
+       /// Default constructor.
+
+       MiniBatch() {}
+
+       MiniBatch(const Index& new_instances_number, DataSet* new_data_set_pointer)
+       {
+           instances_number = new_instances_number;
+
+           data_set_pointer = new_data_set_pointer;
+
+           const Index input_variables_number = data_set_pointer->get_input_variables_number();
+           const Index target_variables_number = data_set_pointer->get_target_variables_number();
+
+           const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+           const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+           inputs_2d = Tensor<type, 2>(instances_number, input_variables_number);
+           targets_2d = Tensor<type, 2>(instances_number, target_variables_number);
+       }
+
+       /// Destructor.
+
+       virtual ~MiniBatch() {}
+
+       Index get_instances_number() const
+       {
+           return instances_number;
+       }
+
+       void get_mini_batch(const Batch& batch, const Index& batch_size);
+
+       void print()
+       {
+           cout << "Batch structure" << endl;
+
+           cout << "Inputs:" << endl;
+           cout << inputs_2d << endl;
+
+           cout << "Targets:" << endl;
+           cout << targets_2d << endl;
+       }
+
+//       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+       Index instances_number = 0;
+
+       DataSet* data_set_pointer = nullptr;
+
+       Tensor<type, 2> inputs_2d;
+       Tensor<type, 2> targets_2d;
+   };
+
    // Instances get methods
 
    inline Index get_instances_number() const {return instances_uses.size();}
