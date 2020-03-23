@@ -1191,8 +1191,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Loss index
 
+    type training_error = 0;
+
     type gradient_norm = 0;
 
+    type selection_error = numeric_limits<type>::max();
     type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
@@ -1235,6 +1238,38 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Loss index
 
+        loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+
+        training_error = training_back_propagation.loss;
+
+        // Selection error
+
+        if(has_selection)
+        {
+            selection_error = 0;
+
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+
+            // Loss Index
+
+            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+
+            selection_error = selection_back_propagation.loss;
+
+            if(selection_error > old_selection_error)
+            {
+                selection_failures++;
+            }
+            else if(selection_error < minimum_selection_error)
+            {
+                minimum_selection_error = selection_error;
+
+                minimal_selection_parameters = optimization_data.parameters;
+            }
+
+            if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
+        }
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
@@ -1242,30 +1277,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         if(display && gradient_norm >= warning_gradient_norm)
         {
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-        }
-
-        // Selection error
-
-        if(has_selection)
-        {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-
-            // Loss Index
-
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-
-            if(selection_back_propagation.error > old_selection_error)
-            {
-                selection_failures++;
-            }
-            else if(selection_back_propagation.error < minimum_selection_error)
-            {
-                minimum_selection_error = selection_back_propagation.error;
-
-                minimal_selection_parameters = optimization_data.parameters;
-            }
-
-            if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
         }
 
         // Optimization data
@@ -1276,7 +1287,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_back_propagation.error;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
         // Stopping Criteria
 
@@ -1374,8 +1385,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
-            results.final_training_error = training_back_propagation.error;
-            results.final_selection_error = selection_back_propagation.error;
+            results.final_training_error = training_error;
+            results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1388,7 +1399,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_back_propagation.error <<  "\n"
+                     << "Training error: " << training_error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << optimization_data.learning_rate <<  "\n"
@@ -1396,7 +1407,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
                 if(has_selection)
                 {
-                    cout << "Selection error: " << selection_back_propagation.error << endl;
+                    cout << "Selection error: " << selection_error << endl;
                 }
             }
 
@@ -1406,7 +1417,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training error: " << training_back_propagation.error << "\n"
+                 << "Training error: " << training_error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Training rate: " << optimization_data.learning_rate << "\n"
@@ -1414,7 +1425,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             if(has_selection)
             {
-                cout << "Selection error: " << selection_back_propagation.error << endl;
+                cout << "Selection error: " << selection_error << endl;
             }
         }
 
