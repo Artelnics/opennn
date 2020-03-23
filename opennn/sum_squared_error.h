@@ -110,7 +110,7 @@ public:
            }
        }
 
-       back_propagation.loss = sum_squared_error(0);
+       back_propagation.error = sum_squared_error(0);
 
        return;
    }
