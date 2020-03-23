@@ -91,7 +91,7 @@ public:
 
                 sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
 
-                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+                back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 
                 return;
             }
@@ -104,7 +104,7 @@ public:
 
                sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
-               back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+               back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 
                return;
             }
