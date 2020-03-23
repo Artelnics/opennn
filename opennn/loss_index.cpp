@@ -805,7 +805,7 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
+Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation(LossIndex::BackPropagation& back_propagation) const
 {
     const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -835,14 +835,14 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
        h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
-       error_forward = calculate_error(batch, parameters_forward);
+       error_forward = calculate_error(batch, parameters_forward, back_propagation);
        parameters_forward(i) -= h;
 
        parameters_backward(i) -= h;
-       error_backward = calculate_error(batch, parameters_backward);
+       error_backward = calculate_error(batch, parameters_backward, back_propagation);
        parameters_backward(i) += h;
 
-       numerical_gradient(i) = (error_forward - error_backward)/(static_cast<type>(2.0)*h);
+       numerical_gradient(i) = (error_forward - error_backward)/(2*h);
     }
 
     return numerical_gradient;

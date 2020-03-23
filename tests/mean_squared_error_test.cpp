@@ -153,7 +153,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    numerical_error_gradient.resize(parameters_number);
 
-   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
 
 //   error_gradient = mean_squared_error.calculate_training_error_gradient();
 
