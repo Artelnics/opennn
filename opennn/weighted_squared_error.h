@@ -99,7 +99,7 @@ public:
 
        const Index instances_number = batch.targets_2d.size();
 
-       back_propagation.loss = error/instances_number;
+       back_propagation.error = error/instances_number;
 
        return;
    }

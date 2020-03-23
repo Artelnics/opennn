@@ -110,7 +110,7 @@ public:
            }
        }
 
-       back_propagation.loss = minkowski_error(0);
+       back_propagation.error = minkowski_error(0);
 
        return;
    }
