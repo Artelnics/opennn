@@ -20,11 +20,9 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-
-
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -56,8 +54,6 @@ public:
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
-
    explicit MeanSquaredError(const tinyxml2::XMLDocument&);
 
    // COPY CONSTRUCTOR
@@ -70,31 +66,234 @@ public:
 
    // Error methods
 
-   double calculate_training_error() const;
-   double calculate_training_error(const Vector<double>&) const;
+   void calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        LossIndex::BackPropagation& back_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
 
-   double calculate_selection_error() const;
+       const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-   // Gradient methods
+       const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+       const Tensor<type, 2>& targets = batch.targets_2d;
 
-   FirstOrderLoss calculate_first_order_loss() const;
+       Tensor<type, 2> errors(batch_instances_number, outputs.dimension(1));
 
-   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                errors.device(*default_device) = outputs - targets;
+
+                sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
+
+                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+                return;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               errors.device(*thread_pool_device) = outputs - targets;
+
+               sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
+
+               back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+               return;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                return ;
+           }
+       }
+
+       return       ;
+   }
 
    // Error terms methods
 
-   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
-   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  BackPropagation& back_propagation) const
+   {
+        #ifdef __OPENNN_DEBUG__
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+        check();
+
+        #endif
+
+        const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        const type coefficient = static_cast<type>(2.0)/static_cast<type>(instances_number);
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 errors.device(*default_device) = outputs - targets;
+
+                 back_propagation.output_gradient.device(*default_device) = coefficient*errors;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                errors.device(*thread_pool_device) = outputs - targets;
+
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+        }
+   }
+
+   void calculate_Jacobian_gradient(const DataSet::Batch& batch,
+                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                    LossIndex::SecondOrderLoss& second_order_loss) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+        const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        Tensor<type, 2> expression(parameters_number, 1);
+
+        const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 errors.device(*default_device) = (outputs - targets).square();
+
+                 second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
+
+                 second_order_loss.gradient.device(*default_device) = second_order_loss.gradient*coefficient;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                errors.device(*thread_pool_device) = (outputs - targets).square();
+
+                expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
+
+                expression.device(*thread_pool_device) = coefficient*expression;
+
+                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(parameters_number)*sizeof(type));
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+        }
+   }
+
+   void calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        Tensor<type, 2> dot(parameters_number, parameters_number);
+
+        const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 second_order_loss.hessian.device(*default_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+                 second_order_loss.hessian.device(*default_device) = coefficient*second_order_loss.hessian;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                dot.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+                second_order_loss.hessian.device(*thread_pool_device) = coefficient*dot;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+        }
+   }
+
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
 
    // Serialization methods
 
@@ -109,7 +308,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

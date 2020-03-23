@@ -18,14 +18,18 @@
 #include <limits>
 #include <cmath>
 #include <ctime>
+#include <iomanip>
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 
-
-
 #include "tinyxml2.h"
+
+using namespace std;
+using namespace Eigen;
+
 
 namespace OpenNN
 {
@@ -79,62 +83,65 @@ public:
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       Matrix<string> write_final_results(const size_t&) const;
+       Tensor<string, 2> write_final_results(const Index& = 3) const;
 
        /// Resizes training history variables.
 
-       void resize_training_history(const size_t&);
+       void resize_training_history(const Index&);
+
+       /// Resizes the training and selection error history keeping the values.
+
+       void resize_error_history(const Index&);
 
        /// Writes final results of the training.
-
-       Matrix<string> write_final_results(const int& precision = 3) const;
+/*
+       Tensor<string, 2> write_final_results(const Index& precision = 3) const;
+*/       
 
        // Training history
 
        /// History of the loss function loss over the training iterations.
 
-       Vector<double> training_error_history;
+       Tensor<type, 1> training_error_history;
 
        /// History of the selection error over the training iterations.
 
-       Vector<double> selection_error_history;
+       Tensor<type, 1> selection_error_history;
 
        // Final values
 
        /// Final neural network parameters vector.
 
-       Vector<double> final_parameters;
+       Tensor<type, 1> final_parameters;
 
        /// Final neural network parameters norm.
 
-       double final_parameters_norm;
+       type final_parameters_norm;
 
        /// Final loss function evaluation.
 
-       double final_training_error;
+       type final_training_error;
 
        /// Final selection error.
 
-       double final_selection_error;
+       type final_selection_error;
 
        /// Final gradient norm.
 
-       double final_gradient_norm;
+       type final_gradient_norm;
 
        /// Elapsed time of the training process.
 
-       double elapsed_time;
+       type elapsed_time;
 
        /// Maximum number of training iterations.
 
-       size_t epochs_number;
+       Index epochs_number;
 
        /// Stopping criterion.
 
        string stopping_criterion;
    };
-
-
 
 
    // Get methods
@@ -147,11 +154,15 @@ public:
 
    const bool& get_display() const;
 
-   const size_t& get_display_period() const;
+   const Index& get_display_period() const;
 
-   const size_t& get_save_period() const;
+   const Index& get_save_period() const;
 
    const string& get_neural_network_file_name() const;
+
+   /// Writes the time from seconds in format HH:mm:ss.
+
+   const string write_elapsed_time(const type&) const;
 
    // Set methods
 
@@ -160,14 +171,18 @@ public:
 
    virtual void set_default();
 
+   void set_device_pointer(Device*);
+
    virtual void set_loss_index_pointer(LossIndex*);
 
    virtual void set_display(const bool&);
 
-   void set_display_period(const size_t&);
+   void set_display_period(const Index&);
 
-   void set_save_period(const size_t&);
+   void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
+
+   virtual void set_reserve_selection_error_history(const bool&) = 0;
 
    // Training methods
 
@@ -184,7 +199,7 @@ public:
    virtual string object_to_string() const;
    void print() const;
 
-   virtual Matrix<string> to_string_matrix() const;
+   virtual Tensor<string, 2> to_string_matrix() const;
 
    virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
@@ -196,23 +211,25 @@ public:
 
 protected:
 
+   Device* device_pointer;
+
    /// Pointer to a loss index for a neural network object.
 
    LossIndex* loss_index_pointer = nullptr;
 
    /// Number of training epochs in the neural network.
 
-   size_t epochs_number = 10000;
+   Index epochs_number = 10000;
 
    // UTILITIES
 
    /// Number of iterations between the training showing progress.
 
-   size_t display_period;
+   Index display_period;
 
    /// Number of iterations between the training saving progress.
 
-   size_t save_period;
+   Index save_period;
 
    /// Path where the neural network is saved.
 
@@ -221,6 +238,56 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
+   const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
+   const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
+   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
+   Tensor<type, 1> normalized(const Tensor<type, 1>& tensor) const
+   {
+       const type norm = l2_norm(tensor);
+
+       const Tensor<type, 1> new_tensor = tensor/norm;
+
+       return new_tensor;
+   }
+
+
+   type l2_norm(const Tensor<type, 1>& tensor) const
+   {
+       Tensor<type, 0> norm;
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                norm.device(*default_device) = tensor.square().sum().sqrt();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+       }
+
+       return norm(0);
+   }
+
 };
 
 }
@@ -229,7 +296,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U N S C A L I N G   L A Y E R    C L A S S                            
+//   U N S C A L I N G   L A Y E R    C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,7 +11,7 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
+/// Default constructor.
 
 UnscalingLayer::UnscalingLayer() : Layer()
 {
@@ -19,23 +19,23 @@ UnscalingLayer::UnscalingLayer() : Layer()
 }
 
 
-/// Outputs number constructor. 
+/// Outputs number constructor.
 
-UnscalingLayer::UnscalingLayer(const size_t& new_neurons_number) : Layer()
+UnscalingLayer::UnscalingLayer(const Index& new_neurons_number) : Layer()
 {
     set(new_neurons_number);
 }
 
 
-/// Outputs descriptives constructor. 
+/// Outputs descriptives constructor.
 
-UnscalingLayer::UnscalingLayer(const Vector<Descriptives>& new_descriptives) : Layer()
+UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
     set(new_descriptives);
 }
 
 
-/// XML constructor. 
+/// XML constructor.
 
 UnscalingLayer::UnscalingLayer(const tinyxml2::XMLDocument& unscaling_layer_document) : Layer()
 {
@@ -43,7 +43,7 @@ UnscalingLayer::UnscalingLayer(const tinyxml2::XMLDocument& unscaling_layer_docu
 }
 
 
-/// Copy constructor. 
+/// Copy constructor.
 
 UnscalingLayer::UnscalingLayer(const UnscalingLayer& other_unscaling_layer) : Layer()
 {
@@ -58,28 +58,32 @@ UnscalingLayer::~UnscalingLayer()
 }
 
 
-Vector<size_t> UnscalingLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> UnscalingLayer::get_input_variables_dimensions() const
 {
-    return Vector<size_t>({descriptives.size()});
+    Tensor<Index, 1> input_variables_dimensions(1);
+
+    input_variables_dimensions.setConstant(descriptives.size());
+
+    return input_variables_dimensions;
 }
 
 
-size_t UnscalingLayer::get_inputs_number() const
-{
-    return descriptives.size();
-}
-
-
-/// Returns the number of unscaling neurons in this layer. 
-
-size_t UnscalingLayer::get_neurons_number() const
+Index UnscalingLayer::get_inputs_number() const
 {
     return descriptives.size();
 }
 
 
-/// Returns all the available descriptives of the inputs and output variables. 
-/// The format is a vector of pointers to vectors of size ten: 
+/// Returns the number of unscaling neurons in this layer.
+
+Index UnscalingLayer::get_neurons_number() const
+{
+    return descriptives.size();
+}
+
+
+/// Returns all the available descriptives of the inputs and output variables.
+/// The format is a vector of pointers to vectors of size ten:
 /// <ul>
 /// <li> Mean of variables.
 /// <li> Standard deviation of variables.
@@ -87,7 +91,7 @@ size_t UnscalingLayer::get_neurons_number() const
 /// <li> Maximum of variables.
 /// </ul>
 
-Vector<Descriptives> UnscalingLayer::get_descriptives() const
+Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
 {
     return descriptives;
 }
@@ -97,54 +101,58 @@ Vector<Descriptives> UnscalingLayer::get_descriptives() const
 /// The number of rows is the number of unscaling neurons,
 /// and the number of columns is 4(minimum, maximum, mean and standard deviation).
 
-Matrix<double> UnscalingLayer::get_descriptives_matrix() const
+Tensor<type, 2> UnscalingLayer::get_descriptives_matrix() const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Matrix<double> statistics_matrix(neurons_number, 4);
+    Tensor<type, 2> descriptives_matrix(neurons_number, 4);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
-        statistics_matrix.set_row(i, descriptives[i].to_vector());
+
+        descriptives_matrix(i,0) = descriptives(i).minimum;
+        descriptives_matrix(i,1) = descriptives(i).maximum;
+        descriptives_matrix(i,2) = descriptives(i).mean;
+        descriptives_matrix(i,3) = descriptives(i).standard_deviation;
     }
 
-    return(statistics_matrix);
+    return descriptives_matrix;
 }
 
 
 /// Returns a vector with the minimum values of all unscaling neurons.
 /// The size is the number of neurons in the layer.
 
-Vector<double> UnscalingLayer::get_minimums() const
+Tensor<type, 1> UnscalingLayer::get_minimums() const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Vector<double> minimums(neurons_number, 4);
+    Tensor<type, 1> minimums(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         minimums[i] = descriptives[i].minimum;
     }
 
-    return(minimums);
+    return minimums;
 }
 
 
 /// Returns a vector with the maximum values of all unscaling neurons.
 /// The size is the number of neurons in the layer.
 
-Vector<double> UnscalingLayer::get_maximums() const
+Tensor<type, 1> UnscalingLayer::get_maximums() const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Vector<double> maximums(neurons_number, 4);
+    Tensor<type, 1> maximums(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         maximums[i] = descriptives[i].maximum;
     }
 
-    return(maximums);
+    return maximums;
 }
 
 
@@ -153,7 +161,7 @@ Vector<double> UnscalingLayer::get_maximums() const
 
 const UnscalingLayer::UnscalingMethod& UnscalingLayer::get_unscaling_method() const
 {
-    return(unscaling_method);
+    return unscaling_method;
 }
 
 
@@ -225,7 +233,7 @@ string UnscalingLayer::write_unscaling_method_text() const
 }
 
 
-/// Returns true if messages from this class are to be displayed on the screen, or false if messages 
+/// Returns true if messages from this class are to be displayed on the screen, or false if messages
 /// from this class are not to be displayed on the screen.
 
 const bool& UnscalingLayer::get_display() const
@@ -234,45 +242,45 @@ const bool& UnscalingLayer::get_display() const
 }
 
 
-/// Sets the unscaling layer to be empty. 
+/// Sets the unscaling layer to be empty.
 
 void UnscalingLayer::set()
 {
-    descriptives.set();
+    descriptives.resize(0);
 
     set_default();
 }
 
 
-void UnscalingLayer::set_inputs_number(const size_t& new_inputs_number)
+void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    descriptives.set(new_inputs_number);
+    descriptives.resize(new_inputs_number);
 }
 
 
-void UnscalingLayer::set_neurons_number(const size_t& new_neurons_number)
+void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 {
-    descriptives.set(new_neurons_number);
+    descriptives.resize(new_neurons_number);
 }
 
 
-/// Sets a new size in the unscaling layer. 
-/// It also sets the members to their default values. 
+/// Sets a new size in the unscaling layer.
+/// It also sets the members to their default values.
 
-void UnscalingLayer::set(const size_t& new_neurons_number)
+void UnscalingLayer::set(const Index& new_neurons_number)
 {
-    descriptives.set(new_neurons_number);
+    descriptives.resize(new_neurons_number);
 
     set_default();
 }
 
 
-/// Sets the size of the unscaling layer and the descriptives values. 
-/// @param new_descriptives Vector of vectors containing the minimums, maximums, means and standard deviations for the unscaling layer. 
-/// The size of this vector must be 4. 
-/// The size of each subvector will be the size of the unscaling layer. 
+/// Sets the size of the unscaling layer and the descriptives values.
+/// @param new_descriptives Vector of vectors containing the minimums, maximums, means and standard deviations for the unscaling layer.
+/// The size of this vector must be 4.
+/// The size of each subvector will be the size of the unscaling layer.
 
-void UnscalingLayer::set(const Vector<Descriptives>& new_descriptives)
+void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
 
@@ -280,7 +288,7 @@ void UnscalingLayer::set(const Vector<Descriptives>& new_descriptives)
 }
 
 
-/// Sets the unscaling layer members from a XML document. 
+/// Sets the unscaling layer members from a XML document.
 /// @param new_unscaling_layer_document Pointer to a TinyXML document containing the member data.
 
 void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
@@ -291,7 +299,7 @@ void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_docume
 }
 
 
-/// Sets the members of this object to be the members of another object of the same class. 
+/// Sets the members of this object to be the members of another object of the same class.
 
 void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
 {
@@ -306,11 +314,11 @@ void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
 /// This member sets the default values for the unscaling layer:
 /// <ul>
 /// <li> Minimus: -1 for all unscaling neurons.
-/// <li> Maximums: 1 for al unscaling neurons. 
-/// <li> Means: 0 for all unscaling neurons. 
-/// <li> Standard deviations 1 for all unscaling neurons. 
-/// <li> Unscaling method: Minimum and maximum. 
-/// <li> Display: True. 
+/// <li> Maximums: 1 for al unscaling neurons.
+/// <li> Means: 0 for all unscaling neurons.
+/// <li> Standard deviations 1 for all unscaling neurons.
+/// <li> Unscaling method: Minimum and maximum.
+/// <li> Display: True.
 /// </ul>
 
 void UnscalingLayer::set_default()
@@ -327,20 +335,20 @@ void UnscalingLayer::set_default()
 /// The size of this vector must be equal to the number of unscaling neurons.
 /// @param new_descriptives Unscaling neurons descriptives.
 
-void UnscalingLayer::set_descriptives(const Vector<Descriptives>& new_descriptives)
+void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const size_t new_descriptives_size = new_descriptives.size();
+    const Index new_descriptives_size = new_descriptives.size();
 
     if(new_descriptives_size != neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void set_descriptives(const Vector<Descriptives>&) method.\n"
+               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") must be equal to number of unscaling neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -354,13 +362,13 @@ void UnscalingLayer::set_descriptives(const Vector<Descriptives>& new_descriptiv
 }
 
 
-void UnscalingLayer::set_descriptives_eigen(const Eigen::MatrixXd& new_descriptives)
+void UnscalingLayer::set_descriptives_eigen(const Tensor<type, 2>& new_descriptives)
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Vector<Descriptives> descriptives(neurons_number);
+    Tensor<Descriptives, 1> descriptives(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         descriptives[i].set_minimum(new_descriptives(static_cast<long long>(i), 0));
         descriptives[i].set_maximum(new_descriptives(static_cast<long long>(i), 1));
@@ -376,7 +384,7 @@ void UnscalingLayer::set_descriptives_eigen(const Eigen::MatrixXd& new_descripti
 /// @param i Index of unscaling neuron.
 /// @param item_descriptives  Descriptives values for that neuron.
 
-void UnscalingLayer::set_item_descriptives(const size_t& i, const Descriptives& item_descriptives)
+void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives[i] = item_descriptives;
 }
@@ -386,7 +394,7 @@ void UnscalingLayer::set_item_descriptives(const size_t& i, const Descriptives& 
 /// @param i Index of unscaling neuron.
 /// @param new_minimum Minimum value.
 
-void UnscalingLayer::set_minimum(const size_t& i, const double& new_minimum)
+void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
 {
     descriptives[i].set_minimum(new_minimum);
 }
@@ -396,7 +404,7 @@ void UnscalingLayer::set_minimum(const size_t& i, const double& new_minimum)
 /// @param i Index of unscaling neuron.
 /// @param new_maximum Maximum value.
 
-void UnscalingLayer::set_maximum(const size_t& i, const double& new_maximum)
+void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives[i].set_maximum(new_maximum);
 }
@@ -406,7 +414,7 @@ void UnscalingLayer::set_maximum(const size_t& i, const double& new_maximum)
 /// @param i Index of unscaling neuron.
 /// @param new_mean Mean value.
 
-void UnscalingLayer::set_mean(const size_t& i, const double& new_mean)
+void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
 {
     descriptives[i].set_mean(new_mean);
 }
@@ -416,7 +424,7 @@ void UnscalingLayer::set_mean(const size_t& i, const double& new_mean)
 /// @param i Index of unscaling neuron.
 /// @param new_standard_deviation Standard deviation value.
 
-void UnscalingLayer::set_standard_deviation(const size_t& i, const double& new_standard_deviation)
+void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives[i].set_standard_deviation(new_standard_deviation);
 }
@@ -466,7 +474,7 @@ void UnscalingLayer::set_unscaling_method(const string& new_unscaling_method)
 }
 
 
-/// Sets a new display value. 
+/// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
 /// @param new_display Display value.
@@ -477,52 +485,24 @@ void UnscalingLayer::set_display(const bool& new_display)
 }
 
 
-/// Removes a single unscaling neuron from the unscaling layer.
-/// @param index Index of neuron to be removed.
-
-void UnscalingLayer::prune_neuron(const size_t& index)
-{
-#ifdef __OPENNN_DEBUG__
-
-    const size_t neurons_number = get_neurons_number();
-
-    if(index >= neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void prune_neuron(const size_t&) method.\n"
-               << "Index of unscaling neuron is equal or greater than number of unscaling neurons.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    descriptives.erase(descriptives.begin() + static_cast<long long>(index));
-}
-
-
-/// Checks whether the outptus from the unscaling layer are inside the range defined by the minimums and maximum values. 
+/// Checks whether the outptus from the unscaling layer are inside the range defined by the minimums and maximum values.
 /// It displays a warning message if they are outside.
 /// @param outputs Set of outptus from the unscaling layer.
 
-void UnscalingLayer::check_range(const Vector<double>& outputs) const
+void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
 {
-    const size_t neurons_number = get_neurons_number();
-
-    
+    const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
-    const size_t size = outputs.size();
+    const Index size = outputs.size();
 
     if(size != neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void check_range(const Vector<double>&) const method.\n"
+               << "void check_range(const Tensor<type, 1>&) const method.\n"
                << "Size of outputs must be equal to number of unscaling neurons.\n";
 
         throw logic_error(buffer.str());
@@ -534,31 +514,31 @@ void UnscalingLayer::check_range(const Vector<double>& outputs) const
 
     if(display)
     {
-        for(size_t i = 0; i < neurons_number; i++)
+        for(Index i = 0; i < neurons_number; i++)
         {
             if(outputs[i] < descriptives[i].minimum)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "void check_range(const Vector<double>&) const method.\n"
-                          << "Output variable " << i << " is less than outputs.\n";
+                     << "void check_range(const Tensor<type, 1>&) const method.\n"
+                     << "Output variable " << i << " is less than outputs.\n";
             }
 
             if(outputs[i] > descriptives[i].maximum)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "void check_range(const Vector<double>&) const method.\n"
-                          << "Output variable " << i << " is greater than maximum.\n";
+                     << "void check_range(const Tensor<type, 1>&) const method.\n"
+                     << "Output variable " << i << " is greater than maximum.\n";
             }
         }
     }
 }
 
 
-/// Returns true if the number of unscaling neurons is zero, and false otherwise. 
+/// Returns true if the number of unscaling neurons is zero, and false otherwise.
 
 bool UnscalingLayer::is_empty() const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 0)
     {
@@ -571,24 +551,24 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-/// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.  
+/// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
 /// @param inputs Set of inputs to the unscaling layer.
 
-Tensor<double> UnscalingLayer::calculate_outputs(const Tensor<double>& inputs)
-{    
+Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
+{
 
 #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const size_t columns_number = inputs.get_dimension(1);
+    const Index columns_number = inputs.dimension(1);
 
     if(columns_number != neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Size must be equal to number of unscaling neurons.\n";
 
         throw logic_error(buffer.str());
@@ -600,62 +580,62 @@ Tensor<double> UnscalingLayer::calculate_outputs(const Tensor<double>& inputs)
 
     switch(unscaling_method)
     {
-        case MinimumMaximum:
-        {
-            return(calculate_minimum_maximum_outputs(inputs));
-        }
-
-        case MeanStandardDeviation:
-        {
-            return(calculate_mean_standard_deviation_outputs(inputs));
-        }
-
-        case Logarithmic:
-        {
-            return(calculate_logarithmic_outputs(inputs));
-        }
-
-        case NoUnscaling:
-        {
-            return inputs;
-        }
+    case MinimumMaximum:
+    {
+        return calculate_minimum_maximum_outputs(inputs);
     }
 
-    return Tensor<double>();
-}  
+    case MeanStandardDeviation:
+    {
+        return calculate_mean_standard_deviation_outputs(inputs);
+    }
+
+    case Logarithmic:
+    {
+        return calculate_logarithmic_outputs(inputs);
+    }
+
+    case NoUnscaling:
+    {
+        return inputs;
+    }
+    }
+
+    return Tensor<type, 2>();
+}
 
 
 /// Calculates the outputs from the unscaling layer with the minimum and maximum method for a set of inputs.
-/// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons. 
+/// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons.
 
-Tensor<double> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<double>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<type, 2>& inputs) const
 {
-    const size_t points_number = inputs.get_dimension(0);
-    const size_t neurons_number = get_neurons_number();
+    const Index points_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
-    Tensor<double> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 
-    for(size_t i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
     {
-    for(size_t j = 0; j < neurons_number; j++)
-    {
-        if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<double>::min())
+        for(Index j = 0; j < neurons_number; j++)
         {
-            if(display)
+            if(descriptives(j).maximum - descriptives(j).minimum < numeric_limits<type>::min())
             {
-                cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Vector<double> calculate_minimum_maximum_outputs(Vector<double>&) const method.\n"
-                          << "Minimum and maximum values of output variable " << i << " are equal.\n"
-                          << "Those outputs won't be unscaled.\n";
-            }
+                if(display)
+                {
+                    cout << "OpenNN Warning: UnscalingLayer class.\n"
+                         << "Tensor<type, 1> calculate_minimum_maximum_outputs(Tensor<type, 1>&) const method.\n"
+                         << "Minimum and maximum values of output variable " << i << " are equal.\n"
+                         << "Those outputs won't be unscaled.\n";
+                }
 
-            outputs(i,j) = 0.0;
+                outputs(i,j) = 0;
+            }
+            else
+            {
+                outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
+            }
         }
-        else
-        {
-            outputs(i,j) = 0.5*(inputs(i,j) + 1.0)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
-        }
-    }
     }
 
     return outputs;
@@ -663,36 +643,36 @@ Tensor<double> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<do
 
 
 /// Calculates the outputs from the unscaling layer with the mean and standard deviation method for a set of inputs.
-/// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons. 
+/// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons.
 
-Tensor<double> UnscalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<double>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<type, 2>& inputs) const
 {
-    const size_t points_number = inputs.get_dimension(0);
-    const size_t neurons_number = get_neurons_number();
+    const Index points_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
-    Tensor<double> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 
-    for(size_t i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
     {
-    for(size_t j = 0; j < neurons_number; j++)
-    {
-        if(descriptives[j].standard_deviation < numeric_limits<double>::min())
+        for(Index j = 0; j < neurons_number; j++)
         {
-            if(display)
+            if(descriptives[j].standard_deviation < numeric_limits<type>::min())
             {
-                cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Vector<double> calculate_mean_standard_deviation_outputs(const Vector<double>&) const method.\n"
-                          << "Standard deviation of output variable " << j << " is zero.\n"
-                          << "Those outputs won't be unscaled.\n";
-            }
+                if(display)
+                {
+                    cout << "OpenNN Warning: UnscalingLayer class.\n"
+                         << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
+                         << "Standard deviation of output variable " << j << " is zero.\n"
+                         << "Those outputs won't be unscaled.\n";
+                }
 
-            outputs(i,j) = 0.0;
+                outputs(i,j) = 0;
+            }
+            else
+            {
+//            outputs(i,j) = inputs[j]*descriptives[j].standard_deviation + descriptives[j].mean;
+            }
         }
-        else
-        {
-            outputs(i,j) = inputs[j]*descriptives[j].standard_deviation + descriptives[j].mean;
-        }
-    }
     }
 
     return outputs;
@@ -702,52 +682,52 @@ Tensor<double> UnscalingLayer::calculate_mean_standard_deviation_outputs(const T
 /// Calculates the outputs from the unscaling layer with the logarithmic method for a set of inputs.
 /// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons.
 
-Tensor<double> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<double>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type, 2>& inputs) const
 {
-    const size_t points_number = inputs.get_dimension(0);
+    const Index points_number = inputs.dimension(0);
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Tensor<double> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 
-    for(size_t i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
     {
-    for(size_t j = 0; j < neurons_number; j++)
-    {
-        if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<double>::min())
+        for(Index j = 0; j < neurons_number; j++)
         {
-            if(display)
+            if(descriptives[j].maximum - descriptives[j].minimum < numeric_limits<type>::min())
             {
-                cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Vector<double> calculate_logarithmic_outputs(Vector<double>&) const method.\n"
-                          << "Minimum and maximum values of output variable " << j << " are equal.\n"
-                          << "Those outputs won't be unscaled.\n";
-            }
+                if(display)
+                {
+                    cout << "OpenNN Warning: UnscalingLayer class.\n"
+                         << "Tensor<type, 1> calculate_logarithmic_outputs(Tensor<type, 1>&) const method.\n"
+                         << "Minimum and maximum values of output variable " << j << " are equal.\n"
+                         << "Those outputs won't be unscaled.\n";
+                }
 
-            outputs(i,j) = 0.0;
+                outputs(i,j) = 0;
+            }
+            else
+            {
+                outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j)-1))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+            }
         }
-        else
-        {
-            outputs(i,j) = 0.5*(exp(inputs(i,j)-1.0))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
-        }
-    }
     }
 
     return outputs;
 }
 
 
-/// Returns a string representation of the current unscaling layer object. 
+/// Returns a string representation of the current unscaling layer object.
 
 string UnscalingLayer::object_to_string() const
 {
     ostringstream buffer;
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     buffer << "Unscaling layer\n";
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer << "Descriptives " << i+1 << ":\n"
                << "Minimum: " << descriptives[i].minimum << "\n"
@@ -763,8 +743,8 @@ string UnscalingLayer::object_to_string() const
 }
 
 
-/// Serializes this unscaling layer object into a TinyXML document-> 
-/// Please read the OpenNN manual for more information about this. 
+/// Serializes this unscaling layer object into a TinyXML document->
+/// Please read the OpenNN manual for more information about this.
 
 tinyxml2::XMLDocument* UnscalingLayer::to_XML() const
 {
@@ -779,7 +759,7 @@ tinyxml2::XMLDocument* UnscalingLayer::to_XML() const
     tinyxml2::XMLElement* element = nullptr;
     tinyxml2::XMLText* text = nullptr;
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     // Unscaling neurons number
     {
@@ -793,10 +773,10 @@ tinyxml2::XMLDocument* UnscalingLayer::to_XML() const
         element->LinkEndChild(text);
     }
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         tinyxml2::XMLElement* statistics_element = document->NewElement("Descriptives");
-        statistics_element->SetAttribute("Index", static_cast<unsigned>(i)+1);
+        statistics_element->SetAttribute("Index", i+1);
 
         unscaling_layer_element->LinkEndChild(statistics_element);
 
@@ -877,7 +857,9 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
+
+    // Unscaling layer
 
     file_stream.OpenElement("UnscalingLayer");
 
@@ -894,11 +876,11 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Descriptives
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Descriptives");
 
-        file_stream.PushAttribute("Index", static_cast<unsigned>(i)+1);
+        file_stream.PushAttribute("Index", i+1);
 
         // Minimum
 
@@ -956,6 +938,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Unscaling layer (end tag)
 
     file_stream.CloseElement();
 }
@@ -994,20 +977,20 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // size_t does not work
+    unsigned index = 0; // Index does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
-        const tinyxml2::XMLElement* statistics_element = start_element->NextSiblingElement("Descriptives");
-        start_element = statistics_element;
+        const tinyxml2::XMLElement* descriptives_element = start_element->NextSiblingElement("Descriptives");
+        start_element = descriptives_element;
 
-        if(!statistics_element)
+        if(!descriptives_element)
         {
             buffer << "OpenNN Exception: UnscalingLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
@@ -1016,7 +999,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw logic_error(buffer.str());
         }
 
-        statistics_element->QueryUnsignedAttribute("Index", &index);
+        descriptives_element->QueryUnsignedAttribute("Index", &index);
 
         if(index != i+1)
         {
@@ -1029,7 +1012,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Minimum
 
-        const tinyxml2::XMLElement* minimum_element = statistics_element->FirstChildElement("Minimum");
+        const tinyxml2::XMLElement* minimum_element = descriptives_element->FirstChildElement("Minimum");
 
         if(!minimum_element)
         {
@@ -1042,12 +1025,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(minimum_element->GetText())
         {
-            descriptives[i].minimum = atof(minimum_element->GetText());
+            descriptives(i).minimum = static_cast<type>(atof(minimum_element->GetText()));
         }
 
         // Maximum
 
-        const tinyxml2::XMLElement* maximum_element = statistics_element->FirstChildElement("Maximum");
+        const tinyxml2::XMLElement* maximum_element = descriptives_element->FirstChildElement("Maximum");
 
         if(!maximum_element)
         {
@@ -1060,12 +1043,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(maximum_element->GetText())
         {
-            descriptives[i].maximum = atof(maximum_element->GetText());
+            descriptives(i).maximum = static_cast<type>(atof(maximum_element->GetText()));
         }
 
         // Mean
 
-        const tinyxml2::XMLElement* mean_element = statistics_element->FirstChildElement("Mean");
+        const tinyxml2::XMLElement* mean_element = descriptives_element->FirstChildElement("Mean");
 
         if(!mean_element)
         {
@@ -1078,12 +1061,12 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(mean_element->GetText())
         {
-            descriptives[i].mean = atof(mean_element->GetText());
+            descriptives(i).mean = static_cast<type>(atof(mean_element->GetText()));
         }
 
         // Standard deviation
 
-        const tinyxml2::XMLElement* standard_deviation_element = statistics_element->FirstChildElement("StandardDeviation");
+        const tinyxml2::XMLElement* standard_deviation_element = descriptives_element->FirstChildElement("StandardDeviation");
 
         if(!standard_deviation_element)
         {
@@ -1096,25 +1079,25 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(standard_deviation_element->GetText())
         {
-            descriptives[i].standard_deviation = atof(standard_deviation_element->GetText());
+            descriptives(i).standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
         }
-    }
 
-    // Unscaling method
+        // Unscaling method
 
-    const tinyxml2::XMLElement* unscaling_method_element = root_element->FirstChildElement("UnscalingMethod");
+        const tinyxml2::XMLElement* unscaling_method_element = root_element->FirstChildElement("UnscalingMethod");
 
-    if(unscaling_method_element)
-    {
-        const string new_method = unscaling_method_element->GetText();
-
-        try
+        if(unscaling_method_element)
         {
-            set_unscaling_method(new_method);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
+            const string new_method = unscaling_method_element->GetText();
+
+            try
+            {
+                set_unscaling_method(new_method);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1141,8 +1124,9 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// Returns a string with the expression of the unscaling process with the none method.
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @todo
 
-string UnscalingLayer::write_none_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string UnscalingLayer::write_none_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1150,46 +1134,48 @@ string UnscalingLayer::write_none_expression(const Vector<string>& inputs_names,
 
     if(outputs_names.size() > 1)
     {
-        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
+//        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
     }
     else
     {
-        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
+//        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
     }
 
     return buffer.str();
 }
 
 
-string UnscalingLayer::write_none_expression_php(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+/// @todo
+
+string UnscalingLayer::write_none_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
     buffer.str("");
 
-    buffer << outputs_names.vector_to_string(',') << " = " << inputs_names.vector_to_string(',') << ";\n";
+//    buffer << outputs_names.vector_to_string(',') << " = " << inputs_names.vector_to_string(',') << ";\n";
 
     return buffer.str();
 }
 
 
-// string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const method
+// string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
 
-/// Returns a string with the expression of the unscaling process with the minimum and maximum method. 
-/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
-/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
+/// Returns a string with the expression of the unscaling process with the minimum and maximum method.
+/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 
-string UnscalingLayer::write_minimum_maximum_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string UnscalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    Vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
         buffer << "0.5*(" << inputs_names[i] << "+1.0)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
@@ -1198,31 +1184,31 @@ string UnscalingLayer::write_minimum_maximum_expression(const Vector<string>& in
     }
 
     buffer.str("");
-
-    if(outputs_names.size() > 1)
-    {
-        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
-    }
-    else
-    {
-        buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-    }
-
+    /*
+        if(outputs_names.size() > 1)
+        {
+            buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+        }
+        else
+        {
+            buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+        }
+    */
     return buffer.str();
 }
 
 
-string UnscalingLayer::write_minimum_maximum_expression_php(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string UnscalingLayer::write_minimum_maximum_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    Vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
         buffer << "0.5*(" << inputs_names[i] << "+1.0)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
@@ -1231,135 +1217,100 @@ string UnscalingLayer::write_minimum_maximum_expression_php(const Vector<string>
     }
 
     buffer.str("");
-
-    if(outputs_names.size() > 1)
-    {
-        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
-    }
-    else
-    {
-        buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-    }
-
+    /*
+        if(outputs_names.size() > 1)
+        {
+            buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+        }
+        else
+        {
+            buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+        }
+    */
     return buffer.str();
 }
 
 
-// string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const method
-
-/// Returns a string with the expression of the unscaling process with the mean and standard deviation method. 
-/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
-/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
-
-string UnscalingLayer::write_mean_standard_deviation_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
-{
-    const size_t neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    Vector<string> expressions(neurons_number);
-
-    for(size_t i = 0; i < neurons_number; i++)
-    {
-        buffer.str("");
-        buffer <<   descriptives[i].mean << "+" << descriptives[i].standard_deviation << "*" << inputs_names[i];
-
-        expressions[i] = buffer.str();
-    }
-
-    buffer.str("");
-
-    if(outputs_names.size() > 1)
-    {
-        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
-    }
-    else
-    {
-        buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-    }
-
-    return buffer.str();
-}
-
-
-string UnscalingLayer::write_mean_standard_deviation_expression_php(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
-{
-    const size_t neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    Vector<string> expressions(neurons_number);
-
-    for(size_t i = 0; i < neurons_number; i++)
-    {
-        buffer.str("");
-        buffer <<   descriptives[i].mean << "+" << descriptives[i].standard_deviation << "*" << inputs_names[i];
-
-        expressions[i] = buffer.str();
-    }
-
-    buffer.str("");
-
-    buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-
-    return buffer.str();
-}
-
-
-// string write_logarithmic_expression(const Vector<string>&, const Vector<string>&) const method
+// string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
 
 /// Returns a string with the expression of the unscaling process with the mean and standard deviation method.
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 /// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
 
-string UnscalingLayer::write_logarithmic_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string UnscalingLayer::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    Vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
-        buffer << "0.5*exp(" << inputs_names[i] << "-1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+        buffer <<   descriptives[i].mean << "+" << descriptives[i].standard_deviation << "*" << inputs_names[i];
 
         expressions[i] = buffer.str();
     }
 
     buffer.str("");
+    /*
+        if(outputs_names.size() > 1)
+        {
+            buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+        }
+        else
+        {
+            buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+        }
+    */
+    return buffer.str();
+}
 
-    if(outputs_names.size() > 1)
+
+string UnscalingLayer::write_mean_standard_deviation_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    Tensor<string, 1> expressions(neurons_number);
+
+    for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+        buffer.str("");
+        buffer <<   descriptives[i].mean << "+" << descriptives[i].standard_deviation << "*" << inputs_names[i];
+
+        expressions[i] = buffer.str();
     }
-    else
-    {
+
+    buffer.str("");
+    /*
         buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-    }
-
+    */
     return buffer.str();
 }
 
 
-string UnscalingLayer::write_logarithmic_expression_php(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+/// Returns a string with the expression of the unscaling process with the mean and standard deviation method.
+/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+
+string UnscalingLayer::write_logarithmic_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    Vector<string> expressions(neurons_number);
+    Tensor<string, 1> expressions(neurons_number);
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
         buffer << "0.5*exp(" << inputs_names[i] << "-1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
@@ -1368,76 +1319,109 @@ string UnscalingLayer::write_logarithmic_expression_php(const Vector<string>& in
     }
 
     buffer.str("");
-
-    buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
-
+    /*
+        if(outputs_names.size() > 1)
+        {
+            buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+        }
+        else
+        {
+            buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+        }
+    */
     return buffer.str();
 }
 
 
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
+string UnscalingLayer::write_logarithmic_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+{
+    const Index neurons_number = get_neurons_number();
 
-/// Returns a string with the expression of the unscaling process in this layer. 
-/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
-/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons. 
+    ostringstream buffer;
 
-string UnscalingLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+    buffer.precision(10);
+
+    Tensor<string, 1> expressions(neurons_number);
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer.str("");
+        buffer << "0.5*exp(" << inputs_names[i] << "-1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+
+        expressions[i] = buffer.str();
+    }
+
+    buffer.str("");
+    /*
+        buffer << outputs_names.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+    */
+    return buffer.str();
+}
+
+
+// string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method
+
+/// Returns a string with the expression of the unscaling process in this layer.
+/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+
+string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(unscaling_method)
     {
-        case NoUnscaling:
-        {
-            return(write_none_expression(inputs_names, outputs_names));
-        }
+    case NoUnscaling:
+    {
+        return write_none_expression(inputs_names, outputs_names);
+    }
 
-        case MinimumMaximum:
-        {
-            return(write_minimum_maximum_expression(inputs_names, outputs_names));
-        }
+    case MinimumMaximum:
+    {
+        return write_minimum_maximum_expression(inputs_names, outputs_names);
+    }
 
-        case MeanStandardDeviation:
-        {
-            return(write_mean_standard_deviation_expression(inputs_names, outputs_names));
-        }
+    case MeanStandardDeviation:
+    {
+        return write_mean_standard_deviation_expression(inputs_names, outputs_names);
+    }
 
-        case Logarithmic:
-        {
-            return(write_logarithmic_expression(inputs_names, outputs_names));
-        }
+    case Logarithmic:
+    {
+        return write_logarithmic_expression(inputs_names, outputs_names);
+    }
     }
 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: UnscalingLayer class.\n"
-           << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+           << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
            << "Unknown unscaling method.\n";
 
     throw logic_error(buffer.str());
 }
 
 
-string UnscalingLayer::write_expression_php(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string UnscalingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(unscaling_method)
     {
     case NoUnscaling:
     {
-        return(write_none_expression_php(inputs_names, outputs_names));
+        return write_none_expression_php(inputs_names, outputs_names);
     }
 
     case MinimumMaximum:
     {
-        return(write_minimum_maximum_expression_php(inputs_names, outputs_names));
+        return write_minimum_maximum_expression_php(inputs_names, outputs_names);
     }
 
     case MeanStandardDeviation:
     {
-        return(write_mean_standard_deviation_expression_php(inputs_names, outputs_names));
+        return write_mean_standard_deviation_expression_php(inputs_names, outputs_names);
     }
 
     case Logarithmic:
     {
-        return(write_logarithmic_expression_php(inputs_names, outputs_names));
+        return write_logarithmic_expression_php(inputs_names, outputs_names);
     }
 
     }
@@ -1445,7 +1429,7 @@ string UnscalingLayer::write_expression_php(const Vector<string>& inputs_names, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: UnscalingLayer class.\n"
-           << "string write_expression_php(const Vector<string>&, const Vector<string>&) const method.\n"
+           << "string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
            << "Unknown unscaling method.\n";
 
     throw logic_error(buffer.str());
@@ -1456,7 +1440,7 @@ string UnscalingLayer::write_expression_php(const Vector<string>& inputs_names, 
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

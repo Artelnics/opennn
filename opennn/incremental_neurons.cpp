@@ -31,12 +31,12 @@ IncrementalNeurons::IncrementalNeurons(TrainingStrategy* new_training_strategy_p
 
 
 /// XML constructor.
-/// @param incremental_order_document Pointer to a TinyXML document containing the incremental order data.
+/// @param incremental_neurons_document Pointer to a TinyXML document containing the incremental order data.
 
-IncrementalNeurons::IncrementalNeurons(const tinyxml2::XMLDocument& incremental_order_document)
-    : NeuronsSelection(incremental_order_document)
+IncrementalNeurons::IncrementalNeurons(const tinyxml2::XMLDocument& incremental_neurons_document)
+    : NeuronsSelection(incremental_neurons_document)
 {
-    from_XML(incremental_order_document);
+    from_XML(incremental_neurons_document);
 }
 
 
@@ -59,7 +59,7 @@ IncrementalNeurons::~IncrementalNeurons()
 
 /// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
 
-const size_t& IncrementalNeurons::get_step() const
+const Index& IncrementalNeurons::get_step() const
 {
     return step;
 }
@@ -67,7 +67,7 @@ const size_t& IncrementalNeurons::get_step() const
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
-const size_t& IncrementalNeurons::get_maximum_selection_failures() const
+const Index& IncrementalNeurons::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
@@ -83,10 +83,11 @@ void IncrementalNeurons::set_default()
 }
 
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm in the model order selection process.
+/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm
+/// in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
 
-void IncrementalNeurons::set_step(const size_t& new_step)
+void IncrementalNeurons::set_step(const Index& new_step)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -95,22 +96,23 @@ void IncrementalNeurons::set_step(const size_t& new_step)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_step(const size_t&) method.\n"
+               << "void set_step(const Index&) method.\n"
                << "New_step(" << new_step << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
-    if(new_step > maximum_order-minimum_order)
+    /*if(new_step > maximum_order-minimum_order)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_step(const size_t&) method.\n"
-               << "New_step must be less than the distance between maximum_order and minimum_order(" << maximum_order-minimum_order << ").\n";
+               << "void set_step(const Index&) method.\n"
+               << "New_step must be less than the distance between maximum_order and minimum_order("
+               << maximum_order-minimum_order << ").\n";
 
         throw logic_error(buffer.str());
-    }
+    }*/
 
 #endif
 
@@ -121,7 +123,7 @@ void IncrementalNeurons::set_step(const size_t& new_step)
 /// Sets the maximum selection failures for the Incremental order selection algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the Incremental order selection algorithm.
 
-void IncrementalNeurons::set_maximum_selection_failures(const size_t& new_maximum_loss_failures)
+void IncrementalNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -130,7 +132,7 @@ void IncrementalNeurons::set_maximum_selection_failures(const size_t& new_maximu
         ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_maximum_selection_failures(const size_t&) method.\n"
+               << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -154,67 +156,68 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         cout.flush();
     }
 
-    // Neural network stuff
+    // Neural network
 
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
-    const size_t trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-    const Vector<Layer*> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
 
-    // Loss index stuff
+    // Loss index
 
-    double prev_selection_error = numeric_limits<double>::max();
+    type prev_selection_error = numeric_limits<type>::max();
 
-    Vector<double> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
-    double optimum_training_loss = 0.0;
-    double optimum_selection_error = 0.0;
+    type optimum_training_loss = 0;
+    type optimum_selection_error = 0;
 
-    double current_training_loss = 0.0;
-    double current_selection_error = 0.0;
+    type current_training_loss = 0;
+    type current_selection_error = 0;
 
-    Vector<double> current_parameters;
+    Tensor<type, 1> current_parameters;
 
-    // Optimization algorithm stuff
+    // Optimization algorithm
 
-    size_t optimal_neurons_number = 0;
+    Index optimal_neurons_number = 0;
 
-    size_t neurons_number = minimum_order;
-    size_t iterations = 0;
-    size_t selection_failures = 0;
+    Index neurons_number = minimum_neurons;
+    Index iterations = 0;
+    Index selection_failures = 0;
 
     bool end = false;
 
     time_t beginning_time, current_time;
-    double elapsed_time = 0.0;
+    type elapsed_time = 0;
 
     time(&beginning_time);
 
     // Main loop
 
-    for(size_t i = 0; i < maximum_order; i++)
+    for(Index i = 0; i < maximum_neurons; i++)
     {
         // Calculate losses
 
         trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number); // Fix
         trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number); // Fix
 
-        // Loss index stuff
+        // Loss index
 
-        double optimum_selection_error_trial = numeric_limits<double>::max();
-        double optimum_training_error_trial = numeric_limits<double>::max();
-        Vector<double> optimum_parameters_trial;
+        type optimum_selection_error_trial = numeric_limits<type>::max();
+        type optimum_training_error_trial = numeric_limits<type>::max();
+        Tensor<type, 1> optimum_parameters_trial;
 
-        for(size_t i = 0; i < trials_number; i++)
+        for(Index i = 0; i < trials_number; i++)
         {
-            neural_network->randomize_parameters_normal();
+            neural_network->set_parameters_random();
 
-            const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
+            const OptimizationAlgorithm::Results optimization_algorithm_results
+                    = training_strategy_pointer->perform_training();
 
-            const double current_training_error_trial = optimization_algorithm_results.final_training_error;
-            const double current_selection_error_trial = optimization_algorithm_results.final_selection_error;
-            const Vector<double> current_parameters_trial = optimization_algorithm_results.final_parameters;
+            const type current_training_error_trial = optimization_algorithm_results.final_training_error;
+            const type current_selection_error_trial = optimization_algorithm_results.final_selection_error;
+            const Tensor<type, 1> current_parameters_trial = optimization_algorithm_results.final_parameters;
 
             if(current_selection_error_trial < optimum_selection_error_trial)
             {
@@ -228,7 +231,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                 cout << "Trial number: " << i << endl;
                 cout << "Training error: " << current_training_error_trial << endl;
                 cout << "Selection error: " << current_selection_error_trial << endl;
-                cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl << endl;
+                cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl;
             }
         }
 
@@ -238,23 +241,52 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         time(&current_time);
 
-        elapsed_time = difftime(current_time, beginning_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        results->neurons_data.push_back(neurons_number);
+//        results->neurons_data.push_back(neurons_number);
 
-        if(reserve_error_data)
+        if(reserve_training_error_data)
         {
-            results->training_loss_data.push_back(current_training_loss);
+            /*           const Tensor<type, 1> old_training_loss_history(training_loss_history);
+
+                       const Index size = training_loss_history.size();
+
+                       training_loss_history.resize(size+1);
+
+                       for(Index i = 0; i < size; i++)
+                       {
+                           training_loss_history(i) = old_training_loss_history(i);
+                       }
+
+                       training_loss_history(size) = current_training_loss;
+            */
+            training_loss_history = insert_result(current_training_loss, training_loss_history);
+
+//            results->training_loss_data.push_back(current_training_loss);
         }
 
         if(reserve_selection_error_data)
         {
-            results->selection_error_data.push_back(current_selection_error);
+            /*            const Tensor<type, 1> old_selection_error_history(selection_error_history);
+
+                        const Index size = selection_error_history.size();
+
+                        selection_error_history.resize(size+1);
+
+                        for(Index i = 0; i < size; i++)
+                        {
+                            selection_error_history(i) = old_selection_error_history(i);
+                        }
+
+                        selection_error_history(size) = current_selection_error;
+            */
+            selection_error_history = insert_result(current_selection_error, selection_error_history);
+//            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(iterations == 0
-        ||(optimum_selection_error > current_selection_error
-        && abs(optimum_selection_error - current_selection_error) > tolerance))
+                ||(optimum_selection_error > current_selection_error
+                   && abs(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_neurons_number = neurons_number;
             optimum_training_loss = current_training_loss;
@@ -287,11 +319,11 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             results->stopping_condition = IncrementalNeurons::SelectionErrorGoal;
         }
-        else if(iterations >= maximum_iterations_number)
+        else if(iterations >= maximum_epochs_number)
         {
             end = true;
 
-            if(display) cout << "Maximum number of iterations reached." << endl;
+            if(display) cout << "Maximum number of epochs reached." << endl;
 
             results->stopping_condition = IncrementalNeurons::MaximumIterations;
         }
@@ -303,7 +335,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             results->stopping_condition = IncrementalNeurons::MaximumSelectionFailures;
         }
-        else if(neurons_number == maximum_order)
+        else if(neurons_number == maximum_neurons)
         {
             end = true;
 
@@ -318,7 +350,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                  << "Hidden neurons number: " << neurons_number << endl
                  << "Training loss: " << current_training_loss << endl
                  << "Selection error: " << current_selection_error << endl
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl << endl;
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         if(end) break;
@@ -329,9 +361,9 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     if(display)
     {
         cout << endl
-                  << "Optimal order: " << optimal_neurons_number <<  endl
-                  << "Optimum selection error: " << optimum_selection_error << endl
-                  << "Corresponding training loss: " << optimum_training_loss << endl;
+             << "Optimal order: " << optimal_neurons_number <<  endl
+             << "Optimum selection error: " << optimum_selection_error << endl
+             << "Corresponding training loss: " << optimum_training_loss << endl;
     }
 
     // Save neural network
@@ -363,137 +395,141 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> IncrementalNeurons::to_string_matrix() const
+Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
 {
-    ostringstream buffer;
+    /*
+        ostringstream buffer;
 
-    Vector<string> labels;
-    Vector<string> values;
+        Tensor<string, 1> labels;
+        Tensor<string, 1> values;
 
-   // Minimum order
+       // Minimum order
 
-   labels.push_back("Minimum order");
+       labels.push_back("Minimum order");
 
-   buffer.str("");
-   buffer << minimum_order;
+       buffer.str("");
+       buffer << minimum_order;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum order
+       // Maximum order
 
-   labels.push_back("Maximum order");
+       labels.push_back("Maximum order");
 
-   buffer.str("");
-   buffer << maximum_order;
+       buffer.str("");
+       buffer << maximum_order;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Step
+       // Step
 
-   labels.push_back("Step");
+       labels.push_back("Step");
 
-   buffer.str("");
-   buffer << step;
+       buffer.str("");
+       buffer << step;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Trials number
+       // Trials number
 
-   labels.push_back("Trials number");
+       labels.push_back("Trials number");
 
-   buffer.str("");
-   buffer << trials_number;
+       buffer.str("");
+       buffer << trials_number;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Tolerance
+       // Tolerance
 
-   labels.push_back("Tolerance");
+       labels.push_back("Tolerance");
 
-   buffer.str("");
-   buffer << tolerance;
+       buffer.str("");
+       buffer << tolerance;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Selection loss goal
+       // Selection loss goal
 
-   labels.push_back("Selection loss goal");
+       labels.push_back("Selection loss goal");
 
-   buffer.str("");
-   buffer << selection_error_goal;
+       buffer.str("");
+       buffer << selection_error_goal;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum selection failures
+       // Maximum selection failures
 
-   labels.push_back("Maximum selection failures");
+       labels.push_back("Maximum selection failures");
 
-   buffer.str("");
-   buffer << maximum_selection_failures;
+       buffer.str("");
+       buffer << maximum_selection_failures;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum iterations number
+       // Maximum iterations number
 
-   labels.push_back("Maximum iterations number");
+       labels.push_back("Maximum iterations number");
 
-   buffer.str("");
-   buffer << maximum_iterations_number;
+       buffer.str("");
+       buffer << maximum_iterations_number;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Maximum time
+       // Maximum time
 
-   labels.push_back("Maximum time");
+       labels.push_back("Maximum time");
 
-   buffer.str("");
-   buffer << maximum_time;
+       buffer.str("");
+       buffer << maximum_time;
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Plot training error history
+       // Plot training error history
 
-   labels.push_back("Plot training error history");
+       labels.push_back("Plot training error history");
 
-   buffer.str("");
+       buffer.str("");
 
-   if(reserve_error_data)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
+       if(reserve_training_error_data)
+       {
+           buffer << "true";
+       }
+       else
+       {
+           buffer << "false";
+       }
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   // Plot selection error history
+       // Plot selection error history
 
-   labels.push_back("Plot selection error history");
+       labels.push_back("Plot selection error history");
 
-   buffer.str("");
+       buffer.str("");
 
-   if(reserve_selection_error_data)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
+       if(reserve_selection_error_data)
+       {
+           buffer << "true";
+       }
+       else
+       {
+           buffer << "false";
+       }
 
-   values.push_back(buffer.str());
+       values.push_back(buffer.str());
 
-   const size_t rows_number = labels.size();
-   const size_t columns_number = 2;
+       const Index rows_number = labels.size();
+       const Index columns_number = 2;
 
-   Matrix<string> string_matrix(rows_number, columns_number);
+       Tensor<string, 2> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels, "name");
-   string_matrix.set_column(1, values, "value");
+       string_matrix.set_column(0, labels, "name");
+       string_matrix.set_column(1, values, "value");
 
-    return string_matrix;
+        return string_matrix;
+    */
+
+    return Tensor<string, 2>();
 }
 
 
@@ -502,68 +538,68 @@ Matrix<string> IncrementalNeurons::to_string_matrix() const
 
 tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 {
-   ostringstream buffer;
+    ostringstream buffer;
 
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Order Selection algorithm
+    // Order Selection algorithm
 
-   tinyxml2::XMLElement* root_element = document->NewElement("IncrementalNeurons");
+    tinyxml2::XMLElement* root_element = document->NewElement("IncrementalNeurons");
 
-   document->InsertFirstChild(root_element);
+    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = nullptr;
-   tinyxml2::XMLText* text = nullptr;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
-   // Minimum order
-   {
-   element = document->NewElement("MinimumOrder");
-   root_element->LinkEndChild(element);
+    // Minimum order
+    {
+        element = document->NewElement("MinimumNeurons");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << minimum_order;
+        buffer.str("");
+        buffer << minimum_neurons;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum order
-   {
-   element = document->NewElement("MaximumOrder");
-   root_element->LinkEndChild(element);
+    // Maximum order
+    {
+        element = document->NewElement("MaximumNeurons");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_order;
+        buffer.str("");
+        buffer << maximum_neurons;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Step
-   {
-   element = document->NewElement("Step");
-   root_element->LinkEndChild(element);
+    // Step
+    {
+        element = document->NewElement("Step");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << step;
+        buffer.str("");
+        buffer << step;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Parameters assays number
-   {
-   element = document->NewElement("TrialsNumber");
-   root_element->LinkEndChild(element);
+    // Parameters assays number
+    {
+        element = document->NewElement("TrialsNumber");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << trials_number;
+        buffer.str("");
+        buffer << trials_number;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve minimal parameters
+    // Reserve minimal parameters
 //   {
 //   element = document->NewElement("ReserveMinimalParameters");
 //   root_element->LinkEndChild(element);
@@ -575,7 +611,7 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Display
+    // Display
 //   {
 //   element = document->NewElement("Display");
 //   root_element->LinkEndChild(element);
@@ -587,31 +623,31 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Tolerance
-   {
-   element = document->NewElement("Tolerance");
-   root_element->LinkEndChild(element);
+    // Tolerance
+    {
+        element = document->NewElement("Tolerance");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << tolerance;
+        buffer.str("");
+        buffer << tolerance;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // selection error goal
-   {
-   element = document->NewElement("SelectionErrorGoal");
-   root_element->LinkEndChild(element);
+    // selection error goal
+    {
+        element = document->NewElement("SelectionErrorGoal");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << selection_error_goal;
+        buffer.str("");
+        buffer << selection_error_goal;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum iterations
+    // Maximum iterations
 //   {
 //   element = document->NewElement("MaximumEpochsNumber");
 //   root_element->LinkEndChild(element);
@@ -623,59 +659,60 @@ tinyxml2::XMLDocument* IncrementalNeurons::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Maximum selection failures
-   {
-   element = document->NewElement("MaximumSelectionFailures");
-   root_element->LinkEndChild(element);
+    // Maximum selection failures
+    {
+        element = document->NewElement("MaximumSelectionFailures");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_selection_failures;
+        buffer.str("");
+        buffer << maximum_selection_failures;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Maximum time
-   {
-   element = document->NewElement("MaximumTime");
-   root_element->LinkEndChild(element);
+    // Maximum time
+    {
+        element = document->NewElement("MaximumTime");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_time;
+        buffer.str("");
+        buffer << maximum_time;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve loss data
-   {
-   element = document->NewElement("ReserveTrainingErrorHistory");
-   root_element->LinkEndChild(element);
+    // Reserve loss data
+    {
+        element = document->NewElement("ReserveTrainingErrorHistory");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_error_data;
+        buffer.str("");
+        buffer << reserve_training_error_data;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   // Reserve selection error data
-   {
-   element = document->NewElement("ReserveSelectionErrorHistory");
-   root_element->LinkEndChild(element);
+    // Reserve selection error data
+    {
+        element = document->NewElement("ReserveSelectionErrorHistory");
+        root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_selection_error_data;
+        buffer.str("");
+        buffer << reserve_selection_error_data;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
 
-   return document;
+    return document;
 }
 
 
-/// Serializes the incremental order object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the incremental order object into a XML document of the TinyXML library without
+/// keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -686,10 +723,10 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Minimum order
 
-    file_stream.OpenElement("MinimumOrder");
+    file_stream.OpenElement("MinimumNeurons");
 
     buffer.str("");
-    buffer << minimum_order;
+    buffer << minimum_neurons;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -697,10 +734,10 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Maximum order
 
-    file_stream.OpenElement("MaximumOrder");
+    file_stream.OpenElement("MaximumNeurons");
 
     buffer.str("");
-    buffer << maximum_order;
+    buffer << maximum_neurons;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -717,7 +754,7 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Parameters assays number
+    // Trials number
 
     file_stream.OpenElement("TrialsNumber");
 
@@ -739,7 +776,7 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // selection error goal
+    // Selection error goal
 
     file_stream.OpenElement("SelectionErrorGoal");
 
@@ -772,12 +809,12 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve loss data
+    // Reserve training erro history
 
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_error_data;
+    buffer << reserve_training_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -817,41 +854,41 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Minimum order
+    // Minimum neurons
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumOrder");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumNeurons");
 
         if(element)
         {
-           const size_t new_minimum_order = static_cast<size_t>(atoi(element->GetText()));
+            const Index new_minimum_neurons = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              minimum_order = new_minimum_order;
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                minimum_neurons = new_minimum_neurons;
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
-    // Maximum order
+    // Maximum neurons
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumOrder");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumNeurons");
 
         if(element)
         {
-           const size_t new_maximum_order = static_cast<size_t>(atoi(element->GetText()));
+            const Index new_maximum_neurons = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              maximum_order = new_maximum_order;
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                maximum_neurons = new_maximum_neurons;
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -861,187 +898,35 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_step = static_cast<size_t>(atoi(element->GetText()));
+            const Index new_step = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_step(new_step);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_step(new_step);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
-    // Parameters assays number
+    // Trials number
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrialsNumber");
 
         if(element)
         {
-           const size_t new_trials_number = static_cast<size_t>(atoi(element->GetText()));
+            const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_trials_number(new_trials_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Performance calculation method
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
-
-        if(element)
-        {
-           const string new_loss_calculation_method = element->GetText();
-
-           try
-           {
-//              set_loss_calculation_method(new_loss_calculation_method);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Reserve loss data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-           const string new_reserve_error_data = element->GetText();
-
-           try
-           {
-              set_reserve_error_data(new_reserve_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Reserve selection error data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-           const string new_reserve_selection_error_data = element->GetText();
-
-           try
-           {
-              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Reserve minimal parameters
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveMinimalParameters");
-
-        if(element)
-        {
-           const string new_reserve_minimal_parameters = element->GetText();
-
-           try
-           {
-              set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-        if(element)
-        {
-           const string new_display = element->GetText();
-
-           try
-           {
-              set_display(new_display != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // selection error goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
-
-        if(element)
-        {
-           const double new_selection_error_goal = atof(element->GetText());
-
-           try
-           {
-              set_selection_error_goal(new_selection_error_goal);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Maximum iterations number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
-
-        if(element)
-        {
-           const size_t new_maximum_iterations_number = static_cast<size_t>(atoi(element->GetText()));
-
-           try
-           {
-              set_maximum_iterations_number(new_maximum_iterations_number);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
-
-        if(element)
-        {
-           const double new_maximum_time = atoi(element->GetText());
-
-           try
-           {
-              set_maximum_time(new_maximum_time);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_trials_number(new_trials_number);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1051,16 +936,35 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_tolerance = atof(element->GetText());
+            const Index new_tolerance = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_tolerance(new_tolerance);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_tolerance(new_tolerance);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Selection error goal
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
+
+        if(element)
+        {
+            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
+
+            try
+            {
+                set_selection_error_goal(new_selection_error_goal);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
@@ -1070,18 +974,77 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_maximum_selection_failures = static_cast<size_t>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
-           try
-           {
-              set_maximum_selection_failures(new_maximum_selection_failures);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
+            try
+            {
+                set_maximum_selection_failures(new_maximum_selection_failures);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
+
+    // Maximum time
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
+
+        if(element)
+        {
+            const type new_maximum_time = atoi(element->GetText());
+
+            try
+            {
+                set_maximum_time(new_maximum_time);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+
+    // Reserve training error history
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
+
+        if(element)
+        {
+            const string new_reserve_training_error_data = element->GetText();
+
+            try
+            {
+                set_reserve_training_error_data(new_reserve_training_error_data != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Reserve selection error history
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
+
+        if(element)
+        {
+            const string new_reserve_selection_error_data = element->GetText();
+
+            try
+            {
+                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
 }
 
 
@@ -1090,11 +1053,11 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
 void IncrementalNeurons::save(const string& file_name) const
 {
-   tinyxml2::XMLDocument* document = to_XML();
+    tinyxml2::XMLDocument* document = to_XML();
 
-   document->SaveFile(file_name.c_str());
+    document->SaveFile(file_name.c_str());
 
-   delete document;
+    delete document;
 }
 
 
@@ -1103,22 +1066,22 @@ void IncrementalNeurons::save(const string& file_name) const
 
 void IncrementalNeurons::load(const string& file_name)
 {
-   set_default();
+    set_default();
 
-   tinyxml2::XMLDocument document;
+    tinyxml2::XMLDocument document;
 
-   if(document.LoadFile(file_name.c_str()))
-   {
-      ostringstream buffer;
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-             << "void load(const string&) method.\n"
-             << "Cannot load XML file " << file_name << ".\n";
+        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
 
-      throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   from_XML(document);
+    from_XML(document);
 }
 
 
@@ -1126,7 +1089,7 @@ void IncrementalNeurons::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

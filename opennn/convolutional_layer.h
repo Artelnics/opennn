@@ -22,13 +22,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
 #include "layer.h"
-#include "functions.h"
-//#include "pooling_layer.h"
-//#include "perceptron_layer.h"
-//#include "probabilistic_layer.h"
+#include "config.h"
 
 #include "tinyxml2.h"
 
@@ -45,6 +40,31 @@ class ConvolutionalLayer : public Layer
 
 public:
 
+    struct ConvolutionalLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit ConvolutionalLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~ConvolutionalLayerForwardPropagation() {}
+
+        void allocate()
+        {
+/*
+            const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+
+            const Index outputs_channels_number = convolutional_layer->get_filters_number();
+            const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+            const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+
+            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+*/
+        }
+
+    };
+
     /// Enumeration of available activation functions for the convolutional layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
@@ -55,7 +75,7 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const Vector<size_t>&, const Vector<size_t>&);
+    explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     // Destructor
 
@@ -63,123 +83,133 @@ public:
 
     bool is_empty() const;
 
-    Vector<double> get_biases() const;
-    Vector<double> extract_biases(const Vector<double>&) const;
+    Tensor<type, 1> get_biases() const;
+    Tensor<type, 1> extract_biases(const Tensor<type, 1>&) const;
 
-    Tensor<double> get_synaptic_weights() const;
-    Tensor<double> extract_synaptic_weights(const Vector<double>&) const;
+    Tensor<type, 2> get_synaptic_weights() const;
+    Tensor<type, 2> extract_synaptic_weights(const Tensor<type, 1>&) const;
 
     ActivationFunction get_activation_function() const;
 
-    Vector<size_t> get_outputs_dimensions() const;
+    Tensor<Index, 1> get_outputs_dimensions() const;
 
-    size_t get_outputs_rows_number() const;
+    Index get_outputs_rows_number() const;
 
-    size_t get_outputs_columns_number() const;
+    Index get_outputs_columns_number() const;
 
     PaddingOption get_padding_option() const;
 
-    size_t get_column_stride() const;
+    Index get_column_stride() const;
 
-    size_t get_row_stride() const;
+    Index get_row_stride() const;
 
-    size_t get_filters_number() const;
+    Index get_filters_number() const;
 
-    size_t get_filters_channels_number() const;
+    Index get_filters_channels_number() const;
 
-    size_t get_filters_rows_number() const;
+    Index get_filters_rows_number() const;
 
-    size_t get_filters_columns_number() const;
+    Index get_filters_columns_number() const;
 
-    size_t get_padding_width() const;
-    size_t get_padding_height() const;
+    Index get_padding_width() const;
+    Index get_padding_height() const;
 
-    size_t get_inputs_channels_number() const;
-    size_t get_inputs_rows_number() const;
-    size_t get_inputs_columns_number() const;
+    Index get_inputs_channels_number() const;
+    Index get_inputs_rows_number() const;
+    Index get_inputs_columns_number() const;
 
-    size_t get_inputs_number() const;
-    size_t get_neurons_number() const;
+    Index get_inputs_number() const;
+    Index get_neurons_number() const;
 
-    Vector<double> get_parameters() const;
-    size_t get_parameters_number() const;
+    Tensor<type, 1> get_parameters() const;
+    Index get_parameters_number() const;
 
     // Set methods
 
-    void set(const Vector<size_t>&, const Vector<size_t>&);
+    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void set_activation_function(const ActivationFunction&);
 
-    void set_biases(const Vector<double>&);
+    void set_biases(const Tensor<type, 1>&);
 
-    void set_synaptic_weights(const Tensor<double>&);
+    void set_synaptic_weights(const Tensor<type, 2>&);
 
     void set_padding_option(const PaddingOption&);
 
-    void set_parameters(const Vector<double>&);
+    void set_parameters(const Tensor<type, 1>&, const Index& index);
 
-    void set_row_stride(const size_t&);
+    void set_row_stride(const Index&);
 
-    void set_column_stride(const size_t&);
+    void set_column_stride(const Index&);
 
     // Initialization
 
-    void initialize_biases(const double&);
+    void set_biases_constant(const type&);
 
-    void initialize_synaptic_weights(const double&);
+    void set_synaptic_weights_constant(const type&);
 
-    void initialize_parameters(const double&);
+    void set_parameters_constant(const type&);
 
     // Combinations
 
-    Matrix<double> calculate_image_convolution(const Tensor<double>&, const Tensor<double>&) const;
-
-    Tensor<double> calculate_convolutions(const Tensor<double>&) const;
-    Tensor<double> calculate_convolutions(const Tensor<double>&, const Vector<double>&) const;
+    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
+    }
 
     // Activation
 
-    Tensor<double> calculate_activations(const Tensor<double>&) const;
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
 
-    Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
+    }
+
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
+
+    }
 
    // Outputs
 
-   Tensor<double> calculate_outputs(const Tensor<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
+   {
+       calculate_convolutions(inputs, forward_propagation.combinations_4d);
+
+       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
+
+       calculate_activations_derivatives(forward_propagation.combinations_4d, forward_propagation.activations_derivatives_4d);
+   }
 
    // Delta methods
 
-   Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
-
-   Tensor<double> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
-   Tensor<double> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
-   Tensor<double> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
-   Tensor<double> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Gradient methods
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
-
-   // Padding methods
-
-   Tensor<double> insert_padding(const Tensor<double>&) const;
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
 protected:
 
-   Tensor<double> synaptic_weights;
+   /// This tensor containing conection strengths from a layer's inputs to its neurons.
 
-   Vector<double> biases;
+   Tensor<type, 2> synaptic_weights;
 
-   size_t row_stride = 1;
+   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
+   /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   size_t column_stride = 1;
+   Tensor<type, 1> biases;
 
-   Vector<size_t> inputs_dimensions;
+   Index row_stride = 1;
+
+   Index column_stride = 1;
+
+   Tensor<Index, 1> input_variables_dimensions;
 
    PaddingOption padding_option = NoPadding;
 
@@ -191,7 +221,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

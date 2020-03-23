@@ -20,18 +20,11 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
+#include "config.h"
 #include "layer.h"
 #include "statistics.h"
 
-
-
 #include "tinyxml2.h"
-
-// Eigen includes
-
-#include "../eigen/Eigen"
 
 namespace OpenNN
 {
@@ -51,9 +44,9 @@ public:
 
    explicit UnscalingLayer();
 
-   explicit UnscalingLayer(const size_t&);
+   explicit UnscalingLayer(const Index&);
 
-   explicit UnscalingLayer(const Vector<Descriptives>&);
+   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
    explicit UnscalingLayer(const tinyxml2::XMLDocument&);
 
@@ -71,16 +64,16 @@ public:
 
    // Get methods
 
-   Vector<size_t> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
-   size_t get_inputs_number() const;
-   size_t get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
-   Vector<Descriptives> get_descriptives() const;
+   Tensor<Descriptives, 1> get_descriptives() const;
 
-   Matrix<double> get_descriptives_matrix() const;
-   Vector<double> get_minimums() const;
-   Vector<double> get_maximums() const;
+   Tensor<type, 2> get_descriptives_matrix() const;
+   Tensor<type, 1> get_minimums() const;
+   Tensor<type, 1> get_maximums() const;
 
    const UnscalingMethod& get_unscaling_method() const;
 
@@ -92,27 +85,27 @@ public:
    // Set methods
 
    void set();
-   void set(const size_t&);
-   void set(const Vector<Descriptives>&);
+   void set(const Index&);
+   void set(const Tensor<Descriptives, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
-   void set_inputs_number(const size_t&);
-   void set_neurons_number(const size_t&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    virtual void set_default();
 
    // Output variables descriptives
 
-   void set_descriptives(const Vector<Descriptives>&);
-   void set_descriptives_eigen(const Eigen::MatrixXd&);
+   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives_eigen(const Tensor<type, 2>&);
 
-   void set_item_descriptives(const size_t&, const Descriptives&);
+   void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const size_t&, const double&);
-   void set_maximum(const size_t&, const double&);
-   void set_mean(const size_t&, const double&);
-   void set_standard_deviation(const size_t&, const double&);
+   void set_minimum(const Index&, const type&);
+   void set_maximum(const Index&, const type&);
+   void set_mean(const Index&, const type&);
+   void set_standard_deviation(const Index&, const type&);
 
    // Outputs unscaling method
 
@@ -121,25 +114,21 @@ public:
 
    // Display messages
 
-   void set_display(const bool&);
-
-   // Pruning and growing
-
-   void prune_neuron(const size_t&);
+   void set_display(const bool&); 
 
    // Check methods
 
    bool is_empty() const;
   
-   Tensor<double> calculate_outputs(const Tensor<double>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<double> calculate_minimum_maximum_outputs(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_logarithmic_outputs(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_logarithmic_outputs(const Tensor<type, 2>&) const;
 
-   void check_range(const Vector<double>&) const;
+   void check_range(const Tensor<type, 1>&) const;
 
    // Serialization methods
 
@@ -152,17 +141,17 @@ public:
 
    // Expression methods
 
-   string write_none_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_logarithmic_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_none_expression_php(const Vector<string>&, const Vector<string>&) const;
-   string write_minimum_maximum_expression_php(const Vector<string>&, const Vector<string>&) const;
-   string write_mean_standard_deviation_expression_php(const Vector<string>&, const Vector<string>&) const;
-   string write_logarithmic_expression_php(const Vector<string>&, const Vector<string>&) const;
+   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_expression_php(const Vector<string>&, const Vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
 protected:
 
@@ -170,7 +159,7 @@ protected:
 
    /// Descriptives of output variables.
 
-   Vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    /// Unscaling method for the output variables.
 
@@ -187,7 +176,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
