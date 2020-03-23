@@ -795,7 +795,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
     LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
-    LossIndex::SecondOrderLoss terms_second_order_loss(training_instances_number, parameters_number);
+    LossIndex::SecondOrderLoss terms_second_order_loss(parameters_number, training_instances_number);
 
     // Training strategy stuff
 
@@ -827,11 +827,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-cout << "1" << endl;
+
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
-cout << "2" << endl;
+
         training_loss = terms_second_order_loss.loss;
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
