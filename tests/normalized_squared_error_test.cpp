@@ -154,7 +154,6 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    DataSet data_set;
 
-
    NormalizedSquaredError nse(&neural_network, &data_set);
 
    Tensor<type, 1> error_gradient;
@@ -217,7 +216,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(training_back_propagation);
 
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
@@ -270,7 +269,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(training_back_propagation);
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 

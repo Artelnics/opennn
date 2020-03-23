@@ -1237,8 +1237,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        cout << "Gradient: " << training_back_propagation.gradient << endl;
-
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)

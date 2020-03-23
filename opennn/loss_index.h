@@ -275,7 +275,7 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
+   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation(BackPropagation&) const;
 
    // ERROR TERMS METHODS
 
@@ -286,7 +286,7 @@ public:
                                 const NeuralNetwork::ForwardPropagation&,
                                 BackPropagation&) const = 0;
 
-   type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
+   type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters, BackPropagation& back_propagation) const
    {
        const Index instances_number = batch.get_instances_number();
 
@@ -298,10 +298,9 @@ public:
 
        // Loss Index
 
-//       calculate_error(batch, forward_propagation, back_propagation);
+       calculate_error(batch, forward_propagation, back_propagation);
 
-//       return back_propagation.loss;
-       return 0;
+       return back_propagation.error;
    }
 
    void back_propagate(const DataSet::Batch& batch,
@@ -324,13 +323,7 @@ public:
        {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           cout << "Training error: " << back_propagation.error << endl;
-           cout << "regularization_weight: " << regularization_weight << endl;
-           cout << "Parameters: " << calculate_regularization(parameters) << endl;
-
            back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
-           cout << "Training loss: " << back_propagation.loss << endl;
-
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
        else
