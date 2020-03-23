@@ -86,8 +86,11 @@ public:
             old_gradient.resize(parameters_number);
             old_gradient.setZero();
 
-            old_hessian.resize(parameters_number, parameters_number);
-            old_hessian.setZero();
+            inverse_hessian.resize(parameters_number, parameters_number);
+            inverse_hessian.setZero();
+
+            old_inverse_hessian.resize(parameters_number, parameters_number);
+            old_inverse_hessian.setZero();
 
             // Optimization algorithm data
 
@@ -110,7 +113,6 @@ public:
 
         Tensor<type, 1> parameters_increment;
 
-        type gradient_norm = 0;
         type parameters_increment_norm = 0;
 
         // Loss index data
@@ -120,8 +122,8 @@ public:
 
         Tensor<type, 1> old_gradient;
 
-        Tensor<type, 2> hessian;
-        Tensor<type, 2> old_hessian;
+        Tensor<type, 2> inverse_hessian;
+        Tensor<type, 2> old_inverse_hessian;
 
         // Optimization algorithm data
 
@@ -259,10 +261,7 @@ public:
            LossIndex::SecondOrderLoss& terms_second_order_loss,
            OptimizationData& optimization_data)
    {
-       optimization_data.gradient_norm = l2_norm(terms_second_order_loss.gradient);
-
-       if(display && optimization_data.gradient_norm >= warning_gradient_norm)
-           cout << "OpenNN Warning: Gradient norm is " << optimization_data.gradient_norm << "." << endl;
+       const Index parameters_number = optimization_data.parameters.dimension(0);
 
        type training_loss = back_propagation.loss;
 
@@ -311,7 +310,6 @@ public:
            optimization_data.training_loss_decrease = training_loss - optimization_data.old_training_loss;
        }
 
-       // Save update
 
        optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
@@ -319,9 +317,13 @@ public:
 
        optimization_data.parameters += optimization_data.parameters_increment;
 
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
        optimization_data.old_training_loss = training_loss;
 
-       optimization_data.old_gradient = terms_second_order_loss.gradient;
+       optimization_data.old_gradient = back_propagation.gradient;
+
+       optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
    }
 

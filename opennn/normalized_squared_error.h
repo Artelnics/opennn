@@ -90,6 +90,7 @@ public:
 
        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
+
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
