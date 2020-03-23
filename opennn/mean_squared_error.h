@@ -225,9 +225,6 @@ public:
 
                 errors.device(*thread_pool_device) = (outputs - targets).square();
 
-//                second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
-
-//                second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
                 expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
 
                 expression.device(*thread_pool_device) = coefficient*expression;

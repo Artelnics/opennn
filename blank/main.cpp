@@ -37,6 +37,62 @@ using namespace OpenNN;
 using namespace std;
 using namespace chrono;
 
+void get_batches()
+{
+    Index buffer_size = 3;
+    Index batches_number = 2;
+    Index batch_size = 5;
+
+    Tensor<type, 1> data(10);
+    data.setValues({1,2,3,4,5,6,7,8,9,10});
+
+    Tensor<type, 2> batches(batches_number, batch_size);
+
+    TensorMap< Tensor<type, 1> > buffer(data.data(), buffer_size);
+    TensorMap< Tensor<type, 1> > rest_data(data.data() + buffer_size, data.size()-buffer_size);
+
+    Index count = 0;
+
+    cout << "Initial buffer" << buffer <<endl;
+
+    for(Index i = 0; i < batches_number; i++)
+    {
+        if(i == batches_number-1)
+        {
+            random_shuffle(buffer.data(), buffer.data() +  buffer.size());
+
+            for(Index j = 0; j < buffer_size;j++)
+            {
+                batches(i,j) = buffer(j);
+            }
+            for(Index j = buffer_size; j < batch_size; j++)
+            {
+                batches(i,j) = rest_data(count);
+                count++;
+            }
+
+            break;
+        }
+        for(Index j = 0; j < batch_size; j++)
+        {
+            Index random_index = static_cast<Index>(rand()% buffer_size);
+cout << "Index" << random_index << endl;
+            batches(i, j) = buffer(random_index);
+
+            for(Index k = random_index; k < buffer_size-1; k++)
+            {
+                buffer(k) = buffer(k+1);
+            }
+
+            buffer(buffer_size-1) = rest_data(count);
+cout << "buffer" << buffer << endl;
+            count++;
+        }
+    }
+
+    cout << batches << endl;
+}
+
 
 int main(void)
 {
@@ -45,9 +101,11 @@ int main(void)
         cout << "Hello Blank Application" << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
+
+        get_batches();
 		
         // Data Set
-
+/*
         const Index samples = 1000;
         const Index variables = 8;
 
@@ -100,7 +158,7 @@ int main(void)
 
         training_strategy.perform_training();
 
-
+*/
         cout << "Bye Blank Application" << endl;
 
         return 0;

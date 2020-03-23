@@ -33,7 +33,7 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-
+/*
         const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
         Tensor<type, 2, RowMajor> t1(2,2);
@@ -45,7 +45,7 @@ int main(void)
 //        for(Index i = 0; i < t.size(); i++) t.data()[i] = i;
 
 //        cout << t.swap_layout() << endl;
-/*
+
         vector<int> ar = { 10, 20, 30, 40, 50 };
 
             // Declaring iterator to a vector
@@ -82,13 +82,12 @@ int main(void)
         Map<RowMajorMatrixXf,0,Stride<Dynamic,3> > M4(M3.data(), M3.rows(), (M3.cols()+2)/3,
                                                       Stride<Dynamic,3>(M3.outerStride(),3));
         cout << "1 column over 3:" << endl << M4 << "\n";
-
+*/
         // Data Set
 
-
-        const Index samples = 400000;
+        const Index samples = 1000000;
         const Index variables = 1000;
-
+/*
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
@@ -105,7 +104,7 @@ int main(void)
 //        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
 
         // Generate Data
-
+*/
         // Device
 
         Device device(Device::EigenSimpleThreadPool);
@@ -163,7 +162,7 @@ int main(void)
         stochastic_gradient_descent_pointer->set_batch_size(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
-*/
+
         cout << "End" << endl;
 
         return 0;

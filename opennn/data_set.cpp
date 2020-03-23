@@ -953,14 +953,98 @@ Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_numb
 {
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+//    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
 //    if(shuffle) std ::shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
 //    std::shuffle(training_indices.data(), training_indices.data() + training_indices.size(), rng);
 
+    if(shuffle)
+    {
 
-    return split_instances(training_indices, batch_instances_number);
+        const Index instances_number = training_indices.dimension(0);
+
+        Index buffer_size = batch_instances_number;
+        Index batches_number;
+        Index batch_size = batch_instances_number;
+
+    //    const Index batches_number =  instances_number / batch_size;
+        if(instances_number < batch_size)
+        {
+            batches_number = 1;
+            batch_size = instances_number;
+        }
+        else
+        {
+            batches_number = instances_number / batch_size;
+        }
+
+
+        Tensor<Index, 2> batches(batches_number, batch_size);
+
+        TensorMap< Tensor<Index, 1> > buffer(training_indices.data(), buffer_size);
+        TensorMap< Tensor<Index, 1> > rest_data(training_indices.data() + buffer_size, instances_number-buffer_size);
+
+        Index count = 0;
+
+        for(Index i = 0; i < batches_number; i++)
+        {
+            if(i == batches_number-1)
+            {
+                if(batch_size == buffer_size)
+                {
+//                    random_shuffle(buffer.data(), buffer.data() +  buffer.size());
+
+                    for(Index j = 0; j < batch_size;j++)
+                    {
+                        batches(i,j) = buffer(j);
+                    }
+                }
+                else
+                {
+//                    random_shuffle(buffer.data(), buffer.data() +  buffer.size());
+
+                    for(Index j = 0; j < buffer_size;j++)
+                    {
+                        batches(i,j) = buffer(j);
+                    }
+                    for(Index j = buffer_size; j < batch_size; j++)
+                    {
+                        batches(i,j) = rest_data(count);
+                        count++;
+                    }
+                }
+                break;
+            }
+
+            for(Index j = 0; j < batch_size; j++)
+            {
+                Index random_index = static_cast<Index>(rand()% buffer_size);
+
+                batches(i, j) = buffer(random_index);
+
+                for(Index k = random_index; k < buffer_size-1; k++)
+                {
+                    buffer(k) = buffer(k+1);
+                }
+
+                buffer(buffer_size-1) = rest_data(count);
+
+                count++;
+            }
+        }
+
+        return batches;
+
+    }
+    else
+    {
+//        random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+        return split_instances(training_indices, batch_instances_number);
+    }
+
+//    return split_instances(training_indices, batch_instances_number);
 }
 
 
