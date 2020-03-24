@@ -421,7 +421,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
     LossIndex::BackPropagation back_propagation(batch.instances_number, loss_index_pointer);
 
-
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
 
     Triplet triplet;
@@ -452,7 +451,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-    triplet.B.second = back_propagation.loss + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+    triplet.B.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
     count++;
 
@@ -468,7 +467,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-        triplet.B.second = back_propagation.loss + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+        triplet.B.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -485,7 +484,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-            triplet.B.second = back_propagation.loss + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+            triplet.B.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             count++;
         }
@@ -500,7 +499,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-        triplet.U.second = back_propagation.loss + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+        triplet.U.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -516,7 +515,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-            triplet.U.second = back_propagation.loss + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+            triplet.U.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             if(triplet.U.first - triplet.A.first <= loss_tolerance)
             {
@@ -723,6 +722,8 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
     Tensor<type, 1> potential_parameters(parameters_number);
 
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
     // Bracket minimum
 
     try
@@ -759,7 +760,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-            V.second = back_propagation.loss;
+            V.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);;
 
             count++;
 
@@ -834,7 +835,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
 
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
-        X.second = back_propagation.loss;
+        X.second = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         if(X.second > loss)
         {

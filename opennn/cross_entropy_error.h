@@ -101,7 +101,7 @@ public:
            }
        }
 
-       back_propagation.loss = cross_entropy_error;
+       back_propagation.error = cross_entropy_error;
 
        return;
   }
