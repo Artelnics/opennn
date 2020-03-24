@@ -188,7 +188,7 @@ public:
 
        calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
 
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_3d);
+       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_2d, forward_propagation.activations_derivatives_3d);
    }
 
    // Activations
@@ -247,90 +247,9 @@ public:
         throw logic_error(buffer.str());
    }
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d, Tensor<type, 3>& activations_derivatives) const
-   {
-        #ifdef __OPENNN_DEBUG__
-
-        const Index dimensions_number = combinations_2d.rank();
-
-        if(dimensions_number != 2)
-        {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Dimensions of combinations_2d (" << dimensions_number << ") must be 2.\n";
-
-           throw logic_error(buffer.str());
-        }
-
-        const Index neurons_number = get_neurons_number();
-
-        const Index combinations_columns_number = combinations_2d.dimension(1);
-
-        if(combinations_columns_number != neurons_number)
-        {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations_2d columns ("
-                  << combinations_columns_number << ") must be equal to number of neurons ("
-                  << neurons_number << ").\n";
-
-           throw logic_error(buffer.str());
-        }
-
-        #endif
-
-        switch(activation_function)
-        {
-            case Binary:
-            {
-                 ostringstream buffer;
-
-                 buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                        << "Binary derivative doesn't exist.\n";
-
-                 throw logic_error(buffer.str());
-            }
-
-            case Logistic:
-            {
-                    logistic_derivatives(combinations_2d, activations_derivatives);
-                    return;
-            }
-
-            case Competitive:
-            {
-                 ostringstream buffer;
-
-                 buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                        << "Competitive derivative doesn't exist.\n";
-
-                 throw logic_error(buffer.str());
-            }
-
-            case Softmax:
-            {
-                softmax_derivatives(combinations_2d, activations_derivatives); return;
-            }
-        }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw logic_error(buffer.str());
-
-   }
-
-
    void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
                                           Tensor<type, 2>& activations,
-                                          Tensor<type, 2>& activations_derivatives) const
+                                          Tensor<type, 3>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 

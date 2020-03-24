@@ -536,24 +536,10 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 
     Tensor<type, 2> combinations_2d;
     Tensor<type, 2> activations_2d;
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 3> activations_derivatives;
 
     Device device(Device::EigenSimpleThreadPool);
     probabilistic_layer.set_device_pointer(&device);
-
-    // Test 0
-
-    probabilistic_layer.set(1,1);
-
-    combinations_2d.resize(1,1);
-    combinations_2d.setValues({{0}});
-    activations_2d.resize(1,1);
-    activations_derivatives.resize(1,1);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-
-    assert_true(activations_derivatives(0,0) < static_cast<type>(1e-5), LOG);
 
     // Test 1
 
@@ -562,14 +548,16 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     combinations_2d.resize(1,3);
     combinations_2d.setValues({{1, 2, 3}});
     activations_2d.resize(1,3);
-    activations_derivatives.resize(3,3);
+    activations_derivatives.resize(3,3,3);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
 
-    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(1,1) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(2,2) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_2d(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
+
+    assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(1,1,0) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(2,2,0) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
 
     // Test 2
 
@@ -578,15 +566,34 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     combinations_2d.resize(1,4);
     combinations_2d.setValues({{-1, 2, -3, -4}});
     activations_2d.resize(1,4);
-    activations_derivatives.resize(4,4);
+    activations_derivatives.resize(4,4,4);
 
     probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
 
-    assert_true(abs(activations_derivatives(3,0) - static_cast<type>(0.00011)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,1) - static_cast<type>(0.00221)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,2) - static_cast<type>(0.00001)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,3) - static_cast<type>(0.00233)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(3,0,0) + static_cast<type>(0.00011)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(3,1,0) + static_cast<type>(0.00221)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(3,2,0) + static_cast<type>(0.00001)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(3,3,0) - static_cast<type>(0.00233)) < static_cast<type>(1e-3), LOG);
 
+    // Test 3
+
+    probabilistic_layer.set(1,1);
+
+    combinations_2d.resize(1,1);
+    combinations_2d.setValues({{-1.55f}});
+    activations_2d.resize(1,1);
+    activations_derivatives.resize(1,1,1);
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+
+    assert_true(abs(activations_2d(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
+
+    assert_true(activations_derivatives.rank() == 3, LOG);
+    assert_true(activations_derivatives.dimension(0) == 1, LOG);
+    assert_true(activations_derivatives.dimension(1) == 1, LOG);
+    assert_true(activations_derivatives.dimension(2) == 1, LOG);
+    assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.1444)) < static_cast<type>(1e-3), LOG);
 }
 
 void ProbabilisticLayerTest::test_calculate_outputs()
@@ -748,7 +755,6 @@ void ProbabilisticLayerTest::test_from_XML()
 }
 */
 
-
 void ProbabilisticLayerTest::run_test_case()
 {
    cout << "Running probabilistic layer test case...\n";
@@ -806,7 +812,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_calculate_combinations();
    test_calculate_activations();
-   test_calculate_derivatives_activations()      ;
+   test_calculate_derivatives_activations();
 
    test_calculate_outputs();
 
