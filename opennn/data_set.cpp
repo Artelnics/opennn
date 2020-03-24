@@ -982,6 +982,10 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
         return batches;
         */
     }
+    /*else if(instances_number < buffer_size)
+    {
+        buffer_size = instances_number;
+    }*/
     else
     {
         batches_number = instances_number / batch_size;
