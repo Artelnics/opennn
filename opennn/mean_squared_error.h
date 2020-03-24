@@ -233,8 +233,6 @@ public:
 
                second_order_loss.gradient = expression.chip(0,1);
 
-//               memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(parameters_number)*sizeof(type));
-
                return;
             }
 

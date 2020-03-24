@@ -375,7 +375,7 @@ public:
 
    // Batches get methods
 
-   Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&) const;
+   Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
 
    // Data get methods
 

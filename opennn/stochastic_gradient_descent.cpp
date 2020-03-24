@@ -575,8 +575,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
@@ -633,7 +633,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     {
         training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                          batch_instances_number,
-                                                         shuffle);
+                                                         shuffle,
+                                                         1500);
+
 
         training_loss = 0;
 
@@ -642,17 +644,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
-/*
-            memcpy(batch_instances_indices.data(),
-                   training_instances_indices.data() + index,
-                   static_cast<size_t>(batch_instances_number)*sizeof(Index));
-            index += batch_instances_number;
-
-
-            sort(batch_instances_indices.data(), batch_instances_indices.data() + batch_instances_indices.size(), less<Index>());
-
-            batch.fill(batch_instances_indices, input_variables_indices, target_variables_indices);
-*/
 
             batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
