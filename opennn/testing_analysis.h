@@ -195,9 +195,10 @@ public:
    Tensor<type, 1> calculate_binary_classification_testing_errors() const;
    Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 
-   type calculate_testing_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_testing_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
+   type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
+   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = 1.5) const;
 
    // Linear regression analysis methods
 

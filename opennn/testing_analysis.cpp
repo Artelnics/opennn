@@ -729,36 +729,99 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
 
 Tensor<type, 2> TestingAnalysis::calculate_errors() const
 {
-    Tensor<type, 2> errors(4,3);
-    /*
-        errors.set_column(0, calculate_training_errors(), "training_errors");
-        errors.set_column(1, calculate_selection_errors(), "selection_errors");
-        errors.set_column(2, calculate_testing_errors(), "testing_errors");
-    */
+    Tensor<type, 2> errors(5,3);
+
+    const Tensor<type, 1> training_errors = calculate_training_errors();
+    const Tensor<type, 1> selection_errors = calculate_selection_errors();
+    const Tensor<type, 1> testing_errors = calculate_testing_errors();
+
+    errors(0,0) = training_errors(0);
+    errors(1,0) = training_errors(1);
+    errors(2,0) = training_errors(2);
+    errors(3,0) = training_errors(3);
+    errors(4,0) = training_errors(4);
+
+    errors(0,1) = selection_errors(0);
+    errors(1,1) = selection_errors(1);
+    errors(2,1) = selection_errors(2);
+    errors(3,1) = selection_errors(3);
+    errors(4,1) = selection_errors(4);
+
+    errors(0,2) = testing_errors(0);
+    errors(1,2) = testing_errors(1);
+    errors(2,2) = testing_errors(2);
+    errors(3,2) = testing_errors(3);
+    errors(4,2) = testing_errors(4);
+
     return errors;
 }
 
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    Tensor<type, 2> errors(5,3);
-    /*
-        errors.set_column(0, calculate_binary_classification_training_errors(), "");
-        errors.set_column(1, calculate_binary_classification_selection_errors(), "");
-        errors.set_column(2, calculate_binary_classification_testing_errors(), "");
-    */
+    Tensor<type, 2> errors(7,3);
+
+    const Tensor<type, 1> training_errors = calculate_binary_classification_training_errors();
+    const Tensor<type, 1> selection_errors = calculate_binary_classification_selection_errors();
+    const Tensor<type, 1> testing_errors = calculate_binary_classification_testing_errors();
+
+    errors(0,0) = training_errors(0);
+    errors(1,0) = training_errors(1);
+    errors(2,0) = training_errors(2);
+    errors(3,0) = training_errors(3);
+    errors(4,0) = training_errors(4);
+    errors(5,0) = training_errors(5);
+    errors(6,0) = training_errors(6);
+
+    errors(0,1) = selection_errors(0);
+    errors(1,1) = selection_errors(1);
+    errors(2,1) = selection_errors(2);
+    errors(3,1) = selection_errors(3);
+    errors(4,1) = selection_errors(4);
+    errors(5,1) = selection_errors(5);
+    errors(6,1) = selection_errors(6);
+
+    errors(0,2) = testing_errors(0);
+    errors(1,2) = testing_errors(1);
+    errors(2,2) = testing_errors(2);
+    errors(3,2) = testing_errors(3);
+    errors(4,2) = testing_errors(4);
+    errors(5,2) = testing_errors(5);
+    errors(6,2) = testing_errors(6);
+
     return errors;
 }
 
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    Tensor<type, 2> errors(5,3);
-    /*
-        errors.set_column(0, calculate_multiple_classification_training_errors(), "");
-        errors.set_column(1, calculate_multiple_classification_selection_errors(), "");
-        errors.set_column(2, calculate_multiple_classification_testing_errors(), "");
-    */
+    Tensor<type, 2> errors(6,3);
+
+    const Tensor<type, 1> training_errors = calculate_multiple_classification_training_errors();
+    const Tensor<type, 1> selection_errors = calculate_multiple_classification_selection_errors();
+    const Tensor<type, 1> testing_errors = calculate_multiple_classification_testing_errors();
+
+    errors(0,0) = training_errors(0);
+    errors(1,0) = training_errors(1);
+    errors(2,0) = training_errors(2);
+    errors(3,0) = training_errors(3);
+    errors(4,0) = training_errors(4);
+    errors(5,0) = training_errors(5);
+
+    errors(0,1) = selection_errors(0);
+    errors(1,1) = selection_errors(1);
+    errors(2,1) = selection_errors(2);
+    errors(3,1) = selection_errors(3);
+    errors(4,1) = selection_errors(4);
+    errors(5,1) = selection_errors(5);
+
+    errors(0,2) = testing_errors(0);
+    errors(1,2) = testing_errors(1);
+    errors(2,2) = testing_errors(2);
+    errors(3,2) = testing_errors(3);
+    errors(4,2) = testing_errors(4);
+    errors(5,2) = testing_errors(5);
+
     return errors;
 }
 
@@ -807,7 +870,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/training_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
 
     return errors;
 }
@@ -854,12 +917,23 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
+    // SSE
     errors(0) = sum_squared_error(0);
+
+    // MSE
     errors(1) = errors(0)/training_instances_number;
+
+    // RMSE
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
-    errors(5) = calculate_testing_weighted_squared_error(targets, outputs);
+
+    // NSE
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+
+    // CE
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
+
+    // WSE
+    errors(5) = calculate_weighted_squared_error(targets, outputs);
 
     return errors;
 }
@@ -908,8 +982,8 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/training_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs); // NO
 
     return errors;
 }
@@ -958,7 +1032,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
 
     return errors;
 }
@@ -998,7 +1072,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(5);
+    Tensor<type, 1> errors(6);
 
     // Results
 
@@ -1007,9 +1081,9 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
-    errors(5) = calculate_testing_weighted_squared_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
+    errors(5) = calculate_weighted_squared_error(targets, outputs);
 
     return errors;
 }
@@ -1058,8 +1132,8 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
@@ -1131,7 +1205,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
 
     return errors;
 }
@@ -1192,9 +1266,9 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
-    errors(5) = calculate_testing_weighted_squared_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
+    errors(5) = calculate_weighted_squared_error(targets, outputs);
 
     return errors;
 }
@@ -1245,7 +1319,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(5);
+    Tensor<type, 1> errors(4);
 
     // Results
 
@@ -1254,8 +1328,8 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_instances_number;
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_testing_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_testing_cross_entropy_error(targets, outputs);
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
+//    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
@@ -1265,28 +1339,25 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 
-type TestingAnalysis::calculate_testing_normalized_squared_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
+type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
+    const Index instances_number = targets.dimension(0);
 
-    const Index testing_instances_number = targets.dimension(0);
-
-    const Tensor<type, 1> testing_targets_mean = mean(targets);
+    const Tensor<type, 1> targets_mean = mean(targets);
 
     Tensor<type, 0> normalization_coefficient;
+    normalization_coefficient.setZero();
+
+    Tensor<type, 0> sum_squared_error = (outputs - targets).square().sum();
 
 //#pragma omp parallel for reduction(+: normalization_coefficient)
 
-    Tensor<type, 0> sum_squared_error = (outputs - targets).sum().square();
-
-    for(Index i = 0; i < testing_instances_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
-        const Tensor<type, 1> row_targets = targets.chip(i,0);
-
-        normalization_coefficient += (row_targets-testing_targets_mean).sum().square();
+        normalization_coefficient += (targets.chip(i,0)-targets_mean).square().sum();
     }
 
-    return sum_squared_error(0)/normalization_coefficient(0);
-
+    return sum_squared_error()/normalization_coefficient();
 }
 
 
@@ -1295,7 +1366,7 @@ type TestingAnalysis::calculate_testing_normalized_squared_error(const Tensor<ty
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 
-type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2>& targets,
+type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
     const Index testing_instances_number = targets.dimension(0);
@@ -1324,7 +1395,8 @@ type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2
                 outputs_row(j) = numeric_limits<type>::max();
             }
 
-            cross_entropy_error -= targets_row(j)*log(outputs_row(j)) + (1.0 - targets_row(j))*log(1.0 - outputs_row(j));
+            cross_entropy_error -=
+                    targets_row(j)*log(outputs_row(j)) + (static_cast<type>(1) - targets_row(j))*log(static_cast<type>(1) - outputs_row(j));
         }
     }
 
@@ -1338,14 +1410,13 @@ type TestingAnalysis::calculate_testing_cross_entropy_error(const Tensor<type, 2
 /// @param outputs Testing output data.
 /// @param weights Weights of the postitives and negatives to evaluate.
 
-type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type, 2>& targets,
-        const Tensor<type, 2>& outputs,
-        const Tensor<type, 1>& weights) const
+type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& targets,
+                                                       const Tensor<type, 2>& outputs,
+                                                       const Tensor<type, 1>& weights) const
 {
+#ifdef __OPENNN_DEBUG__
 
     const Index outputs_number = outputs.dimension(1);
-
-#ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
 
@@ -1408,7 +1479,14 @@ type TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<type
     const type normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
 
     return sum_squared_error(0)/normalization_coefficient;
+}
 
+
+type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type minkowski_parameter) const
+{
+    Tensor<type, 0> Minkoski_error = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
+
+    return Minkoski_error();
 }
 
 
