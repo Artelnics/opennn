@@ -556,7 +556,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics() const
+Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives() const
 {
     // Data set
 
@@ -569,13 +569,13 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics() 
 
     // Error descriptives
 
-    Tensor<Descriptives, 1> descriptives = calculate_absolute_errors_statistics(targets,outputs);
+    Tensor<Descriptives, 1> descriptives = calculate_absolute_errors_descriptives(targets,outputs);
 
     return descriptives;
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics(const Tensor<type, 2>& targets,
+Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (targets-outputs).abs();
@@ -583,7 +583,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_statistics(co
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics() const
+Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptives() const
 {
     // Data set
 
@@ -596,14 +596,14 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics(
 
     // Error descriptives
 
-    const Tensor<Descriptives, 1> descriptives = calculate_percentage_errors_statistics(targets,outputs);
+    const Tensor<Descriptives, 1> descriptives = calculate_percentage_errors_descriptives(targets,outputs);
 
     return descriptives;
 
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics(const Tensor<type, 2>& targets,
+Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptives(const Tensor<type, 2>& targets,
         const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (static_cast<type>(100)*(targets-outputs).abs())/targets;
@@ -620,7 +620,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_statistics(
 /// <li> Standard deviation
 /// </ul>
 
-Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_statistics() const
+Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descriptives() const
 {
     // Neural network
 
@@ -630,7 +630,7 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_statist
 
     // Testing analysis stuff
 
-    Tensor<Tensor<Descriptives, 1>, 1> _descriptives(outputs_number);
+    Tensor<Tensor<Descriptives, 1>, 1> descriptives(outputs_number);
 
     Tensor<type, 3> error_data = calculate_error_data();
 
@@ -642,22 +642,22 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_statist
 
         Tensor<type, 2> matrix(matrix_error);
 
-        _descriptives[i] = descriptives(matrix);
+        descriptives[i] = OpenNN::descriptives(matrix);
 
         index += testing_instances_number*3;
     }
 
-    return _descriptives;
+    return descriptives;
 }
 
 
-void TestingAnalysis::print_error_data_statistics() const
+void TestingAnalysis::print_error_data_descriptives() const
 {
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
-    const Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = calculate_error_data_statistics();
+    const Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = calculate_error_data_descriptives();
 
     for(Index i = 0; i < targets_number; i++)
     {
