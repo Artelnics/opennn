@@ -2561,6 +2561,37 @@ public:
       return Tensor<type, 2>();
    }
 
+   template<class T>
+   Tensor<type, 2> calculate_forward_differences_Jacobiannn(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
+   {
+       /*
+       const Index rn = x.dimension(0);
+       const Index cn = x.dimension(1);
+
+       Tensor<type,2> J(cn,cn);
+
+       for(Index j = 0; j < cn; j++)
+       {
+          Tensor<type, 2> h = calculate_h(x);
+
+          const Tensor<type, 2> x_forward = x + h;
+          const Tensor<type, 2> x_backward = x - h;
+
+          Tensor<type, 2> y_forward(rn,cn);
+          (t.*f)(x_forward, y_forward);
+          Tensor<type, 2> y_backward(rn,cn);
+          (t.*f)(x_backward, y_backward);
+
+          for(Index i = 0; i < cn; i++)
+               {
+                    J(i,j) = (y_forward(0,i) - y_backward(0,i))/(static_cast<type>(2.0)*h(0,j));
+               }
+        }
+       return J;
+       */
+       return    Tensor<type, 2>();
+       }
+
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
@@ -2609,7 +2640,7 @@ public:
             y_forward_2j = (t.*f)(x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - static_cast<type>(2.0)*y_forward_j(i) + y(i))/pow(h_j, 2);
 
             for(Index k = j; k < n; k++)
 			{
