@@ -761,7 +761,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
         {
             for(Index k = 0; k < columns_number; k++)
             {
-                y(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
+                y(j,k,i) = - softmax_values(i,j) * softmax_values(i,k);
 /*
                 if(j == k)
                 {
@@ -1105,35 +1105,15 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
     {
     case Device::EigenDefault:
     {
-   /*     DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
-
-        sum.device(*default_device) = combinations.exp().sum();
-
-        activations.device(*default_device) = combinations.exp() / sum(0);
-
-        // Activations Derivatives
-
-        activations_derivatives.device(*default_device) = activations;
-*/
         return;
     }
 
     case Device::EigenSimpleThreadPool:
     {
- /*       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        // Activations
-
-        sum.device(*default_device) = combinations.exp().sum();
-
-        activations.device(*default_device) = combinations.exp() / sum(0);
-
-        // Activations Derivatives
-
-        activations_derivatives.device(*thread_pool_device) = activations;
-*/
         return;
     }
 
@@ -1146,63 +1126,28 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
     }
     }
 
-    activations.setConstant(1);
+    softmax(combinations,activations);
 
-    //---------------------------
-    const Index n = combinations.dimension(0);
-    const Index columns_number = combinations.dimension(1);
+    const Index dim = combinations.dimension(1);
 
-    Tensor<type, 2> jacobian(columns_number, columns_number);
+    activations_derivatives(dim, dim);
 
-
-
-    activations_derivatives.setConstant(2);
-
-
-/*
-   const Index n = combinations.dimension(0);
-    const Index columns_number = combinations.dimension(1);
-
-    Tensor<type, 2> softmax_values(n, columns_number);
-
-    softmax(combinations, softmax_values);
-//    Tensor<type, 1> softmax_vector(columns_number);
-
-//    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i ++)
+    for(Index i = 0; i < dim; i++)
     {
-//        softmax_vector = softmax_values.chip(i,0);
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < dim; j++)
         {
-            for(Index k = 0; k < columns_number; k++)
-            {
-                activations_derivatives(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
-
-              //  if(j == k)
-             //   {
-             //       y(j,k,i) = softmax_vector(j)*(1.0 - softmax_vector(j));
-           //     }
-         //       else
-         //       {
-         //           y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
-         //       }
-
-            }
+              if(i == j)
+              {
+                  activations_derivatives(i,j) = activations(i)*(static_cast<type>(1.0) - activations(i));
+              }
+              else
+              {
+                  activations_derivatives(i,j) = activations(i) * activations(j);
+              }
         }
     }
-
-//    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        for(Index j = 0; j < columns_number; j++) activations_derivatives(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
-    }
-*/
-
     return;
 }
-
 
 
 void Layer::linear_derivatives(const Tensor<type, 2>& combinations,
