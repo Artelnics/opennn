@@ -1109,63 +1109,6 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
       assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
    }
-
-   // Test
-/*
-   if(numerical_differentiation_tests)
-   {
-      perceptron_layer.set(4, 2);
-
-      parameters.resize(10);
-      parameters[0] = 0.41;
-      parameters[1] = -0.68;
-      parameters[2] = 0.14;
-      parameters[3] = -0.50;
-      parameters[4] = 0.52;
-      parameters[5] = -0.70;
-      parameters[6] = 0.85;
-      parameters[7] = -0.18;
-      parameters[8] = -0.65;
-      parameters[9] = 0.05;
-
-      perceptron_layer.set_parameters(parameters);
-
-      inputs.resize(1,4);
-
-      inputs(0, 0) = 0.85;
-      inputs(0, 1) = -0.25;
-      inputs(0, 2) = 0.29;
-      inputs(0, 3) = -0.77;
-
-      combinations_2d = perceptron_layer.calculate_combinations(inputs);
-
-      perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-      activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d);
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-
-      perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-      activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d);
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-
-      perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
-      activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d);
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-
-      perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-      activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d);
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-
-      perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-      activations_derivatives = perceptron_layer.calculate_activations_derivatives(combinations_2d);
-      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, combinations_2d);
-//      assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
-   }
-*/
-
 }
 
 void PerceptronLayerTest::test_calculate_outputs()

@@ -291,13 +291,10 @@ protected:
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
-    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
-
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
@@ -306,7 +303,8 @@ protected:
     void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
+    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
