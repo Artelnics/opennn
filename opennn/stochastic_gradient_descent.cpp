@@ -575,8 +575,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-//    vector<Index> training_instances_indices = tensor_to_vector(data_set_pointer->get_training_instances_indices());
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
@@ -631,10 +631,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= epochs_number; epoch++)
     {
-//        std::shuffle(training_instances_indices.begin(), training_instances_indices.end(), default_random_engine(NULL));
-//        random_shuffle(training_instances_indices.data(), training_instances_indices.data() + training_instances_indices.size());
-
-        training_batches = data_set_pointer->get_training_batches(batch_instances_number, shuffle);
+        training_batches = data_set_pointer->get_batches(training_instances_indices,
+                                                         batch_instances_number,
+                                                         shuffle);
 
         training_loss = 0;
 
@@ -683,7 +682,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, false);
+            selection_batches = data_set_pointer->get_batches(selection_instances_indices,
+                                                              batch_instances_number,
+                                                              false);
 
             selection_error = 0;
 
