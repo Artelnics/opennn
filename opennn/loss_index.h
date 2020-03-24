@@ -349,7 +349,7 @@ public:
 
        // Loss
 
-       second_order_loss.loss = back_propagation.loss;
+       second_order_loss.loss = back_propagation.error;
 
        // Regularization
 
