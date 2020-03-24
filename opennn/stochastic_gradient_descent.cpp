@@ -634,7 +634,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                          batch_instances_number,
                                                          shuffle,
-                                                         1500);
+                                                         2);
 
 
         training_loss = 0;
