@@ -167,7 +167,7 @@ void MeanSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& b
 
 //    SecondOrderLoss terms_second_order_loss(parameters_number);
 
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch.instances_number, !is_forecasting);
+//    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch.instances_number, !is_forecasting);
 /*
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
 

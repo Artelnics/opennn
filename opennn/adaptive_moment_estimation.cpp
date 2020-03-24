@@ -512,11 +512,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-//    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
-
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
 
     const bool has_selection = data_set_pointer->has_selection();
 
@@ -567,8 +567,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_instances_indices,
+                                                                                         batch_instances_number,
+                                                                                         is_forecasting);
+
+        const Tensor<Index, 2> selection_batches = data_set_pointer->get_batches(selection_instances_indices,
+                                                                                 batch_instances_number,
+                                                                                 is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
 
