@@ -202,18 +202,14 @@ public:
        #endif
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-       const Index parameters_number = neural_network_pointer->get_parameters_number();
 
        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
        const Tensor<type, 2>& targets = batch.targets_2d;
 
-       Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+       Tensor<type, 1> errors(outputs.dimension(0));
+       const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-       const Index instances_number = data_set_pointer->get_training_instances_number();
-
-       Tensor<type, 2> expression(parameters_number, 1);
-
-       const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+       const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
 
        switch(device_pointer->get_type())
        {
@@ -221,7 +217,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                errors.device(*default_device) = (outputs - targets).square();
+                errors.device(*default_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
                 second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
 
@@ -234,13 +230,11 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               errors.device(*thread_pool_device) = (outputs - targets).square();
+               errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
-               expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
+               second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
 
-               expression.device(*thread_pool_device) = coefficient*expression;
-
-               second_order_loss.gradient = expression.chip(0,1);
+               second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
 
                return;
             }
@@ -262,9 +256,7 @@ public:
 
         #endif
 
-        const Index instances_number = data_set_pointer->get_training_instances_number();
-
-        const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+        const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
 
         switch(device_pointer->get_type())
         {
