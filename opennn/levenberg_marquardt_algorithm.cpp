@@ -855,7 +855,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-             const type new_loss = training_back_propagation.loss;
+             const type new_loss = training_back_propagation.error;
 
              if(new_loss <= training_loss) // succesfull step
              {

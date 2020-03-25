@@ -353,21 +353,19 @@ Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tenso
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const Tensor<bool, 1> if_sentence = outputs == outputs.constant(1);
+    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
 
-    Tensor<type, 1> f_1(outputs.dimension(0), outputs.dimension(1));
+    Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
 
-    Tensor<type, 1> f_2(outputs.dimension(0), outputs.dimension(1));
+    Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
 
-    f_1 = ((outputs - targets).sum(rows_sum).square())*positives_weight;
+    f_1 = ((outputs - targets))*positives_weight;
 
-    f_2 = ((outputs - targets).sum(rows_sum).square())*negatives_weight;
+    f_2 = ((outputs - targets))*negatives_weight;
 
-    Tensor<type, 1> weighted_error = (if_sentence.select(f_1, f_2)).sqrt();
+    Tensor<type, 1> weighted_error = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
 
     return weighted_error;
-
-
 }
 
 
