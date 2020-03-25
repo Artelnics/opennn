@@ -1009,14 +1009,14 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
 #ifdef __OPENNN_DEBUG__
 
-    if(x.dimension(0) != y.dimension(2))
+    if(combinations.dimension(0) != activations.dimension(2))
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer Class.\n"
                << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<< x.dimension(0)
-               << ") must be equal to number of rows in y(" <<y.dimension(2)<< ").\n";
+               << "Number of rows in x("<< combinations.dimension(0)
+               << ") must be equal to number of rows in y(" <<activations.dimension(2)<< ").\n";
 
         throw logic_error(buffer.str());
     }
