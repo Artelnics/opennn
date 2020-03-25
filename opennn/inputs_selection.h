@@ -21,10 +21,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
 #include "training_strategy.h"
+#include "config.h"
 
 #include "tinyxml2.h"
 
@@ -36,7 +34,8 @@ namespace OpenNN
 ///
 /// Any derived class must implement the perform_inputs_selection() method.
 ///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
+/// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class InputsSelection
 {
@@ -79,39 +78,39 @@ public:
 
        /// Inputs of the different neural networks.
 
-       Vector<Vector<bool>> inputs_data;
+       Tensor<bool, 2> inputs_data;
        
        /// Performance of the different neural networks.
 
-       Vector<double> loss_data;
+       Tensor<type, 1> loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Vector<double> selection_error_data;
+       Tensor<type, 1> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Vector<double> minimal_parameters;
+       Tensor<type, 1> minimal_parameters;
 
        /// Value of minimum selection error.
 
-       double final_selection_error;
+       type final_selection_error;
 
        /// Value of loss for the neural network with minimum selection error.
 
-       double final_training_error;
+       type final_training_error;
 
        /// Inputs of the neural network with minimum selection error.
 
-       Vector<size_t> optimal_inputs_indices;
+       Tensor<Index, 1> optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 
-       Vector<bool> optimal_inputs;
+       Tensor<bool, 1> optimal_inputs;
 
        /// Number of iterations to perform the inputs selection.
 
-       size_t iterations_number;
+       Index iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -119,7 +118,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       double elapsed_time;
+       type elapsed_time;
     };
 
     // Get methods
@@ -130,7 +129,7 @@ public:
 
     bool has_training_strategy() const;
 
-    const size_t& get_trials_number() const;
+    const Index& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -138,12 +137,12 @@ public:
 
     const bool& get_display() const;
 
-    const double& get_selection_error_goal() const;
-    const size_t& get_maximum_iterations_number() const;
-    const double& get_maximum_time() const;
-    const double& get_maximum_correlation() const;
-    const double& get_minimum_correlation() const;
-    const double& get_tolerance() const;
+    const type& get_selection_error_goal() const;
+    const Index& get_maximum_iterations_number() const;
+    const type& get_maximum_time() const;
+    const type& get_maximum_correlation() const;
+    const type& get_minimum_correlation() const;
+    const type& get_tolerance() const;
 
     // Set methods
 
@@ -153,7 +152,7 @@ public:
 
     void set_default();
 
-    void set_trials_number(const size_t&);
+    void set_trials_number(const Index&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -161,20 +160,18 @@ public:
 
     void set_display(const bool&);
 
-    void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const size_t&);
-    void set_maximum_time(const double&);
-    void set_maximum_correlation(const double&);
-    void set_minimum_correlation(const double&);
-    void set_tolerance(const double&);
+    void set_selection_error_goal(const type&);
+    void set_maximum_iterations_number(const Index&);
+    void set_maximum_time(const type&);
+    void set_maximum_correlation(const type&);
+    void set_minimum_correlation(const type&);
+    void set_tolerance(const type&);
 
     // Performances calculation methods
 
-    Vector<double> calculate_losses(const Vector<bool>&);
+    Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
 
-    Vector<double> perform_mean_model_evaluation(const Vector<bool>&);
-
-    Vector<double> get_parameters_inputs(const Vector<bool>&) const;
+    Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -185,11 +182,25 @@ public:
     void delete_parameters_history();
     void check() const;
 
-    size_t get_input_index(const Vector<DataSet::VariableUse>, const size_t);
+    // Utilities
+
+    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
+    Tensor<Index, 1> insert_result(const Index&, const Tensor<Index, 1>&) const;
+    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
+
+    Tensor<Index, 1> delete_result(const Index&, const Tensor<Index, 1>&) const;
+
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
 
     /// Performs the inputs selection for a neural network.
 
     virtual Results* perform_inputs_selection() = 0;
+
+    //
+
+    /// Writes the time from seconds in format HH:mm:ss.
+
+    const string write_elapsed_time(const type&) const;
 
 protected:
 
@@ -203,23 +214,23 @@ protected:
 
     /// Inputs of all the neural networks trained.
 
-    Vector<Vector<bool>> inputs_history;
+    Tensor<bool, 2> inputs_history;
 
     /// Selection loss of all the neural networks trained.
 
-    Vector<double> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector<double> training_error_history;
+    Tensor<type, 1> training_error_history;
 
     /// Parameters of all the neural network trained.
 
-    Vector<Vector<double>> parameters_history;
+    Tensor<Tensor<type, 1>, 1> parameters_history;
 
     /// Number of trials for each neural network.
 
-    size_t trials_number;
+    Index trials_number;
 
     // Inputs selection results
 
@@ -247,34 +258,34 @@ protected:
 
     /// Goal value for the selection error. It is used as a stopping criterion.
 
-    double selection_error_goal;
+    type selection_error_goal;
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
-    size_t maximum_epochs_number;
+    Index maximum_epochs_number;
 
     /// Maximum value for the correlations.
 
-    double maximum_correlation;
+    type maximum_correlation;
 
     /// Minimum value for the correlations.
 
-    double minimum_correlation;
+    type minimum_correlation;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
-    double maximum_time;
+    type maximum_time;
 
     /// Tolerance for the error in the trainings of the algorithm.
 
-    double tolerance;
+    type tolerance;
 };
 }
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

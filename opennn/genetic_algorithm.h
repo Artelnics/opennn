@@ -21,23 +21,24 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
 
-/// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation, crossover and selection.
+/// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
+/// crossover and selection.
 
 ///
 /// This algorithm are commonly used in optimization and search problems. if the dataset has many inputs,
 /// but we do not know how they affect the target,
 /// then this algorithm provides the best possible combination of variables to optimize the problem.
 ///
-/// \cite 1 Neural Designer "Genetic Algorithms for Feature Selection." \ref https://www.neuraldesigner.com/blog/genetic_algorithms_for_feature_selection
+/// \cite 1 Neural Designer "Genetic Algorithms for Feature Selection."
+/// \ref https://www.neuraldesigner.com/blog/genetic_algorithms_for_feature_selection
 
 class GeneticAlgorithm : public InputsSelection
 {
@@ -91,30 +92,38 @@ public:
 
         string object_to_string() const;
 
+        inline void resize_history(const Index& new_size)
+        {
+            generation_optimum_loss_history.resize(new_size);
+            generation_minimum_selection_history.resize(new_size);
+            generation_mean_history.resize(new_size);
+            generation_standard_deviation_history.resize(new_size);
+        }
+
         /// Values of the minimum loss in each generation.
 
-        Vector<double> generation_optimum_loss_history;
+        Tensor<type, 1> generation_optimum_loss_history;
 
         /// Values of the minimum selection error in each generation.
 
-        Vector<double> generation_minimum_selection_history;
+        Tensor<type, 1> generation_minimum_selection_history;
 
         /// Mean of the selection error in each generation.
 
-        Vector<double> generation_mean_history;
+        Tensor<type, 1> generation_mean_history;
 
         /// Standard deviation of the selection error in each generation.
 
-        Vector<double> generation_standard_deviation_history;
+        Tensor<type, 1> generation_standard_deviation_history;
     };
 
     // Get methods
 
-    const Vector<Vector<bool>>& get_population() const;
+    const Tensor<bool, 2>& get_population() const;
 
-    const Matrix<double>& get_loss() const;
+    const Tensor<type, 2>& get_loss() const;
 
-    const Vector<double>& get_fitness() const;
+    const Tensor<type, 1>& get_fitness() const;
 
     const InitializationMethod& get_initialization_method() const;
 
@@ -122,19 +131,19 @@ public:
 
     const FitnessAssignment& get_fitness_assignment_method() const;
 
-    const size_t& get_population_size() const;
+    const Index& get_population_size() const;
 
-    const double& get_mutation_rate() const;
+    const type& get_mutation_rate() const;
 
-    const size_t& get_elitism_size() const;
+    const Index& get_elitism_size() const;
 
-    const size_t& get_crossover_first_point() const;
+    const Index& get_crossover_first_point() const;
 
-    const size_t& get_crossover_second_point() const;
+    const Index& get_crossover_second_point() const;
 
-    const double& get_selective_pressure() const;
+    const type& get_selective_pressure() const;
 
-    const double& get_incest_prevention_distance() const;
+    const type& get_incest_prevention_distance() const;
 
     const bool& get_reserve_generation_mean() const;
 
@@ -154,11 +163,11 @@ public:
 
     void set_default();
 
-    void set_population(const Vector<Vector<bool>>&);
+    void set_population(const Tensor<bool, 2>&);
 
-    void set_loss(const Matrix<double>&);
+    void set_loss(const Tensor<type, 2>&);
 
-    void set_fitness(const Vector<double>&);
+    void set_fitness(const Tensor<type, 1>&);
 
     void set_inicialization_method(const InitializationMethod&);
     void set_fitness_assignment_method(const FitnessAssignment&);
@@ -168,19 +177,19 @@ public:
     void set_fitness_assignment_method(const string&);
     void set_crossover_method(const string&);
 
-    void set_population_size(const size_t&);
+    void set_population_size(const Index&);
 
-    void set_mutation_rate(const double&);
+    void set_mutation_rate(const type&);
 
-    void set_elitism_size(const size_t&);
+    void set_elitism_size(const Index&);
 
-    void set_crossover_first_point(const size_t&);
+    void set_crossover_first_point(const Index&);
 
-    void set_crossover_second_point(const size_t&);
+    void set_crossover_second_point(const Index&);
 
-    void set_selective_pressure(const double&);
+    void set_selective_pressure(const type&);
 
-    void set_incest_prevention_distance(const double&);
+    void set_incest_prevention_distance(const type&);
 
     void set_reserve_generation_mean(const bool&);
 
@@ -228,15 +237,35 @@ public:
 
     void perform_mutation();
 
-    // Order selection methods
+    // Inputs selection methods
 
-    size_t get_optimal_individual_index() const;
+    Index get_optimal_individual_index() const;
 
     GeneticAlgorithmResults* perform_inputs_selection();
 
+    // Utilities
+
+    type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    static vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor)
+    {
+        const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+        vector<bool> new_vector(static_cast<size_t>(size));
+
+        for(size_t i = 0; i < size; i++)
+        {
+            new_vector[i] = tensor(static_cast<Index>(i));
+        }
+
+        return new_vector;
+    }
+
+    bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
+
     // Serialization methods
 
-    Matrix<string> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -253,15 +282,15 @@ private:
 
     /// Population matrix.
 
-    Vector<Vector<bool>> population;
+    Tensor<bool, 2> population;
 
     /// Performance of population.
 
-    Matrix<double> loss;
+    Tensor<type, 2> loss;
 
     /// Fitness of population.
 
-    Vector<double> fitness;
+    Tensor<type, 1> fitness;
 
     // Training operators
 
@@ -279,43 +308,43 @@ private:
 
     /// Initial uses of the variables in the data set.
 
-    Vector<DataSet::VariableUse> original_uses;
+    Tensor<DataSet::VariableUse, 1> original_uses;
 
     /// Size of the population.
 
-    size_t population_size;
+    Index population_size;
 
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
 
-    double incest_prevention_distance;
+    type incest_prevention_distance;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
     /// This is a parameter of the mutation operator.
 
-    double mutation_rate;
+    type mutation_rate;
 
     /// Elitism size.
     /// It represents the number of individuals which will always be selected for recombination.
     /// This is a parameter of the selection operator.
 
-    size_t elitism_size;
+    Index elitism_size;
 
     /// First point used in the OnePoint and TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    size_t crossover_first_point;
+    Index crossover_first_point;
 
     /// Second point used in the TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    size_t crossover_second_point;
+    Index crossover_second_point;
 
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.
 
-    double selective_pressure;
+    type selective_pressure;
 
     // Inputs selection results
 

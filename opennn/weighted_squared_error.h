@@ -20,12 +20,11 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-
-
-
 #include "tinyxml2.h"
+#include "device.h"
 
 namespace OpenNN
 {
@@ -42,44 +41,31 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit WeightedSquaredError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
    explicit WeightedSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
 
    explicit WeightedSquaredError(DataSet*);
 
-   // DATA SET & NEURAL NETWORK CONSTRUCTOR
-   explicit WeightedSquaredError(NeuralNetwork*, DataSet*);
-
-   // XML CONSTRUCTOR
+   explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
 
    explicit WeightedSquaredError(const tinyxml2::XMLDocument&);
 
-   // COPY CONSTRUCTOR
-
    WeightedSquaredError(const WeightedSquaredError&);
 
-   
+   // Destructor
 
-   virtual ~WeightedSquaredError();
-
-   // STRUCTURES
-
-   
+   virtual ~WeightedSquaredError(); 
 
    // Get methods
 
-   double get_positives_weight() const;
-   double get_negatives_weight() const;
+   type get_positives_weight() const;
+   type get_negatives_weight() const;
 
-   double get_training_normalization_coefficient() const;
-   double get_selection_normalization_coefficient() const;
+   type get_training_normalization_coefficient() const;
+   type get_selection_normalization_coefficient() const;
 
    // Set methods
 
@@ -87,35 +73,96 @@ public:
 
    void set_default();
 
-   void set_positives_weight(const double&);
-   void set_negatives_weight(const double&);
+   void set_positives_weight(const type&);
+   void set_negatives_weight(const type&);
 
-   void set_training_normalization_coefficient(const double&);
-   void set_selection_normalization_coefficient(const double&);
+   void set_training_normalization_coefficient(const type&);
+   void set_selection_normalization_coefficient(const type&);
 
-   void set_weights(const double&, const double&);
+   void set_weights(const type&, const type&);
 
    void set_weights();
 
    void set_training_normalization_coefficient();
    void set_selection_normalization_coefficient();
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+   type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
 
-   Vector<double> calculate_training_error_gradient() const;
+   void calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        LossIndex::BackPropagation& back_propagation) const
+   {
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-   LossIndex::FirstOrderLoss calculate_first_order_loss() const;
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+       const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
+                                                                    batch.targets_2d);
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+       const Index instances_number = batch.targets_2d.size();
+
+       back_propagation.loss = error/instances_number;
+
+       return;
+   }
+
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  BackPropagation& back_propagation) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 errors.device(*default_device) = outputs - targets;
+
+                 back_propagation.output_gradient.device(*default_device) = errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                errors.device(*thread_pool_device) = outputs - targets;
+
+                back_propagation.output_gradient.device(*thread_pool_device) =errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 return;
+            }
+        }
+
+//        back_propagation.output_gradient = (outputs-targets)*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+   }
+
 
    // Error terms methods
 
-   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
-   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -133,19 +180,19 @@ private:
 
    /// Weight for the positives for the calculation of the error.
 
-   double positives_weight;
+   type positives_weight;
 
    /// Weight for the negatives for the calculation of the error.
 
-   double negatives_weight;
+   type negatives_weight;
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   double training_normalization_coefficient;
+   type training_normalization_coefficient;
 
    /// Coefficient of normalization for the calculation of the selection error.
 
-   double selection_normalization_coefficient;
+   type selection_normalization_coefficient;
 };
 
 }
@@ -154,7 +201,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

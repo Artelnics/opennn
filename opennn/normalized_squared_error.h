@@ -11,21 +11,18 @@
 
 // System includes
 
-#include <string>
-#include <sstream>
-
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <limits>
-#include <cmath>
+#include <string>
+#include <sstream>
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-
-
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -43,74 +40,162 @@ class NormalizedSquaredError : public LossIndex
 
 public:
 
-   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
+    // Constructors
 
-   // NEURAL NETWORK CONSTRUCTOR
+   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
 
    explicit NormalizedSquaredError(NeuralNetwork*);
 
-   // DATA SET CONSTRUCTOR
-
    explicit NormalizedSquaredError(DataSet*);
 
-   // DEFAULT CONSTRUCTOR
-
-   explicit NormalizedSquaredError();
-
-   // XML CONSTRUCTOR
+   explicit NormalizedSquaredError();   
 
    explicit NormalizedSquaredError(const tinyxml2::XMLDocument&);
+
+    // Destructor
 
    virtual ~NormalizedSquaredError();
 
    // Get methods
 
-    double get_normalization_coefficient() const;
+    type get_normalization_coefficient() const;
+    type get_selection_normalization_coefficient() const;
 
    // Set methods
 
     void set_normalization_coefficient();
-    void set_normalization_coefficient(const double&);
+    void set_normalization_coefficient(const type&);
 
     void set_selection_normalization_coefficient();
-    void set_selection_normalization_coefficient(const double&);
+    void set_selection_normalization_coefficient(const type&);
 
     void set_default();
 
    // Normalization coefficients 
 
-   double calculate_normalization_coefficient(const Matrix<double>&, const Vector<double>&) const;
+   type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
    // Error methods
+     
+   void calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        LossIndex::BackPropagation& back_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
 
-   double calculate_training_error() const;
-   double calculate_training_error(const Vector<double>&) const;
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-   double calculate_selection_error() const;
+       const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+       const Tensor<type, 2>& targets = batch.targets_2d;
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+       Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                errors.device(*default_device) = outputs - targets;
+
+                sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               errors.device(*thread_pool_device) = outputs - targets;
+
+               sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+       }
+
+       const Index batch_instances_number = batch.get_instances_number();
+       const Index total_instances_number = data_set_pointer->get_instances_number();
+
+       back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+
+       return;
+   }
 
    // Gradient methods
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  BackPropagation& back_propagation) const
+   {
+        #ifdef __OPENNN_DEBUG__
 
-   LossIndex::FirstOrderLoss calculate_first_order_loss() const;
+        check();
 
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+        #endif
+
+        const Index batch_instances_number = batch.get_instances_number();
+        const Index total_instances_number = data_set_pointer->get_instances_number();
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+        const Tensor<type, 2>& targets = batch.targets_2d;
+
+        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+        const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 errors.device(*default_device) = outputs - targets;
+
+                 back_propagation.output_gradient.device(*default_device) = coefficient*errors;
+
+                 return;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                errors.device(*thread_pool_device) = outputs - targets;
+
+                back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
+
+                return;
+             }
+
+            case Device::EigenGpu:
+            {
+        //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+        }
+   }
 
    // Error terms methods
 
-   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
-   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    // Squared errors methods
 
-   Vector<double> calculate_squared_errors() const;
-
-   Vector<size_t> calculate_maximal_errors(const size_t& = 10) const;
-
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -126,9 +211,9 @@ private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   double normalization_coefficient;
+   type normalization_coefficient;
 
-   double selection_normalization_coefficient;
+   type selection_normalization_coefficient;
 };
 
 }
@@ -137,7 +222,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

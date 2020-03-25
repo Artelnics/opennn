@@ -20,12 +20,15 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "training_strategy.h"
 #include "incremental_neurons.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
+
+//Eigen includes
 
 namespace OpenNN
 {
@@ -58,7 +61,7 @@ public:
 
     /// Enumeration of all the available order selection algorithms.
 
-    enum OrderSelectionMethod{NO_NEURONS_SELECTION, INCREMENTAL_NEURONS};
+    enum NeuronsSelectionMethod{NO_NEURONS_SELECTION, INCREMENTAL_NEURONS};
 
     /// Enumeration of all the available inputs selection algorithms.
 
@@ -100,7 +103,7 @@ public:
     TrainingStrategy* get_training_strategy_pointer() const;
     bool has_training_strategy() const;
 
-    const OrderSelectionMethod& get_neurons_selection_method() const;
+    const NeuronsSelectionMethod& get_neurons_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
 
     IncrementalNeurons* get_incremental_neurons_pointer() const;
@@ -117,7 +120,7 @@ public:
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
-    void set_neurons_selection_method(const OrderSelectionMethod&);
+    void set_neurons_selection_method(const NeuronsSelectionMethod&);
     void set_neurons_selection_method(const string&);
 
     void set_inputs_selection_method(const InputsSelectionMethod&);
@@ -130,12 +133,6 @@ public:
     void destruct_neurons_selection();
 
     void destruct_inputs_selection();
-
-    // Cross validation methods
-
-    Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t& = 4) const;
-    Vector<NeuralNetwork> perform_random_cross_validation(const size_t& = 4, const double& = 0.25) const;
-    Vector<NeuralNetwork> perform_positives_cross_validation() const;
 
     // Model selection methods
 
@@ -182,7 +179,7 @@ private:
 
     /// Type of order selection algorithm.
 
-    OrderSelectionMethod neurons_selection_method;
+    NeuronsSelectionMethod neurons_selection_method;
 
     /// Type of inputs selection algorithm.
 

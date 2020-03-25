@@ -11,16 +11,23 @@
 
 // System includes
 
+#include <fstream>
+#include <iostream>
+#include <limits>
 #include <math.h>
+#include <vector>
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-#include "tensor.h"
-#include "functions.h"
+#include "config.h"
+//
+
+// Eigen includes
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
+using namespace Eigen;
 
 namespace OpenNN
 {
@@ -43,7 +50,7 @@ struct Descriptives {
 
   // Values constructor.
 
-  explicit Descriptives(const double &, const double &, const double &, const double &);
+  explicit Descriptives(const type&, const type&, const type&, const type&);
 
   /// Destructor.
 
@@ -51,15 +58,15 @@ struct Descriptives {
 
   // Set methods
 
-  void set_minimum(const double &);
+  void set_minimum(const type&);
 
-  void set_maximum(const double &);
+  void set_maximum(const type&);
 
-  void set_mean(const double &);
+  void set_mean(const type&);
 
-  void set_standard_deviation(const double &);
+  void set_standard_deviation(const type&);
 
-  Vector<double> to_vector() const;
+  Tensor<type, 1> to_vector() const;
 
   bool has_minimum_minus_one_maximum_one();
 
@@ -75,19 +82,19 @@ struct Descriptives {
 
   /// Smallest value of a set, function, etc.
 
-  double minimum = 0;
+  type minimum = 0;
 
   /// Biggest value of a set, function, etc.
 
-  double maximum = 0;
+  type maximum = 0;
 
   /// Mean value of a set, function, etc.
 
-  double mean = 0;
+  type mean = 0;
 
   /// Standard deviation value of a set, function, etc.
 
-  double standard_deviation = 0;
+  type standard_deviation = 0;
 
 };
 
@@ -112,19 +119,19 @@ struct BoxPlot {
 
   // Values constructor.
 
-  explicit BoxPlot(const double &, const double &, const double &, const double &, const double &);
+  explicit BoxPlot(const type&, const type&, const type&, const type&, const type& );
 
   virtual ~BoxPlot() {}
 
-  double minimum;
+  type minimum;
 
-  double first_quartile;
+  type first_quartile;
 
-  double median;
+  type median;
 
-  double third_quartile;
+  type third_quartile;
 
-  double maximum;
+  type maximum;
 };
 
 
@@ -140,7 +147,6 @@ struct BoxPlot {
 /// <li> Frequencies.
 /// </ul>
 
-
 struct Histogram
 {
   /// Default constructor.
@@ -149,11 +155,11 @@ struct Histogram
 
   /// Bins number constructor.
 
-  explicit Histogram(const size_t &);
+  explicit Histogram(const Index &);
 
   /// Values constructor.
 
-  explicit Histogram(const Vector<double>&, const Vector<size_t>&);
+  explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
   /// Destructor.
 
@@ -161,185 +167,163 @@ struct Histogram
 
   // Methods
 
-  size_t get_bins_number() const;
+  Index get_bins_number() const;
 
-  size_t count_empty_bins() const;
+  Index count_empty_bins() const;
 
-  size_t calculate_minimum_frequency() const;
+  Index calculate_minimum_frequency() const;
 
-  size_t calculate_maximum_frequency() const;
+  Index calculate_maximum_frequency() const;
 
-  size_t calculate_most_populated_bin() const;
+  Index calculate_most_populated_bin() const;
 
-  Vector<double> calculate_minimal_centers() const;
+  Tensor<type, 1> calculate_minimal_centers() const;
 
-  Vector<double> calculate_maximal_centers() const;
+  Tensor<type, 1> calculate_maximal_centers() const;
 
-  size_t calculate_bin(const double &) const;
+  Index calculate_bin(const type&) const;
 
-  size_t calculate_frequency(const double &) const;
+  Index calculate_frequency(const type&) const;
 
   /// Positions of the bins in the histogram.
 
-  Vector<double> centers;
+  Tensor<type, 1> centers;
 
   /// Minimum positions of the bins in the histogram.
 
-  Vector<double> minimums;
+  Tensor<type, 1> minimums;
 
   /// Maximum positions of the bins in the histogram.
 
-  Vector<double> maximums;
+  Tensor<type, 1> maximums;
 
   /// Population of the bins in the histogram.
 
-  Vector<size_t> frequencies;
+  Tensor<Index, 1> frequencies;
 };
-
-
      // Minimum
 
-     double minimum(const Vector<double>&);
-     size_t minimum(const Vector<size_t>&);
-     time_t minimum(const Vector<time_t>&);
-     double minimum(const Matrix<double>&);
-     double minimum_missing_values(const Vector<double>&);
-     Vector<double> columns_minimums(const Matrix<double>&, const Vector<size_t>& = Vector<size_t>());
-     double minimum_matrix(const Matrix<double>& matrix);
+     type minimum(const Tensor<type, 1>&);
+     Index minimum(const Tensor<Index, 1>&);
+     time_t minimum(const Tensor<time_t, 1>&);
+     type minimum(const Tensor<type, 2>&);
+     Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
      // Maximum
 
-     double maximum(const Vector<double>&);
-     size_t maximum(const Vector<size_t>&);
-     time_t maximum(const Vector<time_t>&);
-     double maximum(const Matrix<double>&);
-     double maximum_missing_values(const Vector<double>&);
-     Vector<double> columns_maximums(const Matrix<double>&, const Vector<size_t>& = Vector<size_t>());
-     double maximum_matrix(const Matrix<double>& matrix);
+     type maximum(const Tensor<type, 1>&);
+     Index maximum(const Tensor<Index, 1>&);
+     time_t maximum(const Tensor<time_t, 1>&);
+     type maximum(const Tensor<type, 2>&);
+     Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
-     double strongest(const Vector<double>&);
-
+     type strongest(const Tensor<type, 1>&);
 
      // Range
-     double range(const Vector<double>&);
+     type range(const Tensor<type, 1>&);
 
      // Mean
-     double mean(const Vector<double>&);
-     double mean(const Vector<double>&, const size_t&, const size_t&);
-     double mean(const Matrix<double>&,  const size_t&);
-     Vector<double> mean(const Tensor<double>&);
-     Vector<double> mean(const Matrix<double>&, const Vector<size_t>&);
-     Vector<double> mean(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
-     double mean_missing_values(const Vector<double>&);
-     Vector<double> mean_missing_values(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
-     Vector<double> columns_mean(const Matrix<double>&);
-     Vector<double> rows_means(const Matrix<double>&, const Vector<size_t>& );
+     type mean(const Tensor<type, 1>&);
+     type mean(const Tensor<type, 1>&, const Index&, const Index&);
+     type mean(const Tensor<type, 2>&,  const Index&);
+     Tensor<type, 1> mean(const Tensor<type, 2>&);
+     Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&);
+     Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+     Tensor<type, 1> columns_mean(const Tensor<type, 2>&);
+     Tensor<type, 1> rows_means(const Tensor<type, 2>&, const Tensor<Index, 1>&);
 
      // Median
-     double median(const Vector<double>&);
-     double median(const Matrix<double>&, const size_t&);
-     Vector<double> median(const Matrix<double>&);
-     Vector<double> median(const Matrix<double>&, const Vector<size_t>&);
-     Vector<double> median(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
-     double median_missing_values(const Vector<double>&);
-     Vector<double> median_missing_values(const Matrix<double>&);
-     Vector<double> median_missing_values(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
+     type median(const Tensor<type, 1>&);
+     type median(const Tensor<type, 2>&, const Index&);
+     Tensor<type, 1> median(const Tensor<type, 2>&);
+     Tensor<type, 1> median(const Tensor<type, 2>&, const Tensor<Index, 1>&);
+     Tensor<type, 1> median(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
      // Variance
-     double variance(const Vector<double>&);
-     double variance_missing_values(const Vector<double>&);
-     Vector<double> explained_variance(const Vector<double>&);
+     type variance(const Tensor<type, 1>&);
 
      // Standard deviation
-     double standard_deviation(const Vector<double>&);
-     Vector<double> standard_deviation(const Vector<double>&, const size_t&);
-     double standard_deviation_missing_values(const Vector<double>&);
+     type standard_deviation(const Tensor<type, 1>&);
+     Tensor<type, 1> standard_deviation(const Tensor<type, 1>&, const Index&);
 
      // Assymetry
-     double asymmetry(const Vector<double>&);
-     double asymmetry_missing_values(const Vector<double>&);
+     type asymmetry(const Tensor<type, 1>&);
 
      // Kurtosis
-     double kurtosis(const Vector<double>&);
-     double kurtosis_missing_values(const Vector<double>&);
+     type kurtosis(const Tensor<type, 1>&);
 
      // Quartiles
-     Vector<double> quartiles(const Vector<double>&);
-     Vector<double> quartiles_missing_values(const Vector<double>&);
+     Tensor<type, 1> quartiles(const Tensor<type, 1>&);
+     Tensor<type, 1> quartiles(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
      // Box plot
-     BoxPlot box_plot(const Vector<double>&);
-     BoxPlot box_plot_missing_values(const Vector<double>&);
-     Vector<BoxPlot> box_plots(const Matrix<double>&, const Vector<Vector<size_t>>&, const Vector<size_t>&);
+     BoxPlot box_plot(const Tensor<type, 1>&);
+     BoxPlot box_plot(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+     Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>&, const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&);
 
      // Descriptives vector
-     Descriptives descriptives(const Vector<double>&);
-     Descriptives descriptives_missing_values(const Vector<double>&);
+     Descriptives descriptives(const Tensor<type, 1>&);
 
      // Descriptives matrix
-     Vector<Descriptives> descriptives(const Matrix<double>&);
-     Vector<Descriptives> descriptives(const Tensor<double>&);
-     Vector<Descriptives> descriptives(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
-     Vector<Descriptives> descriptives_missing_values(const Matrix<double>&);
-     Vector<Descriptives> descriptives_missing_values(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
+     Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&);
+     Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
      // Histograms
-     Histogram histogram(const Vector<double>&, const size_t & = 10);
-     Histogram histogram_missing_values(const Vector<double>&, const size_t & = 10);
-     Histogram histogram_centered(const Vector<double>&, const double& = 0.0, const size_t & = 10);
-     Histogram histogram(const Vector<bool>&);
-     Histogram histogram(const Vector<int>&, const size_t & = 10);
-     Vector<Histogram> histograms(const Matrix<double>&, const size_t& = 10);
-     Vector<Histogram> histograms_missing_values(const Matrix<double>& matrix, const size_t& bins_number);
-     Vector<size_t> total_frequencies(const Vector<Histogram>&);
+     Histogram histogram(const Tensor<type, 1>&, const Index & = 10);
+     Histogram histogram_centered(const Tensor<type, 1>&, const type& = 0.0, const Index & = 10);
+     Histogram histogram(const Tensor<bool, 1>&);
+     Histogram histogram(const Tensor<Index, 1>&, const Index & = 10);
+     Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
+     Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
 
      // Distribution
-     size_t perform_distribution_distance_analysis(const Vector<double>&);
-     size_t perform_distribution_distance_analysis_missing_values(const Vector<double>&, const Vector<size_t>&);
-     double normal_distribution_distance(const Vector<double>&);
-     double half_normal_distribution_distance(const Vector<double>&);
-     double uniform_distribution_distance(const Vector<double>&);
+     Index perform_distribution_distance_analysis(const Tensor<type, 1>&);
+     Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+     type normal_distribution_distance(const Tensor<type, 1>&);
+     type half_normal_distribution_distance(const Tensor<type, 1>&);
+     type uniform_distribution_distance(const Tensor<type, 1>&);
 
      // Normality
-     Vector<bool> perform_normality_analysis(const Vector<double>&);
-     double normality_parameter(const Vector<double>&);
-     bool perform_Lilliefors_normality_test(const Vector<double>&, const double&);
-     Vector<bool> perform_Lilliefors_normality_test(const Vector<double>&, const Vector<double>&);
+     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
+     type normality_parameter(const Tensor<type, 1>&);
+     //bool perform_Lilliefors_normality_test(const Tensor<type, 1>&, const type&);
+     //Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Minimal indices
-     size_t minimal_index(const Vector<double>&);
-     Vector<size_t> minimal_indices(const Vector<double>&, const size_t &);
-     Vector<size_t> minimal_indices_omit(const Matrix<double>&, const double&);
-     Vector<size_t> minimal_indices(const Matrix<double>&);
+     Index minimal_index(const Tensor<type, 1>&);
+     Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index &);
+     Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
 
      // Maximal indices
-     size_t maximal_index(const Vector<double>&);
-     Vector<size_t> maximal_indices(const Vector<double>&, const size_t &);
-     Vector<size_t> maximal_indices(const Matrix<double>&);
-     Vector<size_t> maximal_indices_omit(const Matrix<double>&, const double&);
-     Vector<double> variation_percentage(const Vector<double>&);
-     double column_minimum(const size_t&);
-     double column_maximum(const size_t&);
+     Index maximal_index(const Tensor<type, 1>&);
+     Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index &);
+     Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
+     Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
+     Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
+     type column_minimum(const Index&);
+     type column_maximum(const Index&);
 
      // Means binary
-     Vector<double> means_binary_column(const Matrix<double>&);
-     Vector<double> means_binary_columns(const Matrix<double>&);
-     Vector<double> means_binary_columns_missing_values(const Matrix<double>&);
+     Tensor<type, 1> means_binary_column(const Tensor<type, 2>&);
+     Tensor<type, 1> means_binary_columns(const Tensor<type, 2>&);
 
      // Mean weights
-     double weighted_mean(const Vector<double>&, const Vector<double>&);
-     Vector<size_t> maximal_indices();
-     Vector<Vector<size_t>> minimal_maximal_indices();
+     type weighted_mean(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     Tensor<Index, 1> maximal_indices();
+     Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
-     // Percentiles
-     Vector<double> percentiles(const Vector<double>&);
-     Vector<double> percentiles_missing_values(const Vector<double>&);
+     // Percentiles @todo, mix mising values with percentiles
+     Tensor<type, 1> percentiles(const Tensor<type, 1>&);
+     Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>&);
 
      // Means by categories
-     Vector<double> means_by_categories(const Matrix<double>& matrix);
-     Vector<double> means_by_categories_missing_values(const Matrix<double>& matrix);
+     Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
      // Means continuous
+
+     // NAN methods
+
+     Index count_nan(const Tensor<type,1>&);
 }
 
 #endif // __STATISTICS_H

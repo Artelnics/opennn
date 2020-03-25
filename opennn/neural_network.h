@@ -21,11 +21,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
+#include "config.h"
 #include "data_set.h"
-
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer.h"
@@ -37,8 +34,11 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-
 #include "tinyxml2.h"
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
+#endif
 
 namespace OpenNN
 {
@@ -59,15 +59,15 @@ public:
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Vector<size_t>&);
+   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 
-   explicit NeuralNetwork(const Vector<size_t>&, const size_t&, const Vector<size_t>&, const size_t&);
+   explicit NeuralNetwork(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    explicit NeuralNetwork(const string&);
 
    explicit NeuralNetwork(const tinyxml2::XMLDocument&);
 
-   explicit NeuralNetwork(const Vector<Layer*>&);
+   explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
    NeuralNetwork(const NeuralNetwork&);
 
@@ -75,11 +75,113 @@ public:
 
    virtual ~NeuralNetwork();
 
+   struct ForwardPropagation
+   {
+       /// Default constructor.
+
+       ForwardPropagation() {}
+
+       ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       {
+           batch_instances_number = new_batch_instances_number;
+
+           neural_network_pointer = new_neural_network_pointer;
+
+           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           const Index trainable_layers_number = trainable_layers_pointers.size();
+
+           layers.resize(trainable_layers_number);
+
+           for(Index i = 0; i < trainable_layers_number; i++)
+           {
+               layers(i).set(new_batch_instances_number, trainable_layers_pointers(i));
+           }
+       }
+
+       /// Destructor.
+
+       virtual ~ForwardPropagation() {}
+
+       void print()
+       {
+           const Index layers_number = layers.size();
+
+           cout << "Layers number: " << layers_number << endl;
+
+           for(Index i = 0; i < layers_number; i++)
+           {
+               cout << "Layer " << i+1 << endl;
+
+               layers(i).print();
+           }
+       }
+
+       Index batch_instances_number = 0;
+
+       NeuralNetwork* neural_network_pointer = nullptr;
+
+       Tensor<Layer::ForwardPropagation, 1> layers;
+   };
+
+
+   struct BackPropagation
+   {
+       BackPropagation() {}
+
+       BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       {
+           batch_instances_number = new_batch_instances_number;
+
+           neural_network_pointer = new_neural_network_pointer;
+       }
+
+
+       void set(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       {
+           batch_instances_number = new_batch_instances_number;
+
+           neural_network_pointer = new_neural_network_pointer;
+
+           const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           const Index trainable_layers_number = trainable_layers_pointers.size();
+
+           layers.resize(trainable_layers_number);
+
+           for(Index i = 0; i < trainable_layers_number; i++)
+           {
+               layers(i).set(batch_instances_number, trainable_layers_pointers(i));
+           }
+       }
+
+       void print()
+       {
+           const Index layers_number = layers.size();
+
+           cout << "Layers number: " << layers_number << endl;
+
+           for(Index i = 0; i < layers_number; i++)
+           {
+               cout << "Layer " << i+1 << endl;
+
+               layers(i).print();
+           }
+       }
+
+       Index batch_instances_number = 0;
+
+       NeuralNetwork* neural_network_pointer = nullptr;
+
+       Tensor<Layer::BackPropagation, 1> layers;
+   };
+
+
    // APPENDING LAYERS
 
    void add_layer(Layer*);
 
-   bool check_layer_type(const Layer::LayerType);
+   bool check_layer_type(const Layer::Type);
 
    // Get methods
 
@@ -93,17 +195,17 @@ public:
 
    bool is_empty() const;  
 
-   Vector<string> get_inputs_names() const;
-   string get_input_name(const size_t&) const;
-   size_t get_input_index(const string&) const;
+   Tensor<string, 1> get_inputs_names() const;
+   string get_input_name(const Index&) const;
+   Index get_input_index(const string&) const;
 
-   Vector<string> get_outputs_names() const;
-   string get_output_name(const size_t&) const;
-   size_t get_output_index(const string&) const;
+   Tensor<string, 1> get_outputs_names() const;
+   string get_output_name(const Index&) const;
+   Index get_output_index(const string&) const;
 
-   Vector<Layer*> get_layers_pointers() const;
-   Vector<Layer*> get_trainable_layers_pointers() const;
-   Vector<size_t> get_trainable_layers_indices() const;
+   Tensor<Layer*, 1> get_layers_pointers() const;
+   Tensor<Layer*, 1> get_trainable_layers_pointers() const;
+   Tensor<Index, 1> get_trainable_layers_indices() const;
 
    ScalingLayer* get_scaling_layer_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
@@ -114,7 +216,7 @@ public:
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
    Layer* get_output_layer_pointer() const;
-   Layer* get_layer_pointer(const size_t&) const;
+   Layer* get_layer_pointer(const Index&) const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;
@@ -123,21 +225,23 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ProjectType&, const Vector<size_t>&);
-   void set(const Vector<size_t>&, const size_t&, const Vector<size_t>&, const size_t&);
+   void set(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+   void set(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    void set(const string&);
    void set(const NeuralNetwork&);
 
-   void set_inputs_names(const Vector<string>&);
-   void set_outputs_names(const Vector<string>&);
+   void set_inputs_names(const Tensor<string, 1>&);
+   void set_outputs_names(const Tensor<string, 1>&);
 
-   void set_inputs_number(const size_t&);
-   void set_inputs_number(const Vector<bool>&);
+   void set_inputs_number(const Index&);
+   void set_inputs_number(const Tensor<bool, 1>&);
 
    virtual void set_default();
 
-   void set_layers_pointers(Vector<Layer*>&);
+   void set_device_pointer(Device*);
+
+   void set_layers_pointers(Tensor<Layer*, 1>&);
 
    void set_scaling_layer(ScalingLayer&);
 
@@ -145,73 +249,77 @@ public:
 
    // Layers 
 
-   size_t get_layers_number() const;
-   Vector<size_t> get_layers_neurons_numbers() const;
+   Index get_layers_number() const;
+   Tensor<Index, 1> get_layers_neurons_numbers() const;
 
-   size_t get_trainable_layers_number() const;
+   Index get_trainable_layers_number() const;
+
+   Index get_perceptron_layers_number() const;
+   Index get_probabilistic_layers_number() const;
 
    // Architecture
 
-   size_t get_inputs_number() const;
-   size_t get_outputs_number() const;
+   Index get_inputs_number() const;
+   Index get_outputs_number() const;
 
-   Vector<size_t> get_architecture() const;
+   Tensor<Index, 1> get_architecture() const;
 
    // Parameters
 
-   size_t get_parameters_number() const;
-   size_t get_trainable_parameters_number() const;
-   Vector<double> get_parameters() const;
+   Index get_parameters_number() const;
+   Index get_trainable_parameters_number() const;
+   Tensor<type, 1> get_parameters() const;
 
-   Vector<size_t> get_trainable_layers_parameters_numbers() const;
+   Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
-   Vector<Vector<double>> get_trainable_layers_parameters(const Vector<double>&) const;
+   Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
-   void set_parameters(const Vector<double>&);
+   void set_parameters(Tensor<type, 1>&);
 
    // Parameters initialization methods
 
-   void initialize_parameters(const double&);
+   void set_parameters_constant(const type&);
 
-   void randomize_parameters_uniform(const double& = -1.0, const double& = 1.0);  
-
-   void randomize_parameters_normal(const double& = 0.0, const double& = 1.0);  
+   void set_parameters_random();
 
    // Parameters
 
-   double calculate_parameters_norm() const;
+   type calculate_parameters_norm() const;
    Descriptives calculate_parameters_descriptives() const;
-   Histogram calculate_parameters_histogram(const size_t& = 10) const;
+   Histogram calculate_parameters_histogram(const Index& = 10) const;
 
-   void perturbate_parameters(const double&);
+   void perturbate_parameters(const type&);
 
    // Output 
 
-   Tensor<double> calculate_outputs(const Tensor<double>&);
-   Eigen::MatrixXd calculate_outputs_eigen(const Eigen::MatrixXd&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<double> calculate_trainable_outputs(const Tensor<double>&) const;
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double> calculate_trainable_outputs(const Tensor<double>&, const Vector<double>&) const;
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Matrix<double> calculate_directional_inputs(const size_t&, const Vector<double>&, const double&, const double&, const size_t& = 101) const;
+   Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Vector<Histogram> calculate_outputs_histograms(const size_t& = 1000, const size_t& = 10);
-   Vector<Histogram> calculate_outputs_histograms(const Tensor<double>&, const size_t& = 10);
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
-   vector<double> calculate_outputs_std(const vector<double>&);
+   Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
    // Serialization methods
 
    string object_to_string() const;
  
-   Matrix<string> get_information() const;
+   Tensor<string, 2> get_information() const;
+   Tensor<string, 2> get_perceptron_layers_information() const;
+   Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
+   void inputs_from_XML(const tinyxml2::XMLDocument&);
+   void layers_from_XML(const tinyxml2::XMLDocument&);
+   void outputs_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
-   // virtual void read_XML(  );
+   // virtual void read_XML( );
 
    void print() const;
    void print_summary() const;
@@ -235,36 +343,86 @@ public:
    void save_expression_python(const string&);
    void save_expression_R(const string&);
 
-   /// Calculate de Forward Propagation in Neural Network   
+   /// Calculate de forward propagation in the neural network
 
-   Vector<Layer::FirstOrderActivations> calculate_trainable_forward_propagation(const Tensor<double>&) const;
+   void forward_propagate(const DataSet::Batch& batch,
+                                      ForwardPropagation& forward_propagation) const
+   {
+       const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
+
+       trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
+       for(Index i = 1; i < trainable_layers_number; i++)
+       {
+            trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                        forward_propagation.layers(i));
+       }
+   }
+
+
+   void forward_propagate(const DataSet::Batch& batch,
+                                      Tensor<type, 1>& parameters,
+                                      ForwardPropagation& forward_propagation) const
+   {                       
+       const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
+
+       const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
+
+       const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+
+       trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+
+       Index index = parameters_number;
+
+       for(Index i = 1; i < trainable_layers_number; i++)
+       {
+           const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+           const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+            trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                        potential_parameters,
+                                                                        forward_propagation.layers(i));
+
+            index += parameters_number;
+       }       
+   }
+
 
 protected:
 
    /// Names of inputs
 
-   Vector<string> inputs_names;
+   Tensor<string, 1> inputs_names;
 
    /// Names of ouputs
 
-   Vector<string> outputs_names;
+   Tensor<string, 1> outputs_names;
 
    /// Layers
 
-   Vector<Layer*> layers_pointers;
+   Tensor<Layer*, 1> layers_pointers;
 
    /// Display messages to screen.
 
    bool display = true;
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/neural_network_cuda.h"
+#endif
+
 };
 
 }
 
 #endif
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

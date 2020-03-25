@@ -24,12 +24,18 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-#include "statistics.h"
-#include "transformations.h"
+//#include "statistics.h"
+//
+//
+#include "config.h"
+
+//Eigen includes
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+
 
 using namespace std;
+using namespace Eigen;
 
 namespace OpenNN
 {
@@ -49,17 +55,31 @@ struct RegressionResults
 
     virtual ~RegressionResults() {}
 
+    string write_regression_type() const
+    {
+        switch(regression_type)
+        {
+            case Linear: return "Linear";
+            case Logistic: return "Logistic";
+            case Logarithmic: return "Logarithmic";
+            case Exponential: return "Exponential";
+            case Power: return "Power";
+            case KarlPearson: return "KarlPearson";
+            case OneWayAnova: return "OneWayAnova";
+        }
+    }
+
     /// Independent coefficient of the logistic function.
 
-    double a = static_cast<double>(NAN);
+    type a = static_cast<type>(NAN);
 
     /// x coefficient of the logistic function.
 
-    double b = static_cast<double>(NAN);
+    type b = static_cast<type>(NAN);
 
     /// Correlation coefficient of the  regression.
 
-    double correlation =  static_cast<double>(NAN);
+    type correlation =  static_cast<type>(NAN);
 
     /// Regression method type.
 
@@ -80,152 +100,151 @@ struct CorrelationResults
 
     virtual ~CorrelationResults() {}
 
+    string write_correlation_type() const
+    {
+        switch(correlation_type)
+        {
+            case Linear_correlation: return "Linear";
+            case Logistic_correlation: return "Logistic";
+            case Logarithmic_correlation: return "Logarithmic";
+            case Exponential_correlation: return "Exponential";
+            case Power_correlation: return "Power";
+            case KarlPearson_correlation: return "Karl-Pearson";
+            case OneWayAnova_correlation: return "One-way Anova";
+        }
+
+        return "";
+    }
+
     /// Correlation coefficient.
 
-    double correlation = static_cast<double>(NAN);
+    type correlation = static_cast<type>(NAN);
 
     /// Correlation type.
 
     CorrelationType correlation_type;
 };
-
-
     // Linear
 
-    double linear_correlation(const Vector<double>&, const Vector<double>&);
-    double linear_correlation_missing_values(const Vector<double>&x, const Vector<double>&);
+    type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Rank linear
 
-    double rank_linear_correlation(const Vector<double>&, const Vector<double>&);
-    double rank_linear_correlation_missing_values(const Vector<double>&x, const Vector<double>&);
+    type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type rank_linear_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type, 1>&);
 
     // Exponential
 
-    double exponential_correlation(const Vector<double>&, const Vector<double>&);
-    double exponential_correlation_missing_values(const Vector<double>&, const Vector<double>&);
+    type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Logarithmic
 
-    double logarithmic_correlation(const Vector<double>&, const Vector<double>&);
-    double logarithmic_correlation_missing_values(const Vector<double>&, const Vector<double>&);
-
-    // Logistic
-
-    double logistic_correlation(const Vector<double>&, const Vector<double>&);
-    double logistic_correlation_missing_values(const Vector<double>&, const Vector<double>&);
+    type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Rank Logistic
 
-    double rank_logistic_correlation(const Vector<double>&, const Vector<double>&);
+    type rank_logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Power
 
-    double power_correlation(const Vector<double>&, const Vector<double>&);
-    double power_correlation_missing_values(const Vector<double>&, const Vector<double>&);
+    type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    // Karl Pearson
+
+    type karl_pearson_correlation(const Tensor<type,2>&, const Tensor<type,2>&);
 
     // Time series correlation methods
 
-    Vector<double> autocorrelations(const Vector<double>&, const size_t & = 10);
-    Vector<double> cross_correlations(const Vector<double>&, const Vector<double>&, const size_t & = 10);
+    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
+    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
 
     // Logistic error methods
 
-    double logistic(const double&, const double&, const double&);
+    type logistic(const type&, const type&, const type&);
+    Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
-    double logistic_error(const double&, const double&, const Vector<double>&, const Vector<double>&);
-    double logistic_error_missing_values(const double&, const double&, const Vector<double>&, const Vector<double>&);
+    type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Vector<double> logistic_error_gradient(const double&, const double&, const Vector<double>&, const Vector<double>&);
-    Vector<double> logistic_error_gradient_missing_values(const double&, const double&, const Vector<double>&, const Vector<double>&);
+    Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Regression methods
 
-    RegressionResults linear_regression(const Vector<double>&, const Vector<double>&);
-    RegressionResults linear_regression_missing_values(const Vector<double>&, const Vector<double>&);
+    RegressionResults linear_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults logarithmic_regression(const Vector<double>&, const Vector<double>&);
-    RegressionResults logarithmic_regression_missing_values(const Vector<double>&, const Vector<double>&);
+    RegressionResults logarithmic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults exponential_regression(const Vector<double>&, const Vector<double>&);
-    RegressionResults exponential_regression_missing_values(const Vector<double>&, const Vector<double>&);
+    RegressionResults exponential_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults power_regression(const Vector<double>&, const Vector<double>&);
-    RegressionResults power_regression_missing_values(const Vector<double>&, const Vector<double>&);
+    RegressionResults power_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults logistic_regression(const Vector<double>&, const Vector<double>&);
-    RegressionResults logistic_regression_missing_values(const Vector<double>&, const Vector<double>&);
+    RegressionResults logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Correlation methods
 
-    CorrelationResults linear_correlations(const Vector<double>&, const Vector<double>&);
-    CorrelationResults linear_correlations_missing_values(const Vector<double>&, const Vector<double>&);
+    CorrelationResults linear_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults logarithmic_correlations(const Vector<double>&, const Vector<double>&);
-    CorrelationResults logarithmic_correlations_missing_values(const Vector<double>&, const Vector<double>&);
+    CorrelationResults logarithmic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults exponential_correlations(const Vector<double>&, const Vector<double>&);
-    CorrelationResults exponential_correlations_missing_values(const Vector<double>&, const Vector<double>&);
+    CorrelationResults exponential_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults power_correlations(const Vector<double>&, const Vector<double>&);
-    CorrelationResults power_correlations_missing_values(const Vector<double>&, const Vector<double>&);
+    CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults logistic_correlations(const Vector<double>&, const Vector<double>&);
-    CorrelationResults logistic_correlations_missing_values(const Vector<double>&, const Vector<double>&);
+    CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults karl_pearson_correlations(const Matrix<double>&, const Matrix<double>&);
-    CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>&, const Matrix<double>&);
+    CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    CorrelationResults one_way_anova_correlations(const Matrix<double>&, const Vector<double>&);
-    CorrelationResults one_way_anova_correlations_missing_values(const Matrix<double>&, const Vector<double>&);
+    CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     // Covariance
 
-    double covariance(const Vector<double>&, const Vector<double>&);
-    double covariance_missing_values(const Vector<double>&, const Vector<double>&);
+    type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type covariance_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Matrix<double> covariance_matrix(const Matrix<double>&);
+    Tensor<type, 2> covariance_matrix(const Tensor<type, 2>&);
 
-    Vector<double> less_rank_with_ties(const Vector<double>&);
+    Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>&);
 
     // Contingency tables
 
-    Matrix<size_t> contingency_table(const Vector<string>&, const Vector<string>&);
-    Matrix<size_t> contingency_table(Matrix<string>&);
-    Matrix<size_t> contingency_table(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>& );
+    Tensor<Index, 2> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
+    Tensor<Index, 2> contingency_table(Tensor<string, 2>&);
+    Tensor<Index, 2> contingency_table(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
-    double chi_square_test(const Matrix<double>&);
+    type chi_square_test(const Tensor<type, 2>&);
 
-    double chi_square_critical_point(const double&, const double&);
-
-    double karl_pearson_correlation(const Vector<string>&, const Vector<string>&);
-    double karl_pearson_correlation(const Matrix<double>&, const Matrix<double>&);
-    double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&);
+    type chi_square_critical_point(const type&, const type&);
 
     //One way ANOVA
 
-    double one_way_anova(const Matrix<double>&, const Vector<double>&);
-    double one_way_anova(const Matrix<double>& ,const size_t&, const Vector<size_t>& );
+    type one_way_anova(const Tensor<type, 2>&, const Tensor<type, 1>&);
+    type one_way_anova(const Tensor<type, 2>& ,const Index&, const Tensor<Index, 1>&);
 
-    double one_way_anova_correlation(const Matrix<double>&, const Vector<double>&);
-    double one_way_anova_correlation_missing_values(const Matrix<double>&, const Vector<double>&);
+    type one_way_anova_correlation(const Tensor<type, 2>&, const Tensor<type, 1>&);
+    type one_way_anova_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-    double f_snedecor_critical_point(const Matrix<double>&, const double&);
-    double f_snedecor_critical_point(const Matrix<string>&, const double&);    
-    double f_snedecor_critical_point(const Matrix<double>&);
-    double f_snedecor_critical_point_missing_values(const Matrix<double>&);
+    type f_snedecor_critical_point(const Tensor<type, 2>&, const type&);
+    type f_snedecor_critical_point(const Tensor<string, 2>&, const type&);
+    type f_snedecor_critical_point(const Tensor<type, 2>&);
+    type f_snedecor_critical_point_missing_values(const Tensor<type, 2>&);
 
-    double one_way_anova_correlation(const Matrix<double>& ,const size_t& , const Vector<size_t>& );
+    type one_way_anova_correlation(const Tensor<type, 2>& ,const Index& , const Tensor<Index, 1>&);
 
-    pair<Vector<double>, Vector<double>> filter_missing_values(const Vector<double>&, const Vector<double>&);
+    // Missing values methods
 
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    Index count_NAN(const Tensor<type, 1>&);
+
+    // Other methods
+
+    Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
 }
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
