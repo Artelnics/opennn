@@ -1300,24 +1300,24 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
     const type length = (max - min)/static_cast<type>(bins_number);
 
-    minimums[bin_center-1] = center - length;
-    maximums[bin_center-1] = center + length;
-    centers[bin_center-1] = center;
+    minimums(bin_center-1) = center - length;
+    maximums(bin_center-1) = center + length;
+    centers(bin_center-1) = center;
 
     // Calculate bins center
 
     for(Index i = bin_center; i < bins_number; i++) // Upper centers
     {
-        minimums(i) = minimums[i - 1] + length;
-        maximums(i) = maximums[i - 1] + length;
+        minimums(i) = minimums(i - 1) + length;
+        maximums(i) = maximums(i - 1) + length;
 
         centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
     }
 
     for(Index i = static_cast<Index>(bin_center)-2; i >= 0; i--) // Lower centers
     {
-        minimums(i) = minimums[i + 1] - length;
-        maximums(i) = maximums[i + 1] - length;
+        minimums(i) = minimums(i + 1) - length;
+        maximums(i) = maximums(i + 1) - length;
 
         centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
     }
@@ -1336,9 +1336,9 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
             }
         }
 
-        if(vector(i) >= minimums[bins_number - 1])
+        if(vector(i) >= minimums(bins_number - 1))
         {
-            frequencies[bins_number - 1]++;
+            frequencies(bins_number - 1)++;
         }
     }
 
@@ -1349,8 +1349,6 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
     histogram.frequencies = frequencies;
 
     return histogram;
-
-//    return Histogram();
 }
 
 

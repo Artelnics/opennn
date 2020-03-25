@@ -455,6 +455,9 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
+    cout << "ouputs_minimum: " << outputs_minimum << endl;
+    cout << "ouputs_maximum: " << outputs_maximum << endl;
+
     // Error data
 
     Tensor<type, 3> error_data(testing_instances_number, 3, outputs_number);
@@ -536,19 +539,19 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
        const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
        const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-       const Index outputs_number = unscaling_layer_pointer->get_neurons_number();
+       const Index outputs_number = neural_network_pointer->get_outputs_number();
 
        // Error data
 
        Tensor<type, 2> error_data(testing_instances_number, outputs_number);
 
-       Tensor<type, 2> difference_absolute_value = (targets - outputs).abs();
+       Tensor<type, 2> difference_value = (targets - outputs)/*.abs()*/;
 
        for(Index i = 0; i < testing_instances_number; i++)
        {
            for(Index j = 0; j < outputs_number; j++)
            {
-               error_data(i,j) = (difference_absolute_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
+               error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
            }
        }
 
@@ -684,13 +687,13 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Inde
 {
     const Tensor<type, 2> error_data = calculate_percentage_error_data();
 
-    const Index outputs_number = error_data.size();
+    const Index outputs_number = error_data.dimension(1);
 
     Tensor<Histogram, 1> histograms(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        histograms[i] = histogram_centered(error_data.chip(0,i), 0.0, bins_number);
+        histograms(i) = histogram_centered(error_data.chip(i,1), 0.0, bins_number);
     }
 
     return histograms;
