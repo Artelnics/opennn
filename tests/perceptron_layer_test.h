@@ -113,6 +113,15 @@ public:
 
    void test_calculate_outputs();
 
+   // Forward propagate
+
+   void test_forward_propagate();
+
+   // Hidden delta
+
+   void test_calculate_hidden_delta();
+   void test_calculate_output_delta();
+
    // Expression methods
 
    void test_get_activation_function_expression();

@@ -1241,6 +1241,25 @@ void PerceptronLayerTest::test_calculate_outputs()
    assert_true(abs(perceptron_layer.calculate_outputs(inputs)(0,0) - perceptron_layer.calculate_outputs(inputs, parameters)(0,0)) < static_cast<type>(1e-3), LOG);
 }
 
+//----------------------------------------------
+
+void PerceptronLayerTest::test_forward_propagate()
+{
+    cout << "test_forward_propagate\n";
+}
+
+void PerceptronLayerTest::test_calculate_output_delta()
+{
+    cout << "test_calculate_output_delta\n";
+}
+
+void PerceptronLayerTest::test_calculate_hidden_delta()
+{
+    cout << "test_calculate_hidden_delta\n";
+}
+
+//----------------------------------------------
+
 void PerceptronLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
@@ -1355,8 +1374,17 @@ void PerceptronLayerTest::run_test_case()
 
    test_calculate_outputs();
 
+   // Forward propagate
 
-  // Expression methods
+   test_forward_propagate();
+
+   // Delta methods
+
+   test_calculate_output_delta();
+
+   test_calculate_hidden_delta();
+
+   // Expression methods
 
    test_write_expression();
 
