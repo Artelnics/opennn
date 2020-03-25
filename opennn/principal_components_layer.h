@@ -7,8 +7,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                             
 
-#ifndef PRINCIPALCOMPONENTSLAYER_H
-#define PRINCIPALCOMPONENTSLAYER_H
+
+
+#ifndef PrincipalComponentsLayer_H
+#define PrincipalComponentsLayer_H
 
 // System includes
 
@@ -21,9 +23,12 @@
 
 // OpenNN includes
 
-#include "config.h"
-
+#include "vector.h"
+#include "matrix.h"
+#include "metrics.h"
 #include "layer.h"
+
+
 
 #include "tinyxml2.h"
 
@@ -46,7 +51,7 @@ public:
 
    // INPUTS AND PRINCIPAL COMPONENTS NUMBER CONSTRUCTOR
 
-   explicit PrincipalComponentsLayer(const Index&, const Index&);
+   explicit PrincipalComponentsLayer(const size_t&, const size_t&);
 
    // COPY CONSTRUCTOR
 
@@ -71,14 +76,14 @@ public:
 
    // Get methods
 
-   Tensor<type, 2> get_principal_components() const;
-   Tensor<type, 1> get_means() const;
+   Matrix<double> get_principal_components() const;
+   Vector<double> get_means() const;
 
-   Tensor<type, 1> get_explained_variance() const;
+   Vector<double> get_explained_variance() const;
 
-   Index get_inputs_number() const;
-   Index get_principal_components_number() const;
-   Index get_neurons_number() const;
+   size_t get_inputs_number() const;
+   size_t get_principal_components_number() const;
+   size_t get_neurons_number() const;
 
 
    // Inputs principal components function
@@ -90,19 +95,19 @@ public:
    // Set methods
 
    void set();
-   void set(const Index&, const Index&);
+   void set(const size_t&, const size_t&);
    void set(const PrincipalComponentsLayer&);
 
-   void set_inputs_number(const Index&);
-   void set_principal_components_number(const Index&);
+   void set_inputs_number(const size_t&);
+   void set_principal_components_number(const size_t&);
 
-   void set_principal_component(const Index&, const Tensor<type, 1>&);
-   void set_principal_components(const Tensor<type, 2>&);
+   void set_principal_component(const size_t&, const Vector<double>&);
+   void set_principal_components(const Matrix<double>&);
 
-   void set_means(const Tensor<type, 1>&);
-   void set_means(const Index&, const type&);
+   void set_means(const Vector<double>&);
+   void set_means(const size_t&, const double&);
 
-   void set_explained_variance(const Tensor<type, 1>&);
+   void set_explained_variance(const Vector<double>&);
 
    virtual void set_default();
 
@@ -117,14 +122,14 @@ public:
 
    // Inputs principal components function
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
 
-   string write_no_principal_components_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_principal_components_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_no_principal_components_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_principal_components_expression(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
@@ -140,24 +145,24 @@ protected:
 
    /// Inputs number
 
-   Index inputs_number;
+   size_t inputs_number;
 
    /// Principal components number
 
-   Index principal_components_number;
+   size_t principal_components_number;
 
    /// Means of the input variables
 
-   Tensor<type, 1> means;
+   Vector<double> means;
 
    /// Contains all the principal components getd in rows and sorted
    /// according to their relative explained variance.
 
-   Tensor<type, 2> principal_components;
+   Matrix<double> principal_components;
 
    /// Explained variances for every of the principal components
 
-   Tensor<type, 1> explained_variance;
+   Vector<double> explained_variance;
 
    /// Principal components layer method
 
@@ -173,7 +178,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -37,23 +37,23 @@ public:
 
    // Get methods
 
-   Index get_tests_count() const;
-   Index get_tests_passed_count() const;
-   Index get_tests_failed_count() const;
+   size_t get_tests_count() const;
+   size_t get_tests_passed_count() const;
+   size_t get_tests_failed_count() const;
 
    bool get_numerical_differentiation_tests() const;
-   Index get_random_tests_number() const;
+   size_t get_random_tests_number() const;
 
    const bool& get_display() const;
 
    // Set methods
 
-   void set_tests_count(const Index&);
-   void set_tests_passed_count(const Index&);
-   void set_tests_failed_count(const Index&);
+   void set_tests_count(const size_t&);
+   void set_tests_passed_count(const size_t&);
+   void set_tests_failed_count(const size_t&);
 
    void set_numerical_differentiation_tests(const bool&);
-   void set_random_tests_number(const Index&);
+   void set_random_tests_number(const size_t&);
 
    void set_message(const string&);
 
@@ -76,15 +76,15 @@ protected:
 
    /// Number of performed tests.
 
-   Index tests_count;
+   size_t tests_count;
 
    /// Number of tests which have passed the test case.
  
-   Index tests_passed_count;
+   size_t tests_passed_count;
 
    /// Number of tests which have failed the test case.
 
-   Index tests_failed_count;
+   size_t tests_failed_count;
 
    /// True if test using numerical differentiation are to be performed.
 
@@ -92,7 +92,7 @@ protected:
 
    /// Number of iterations in random tests loops.
 
-   Index random_tests_number;
+   size_t random_tests_number;
 
    /// True if messages from this class are to be displayed, false otherwise.
 

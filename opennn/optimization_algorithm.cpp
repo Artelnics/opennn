@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S
+//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S               
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,13 +11,13 @@
 namespace OpenNN
 {
 
-/// Default constructor.
-/// It creates a optimization algorithm object not associated to any loss index object.
+/// Default constructor. 
+/// It creates a optimization algorithm object not associated to any loss index object.  
 
 OptimizationAlgorithm::OptimizationAlgorithm()
-    : loss_index_pointer(nullptr)
-{
-    set_default();
+ : loss_index_pointer(nullptr)
+{ 
+   set_default();
 }
 
 
@@ -25,27 +25,27 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
-    : loss_index_pointer(new_loss_index_pointer)
+ : loss_index_pointer(new_loss_index_pointer)
 {
-    set_default();
+   set_default();
 }
 
 
-/// XML constructor.
-/// It creates a optimization algorithm object not associated to any loss index object.
+/// XML constructor. 
+/// It creates a optimization algorithm object not associated to any loss index object. 
 /// It also loads the other members from a XML document.
 
 OptimizationAlgorithm::OptimizationAlgorithm(const tinyxml2::XMLDocument& document)
-    : loss_index_pointer(nullptr)
-{
-    from_XML(document);
+ : loss_index_pointer(nullptr)
+{ 
+   from_XML(document);
 }
 
 
 /// Destructor.
 
 OptimizationAlgorithm::~OptimizationAlgorithm()
-{
+{ 
 }
 
 
@@ -54,7 +54,7 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 
 LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
     if(!loss_index_pointer)
     {
@@ -67,9 +67,9 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
         throw logic_error(buffer.str());
     }
 
-#endif
+    #endif
 
-    return loss_index_pointer;
+   return(loss_index_pointer);
 }
 
 
@@ -94,23 +94,23 @@ bool OptimizationAlgorithm::has_loss_index() const
 
 const bool& OptimizationAlgorithm::get_display() const
 {
-    return display;
+   return display;
 }
 
 
 /// Returns the number of iterations between the training showing progress.
 
-const Index& OptimizationAlgorithm::get_display_period() const
+const size_t& OptimizationAlgorithm::get_display_period() const
 {
-    return display_period;
+   return(display_period);
 }
 
 
 /// Returns the number of iterations between the training saving progress.
 
-const Index& OptimizationAlgorithm::get_save_period() const
+const size_t& OptimizationAlgorithm::get_save_period() const
 {
-    return save_period;
+   return(save_period);
 }
 
 
@@ -118,36 +118,30 @@ const Index& OptimizationAlgorithm::get_save_period() const
 
 const string& OptimizationAlgorithm::get_neural_network_file_name() const
 {
-    return neural_network_file_name;
+   return(neural_network_file_name);
 }
 
 
 /// Sets the loss index pointer to nullptr.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of members to their default values. 
 
 void OptimizationAlgorithm::set()
 {
-    loss_index_pointer = nullptr;
+   loss_index_pointer = nullptr;
 
-    set_default();
+   set_default();
 }
 
 
 /// Sets a new loss index pointer.
-/// It also sets the rest of members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// It also sets the rest of members to their default values. 
+/// @param new_loss_index_pointer Pointer to a loss index object. 
 
 void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 {
-    loss_index_pointer = new_loss_index_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
-    set_default();
-}
-
-
-void OptimizationAlgorithm::set_device_pointer(Device* new_device_pointer)
-{
-    device_pointer = new_device_pointer;
+   set_default();
 }
 
 
@@ -156,7 +150,7 @@ void OptimizationAlgorithm::set_device_pointer(Device* new_device_pointer)
 
 void OptimizationAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-    loss_index_pointer = new_loss_index_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 }
 
 
@@ -167,7 +161,7 @@ void OptimizationAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_poi
 
 void OptimizationAlgorithm::set_display(const bool& new_display)
 {
-    display = new_display;
+   display = new_display;
 }
 
 
@@ -175,26 +169,26 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
+void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
 {
+   
 
+   #ifdef __OPENNN_DEBUG__
 
-#ifdef __OPENNN_DEBUG__
+   if(new_display_period <= 0)
+   {
+      ostringstream buffer;
 
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
+      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+             << "void set_display_period(const size_t&) method.\n"
+             << "Display period must be greater than 0.\n";
 
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_display_period(const Index&) method.\n"
-               << "Display period must be greater than 0.\n";
+      throw logic_error(buffer.str());
+   }
 
-        throw logic_error(buffer.str());
-    }
+   #endif
 
-#endif
-
-    display_period = new_display_period;
+   display_period = new_display_period;
 }
 
 
@@ -202,26 +196,26 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 /// @param new_save_period
 /// Number of iterations between the training saving progress.
 
-void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
+void OptimizationAlgorithm::set_save_period(const size_t& new_save_period)
 {
+   
 
+   #ifdef __OPENNN_DEBUG__
 
-#ifdef __OPENNN_DEBUG__
+   if(new_save_period <= 0)
+   {
+      ostringstream buffer;
 
-    if(new_save_period <= 0)
-    {
-        ostringstream buffer;
+      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+             << "void set_save_period(const size_t&) method.\n"
+             << "Save period must be greater than 0.\n";
 
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_save_period(const Index&) method.\n"
-               << "Save period must be greater than 0.\n";
+      throw logic_error(buffer.str());
+   }
 
-        throw logic_error(buffer.str());
-    }
+   #endif
 
-#endif
-
-    save_period = new_save_period;
+   save_period = new_save_period;
 }
 
 
@@ -231,7 +225,7 @@ void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 
 void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neural_network_file_name)
 {
-    neural_network_file_name = new_neural_network_file_name;
+   neural_network_file_name = new_neural_network_file_name;
 }
 
 
@@ -239,46 +233,46 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 void OptimizationAlgorithm::set_default()
 {
-    display = true;
+   display = true;
 
-    display_period = 5;
+   display_period = 5;
 
-    save_period = UINT_MAX;
+   save_period = UINT_MAX;
 
-    neural_network_file_name = "neural_network.xml";
+   neural_network_file_name = "neural_network.xml";
 }
 
 
 /// Performs a default checking for optimization algorithms.
 /// In particular, it checks that the loss index pointer associated to the optimization algorithm is not nullptr,
 /// and that the neural network associated to that loss index is neither nullptr.
-/// If that checkings are not hold, an exception is thrown.
+/// If that checkings are not hold, an exception is thrown. 
 
 void OptimizationAlgorithm::check() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    ostringstream buffer;
+   ostringstream buffer;
 
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
+   if(!loss_index_pointer)
+   {
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+             << "void check() const method.\n"
+             << "Pointer to loss index is nullptr.\n";
 
-        throw logic_error(buffer.str());
-    }
+      throw logic_error(buffer.str());	  
+   }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    if(neural_network_pointer == nullptr)
-    {
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
+   if(neural_network_pointer == nullptr)
+   {
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+             << "void check() const method.\n"
+             << "Pointer to neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
-    }
+      throw logic_error(buffer.str());
+   }
 
 #endif
 }
@@ -301,14 +295,14 @@ tinyxml2::XMLDocument* OptimizationAlgorithm::to_XML() const
 
     // Display
     {
-        tinyxml2::XMLElement* element = document->NewElement("Display");
-        optimization_algorithm_element->LinkEndChild(element);
+       tinyxml2::XMLElement* element = document->NewElement("Display");
+       optimization_algorithm_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << display;
+       buffer.str("");
+       buffer << display;
 
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
+       tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
+       element->LinkEndChild(text);
     }
 
     return document;
@@ -358,24 +352,24 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Display
-    {
-        const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+  // Display
+  {
+     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-        if(display_element)
+     if(display_element)
+     {
+        const string new_display_string = display_element->GetText();
+
+        try
         {
-            const string new_display_string = display_element->GetText();
-
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+           set_display(new_display_string != "0");
         }
-    }
+        catch(const logic_error& e)
+        {
+           cerr << e.what() << endl;
+        }
+     }
+  }
 }
 
 
@@ -383,21 +377,21 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 string OptimizationAlgorithm::object_to_string() const
 {
-    ostringstream buffer;
+   ostringstream buffer;
 
-    buffer << "Training strategy\n"
-           << "Display: " << display << "\n";
+   buffer << "Training strategy\n" 
+          << "Display: " << display << "\n";
 
-    return buffer.str();
+   return buffer.str();
 }
 
 
 /// Returns a default(empty) string matrix containing the members
 /// of the optimization algorithm object.
 
-Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
+Matrix<string> OptimizationAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix;
+    Matrix<string> string_matrix;
 
     return string_matrix;
 }
@@ -407,45 +401,45 @@ Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 
 void OptimizationAlgorithm::print() const
 {
-    cout << object_to_string();
+   cout << object_to_string();
 }
 
 
 /// Saves to a XML-type file the members of the optimization algorithm object.
-/// @param file_name Name of optimization algorithm XML-type file.
+/// @param file_name Name of optimization algorithm XML-type file. 
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+   tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+   document->SaveFile(file_name.c_str());
 
-    delete document;
+   delete document;
 }
 
 
 /// Loads a gradient descent object from a XML-type file.
-/// Please mind about the file format, wich is specified in the User's Guide.
-/// @param file_name Name of optimization algorithm XML-type file.
+/// Please mind about the file format, wich is specified in the User's Guide. 
+/// @param file_name Name of optimization algorithm XML-type file. 
 
 void OptimizationAlgorithm::load(const string& file_name)
 {
-    set_default();
+   set_default();
 
-    tinyxml2::XMLDocument document;
+   tinyxml2::XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
+   if(document.LoadFile(file_name.c_str()))
+   {
+      ostringstream buffer;
 
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
+             << "void load(const string&) method.\n"
+             << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
-    }
+      throw logic_error(buffer.str());
+   }
 
-    from_XML(document);
+   from_XML(document);
 }
 
 
@@ -456,25 +450,33 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
     switch(stopping_condition)
     {
     case MinimumParametersIncrementNorm:
+    {
         return "Minimum parameters increment norm";
-
+    }
     case MinimumLossDecrease:
+    {
         return "Minimum loss decrease";
-
+    }
     case LossGoal:
+    {
         return "Loss goal";
-
+    }
     case GradientNormGoal:
+    {
         return "Gradient norm goal";
-
+    }
     case MaximumSelectionErrorIncreases:
+    {
         return "Maximum selection error increases";
-
+    }
     case MaximumEpochsNumber:
+    {
         return "Maximum number of iterations";
-
+    }
     case MaximumTime:
+    {
         return "Maximum training time";
+    }
     }
 
     return string();
@@ -484,101 +486,38 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 /// Resizes all the training history variables.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_training_history(const Index& new_size)
+void OptimizationAlgorithm::Results::resize_training_history(const size_t& new_size)
 {
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
 }
 
-
-/// Resizes the training and selection error history keeping the values.
-/// @param new_size Size of training history variables.
-
-void OptimizationAlgorithm::Results::resize_error_history(const Index& new_size)
-{
-    const Tensor<type, 1> old_training_error_history = training_error_history;
-    const Tensor<type, 1> old_selection_error_history = selection_error_history;
-
-    training_error_history.resize(new_size);
-    selection_error_history.resize(new_size);
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        training_error_history(i) = old_training_error_history(i);
-        selection_error_history(i) = old_selection_error_history(i);
-    }
-}
-
-
-/// Writes the time from seconds in format HH:mm:ss.
-
-const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
-{
-
-#ifdef __OPENNN_DEBUG__
-
-    if(time > static_cast<type>(3600e5))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
-               << "Time must be lower than 10e5 seconds.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(time < static_cast<type>(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
-               << "Time must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-#endif
-
-    int hours = static_cast<int>(time) / 3600;
-    int seconds = static_cast<int>(time) % 3600;
-    int minutes = seconds / 60;
-    seconds = seconds % 60;
-
-    ostringstream elapsed_time;
-
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds;
-
-    return elapsed_time.str();
-}
 
 /// Returns a string representation of the current quasi-Newton method results structure.
 
 string OptimizationAlgorithm::Results::object_to_string() const
 {
-    ostringstream buffer;
+   ostringstream buffer;
 
-    buffer << "% Results\n";
+   buffer << "% Results\n";
 
-    // Loss history
+   // Loss history
 
-    if(training_error_history.dimension(0) != 0)
-    {
-        buffer << "% Training error history:\n"
-               << training_error_history << "\n";
-    }
+   if(!training_error_history.empty())
+   {
+       buffer << "% Training error history:\n"
+              << training_error_history << "\n";
+   }
 
-    // Selection loss history
+   // Selection loss history
 
-    if(selection_error_history.dimension(0) != 0)
-    {
-        buffer << "% Selection loss history:\n"
-               << selection_error_history << "\n";
-    }
+   if(!selection_error_history.empty())
+   {
+       buffer << "% Selection loss history:\n"
+              << selection_error_history << "\n";
+   }
 
-    return buffer.str();
+   return buffer.str();
 }
 
 
@@ -591,89 +530,103 @@ void OptimizationAlgorithm::Results::save(const string&) const
 
 
 
-Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Index& precision) const
+Matrix<string> OptimizationAlgorithm::Results::write_final_results(const int& precision) const
 {
-    ostringstream buffer;
+   ostringstream buffer;
 
-    Tensor<string, 2> final_results(7, 2);
+   Vector<string> names;
+   Vector<string> values;
 
-    // Final parameters norm
+   // Final parameters norm
 
-    final_results(0,0) = "Final parameters norm";
+   names.push_back("Final parameters norm");
 
-    buffer.str("");
-    buffer << setprecision(precision) << final_parameters_norm;
+   buffer.str("");
+   buffer << setprecision(precision) << final_parameters_norm;
 
-    final_results(0,1) = buffer.str();
+   values.push_back(buffer.str());
 
-    // Final loss
+   // Final loss
 
-    final_results(1,0) = "Final training error";
+   names.push_back("Final training error");
 
-    buffer.str("");
-    buffer << setprecision(precision) << final_training_error;
+   buffer.str("");
+   buffer << setprecision(precision) << final_training_error;
 
-    final_results(1,1) = buffer.str();
+   values.push_back(buffer.str());
 
-    // Final selection error
+   // Final selection error
 
-    final_results(2,0) = "Final selection error";
+//   const LossIndex* loss_index_pointer = quasi_Newton_method_pointer->get_loss_index_pointer();
 
-    buffer.str("");
-    buffer << setprecision(precision) << final_selection_error;
+//   if(loss_index_pointer->has_selection())
+//   {
+       names.push_back("Final selection error");
 
-    final_results(2,1) = buffer.str();
+       buffer.str("");
+       buffer << setprecision(precision) << final_selection_error;
 
-    // Final gradient norm
+       values.push_back(buffer.str());
+//    }
 
-    final_results(3,0) = "Final gradient norm";
+   // Final gradient norm
 
-    buffer.str("");
-    buffer << setprecision(precision) << final_gradient_norm;
+   names.push_back("Final gradient norm");
 
-    final_results(3,1) = buffer.str();
+   buffer.str("");
+   buffer << setprecision(precision) << final_gradient_norm;
 
-    // Final training rate
+   values.push_back(buffer.str());
 
-    //   names.push_back("Final training rate");
+   // Final training rate
 
-    //   buffer.str("");
-    //   buffer << setprecision(precision) << final_learning_rate;
+//   names.push_back("Final training rate");
 
-    //   values.push_back(buffer.str());
+//   buffer.str("");
+//   buffer << setprecision(precision) << final_learning_rate;
 
-    // Epochs number
+//   values.push_back(buffer.str());
 
-    final_results(4,0) = "Epochs number";
+   // Epochs number
 
-    buffer.str("");
-    buffer << epochs_number;
+   names.push_back("Epochs number");
 
-    final_results(4,1) = buffer.str();
+   buffer.str("");
+   buffer << epochs_number;
 
-    // Elapsed time
+   values.push_back(buffer.str());
 
-    final_results(5,0) = "Elapsed time";
+   // Elapsed time
 
-    buffer.str("");
-    buffer << setprecision(precision) << elapsed_time;
+   names.push_back("Elapsed time");
 
-    final_results(5,1) = buffer.str();
+   buffer.str("");
+   buffer << write_elapsed_time(elapsed_time);
 
-    // Stopping criteria
+   values.push_back(buffer.str());
 
-    final_results(6,0) = "Stopping criterion";
+   // Stopping criteria
 
-    final_results(6,1) = write_stopping_condition();
+   names.push_back("Stopping criterion");
 
-    return final_results;
+   values.push_back(write_stopping_condition());
+
+   const size_t rows_number = names.size();
+   const size_t columns_number = 2;
+
+   Matrix<string> final_results(rows_number, columns_number);
+
+   final_results.set_column(0, names, "name");
+   final_results.set_column(1, values, "value");
+
+   return(final_results);
 }
 
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

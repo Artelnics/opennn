@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   W E I G T H E D   S Q U A R E D   E R R O R   C L A S S
+//   W E I G T H E D   S Q U A R E D   E R R O R   C L A S S               
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,7 +11,7 @@
 namespace OpenNN
 {
 
-/// Default constructor.
+/// Default constructor. 
 /// It creates a weighted squared error term not associated to any
 /// neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
@@ -22,7 +22,7 @@ WeightedSquaredError::WeightedSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
+/// Neural network constructor. 
 /// It creates a weighted squared error term object associated to a
 /// neural network object but not measured on any data set object.
 /// It also initializes all the rest of class members to their default values.
@@ -35,7 +35,7 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
 }
 
 
-/// Data set constructor.
+/// Data set constructor. 
 /// It creates a weighted squared error term not associated to any
 /// neural network but to be measured on a given data set object.
 /// It also initializes all the rest of class members to their default values.
@@ -48,7 +48,7 @@ WeightedSquaredError::WeightedSquaredError(DataSet* new_data_set_pointer)
 }
 
 
-/// Neural network and data set constructor.
+/// Neural network and data set constructor. 
 /// It creates a weighted squared error term object associated to a
 /// neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -62,7 +62,7 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
 }
 
 
-/// XML constructor.
+/// XML constructor. 
 /// It creates a weighted squared error object with all pointers set to nullptr.
 /// The object members are loaded by means of a XML document.
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
@@ -77,7 +77,7 @@ WeightedSquaredError::WeightedSquaredError(const tinyxml2::XMLDocument& weighted
 }
 
 
-/// Copy constructor.
+/// Copy constructor. 
 /// It creates a copy of an existing weighted squared error object.
 /// @param other_weighted_squared_error Weighted squared error object to be copied.
 
@@ -101,25 +101,25 @@ WeightedSquaredError::~WeightedSquaredError()
 
 /// Returns the weight of the positives.
 
-type WeightedSquaredError::get_positives_weight() const
+double WeightedSquaredError::get_positives_weight() const
 {
-    return positives_weight;
+    return(positives_weight);
 }
 
 
 /// Returns the weight of the negatives.
 
-type WeightedSquaredError::get_negatives_weight() const
+double WeightedSquaredError::get_negatives_weight() const
 {
-    return negatives_weight;
+    return(negatives_weight);
 }
 
 
 /// Returns the normalization coefficient.
 
-type WeightedSquaredError::get_training_normalization_coefficient() const
+double WeightedSquaredError::get_training_normalization_coefficient() const
 {
-    return training_normalization_coefficient;
+    return(training_normalization_coefficient);
 }
 
 
@@ -149,7 +149,7 @@ void WeightedSquaredError::set_default()
 /// Set a new weight for the positives values.
 /// @param new_positives_weight New weight for the positives.
 
-void WeightedSquaredError::set_positives_weight(const type& new_positives_weight)
+void WeightedSquaredError::set_positives_weight(const double& new_positives_weight)
 {
     positives_weight = new_positives_weight;
 }
@@ -158,7 +158,7 @@ void WeightedSquaredError::set_positives_weight(const type& new_positives_weight
 /// Set a new weight for the negatives values.
 /// @param new_negatives_weight New weight for the negatives.
 
-void WeightedSquaredError::set_negatives_weight(const type& new_negatives_weight)
+void WeightedSquaredError::set_negatives_weight(const double& new_negatives_weight)
 {
     negatives_weight = new_negatives_weight;
 }
@@ -167,7 +167,7 @@ void WeightedSquaredError::set_negatives_weight(const type& new_negatives_weight
 /// Set a new normalization coefficient.
 /// @param new_training_normalization_coefficient New normalization coefficient.
 
-void WeightedSquaredError::set_training_normalization_coefficient(const type& new_training_normalization_coefficient)
+void WeightedSquaredError::set_training_normalization_coefficient(const double& new_training_normalization_coefficient)
 {
     training_normalization_coefficient = new_training_normalization_coefficient;
 }
@@ -177,7 +177,7 @@ void WeightedSquaredError::set_training_normalization_coefficient(const type& ne
 /// @param new_positives_weight New weight for the positives.
 /// @param new_negatives_weight New weight for the negatives.
 
-void WeightedSquaredError::set_weights(const type& new_positives_weight, const type& new_negatives_weight)
+void WeightedSquaredError::set_weights(const double& new_positives_weight, const double& new_negatives_weight)
 {
     positives_weight = new_positives_weight;
     negatives_weight = new_negatives_weight;
@@ -196,10 +196,10 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
+    const Vector<size_t> target_distribution = data_set_pointer->calculate_target_distribution();
 
-    const Index negatives = target_distribution[0];
-    const Index positives = target_distribution[1];
+    const size_t negatives = target_distribution[0];
+    const size_t positives = target_distribution[1];
 
     if(positives == 0 || negatives == 0)
     {
@@ -210,7 +210,7 @@ void WeightedSquaredError::set_weights()
     }
 
     negatives_weight = 1.0;
-    positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
+    positives_weight = static_cast<double>(negatives)/static_cast<double>(positives);
 }
 
 
@@ -226,11 +226,13 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
 #endif
 
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    
 
-    const Index negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
+    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
 
-    training_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+    const size_t negatives = data_set_pointer->calculate_training_negatives(targets_indices[0]);
+
+    training_normalization_coefficient = negatives*negatives_weight*0.5;
 }
 
 
@@ -246,93 +248,260 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 
 #endif
 
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
 
-    const Index negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
+    const size_t negatives = data_set_pointer->calculate_selection_negatives(targets_indices[0]);
 
-    selection_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+    selection_normalization_coefficient = negatives*negatives_weight*0.5;
 }
 
 
-type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const
+/// This method calculates the error term gradient for batch instances.
+/// It is used for optimization of parameters during training.
+/// Returns the value of the error term gradient.
+/// @param batch_indices Indices of the batch instances corresponding to the dataset.
+
+double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+        check();
+
+    #endif
+
+    // Data set
+
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+
+    const double batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
+
+    return batch_error / training_normalization_coefficient;
+}
+
+
+double WeightedSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices,
+                                                   const Vector<double>& parameters) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+        check();
+
+    #endif
+
+    // Data set
+
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+
+    const double batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
+
+    return batch_error / training_normalization_coefficient;
+}
+
+
+/// This method calculates the error term gradient for training instances.
+/// It is used for optimization of parameters during training.
+/// Returns the value of the error term gradient.
+
+Vector<double> WeightedSquaredError::calculate_training_error_gradient() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-
-    const Index other_rows_number = y.dimension(0);
-
-    if(other_rows_number != rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
-               << "Other number of rows must be equal to this number of rows.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index other_columns_number = y.dimension(1);
-
-    if(other_columns_number != columns_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
-               << "Other number of columns must be equal to this number of columns.\n";
-
-        throw logic_error(buffer.str());
-    }
+check();
 
 #endif
 
-//    type weighted_sum_squared_error = 0.0;
+    // Neural network
 
-    const Tensor<bool, 2> if_sentence = x == x.constant(1);
-    const Tensor<bool, 2> else_sentence = x == x.constant(0);
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+     bool is_forecasting = false;
 
-    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    f_1 = (x - y).square()*positives_weight;
+    // Data set
 
-    f_2 = (x - y).square()*negatives_weight;
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    f_3 = x.constant(0);
 
-    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
-/*
-    for(Index i = 0; i < x.size(); i++)
+    const size_t batches_number = training_batches.size();
+
+    // Loss index
+
+    Vector<double> training_error_gradient(parameters_number, 0.0);
+
+     #pragma omp parallel for
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        error = x(i) - y(i);
+        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
+        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
 
-        if(static_cast<double>(y(i)) == 1.0)
-        {
-            weighted_sum_squared_error += positives_weight*(error*error);
-        }
-        else if(static_cast<double>(y(i)) == 0.0)
-        {
-            weighted_sum_squared_error += negatives_weight*(error*error);
-        }
-        else
-        {
-            ostringstream buffer;
+        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
-            buffer << "OpenNN Exception: Metrics functions.\n"
-                   << "double calculate_error() method.\n"
-                   << "Other matrix is neither a positive nor a negative.\n";
+        const Tensor<double> output_gradient
+                = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
 
-            throw logic_error(buffer.str());
-        }
+        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+
+        const Vector<double> batch_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
+
+        #pragma omp critical
+
+        training_error_gradient += batch_gradient;
     }
-*/
-    return weighted_sum_squared_error(0);
+
+    return training_error_gradient * 2.0 / training_normalization_coefficient;
+}
+
+
+/// This method calculates the first order loss.
+/// It is used for optimization of parameters during training.
+/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
+
+LossIndex::FirstOrderLoss WeightedSquaredError::calculate_first_order_loss() const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Neural network
+
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+     bool is_forecasting = false;
+
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+
+    // Data set
+
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+
+    const size_t batches_number = training_batches.size();
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+     #pragma omp parallel for
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    {
+        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
+
+        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+
+        const Vector<double> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
+
+        const Tensor<double> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
+
+        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+
+        const Matrix<double> error_terms_Jacobian
+                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+
+        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+
+        const double loss = dot(error_terms, error_terms);
+
+        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
+
+          #pragma omp critical
+        {
+            first_order_loss.loss += loss;
+            first_order_loss.gradient += gradient;
+         }
+    }
+
+    first_order_loss.loss /= training_normalization_coefficient;
+    first_order_loss.gradient *= (2.0/training_normalization_coefficient);
+
+    if(regularization_method != RegularizationMethod::NoRegularization)
+    {
+        first_order_loss.loss += regularization_weight*calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+    }
+
+    return first_order_loss;
+}
+
+
+/// This method calculates the first order loss for the selected batch.
+/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
+/// @param batch_indices Indices of the batch instances corresponding to the dataset.
+
+LossIndex::FirstOrderLoss WeightedSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Neural network
+
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+
+    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+
+    const Tensor<double> output_gradient
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets)/training_normalization_coefficient;
+
+    const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+
+    const Vector<double> batch_gradient
+            = calculate_error_gradient(inputs, forward_propagation, layers_delta);
+
+    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, targets);
+
+    first_order_loss.loss = batch_error / training_normalization_coefficient;
+    first_order_loss.gradient += batch_gradient;
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::NoRegularization)
+    {
+        first_order_loss.loss += regularization_weight*calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+    }
+
+    return first_order_loss;
+}
+
+
+/// Calculates the loss output gradient by means of the back-propagation algorithm,
+/// and returns it in a single vector of size the number of neural network parameters.
+/// @param outputs Tensor    of the outputs of the model.
+/// @param targets Tensor of targets of the data set.
+
+Tensor<double> WeightedSquaredError::calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    return (outputs-targets)*((targets-1.0)*(-1.0)*negatives_weight + targets*positives_weight);
 }
 
 
@@ -341,20 +510,17 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 /// @param outputs Output data.
 /// @param targets Target data.
 
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& /*outputs*/, const Tensor<type, 2>& /*targets*/) const
+Vector<double> WeightedSquaredError::calculate_training_error_terms(const Tensor<double>& outputs, const Tensor<double>& targets) const
 {
     // Control sentence
 
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
     check();
 
-#endif
-    /*
-        return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
-    */
-    return Tensor<type, 1>();
+    #endif
 
+    return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
 }
 
 
@@ -362,26 +528,23 @@ Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tenso
 /// It uses the error back-propagation method.
 /// @param parameters Parameters of the neural network
 
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 1>& parameters) const
+Vector<double> WeightedSquaredError::calculate_training_error_terms(const Vector<double>& parameters) const
 {
     // Control sentence
 
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
     check();
 
-#endif
+    #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+    const Tensor<double> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+    const Tensor<double> targets = data_set_pointer->get_training_target_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-    /*
-        return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
-    */
-    return Tensor<type, 1>();
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
+    return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
 }
 
 
@@ -389,80 +552,79 @@ Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tenso
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-void WeightedSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const
+LossIndex::SecondOrderLoss WeightedSquaredError::calculate_terms_second_order_loss() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    check();
+check();
 
 #endif
 
     // Neural network
 
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    bool is_forecasting = false;
+     bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-//    SecondOrderLoss terms_second_order_loss(parameters_number);
-/*
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+    const size_t batches_number = training_batches.size();
 
-    // Eigen stuff
+    SecondOrderLoss terms_second_order_loss(parameters_number);
 
-    #pragma omp parallel for
+     #pragma omp parallel for
 
-    for(Index i = 0; i < batches_number; i++)
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
+        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-                const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
+        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
-                const Tensor<type, 1> error_terms
-                        = calculate_training_error_terms(forward_propagation[layers_number-1].activations_2d, targets);
+        const Vector<double> error_terms
+                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations_2d - targets).divide(error_terms, 0);
+        const Tensor<double> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-                const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-                const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+        const Matrix<double> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-        //        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-                const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);//dot(error_terms, error_terms);
+        const double loss = dot(error_terms, error_terms);
 
-                const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);//dot(error_terms_Jacobian_transpose, error_terms);
+        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
-                Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_transpose_matrix);
-                //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+        Matrix<double> hessian_approximation;
+        //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
 
-                  #pragma omp critical
-                {
-                    terms_second_order_loss.loss += loss(0);
-                    terms_second_order_loss.gradient += gradient;
-                    terms_second_order_loss.hessian += hessian_approximation;
-                }        
+          #pragma omp critical
+        {
+            terms_second_order_loss.loss += loss;
+            terms_second_order_loss.gradient += gradient;
+            terms_second_order_loss.hessian += hessian_approximation;
+        }
     }
 
     terms_second_order_loss.loss /= training_normalization_coefficient;
-    terms_second_order_loss.gradient = (static_cast<type>(2.0)/training_normalization_coefficient)*terms_second_order_loss.gradient;
-    terms_second_order_loss.hessian = (static_cast<type>(2.0)/training_normalization_coefficient)*terms_second_order_loss.hessian;
+    terms_second_order_loss.gradient *= (2.0/training_normalization_coefficient);
+    terms_second_order_loss.hessian *= (2.0/training_normalization_coefficient);
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-//        terms_second_order_loss.loss += calculate_regularization();
-//        terms_second_order_loss.gradient += calculate_regularization_gradient();
-//        terms_second_order_loss.hessian += calculate_regularization_hessian();
+        terms_second_order_loss.loss += calculate_regularization();
+        terms_second_order_loss.gradient += calculate_regularization_gradient();
+        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-*/
+
+    return terms_second_order_loss;
 }
 
 
@@ -483,7 +645,7 @@ string WeightedSquaredError::get_error_type_text() const
 
 
 /// Serializes the weighted squared error object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document->
+/// See the OpenNN manual for more information about the format of this document-> 
 
 tinyxml2::XMLDocument* WeightedSquaredError::to_XML() const
 {
@@ -499,26 +661,26 @@ tinyxml2::XMLDocument* WeightedSquaredError::to_XML() const
 
     // Positives weight
     {
-        tinyxml2::XMLElement* element = document->NewElement("PositivesWeight");
-        weighted_squared_error_element->LinkEndChild(element);
+    tinyxml2::XMLElement* element = document->NewElement("PositivesWeight");
+    weighted_squared_error_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << positives_weight;
+    buffer.str("");
+    buffer << positives_weight;
 
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
+    tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
+    element->LinkEndChild(text);
     }
 
     // Negatives weight
     {
-        tinyxml2::XMLElement* element = document->NewElement("NegativesWeight");
-        weighted_squared_error_element->LinkEndChild(element);
+    tinyxml2::XMLElement* element = document->NewElement("NegativesWeight");
+    weighted_squared_error_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << negatives_weight;
+    buffer.str("");
+    buffer << negatives_weight;
 
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
+    tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
+    element->LinkEndChild(text);
     }
 
     // Display
@@ -588,69 +750,69 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
+   const tinyxml2::XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
 
-    if(!root_element)
-    {
-        ostringstream buffer;
+   if(!root_element)
+   {
+       ostringstream buffer;
 
-        buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Weighted squared element is nullptr.\n";
+       buffer << "OpenNN Exception: WeightedSquaredError class.\n"
+              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+              << "Weighted squared element is nullptr.\n";
 
-        throw logic_error(buffer.str());
-    }
+       throw logic_error(buffer.str());
+   }
 
-    // Positives weight
+   // Positives weight
 
-    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+   const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
-    const tinyxml2::XMLElement* positives_weight_element = error_element->FirstChildElement("PositivesWeight");
+   const tinyxml2::XMLElement* positives_weight_element = error_element->FirstChildElement("PositivesWeight");
 
-    if(positives_weight_element)
-    {
-        const string string = positives_weight_element->GetText();
+   if(positives_weight_element)
+   {
+      const string string = positives_weight_element->GetText();
 
-        try
-        {
-            set_positives_weight(static_cast<type>(atof(string.c_str())));
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+      try
+      {
+         set_positives_weight(atof(string.c_str()));
+      }
+      catch(const logic_error& e)
+      {
+         cerr << e.what() << endl;
+      }
+   }
 
-    // Negatives weight
+   // Negatives weight
 
-    const tinyxml2::XMLElement* negatives_weight_element = error_element->FirstChildElement("NegativesWeight");
+   const tinyxml2::XMLElement* negatives_weight_element = error_element->FirstChildElement("NegativesWeight");
 
-    if(negatives_weight_element)
-    {
-        const string string = negatives_weight_element->GetText();
+   if(negatives_weight_element)
+   {
+      const string string = negatives_weight_element->GetText();
 
-        try
-        {
-            set_negatives_weight(static_cast<type>(atof(string.c_str())));
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+      try
+      {
+         set_negatives_weight(atof(string.c_str()));
+      }
+      catch(const logic_error& e)
+      {
+         cerr << e.what() << endl;
+      }
+   }
 
-    // Regularization
+   // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
-    tinyxml2::XMLNode* element_clone;
+   tinyxml2::XMLDocument regularization_document;
+   tinyxml2::XMLNode* element_clone;
 
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+   const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
 
-    element_clone = regularization_element->DeepClone(&regularization_document);
+   element_clone = regularization_element->DeepClone(&regularization_document);
 
-    regularization_document.InsertFirstChild(element_clone);
+   regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+   regularization_from_XML(regularization_document);
 }
 
 
@@ -670,7 +832,7 @@ string WeightedSquaredError::object_to_string() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

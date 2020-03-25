@@ -16,9 +16,9 @@ namespace OpenNN
 /// It also initializes the class members to their default values.
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation()
-    :OptimizationAlgorithm()
+:OptimizationAlgorithm()
 {
-    set_default();
+   set_default();
 }
 
 
@@ -28,11 +28,13 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation()
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+: OptimizationAlgorithm(new_loss_index_pointer)
 {
-    set_default();
+   set_default();
 }
 
+
+// XML CONSTRUCTOR
 
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
@@ -40,11 +42,11 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_poi
 /// @param document TinyXML document with the members of a gradient descent object.
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const tinyxml2::XMLDocument& document)
-    : OptimizationAlgorithm(document)
+: OptimizationAlgorithm(document)
 {
-    set_default();
+   set_default();
 
-    from_XML(document);
+   from_XML(document);
 }
 
 
@@ -57,94 +59,135 @@ AdaptiveMomentEstimation::~AdaptiveMomentEstimation()
 
 /// Returns the initial learning rate.
 
-const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
+const double& AdaptiveMomentEstimation::get_initial_learning_rate() const
 {
-    return initial_learning_rate;
+   return(initial_learning_rate);
 }
 
 
 /// Returns beta 1.
 
-const type& AdaptiveMomentEstimation::get_beta_1() const
+const double& AdaptiveMomentEstimation::get_beta_1() const
 {
-    return beta_1;
+   return(beta_1);
 }
 
 
 /// Returns beta 2.
 
-const type& AdaptiveMomentEstimation::get_beta_2() const
+const double& AdaptiveMomentEstimation::get_beta_2() const
 {
-    return beta_2;
+   return(beta_2);
 }
 
 
 /// Returns epsilon.
 
-const type& AdaptiveMomentEstimation::get_epsilon() const
+const double& AdaptiveMomentEstimation::get_epsilon() const
 {
-    return epsilon;
+   return(epsilon);
 }
 
 
 /// Returns the minimum value for the norm of the parameters vector at wich a warning message is
 /// written to the screen.
 
-const type& AdaptiveMomentEstimation::get_warning_parameters_norm() const
+const double& AdaptiveMomentEstimation::get_warning_parameters_norm() const
 {
-    return warning_parameters_norm;
+   return(warning_parameters_norm);
 }
 
 
 /// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
 /// to the screen.
 
-const type& AdaptiveMomentEstimation::get_warning_gradient_norm() const
+const double& AdaptiveMomentEstimation::get_warning_gradient_norm() const
 {
-    return warning_gradient_norm;
+   return(warning_gradient_norm);
 }
 
 
 /// Returns the value for the norm of the parameters vector at wich an error message is
 /// written to the screen and the program exits.
 
-const type& AdaptiveMomentEstimation::get_error_parameters_norm() const
+const double& AdaptiveMomentEstimation::get_error_parameters_norm() const
 {
-    return error_parameters_norm;
+   return(error_parameters_norm);
 }
 
 
 /// Returns the value for the norm of the gradient vector at wich an error message is written
 /// to the screen and the program exits.
 
-const type& AdaptiveMomentEstimation::get_error_gradient_norm() const
+const double& AdaptiveMomentEstimation::get_error_gradient_norm() const
 {
-    return error_gradient_norm;
+   return(error_gradient_norm);
+}
+
+
+/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
+
+const double& AdaptiveMomentEstimation::get_minimum_parameters_increment_norm() const
+{
+   return(minimum_parameters_increment_norm);
+}
+
+
+/// Returns the minimum loss improvement during training.
+
+const double& AdaptiveMomentEstimation::get_minimum_loss_increase() const
+{
+   return(minimum_loss_decrease);
 }
 
 
 /// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
-const type& AdaptiveMomentEstimation::get_loss_goal() const
+const double& AdaptiveMomentEstimation::get_loss_goal() const
 {
-    return training_loss_goal;
+   return(loss_goal);
+}
+
+
+/// Returns the goal value for the norm of the error function gradient.
+/// This is used as a stopping criterion when training a neural network
+
+const double& AdaptiveMomentEstimation::get_gradient_norm_goal() const
+{
+   return(gradient_norm_goal);
+}
+
+
+/// Returns the maximum number of selection failures during the training process.
+
+const size_t& AdaptiveMomentEstimation::get_maximum_selection_failures() const
+{
+   return(maximum_selection_failures);
 }
 
 
 /// Returns the maximum training time.
 
-const type& AdaptiveMomentEstimation::get_maximum_time() const
+const double& AdaptiveMomentEstimation::get_maximum_time() const
 {
-    return maximum_time;
+   return(maximum_time);
 }
 
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
-const bool& AdaptiveMomentEstimation::get_choose_best_selection() const
+const bool& AdaptiveMomentEstimation::get_return_minimum_selection_error_neural_network() const
 {
-    return choose_best_selection;
+    return(return_minimum_selection_error_neural_network);
+}
+
+
+/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+
+const bool& AdaptiveMomentEstimation::get_apply_early_stopping() const
+{
+    return(apply_early_stopping);
 }
 
 
@@ -152,7 +195,7 @@ const bool& AdaptiveMomentEstimation::get_choose_best_selection() const
 
 const bool& AdaptiveMomentEstimation::get_reserve_training_error_history() const
 {
-    return reserve_training_error_history;
+   return(reserve_training_error_history);
 }
 
 
@@ -160,7 +203,7 @@ const bool& AdaptiveMomentEstimation::get_reserve_training_error_history() const
 
 const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() const
 {
-    return reserve_selection_error_history;
+   return(reserve_selection_error_history);
 }
 
 
@@ -170,44 +213,49 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 
 void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-    loss_index_pointer = new_loss_index_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 }
 
 
 void AdaptiveMomentEstimation::set_default()
 {
-    // TRAINING OPERATORS
+   // TRAINING OPERATORS
 
-    initial_learning_rate = static_cast<type>(0.001);
-    initial_decay = 0;
-    beta_1 = static_cast<type>(0.9);
-    beta_2 = static_cast<type>(0.999);
+   initial_learning_rate = 0.001;
+   initial_decay = 0.0;
+   beta_1 = 0.9;
+   beta_2 = 0.999;
 
-    epsilon =static_cast<type>(1.e-7);
+   epsilon =1.e-7;
 
-    // TRAINING PARAMETERS
+   // TRAINING PARAMETERS
 
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
+   warning_parameters_norm = 1.0e6;
+   warning_gradient_norm = 1.0e6;
+   error_parameters_norm = 1.0e9;
+   error_gradient_norm = 1.0e9;
 
-    // Stopping criteria
+   // Stopping criteria
 
-    training_loss_goal = 0;
-    maximum_time = 1000.0;
-    maximum_epochs_number = 10000;
-    choose_best_selection = false;
+   minimum_parameters_increment_norm = 0.0;
+   minimum_loss_decrease = 0.0;
+   loss_goal = -numeric_limits<double>::max();
+   gradient_norm_goal = 0.0;
+   maximum_selection_failures = 1000000;
+   maximum_time = 1000.0;
+   maximum_epochs_number = 10000;
+   return_minimum_selection_error_neural_network = false;
+   apply_early_stopping = true;
 
-    // TRAINING HISTORY
+   // TRAINING HISTORY
 
-    reserve_training_error_history = true;
-    reserve_selection_error_history = false;
+   reserve_training_error_history = true;
+   reserve_selection_error_history = false;
 
-    // UTILITIES
+   // UTILITIES
 
-    display = true;
-    display_period = 1;
+   display = true;
+   display_period = 1;
 }
 
 
@@ -227,16 +275,16 @@ void AdaptiveMomentEstimation::set_default()
 
 void AdaptiveMomentEstimation::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
-    reserve_training_error_history = new_reserve_all_training_history;
+   reserve_training_error_history = new_reserve_all_training_history;
 
-    reserve_selection_error_history = new_reserve_all_training_history;
+   reserve_selection_error_history = new_reserve_all_training_history;
 }
 
 
 /// Sets a new learning rate.
 /// @param new_learning_rate.
 
-void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
+void AdaptiveMomentEstimation::set_initial_learning_rate(const double& new_learning_rate)
 {
     initial_learning_rate= new_learning_rate;
 }
@@ -245,7 +293,7 @@ void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learnin
 /// Sets beta 1 generally close to 1.
 /// @param new_beta_1.
 
-void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
+void AdaptiveMomentEstimation::set_beta_1(const double& new_beta_1)
 {
     beta_1= new_beta_1;
 }
@@ -254,7 +302,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 /// Sets beta 2 generally close to 1.
 /// @param new_beta_2.
 
-void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
+void AdaptiveMomentEstimation::set_beta_2(const double& new_beta_2)
 {
     beta_2= new_beta_2;
 }
@@ -263,7 +311,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 /// Sets epsilon.
 /// @param epsilon.
 
-void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
+void AdaptiveMomentEstimation::set_epsilon(const double& new_epsilon)
 {
     epsilon= new_epsilon;
 }
@@ -272,26 +320,28 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 /// Sets a new value for the parameters vector norm at which a warning message is written to the screen.
 /// @param new_warning_parameters_norm Warning norm of parameters vector value.
 
-void AdaptiveMomentEstimation::set_warning_parameters_norm(const type& new_warning_parameters_norm)
+void AdaptiveMomentEstimation::set_warning_parameters_norm(const double& new_warning_parameters_norm)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
+   if(new_warning_parameters_norm < 0.0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_warning_parameters_norm(const double&) method.\n"
+             << "Warning parameters norm must be equal or greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    // Set warning parameters norm
+   #endif
 
-    warning_parameters_norm = new_warning_parameters_norm;
+   // Set warning parameters norm
+
+   warning_parameters_norm = new_warning_parameters_norm;
 }
 
 
@@ -299,27 +349,28 @@ void AdaptiveMomentEstimation::set_warning_parameters_norm(const type& new_warni
 /// a warning message is written to the screen.
 /// @param new_warning_gradient_norm Warning norm of gradient vector value.
 
-void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning_gradient_norm)
+void AdaptiveMomentEstimation::set_warning_gradient_norm(const double& new_warning_gradient_norm)
 {
+   
 
-#ifdef __OPENNN_DEBUG__
+   #ifdef __OPENNN_DEBUG__
 
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   if(new_warning_gradient_norm < 0.0)
+   {
+      ostringstream buffer;
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_warning_gradient_norm(const double&) method.\n"
+             << "Warning gradient norm must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
-    }
+      throw logic_error(buffer.str());
+   }
 
-#endif
+   #endif
 
-    // Set warning gradient norm
+   // Set warning gradient norm
 
-    warning_gradient_norm = new_warning_gradient_norm;
+   warning_gradient_norm = new_warning_gradient_norm;
 }
 
 
@@ -327,26 +378,28 @@ void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning
 /// screen and the program exits.
 /// @param new_error_parameters_norm Error norm of parameters vector value.
 
-void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_parameters_norm)
+void AdaptiveMomentEstimation::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
+   if(new_error_parameters_norm < 0.0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_error_parameters_norm(const double&) method.\n"
+             << "Error parameters norm must be equal or greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    // Set error parameters norm
+   #endif
 
-    error_parameters_norm = new_error_parameters_norm;
+   // Set error parameters norm
+
+   error_parameters_norm = new_error_parameters_norm;
 }
 
 
@@ -354,52 +407,112 @@ void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_p
 /// and the program exits.
 /// @param new_error_gradient_norm Error norm of gradient vector value.
 
-void AdaptiveMomentEstimation::set_error_gradient_norm(const type& new_error_gradient_norm)
+void AdaptiveMomentEstimation::set_error_gradient_norm(const double& new_error_gradient_norm)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
+   if(new_error_gradient_norm < 0.0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_error_gradient_norm(const double&) method.\n"
+             << "Error gradient norm must be equal or greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    // Set error gradient norm
+   #endif
 
-    error_gradient_norm = new_error_gradient_norm;
+   // Set error gradient norm
+
+   error_gradient_norm = new_error_gradient_norm;
 }
 
 
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+void AdaptiveMomentEstimation:: set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_maximum_epochs_number < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_epochs_number(const type&) method.\n"
-               << "Maximum epochs number must be equal or greater than 0.\n";
+   if(new_maximum_epochs_number < 0.0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_maximum_epochs_number(const double&) method.\n"
+             << "Maximum epochs number must be equal or greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    // Set maximum_epochs number
+   #endif
 
-    maximum_epochs_number = new_maximum_epochs_number;
+   // Set maximum_epochs number
+
+   maximum_epochs_number = new_maximum_epochs_number;
+}
+
+
+/// Sets a new value for the minimum parameters increment norm stopping criterion.
+/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
+
+void AdaptiveMomentEstimation::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
+{
+   
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(new_minimum_parameters_increment_norm < 0.0)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void new_minimum_parameters_increment_norm(const double&) method.\n"
+             << "Minimum parameters increment norm must be equal or greater than 0.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   // Set error training rate
+
+   minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
+}
+
+
+/// Sets a new minimum loss improvement during training.
+/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
+
+void AdaptiveMomentEstimation::set_minimum_loss_increase(const double& new_minimum_loss_increase)
+{
+   
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(new_minimum_loss_increase < 0.0)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "Minimum loss improvement must be equal or greater than 0.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   // Set minimum loss improvement
+
+   minimum_loss_decrease = new_minimum_loss_increase;
 }
 
 
@@ -407,45 +520,93 @@ void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maxim
 /// This is used as a stopping criterion when training a neural network
 /// @param new_loss_goal Goal value for the loss.
 
-void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
+void AdaptiveMomentEstimation::set_loss_goal(const double& new_loss_goal)
 {
-    training_loss_goal = new_loss_goal;
+   loss_goal = new_loss_goal;
+}
+
+
+/// Sets a new the goal value for the norm of the error function gradient.
+/// This is used as a stopping criterion when training a neural network
+/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
+
+void AdaptiveMomentEstimation::set_gradient_norm_goal(const double& new_gradient_norm_goal)
+{
+   
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(new_gradient_norm_goal < 0.0)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_gradient_norm_goal(const double&) method.\n"
+             << "Gradient norm goal must be equal or greater than 0.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   // Set gradient norm goal
+
+   gradient_norm_goal = new_gradient_norm_goal;
+}
+
+
+/// Sets a new maximum number of selection failures.
+/// @param new_maximum_selection_failures Maximum number of iterations in which the selection evalutation decreases.
+
+void AdaptiveMomentEstimation::set_maximum_selection_error_increases(const size_t& new_maximum_selection_failures)
+{
+   maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
 /// Sets a new maximum training time.
 /// @param new_maximum_time Maximum training time.
 
-void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
+void AdaptiveMomentEstimation::set_maximum_time(const double& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_maximum_time < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
+   if(new_maximum_time < 0.0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_maximum_time(const double&) method.\n"
+             << "Maximum time must be equal or greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    // Set maximum time
+   #endif
 
-    maximum_time = new_maximum_time;
+   // Set maximum time
+
+   maximum_time = new_maximum_time;
 }
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error,
-/// false otherwise.
+/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-void AdaptiveMomentEstimation::set_choose_best_selection(const bool& new_choose_best_selection)
+void AdaptiveMomentEstimation::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
 {
-    choose_best_selection = new_choose_best_selection;
+   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+}
+
+
+/// Makes the selection error decrease stopping criteria has to be taken in account or not.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+
+void AdaptiveMomentEstimation::set_apply_early_stopping(const bool& new_apply_early_stopping)
+{
+    apply_early_stopping = new_apply_early_stopping;
 }
 
 
@@ -454,7 +615,7 @@ void AdaptiveMomentEstimation::set_choose_best_selection(const bool& new_choose_
 
 void AdaptiveMomentEstimation::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
 {
-    reserve_training_error_history = new_reserve_training_error_history;
+   reserve_training_error_history = new_reserve_training_error_history;
 }
 
 
@@ -464,7 +625,7 @@ void AdaptiveMomentEstimation::set_reserve_training_error_history(const bool& ne
 
 void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
-    reserve_selection_error_history = new_reserve_selection_error_history;
+   reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
 
@@ -472,24 +633,26 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void AdaptiveMomentEstimation::set_display_period(const Index& new_display_period)
+void AdaptiveMomentEstimation::set_display_period(const size_t& new_display_period)
 {
-#ifdef __OPENNN_DEBUG__
+   
 
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
+   #ifdef __OPENNN_DEBUG__
 
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+   if(new_display_period <= 0)
+   {
+      ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+      buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
+             << "void set_display_period(const double&) method.\n"
+             << "First training rate must be greater than 0.\n";
 
-#endif
+      throw logic_error(buffer.str());
+   }
 
-    display_period = new_display_period;
+   #endif
+
+   display_period = new_display_period;
 }
 
 
@@ -502,268 +665,279 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 {
     Results results;
 
-    check();
+   check();
 
-    // Start training
+   // Start training
 
-    if(display) cout << "Training with adaptive moment estimator \"Adam\" ...\n";
+   if(display) cout << "Training with adaptive moment estimator \"Adam\" ...\n";
 
-    // Data set
+   // Data set stuff
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+   DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-//    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    //
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+   const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-    const bool has_selection = data_set_pointer->has_selection();
+   // Neural network stuff
 
-    DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(batch_instances_number, data_set_pointer);
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    // Neural network
+   const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+   Vector<double> parameters(parameters_number);
+   Vector<double> parameters_increment(parameters_number);
 
-    type parameters_norm = 0;
+   double parameters_norm = 0.0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_instances_number, neural_network_pointer);
+   // Loss index stuff
 
-    // Loss index
+   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
 
-    LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
+   double training_error = 0.0;
 
-    type training_loss = 0;
-    type selection_error = numeric_limits<type>::max();
+   double selection_error = 0.0;
+   double old_selection_error = 0.0;
 
-    // Optimization algorithm
+   double loss = 0.0;
+   double gradient_norm = 0.0;
 
-    type learning_rate = 0;
+   // Optimization algorithm stuff
 
-    type minimum_selection_error = numeric_limits<type>::max();
+   double learning_rate = 0.0;
 
-    bool stop_training = false;
+   size_t selection_failures = 0;
 
-    time_t beginning_time, current_time;
-    time(&beginning_time);
-    type elapsed_time = 0;
+   Vector<double> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error = numeric_limits<double>::max();
 
-    results.resize_training_history(maximum_epochs_number + 1);
+   bool stop_training = false;
 
-    Index iteration_count = 0;
+   time_t beginning_time, current_time;
+   time(&beginning_time);
+   double elapsed_time = 0.0;
 
-    OptimizationData optimization_data(this);
+   results.resize_training_history(maximum_epochs_number + 1);
+
+   Vector<double> gradient_exponential_decay(parameters_number,0.0);
+   Vector<double> square_gradient_exponential_decay(parameters_number,0.0);
+
+   Vector<double> last_gradient_exponential_decay(parameters_number,0.0);
+   Vector<double> last_square_gradient_exponential_decay(parameters_number,0.0);
+
+   size_t iteration_count = 0;
 
     bool is_forecasting = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer()
-    || neural_network_pointer->has_recurrent_layer())
-        is_forecasting = true;
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    // Main loop
+   // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
-    {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
+   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
+   {
+       const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-        const Index batches_number = training_batches.dimension(0);
+       const size_t batches_number = training_batches.size();
 
-        parameters_norm = l2_norm(optimization_data.parameters);
+       parameters = neural_network_pointer->get_parameters();
 
-        if(display && parameters_norm >= warning_parameters_norm)
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       parameters_norm = l2_norm(parameters);
 
-        training_loss = 0;
+       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-        for(Index iteration = 0; iteration < batches_number; iteration++)
-        {
-            iteration_count++;
+       loss = 0.0;
 
-            // Data set
+       for(size_t iteration = 0; iteration < batches_number; iteration++)
+       {
+           iteration_count++;
 
-//            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+           learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
 
-            // Neural network
+           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
 
-            neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+           parameters = neural_network_pointer->get_parameters();
 
-            // Loss index
+           // Loss
 
-            loss_index_pointer->back_propagate(training_batch, training_forward_propagation, back_propagation);
+           loss += first_order_loss.loss;
 
-            training_loss += back_propagation.loss;
+           // Gradient
 
-            // Gradient
+           gradient_exponential_decay = last_gradient_exponential_decay*beta_1 + first_order_loss.gradient*(1 - beta_1);
 
-            update_iteration(back_propagation, optimization_data);
+           last_gradient_exponential_decay = gradient_exponential_decay;
 
-            neural_network_pointer->set_parameters(optimization_data.parameters);
+           square_gradient_exponential_decay = last_square_gradient_exponential_decay*beta_2 + first_order_loss.gradient*first_order_loss.gradient*(1 - beta_2);
+
+           last_square_gradient_exponential_decay = square_gradient_exponential_decay;
+
+           // Update parameters
+
+           neural_network_pointer->set_parameters(parameters - gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon));
+
         }
+
+       // Gradient
+
+       gradient_norm = l2_norm(first_order_loss.gradient);
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number);
+       training_error = loss/static_cast<double>(batches_number);
 
-        if(has_selection)
+       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+
+       if(epoch == 0)
+       {
+          minimum_selection_error = selection_error;
+          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+       }
+       else if(epoch != 0 && selection_error > old_selection_error)
+       {
+          selection_failures++;
+       }
+       else if(selection_error <= minimum_selection_error)
+       {
+          minimum_selection_error = selection_error;
+          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+       }
+
+       // Elapsed time
+
+       time(&current_time);
+       elapsed_time = difftime(current_time, beginning_time);
+
+       // Training history loss index
+
+       if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
+
+       if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+
+       // Stopping Criteria
+
+        if(selection_failures >= maximum_selection_failures && apply_early_stopping)
         {
-//           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+           if(display)
+           {
+              cout << "Epoch " << epoch << ", iteration " << epoch << ": Maximum selection failures reached.\n"
+                   << "Selection failures: " << selection_failures << endl;
+           }
 
-//           selection_error = loss_index_pointer->calculate_error(
-//                       selection_forward_propagation.layers[trainable_layers_number].activations_2d,
-//                       selection_batch.targets_2d);
+           stop_training = true;
 
-            const Index selection_batches_number = selection_batches.dimension(0);
-
-            selection_error = 0;
-
-            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
-            {
-                // Data set
-
-//                selection_batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
-
-                // Neural network
-
-                neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-
-                // Loss index
-
-                loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, back_propagation);
-
-                selection_error += back_propagation.loss;
-            }
-
-            selection_error /= static_cast<type>(batches_number);
-
-            if(epoch == 0)
-            {
-                minimum_selection_error = selection_error;
-                optimization_data.minimal_selection_parameters = optimization_data.parameters;
-            }
-//            else if(epoch != 0 && selection_error > old_selection_error)
-//            {
-//                selection_error_increases++;
-//            }
-            else if(epoch != 0 && selection_error <= minimum_selection_error)
-            {
-                minimum_selection_error = selection_error;
-                optimization_data.minimal_selection_parameters = optimization_data.parameters;
-            }
+           results.stopping_condition = MaximumSelectionErrorIncreases;
         }
-
-        // Elapsed time
-
-        time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        // Training history
-
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_loss;
-
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+           if(display)
+           {
+              cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+           }
 
-            stop_training = true;
+           stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+           results.stopping_condition = MaximumEpochsNumber;
         }
 
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+           if(display)
+           {
+              cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+           }
 
-            stop_training = true;
+           stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+           results.stopping_condition = MaximumTime;
         }
 
-        else if(training_loss <= training_loss_goal)
+        else if(training_error <= loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+           if(display)
+           {
+              cout << "Epoch " << epoch << ": Loss goal reached.\n";
+           }
 
-            stop_training = true;
+           stop_training = true;
 
-            results.stopping_condition  = LossGoal;
+           results.stopping_condition  = LossGoal;
         }
 
         if(epoch != 0 && epoch % save_period == 0)
         {
-            neural_network_pointer->save(neural_network_file_name);
+              neural_network_pointer->save(neural_network_file_name);
         }
 
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_loss << "\n"
-                     << loss_index_pointer->write_information()
-                     << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+           if(display)
+           {                              
+              cout << "Parameters norm: " << parameters_norm << "\n"
+                   << "Training loss: " << training_error << "\n"
+                   << "Gradient norm: " << gradient_norm << "\n"
+                   << loss_index_pointer->write_information()
+                   << "Learning rate: " << learning_rate << "\n"
+                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+                   << "Selection error: " << selection_error << endl;
+           }
 
-                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
+           results.resize_training_history(1+epoch);
 
-            results.resize_training_history(1+epoch);
+           results.final_parameters = parameters;
 
-            results.final_parameters = optimization_data.parameters;
+           results.final_parameters_norm = parameters_norm;
 
-            results.final_parameters_norm = parameters_norm;
+           results.final_training_error = training_error;
 
-            results.final_training_error = training_loss;
+           results.final_selection_error = selection_error;
 
-            results.final_selection_error = selection_error;
+           results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+           results.elapsed_time = elapsed_time;
 
-            results.epochs_number = epoch;
+           results.epochs_number = epoch;
 
-            break;
+           break;
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
-                 << "Training loss: " << training_loss << "\n"
-                 << "Batch size: " << batch_instances_number << "\n"
-                << loss_index_pointer->write_information()
+           cout << "Epoch " << epoch << ";\n"
+                << "Training loss: " << training_error << "\n"
+//                << "Batch size: " << batch_instances_number << "\n"
+//                << "Gradient norm: " << gradient_norm << "\n"
+//                << loss_index_pointer->write_information()
 //                << "Learning rate: " << learning_rate<< "\n"
-                  << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-            if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
+                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+//                << "Selection error: " << selection_error << endl;
 
         }
 
-        // Update stuff
+          // Update stuff
 
-//        old_selection_error = selection_error;
+          old_selection_error = selection_error;
 
-        if(stop_training) break;
-    }
+       if(stop_training) break;
+   }
 
-    if(choose_best_selection)
-    {
-        optimization_data.parameters = optimization_data.minimal_selection_parameters;
-        parameters_norm = l2_norm(optimization_data.parameters);
+   if(return_minimum_selection_error_neural_network)
+   {
+       parameters = minimum_selection_error_parameters;
+       parameters_norm = l2_norm(parameters);
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
+       neural_network_pointer->set_parameters(parameters);
 
-        selection_error = minimum_selection_error;
-    }
+       selection_error = minimum_selection_error;
+   }
 
-    results.final_parameters = optimization_data.parameters;
-    results.final_parameters_norm = parameters_norm;
-    results.final_training_error = training_loss;
-    results.final_selection_error = selection_error;
-    results.elapsed_time = elapsed_time;
+   results.final_parameters = parameters;
+   results.final_parameters_norm = parameters_norm;
+   results.final_training_error = training_error;
+   results.final_selection_error = selection_error;
+   results.final_gradient_norm = gradient_norm;
+   results.elapsed_time = elapsed_time;
 
-    return results;
+   return results;
 }
 
 
@@ -771,116 +945,131 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
 void AdaptiveMomentEstimation::perform_training_void()
 {
-//   perform_training();
+ //   perform_training();
 }
 
 
 string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 {
-    return "GRADIENT_DESCENT";
+   return "GRADIENT_DESCENT";
 }
 
 
 /// Writes as matrix of strings the most representative atributes.
 
-Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
+Matrix<string> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
+    ostringstream buffer;
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    Vector<string> labels;
+    Vector<string> values;
 
-       // Loss goal
+   // Minimum parameters increment norm
 
-       labels.push_back(" Loss goal");
+   labels.push_back("Minimum parameters increment norm");
 
-       buffer.str("");
-       buffer << training_loss_goal;
+   buffer.str("");
+   buffer << minimum_parameters_increment_norm;
 
-       values.push_back(buffer.str());
+   values.push_back(buffer.str());
 
-       // Gradient norm goal
+   // Minimum loss decrease
 
-       labels.push_back("Gradient norm goal");
+   labels.push_back("Minimum loss decrease");
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+   buffer.str("");
+   buffer << minimum_loss_decrease;
 
-       values.push_back(buffer.str());
+   values.push_back(buffer.str());
 
-       // Maximum selection error increases
+   // Loss goal
 
-       labels.push_back("Maximum selection error increases");
+   labels.push_back(" Loss goal");
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+   buffer.str("");
+   buffer << loss_goal;
 
-       values.push_back(buffer.str());
+   values.push_back(buffer.str());
 
-       // Maximum iterations number
+   // Gradient norm goal
 
-       labels.push_back("Maximum epoch number");
+   labels.push_back("Gradient norm goal");
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+   buffer.str("");
+   buffer << gradient_norm_goal;
 
-       values.push_back(buffer.str());
+   values.push_back(buffer.str());
 
-       // Maximum time
+   // Maximum selection error decreases
 
-       labels.push_back("Maximum time");
+   labels.push_back("Maximum selection error increases");
 
-       buffer.str("");
-       buffer << maximum_time;
+   buffer.str("");
+   buffer << maximum_selection_failures;
 
-       values.push_back(buffer.str());
+   values.push_back(buffer.str());
 
-       // Reserve training error history
+   // Maximum iterations number
 
-       labels.push_back("Reserve loss history");
+   labels.push_back("Maximum epoch number");
 
-       buffer.str("");
+   buffer.str("");
+   buffer << maximum_epochs_number;
 
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+   values.push_back(buffer.str());
 
-       values.push_back(buffer.str());
+   // Maximum time
 
-       // Reserve selection error history
+   labels.push_back("Maximum time");
 
-       labels.push_back("Reserve selection error history");
+   buffer.str("");
+   buffer << maximum_time;
 
-       buffer.str("");
+   values.push_back(buffer.str());
 
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+   // Reserve training error history
 
-       values.push_back(buffer.str());
+   labels.push_back("Reserve loss history");
 
-       const Index rows_number = labels.dimension(0);
-       const Index columns_number = 2;
+   buffer.str("");
 
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
+   if(reserve_training_error_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
+   values.push_back(buffer.str());
 
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+   // Reserve selection error history
+
+   labels.push_back("Reserve selection error history");
+
+   buffer.str("");
+
+   if(reserve_selection_error_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
+
+   values.push_back(buffer.str());
+
+   const size_t rows_number = labels.size();
+   const size_t columns_number = 2;
+
+   Matrix<string> string_matrix(rows_number, columns_number);
+
+   string_matrix.set_column(0, labels, "name");
+   string_matrix.set_column(1, values, "value");
+
+    return string_matrix;
 }
 
 
@@ -889,182 +1078,237 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
 tinyxml2::XMLDocument* AdaptiveMomentEstimation::to_XML() const
 {
-    ostringstream buffer;
+   ostringstream buffer;
 
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-    // Optimization algorithm
+   // Optimization algorithm
 
-    tinyxml2::XMLElement* root_element = document->NewElement("AdaptiveMomentEstimation");
+   tinyxml2::XMLElement* root_element = document->NewElement("AdaptiveMomentEstimation");
 
-    document->InsertFirstChild(root_element);
+   document->InsertFirstChild(root_element);
 
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
-    // Return minimum selection error neural network
+   // Return minimum selection error neural network
 
-    element = document->NewElement("ReturnMinimumSelectionErrorNN");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("ReturnMinimumSelectionErrorNN");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << choose_best_selection;
+   buffer.str("");
+   buffer << return_minimum_selection_error_neural_network;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Warning parameters norm
+   // Apply early stopping
 
-    element = document->NewElement("WarningParametersNorm");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("ApplyEarlyStopping");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << warning_parameters_norm;
+   buffer.str("");
+   buffer << apply_early_stopping;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Warning gradient norm
+   // Warning parameters norm
 
-    element = document->NewElement("WarningGradientNorm");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("WarningParametersNorm");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << warning_gradient_norm;
+   buffer.str("");
+   buffer << warning_parameters_norm;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Error parameters norm
+   // Warning gradient norm
 
-    element = document->NewElement("ErrorParametersNorm");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("WarningGradientNorm");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << error_parameters_norm;
+   buffer.str("");
+   buffer << warning_gradient_norm;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Error gradient norm
+   // Error parameters norm
 
-    element = document->NewElement("ErrorGradientNorm");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("ErrorParametersNorm");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << error_gradient_norm;
+   buffer.str("");
+   buffer << error_parameters_norm;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Loss goal
+   // Error gradient norm
 
-    element = document->NewElement("LossGoal");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("ErrorGradientNorm");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << training_loss_goal;
+   buffer.str("");
+   buffer << error_gradient_norm;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Maximum iterations number
+   // Minimum parameters increment norm
 
-    element = document->NewElement("MaximumEpochsNumber");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("MinimumParametersIncrementNorm");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << maximum_epochs_number;
+   buffer.str("");
+   buffer << minimum_parameters_increment_norm;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Maximum time
+   // Minimum loss decrease
 
-    element = document->NewElement("MaximumTime");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("MinimumLossDecrease");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << maximum_time;
+   buffer.str("");
+   buffer << minimum_loss_decrease;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Reserve training error history
+   // Loss goal
 
-    element = document->NewElement("ReserveTrainingErrorHistory");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("LossGoal");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << reserve_training_error_history;
+   buffer.str("");
+   buffer << loss_goal;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Reserve selection error history
+   // Gradient norm goal
 
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("GradientNormGoal");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << reserve_selection_error_history;
+   buffer.str("");
+   buffer << gradient_norm_goal;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+
+   // Maximum selection error decreases
+
+   element = document->NewElement("MaximumSelectionErrorIncreases");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << maximum_selection_failures;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+
+   // Maximum iterations number
+
+   element = document->NewElement("MaximumEpochsNumber");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << maximum_epochs_number;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+
+   // Maximum time
+
+   element = document->NewElement("MaximumTime");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << maximum_time;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+
+   // Reserve training error history
+
+   element = document->NewElement("ReserveTrainingErrorHistory");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << reserve_training_error_history;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+
+   // Reserve selection error history
+
+   element = document->NewElement("ReserveSelectionErrorHistory");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << reserve_selection_error_history;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
     //Reserve selection error history
 
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("ReserveSelectionErrorHistory");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << reserve_selection_error_history;
+   buffer.str("");
+   buffer << reserve_selection_error_history;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Display period
+   // Display period
 
-    element = document->NewElement("DisplayPeriod");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("DisplayPeriod");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << display_period;
+   buffer.str("");
+   buffer << display_period;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Save period
+   // Save period
 
-    element = document->NewElement("SavePeriod");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("SavePeriod");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << save_period;
+   buffer.str("");
+   buffer << save_period;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    // Neural network file name
+   // Neural network file name
 
-    element = document->NewElement("NeuralNetworkFileName");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("NeuralNetworkFileName");
+   root_element->LinkEndChild(element);
 
-    text = document->NewText(neural_network_file_name.c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(neural_network_file_name.c_str());
+   element->LinkEndChild(text);
 
-    // Display warnings
+   // Display warnings
 
-    element = document->NewElement("Display");
-    root_element->LinkEndChild(element);
+   element = document->NewElement("Display");
+   root_element->LinkEndChild(element);
 
-    buffer.str("");
-    buffer << display;
+   buffer.str("");
+   buffer << display;
 
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
-    return document;
+   return document;
 }
 
 
@@ -1075,23 +1319,49 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 {
     ostringstream buffer;
 
-    // Batch size
+    //file_stream.OpenElement("AdaptiveMomentEstimation");
 
-    file_stream.OpenElement("BatchSize");
+    // Return minimum selection error neural network
+
+
+    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
     buffer.str("");
-    buffer << batch_instances_number;
+    buffer << return_minimum_selection_error_neural_network;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Return minimum selection error neural network
 
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
+    // Apply early stopping
+
+    file_stream.OpenElement("ApplyEarlyStopping");
 
     buffer.str("");
-    buffer << choose_best_selection;
+    buffer << apply_early_stopping;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Minimum parameters increment norm
+
+    file_stream.OpenElement("MinimumParametersIncrementNorm");
+
+    buffer.str("");
+    buffer << minimum_parameters_increment_norm;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Minimum loss decrease
+
+    file_stream.OpenElement("MinimumLossDecrease");
+
+    buffer.str("");
+    buffer << minimum_loss_decrease;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1102,7 +1372,29 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << training_loss_goal;
+    buffer << loss_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Gradient norm goal
+
+    file_stream.OpenElement("GradientNormGoal");
+
+    buffer.str("");
+    buffer << gradient_norm_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum selection error decreases
+
+    file_stream.OpenElement("MaximumSelectionErrorIncreases");
+
+    buffer.str("");
+    buffer << maximum_selection_failures;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1164,42 +1456,116 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Adaptative moment estimation element is nullptr.\n";
+               << "Gradient descent element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    // Batch size
+   // Warning parameters norm
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
 
-    const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
+       if(element)
+       {
+          const double new_warning_parameters_norm = atof(element->GetText());
 
-    if(batch_size_element)
-    {
-        string new_batch_size = batch_size_element->GetText();
+          try
+          {
+             set_warning_parameters_norm(new_warning_parameters_norm);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
-        try
-        {
-            set_batch_instances_number(new_batch_size != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
+   // Warning gradient norm
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
+
+       if(element)
+       {
+          const double new_warning_gradient_norm = atof(element->GetText());
+
+          try
+          {
+             set_warning_gradient_norm(new_warning_gradient_norm);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Error parameters norm
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorParametersNorm");
+
+       if(element)
+       {
+          const double new_error_parameters_norm = atof(element->GetText());
+
+          try
+          {
+              set_error_parameters_norm(new_error_parameters_norm);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Error gradient norm
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
+
+       if(element)
+       {
+          const double new_error_gradient_norm = atof(element->GetText());
+
+          try
+          {
+             set_error_gradient_norm(new_error_gradient_norm);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* choose_best_selection_element
-        = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
-    if(choose_best_selection_element)
+    if(return_minimum_selection_error_neural_network_element)
     {
-        const string new_choose_best_selection
-            = choose_best_selection_element->GetText();
+        string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
 
         try
         {
-            set_choose_best_selection(new_choose_best_selection != "0");
+           set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+        }
+        catch(const logic_error& e)
+        {
+           cerr << e.what() << endl;
+        }
+    }
+
+    // Apply early stopping
+
+    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
+
+    if(apply_early_stopping_element)
+    {
+        string new_apply_early_stopping = apply_early_stopping_element->GetText();
+
+        try
+        {
+            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {
@@ -1207,81 +1573,157 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Loss goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
+   // Minimum parameters increment norm
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
 
-        if(element)
-        {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+       if(element)
+       {
+          const double new_minimum_parameters_increment_norm = atof(element->GetText());
 
-            try
-            {
-                set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+          try
+          {
+             set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
-    // Maximum eochs number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
+   // Minimum loss decrease
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
 
-        if(element)
-        {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+       if(element)
+       {
+          const double new_minimum_loss_increase = atof(element->GetText());
 
-            try
-            {
-                set_maximum_epochs_number(new_maximum_epochs_number);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+          try
+          {
+             set_minimum_loss_increase(new_minimum_loss_increase);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
-    // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
+   // Loss goal
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
-        if(element)
-        {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+       if(element)
+       {
+          const double new_loss_goal = atof(element->GetText());
 
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+          try
+          {
+             set_loss_goal(new_loss_goal);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
+   // Gradient norm goal
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
 
-        if(element)
-        {
-            const string new_reserve_training_error_history = element->GetText();
+       if(element)
+       {
+          const double new_gradient_norm_goal = atof(element->GetText());
 
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+          try
+          {
+             set_gradient_norm_goal(new_gradient_norm_goal);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Maximum selection error decreases
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+
+       if(element)
+       {
+          const size_t new_maximum_selection_failures = static_cast<size_t>(atoi(element->GetText()));
+
+          try
+          {
+             set_maximum_selection_error_increases(new_maximum_selection_failures);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Maximum iterations number
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumEpochsNumber");
+
+       if(element)
+       {
+          const size_t new_maximum_epochs_number = static_cast<size_t>(atoi(element->GetText()));
+
+          try
+          {
+             set_maximum_epochs_number(new_maximum_epochs_number);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Maximum time
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
+
+       if(element)
+       {
+          const double new_maximum_time = atof(element->GetText());
+
+          try
+          {
+             set_maximum_time(new_maximum_time);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+   // Reserve training error history
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
+
+       if(element)
+       {
+          const string new_reserve_training_error_history = element->GetText();
+
+          try
+          {
+             set_reserve_training_error_history(new_reserve_training_error_history != "0");
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 
     // Reserve selection error history
     {
@@ -1289,24 +1731,101 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_selection_error_history = element->GetText();
+           const string new_reserve_selection_error_history = element->GetText();
 
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+           try
+           {
+              set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
+           }
+           catch(const logic_error& e)
+           {
+              cerr << e.what() << endl;
+           }
         }
     }
+
+   // Display period
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
+
+       if(element)
+       {
+          const size_t new_display_period = static_cast<size_t>(atoi(element->GetText()));
+
+          try
+          {
+             set_display_period(new_display_period);
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
+
+    // Save period
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
+
+        if(element)
+        {
+           const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
+
+           try
+           {
+              set_save_period(new_save_period);
+           }
+           catch(const logic_error& e)
+           {
+              cerr << e.what() << endl;
+           }
+        }
+    }
+
+    // Neural network file name
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
+
+        if(element)
+        {
+           const string new_neural_network_file_name = element->GetText();
+
+           try
+           {
+              set_neural_network_file_name(new_neural_network_file_name);
+           }
+           catch(const logic_error& e)
+           {
+              cerr << e.what() << endl;
+           }
+        }
+    }
+
+   // Display
+   {
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+
+       if(element)
+       {
+          const string new_display = element->GetText();
+
+          try
+          {
+             set_display(new_display != "0");
+          }
+          catch(const logic_error& e)
+          {
+             cerr << e.what() << endl;
+          }
+       }
+   }
 }
 
 }
+
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

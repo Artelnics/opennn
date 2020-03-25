@@ -21,18 +21,18 @@
 
 // OpenNN includes
 
+#include "vector.h"
+#include "matrix.h"
 #include "training_strategy.h"
 #include "neurons_selection.h"
 #include "tinyxml2.h"
-#include "config.h"
 
 namespace OpenNN
 {
 
 /// This concrete class represents an incremental algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
 
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class IncrementalNeurons : public NeuronsSelection
 {
@@ -72,17 +72,17 @@ public:
 
     // Get methods
 
-    const Index& get_step() const;
+    const size_t& get_step() const;
 
-    const Index& get_maximum_selection_failures() const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_step(const Index&);
+    void set_step(const size_t&);
 
-    void set_maximum_selection_failures(const Index&);
+    void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
 
@@ -90,7 +90,7 @@ public:
 
     // Serialization methods
 
-    Tensor<string, 2> to_string_matrix() const;
+    Matrix<string> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -104,11 +104,11 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   Index step;
+   size_t step;
 
    /// Maximum number of iterations at which the selection error increases.
 
-   Index maximum_selection_failures;
+   size_t maximum_selection_failures;
 
 };
 
@@ -117,7 +117,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

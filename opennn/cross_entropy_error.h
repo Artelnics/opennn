@@ -19,7 +19,8 @@
 
 #include "loss_index.h"
 #include "data_set.h"
-#include "config.h"
+
+
 
 #include "tinyxml2.h"
 
@@ -36,124 +37,42 @@ class CrossEntropyError : public LossIndex
 
 public:
 
-   // Constructors
+   // DEFAULT CONSTRUCTOR
 
    explicit CrossEntropyError();
 
+   // NEURAL NETWORK CONSTRUCTOR
+
    explicit CrossEntropyError(NeuralNetwork*);
+
+   // DATA SET CONSTRUCTOR
 
    explicit CrossEntropyError(DataSet*);
 
+   
+
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
+
+   // XML CONSTRUCTOR
 
    explicit CrossEntropyError(const tinyxml2::XMLDocument&);
 
-   CrossEntropyError(const CrossEntropyError&);
+   // COPY CONSTRUCTOR
 
-   // Destructor
+   CrossEntropyError(const CrossEntropyError&);
 
    virtual ~CrossEntropyError();
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const
-   {
-       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-       const Tensor<type, 2>& targets = batch.targets_2d;
-
-       const Index rows_number = outputs.dimension(0);
-       const Index columns_number = outputs.dimension(1);
-
-       type cross_entropy_error = 0.0;
-
-       for(Index i = 0; i < rows_number; i++)
-       {
-           for(Index j = 0; j < columns_number; j++)
-           {
-               const type target = targets(i,j);
-               const type output = outputs(i,j);
-
-               if(abs(target) < numeric_limits<type>::min() && abs(output) < numeric_limits<type>::min())
-               {
-                   // Do nothing
-               }
-               else if(abs(target - 1) < numeric_limits<type>::min()
-                    && abs(output - 1) < numeric_limits<type>::min())
-               {
-                   // Do nothing
-               }
-               else if(abs(output) < numeric_limits<type>::min())
-               {
-                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.000000001));
-               }
-               else if(abs(output - 1) < numeric_limits<type>::min())
-               {
-                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.999999999));
-               }
-               else
-               {
-                   cross_entropy_error -= (1 - target)*log(1-output) + target*log(output);
-               }
-           }
-       }
-
-       back_propagation.loss = cross_entropy_error;
-
-       return;
-  }
+   double calculate_batch_error(const Vector<size_t>&) const;
+   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
    // Gradient methods
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const
-   {
-        #ifdef __OPENNN_DEBUG__
+   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
 
-        check();
-
-        #endif
-
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-        const Tensor<type, 2>& targets = batch.targets_2d;
-        const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                 back_propagation.output_gradient.device(*default_device) =
-                         -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-                 return;
-             }
-
-             case Device::EigenSimpleThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                back_propagation.output_gradient.device(*thread_pool_device) =
-                        -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-                return;
-             }
-
-            case Device::EigenGpu:
-            {
-        //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 break;
-            }
-        }
-   }
-
+   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -164,6 +83,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
 };
 
 }
@@ -172,7 +92,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

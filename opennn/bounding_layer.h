@@ -20,10 +20,11 @@
 
 // OpenNN includes
 
+#include "vector.h"
+#include "matrix.h"
 #include "layer.h"
-
+#include "functions.h"
 #include "tinyxml2.h"
-#include "config.h"
 
 namespace OpenNN
 {
@@ -41,7 +42,7 @@ public:
 
    explicit BoundingLayer();
 
-   explicit BoundingLayer(const Index&);
+   explicit BoundingLayer(const size_t&);
 
    explicit BoundingLayer(const tinyxml2::XMLDocument&);
 
@@ -63,51 +64,60 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Vector<size_t> get_input_variables_dimensions() const;
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
    const BoundingMethod& get_bounding_method() const;
 
    string write_bounding_method() const;
 
-   const Tensor<type, 1>& get_lower_bounds() const;
-   type get_lower_bound(const Index&) const;
+   const Vector<double>& get_lower_bounds() const;
+   double get_lower_bound(const size_t&) const;
 
-   const Tensor<type, 1>& get_upper_bounds() const;
-   type get_upper_bound(const Index&) const;
+   const Vector<double>& get_upper_bounds() const;
+   double get_upper_bound(const size_t&) const;
+
+   Vector<Vector<double>> get_bounds();
 
    // Variables bounds
 
    void set();
-   void set(const Index&);
+   void set(const size_t&);
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
+
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
 
-   void set_lower_bounds(const Tensor<type, 1>&);
-   void set_lower_bound(const Index&, const type&);
+   void set_lower_bounds(const Vector<double>&);
+   void set_lower_bound(const size_t&, const double&);
 
-   void set_upper_bounds(const Tensor<type, 1>&);
-   void set_upper_bound(const Index&, const type&);
+   void set_upper_bounds(const Vector<double>&);
+   void set_upper_bound(const size_t&, const double&);
+
+   void set_bounds(const Vector<Vector<double>>&);
 
    void set_display(const bool&);
 
    void set_default();
 
+   // Pruning and growing
+
+   void prune_neuron(const size_t&);
+
    // Lower and upper bounds
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression_php(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
@@ -117,7 +127,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML();
+   //void read_XML( );
 
 protected:
 
@@ -129,11 +139,11 @@ protected:
 
    /// Lower bounds of output variables
 
-   Tensor<type, 1> lower_bounds;
+   Vector<double> lower_bounds;
 
    /// Upper bounds of output variables
 
-   Tensor<type, 1> upper_bounds;
+   Vector<double> upper_bounds;
 
    /// Display messages to screen. 
 
@@ -146,7 +156,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

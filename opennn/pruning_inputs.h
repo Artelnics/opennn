@@ -1,10 +1,14 @@
+
+
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
-//
+
 //   P R U N I N G   I N P U T S   C L A S S   H E A D E R                 
-//
+
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
+
+
 
 #ifndef PRUNINGINPUTS_H
 #define PRUNINGINPUTS_H
@@ -21,9 +25,14 @@
 
 // OpenNN includes
 
-#include "config.h"
+#include "vector.h"
+#include "matrix.h"
+
 #include "training_strategy.h"
+
 #include "inputs_selection.h"
+
+
 
 #include "tinyxml2.h"
 
@@ -45,7 +54,7 @@ public:
 
     explicit PruningInputs(TrainingStrategy*);
 
-    
+    // XML CONSTRUCTOR
 
     explicit PruningInputs(const tinyxml2::XMLDocument&);
 
@@ -83,21 +92,21 @@ public:
 
     // Get methods
 
-    const Index& get_minimum_inputs_number() const;
+    const size_t& get_minimum_inputs_number() const;
 
-    const Index& get_maximum_inputs_number() const;
+    const size_t& get_maximum_inputs_number() const;
 
-    const Index& get_maximum_selection_failures() const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_minimum_inputs_number(const Index&);
+    void set_minimum_inputs_number(const size_t&);
 
-    void set_maximum_inputs_number(const Index&);
+    void set_maximum_inputs_number(const size_t&);
 
-    void set_maximum_selection_failures(const Index&);
+    void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
 
@@ -105,7 +114,7 @@ public:
 
     // Serialization methods
 
-    Tensor<string, 2> to_string_matrix() const;
+    Matrix<string> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -122,15 +131,15 @@ private:
 
     /// Minimum number of inputs in the neural network.
 
-    Index minimum_inputs_number;
+    size_t minimum_inputs_number;
 
     /// Maximum number of inputs in the neural network.
 
-    Index maximum_inputs_number;
+    size_t maximum_inputs_number;
 
     /// Maximum number of iterations at which the selection error increases.
 
-    Index maximum_selection_failures;
+    size_t maximum_selection_failures;
 };
 
 }
@@ -138,7 +147,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

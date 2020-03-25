@@ -19,7 +19,6 @@
 
 // OpenNN includes
 
-#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -57,130 +56,25 @@ public:
 
    // Get methods
 
-   type get_Minkowski_parameter() const;
+   double get_Minkowski_parameter() const;
 
    // Set methods
 
    void set_default();
 
-   void set_Minkowski_parameter(const type&);
+   void set_Minkowski_parameter(const double&);
 
    // loss methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const
-   {
-       Tensor<type, 0> minkowski_error;
+   double calculate_training_error() const;
+   double calculate_training_error(const Vector<double>&) const;
 
-       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+   double calculate_selection_error() const;
 
-       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-       const Tensor<type, 2>& targets = batch.targets_2d;
+   double calculate_batch_error(const Vector<size_t>&) const;
+   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
-       Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                minkowski_error.device(*default_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                                .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       back_propagation.loss = minkowski_error(0);
-
-       return;
-   }
-
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const
-   {
-        #ifdef __OPENNN_DEBUG__
-
-        check();
-
-        #endif
-
-        const Index training_instances_number = data_set_pointer->get_training_instances_number();
-
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-        const Tensor<type, 2>& targets = batch.targets_2d;
-
-        Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-
-//        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
-//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
-
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                 errors.device(*default_device) = outputs - targets;
-
-                 const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                 back_propagation.output_gradient.device(*default_device)
-                         = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
-
-                 back_propagation.output_gradient.device(*default_device) =
-                         back_propagation.output_gradient/static_cast<type>(training_instances_number);
-
-                 return;
-             }
-
-             case Device::EigenSimpleThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                errors.device(*thread_pool_device) = outputs - targets;
-
-                const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
-
-                back_propagation.output_gradient.device(*thread_pool_device)
-                        = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
-
-                back_propagation.output_gradient.device(*thread_pool_device) =
-                        back_propagation.output_gradient/static_cast<type>(training_instances_number);
-
-                 return;
-             }
-
-            case Device::EigenGpu:
-            {
- //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
-        }
-   }
+   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -196,7 +90,7 @@ private:
 
    /// Minkowski exponent value.
 
-   type minkowski_parameter;
+   double minkowski_parameter;
 
 };
 
@@ -206,7 +100,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

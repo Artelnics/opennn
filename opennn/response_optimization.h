@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+
+
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
@@ -20,14 +22,18 @@
 
 // OpenNN includes
 
-#include "config.h"
+#include "vector.h"
+#include "matrix.h"
 #include "neural_network.h"
+
+
+
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This class is used to optimize model response identify the combinations_2d of variable settings jointly optimize a set of responses.
+/// This class is used to optimize model response identify the combinations of variable settings jointly optimize a set of responses.
 
 ///
 /// This tool is adequate when you need to know the behaviour of a multiple variables on a response
@@ -44,7 +50,7 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
-    void set_evaluations_number(const Index&);
+    void set_evaluations_number(const size_t&);
 
    
 
@@ -71,24 +77,24 @@ public:
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<type, 1> optimal_variables;
+       Vector<double> optimal_variables;
 
-       type optimum_objective;
+       double optimum_objective;
 
        void print() const
        {
-           const Index inputs_number = neural_network_pointer->get_inputs_number();
-           const Index outputs_number = neural_network_pointer->get_outputs_number();
+           const size_t inputs_number = neural_network_pointer->get_inputs_number();
+           const size_t outputs_number = neural_network_pointer->get_outputs_number();
 
-           const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
-           const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
+           const Vector<string> inputs_names = neural_network_pointer->get_inputs_names();
+           const Vector<string> outputs_names = neural_network_pointer->get_outputs_names();
 
-           for(Index i = 0; i < inputs_number; i++)
+           for(size_t i = 0; i < inputs_number; i++)
            {
                cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
            }
 
-           for(Index i = 0; i < outputs_number; i++)
+           for(size_t i = 0; i < outputs_number; i++)
            {
                cout << outputs_names[i] << " " << optimal_variables[inputs_number+i] << endl;
            }
@@ -97,32 +103,33 @@ public:
        }
    };
 
+
    // Get methods
 
-   Tensor<Condition, 1> get_inputs_conditions();
-   Tensor<Condition, 1> get_outputs_conditions();
+   Vector<Condition> get_inputs_conditions();
+   Vector<Condition> get_outputs_conditions();
 
-   Tensor<type, 1> get_inputs_minimums();
-   Tensor<type, 1> get_inputs_maximums();
-   Tensor<type, 1> get_outputs_minimums();
-   Tensor<type, 1> get_outputs_maximums();
+   Vector<double> get_inputs_minimums();
+   Vector<double> get_inputs_maximums();
+   Vector<double> get_outputs_minimums();
+   Vector<double> get_outputs_maximums();
 
    // Set methods
 
-   void set_input_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
-   void set_output_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_input_condition(const string&, const Condition&, const Vector<double>& = Vector<double>());
+   void set_output_condition(const string&, const Condition&, const Vector<double>& = Vector<double>());
 
-   void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
-   void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_input_condition(const size_t&, const Condition&, const Vector<double>& = Vector<double>());
+   void set_output_condition(const size_t&, const Condition&, const Vector<double>& = Vector<double>());
 
-   void set_inputs_outputs_conditions(const Tensor<string, 1>&, const Tensor<string, 1>&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_inputs_outputs_conditions(const Vector<string>&, const Vector<string>&, const Vector<double>& = Vector<double>());
 
-   Tensor<Condition, 1> get_conditions(const Tensor<string, 1>&) const;
-   Tensor<Tensor<type, 1>, 1> get_values_conditions(const Tensor<Condition, 1>&, const Tensor<type, 1>&) const;
+   Vector<Condition> get_conditions(const Vector<string>&) const;
+   Vector<Vector<double>> get_values_conditions(const Vector<Condition>&, const Vector<double>&) const;
 
-   Tensor<type, 2> calculate_inputs() const;
+   Tensor<double> calculate_inputs() const;
 
-   Tensor<type, 2> calculate_envelope(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Matrix<double> calculate_envelope(const Tensor<double>&, const Tensor<double>&) const;
 
    Results* perform_optimization() const;
 
@@ -130,18 +137,18 @@ private:
 
     NeuralNetwork* neural_network_pointer = nullptr;
 
-    Tensor<Condition, 1> inputs_conditions;
-    Tensor<Condition, 1> outputs_conditions;
+    Vector<Condition> inputs_conditions;
+    Vector<Condition> outputs_conditions;
 
-    Tensor<type, 1> inputs_minimums;
-    Tensor<type, 1> inputs_maximums;
+    Vector<double> inputs_minimums;
+    Vector<double> inputs_maximums;
 
-    Tensor<type, 1> outputs_minimums;
-    Tensor<type, 1> outputs_maximums;
+    Vector<double> outputs_minimums;
+    Vector<double> outputs_maximums;
 
-    Index evaluations_number = 1000;
+    size_t evaluations_number = 1000;
 
-    type calculate_random_uniform(const type&, const type&) const;
+    double calculate_random_uniform(const double&, const double&) const;
 
 };
 
@@ -151,7 +158,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

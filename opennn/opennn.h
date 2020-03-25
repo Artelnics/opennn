@@ -9,8 +9,6 @@
 #ifndef OPENNN_H
 #define OPENNN_H
 
-#include "config.h"
-
 #include "statistics.h"
 
 // Data set
@@ -19,7 +17,6 @@
 
 // Neural network
 
-#include "config.h"
 #include "layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
@@ -66,11 +63,18 @@
 
 // Utilities
 
+#include "math.h"
+#include "matrix.h"
+#include "tensor.h"
 #include "numerical_differentiation.h"
+#include "vector.h"
 #include "tinyxml2.h"
 #include "correlations.h"
+#include "functions.h"
+#include "metrics.h"
 #include "response_optimization.h"
 #include "statistics.h"
+#include "k_means.h"
 #include "opennn_strings.h"
 
 #endif

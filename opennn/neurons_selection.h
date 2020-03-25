@@ -20,8 +20,11 @@
 
 // OpenNN includes
 
-#include "config.h"
+#include "vector.h"
+#include "matrix.h"
+
 #include "training_strategy.h"
+
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -60,7 +63,7 @@ public:
 
     // Structures
 
-    /// This structure contains the results from the neurons selection.
+    /// This structure contains the results from the order selection.
 
     struct Results
     {
@@ -72,37 +75,37 @@ public:
 
        string object_to_string() const;
 
-       /// Neurons of the diferent neural networks.
+       /// Order of the diferent neural networks.
 
-       Tensor<Index, 1> neurons_data;
+       Vector<size_t> neurons_data;
 
        /// Performance of the different neural networks.
 
-       Tensor<type, 1> training_loss_data;
+       Vector<double> training_loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Tensor<type, 1> selection_error_data;
+       Vector<double> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Tensor<type, 1> minimal_parameters;
+       Vector<double> minimal_parameters;
 
        /// Value of minimum selection error.
 
-       type final_selection_error;
+       double final_selection_error;
 
        /// Value of loss for the neural network with minimum selection error.
 
-       type final_training_loss;
+       double final_training_loss;
 
-       /// Neurons of the neural network with minimum selection error.
+       /// Order of the neural network with minimum selection error.
 
-       Index optimal_neurons_number;
+       size_t optimal_neurons_number;
 
-       /// Number of iterations to perform the neurons selection.
+       /// Number of iterations to perform the order selection.
 
-       Index iterations_number;
+       size_t iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -110,7 +113,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       type elapsed_time;
+       double elapsed_time;
     };
 
     // Get methods
@@ -119,20 +122,20 @@ public:
 
     bool has_training_strategy() const;
 
-    const Index& get_maximum_neurons() const;
-    const Index& get_minimum_neurons() const;
-    const Index& get_trials_number() const;
+    const size_t& get_maximum_order() const;
+    const size_t& get_minimum_order() const;
+    const size_t& get_trials_number() const;
 
-    const bool& get_reserve_training_error_data() const;
+    const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
     const bool& get_reserve_minimal_parameters() const;
 
     const bool& get_display() const;
 
-    const type& get_selection_error_goal() const;
-    const Index& get_maximum_epochs_number() const;
-    const type& get_maximum_time() const;
-    const type& get_tolerance() const;
+    const double& get_selection_error_goal() const;
+    const size_t& get_maximum_iterations_number() const;
+    const double& get_maximum_time() const;
+    const double& get_tolerance() const;
 
     // Set methods
 
@@ -140,47 +143,36 @@ public:
 
     void set_default();
 
-    void set_maximum_neurons(const Index&);
-    void set_minimum_neurons(const Index&);
-    void set_trials_number(const Index&);
+    void set_maximum_order(const size_t&);
+    void set_minimum_order(const size_t&);
+    void set_trials_number(const size_t&);
 
-    void set_reserve_training_error_data(const bool&);
+    void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
-    void set_selection_error_goal(const type&);
-    void set_maximum_epochs_number(const Index&);
-    void set_maximum_time(const type&);
-    void set_tolerance(const type&);
+    void set_selection_error_goal(const double&);
+    void set_maximum_iterations_number(const size_t&);
+    void set_maximum_time(const double&);
+    void set_tolerance(const double&);
 
     // Loss calculation methods
 
-    Tensor<type, 1> calculate_losses(const Index&, NeuralNetwork&);
+    Vector<double> calculate_losses(const size_t&, NeuralNetwork&);
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
-    // Neuron selection methods
+    // order order selection methods
 
     void delete_selection_history();
     void delete_training_loss_history();
     void check() const;
 
-    // Utilities
-
-    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
-    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
-
-    /// Performs the neurons selection for a neural network.
+    /// Performs the order selection for a neural network.
 
     virtual Results* perform_neurons_selection() = 0;
-
-    //
-
-    /// Writes the time from seconds in format HH:mm:ss.
-
-    const string write_elapsed_time(const type&) const;
 
 protected:
 
@@ -188,39 +180,37 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Neurons of all the neural networks trained.
+    /// Order of all the neural networks trained.
 
-    Tensor<Index, 1> neurons_history;
+    Vector<size_t> order_history;
 
     /// Selection loss of all the neural networks trained.
 
-    Tensor<type, 1> selection_error_history;
+    Vector<double> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Tensor<type, 1> training_loss_history;
+    Vector<double> training_loss_history;
 
-    /// Parameters of all the neural networks trained.
-
-    Tensor<Tensor<type, 1>, 1> parameters_history;
+    Vector<Vector<double>> parameters_history;
 
     /// Minimum number of hidden neurons.
 
-    Index minimum_neurons;
+    size_t minimum_order;
 
     /// Maximum number of hidden neurons.
 
-    Index maximum_neurons;
+    size_t maximum_order;
 
     /// Number of trials for each neural network.
 
-    Index trials_number;
+    size_t trials_number;
 
-    // Neurons selection results
+    // Order selection results
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_training_error_data;
+    bool reserve_error_data;
 
     /// True if the selection error of all neural networks are to be reserved.
 
@@ -236,19 +226,19 @@ protected:
 
     /// Goal value for the selection error. It is used as a stopping criterion.
 
-    type selection_error_goal;
+    double selection_error_goal;
 
     /// Maximum number of iterations to perform_neurons_selection. It is used as a stopping criterion.
 
-    Index maximum_epochs_number;
+    size_t maximum_iterations_number;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
-    type maximum_time;
+    double maximum_time;
 
     /// Tolerance for the error in the trainings of the algorithm.
 
-    type tolerance;
+    double tolerance;
 };
 }
 
@@ -256,7 +246,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

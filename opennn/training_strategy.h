@@ -21,8 +21,8 @@
 
 // OpenNN includes
 
-#include "config.h"
 #include "loss_index.h"
+
 #include "sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
@@ -40,8 +40,6 @@
 #include "adaptive_moment_estimation.h"
 
 #include "tinyxml2.h"
-
-//Eigen Includes
 
 namespace OpenNN
 {
@@ -142,8 +140,6 @@ public:
 
    void set();
    void set_default();
-
-   void set_device_pointer(Device*);
 
    void set_loss_index_pointer(LossIndex*);
 
@@ -262,7 +258,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

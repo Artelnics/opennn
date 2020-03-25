@@ -20,8 +20,12 @@
 
 // OpenNN includes
 
+#include "vector.h"
+#include "matrix.h"
 #include "layer.h"
 #include "statistics.h"
+
+
 
 #include "tinyxml2.h"
 
@@ -43,10 +47,10 @@ public:
 
    explicit ScalingLayer();
 
-   explicit ScalingLayer(const Index&);
-   explicit ScalingLayer(const Tensor<Index, 1>&);
+   explicit ScalingLayer(const size_t&);
+   explicit ScalingLayer(const Vector<size_t>&);
 
-   explicit ScalingLayer(const Tensor<Descriptives, 1>&);
+   explicit ScalingLayer(const Vector<Descriptives>&);
 
    ScalingLayer(const ScalingLayer&);
 
@@ -60,30 +64,30 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
-   Tensor<Index, 1> get_outputs_dimensions() const;
+   Vector<size_t> get_input_variables_dimensions() const;
+   Vector<size_t> get_outputs_dimensions() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
    // Inputs descriptives
 
-   Tensor<Descriptives, 1> get_descriptives() const;
-   Descriptives get_descriptives(const Index&) const;
+   Vector<Descriptives> get_descriptives() const;
+   Descriptives get_descriptives(const size_t&) const;
 
-   Tensor<type, 2> get_descriptives_matrix() const;
+   Matrix<double> get_descriptives_matrix() const;
 
-   Tensor<type, 1> get_minimums() const;
-   Tensor<type, 1> get_maximums() const;
-   Tensor<type, 1> get_means() const;
-   Tensor<type, 1> get_standard_deviations() const;
+   Vector<double> get_minimums() const;
+   Vector<double> get_maximums() const;
+   Vector<double> get_means() const;
+   Vector<double> get_standard_deviations() const;
 
    // Variables scaling and unscaling
 
-   const Tensor<ScalingMethod, 1> get_scaling_methods() const;
+   const Vector<ScalingMethod> get_scaling_methods() const;
 
-   Tensor<string, 1> write_scaling_methods() const;
-   Tensor<string, 1> write_scaling_methods_text() const;
+   Vector<string> write_scaling_methods() const;
+   Vector<string> write_scaling_methods_text() const;
 
    // Display messages
 
@@ -92,34 +96,35 @@ public:
    // Set methods
 
    void set();
-   void set(const Index&);
-   void set(const Tensor<Index, 1>&);
-   void set(const Tensor<Descriptives, 1>&);
+   void set(const size_t&);
+   void set(const Vector<size_t>&);
+   void set(const Vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
-   void set(const Tensor<bool, 1>&);
+   void set(const Vector<bool>&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
 
    void set_default();
 
    // Descriptives
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
-   void set_descriptives_eigen(const Tensor<type, 2>&);
-   void set_item_descriptives(const Index&, const Descriptives&);
+   void set_descriptives(const Vector<Descriptives>&);
+   void set_descriptives_eigen(const Eigen::MatrixXd&);
+   void set_item_descriptives(const size_t&, const Descriptives&);
 
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
+   void set_minimum(const size_t&, const double&);
+   void set_maximum(const size_t&, const double&);
+   void set_mean(const size_t&, const double&);
+   void set_standard_deviation(const size_t&, const double&);
 
    // Scaling method
 
-   void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
-   void set_scaling_methods(const Tensor<string, 1>&);
+   void set_scaling_methods(const Vector<ScalingMethod>&);
+   void set_scaling_methods(const Vector<string>&);
+   void set_scaling_methods(const vector<string>&);
 
    void set_scaling_methods(const ScalingMethod&);
    void set_scaling_methods(const string&);
@@ -128,29 +133,35 @@ public:
 
    void set_display(const bool&);
 
+   // Pruning and growing
+
+   void grow_neuron(const Descriptives& new_descriptives = Descriptives());
+
+   void prune_neuron(const size_t&);
+
    // Check methods
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
+   void check_range(const Vector<double>&) const;
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
-   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
+   Tensor<double> calculate_minimum_maximum_outputs(const Tensor<double>&) const;
 
-   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
+   Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const;
 
    // Expression methods
 
-   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_no_scaling_expression(const Vector<string>&, const Vector<string>&) const;
 
-   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const;
 
-   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
 
-   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
@@ -163,24 +174,19 @@ public:
 
 protected:
 
-   Tensor<Index, 1> input_variables_dimensions;
+   Vector<size_t> inputs_dimensions;
 
    /// Descriptives of input variables.
 
-   Tensor<Descriptives, 1> descriptives;
+   Vector<Descriptives> descriptives;
 
    /// Vector of scaling methods for each variable.
 
-   Tensor<ScalingMethod, 1> scaling_methods;
+   Vector<ScalingMethod> scaling_methods;
 
    /// Display warning messages to screen. 
 
    bool display;
-
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/scaling_layer_cuda.h"
-#endif
-
 };
 
 }
@@ -189,7 +195,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

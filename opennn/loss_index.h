@@ -20,17 +20,22 @@
 
 // OpenNN includes
 
-#include "config.h"
-#include "device.h"
+#include "vector.h"
+#include "matrix.h"
+
 #include "data_set.h"
+
 #include "neural_network.h"
 #include "numerical_differentiation.h"
+
+
+
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This abstract class represents the concept of loss index composed of an error term and a regularization term.
+/// This abstrac class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
 /// The error terms could be:
@@ -76,83 +81,32 @@ public:
    /// A loss index composed of several terms, this structure represent the First Order for this function.
 
    ///
-   /// Set of loss value and gradient vector of the loss index.
+   /// Set of loss value and gradient vector of the peformance function.
    /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-   struct BackPropagation
+   struct FirstOrderLoss
    {
        /// Default constructor.
 
-       explicit BackPropagation() {}
+       explicit FirstOrderLoss() {}
 
-       explicit BackPropagation(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
-       {
-           set(new_batch_instances_number, new_loss_index_pointer);
-       }
+       explicit FirstOrderLoss(const size_t& new_parameters_number);
 
-       virtual ~BackPropagation();
+       void set_parameters_number(const size_t& new_parameters_number);
 
-       void set(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
-       {                      
-           batch_instances_number = new_batch_instances_number;
+       virtual ~FirstOrderLoss();
 
-           loss_index_pointer = new_loss_index_pointer;
+       double loss;
 
-           // Neural network
-
-           NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-           const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-           const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-           // First order loss
-
-           loss = 0;
-
-           output_gradient.resize(batch_instances_number, outputs_number);
-
-           neural_network.set(batch_instances_number, neural_network_pointer);
-
-           gradient.resize(parameters_number);
-       }
-
-
-       void print()
-       {
-           cout << "Error:" << endl;
-           cout << error << endl;
-
-           cout << "Loss:" << endl;
-           cout << loss << endl;
-
-           cout << "Output gradient:" << endl;
-           cout << output_gradient << endl;
-
-           cout << "Gradient:" << endl;
-           cout << gradient << endl; 
-       }
-
-       LossIndex* loss_index_pointer = nullptr;
-
-       Index batch_instances_number = 0;
-
-       NeuralNetwork::BackPropagation neural_network;
-
-       Tensor<type, 2> output_gradient;
-
-       type error;
-
-       type loss;
-
-       Tensor<type, 1> gradient;
+       Vector<double> gradient;
    };
 
 
-   /// This structure contains second order information about the loss function (loss, gradient and Hessian).
-   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss,
-   /// gradient and <i>Hessian</i> methods separately.
+   /// This structure represents the Second Order in the loss function.
+
+   ///
+   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the peformance function.
+   /// A method returning this structure might be implemented more efficiently than the loss, gradient and <i>Hessian</i> methods separately.
 
    struct SecondOrderLoss
    {
@@ -160,26 +114,16 @@ public:
 
        SecondOrderLoss() {}
 
-       SecondOrderLoss(const Index& parameters_number, const Index& instances_number)
+       SecondOrderLoss(const size_t& parameters_number)
        {
-           loss = 0;           
-           gradient = Tensor<type, 1>(parameters_number);
-           error_Jacobian = Tensor<type, 2>(instances_number, parameters_number);
-           hessian = Tensor<type, 2>(parameters_number, parameters_number);
+           loss = 0.0;
+           gradient.set(parameters_number, 0.0);
+           hessian.set(parameters_number, parameters_number, 0.0);
        }
 
-       void sum_hessian_diagonal(const type& value)
-       {
-           const Index parameters_number = gradient.size();
-
-           for(Index i = 0; i < parameters_number; i++)
-               hessian(i,i) += value;
-       }
-
-       type loss;
-       Tensor<type, 1> gradient;
-       Tensor<type, 2> error_Jacobian;
-       Tensor<type, 2> hessian;
+       double loss;
+       Vector<double> gradient;
+       Matrix<double> hessian;
    };
 
 
@@ -227,7 +171,7 @@ public:
       return data_set_pointer;
    }
 
-   const type& get_regularization_weight() const;
+   const double& get_regularization_weight() const;
 
    const bool& get_display() const;
 
@@ -248,8 +192,6 @@ public:
 
    void set(const LossIndex&);
 
-   void set_device_pointer(Device*);
-
    void set_neural_network_pointer(NeuralNetwork*);
 
    void set_data_set_pointer(DataSet*);
@@ -258,216 +200,75 @@ public:
 
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
-   void set_regularization_weight(const type&);
+   void set_regularization_weight(const double&);
 
    void set_display(const bool&);
 
    bool has_selection() const;
 
+   // Loss methods
+
+   double calculate_training_loss() const;
+   double calculate_training_loss(const Vector<double>&) const;
+   double calculate_training_loss(const Vector<double>&, const double&) const;
+
+   // Loss gradient methods
+
+   Vector<double> calculate_training_loss_gradient() const;
+
+   // ERROR METHODS
+
+   virtual double calculate_training_error() const;
+   virtual double calculate_training_error(const Vector<double>&) const;
+
+   virtual double calculate_selection_error() const;
+
+   virtual double calculate_batch_error(const Vector<size_t>&) const = 0;
+   virtual double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const = 0;
+
    // GRADIENT METHODS
 
-   virtual void calculate_output_gradient(const DataSet::Batch&,
-                                          const NeuralNetwork::ForwardPropagation&,
-                                          BackPropagation&) const = 0;
+   virtual Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const = 0;
 
-   // Numerical differentiation
+   virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
 
-   type calculate_eta() const;
-   type calculate_h(const type&) const;
+   Vector<double> calculate_training_error_gradient() const;
 
-   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
+   Vector<double> calculate_training_error_gradient_numerical_differentiation() const;
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
-   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
+   virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const {return Vector<double>();}
+   virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const {return Matrix<double>();}
 
-   virtual void calculate_error(const DataSet::Batch&,
-                                const NeuralNetwork::ForwardPropagation&,
-                                BackPropagation&) const = 0;
+   virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss();}
 
-   type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
-   {
-       const Index instances_number = batch.get_instances_number();
-
-       // Neural Network
-
-       NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
-
-       neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
-
-       // Loss Index
-
-//       calculate_error(batch, forward_propagation, back_propagation);
-
-//       return back_propagation.loss;
-       return 0;
-   }
-
-   void back_propagate(const DataSet::Batch& batch,
-                       NeuralNetwork::ForwardPropagation& forward_propagation,
-                       BackPropagation& back_propagation) const
-   {
-       // Loss index
-
-       calculate_error(batch, forward_propagation, back_propagation);
-
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
-
-       calculate_layers_delta(forward_propagation, back_propagation);
-
-       calculate_error_gradient(batch, forward_propagation, back_propagation);
-
-       // Regularization
-
-       if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-           back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
-
-           back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-       }
-   }
-
-   // Second Order loss
-
-   void calculate_terms_second_order_loss(const DataSet::Batch& batch,
-                                          NeuralNetwork::ForwardPropagation& forward_propagation,
-                                          BackPropagation& back_propagation,
-                                          SecondOrderLoss& second_order_loss) const
-   {
-       // First Order
-
-       calculate_error(batch, forward_propagation, back_propagation);
-
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
-
-       calculate_layers_delta(forward_propagation, back_propagation);
-
-       // Second Order
-cout << "First Order" << endl;
-       calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-cout << "terms" << endl;
-       calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-cout <<"jacobian" << endl;
-       calculate_hessian_approximation(second_order_loss);
-cout << "Second" << endl;
-       // Loss
-
-       second_order_loss.loss = back_propagation.loss;
-
-       // Regularization
-
-       if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-           second_order_loss.loss += regularization_weight*calculate_regularization(parameters);
-           second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-           second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
-       }
-   }
-
-   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, SecondOrderLoss&) const {}
-
-   virtual void calculate_hessian_approximation(SecondOrderLoss&) const {}
+   virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
+   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
 
    // Regularization methods
 
-   type calculate_regularization(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
-   Tensor<type, 2> calculate_regularization_hessian(const Tensor<type, 1>&) const;
+   double calculate_regularization() const;
+   Vector<double> calculate_regularization_gradient() const;
+   Matrix<double> calculate_regularization_hessian() const;
+
+   double calculate_regularization(const Vector<double>&) const;
+   Vector<double> calculate_regularization_gradient(const Vector<double>&) const;
+   Matrix<double> calculate_regularization_hessian(const Vector<double>&) const;
 
    // Delta methods
 
-   void calculate_layers_delta(NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
-   {
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+   Vector<Tensor<double>> calculate_layers_delta(const Vector<Layer::FirstOrderActivations>&, const Tensor<double>&) const;
 
-        if(trainable_layers_number == 0) return;
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Vector<Layer::FirstOrderActivations>&, const Vector<Tensor<double>>&) const;
 
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+   Matrix<double> calculate_layer_error_terms_Jacobian(const Tensor<double>&, const Tensor<double>&) const;
 
-        // Output layer
-
-        trainable_layers_pointers(trainable_layers_number-1)
-        ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                 back_propagation.output_gradient,
-                                 back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-
-//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
-
-        // Hidden layers
-
-      for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
-      {
-          Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
-
-          trainable_layers_pointers(i)
-          ->calculate_hidden_delta(previous_layer_pointer,
-                                   forward_propagation.layers(i).activations_2d,
-                                   forward_propagation.layers(i).activations_derivatives_2d,
-                                   back_propagation.neural_network.layers(i+1).delta,
-                                   back_propagation.neural_network.layers(i).delta);
-      }
-   }
-
-   void calculate_error_gradient(const DataSet::Batch& batch,
-                                 const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                 BackPropagation& back_propagation) const
-   {
-       #ifdef __OPENNN_DEBUG__
-
-       check();
-
-       #endif
-
-       const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-       const Index trainable_layers_number = trainable_layers_pointers.size();
-
-       const Tensor<Index, 1> trainable_layers_parameters_number
-               = neural_network_pointer->get_trainable_layers_parameters_numbers();
-
-       trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
-                                                              forward_propagation.layers(0),
-                                                              back_propagation.neural_network.layers(0));
-
-       Index index = 0;
-
-       trainable_layers_pointers(0)->insert_gradient(back_propagation.neural_network.layers(0),
-               index, back_propagation.gradient);
-
-       index += trainable_layers_parameters_number(0);
-
-       for(Index i = 1; i < trainable_layers_number; i++)
-       {
-           trainable_layers_pointers(i)->calculate_error_gradient(
-                   forward_propagation.layers(i-1).activations_2d,
-                   forward_propagation.layers(i-1),
-                   back_propagation.neural_network.layers(i));
-
-           trainable_layers_pointers(i)->insert_gradient(back_propagation.neural_network.layers(i),
-                                                         index,
-                                                         back_propagation.gradient);
-
-           index += trainable_layers_parameters_number(i);
-       }
-   }
-
-   Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_error_terms_Jacobian(const DataSet::Batch&,
-                                       const NeuralNetwork::ForwardPropagation&,
-                                       const BackPropagation&,
-                                       SecondOrderLoss&) const;
+   Matrix<double> calculate_error_terms_Jacobian(const Tensor<double>&, const Vector<Layer::FirstOrderActivations>&, const Vector<Tensor<double>>&) const;
 
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;
-
    void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -486,254 +287,7 @@ cout << "Second" << endl;
 
    void check() const;
 
-   // Metrics
-
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-
-   type l2_norm(const Tensor<type, 1>& parameters) const
-   {
-       Tensor<type, 0> norm;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                norm.device(*default_device) = parameters.square().sum().sqrt();
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       return norm(0);
-   }
-
-   type l1_norm(const Tensor<type, 1>& parameters) const
-   {
-       Tensor<type, 0> norm;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                norm.device(*default_device) = parameters.abs().sum();
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               norm.device(*thread_pool_device) = parameters.abs().sum();
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       return norm(0);
-   }
-
-   Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& parameters) const
-   {
-       const Index parameters_number = parameters.size();
-
-       Tensor<type, 1> gradient(parameters_number);
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                gradient.device(*default_device) = parameters.sign();
-
-                return gradient;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               gradient.device(*thread_pool_device) = parameters.sign();
-
-               return gradient;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
-
-       return Tensor<type, 1>();
-   }
-
-
-   Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
-   {
-       const Index parameters_number = parameters.size();
-
-       Tensor<type, 2> hessian(parameters_number, parameters_number);
-
-           switch(device_pointer->get_type())
-           {
-                case Device::EigenDefault:
-                {
-                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                    hessian.device(*default_device) = hessian.setZero();  //<---
-
-                    return hessian;
-
-                }
-
-                case Device::EigenSimpleThreadPool:
-                {
-                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                   hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
-
-                   return hessian;
-                }
-
-               case Device::EigenGpu:
-               {
-    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                    break;
-               }
-           }
-
-           return Tensor<type, 2>();
-   }
-
-
-   Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const
-   {
-       const Index parameters_number = parameters.size();
-
-       Tensor<type, 1> gradient(parameters_number);
-
-       const type norm = l2_norm(parameters);
-
-       if(static_cast<Index>(norm) ==  0)
-       {
-           gradient.setZero();
-
-           return gradient;
-       }
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                gradient.device(*default_device) = parameters/norm;
-
-                return gradient;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               gradient.device(*thread_pool_device) = parameters/norm;
-
-               return gradient;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return Tensor<type, 1>();
-           }
-       }
-
-       return Tensor<type, 1>();
-   }
-
-
-   Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& parameters) const
-   {
-       const Index parameters_number = parameters.size();
-
-       Tensor<type, 2> hessian(parameters_number, parameters_number);
-
-       const type norm = l2_norm(parameters);
-
-       if(static_cast<Index>(norm) == 0.0)
-       {
-           hessian.setZero();
-
-           return hessian;
-       }
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-                return hessian;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-               return hessian;
-
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-               return hessian;
-           }
-       }
-
-       return Tensor<type, 2>();
-   }
-
 protected:
-
-   Device* device_pointer = nullptr;
 
    /// Pointer to a neural network object.
 
@@ -749,16 +303,11 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight = static_cast<type>(0.01);
+   double regularization_weight = 0.01;
 
    /// Display messages to screen. 
 
    bool display = true;
-
-   const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
-   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }
@@ -767,7 +316,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

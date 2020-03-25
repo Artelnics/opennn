@@ -21,10 +21,11 @@
 
 // OpenNN includes
 
+#include "vector.h"
+#include "matrix.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 #include "tinyxml2.h"
-#include "config.h"
 
 
 namespace OpenNN
@@ -32,8 +33,7 @@ namespace OpenNN
 
 /// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class GrowingInputs : public InputsSelection
 {
@@ -69,27 +69,27 @@ public:
         virtual ~GrowingInputsResults() {}
 
 
-        Tensor<bool, 1> selected_inputs;
+        Vector<bool> selected_inputs;
     };
 
 
     // Get methods
 
-    const Index& get_maximum_inputs_number() const;
+    const size_t& get_maximum_inputs_number() const;
 
-    const Index& get_minimum_inputs_number() const;
+    const size_t& get_minimum_inputs_number() const;
 
-    const Index& get_maximum_selection_failures() const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_maximum_inputs_number(const Index&);
+    void set_maximum_inputs_number(const size_t&);
 
-    void set_minimum_inputs_number(const Index&);
+    void set_minimum_inputs_number(const size_t&);
 
-    void set_maximum_selection_failures(const Index&);
+    void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
 
@@ -97,7 +97,7 @@ public:
 
     // Serialization methods
 
-    Tensor<string, 2> to_string_matrix() const;
+    Matrix<string> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -111,15 +111,15 @@ private:
 
     /// Maximum number of inputs in the neural network.
 
-    Index maximum_inputs_number;
+    size_t maximum_inputs_number;
 
     /// Minimum number of inputs in the neural network.
 
-    Index minimum_inputs_number = 1;
+    size_t minimum_inputs_number = 1;
 
     /// Maximum number of iterations at which the selection error increases.
 
-    Index maximum_selection_failures = 10;
+    size_t maximum_selection_failures = 10;
 };
 
 }
@@ -127,7 +127,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
