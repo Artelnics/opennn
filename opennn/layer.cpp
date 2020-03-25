@@ -1553,13 +1553,13 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
         Tensor<type,3> activations_derivatives_(dim, dim, 1);
 
         for(Index i = 0; i < dim; i++)
-        {
-        for(Index j = 0; j < dim; j++)
-            {
-            Index delta = 0;
-            if(i == j) delta = 1;
+        {            
+            for(Index j = 0; j < dim; j++)
+            {                
+                Index delta = 0;
+                if(i == j) delta = 1;
 
-            activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
+                activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
             }
        }
 
