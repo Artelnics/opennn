@@ -28,6 +28,22 @@
 #include <cstdlib>
 #include <ostream>
 
+// Qt includes
+
+#include <QFileInfo>
+#include <QCoreApplication>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QString>
+#include <QFile>
+#include <QTextStream>
+#include <QTextCodec>
+#include <QVector>
+#include <QDebug>
+#include <QDir>
+
+#include <QObject>
 
 // OpenNN includes
 

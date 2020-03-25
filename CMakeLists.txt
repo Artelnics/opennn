@@ -22,8 +22,6 @@ include_directories(opennn)
 
 option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 
-option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
-
 #option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    OFF)
 
 
@@ -34,9 +32,5 @@ option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif(OpenNN_BUILD_EXAMPLES)
-
-if(OpenNN_BUILD_BLANK)
-    add_subdirectory(blank)
-endif(OpenNN_BUILD_BLANK)
 
 include(CPack)
