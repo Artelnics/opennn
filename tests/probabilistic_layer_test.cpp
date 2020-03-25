@@ -548,16 +548,23 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     combinations_2d.resize(1,3);
     combinations_2d.setValues({{1, 2, 3}});
     activations_2d.resize(1,3);
-    activations_derivatives.resize(3,3,3);
+    activations_derivatives.resize(3,3,1);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+
+
+    assert_true(activations_derivatives.rank() == 3, LOG);
+    assert_true(activations_derivatives.dimension(0) == 3, LOG);
+    assert_true(activations_derivatives.dimension(1) == 3, LOG);
+    assert_true(activations_derivatives.dimension(2) == 1, LOG);
 
     assert_true(abs(activations_2d(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(1,1,0) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(2,2,0) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
+
 
     // Test 2
 
@@ -566,7 +573,7 @@ void ProbabilisticLayerTest::test_calculate_derivatives_activations()
     combinations_2d.resize(1,4);
     combinations_2d.setValues({{-1, 2, -3, -4}});
     activations_2d.resize(1,4);
-    activations_derivatives.resize(4,4,4);
+    activations_derivatives.resize(4,4,1);
 
     probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
 

@@ -943,142 +943,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse());
-
-        return;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        // Activations
-
-        activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
-
-        // Activations Derivatives
-
-        activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse());
-
-        return;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        return;
-    }
-    }
-
-}
-
-
-void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
-                                 Tensor<type, 2>& activations,
-                                 Tensor<type, 3>& activations_derivatives) const
-{
-    Tensor<type, 0> sum;
-
-    if(/* DISABLES CODE */ (false))
-    {
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        return;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        return;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        return;
-    }
-    }
-}
-
-#ifdef __OPENNN_DEBUG__
-
-    if(combinations.dimension(0) != activations.dimension(2))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Layer Class.\n"
-               << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<< combinations.dimension(0)
-               << ") must be equal to number of rows in y(" <<activations.dimension(2)<< ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Index n = combinations.dimension(0);
-    const Index columns_number = combinations.dimension(1);
-
-    Tensor<type, 2> softmax_values(n, columns_number);
-
-    softmax(combinations, activations);
-
-    for(Index i = 0; i < n; i ++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            for(Index k = 0; k < columns_number; k++)
-            {
-                activations_derivatives(j,k,i) = - activations(i,j) * activations(i,k);
-
-            }
-        }
-    }
-
-    for(Index i = 0; i < n; i++)
-    {
-        for(Index j = 0; j < columns_number; j++) activations_derivatives(j,j,i) = activations(i,j)*(static_cast<type>(1.0) - activations(i,j));
-    }
-
-    return;
-
-    }
-
-
-
-void Layer::linear_derivatives(const Tensor<type, 2>& combinations,
-                               Tensor<type, 2>& activations,
-                               Tensor<type, 2>& activations_derivatives) const
-{
-    activations = combinations;
-
-    activations_derivatives.setConstant(1.0);
-}
-
-
-void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
-                                 Tensor<type, 2>& activations,
-                                 Tensor<type, 3>& activations_derivatives) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        // Activations
-
-        activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
-
-        // Activations Derivatives
-
         activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
 
         return;
@@ -1101,13 +965,24 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
     case Device::EigenGpu:
     {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+//      GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
         return;
     }
     }
 
 }
+
+
+void Layer::linear_derivatives(const Tensor<type, 2>& combinations,
+                               Tensor<type, 2>& activations,
+                               Tensor<type, 2>& activations_derivatives) const
+{
+    activations = combinations;
+
+    activations_derivatives.setConstant(1.0);
+}
+
 
 
 void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
@@ -1513,7 +1388,7 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+        const Tensor<bool, 2> if_sentence = combinations <= combinations.constant(0);
 
         const type alpha = static_cast<type>(1.0);
 
@@ -1578,6 +1453,152 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
     }
 
 }
+
+
+
+void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
+                                 Tensor<type, 2>& activations,
+                                 Tensor<type, 3>& activations_derivatives) const
+{
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        // Activations
+
+        activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
+
+        // Activations Derivatives
+
+        Index dim = combinations.dimension(1);
+
+        Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+
+        Tensor<type,3> ad_3d(1, dim, 1);
+        ad_3d.setZero();
+
+        ad_3d.chip(0,0) = ad_2d;
+
+        activations_derivatives.device(*default_device) = ad_3d;
+
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        // Activations
+
+        activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
+
+        // Activations Derivatives
+
+        Index dim = combinations.dimension(1);
+
+        Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+
+        Tensor<type,3> ad_3d(1, dim, 1);
+        ad_3d.setZero();
+
+        ad_3d.chip(0,0) = ad_2d;
+
+        activations_derivatives.device(*thread_pool_device) = ad_3d;
+
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+        return;
+    }
+    }
+
+}
+
+
+void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
+                                 Tensor<type, 2>& activations,
+                                 Tensor<type, 3>& activations_derivatives) const
+{
+    Tensor<type, 0> sum;
+
+    const Index dim = combinations.dimension(1);
+
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        //Activations
+
+        sum.device(*thread_pool_device) = combinations.exp().sum();
+
+        activations.device(*thread_pool_device) = combinations.exp() / sum(0);
+
+        //Activations derivatives
+
+        Tensor<type,3> activations_derivatives_(dim, dim, 1);
+
+        for(Index i = 0; i < dim; i++)
+        {
+        for(Index j = 0; j < dim; j++)
+            {
+            Index delta = 0;
+            if(i == j) delta = 1;
+
+            activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
+            }
+       }
+
+        activations_derivatives.device(*thread_pool_device) = activations_derivatives_;
+
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+        return;
+    }
+}
+
+    /*
+#ifdef __OPENNN_DEBUG__
+
+    if(combinations.dimension(0) != activations.dimension(2))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer Class.\n"
+               << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
+               << "Number of rows in x("<< combinations.dimension(0)
+               << ") must be equal to number of rows in y(" <<activations.dimension(2)<< ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+
+    return;
+*/
+}
+
+
 
 
 }
