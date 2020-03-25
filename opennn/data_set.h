@@ -853,7 +853,7 @@ public:
 
    void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
 
-   Tensor<Index, 2> split_instances(Tensor<Index, 1>&, const Index&) const;
+   Tensor<Index, 2> split_instances(const Tensor<Index, 1>&, const Index&) const;
 
 private:
 
