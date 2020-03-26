@@ -33,79 +33,10 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-/*
-        const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
-        Tensor<type, 2, RowMajor> t1(2,2);
-        Tensor<type, 2, RowMajor> t2(2,2);
-
-//          Tensor<type, 2, RowMajor> t3 = t1.contract(t2, A_B);
-
-
-//        for(Index i = 0; i < t.size(); i++) t.data()[i] = i;
-
-//        cout << t.swap_layout() << endl;
-
-        vector<int> ar = { 10, 20, 30, 40, 50 };
-
-            // Declaring iterator to a vector
-            vector<int>::iterator ptr = ar.begin();
-
-            // Using advance() to increment iterator position
-            // points to 4
-
-            advance(ptr, 3);
-
-            // Displaying iterator position
-            cout << "The position of iterator after advancing is : ";
-            cout << *ptr << " " << endl;
-
-
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        MatrixXf M1 = MatrixXf::Random(3,8);
-
-        vector<Index> rows(1,1);
-
-//        cout <<M1(1,rows) << endl;
-
-        cout << "Column major input:" << endl << M1 << "\n";
-
-        Map<MatrixXf, 0, OuterStride<> > M2(M1.data(), M1.rows(), (M1.cols()+2)/3, OuterStride<>(M1.outerStride()*3));
-
-        cout << "1 column over 3:" << endl << M2 << "\n";
-
-        typedef Matrix<float,Dynamic,Dynamic,RowMajor> RowMajorMatrixXf;
-        RowMajorMatrixXf M3(M1);
-        cout << "Row major input:" << endl << M3 << "\n";
-
-        Map<RowMajorMatrixXf,0,Stride<Dynamic,3> > M4(M3.data(), M3.rows(), (M3.cols()+2)/3,
-                                                      Stride<Dynamic,3>(M3.outerStride(),3));
-        cout << "1 column over 3:" << endl << M4 << "\n";
-*/
         // Data Set
 
         const Index samples = 1000000;
         const Index variables = 1000;
-/*
-        DataSet data_set;
-
-        data_set.generate_Rosenbrock_data(samples, variables+1);
-
-        data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_400000_100.csv");
-
-
-        data_set.save_data();
-
-
-        // Read Data
-
-//        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
-
-        // Generate Data
-*/
-        // Device
 
         Device device(Device::EigenSimpleThreadPool);
 
@@ -116,7 +47,6 @@ int main(void)
         data_set.set_device_pointer(&device);
 
         data_set.set_training();
-//        data_set.split_instances_random();
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
