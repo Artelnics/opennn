@@ -298,7 +298,7 @@ public:
            ostringstream buffer;
 
            buffer << "OpenNN Exception: PerceptronLayer class.\n"
-                  << "void forward_propagate(const Tensor<type, 2>&,, ForwardPropagation&) method.\n"
+                  << "void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) method.\n"
                   << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
                   << inputs_number << ").\n";
 
