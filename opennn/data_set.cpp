@@ -1103,7 +1103,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
 }
 
 
-
 /// Returns the number of instances in the data set which will be used for training.
 
 Index DataSet::get_training_instances_number() const
