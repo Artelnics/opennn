@@ -72,7 +72,6 @@ Tensor<Index, 1> PerceptronLayer::get_input_variables_dimensions() const
 Index PerceptronLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
-
 }
 
 
