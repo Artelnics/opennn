@@ -2287,24 +2287,21 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
         throw logic_error(buffer.str());
     }
 
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        sorted_targets(i) = targets(sorted_indices(i),0);
     }
-
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
     const Index points_number = 21;
     const type percentage_increment = static_cast<type>(0.05);
@@ -2326,11 +2323,11 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 
         positives = 0;
 
-        maximum_index = static_cast<Index>(percentage*rows_number);
+        maximum_index = static_cast<Index>(percentage*testing_instances_number);
 
         for(Index j = 0; j < maximum_index; j++)
         {
-            if(static_cast<double>(sorted_targets(j, 0)) == 1.0)
+            if(static_cast<double>(sorted_targets(j)) == 1.0)
             {
                  positives++;
             }
@@ -2364,24 +2361,21 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
         throw logic_error(buffer.str());
     }
 
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        sorted_targets(i) = targets(sorted_indices(i),0);
     }
-
-    // Sort by descending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), greater<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
     const Index points_number = 21;
     const type percentage_increment = static_cast<type>(0.05);
@@ -2403,11 +2397,11 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
         negatives = 0;
 
-        maximum_index = static_cast<Index>(percentage*rows_number);
+        maximum_index = static_cast<Index>(percentage*testing_instances_number);
 
         for(Index j = 0; j < maximum_index; j++)
         {
-            if(sorted_targets(j, 0) < numeric_limits<type>::min())
+            if(sorted_targets(j) < numeric_limits<type>::min())
             {
                  negatives++;
             }
@@ -2419,7 +2413,6 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     }
 
     return negative_cumulative_gain;
-
 }
 
 
@@ -2623,8 +2616,8 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
                 && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > static_cast<type>(0.0))
         {
-            maximum_gain[1] = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
-            maximum_gain[0] = percentage;
+            maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
+            maximum_gain(0) = percentage;
         }
     }
 

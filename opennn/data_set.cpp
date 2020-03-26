@@ -4727,7 +4727,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Index calculate_testing_negatives(const Index&) const method.\n"
                    << "Selection instance is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
 
             throw logic_error(buffer.str());
@@ -4757,16 +4757,16 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(abs(data(testing_index, target_index) -1) < numeric_limits<type>::min())
+        /*else if(abs(data(testing_index, target_index) - 1) < static_cast<type>(1.0e-3))
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Index calculate_testing_negatives(const Index&) const method.\n"
                    << "Testing instance is neither a positive nor a negative: " << data(testing_index, target_index) << endl;
 
             throw logic_error(buffer.str());
-        }
+        }*/
     }
 
     return negatives;
@@ -8620,52 +8620,52 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     Tensor<Index, 1> class_distribution;
-    /*
-       if(targets_number == 1) // Two classes
-       {
-          class_distribution.resize(2, 0);
 
-          Index target_index = target_variables_indices(0);
+    if(targets_number == 1) // Two classes
+    {
+        class_distribution = Tensor<Index, 1>(2);
 
-          Index positives = 0;
-          Index negatives = 0;
+        Index target_index = target_variables_indices(0);
 
-          for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
-          {
-              if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
-              {
-                  if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
-                  {
-                      negatives++;
-                  }
-                  else
-                  {
-                      positives++;
-                  }
-              }
-          }
+        Index positives = 0;
+        Index negatives = 0;
 
-          class_distribution(0) = negatives;
-          class_distribution(1) = positives;
-       }
-       else // More than two classes
-       {
-          class_distribution.resize(targets_number, 0);
+        for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
+        {
+            if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
+            {
+                if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
+                {
+                    negatives++;
+                }
+                else
+                {
+                    positives++;
+                }
+            }
+        }
 
-          for(Index i = 0; i < instances_number; i++)
-          {
-              if(get_instance_use(i) != UnusedInstance)
-              {
-                 for(Index j = 0; j < targets_number; j++)
-                 {
-                     if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
+        class_distribution(0) = negatives;
+        class_distribution(1) = positives;
+    }
+    else // More than two classes
+    {
+        class_distribution = Tensor<Index, 1>(targets_number);
 
-                     if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
-                 }
-              }
-          }
-       }
-    */
+        for(Index i = 0; i < instances_number; i++)
+        {
+            if(get_instance_use(i) != UnusedInstance)
+            {
+                for(Index j = 0; j < targets_number; j++)
+                {
+                    if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
+
+                    if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
+                }
+            }
+        }
+    }
+
     return class_distribution;
 }
 
