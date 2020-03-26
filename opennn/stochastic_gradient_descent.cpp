@@ -633,8 +633,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     {
         training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                          batch_instances_number,
-                                                         shuffle,
-                                                         100);
+                                                         shuffle);
 
         training_loss = 0;
 
@@ -649,7 +648,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->forward_propagate(batch, forward_propagation);
 
             // Loss
-
+/*
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
 
             training_loss += back_propagation.error;
@@ -658,7 +657,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             update_iteration(back_propagation, optimization_data);
 
-            neural_network_pointer->set_parameters(optimization_data.parameters);
+            neural_network_pointer->set_parameters(optimization_data.parameters);*/
         }
 
         // Loss
@@ -714,7 +713,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
+/*
         if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
@@ -723,7 +722,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-
+*/
         if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
