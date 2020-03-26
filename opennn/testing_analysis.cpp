@@ -1792,8 +1792,8 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 {
     const Tensor<Index, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
-    const Index total_positives = positives_negatives_rate[0];
-    const Index total_negatives = positives_negatives_rate[1];
+    const Index total_positives = positives_negatives_rate(0);
+    const Index total_negatives = positives_negatives_rate(1);
 
     if(total_positives == 0)
     {
@@ -1835,28 +1835,46 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         step_size = 1;
     }
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
-
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    if(targets.dimension(1) != 1)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
+               << "Number of of target variables ("<< targets.dimension(1) <<") must be one.\n";
+
+        throw logic_error(buffer.str());
     }
 
-    // Sort by ascending values
+    if(outputs.dimension(1) != 1)
+    {
+        ostringstream buffer;
 
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
+               << "Number of of output variables ("<< targets.dimension(1) <<") must be one.\n";
 
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
+        throw logic_error(buffer.str());
+    }
+
+    // Sort by ascending values of outputs vector
+
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+    Tensor<type, 1> sorted_outputs(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
+    {
+        sorted_targets(i) = targets(sorted_indices(i),0);
+        sorted_outputs(i) = outputs(sorted_indices(i),0);
+    }
 
     Tensor<type, 2> roc_curve(points_number+1, 3);
     roc_curve.setZero();
-
-    const Index step_s = step_size;
 
      #pragma omp parallel for schedule(dynamic)
 
@@ -1865,17 +1883,17 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         Index positives = 0;
         Index negatives = 0;
 
-        const Index current_index = i*step_s;
+        const Index current_index = i*step_size;
 
-        const type threshold = sorted_outputs(current_index, 0);
+        const type threshold = sorted_outputs(current_index);
 
         for(Index j = 0; j < static_cast<Index>(current_index); j++)
         {
-             if(sorted_outputs(j,0) < threshold && static_cast<double>(sorted_targets(j,0)) == 1.0)
+             if(sorted_outputs(j) < threshold && static_cast<double>(sorted_targets(j)) == 1.0)
              {
                  positives++;
              }
-             if(sorted_outputs(j,0) < threshold && sorted_targets(j,0) < numeric_limits<type>::min())
+             if(sorted_outputs(j) < threshold && sorted_targets(j) < numeric_limits<type>::min())
              {
                  negatives++;
              }
@@ -2145,22 +2163,11 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
         step_size = 1;
     }
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
-    {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
-    }
+    Tensor<type, 1> sorted_outputs = outputs.chip(0,1);
 
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
+    stable_sort(sorted_outputs.data(), sorted_outputs.data()+sorted_outputs.size(), less<type>());
 
     type threshold = 0;
     type optimal_threshold = 0.5;
@@ -2174,9 +2181,9 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     {
         current_index = i*step_size;
 
-        threshold = sorted_outputs(current_index, 0);
+        threshold = sorted_outputs(current_index);
 
-        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
+        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - static_cast<type>(1))*(roc_curve(i,1) - static_cast<type>(1)));
 
         if(distance < minimun_distance)
         {
@@ -2187,7 +2194,6 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     }
 
     return optimal_threshold;
-
 }
 
 

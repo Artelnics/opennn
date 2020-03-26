@@ -17,6 +17,8 @@
 #include <sstream>
 #include <cmath>
 
+#include <numeric>
+
 // OpenNN includes
 
 #include "config.h"
