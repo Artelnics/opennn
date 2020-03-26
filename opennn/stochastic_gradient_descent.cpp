@@ -634,12 +634,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                          batch_instances_number,
                                                          shuffle,
-                                                         2);
+                                                         100);
+
+//        cout << training_batches << endl;
 
 
         training_loss = 0;
-
-        Index index = 0;
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
