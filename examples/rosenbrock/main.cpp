@@ -85,8 +85,8 @@ int main(void)
 */
         // Data Set
 
-        const Index samples = 10;
-        const Index variables = 3;
+        const Index samples = 1000000;
+        const Index variables = 1000;
 /*
         DataSet data_set;
 
