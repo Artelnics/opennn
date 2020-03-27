@@ -85,7 +85,7 @@ public:
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
-   Tensor<type, 2> get_hidden_states() const;
+   Tensor<type, 1> get_hidden_states() const;
 
    // Parameters
 
@@ -186,6 +186,8 @@ public:
 
            calculate_combinations(current_inputs, combinations_1d);
 
+           calculate_activations(combinations_1d, hidden_states);
+
            for(Index j = 0; j < neurons_number; j++)
                combinations_2d(i,j) = combinations_1d(j);
        }
@@ -234,7 +236,7 @@ public:
 
    // neuron layer activations_2d
 
-   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
+   void calculate_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& activations_1d) const
    {
 
 #ifdef __OPENNN_DEBUG__
@@ -259,27 +261,27 @@ if(combinations_columns_number != neurons_number)
 
        switch(activation_function)
        {
-           case Linear: return linear(combinations_2d, activations_2d);
+           case Linear: return linear(combinations_1d, activations_1d);
 
-           case Logistic: return logistic(combinations_2d, activations_2d);
+           case Logistic: return logistic(combinations_1d, activations_1d);
 
-           case HyperbolicTangent: return hyperbolic_tangent(combinations_2d, activations_2d);
+           case HyperbolicTangent: return hyperbolic_tangent(combinations_1d, activations_1d);
 
-           case Threshold: return threshold(combinations_2d, activations_2d);
+           case Threshold: return threshold(combinations_1d, activations_1d);
 
-           case SymmetricThreshold: return symmetric_threshold(combinations_2d, activations_2d);
+           case SymmetricThreshold: return symmetric_threshold(combinations_1d, activations_1d);
 
-           case RectifiedLinear: return rectified_linear(combinations_2d, activations_2d);
+           case RectifiedLinear: return rectified_linear(combinations_1d, activations_1d);
 
-           case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d, activations_2d);
+           case ScaledExponentialLinear: return scaled_exponential_linear(combinations_1d, activations_1d);
 
-           case SoftPlus: return soft_plus(combinations_2d, activations_2d);
+           case SoftPlus: return soft_plus(combinations_1d, activations_1d);
 
-           case SoftSign: return soft_sign(combinations_2d, activations_2d);
+           case SoftSign: return soft_sign(combinations_1d, activations_1d);
 
-           case HardSigmoid: return hard_sigmoid(combinations_2d, activations_2d);
+           case HardSigmoid: return hard_sigmoid(combinations_1d, activations_1d);
 
-           case ExponentialLinear: return exponential_linear(combinations_2d, activations_2d);
+           case ExponentialLinear: return exponential_linear(combinations_1d, activations_1d);
 
        }
 
@@ -341,7 +343,7 @@ if(combinations_columns_number != neurons_number)
 
    // neuron layer outputs
 
-   void update_hidden_states(const Tensor<type, 2>&);
+   void update_hidden_states(const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -374,6 +376,10 @@ if(combinations_columns_number != neurons_number)
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_activation_function_expression() const;
 
+   // Utilities
+
+   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
+
    string object_to_string() const;
 
    // Serialization methods
@@ -401,7 +407,7 @@ protected:
 
    ActivationFunction activation_function = HyperbolicTangent;
 
-   Tensor<type, 2> hidden_states;
+   Tensor<type, 1> hidden_states;
 
    /// Display messages to screen.
 
