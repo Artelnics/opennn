@@ -717,7 +717,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
 */
     }
 
-    return outputs;
+//    return outputs;
 
     return Tensor<type, 2>();
 }
@@ -1016,14 +1016,8 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     Tensor<type, 2> outputs(instances_number, neurons_number);
 
-    calculate_combinations(inputs, outputs);
-
-    calculate_activations(outputs, outputs);
-
-    hidden_states = outputs;
-  /*
     Tensor<type, 1> current_outputs(neurons_number);
-
+/*
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
@@ -1106,7 +1100,6 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
           }
 */
     return outputs;
-
 }
 
 
