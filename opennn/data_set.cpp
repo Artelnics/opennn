@@ -2520,8 +2520,6 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 {
     const Index used_number = get_used_variables_number();
 
-    const Tensor<Index, 1> unused_columns_indices = get_used_columns_indices();
-
     Tensor<Index, 1> used_indices(used_number);
 
     Index used_index = 0;
@@ -3863,25 +3861,25 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 }
 
 
-Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
+Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & variables_indices) const
 {
     const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
+    const Index variables_number = variables_indices.size();
 
-    Tensor<type, 2> subtensor(rows_indices.size(), columns_indices.size());
+    Tensor<type, 2> subtensor(rows_indices.size(), variables_indices.size());
 
     Index row_index;
-    Index column_index;
+    Index variable_index;
 
     for(Index i = 0; i < rows_number; i++)
     {
         row_index = rows_indices(i);
 
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < variables_number; j++)
         {
-            column_index = columns_indices(j);
+            variable_index = variables_indices(j);
 
-            subtensor(i, j) = data(row_index, column_index);
+            subtensor(i, j) = data(row_index, variable_index);
         }
     }
 
