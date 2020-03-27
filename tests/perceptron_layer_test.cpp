@@ -1248,7 +1248,20 @@ void PerceptronLayerTest::test_forward_propagate()
 /*
     PerceptronLayer perceptron_layer;
 
+    Device device(Device::EigenSimpleThreadPool);
+    perceptron_layer.set_device_pointer(&device);
+
+    Tensor<Index, 1> arquitecture(3);
+    arquitecture.setValues({2, 0, 2});
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+    neural_network.set_device_pointer(&device);
+
+    Layer* layer_pointer = neural_network.get_layer_pointer(1);
+
     Layer::ForwardPropagation forward_propagation;
+
+    forward_propagation.set(2, layer_pointer);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 1> potential_parameters_0(1);
@@ -1260,8 +1273,6 @@ void PerceptronLayerTest::test_forward_propagate()
     Tensor<type, 2> activations_2d(1,2);
     Tensor<type, 2> activations_derivatives(1,2);
 
-    Device device(Device::EigenSimpleThreadPool);
-    perceptron_layer.set_device_pointer(&device);
 
     // Test 1
 
@@ -1306,10 +1317,14 @@ void PerceptronLayerTest::test_forward_propagate()
 void PerceptronLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
-    /*
+/*
     PerceptronLayer perceptron_layer;
 
     Layer::ForwardPropagation forward_propagation;
+
+    Layer* layer_pointer = nullptr;
+
+    forward_propagation.set(1, layer_pointer);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 1> potential_parameters_0(1);
@@ -1347,7 +1362,7 @@ void PerceptronLayerTest::test_calculate_output_delta()
     assert_true(abs(activations_2d(0,1) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,1) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
-    */
+*/
 }
 
 void PerceptronLayerTest::test_calculate_hidden_delta()
