@@ -1017,14 +1017,14 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     Tensor<type, 2> outputs(instances_number, neurons_number);
 
     Tensor<type, 1> current_outputs(neurons_number);
-/*
+
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
 
         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-        calculate_combinations(current_inputs, current_outputs);
+        calculate_combinations(current_inputs, input_weights, biases, recurrent_weights, current_outputs);
 
         calculate_activations(current_outputs, current_outputs);
 
@@ -1034,7 +1034,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
         hidden_states = current_outputs;
     }
-*/
+
     return outputs;
 }
 
@@ -1074,32 +1074,37 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const Index neurons_number = get_neurons_number();
 
+    const Tensor<type, 2> input_weights = get_input_weights(parameters);
+    const Tensor<type, 2> biases = get_biases(parameters);
+    const Tensor<type, 2> recurrent_weights = get_recurrent_weights(parameters);
+
     Tensor<type, 2> outputs(instances_number, neurons_number);
 
-    /*
-        Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
+    Tensor<type, 1> current_outputs(neurons_number);
 
-        for(Index i = 0; i < instances_number; i++)
-        {
-            if(i%timesteps == 0) hidden_states.setZero();
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(i%timesteps == 0) hidden_states.setZero();
 
-            const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-            const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs, parameters);
+        calculate_combinations(current_inputs, input_weights, biases, recurrent_weights, current_outputs);
 
-            const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        calculate_activations(current_outputs, current_outputs);
 
-            hidden_states = activations_2d;
+        hidden_states = current_outputs;
 
-            outputs.set_row(i, activations_2d);
-          }
-*/
+//        outputs.set_row(i, activations_1d);
+        for(Index j = 0; j < neurons_number; j++)
+            outputs(i,j) = current_outputs(j);
+      }
+
     return outputs;
 }
 
 
 Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
-        const Tensor<type, 1>& new_biases,
+        const Tensor<type, 2>& new_biases,
         const Tensor<type, 2>& new_input_weights,
         const Tensor<type, 2>& new_recurrent_weights)
 {
@@ -1170,27 +1175,29 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 #endif
 
     const Index instances_number = inputs.dimension(0);
-    /*
-        Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
-        for(Index i = 0; i < instances_number; i++)
-        {
-            if(i%timesteps == 0) hidden_states.setZero();
+    Tensor<type, 2> outputs(instances_number, neurons_number);
 
-            const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+    Tensor<type, 1> current_outputs(neurons_number);
 
-            const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs, new_biases, new_input_weights, new_recurrent_weights);
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(i%timesteps == 0) hidden_states.setZero();
 
-            const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-            hidden_states = activations_2d;
+        calculate_combinations(current_inputs, new_input_weights, new_biases, new_recurrent_weights, current_outputs);
 
-            outputs.set_row(i, activations_2d);
-          }
+        calculate_activations(current_outputs, current_outputs);
 
-        return outputs;
-    */
-    return Tensor<type, 2>();
+        hidden_states = current_outputs;
+
+//        outputs.set_row(i, activations_2d);
+        for(Index j = 0; j < neurons_number; j++)
+            outputs(i,j) = current_outputs(j);
+      }
+
+    return outputs;
 }
 
 
