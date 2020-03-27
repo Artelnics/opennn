@@ -82,10 +82,18 @@ public:
 
             combinations_2d.resize(batch_instances_number, neurons_number);
 
-            activations_2d.resize(batch_instances_number, neurons_number);
+//            activations_2d.resize(batch_instances_number, neurons_number);
 
             if(layer_pointer->get_type() == Perceptron)
             {
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            }
+            else if(layer_pointer->get_type() == Recurrent && layer_pointer->get_type() == LongShortTermMemory)
+            {
+                combinations_1d.resize(neurons_number);
+
+                activations_1d.resize(neurons_number);
+
                 activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
             else
@@ -119,6 +127,9 @@ public:
         Index batch_instances_number = 0;
 
         Layer* layer_pointer;
+
+        Tensor<type, 1> combinations_1d;
+        Tensor<type, 1> activations_1d;
 
         Tensor<type, 2> combinations_2d;
         Tensor<type, 2> activations_2d;
