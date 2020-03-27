@@ -361,10 +361,10 @@ if(combinations_columns_number != neurons_number)
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void forward_propagate(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation) const
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
    {
 
-//       calculate_combinations(inputs, forward_propagation.combinations_2d);
+//       calculate_combinations(inputs, input_weights, biases, recurrent_weights, forward_propagation.combinations_2d);
 
 //       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
 
