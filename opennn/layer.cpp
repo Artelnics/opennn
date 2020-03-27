@@ -237,6 +237,100 @@ string Layer::object_to_string() const
     throw logic_error(buffer.str());
 }
 
+// Activations 1d
+
+void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
+{
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        if(x(i) < static_cast<type>(-2.5))
+        {
+            y(i) = 0;
+        }
+        else if(x(i) > static_cast<type>(2.5))
+        {
+            y(i) = 1;
+        }
+        else
+        {
+            y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
+        }
+    }
+}
+
+
+void Layer::hyperbolic_tangent(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
+{
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        y.device(*default_device) = x.tanh();
+
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        y.device(*thread_pool_device) = x.tanh();
+
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+        return;
+    }
+    }
+}
+
+
+void Layer::logistic(const Tensor<type, 1>& x, Tensor<type, 1>& y)const
+{
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        y.device(*default_device) = (1 + x.exp().inverse()).inverse();
+
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        y.device(*thread_pool_device) = (1 + x.exp().inverse()).inverse();
+
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+        return;
+    }
+    }
+}
+
+
+void Layer::linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
+{
+    y = x;
+}
+
+// Activations 2d
 
 void Layer::hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
