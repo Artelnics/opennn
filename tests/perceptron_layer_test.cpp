@@ -1245,23 +1245,16 @@ void PerceptronLayerTest::test_calculate_outputs()
 void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     PerceptronLayer perceptron_layer;
 
     Device device(Device::EigenSimpleThreadPool);
-    perceptron_layer.set_device_pointer(&device);
 
     Tensor<Index, 1> arquitecture(3);
     arquitecture.setValues({2, 0, 2});
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
     neural_network.set_device_pointer(&device);
-
-    Layer* layer_pointer = neural_network.get_layer_pointer(1);
-
-    Layer::ForwardPropagation forward_propagation;
-
-    forward_propagation.set(2, layer_pointer);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 1> potential_parameters_0(1);
@@ -1271,21 +1264,33 @@ void PerceptronLayerTest::test_forward_propagate()
 
     Tensor<type, 2> combinations_2d(1,2);
     Tensor<type, 2> activations_2d(1,2);
-    Tensor<type, 2> activations_derivatives(1,2);
+    Tensor<type, 2> activations_derivatives_2d(1,2);
 
 
     // Test 1
 
     perceptron_layer.set(2,2);
     perceptron_layer.set_parameters_constant(1);
-    biases = perceptron_layer.get_biases();
-    synaptic_weights = perceptron_layer.get_synaptic_weights();
+    perceptron_layer.set_biases_constant(1);
+    perceptron_layer.set_synaptic_weights_constant(1);
     inputs.setConstant(1);
+    combinations_2d.setZero();
+    activations_2d.setZero();
+    activations_derivatives_2d.setZero();
+
+    perceptron_layer.set_device_pointer(&device);
 
     perceptron_layer.set_activation_function(PerceptronLayer::Linear);
 
+    PerceptronLayer* layer_pointer = neural_network.get_first_perceptron_layer_pointer();
+
+    Layer::ForwardPropagation forward_propagation;
+
+    forward_propagation.set(1, layer_pointer);
+
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
+/*
     assert_true(abs(activations_2d(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_2d(0,1) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
