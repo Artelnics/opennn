@@ -171,8 +171,13 @@ public:
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&);
 
-   void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations_2d)
+   void calculate_combinations(const Tensor<type, 2>& inputs,
+                               const Tensor<type, 2>& input_weights,
+                               const Tensor<type, 2>& biases,
+                               const Tensor<type, 2>& recurrent_weights,
+                               Tensor<type, 2>& combinations_2d)
    {
+
        const Index instances_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
 
@@ -184,7 +189,7 @@ public:
 
            const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-           calculate_combinations(current_inputs, combinations_1d);
+           calculate_combinations(current_inputs, input_weights, biases, recurrent_weights, combinations_1d);
 
            calculate_activations(combinations_1d, hidden_states);
 
@@ -193,7 +198,11 @@ public:
        }
    }
 
-   void calculate_combinations(const Tensor<type, 1>& inputs, Tensor<type, 1>& combinations_1d)
+   void calculate_combinations(const Tensor<type, 1>& inputs,
+                               const Tensor<type, 2>& input_weights,
+                               const Tensor<type, 2>& biases,
+                               const Tensor<type, 2>& recurrent_weights,
+                               Tensor<type, 1>& combinations_1d)
    {
        switch(device_pointer->get_type())
        {
@@ -348,7 +357,7 @@ if(combinations_columns_number != neurons_number)
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -384,9 +393,9 @@ if(combinations_columns_number != neurons_number)
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&) {};
+   void from_XML(const tinyxml2::XMLDocument&) {}
 
-   void write_XML(tinyxml2::XMLPrinter&) const {};
+   void write_XML(tinyxml2::XMLPrinter&) const {}
 
 protected:
 
