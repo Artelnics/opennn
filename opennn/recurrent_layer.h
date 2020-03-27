@@ -173,7 +173,46 @@ public:
 
    void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations_2d)
    {
-       combinations_2d = inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                combinations_2d.device(*default_device) = inputs.contract(input_weights, A_B);
+
+                combinations_2d.device(*default_device) += biases.chip(0,0);
+
+                combinations_2d.device(*default_device) += hidden_states.contract(recurrent_weights, A_B);
+
+                return;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               combinations_2d.device(*thread_pool_device) = inputs.contract(input_weights, A_B);
+
+               combinations_2d.device(*thread_pool_device) += biases.chip(0,0);
+
+               combinations_2d.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, A_B);
+
+                return;
+            }
+
+           case Device::EigenGpu:
+           {
+#ifdef EIGEN_USE_GPU
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+#endif
+
+                return;
+           }
+       }
+//       combinations_2d = inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
    }
 
 
