@@ -1246,15 +1246,15 @@ void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     Device device(Device::EigenSimpleThreadPool);
 
-    Tensor<Index, 1> arquitecture(3);
-    arquitecture.setValues({2, 0, 2});
+//    Tensor<Index, 1> arquitecture(3);
+//    arquitecture.setValues({2, 0, 2});
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-    neural_network.set_device_pointer(&device);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+//    neural_network.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 1> potential_parameters_0(1);
@@ -1269,24 +1269,24 @@ void PerceptronLayerTest::test_forward_propagate()
 
     // Test 1
 
-    perceptron_layer.set(2,2);
+    PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
+
+    // Set parameters
+
     perceptron_layer.set_parameters_constant(1);
-    perceptron_layer.set_biases_constant(1);
-    perceptron_layer.set_synaptic_weights_constant(1);
+
     inputs.setConstant(1);
     combinations_2d.setZero();
     activations_2d.setZero();
     activations_derivatives_2d.setZero();
 
+    // Forward propagation
+
+    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+
     perceptron_layer.set_device_pointer(&device);
 
-    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-
-    PerceptronLayer* layer_pointer = neural_network.get_first_perceptron_layer_pointer();
-
-    Layer::ForwardPropagation forward_propagation;
-
-    forward_propagation.set(1, layer_pointer);
+    forward_propagation.print();
 
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
