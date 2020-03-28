@@ -501,7 +501,7 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 
 void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
 {
-        forget_biases = new_biases;
+    forget_biases = new_biases;
 }
 
 
@@ -510,7 +510,7 @@ void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_bias
 ///
 void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
 {
-        input_biases = new_biases;
+    input_biases = new_biases;
 }
 
 
@@ -520,7 +520,7 @@ void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biase
 
 void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
 {
-        state_biases = new_biases;
+    state_biases = new_biases;
 }
 
 
@@ -530,7 +530,7 @@ void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biase
 
 void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
 {
-        output_biases = new_biases;
+    output_biases = new_biases;
 }
 
 
@@ -543,7 +543,7 @@ void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_bias
 void LongShortTermMemoryLayer::set_forget_weights(const Tensor<type, 2>& new_forget_weights)
 {
 
-        forget_weights = new_forget_weights;
+    forget_weights = new_forget_weights;
 
 }
 
@@ -556,7 +556,7 @@ void LongShortTermMemoryLayer::set_forget_weights(const Tensor<type, 2>& new_for
 
 void LongShortTermMemoryLayer::set_input_weights(const Tensor<type, 2>& new_input_weight)
 {
-        input_weights = new_input_weight;
+    input_weights = new_input_weight;
 }
 
 
@@ -568,7 +568,7 @@ void LongShortTermMemoryLayer::set_input_weights(const Tensor<type, 2>& new_inpu
 
 void LongShortTermMemoryLayer::set_state_weights(const Tensor<type, 2>& new_state_weights)
 {
-        state_weights = new_state_weights;
+    state_weights = new_state_weights;
 }
 
 
@@ -580,7 +580,7 @@ void LongShortTermMemoryLayer::set_state_weights(const Tensor<type, 2>& new_stat
 
 void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_output_weight)
 {
-        output_weights = new_output_weight;
+    output_weights = new_output_weight;
 
 }
 
@@ -593,7 +593,7 @@ void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_out
 
 void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2>& new_forget_recurrent_weight)
 {
-        forget_recurrent_weights = new_forget_recurrent_weight;
+    forget_recurrent_weights = new_forget_recurrent_weight;
 }
 
 
@@ -606,7 +606,7 @@ void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>& new_input_recurrent_weight)
 {
-        input_recurrent_weights = new_input_recurrent_weight;
+    input_recurrent_weights = new_input_recurrent_weight;
 }
 
 
@@ -619,7 +619,7 @@ void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>
 
 void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>& new_state_recurrent_weight)
 {
-        state_recurrent_weights = new_state_recurrent_weight;
+    state_recurrent_weights = new_state_recurrent_weight;
 }
 
 
@@ -631,7 +631,7 @@ void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>
 
 void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2>& new_output_recurrent_weight)
 {
-        output_recurrent_weights = new_output_recurrent_weight;
+    output_recurrent_weights = new_output_recurrent_weight;
 }
 
 
