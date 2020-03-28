@@ -18,7 +18,7 @@ RecurrentLayerTest::~RecurrentLayerTest()
 {
 }
 
-/*
+
 void RecurrentLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -137,8 +137,6 @@ void RecurrentLayerTest::test_get_biases()
 
    RecurrentLayer recurrent_layer;
 
-   Tensor<type, 1> biases;
-
    Index inputs_number;
    Index neurons_number;
 
@@ -147,12 +145,17 @@ void RecurrentLayerTest::test_get_biases()
    neurons_number = 3;
    inputs_number = 2;
 
-   recurrent_layer.set(inputs_number,neurons_number);
+   Tensor<type, 2> biases(1, neurons_number);
 
-   biases.initialize_sequential();
+   recurrent_layer.set(inputs_number, neurons_number);
+
+   biases.setConstant(1);
    recurrent_layer.set_biases(biases);
 
-   assert_true(biases == recurrent_layer.get_biases(), LOG);
+   assert_true(biases(0) == recurrent_layer.get_biases()(0), LOG);
+   assert_true(biases(1) == recurrent_layer.get_biases()(1), LOG);
+   assert_true(biases.size() == recurrent_layer.get_biases().size(), LOG);
+   assert_true(biases(0) == 1, LOG);
 }
 
 void RecurrentLayerTest::test_get_weights()
@@ -161,7 +164,7 @@ void RecurrentLayerTest::test_get_weights()
 
    RecurrentLayer recurrent_layer;
 
-   Tensor<type, 2> weights;
+//   Tensor<type, 2> weights;
 
    //Test
 
@@ -169,7 +172,7 @@ void RecurrentLayerTest::test_get_weights()
 
    recurrent_layer.set_parameters_constant(4.0);
 
-   assert_true(recurrent_layer.get_input_weights() == 4.0, LOG);
+   assert_true(recurrent_layer.get_input_weights()(0) == 4.0, LOG);
 
 
 }
@@ -180,7 +183,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
    RecurrentLayer recurrent_layer;
 
-   Tensor<type, 2> recurrent_weights;
+//   Tensor<type, 2> recurrent_weights;
 
    //Test
 
@@ -188,16 +191,16 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
    recurrent_layer.set_parameters_constant(-1.0);
 
-   recurrent_weights = recurrent_layer.get_recurrent_weights();
+   Tensor<type, 2> recurrent_weights = recurrent_layer.get_recurrent_weights();
 
    assert_true(recurrent_weights.size() == 4, LOG);
    assert_true(recurrent_weights.dimension(0) == 2, LOG);
    assert_true(recurrent_weights.dimension(1) == 2, LOG);
 
-   assert_true(recurrent_weights == -1.0, LOG);
+   assert_true(recurrent_weights(0) == -1.0, LOG);
 }
 
-
+/*
 void RecurrentLayerTest::test_get_parameters_number()
 {
    cout << "test_get_parameters_number\n";
@@ -489,7 +492,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 void RecurrentLayerTest::run_test_case()
 {
    cout << "Running recurrent layer test case...\n";
-/*
+
    // Constructor and destructor
 
    test_constructor();
@@ -511,9 +514,9 @@ void RecurrentLayerTest::run_test_case()
    test_get_weights();
    test_get_recurrent_initializer();
 
-   test_get_parameters_number();
-   test_get_parameters();
-
+//   test_get_parameters_number();
+//   test_get_parameters();
+/*
 //   test_calculate_activations_derivatives();
 
 //   test_calculate_combinations();
