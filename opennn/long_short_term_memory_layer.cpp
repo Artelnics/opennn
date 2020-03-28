@@ -422,7 +422,6 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
         hidden_states.resize(new_neurons_number); // memory
         hidden_states.setZero();
 
-
         cell_states.resize(new_neurons_number); // carry
         cell_states.setZero();
 
