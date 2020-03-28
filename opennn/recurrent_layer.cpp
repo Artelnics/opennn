@@ -644,7 +644,7 @@ void RecurrentLayer::set_parameters_random()
     recurrent_weights.setRandom();
 }
 
-
+/*
 Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -669,9 +669,9 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     return inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
 
 //    return inputs_dot_inputs_weights + biases.chip(0,0) + hidden_states_dot_recurrent_weights;
-    /*
-        return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
-    */
+
+//        return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
+
 }
 
 
@@ -704,7 +704,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
-/*
+
         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
         const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
@@ -714,7 +714,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
         hidden_states = activations_2d;
 
         outputs.set_row(i, combinations_2d);
-*/
+
     }
 
 //    return outputs;
@@ -758,9 +758,9 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     const Tensor<type, 2> new_biases = get_biases(parameters);
 
     return inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
-    /*
+
         return dot(inputs, new_input_weights) + new_biases + dot(hidden_states,new_recurent_weights);
-    */
+
 }
 
 
@@ -837,12 +837,12 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     Tensor<type, 1> combinations_2d(get_neurons_number());
 
     combinations_2d = inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
-    /*
-        combinations_2d = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
-    */
+
+//        combinations_2d = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
+
     return combinations_2d ;
 }
-
+*/
 /*
 Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_2d) const
 {
@@ -983,7 +983,7 @@ void RecurrentLayer::update_hidden_states(const Tensor<type, 1>& inputs)
 {
     Tensor<type, 1> combinations_2d(inputs.dimension(0));
 
-    calculate_combinations(inputs, combinations_2d);
+    calculate_combinations(inputs, input_weights, biases, recurrent_weights, combinations_2d);
 
     calculate_activations(combinations_2d, hidden_states);
 
