@@ -208,7 +208,7 @@ public:
    Tensor<type, 1> calculate_state_combinations(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_output_combinations(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_activations_states(const Tensor<type, 2>&);
+   Tensor<type, 3> calculate_activations_states(const Tensor<type, 2>&);
 
    // Long short term memory layer activations_2d
 
