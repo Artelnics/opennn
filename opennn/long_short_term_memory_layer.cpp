@@ -1384,9 +1384,10 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 {  
     const Index instances_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
-/*
+
     // forget activations_2d, input activations_2d, state activations_2d, output activations_2d, state, hidden state
-    Tensor<type, 2> activations_states(instances_number, neurons_number, 6);
+//    Tensor<type, 2> activations_states(instances_number, neurons_number, 6);
+    Tensor<type, 3> activations_states(instances_number, neurons_number,6);
 
     Index forget_activations_index = 0;
     Index input_activations_index = instances_number*neurons_number;
@@ -1435,8 +1436,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
         hidden_states_index ++; //= neurons_number;
     }
 
-    return activations_states;
-*/
+//    return activations_states;
+
     return Tensor<type, 2>();
 }
 
@@ -2002,15 +2003,19 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     #pragma omp parallel
             {
 //                forget_combinations = dot(current_inputs, new_forget_weights) + new_forget_biases + dot(hidden_states, new_forget_recurrent_weights);
+                forget_combinations = calculate_forget_combinations(current_inputs);
                 forget_activations = calculate_recurrent_activations(forget_combinations);
 
 //                input_combinations = dot(current_inputs, new_input_weights) + new_input_biases + dot(hidden_states, new_input_recurrent_weights);
+                input_combinations = calculate_input_combinations(current_inputs);
                 input_activations = calculate_recurrent_activations(input_combinations);
 
 //                state_combinations = dot(current_inputs, new_state_weights) + new_state_biases + dot(hidden_states, new_state_recurrent_weights);
+                state_combinations = calculate_state_combinations(current_inputs);
                 state_activations = calculate_activations(state_combinations);
 
 //                output_combinations = dot(current_inputs, new_output_weights) + new_output_biases + dot(hidden_states, new_output_recurrent_weights);
+                output_combinations = calculate_output_combinations(current_inputs);
                 output_activations = calculate_recurrent_activations(output_combinations);
             }
 
