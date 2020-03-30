@@ -140,7 +140,7 @@ public:
 
    void set_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index&);
+   void set_parameters(const Tensor<type, 1>&, const Index& index=0);
 
    // Activation functions
 
@@ -204,17 +204,18 @@ public:
                                const Tensor<type, 2>& recurrent_weights,
                                Tensor<type, 1>& combinations_1d) const
    {
+
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                combinations_1d.device(*default_device) = inputs.contract(input_weights, A_B);
+                combinations_1d.device(*default_device) = inputs.contract(input_weights, AT_B).eval();
 
                 combinations_1d.device(*default_device) += biases.chip(0,0);
 
-                combinations_1d.device(*default_device) += hidden_states.contract(recurrent_weights, A_B);
+                combinations_1d.device(*default_device) += hidden_states.contract(recurrent_weights, AT_B).eval();
 
                 return;
             }
@@ -223,11 +224,11 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, A_B);
+               combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, AT_B).eval();
 
                combinations_1d.device(*thread_pool_device) += biases.chip(0,0);
 
-               combinations_1d.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, A_B);
+               combinations_1d.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, AT_B).eval();
 
                 return;
             }
@@ -252,7 +253,7 @@ public:
 
 const Index neurons_number = get_neurons_number();
 
-const Index combinations_columns_number = combinations_2d.dimension(1);
+const Index combinations_columns_number = combinations_1d.dimension(0);
 
 if(combinations_columns_number != neurons_number)
 {
@@ -325,7 +326,7 @@ if(combinations_columns_number != neurons_number)
        }
    }
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d, Tensor<type, 2>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -349,27 +350,27 @@ if(combinations_columns_number != neurons_number)
 
         switch(activation_function)
         {
-            case Linear: linear_derivatives(combinations_2d, activations_derivatives); return;
+            case Linear: linear_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case Logistic: logistic_derivatives(combinations_2d, activations_derivatives); return;
+            case Logistic: logistic_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_2d, activations_derivatives); return;
+            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case Threshold: threshold_derivatives(combinations_2d, activations_derivatives); return;
+            case Threshold: threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case SymmetricThreshold: symmetric_threshold_derivatives(combinations_2d, activations_derivatives); return;
+            case SymmetricThreshold: symmetric_threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case RectifiedLinear: rectified_linear_derivatives(combinations_2d, activations_derivatives); return;
+            case RectifiedLinear: rectified_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_2d, activations_derivatives); return;
+            case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case SoftPlus: soft_plus_derivatives(combinations_2d, activations_derivatives); return;
+            case SoftPlus: soft_plus_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case SoftSign: soft_sign_derivatives(combinations_2d, activations_derivatives); return;
+            case SoftSign: soft_sign_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case HardSigmoid: hard_sigmoid_derivatives(combinations_2d, activations_derivatives); return;
+            case HardSigmoid: hard_sigmoid_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
 
-            case ExponentialLinear: exponential_linear_derivatives(combinations_2d, activations_derivatives); return;
+            case ExponentialLinear: exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives); return;
         }
    }
 
@@ -426,7 +427,7 @@ if(combinations_columns_number != neurons_number)
 //       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
        first_order_forward_propagate(inputs, input_weights, biases, recurrent_weights, forward_propagation.combinations_2d, forward_propagation.activations_2d);
 
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_2d);
+//       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_derivatives_2d);
 
    }
 
