@@ -308,7 +308,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 1> parameters;
    Tensor<type, 2> inputs;
    Tensor<type, 2> combinations_2d;
-   Tensor<type, 2> activations_2d;
    Tensor<type, 2> activations_derivatives;
    Tensor<type, 2> numerical_activation_derivative;
 
@@ -318,15 +317,14 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
    recurrent_layer.set(1, 1);
    combinations_2d.resize(1,1);
-   activations_2d.resize(1,1);
-
+/*
    recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
-   recurrent_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   recurrent_layer.calculate_activations_derivatives(combinations_2d, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == 0.25, LOG);
-/*
+
    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations_2d);
    assert_true(activations_derivatives.rank() == 2, LOG);
