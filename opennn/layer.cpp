@@ -859,6 +859,11 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
     Tensor<type, 0> sum;
 
+    Index dim_0 = x.dimension(0);
+    Index dim_1 = x.dimension(1);
+
+    y.resize(dim_0,dim_1);
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
@@ -869,7 +874,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y.device(*default_device) = x.exp() / sum(0);
 
-        break;
+        return;
     }
 
     case Device::EigenSimpleThreadPool:
@@ -880,7 +885,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y.device(*thread_pool_device) = x.exp() / sum(0);
 
-        break;
+        return;
     }
 
     case Device::EigenGpu:

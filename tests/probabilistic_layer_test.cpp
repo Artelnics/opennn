@@ -513,6 +513,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    activations_2d.resize(1,3);
    probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 3, LOG);
@@ -527,7 +528,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(abs(activations_2d(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_derivatives_activations()
+void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_derivatives_activations\n";
 
@@ -711,6 +712,137 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
 }
 
+
+//----------------------------------------------
+
+void ProbabilisticLayerTest::test_forward_propagate()
+{
+    cout << "test_forward_propagate\n";
+
+    ProbabilisticLayer probabilistic_layer(2,2);
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
+
+    // Test 1
+
+    probabilistic_layer.set_parameters_constant(1);
+    inputs.setConstant(1);
+
+    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
+
+    probabilistic_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(forward_propagation.combinations_2d.rank() == 2, LOG);
+    assert_true(forward_propagation.combinations_2d.dimension(0) == 1, LOG);
+    assert_true(forward_propagation.combinations_2d.dimension(1) == 2, LOG);
+    assert_true(abs(forward_propagation.combinations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.combinations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations_2d(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations_2d(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations_derivatives_3d(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+}
+
+void ProbabilisticLayerTest::test_calculate_output_delta()
+{
+    cout << "test_calculate_output_delta\n";
+
+    ProbabilisticLayer probabilistic_layer(2,2);
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+
+    Tensor<type,2> output_delta(1,2);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
+
+    // Test 1
+
+    probabilistic_layer.set_parameters_constant(1);
+    inputs.setConstant(1);
+    Tensor<type,2> activations_2d(1,2);
+
+    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
+
+    probabilistic_layer.forward_propagate(inputs, forward_propagation);
+
+    Tensor<type,2> output_gradient(1,2);
+    output_gradient.setValues({{1,0}});
+
+    probabilistic_layer.calculate_output_delta(forward_propagation, output_gradient, output_delta);
+
+    assert_true(output_delta.rank() == 2, LOG);
+    assert_true(output_delta.dimension(0) == 1, LOG);
+    assert_true(output_delta.dimension(1) == 2, LOG);
+    assert_true(abs(output_delta(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+}
+
+void ProbabilisticLayerTest::test_calculate_hidden_delta()
+{
+    cout << "test_calculate_hidden_delta\n";
+
+    ProbabilisticLayer probabilistic_layer_0(2,2);
+    ProbabilisticLayer probabilistic_layer_1(2,2);
+
+    probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer_0.set_device_pointer(&device);
+    probabilistic_layer_1.set_device_pointer(&device);
+
+    probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
+
+    Tensor<type,2> output_delta(1,2);
+    Tensor<type,2> hidden_delta(1,2);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs_0(1,2);
+    Tensor<type, 2> inputs_1(1,2);
+    // Test 1
+
+    probabilistic_layer_0.set_parameters_constant(1);
+    inputs_0.setConstant(1);
+
+    probabilistic_layer_1.set_parameters_constant(1);
+    inputs_1.setValues({{3,3}});
+
+    Layer::ForwardPropagation forward_propagation_0(1, &probabilistic_layer_0);
+    Layer::ForwardPropagation forward_propagation_1(1, &probabilistic_layer_1);
+
+    probabilistic_layer_0.forward_propagate(inputs_0, forward_propagation_0);
+    probabilistic_layer_1.forward_propagate(inputs_1, forward_propagation_1);
+
+    Tensor<type,2> output_gradient(1,2);
+    output_gradient.setValues({{1,0}});
+
+    probabilistic_layer_1.calculate_output_delta(forward_propagation_1, output_gradient, output_delta);
+
+    probabilistic_layer_0.calculate_hidden_delta(&probabilistic_layer_1, {0,0} ,forward_propagation_0.activations_derivatives_2d, output_delta, hidden_delta);
+
+    cout << hidden_delta << endl;
+
+    assert_true(hidden_delta.rank() == 2, LOG);
+    assert_true(hidden_delta.dimension(0) == 1, LOG);
+    assert_true(hidden_delta.dimension(1) == 2, LOG);
+    assert_true(abs(hidden_delta(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(hidden_delta(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+}
+
+//----------------------------------------------
+
+
 /*
 void ProbabilisticLayerTest::test_to_XML()
 {
@@ -819,7 +951,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_calculate_combinations();
    test_calculate_activations();
-   test_calculate_derivatives_activations();
+   test_calculate_activations_derivatives();
 
    test_calculate_outputs();
 
@@ -828,6 +960,15 @@ void ProbabilisticLayerTest::run_test_case()
 //   test_to_XML();
 
 //   test_from_XML();
+
+   // Forward propagate
+
+   test_forward_propagate();
+
+   // Hidden delta
+
+   test_calculate_hidden_delta();
+   test_calculate_output_delta();
 
    cout << "End of probabilistic layer test case.\n";
 }

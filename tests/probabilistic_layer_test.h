@@ -85,7 +85,7 @@ public:
 
    void test_calculate_combinations();
    void test_calculate_activations();
-   void test_calculate_derivatives_activations();
+   void test_calculate_activations_derivatives();
 
    void test_calculate_outputs();
 
@@ -99,7 +99,14 @@ public:
 
    void test_from_XML();
 
+   // Forward propagate
 
+   void test_forward_propagate();
+
+   // Hidden delta
+
+   void test_calculate_hidden_delta();
+   void test_calculate_output_delta();
 
    // Unit testing methods
 
