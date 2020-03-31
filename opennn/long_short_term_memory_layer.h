@@ -232,7 +232,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&,const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&,
-                                     const Tensor<type, 2>&, const Tensor<type, 2>&);
+                                     const Tensor<type, 3>&, const Tensor<type, 3>&);
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -241,7 +241,7 @@ public:
    Tensor<type, 1> calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                            const Layer::ForwardPropagation&,
                                                            const Tensor<type, 2>&,
-                                                           const Tensor<type, 2>&);
+                                                           const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
@@ -303,6 +303,10 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
+
+   // Utilities
+
+   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
    string object_to_string() const;
 
