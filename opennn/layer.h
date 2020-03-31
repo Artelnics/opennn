@@ -82,7 +82,7 @@ public:
 
             combinations_2d.resize(batch_instances_number, neurons_number);
 
-//            activations_2d.resize(batch_instances_number, neurons_number);
+            activations_2d.resize(batch_instances_number, neurons_number);
 
             if(layer_pointer->get_type() == Perceptron)
             {
@@ -308,18 +308,6 @@ protected:
     void softmax(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void binary(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-
-    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;

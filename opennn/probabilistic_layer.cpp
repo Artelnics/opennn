@@ -812,6 +812,8 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
 
+    cout << "holapbl" << endl;
+
     if(!probabilistic_layer_element)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
@@ -829,11 +831,12 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n" << inputs_number_element->GetText();
+               << "Inputs number element is nullptr.\n" /* << inputs_number_element->GetText()*/;
 
         throw logic_error(buffer.str());
     }
 
+    cout << "medium" << endl;
     Index new_inputs_number;
 
     if(inputs_number_element->GetText())
@@ -843,6 +846,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Neurons number
 
+    cout << "holaneurons" << endl;
     const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
 
     if(!inputs_number_element)

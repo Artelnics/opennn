@@ -2135,6 +2135,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
         throw logic_error(buffer.str());
     }
 #endif
+         Index inputs_number;
 
          const Tensor<type, 2> new_forget_weights(new_weights.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
          const Tensor<type, 2> new_input_weights(new_weights.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
