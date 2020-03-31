@@ -122,20 +122,14 @@ public:
    void test_calculate_hidden_delta();
    void test_calculate_output_delta();
 
+   // Gradient
+
+   void test_calculate_error_gradient();
+   void test_insert_gradient();
+
    // Expression methods
 
-   void test_get_activation_function_expression();
-
    void test_write_expression();
-
-   void test_get_network_architecture_expression();
-
-   void test_get_inputs_scaling_expression();
-   void test_get_outputs_unscaling_expression();
-
-   void test_get_boundary_conditions_expression();
-
-   void test_get_bounded_output_expression();
 
    // Unit testing methods
 

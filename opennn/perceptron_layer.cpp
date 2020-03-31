@@ -292,7 +292,7 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
     synaptic_weights.setRandom();
 
     activation_function = new_activation_function;
-cout << "end" << endl;
+
     set_default();
 }
 

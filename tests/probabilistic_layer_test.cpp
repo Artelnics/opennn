@@ -831,7 +831,7 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
 
     probabilistic_layer_0.calculate_hidden_delta(&probabilistic_layer_1, {0,0} ,forward_propagation_0.activations_derivatives_2d, output_delta, hidden_delta);
 
-    cout << hidden_delta << endl;
+//    cout << hidden_delta << endl;
 
     assert_true(hidden_delta.rank() == 2, LOG);
     assert_true(hidden_delta.dimension(0) == 1, LOG);
@@ -842,8 +842,6 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
 
 //----------------------------------------------
 
-
-/*
 void ProbabilisticLayerTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -861,14 +859,17 @@ void ProbabilisticLayerTest::test_to_XML()
 
    // Test
 
+   probabilistic_layer.set_inputs_number(2);
    probabilistic_layer.set_neurons_number(2);
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
    probabilistic_layer.set_display(false);
 
    pld = probabilistic_layer.to_XML();
 
+   cout << "hola2" << endl;
    probabilistic_layer.from_XML(*pld);
 
+   cout << "hola3" << endl;
    assert_true(probabilistic_layer.get_neurons_number() == 2, LOG);
    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Competitive, LOG);
    assert_true(probabilistic_layer.get_display() == false, LOG);
@@ -876,7 +877,7 @@ void ProbabilisticLayerTest::test_to_XML()
    delete pld;
 }
 
-
+/*
 void ProbabilisticLayerTest::test_from_XML()
 {
    cout << "test_from_XML\n";
@@ -957,7 +958,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    // Serialization methods
 
-//   test_to_XML();
+   test_to_XML();
 
 //   test_from_XML();
 

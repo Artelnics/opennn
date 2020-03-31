@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "perceptron_layer_test.h"
+#include "loss_index.h"
 
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {
@@ -1239,19 +1240,23 @@ void PerceptronLayerTest::test_calculate_outputs()
    assert_true(abs(perceptron_layer.calculate_outputs(inputs)(0,0) - perceptron_layer.calculate_outputs(inputs, parameters)(0,0)) < static_cast<type>(1e-3), LOG);
 }
 
-//----------------------------------------------
-
 void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
+    PerceptronLayer perceptron_layer(2,2);
+    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
 
     Device device(Device::EigenSimpleThreadPool);
     perceptron_layer.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
+
+    Tensor<type, 2> combinations_2d(1,2);
+    Tensor<type, 2> activations_2d(1,2);
+    Tensor<type, 2> activations_derivatives_2d(1,2);
+
 
     // Test 1
 
@@ -1325,16 +1330,61 @@ void PerceptronLayerTest::test_calculate_output_delta()
 
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
+    // Neural network
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
+    DataSet data_set;
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    Tensor<type, 1> error_gradient;
+
+    Tensor<type, 1> error_terms;
+    Tensor<type, 2> terms_Jacobian;
+    Tensor<type, 2> numerical_Jacobian_terms;
+
+    Tensor<type, 2> targets;
+    Tensor<type, 2> outputs;
+
+    Tensor<type, 2> output_gradient;
+    Tensor<Tensor<type, 2>, 1> layers_delta;
+
+    architecture.setValues({1,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
+
+    neural_network.set_parameters_constant(0.0);
+
+    data_set.set(1, 1, 1);
+
+    data_set.initialize_data(0.0);
+
+    inputs = data_set.get_training_input_data();
+    targets = data_set.get_training_target_data();
+    outputs = neural_network.calculate_outputs(inputs);
+
+    //Test
+
+    DataSet::Batch batch(1,&data_set);
+
+    NeuralNetwork::ForwardPropagation forward_propagation_nn(1, &neural_network);
+    neural_network.forward_propagate(batch, forward_propagation_nn);
+
+    LossIndex::BackPropagation back_propagation;
+
+    mean_squared_error.calculate_output_gradient(batch, forward_propagation_nn, back_propagation);
+
+    cout << back_propagation.output_gradient << endl;
+
+/*
     perceptron_layer.calculate_output_delta(forward_propagation, output_gradient, output_delta);
 
     assert_true(output_delta.rank() == 2, LOG);
     assert_true(output_delta.dimension(0) == 1, LOG);
     assert_true(output_delta.dimension(1) == 2, LOG);
     assert_true(abs(output_delta(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(output_delta(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);*/
 }
 
 void PerceptronLayerTest::test_calculate_hidden_delta()
@@ -1382,7 +1432,93 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     assert_true(abs(hidden_delta(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 }
 
-//----------------------------------------------
+void PerceptronLayerTest::test_calculate_error_gradient()
+{
+    cout << "test_calculate_error_gradient\n";
+
+    PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
+
+    Device device(Device::EigenSimpleThreadPool);
+    perceptron_layer.set_device_pointer(&device);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
+
+    // Test 1
+    parameters.setValues({1,2, 11,12,21,22});
+    perceptron_layer.set_parameters(parameters);
+
+    inputs.setValues({{0,5}});
+
+    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+
+    perceptron_layer.forward_propagate(inputs, forward_propagation);
+
+    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+
+    Tensor<type, 2> delta(1,2);
+    delta.setValues({{1,1}});
+
+    back_propagation.delta = delta;
+
+    perceptron_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
+
+    assert_true(back_propagation.biases_derivatives.rank() == 1, LOG);
+    assert_true(back_propagation.biases_derivatives.dimension(0) == 2, LOG);
+    assert_true(abs(back_propagation.biases_derivatives(0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.biases_derivatives(1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+
+    assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) - static_cast<type>(5)) < static_cast<type>(1e-3), LOG);
+
+}
+
+void PerceptronLayerTest::test_insert_gradient()
+{
+    cout << "test_insert_gradient\n";
+/*
+    PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
+
+    Device device(Device::EigenSimpleThreadPool);
+    perceptron_layer.set_device_pointer(&device);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
+
+    Tensor<type, 1> gradient(2);
+
+    // Test 1
+
+    perceptron_layer.set_parameters_constant(1);
+    inputs.setConstant(1);
+
+    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+
+    perceptron_layer.forward_propagate(inputs, forward_propagation);
+
+    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+
+    Tensor<type, 2> delta(1,2);
+    delta.setValues({{1,1}});
+
+    back_propagation.delta = delta;
+
+    perceptron_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
+
+    perceptron_layer.insert_gradient(back_propagation, 1, gradient);
+
+    cout << gradient << endl;
+
+    assert_true(gradient.rank() == 1, LOG);
+    assert_true(gradient.dimension(0) == 2, LOG);
+    assert_true(abs(gradient(0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(gradient(1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);*/
+}
 
 void PerceptronLayerTest::test_write_expression()
 {
@@ -1507,6 +1643,12 @@ void PerceptronLayerTest::run_test_case()
    test_calculate_output_delta();
 
    test_calculate_hidden_delta();
+
+   // Gradient
+
+   test_calculate_error_gradient();
+
+   test_insert_gradient();
 
    // Expression methods
 

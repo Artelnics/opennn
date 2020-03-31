@@ -859,11 +859,6 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
     Tensor<type, 0> sum;
 
-    Index dim_0 = x.dimension(0);
-    Index dim_1 = x.dimension(1);
-
-    y.resize(dim_0,dim_1);
-
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
@@ -1132,7 +1127,6 @@ void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
         // Activations Derivatives
 
         activations_derivatives.setZero();
-
 
         break;
     }
