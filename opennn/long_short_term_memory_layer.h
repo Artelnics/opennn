@@ -246,57 +246,57 @@ public:
    Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
                                                           const Tensor<type, 2>&,
-                                                          const Tensor<type, 2>&);
+                                                          const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_state_weights_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
                                                           const Tensor<type, 2>&,
-                                                          const Tensor<type, 2>&);
+                                                          const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_output_weights_error_gradient(const Tensor<type, 2>&,
                                                            const Layer::ForwardPropagation&,
                                                            const Tensor<type, 2>&,
-                                                           const Tensor<type, 2>&);
+                                                           const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_forget_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                                      const Layer::ForwardPropagation&,
                                                                      const Tensor<type, 2>&,
-                                                                     const Tensor<type, 2>&);
+                                                                     const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_input_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                                     const Layer::ForwardPropagation&,
                                                                     const Tensor<type, 2>&,
-                                                                    const Tensor<type, 2>&);
+                                                                    const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_state_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                                     const Layer::ForwardPropagation&,
                                                                     const Tensor<type, 2>&,
-                                                                    const Tensor<type, 2>&);
+                                                                    const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_output_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                                      const Layer::ForwardPropagation&,
                                                                      const Tensor<type, 2>&,
-                                                                     const Tensor<type, 2>&);
+                                                                     const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_forget_biases_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
                                                           const Tensor<type, 2>&,
-                                                          const Tensor<type, 2>&);
+                                                          const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_input_biases_error_gradient(const Tensor<type, 2>&,
                                                          const Layer::ForwardPropagation&,
                                                          const Tensor<type, 2>&,
-                                                         const Tensor<type, 2>&);
+                                                         const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_state_biases_error_gradient(const Tensor<type, 2>&,
                                                          const Layer::ForwardPropagation&,
                                                          const Tensor<type, 2>&,
-                                                         const Tensor<type, 2>&);
+                                                         const Tensor<type, 3>&);
 
    Tensor<type, 1> calculate_output_biases_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
                                                           const Tensor<type, 2>&,
-                                                          const Tensor<type, 2>&);
+                                                          const Tensor<type, 3>&);
 
    // Expression methods
 
