@@ -2367,10 +2367,10 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 
 
 Tensor<type, 1> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> &  inputs,
-        const Layer::ForwardPropagation& layers,
+        const Layer::ForwardPropagation& forward_propagation,
         const Tensor<type, 2> & deltas)
 {
-    /*
+
     const Index parameters_number = get_parameters_number();
 
     const Index neurons_number = get_neurons_number();
@@ -2382,65 +2382,113 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<
     const Index recurrent_weights_number = neurons_number*neurons_number;
     const Index biases_number = neurons_number;
 
-    Tensor<type, 1> error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> error_gradient(parameters_number);
 
-    const Tensor<type, 2> activations_states = calculate_activations_states(inputs);
+    const Tensor<type, 3> activations_states = calculate_activations_states(inputs);
 
 
     #pragma omp parallel
     {
         // Forget weights
 
-        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+
+        for(Index i = 0; i < weights_number; i++)
+        {
+            error_gradient(i) = (calculate_forget_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Input weights
 
-        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < weights_number; i++)
+        {
+            error_gradient(i + weights_number) = (calculate_input_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // State weights
 
-        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < weights_number; i++)
+        {
+            error_gradient(i + 2*weights_number) = (calculate_state_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Output weights
 
-        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < weights_number; i++)
+        {
+            error_gradient(i + 3*weights_number) = (calculate_output_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Forget recurrent weights
 
-        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < recurrent_weights_number; i++)
+        {
+            error_gradient(i + 4*weights_number) = (calculate_forget_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Input recurrent weights
 
-        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < recurrent_weights_number; i++)
+        {
+            error_gradient(i + 4*weights_number+recurrent_weights_number) = (calculate_input_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // State recurrent weights
 
-        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < recurrent_weights_number; i++)
+        {
+            error_gradient(i + 4*weights_number+2*recurrent_weights_number) = (calculate_state_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Output recurrent weights
 
-        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < recurrent_weights_number; i++)
+        {
+            error_gradient(i + 4*weights_number+3*recurrent_weights_number) = (calculate_output_recurrent_weights_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Forget biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < biases_number; i++)
+        {
+            error_gradient(i + 4*weights_number+4*recurrent_weights_number) = (calculate_forget_biases_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Input biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < biases_number; i++)
+        {
+            error_gradient(4*weights_number+4*recurrent_weights_number+biases_number) = (calculate_input_biases_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // State biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < biases_number; i++)
+        {
+            error_gradient(i + 4*weights_number+4*recurrent_weights_number+2*biases_number) = (calculate_state_biases_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
 
         // Output biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,layers,deltas,activations_states));
+//        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,forward_propagation,deltas,activations_states));
+        for(Index i = 0; i < biases_number; i++)
+        {
+            error_gradient(i + 4*weights_number+4*recurrent_weights_number+3*biases_number) = (calculate_output_biases_error_gradient(inputs,forward_propagation,deltas,activations_states))(i);
+        }
     }
 
     return error_gradient;
-    */
-    return Tensor<type, 1>();
+
 }
 
 
