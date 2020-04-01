@@ -1424,7 +1424,7 @@ Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 //        activations_states.embed(output_activations_index, output_activations);
 //        activations_states.embed(states_index, cell_states);
 //        activations_states.embed(hidden_states_index, hidden_states);
-        memcpy(activations_states.data() +forget_activations_index, forget_activations.data(), static_cast<size_t>(forget_activations.size())*sizeof(type));
+        memcpy(activations_states.data() + forget_activations_index, forget_activations.data(), static_cast<size_t>(forget_activations.size())*sizeof(type));
         memcpy(activations_states.data() + input_activations_index, input_activations.data(), static_cast<size_t>(input_activations.size())*sizeof(type));
         memcpy(activations_states.data() + state_activations_index, state_activations.data(), static_cast<size_t>(state_activations.size())*sizeof(type));
         memcpy(activations_states.data() + output_activations_index, output_activations.data(), static_cast<size_t>(output_activations.size())*sizeof(type));
@@ -2209,8 +2209,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
          return outputs;
 }
 
-/*
 
+/*
 Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs)
 {
     const Index instances_number = inputs.dimension(0);
