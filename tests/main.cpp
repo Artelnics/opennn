@@ -134,7 +134,7 @@ int main()
          tests_failed_count += matrix_test.get_tests_failed_count();
       }
 
-      else if(test == "long_short_term_memory_layer" || test == "lstml")
+      else if(test == "long_short_term_memory_layer" || test == "lstm")
       {
          LongShortTermMemoryLayerTest long_short_memory_layer_test;
 

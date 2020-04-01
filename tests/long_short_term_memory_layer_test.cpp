@@ -18,7 +18,7 @@ LongShortTermMemoryLayerTest::~LongShortTermMemoryLayerTest()
 {
 }
 
-/*
+
 void LongShortTermMemoryLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -293,7 +293,7 @@ void LongShortTermMemoryLayerTest::test_get_biases()
 
    long_short_term_memory_layer.set_biases_constant(0.0);
 
-   assert_true(long_short_term_memory_layer.get_biases_number() == 12, LOG);
+   assert_true(long_short_term_memory_layer.get_biases().size() == 12, LOG); ///@todo get_biases_number
    assert_true(long_short_term_memory_layer.get_biases().dimension(0) == neurons_number, LOG);
    assert_true(long_short_term_memory_layer.get_biases().dimension(1) == 4, LOG);
    
@@ -304,18 +304,38 @@ void LongShortTermMemoryLayerTest::test_get_biases()
 
    long_short_term_memory_layer.set(inputs_number,neurons_number);
 
-   long_short_term_memory_layer.set_forget_biases({0,1,2});
-   long_short_term_memory_layer.set_input_biases({3,4,5});
-   long_short_term_memory_layer.set_state_biases({5,7,8});
-   long_short_term_memory_layer.set_output_biases({9,10,11});
+   Tensor<type, 1> init_forget_biases(3);
+   init_forget_biases.setValues({0,1,2});
+   Tensor<type, 1> init_input_biases(3);
+   init_input_biases.setValues({3,4,5});
+   Tensor<type, 1> init_state_biases(3);
+   init_state_biases.setValues({5,7,8});
+   Tensor<type, 1> init_output_biases(3);
+   init_output_biases.setValues({9,10,11});
 
-   assert_true(long_short_term_memory_layer.get_forget_biases() == long_short_term_memory_layer.get_biases().get_column(0), LOG);
-   assert_true(long_short_term_memory_layer.get_input_biases() == long_short_term_memory_layer.get_biases().get_column(1), LOG);
-   assert_true(long_short_term_memory_layer.get_state_biases() == long_short_term_memory_layer.get_biases().get_column(2), LOG);
-   assert_true(long_short_term_memory_layer.get_output_biases() == long_short_term_memory_layer.get_biases().get_column(3), LOG);
+   long_short_term_memory_layer.set_forget_biases(init_forget_biases);
+   long_short_term_memory_layer.set_input_biases(init_input_biases);
+   long_short_term_memory_layer.set_state_biases(init_state_biases);
+   long_short_term_memory_layer.set_output_biases(init_output_biases);
 
+   const Tensor<type, 1> forget_biases = long_short_term_memory_layer.get_biases().chip(0, 1);
+   const Tensor<type, 1> input_biases = long_short_term_memory_layer.get_biases().chip(1, 1);
+   const Tensor<type, 1> state_biases = long_short_term_memory_layer.get_biases().chip(2, 1);
+   const Tensor<type, 1> output_biases = long_short_term_memory_layer.get_biases().chip(3, 1);
+
+   assert_true(long_short_term_memory_layer.get_forget_biases()(0) == forget_biases(0), LOG);
+   assert_true(long_short_term_memory_layer.get_forget_biases()(2) == forget_biases(2), LOG);
+
+   assert_true(long_short_term_memory_layer.get_input_biases()(0) == input_biases(0), LOG);
+   assert_true(long_short_term_memory_layer.get_input_biases()(2) == input_biases(2), LOG);
+
+   assert_true(long_short_term_memory_layer.get_state_biases()(0) == state_biases(0), LOG);
+   assert_true(long_short_term_memory_layer.get_state_biases()(2) == state_biases(2), LOG);
+
+   assert_true(long_short_term_memory_layer.get_output_biases()(0) == output_biases(0), LOG);
+   assert_true(long_short_term_memory_layer.get_output_biases()(2) == output_biases(2), LOG);
 }
-
+/*
 void LongShortTermMemoryLayerTest::test_get_weights()
 {
    cout << "test_get_synaptic_weights\n";
@@ -822,7 +842,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 void LongShortTermMemoryLayerTest::run_test_case()
 {
    cout << "Running long short term memory layer test case...\n";
-/*
+
    // Constructor and destructor
 
    test_constructor();
@@ -849,10 +869,10 @@ void LongShortTermMemoryLayerTest::run_test_case()
    // Parameters
 
    test_get_parameters_number();
-   test_get_parameters();
+//   test_get_parameters();
 
    test_get_biases();
-   test_get_weights();
+/*   test_get_weights();
    test_get_recurrent_weights();
 
    // lstm layer parameters
