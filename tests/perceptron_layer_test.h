@@ -125,7 +125,6 @@ public:
    // Gradient
 
    void test_calculate_error_gradient();
-   void test_insert_gradient();
 
    // Expression methods
 

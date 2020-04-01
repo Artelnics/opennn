@@ -712,9 +712,6 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
 }
 
-
-//----------------------------------------------
-
 void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
@@ -810,6 +807,7 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs_0(1,2);
     Tensor<type, 2> inputs_1(1,2);
+
     // Test 1
 
     probabilistic_layer_0.set_parameters_constant(1);
@@ -836,64 +834,62 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
     assert_true(hidden_delta.rank() == 2, LOG);
     assert_true(hidden_delta.dimension(0) == 1, LOG);
     assert_true(hidden_delta.dimension(1) == 2, LOG);
-    assert_true(abs(hidden_delta(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(hidden_delta(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(hidden_delta(0,0) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(hidden_delta(0,1) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
 }
 
-//----------------------------------------------
-
-void ProbabilisticLayerTest::test_to_XML()
+void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
-   cout << "test_to_XML\n";
+    cout << "test_calculate_error_gradient\n";
 
-   ProbabilisticLayer  probabilistic_layer;
-   tinyxml2::XMLDocument* pld;
+    ProbabilisticLayer probabilistic_layer(2,2);
 
-   // Test
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-   probabilistic_layer.set();
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
 
-   pld = probabilistic_layer.to_XML();
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
 
-   assert_true(pld != nullptr, LOG);
+    Tensor<type, 2> output_gradient(1,2);
 
-   // Test
+    Tensor<type, 2> output_delta(1,2);
 
-   probabilistic_layer.set_inputs_number(2);
-   probabilistic_layer.set_neurons_number(2);
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
-   probabilistic_layer.set_display(false);
+    // Test 1
+    parameters.setConstant(1);
+    probabilistic_layer.set_parameters(parameters);
 
-   pld = probabilistic_layer.to_XML();
+    inputs.setValues({{0,1}});
 
-   cout << "hola2" << endl;
-   probabilistic_layer.from_XML(*pld);
+    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
 
-   cout << "hola3" << endl;
-   assert_true(probabilistic_layer.get_neurons_number() == 2, LOG);
-   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Competitive, LOG);
-   assert_true(probabilistic_layer.get_display() == false, LOG);
+    probabilistic_layer.forward_propagate(inputs, forward_propagation);
 
-   delete pld;
-}
+    Layer::BackPropagation back_propagation(1, &probabilistic_layer);
+
+    output_gradient.setValues({{2,-2}});
+
+    probabilistic_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+
+    back_propagation.delta = output_delta;
+
+    probabilistic_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
 
 /*
-void ProbabilisticLayerTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
+    assert_true(back_propagation.biases_derivatives.rank() == 1, LOG);
+    assert_true(back_propagation.biases_derivatives.dimension(0) == 2, LOG);
+    assert_true(abs(back_propagation.biases_derivatives(0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.biases_derivatives(1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
 
-   ProbabilisticLayer  probabilistic_layer;
-   tinyxml2::XMLDocument* pld;
-
-   // Test
-
-   pld = probabilistic_layer.to_XML();
-
-   probabilistic_layer.from_XML(*pld);
-
-   delete pld;
+    assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);*/
 }
-*/
 
 void ProbabilisticLayerTest::run_test_case()
 {
@@ -958,7 +954,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    // Serialization methods
 
-   test_to_XML();
+//   test_to_XML();
 
 //   test_from_XML();
 
@@ -968,8 +964,10 @@ void ProbabilisticLayerTest::run_test_case()
 
    // Hidden delta
 
-   test_calculate_hidden_delta();
    test_calculate_output_delta();
+   test_calculate_hidden_delta();
+
+   test_calculate_error_gradient();
 
    cout << "End of probabilistic layer test case.\n";
 }
