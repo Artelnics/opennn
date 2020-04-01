@@ -710,32 +710,20 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
 #endif
 
-       set_forget_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-       set_state_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+       set_forget_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+       set_state_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
 
-       set_forget_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number -1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-       set_input_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-       set_state_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-       set_output_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 4 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+       set_forget_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+       set_input_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+       set_state_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+       set_output_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
 
-       set_forget_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({ 4 * neurons_number * (inputs_number + neurons_number) + neurons_number -1})));
-       set_input_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number - 1})));
-       set_state_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1})));
-       set_output_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number + 1) - 1})));
-
-/*
-       set_forget_recurrent_weights(new_parameters.get_subvector(4 * inputs_number * neurons_number,  4 * inputs_number * neurons_number + neurons_number * neurons_number -1).to_matrix(neurons_number, neurons_number));
-       set_input_recurrent_weights(new_parameters.get_subvector(4 * inputs_number * neurons_number + neurons_number * neurons_number, 4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number - 1).to_matrix(neurons_number, neurons_number));
-       set_state_recurrent_weights(new_parameters.get_subvector(4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number , 4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number  - 1).to_matrix(neurons_number, neurons_number));
-       set_output_recurrent_weights(new_parameters.get_subvector(4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number , 4 * inputs_number * neurons_number + 4 * neurons_number * neurons_number  - 1).to_matrix(neurons_number, neurons_number));
-
-       set_forget_biases(new_parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number),  4 * neurons_number * (inputs_number + neurons_number) + neurons_number -1));
-       set_input_biases(new_parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + neurons_number, 4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number - 1));
-       set_state_biases(new_parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number , 4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1));
-       set_output_biases(new_parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number, 4 * neurons_number * (inputs_number + neurons_number + 1) - 1));
-    */
+       set_forget_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({neurons_number})));
+       set_input_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
+       set_state_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
+       set_output_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
 }
 
 
