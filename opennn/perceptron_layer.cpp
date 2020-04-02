@@ -668,9 +668,12 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-/*      Tensor<type, 1> s_w_column =  synaptic_weights.chip(j,1);
 
-               buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
+      Tensor<type, 1> s_w_column =  synaptic_weights.chip(j,1);
+
+      cout << s_w_column  << endl;
+
+/*               buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 
                for(Index i = 0; i < inputs_names.size() - 1; i++)
                {

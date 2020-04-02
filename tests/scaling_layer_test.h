@@ -40,9 +40,12 @@ public:
 
    // Get methods
 
+
+
    // Multilayer perceptron architecture 
 
    void test_get_neurons_number();
+   void test_get_inputs_number();
 
    // Statistics
 
@@ -76,7 +79,15 @@ public:
    // Set methods
 
    void test_set();
+
+   void test_set_inputs_number();
+   void test_set_neurons_number();
+
    void test_set_default();
+
+   // Descriptives
+
+
 
    // Multilayer perceptron architecture
 
