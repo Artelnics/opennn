@@ -1147,7 +1147,7 @@ void LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 
 
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1207,7 +1207,7 @@ void LongShortTermMemoryLayer::calculate_input_combinations(const Tensor<type, 1
              return;
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1265,7 +1265,7 @@ void LongShortTermMemoryLayer::calculate_state_combinations(const Tensor<type, 1
              return;
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1325,7 +1325,7 @@ void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 
              return;
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -2377,7 +2377,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 

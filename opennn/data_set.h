@@ -39,7 +39,7 @@
 #include "tinyxml2.h"
 
 #ifdef __OPENNN_CUDA__
-    #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
+    #include "../../artelnics/opennn_cuda/opennn_cuda/cublas_opennn.h"
 #endif
 
 // Eigen includes
@@ -142,6 +142,7 @@ public:
        string name;
 
        /// Column use.
+
        VariableUse column_use;
 
        /// Column type.
@@ -275,8 +276,6 @@ public:
            cout << "Targets:" << endl;
            cout << targets_2d << endl;
        }
-
-//       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
        Index instances_number = 0;
 

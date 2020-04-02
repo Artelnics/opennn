@@ -276,7 +276,7 @@ void Layer::hyperbolic_tangent(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -306,7 +306,7 @@ void Layer::logistic(const Tensor<type, 1>& x, Tensor<type, 1>& y)const
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -369,7 +369,7 @@ void Layer::hyperbolic_tangent(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -399,7 +399,7 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)const
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -445,7 +445,7 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -491,7 +491,7 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -535,7 +535,7 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -587,7 +587,7 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -634,7 +634,7 @@ void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -676,7 +676,7 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -730,7 +730,7 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -773,7 +773,7 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
 //        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -824,7 +824,7 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -872,7 +872,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -936,7 +936,7 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -998,7 +998,7 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1042,7 +1042,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1108,7 +1108,7 @@ void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1169,7 +1169,7 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1230,7 +1230,7 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1303,7 +1303,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& combina
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1369,7 +1369,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1430,7 +1430,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
         // Activations
@@ -1506,7 +1506,7 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
         break;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1579,7 +1579,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -1631,7 +1631,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
 
-    case Device::EigenSimpleThreadPool:
+    case Device::EigenThreadPool:
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
