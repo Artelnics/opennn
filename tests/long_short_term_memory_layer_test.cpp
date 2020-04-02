@@ -839,25 +839,30 @@ void LongShortTermMemoryLayerTest::test_get_parameters()
 //   cout<< "biases "<< long_short_term_memory_layer.get_biases()<<endl;
 
 }
-
+*/
 void LongShortTermMemoryLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
+   Device device(Device::EigenSimpleThreadPool);
+
    Tensor<type, 2> inputs;
-   Tensor<type, 2> outputs;
+//   Tensor<type, 2> outputs;
 
    Tensor<type, 1> parameters;
 
-   Tensor<type, 2> weights;
-   Tensor<type, 2> recurrent_weights;
+   Tensor<type, 3> weights;
+   Tensor<type, 3> recurrent_weights;
    Tensor<type, 2> biases;
 
    Index instances = 3;
 
     //Test
+
+   const Index neurons_number = 2;
+   const Index inputs_number = 3;
 
    long_short_term_memory_layer.set(3,2);
    long_short_term_memory_layer.set_timesteps(2);
@@ -865,38 +870,56 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
    long_short_term_memory_layer.set_activation_function("HyperbolicTangent");
    long_short_term_memory_layer.set_recurrent_activation_function("HardSigmoid");
 
-   inputs.resize({instances, 3},1.0);
+   inputs.resize(instances, 3);
+   inputs.setConstant(1.0);
 
-   weights.set(Tensor<Index, 1>({3,2,4}));
-   recurrent_weights.set(Tensor<Index, 1>({2,2,4}));
+   weights.resize(3,2,4);
+   recurrent_weights.resize(2,2,4);
    biases.resize(2,4);
 
-   weights.initialize_sequential();
-   recurrent_weights.initialize_sequential();
-   biases.initialize_sequential();
+//   weights.initialize_sequential();
+//   recurrent_weights.initialize_sequential();
+//   biases.initialize_sequential();
 
-   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
+//   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
 
-   long_short_term_memory_layer.set_forget_weights(weights.get_matrix(0));
-   long_short_term_memory_layer.set_input_weights(weights.get_matrix(1));
-   long_short_term_memory_layer.set_state_weights(weights.get_matrix(2));
-   long_short_term_memory_layer.set_output_weights(weights.get_matrix(3));
+   long_short_term_memory_layer.set_parameters_random();
 
-   long_short_term_memory_layer.set_forget_recurrent_weights(recurrent_weights.get_matrix(0));
-   long_short_term_memory_layer.set_input_recurrent_weights(recurrent_weights.get_matrix(1));
-   long_short_term_memory_layer.set_state_recurrent_weights(recurrent_weights.get_matrix(2));
-   long_short_term_memory_layer.set_output_recurrent_weights(recurrent_weights.get_matrix(3));
+   parameters = long_short_term_memory_layer.get_parameters();
 
-   long_short_term_memory_layer.set_forget_biases(biases.get_column(0));
-   long_short_term_memory_layer.set_input_biases(biases.get_column(1));
-   long_short_term_memory_layer.set_state_biases(biases.get_column(2));
-   long_short_term_memory_layer.set_output_biases(biases.get_column(3));
+   long_short_term_memory_layer.set_device_pointer(&device);
 
-   assert_true(long_short_term_memory_layer.calculate_outputs(inputs) == long_short_term_memory_layer.calculate_outputs(inputs, parameters), LOG);
+   long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+   long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+   long_short_term_memory_layer.set_state_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+   long_short_term_memory_layer.set_output_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
 
-   assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights) == long_short_term_memory_layer.calculate_outputs(inputs, parameters), LOG);
+   long_short_term_memory_layer.set_forget_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+   long_short_term_memory_layer.set_input_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+   long_short_term_memory_layer.set_state_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+   long_short_term_memory_layer.set_output_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
 
-   assert_true(long_short_term_memory_layer.calculate_outputs(inputs) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights), LOG);
+   long_short_term_memory_layer.set_forget_biases(biases.chip(0, 1));
+   long_short_term_memory_layer.set_input_biases(biases.chip(1, 1));
+   long_short_term_memory_layer.set_state_biases(biases.chip(2, 1));
+   long_short_term_memory_layer.set_output_biases(biases.chip(3, 1));
+
+//   const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs);
+//   const Tensor<type, 2> outputs_parameters = long_short_term_memory_layer.calculate_outputs(inputs, parameters);
+//   const Tensor<type, 2> outputs_2 = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
+
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(2), LOG);
+
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(2) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(2), LOG);
+
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(0), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(1), LOG);
+   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(2), LOG);
+
 
    //Test
 
@@ -904,7 +927,8 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    long_short_term_memory_layer.set_timesteps(3);
 
-   inputs.resize({3,1}, 1.0);
+   inputs.resize(3,1);
+   inputs.setConstant(1.0);
 
    long_short_term_memory_layer.set_biases_constant(0.0);
    long_short_term_memory_layer.initialize_weights(1.0);
@@ -915,7 +939,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    cout<< "outputs:  "<< long_short_term_memory_layer.calculate_outputs(inputs)<<endl;
 }
-*/
+
 
 void LongShortTermMemoryLayerTest::run_test_case()
 {
@@ -981,13 +1005,13 @@ void LongShortTermMemoryLayerTest::run_test_case()
    test_set_parameters_random();
 
    // Parameters norm
-/*
-   test_calculate_parameters_norm();
+
+//   test_calculate_parameters_norm();
 
    // Calculate outputs
 
    test_calculate_outputs();
-*/
+
    cout << "End of long short term memory layer test case.\n";
 }
 

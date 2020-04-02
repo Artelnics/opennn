@@ -300,6 +300,18 @@ protected:
     void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
     void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
 
+    void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void logistic_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void symmetric_threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void rectified_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void scaled_exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void soft_plus_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void soft_sign_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+
     // activations 2d
 
     void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&) const;
