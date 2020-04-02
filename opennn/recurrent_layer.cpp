@@ -1246,7 +1246,7 @@ Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer
 //             return;
          }
 
-         case Device::EigenSimpleThreadPool:
+         case Device::EigenThreadPool:
          {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 

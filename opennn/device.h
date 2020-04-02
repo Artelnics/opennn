@@ -22,7 +22,7 @@ class Device
 {
     public:
 
-        enum Type{EigenDefault, EigenSimpleThreadPool, EigenGpu};
+        enum Type{EigenDefault, EigenThreadPool, EigenGpu};
 
         explicit Device() {}
 
@@ -47,7 +47,7 @@ class Device
 
                 break;
 
-                case EigenSimpleThreadPool:
+                case EigenThreadPool:
                 {
                     const int n = omp_get_max_threads();
 
@@ -77,7 +77,7 @@ class Device
 
     private:
 
-        Type type = EigenSimpleThreadPool;
+        Type type = EigenThreadPool;
 
         DefaultDevice* default_device = nullptr;
 

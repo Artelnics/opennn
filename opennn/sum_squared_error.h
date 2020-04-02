@@ -91,7 +91,7 @@ public:
                 break;
             }
 
-            case Device::EigenSimpleThreadPool:
+            case Device::EigenThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -149,7 +149,7 @@ public:
                  return;
              }
 
-             case Device::EigenSimpleThreadPool:
+             case Device::EigenThreadPool:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -206,7 +206,7 @@ public:
                 return;
             }
 
-            case Device::EigenSimpleThreadPool:
+            case Device::EigenThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -251,7 +251,7 @@ public:
                  return;
              }
 
-             case Device::EigenSimpleThreadPool:
+             case Device::EigenThreadPool:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
