@@ -7493,7 +7493,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(j != data_file_preview(i).size()-1)
             {
-                file_stream.PushText(" ");
+                file_stream.PushText(",");
             }
         }
 
@@ -8139,7 +8139,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(row_element->GetText())
         {
-            data_file_preview(i) = get_tokens(row_element->GetText(), ' ');
+            data_file_preview(i) = get_tokens(row_element->GetText(), ',');
         }
     }
 
