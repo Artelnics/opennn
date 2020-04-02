@@ -203,25 +203,45 @@ public:
 
    // Long short term memory layer combinations_2d
 
-   Tensor<type, 1> calculate_forget_combinations(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_input_combinations(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_state_combinations(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_output_combinations(const Tensor<type, 1>&) const;
+   void calculate_forget_combinations(const Tensor<type, 1>& ,
+                                      const Tensor<type, 2>& ,
+                                      const Tensor<type, 2>& ,
+                                      const Tensor<type, 1>& ,
+                                      Tensor<type, 1>&) const;
+
+   void calculate_input_combinations(const Tensor<type, 1>& ,
+                                     const Tensor<type, 2>& ,
+                                     const Tensor<type, 2>& ,
+                                     const Tensor<type, 1>& ,
+                                     Tensor<type, 1>&) const;
+
+   void calculate_state_combinations(const Tensor<type, 1>& ,
+                                     const Tensor<type, 2>& ,
+                                     const Tensor<type, 2>& ,
+                                     const Tensor<type, 1>& ,
+                                     Tensor<type, 1>&) const;
+
+   void calculate_output_combinations(const Tensor<type, 1>& ,
+                                      const Tensor<type, 2>& ,
+                                      const Tensor<type, 2>& ,
+                                      const Tensor<type, 1>& ,
+                                      Tensor<type, 1>&) const;
 
    Tensor<type, 3> calculate_activations_states(const Tensor<type, 2>&);
 
    // Long short term memory layer activations_2d
 
-   Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
+   void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
-   Tensor<type, 2> calculate_recurrent_activations(const Tensor<type, 2>&) const;
-   Tensor<type, 1> calculate_recurrent_activations(const Tensor<type, 1>&) const;
+   void calculate_recurrent_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_recurrent_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    // Long short term memory layer derivatives
 
-   Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
-   Tensor<type, 1> calculate_activations_derivatives(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_recurrent_activations_derivatives(const Tensor<type, 1>&) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type,2>&, Tensor<type, 2>&) const;
+   void calculate_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    // Long short term memory layer outputs
 
@@ -243,11 +263,11 @@ public:
        const Index instances_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
 
-       Tensor<type, 2> activations_2d(instances_number,neurons_number);
+//       Tensor<type, 2> activations_2d(instances_number,neurons_number);
 
        // forget, input, state, output and tanh(cell_states) derivatives
-       Tensor<type, 3> activations_derivatives(instances_number,neurons_number, 5);
-       activations_derivatives.setZero();
+//       Tensor<type, 3> activations_derivatives(instances_number,neurons_number, 5);
+//       activations_derivatives.setZero();
 
        Index forget_activations_index = 0;
        Index input_activations_index = instances_number*neurons_number;
@@ -255,21 +275,23 @@ public:
        Index output_activations_index = 3*instances_number*neurons_number;
        Index hidden_states_index = 4*instances_number*neurons_number;
 
-       Tensor<type, 1> forget_combinations;
-       Tensor<type, 1> forget_activations;
-       Tensor<type, 1> forget_activations_derivatives;
+       Tensor<type, 1> forget_combinations(neurons_number);
+       Tensor<type, 1> forget_activations(neurons_number);
+       Tensor<type, 1> forget_activations_derivatives(neurons_number);
 
-       Tensor<type, 1> input_combinations;
-       Tensor<type, 1> input_activations;
-       Tensor<type, 1> input_activations_derivatives;
+       Tensor<type, 1> input_combinations(neurons_number);
+       Tensor<type, 1> input_activations(neurons_number);
+       Tensor<type, 1> input_activations_derivatives(neurons_number);
 
-       Tensor<type, 1> state_combinations;
-       Tensor<type, 1> state_activations;
-       Tensor<type, 1> state_activations_derivatives;
+       Tensor<type, 1> state_combinations(neurons_number);
+       Tensor<type, 1> state_activations(neurons_number);
+       Tensor<type, 1> state_activations_derivatives(neurons_number);
 
-       Tensor<type, 1> output_combinations;
-       Tensor<type, 1> output_activations;
-       Tensor<type, 1> output_activations_derivatives;
+       Tensor<type, 1> output_combinations(neurons_number);
+       Tensor<type, 1> output_activations(neurons_number);
+       Tensor<type, 1> output_activations_derivatives(neurons_number);
+
+       Tensor<type, 1> hidden_states_derivatives(neurons_number);
 
        for(Index i = 0; i < instances_number; i++)
        {
@@ -283,30 +305,30 @@ public:
 
     #pragma omp parallel
            {
-               forget_combinations = calculate_forget_combinations(current_inputs);
-               forget_activations = calculate_recurrent_activations(forget_combinations);
-               forget_activations_derivatives = calculate_recurrent_activations_derivatives(forget_combinations);
 
-               input_combinations = calculate_input_combinations(current_inputs);
-               input_activations = calculate_recurrent_activations(input_combinations);
-               input_activations_derivatives = calculate_recurrent_activations_derivatives(input_combinations);
+               calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+               calculate_recurrent_activations_derivatives(forget_combinations, forget_activations, forget_activations_derivatives);
 
-               state_combinations = calculate_state_combinations(current_inputs);
-               state_activations = calculate_activations(state_combinations);
-               state_activations_derivatives = calculate_activations_derivatives(state_combinations);
+               calculate_input_combinations(current_inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
+               calculate_recurrent_activations_derivatives(input_combinations, input_activations, input_activations_derivatives);
 
-               output_combinations = calculate_output_combinations(current_inputs);
-               output_activations = calculate_recurrent_activations(output_combinations);
-               output_activations_derivatives = calculate_recurrent_activations_derivatives(output_combinations);
+               calculate_state_combinations(current_inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
+               calculate_activations_derivatives(state_combinations, state_activations, state_activations_derivatives);
+
+               calculate_output_combinations(current_inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
+               calculate_recurrent_activations_derivatives(output_combinations, output_activations, output_activations_derivatives);
+
            }
 
            cell_states = forget_activations * cell_states + input_activations * state_activations;
-           hidden_states = output_activations * calculate_activations(cell_states);
-           const Tensor<type, 1> hidden_states_derivatives = calculate_activations_derivatives(cell_states);
+//           hidden_states = output_activations * calculate_activations(cell_states);
+//           const Tensor<type, 1> hidden_states_derivatives = calculate_activations_derivatives(cell_states);
+           calculate_activations_derivatives(cell_states, hidden_states, hidden_states_derivatives);
+           hidden_states *= output_activations;
 
 //           forward_propagation.activations_2d.set_row(i,hidden_states);
            for(Index j = 0; j < neurons_number; j++)
-               forward_propagation.activations_2d(i,j) =  hidden_states(j);
+               forward_propagation.activations_2d(i,j) = hidden_states(j);
 
 //           forward_propagation.activations_derivatives.embed(forget_activations_index, forget_activations_derivatives);
 //           forward_propagation.activations_derivatives.embed(input_activations_index, input_activations_derivatives);

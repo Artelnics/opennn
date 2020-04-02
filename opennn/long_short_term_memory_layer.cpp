@@ -1107,7 +1107,11 @@ void LongShortTermMemoryLayer::set_parameters_random()
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 1>& inputs) const
+void LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 1>& inputs,
+                                                             const Tensor<type, 2>&forget_weights,
+                                                             const Tensor<type, 2>& forget_recurrent_weights,
+                                                             const Tensor<type, 1>& forget_biases,
+                                                             Tensor<type, 1>&forget_combinations_1d) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1126,9 +1130,6 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Te
 
 #endif
 
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> forget_combinations_1d(neurons_number);
 
     switch(device_pointer->get_type())
     {
@@ -1142,7 +1143,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Te
 
              forget_combinations_1d.device(*default_device) += hidden_states.contract(forget_recurrent_weights, AT_B).eval();
 
-             return forget_combinations_1d;
+             return;
+
          }
 
          case Device::EigenSimpleThreadPool:
@@ -1155,23 +1157,23 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Te
 
             forget_combinations_1d.device(*thread_pool_device) += hidden_states.contract(forget_recurrent_weights, AT_B).eval();
 
-             return forget_combinations_1d;
+            return;
+
          }
 
         case Device::EigenGpu:
         {
-             return Tensor<type, 1>();
+             return;
         }
     }
-    /*
-        return dot(inputs, forget_weights) + forget_biases + dot(hidden_states, forget_recurrent_weights);
-    */
-
-    return Tensor<type, 1>();
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Tensor<type, 1>& inputs) const
+void LongShortTermMemoryLayer::calculate_input_combinations(const Tensor<type, 1>& inputs,
+                                                            const Tensor<type, 2>& input_weights,
+                                                            const Tensor<type, 2>& input_recurrent_weights,
+                                                            const Tensor<type, 1>& input_biases,
+                                                            Tensor<type, 1>& input_combinations_1d) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1190,10 +1192,6 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Ten
 
 #endif
 
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> input_combinations_1d(neurons_number);
-
     switch(device_pointer->get_type())
     {
          case Device::EigenDefault:
@@ -1206,7 +1204,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Ten
 
              input_combinations_1d.device(*default_device) += hidden_states.contract(input_recurrent_weights, AT_B).eval();
 
-             return input_combinations_1d;
+             return;
          }
 
          case Device::EigenSimpleThreadPool:
@@ -1219,23 +1217,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Ten
 
             input_combinations_1d.device(*thread_pool_device) += hidden_states.contract(input_recurrent_weights, AT_B).eval();
 
-             return input_combinations_1d;
+            return;
          }
 
         case Device::EigenGpu:
         {
-             return Tensor<type, 1>();
         }
     }
-    /*
-        return dot(inputs, input_weights) + input_biases + dot(hidden_states, input_recurrent_weights);
-    */
-    return Tensor<type, 1>();
-
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Tensor<type, 1>& inputs) const
+void LongShortTermMemoryLayer::calculate_state_combinations(const Tensor<type, 1>& inputs,
+                                                            const Tensor<type, 2>& state_weights,
+                                                            const Tensor<type, 2>& state_recurrent_weights,
+                                                            const Tensor<type, 1>& state_biases,
+                                                            Tensor<type, 1>& state_combinations_1d) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1254,10 +1250,6 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Ten
 
 #endif
 
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> state_combinations_1d(neurons_number);
-
     switch(device_pointer->get_type())
     {
          case Device::EigenDefault:
@@ -1270,7 +1262,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Ten
 
              state_combinations_1d.device(*default_device) += hidden_states.contract(state_recurrent_weights, AT_B).eval();
 
-             return state_combinations_1d;
+             return;
          }
 
          case Device::EigenSimpleThreadPool:
@@ -1283,23 +1275,22 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Ten
 
             state_combinations_1d.device(*thread_pool_device) += hidden_states.contract(state_recurrent_weights, AT_B).eval();
 
-             return state_combinations_1d;
+             return;
          }
 
         case Device::EigenGpu:
         {
-             return Tensor<type, 1>();
+             return;
         }
     }
-    /*
-        return dot(inputs, state_weights) + state_biases + dot(hidden_states, state_recurrent_weights);
-    */
-    return Tensor<type, 1>();
-
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 1>& inputs) const
+void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 1>& inputs,
+                                                             const Tensor<type, 2>& output_weights,
+                                                             const Tensor<type, 2>& output_recurrent_weights,
+                                                             const Tensor<type, 1>& output_biases,
+                                                             Tensor<type, 1>& output_combinations_1d) const
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -1319,10 +1310,6 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 
 #endif
 
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> output_combinations_1d(neurons_number);
-
     switch(device_pointer->get_type())
     {
          case Device::EigenDefault:
@@ -1335,7 +1322,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 
              output_combinations_1d.device(*default_device) += hidden_states.contract(output_recurrent_weights, AT_B).eval();
 
-             return output_combinations_1d;
+             return;
          }
 
          case Device::EigenSimpleThreadPool:
@@ -1348,20 +1335,14 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 
             output_combinations_1d.device(*thread_pool_device) += hidden_states.contract(output_recurrent_weights, AT_B).eval();
 
-             return output_combinations_1d;
+             return;
          }
 
         case Device::EigenGpu:
         {
-             return Tensor<type, 1>();
+             return;
         }
     }
-
-    /*
-        return dot(inputs, output_weights) + output_biases + dot(hidden_states, output_recurrent_weights);
-    */
-    return Tensor<type, 1>();
-
 }
 
 
@@ -1381,6 +1362,18 @@ Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Ten
     Index states_index = 4*instances_number*neurons_number;
     Index hidden_states_index = 5*instances_number*neurons_number;
 
+    Tensor<type, 1> forget_combinations(neurons_number);
+    Tensor<type, 1> forget_activations(neurons_number);
+
+    Tensor<type, 1> input_combinations(neurons_number);
+    Tensor<type, 1> input_activations(neurons_number);
+
+    Tensor<type, 1> state_combinations(neurons_number);
+    Tensor<type, 1> state_activations(neurons_number);
+
+    Tensor<type, 1> output_combinations(neurons_number);
+    Tensor<type, 1> output_activations(neurons_number);
+
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0)
@@ -1391,27 +1384,23 @@ Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 
         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-        const Tensor<type, 1> forget_combinations = calculate_forget_combinations(current_inputs);
-        const Tensor<type, 1> forget_activations = calculate_recurrent_activations(forget_combinations);
+        calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+        calculate_recurrent_activations(forget_combinations, forget_activations);
 
-        const Tensor<type, 1> input_combinations = calculate_input_combinations(current_inputs);
-        const Tensor<type, 1> input_activations = calculate_recurrent_activations(input_combinations);
+        calculate_input_combinations(current_inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
+        calculate_recurrent_activations(input_combinations, input_activations);
 
-        const Tensor<type, 1> state_combinations = calculate_state_combinations(current_inputs);
-        const Tensor<type, 1> state_activations = calculate_activations(state_combinations);
+        calculate_state_combinations(current_inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
+        calculate_activations(state_combinations, state_activations);
 
-        const Tensor<type, 1> output_combinations = calculate_output_combinations(current_inputs);
-        const Tensor<type, 1> output_activations = calculate_recurrent_activations(output_combinations);
+        calculate_output_combinations(current_inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
+        calculate_recurrent_activations(output_combinations, output_activations);
 
         cell_states = forget_activations * cell_states + input_activations * state_activations;
-        hidden_states = output_activations * calculate_activations(cell_states);
+//        hidden_states = output_activations * calculate_activations(cell_states);
+         calculate_activations(cell_states, hidden_states);
+         hidden_states *= output_activations;
 
-//        activations_states.embed(forget_activations_index, forget_activations);
-//        activations_states.embed(input_activations_index, input_activations);
-//        activations_states.embed(state_activations_index, state_activations);
-//        activations_states.embed(output_activations_index, output_activations);
-//        activations_states.embed(states_index, cell_states);
-//        activations_states.embed(hidden_states_index, hidden_states);
         memcpy(activations_states.data() + forget_activations_index, forget_activations.data(), static_cast<size_t>(forget_activations.size())*sizeof(type));
         memcpy(activations_states.data() + input_activations_index, input_activations.data(), static_cast<size_t>(input_activations.size())*sizeof(type));
         memcpy(activations_states.data() + state_activations_index, state_activations.data(), static_cast<size_t>(state_activations.size())*sizeof(type));
@@ -1429,11 +1418,10 @@ Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Ten
 
     return activations_states;
 
-//    return Tensor<type, 2>();
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations_2d) const
+void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1453,8 +1441,6 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     }
 
 #endif
-
-    Tensor<type, 2> activations_2d(combinations_2d.dimension(0), combinations_2d.dimension(1));
 
     switch(activation_function)
     {
@@ -1480,8 +1466,54 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 
         case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);
     }
+}
 
-    return activations_2d;//Tensor<type, 2>();
+
+void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& activations_1d) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index neurons_number = get_neurons_number();
+
+    const Index combinations_columns_number = combinations_1d.size();
+
+    if(combinations_columns_number != neurons_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "Tensor<type, 2> calculate_activations(const Tensor<type, 1>&) const method.\n"
+               << "Size of combinations_2d must be equal to number of neurons.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    switch(activation_function)
+    {
+        case Linear:  linear(combinations_1d, activations_1d);
+
+        case Logistic:  logistic(combinations_1d, activations_1d);
+
+        case HyperbolicTangent:  hyperbolic_tangent(combinations_1d, activations_1d);
+
+        case Threshold:  threshold(combinations_1d, activations_1d);
+
+        case SymmetricThreshold:  symmetric_threshold(combinations_1d, activations_1d);
+
+        case RectifiedLinear:  rectified_linear(combinations_1d, activations_1d);
+
+        case ScaledExponentialLinear:  scaled_exponential_linear(combinations_1d, activations_1d);
+
+        case SoftPlus:  soft_plus(combinations_1d, activations_1d);
+
+        case SoftSign:  soft_sign(combinations_1d, activations_1d);
+
+        case HardSigmoid:  hard_sigmoid(combinations_1d, activations_1d);
+
+        case ExponentialLinear:  exponential_linear(combinations_1d, activations_1d);
+    }
 }
 
 
@@ -1536,8 +1568,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     return activations_1d;
 }
 
-
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations_2d) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1558,43 +1589,42 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 
     #endif
 
-/*
+
     switch(recurrent_activation_function)
     {
-        case Linear: return linear(combinations_2d);
+        case Linear:  linear(combinations_2d, activations_2d);
 
-        case Logistic: return logistic(combinations_2d);
+        case Logistic:  logistic(combinations_2d, activations_2d);
 
-        case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
+        case HyperbolicTangent:  hyperbolic_tangent(combinations_2d, activations_2d);
 
-        case Threshold: return threshold(combinations_2d);
+        case Threshold:  threshold(combinations_2d, activations_2d);
 
-        case SymmetricThreshold: return symmetric_threshold(combinations_2d);
+        case SymmetricThreshold:  symmetric_threshold(combinations_2d, activations_2d);
 
-        case RectifiedLinear: return rectified_linear(combinations_2d);
+        case RectifiedLinear:  rectified_linear(combinations_2d, activations_2d);
 
-        case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
+        case ScaledExponentialLinear:  scaled_exponential_linear(combinations_2d, activations_2d);
 
-        case SoftPlus: return soft_plus(combinations_2d);
+        case SoftPlus:  soft_plus(combinations_2d, activations_2d);
 
-        case SoftSign: return soft_sign(combinations_2d);
+        case SoftSign:  soft_sign(combinations_2d, activations_2d);
 
-        case HardSigmoid: return hard_sigmoid(combinations_2d);
+        case HardSigmoid:  hard_sigmoid(combinations_2d, activations_2d);
 
-        case ExponentialLinear: return exponential_linear(combinations_2d);
+        case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);
     }
-*/
-    return Tensor<type, 2>();
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_2d) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& recurrent_activations_1d) const
 {
+
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combinations_2d.size();
+    const Index combinations_columns_number = combinations_1d.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1608,37 +1638,37 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
     }
 
 #endif
-    /*
-        switch(recurrent_activation_function)
-        {
-            case Linear: return linear(combinations_2d);
 
-            case Logistic: return logistic(combinations_2d);
+    switch(recurrent_activation_function)
+    {
+        case Linear:  linear(combinations_1d, recurrent_activations_1d);
 
-            case HyperbolicTangent: return hyperbolic_tangent(combinations_2d);
+        case Logistic:  logistic(combinations_1d, recurrent_activations_1d);
 
-            case Threshold: return threshold(combinations_2d);
+        case HyperbolicTangent:  hyperbolic_tangent(combinations_1d, recurrent_activations_1d);
 
-            case SymmetricThreshold: return symmetric_threshold(combinations_2d);
+        case Threshold:  threshold(combinations_1d, recurrent_activations_1d);
 
-            case RectifiedLinear: return rectified_linear(combinations_2d);
+        case SymmetricThreshold:  symmetric_threshold(combinations_1d, recurrent_activations_1d);
 
-            case ScaledExponentialLinear: return scaled_exponential_linear(combinations_2d);
+        case RectifiedLinear:  rectified_linear(combinations_1d, recurrent_activations_1d);
 
-            case SoftPlus: return soft_plus(combinations_2d);
+        case ScaledExponentialLinear:  scaled_exponential_linear(combinations_1d, recurrent_activations_1d);
 
-            case SoftSign: return soft_sign(combinations_2d);
+        case SoftPlus:  soft_plus(combinations_1d, recurrent_activations_1d);
 
-            case HardSigmoid: return hard_sigmoid(combinations_2d);
+        case SoftSign:  soft_sign(combinations_1d, recurrent_activations_1d);
 
-            case ExponentialLinear: return exponential_linear(combinations_2d);
-        }
-    */
-    return Tensor<type, 1>();
+        case HardSigmoid:  hard_sigmoid(combinations_1d, recurrent_activations_1d);
+
+        case ExponentialLinear:  exponential_linear(combinations_1d, recurrent_activations_1d);
+    }
 }
 
 
-Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d) const
+void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
+                                                                 Tensor<type, 2>& activations_2d,
+                                                                 Tensor<type, 2>& activations_derivatives_2d) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1658,45 +1688,46 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
     }
 
 #endif
-/*
+
     switch(activation_function)
     {
-        case Linear: return linear_derivatives(combinations_2d);
+        case Linear: return linear_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case Logistic: return logistic_derivatives(combinations_2d);
+        case Logistic: return logistic_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations_2d);
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case Threshold: return threshold_derivatives(combinations_2d);
+        case Threshold: return threshold_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations_2d);
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case RectifiedLinear: return rectified_linear_derivatives(combinations_2d);
+        case RectifiedLinear: return rectified_linear_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations_2d);
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case SoftPlus: return soft_plus_derivatives(combinations_2d);
+        case SoftPlus: return soft_plus_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case SoftSign: return soft_sign_derivatives(combinations_2d);
+        case SoftSign: return soft_sign_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case HardSigmoid: return hard_sigmoid_derivatives(combinations_2d);
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
 
-        case ExponentialLinear: return exponential_linear_derivatives(combinations_2d);
+        case ExponentialLinear: return exponential_linear_derivatives(combinations_2d, activations_2d, activations_derivatives_2d);
     }
-*/
-    return Tensor<type, 2>();
+
 }
 
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& /*combination*/) const
+void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 1>& combinations_1d,
+                                                                 Tensor<type, 1>& activations_1d,
+                                                                 Tensor<type, 1>& activations_derivatives_1d) const
 {
-/*
+
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combination.size();
+    const Index combinations_columns_number = combinations_1d.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1714,40 +1745,40 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
     switch(activation_function)
     {
 
-                case Linear: return linear_derivatives(combination);
+                case Linear: return linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case Logistic: return logistic_derivatives(combination);
+                case Logistic: return logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+                case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case Threshold: return threshold_derivatives(combination);
+                case Threshold: return threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+                case SymmetricThreshold: return symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case RectifiedLinear: return rectified_linear_derivatives(combination);
+                case RectifiedLinear: return rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+                case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SoftPlus: return soft_plus_derivatives(combination);
+                case SoftPlus: return soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SoftSign: return soft_sign_derivatives(combination);
+                case SoftSign: return soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case HardSigmoid: return hard_sigmoid_derivatives(combination);
+                case HardSigmoid: return hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case ExponentialLinear: return exponential_linear_derivatives(combination);
+                case ExponentialLinear: return exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
     }
-*/
-    return Tensor<type, 1>();
 }
 
-Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const Tensor<type, 1>& combination) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const Tensor<type, 1>& combinations_1d,
+                                                                           Tensor<type, 1>& activations_1d,
+                                                                           Tensor<type, 1>& activations_derivatives_1d) const
 {
 #ifdef __OPENNN_DEBUG__
 
     const Index neurons_number = get_neurons_number();
 
-    const Index combinations_columns_number = combination.size();
+    const Index combinations_columns_number = combinations_1d.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1761,35 +1792,32 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
     }
 
 #endif
-/*
+
     switch(recurrent_activation_function)
     {
+        case Linear: return linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case Linear: return linear_derivatives(combination);
+        case Logistic: return logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case Logistic: return logistic_derivatives(combination);
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+        case Threshold: return threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case Threshold: return threshold_derivatives(combination);
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+        case RectifiedLinear: return rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case RectifiedLinear: return rectified_linear_derivatives(combination);
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+        case SoftPlus: return soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SoftPlus: return soft_plus_derivatives(combination);
+        case SoftSign: return soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case SoftSign: return soft_sign_derivatives(combination);
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
-                case HardSigmoid: return hard_sigmoid_derivatives(combination);
-
-                case ExponentialLinear: return exponential_linear_derivatives(combination);
+        case ExponentialLinear: return exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d);
 
     }
-*/
-    return Tensor<type, 1>();
 }
 
 
@@ -1812,14 +1840,26 @@ void LongShortTermMemoryLayer::update_cell_states(const Tensor<type, 1>& inputs)
 
 #endif
 
-    const Tensor<type, 1> forget_combinations = calculate_forget_combinations(inputs);
-    Tensor<type, 1> forget_activations = calculate_recurrent_activations(forget_combinations);
+    const Index neurons_number = get_neurons_number();
 
-    const Tensor<type, 1> input_combinations = calculate_input_combinations(inputs);
-    const Tensor<type, 1> input_activations = calculate_recurrent_activations(input_combinations);
+    Tensor<type, 1> forget_combinations(neurons_number);
+    Tensor<type, 1> forget_activations(neurons_number);
 
-    const Tensor<type, 1> state_combinations = calculate_state_combinations(inputs);
-    const Tensor<type, 1> state_activations = calculate_recurrent_activations(state_combinations);
+    Tensor<type, 1> input_combinations(neurons_number);
+    Tensor<type, 1> input_activations(neurons_number);
+
+    Tensor<type, 1> state_combinations(neurons_number);
+    Tensor<type, 1> state_activations(neurons_number);
+
+    calculate_forget_combinations(inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+    calculate_recurrent_activations(forget_combinations, forget_activations);
+
+    calculate_input_combinations(inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
+    calculate_recurrent_activations(input_combinations, input_activations);
+
+    calculate_state_combinations(inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
+    calculate_recurrent_activations(state_combinations, state_activations);
+
 
     cell_states = forget_activations * cell_states + input_activations*state_activations;
 }
@@ -1844,11 +1884,16 @@ void LongShortTermMemoryLayer::update_hidden_states(const Tensor<type, 1>& input
 
 #endif
 
-    const Tensor<type, 1> output_combinations = calculate_output_combinations(inputs);
+    const Index neurons_number = get_neurons_number();
 
-    const Tensor<type, 1> output_activations = calculate_activations(output_combinations);
+    Tensor<type, 1> output_combinations(neurons_number);
+    Tensor<type, 1> output_activations(neurons_number);
 
-    hidden_states = output_activations*calculate_activations(cell_states);
+    calculate_output_combinations(inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
+    calculate_activations(output_combinations, output_activations);
+
+    calculate_activations(cell_states, hidden_states);
+    hidden_states *= output_activations;
 }
 
 
@@ -1878,14 +1923,17 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
     Tensor<type, 2> outputs(instances_number, neurons_number);
 
-    Tensor<type, 1> forget_combinations;
-    Tensor<type, 1> forget_activations;
-    Tensor<type, 1> input_combinations;
-    Tensor<type, 1> input_activations;
-    Tensor<type, 1> state_combinations;
-    Tensor<type, 1> state_activations;
-    Tensor<type, 1> output_combinations;
-    Tensor<type, 1> output_activations;
+    Tensor<type, 1> forget_combinations(neurons_number);
+    Tensor<type, 1> forget_activations(neurons_number);
+
+    Tensor<type, 1> input_combinations(neurons_number);
+    Tensor<type, 1> input_activations(neurons_number);
+
+    Tensor<type, 1> state_combinations(neurons_number);
+    Tensor<type, 1> state_activations(neurons_number);
+
+    Tensor<type, 1> output_combinations(neurons_number);
+    Tensor<type, 1> output_activations(neurons_number);
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -1899,21 +1947,22 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
     #pragma omp parallel
         {
-            forget_combinations = calculate_forget_combinations(current_inputs);
-            forget_activations = calculate_recurrent_activations(forget_combinations);
+            calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations); // change combinations, add parameters
+            calculate_recurrent_activations(forget_combinations, forget_activations);
 
-            input_combinations = calculate_input_combinations(current_inputs);
-            input_activations  = calculate_recurrent_activations(input_combinations);
+            calculate_input_combinations(current_inputs, input_weights, input_recurrent_weights, input_biases, input_combinations); // change combinations, add parameters
+            calculate_recurrent_activations(input_combinations, input_activations);
 
-            state_combinations = calculate_state_combinations(current_inputs);
-            state_activations  = calculate_activations(state_combinations);
+            calculate_state_combinations(current_inputs, state_weights, state_recurrent_weights, state_biases, state_combinations); // change combinations, add parameters
+            calculate_activations(state_combinations, state_activations);
 
-            output_combinations = calculate_output_combinations(current_inputs);
-            output_activations  = calculate_recurrent_activations(output_combinations);
+            calculate_output_combinations(current_inputs, output_weights, output_recurrent_weights, output_biases, output_combinations); // change combinations, add parameters
+            calculate_recurrent_activations(output_combinations, output_activations);
         }
 
         cell_states = forget_activations * cell_states + input_activations * state_activations;
-        hidden_states = output_activations * calculate_activations(cell_states);
+        calculate_activations(cell_states, hidden_states);
+        hidden_states *= output_activations;
 
 //        outputs.set_row(i, hidden_states);
         for(Index j = 0; j < neurons_number; j++)
@@ -1973,20 +2022,20 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 //        const Tensor<type, 1> new_state_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number , 4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1);
 //        const Tensor<type, 1> new_output_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number, 4 * neurons_number * (inputs_number + neurons_number + 1) - 1);
 
-        const Tensor<type,2> new_forget_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
-        const Tensor<type,2> new_input_weights  = parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
-        const Tensor<type,2> new_state_weights  = parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
-        const Tensor<type,2> new_output_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
+        const Tensor<type,2> new_forget_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
+        const Tensor<type,2> new_input_weights  = parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
+        const Tensor<type,2> new_state_weights  = parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
+        const Tensor<type,2> new_output_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number}));
 
-        const Tensor<type, 2> new_forget_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number -1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
-        const Tensor<type, 2> new_input_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
-        const Tensor<type, 2> new_state_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
-        const Tensor<type, 2> new_output_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 4 * neurons_number * neurons_number - 1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
+        const Tensor<type, 2> new_forget_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number * neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
+        const Tensor<type, 2> new_input_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number * neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
+        const Tensor<type, 2> new_state_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number * neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
+        const Tensor<type, 2> new_output_recurrent_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({ neurons_number * neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number}));
 
-        const Tensor<type, 1> new_forget_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({ 4 * neurons_number * (inputs_number + neurons_number) + neurons_number -1}));
-        const Tensor<type, 1> new_input_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number - 1}));
-        const Tensor<type, 1> new_state_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1}));
-        const Tensor<type, 1> new_output_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number + 1) - 1}));
+        const Tensor<type, 1> new_forget_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({neurons_number}));
+        const Tensor<type, 1> new_input_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
+        const Tensor<type, 1> new_state_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
+        const Tensor<type, 1> new_output_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number}));
 
         Tensor<type, 2> outputs(instances_number, neurons_number);
 
@@ -2014,25 +2063,24 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
     #pragma omp parallel
             {
-//                forget_combinations = dot(current_inputs, new_forget_weights) + new_forget_biases + dot(hidden_states, new_forget_recurrent_weights);
-                forget_combinations = calculate_forget_combinations(current_inputs); // change combinations, add parameters
-                forget_activations = calculate_recurrent_activations(forget_combinations);
 
-//                input_combinations = dot(current_inputs, new_input_weights) + new_input_biases + dot(hidden_states, new_input_recurrent_weights);
-                input_combinations = calculate_input_combinations(current_inputs);
-                input_activations = calculate_recurrent_activations(input_combinations);
+                calculate_forget_combinations(current_inputs, new_forget_weights, new_forget_recurrent_weights, new_forget_biases, forget_combinations); // change combinations, add parameters
+                calculate_recurrent_activations(forget_combinations, forget_activations);
 
-//                state_combinations = dot(current_inputs, new_state_weights) + new_state_biases + dot(hidden_states, new_state_recurrent_weights);
-                state_combinations = calculate_state_combinations(current_inputs);
-                state_activations = calculate_activations(state_combinations);
+                calculate_input_combinations(current_inputs, new_input_weights, new_input_recurrent_weights, new_input_biases, input_combinations); // change combinations, add parameters
+                calculate_recurrent_activations(input_combinations, input_activations);
 
-//                output_combinations = dot(current_inputs, new_output_weights) + new_output_biases + dot(hidden_states, new_output_recurrent_weights);
-                output_combinations = calculate_output_combinations(current_inputs);
-                output_activations = calculate_recurrent_activations(output_combinations);
+                calculate_state_combinations(current_inputs, new_state_weights, new_state_recurrent_weights, new_state_biases, state_combinations); // change combinations, add parameters
+                calculate_activations(state_combinations, state_activations);
+
+                calculate_output_combinations(current_inputs, new_output_weights, new_output_recurrent_weights, new_output_biases, output_combinations); // change combinations, add parameters
+                calculate_recurrent_activations(output_combinations, output_activations);
+
             }
 
             cell_states = forget_activations * cell_states + input_activations * state_activations;
-            hidden_states = output_activations * calculate_activations(cell_states);
+            calculate_activations(cell_states, hidden_states);
+            hidden_states *= output_activations;
 
 //            outputs.set_row(i, hidden_states);
             for(Index j = 0; j < neurons_number; j++)
@@ -2144,17 +2192,17 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
          Tensor<type, 2> outputs(instances_number, neurons_number);
 
-         Tensor<type, 1> forget_combinations;
-         Tensor<type, 1> forget_activations;
+         Tensor<type, 1> forget_combinations(neurons_number);
+         Tensor<type, 1> forget_activations(neurons_number);
 
-         Tensor<type, 1> input_combinations;
-         Tensor<type, 1> input_activations;
+         Tensor<type, 1> input_combinations(neurons_number);
+         Tensor<type, 1> input_activations(neurons_number);
 
-         Tensor<type, 1> state_combinations;
-         Tensor<type, 1> state_activations;
+         Tensor<type, 1> state_combinations(neurons_number);
+         Tensor<type, 1> state_activations(neurons_number);
 
-         Tensor<type, 1> output_combinations;
-         Tensor<type, 1> output_activations;
+         Tensor<type, 1> output_combinations(neurons_number);
+         Tensor<type, 1> output_activations(neurons_number);
 
          for(Index i = 0; i < instances_number; i++)
          {
@@ -2168,26 +2216,24 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
      #pragma omp parallel
              {
-//                 forget_combinations = dot(current_inputs, new_forget_weights) + new_forget_biases + dot(hidden_states, new_forget_recurrent_weights);
-                 forget_combinations = calculate_forget_combinations(current_inputs);
-                 forget_activations = calculate_recurrent_activations(forget_combinations);
 
-//                 input_combinations = dot(current_inputs, new_input_weights) + new_input_biases + dot(hidden_states, new_input_recurrent_weights);
-                 input_combinations = calculate_input_combinations(current_inputs);
-                 input_activations = calculate_recurrent_activations(input_combinations);
+                 calculate_forget_combinations(current_inputs, new_forget_weights, new_forget_recurrent_weights, new_forget_biases, forget_combinations); // change combinations, add parameters
+                 calculate_recurrent_activations(forget_combinations, forget_activations);
 
-//                 state_combinations = dot(current_inputs, new_state_weights) + new_state_biases + dot(hidden_states, new_state_recurrent_weights);
-                 state_combinations = calculate_state_combinations(current_inputs);
-                 state_activations = calculate_activations(state_combinations);
+                 calculate_input_combinations(current_inputs, new_input_weights, new_input_recurrent_weights, new_input_biases, input_combinations); // change combinations, add parameters
+                 calculate_recurrent_activations(input_combinations, input_activations);
 
-//                 output_combinations = dot(current_inputs, new_output_weights) + new_output_biases + dot(hidden_states, new_output_recurrent_weights);
-                 output_activations = calculate_recurrent_activations(current_inputs);
-                 output_activations = calculate_recurrent_activations(output_combinations);
+                 calculate_state_combinations(current_inputs, new_state_weights, new_state_recurrent_weights, new_state_biases, state_combinations); // change combinations, add parameters
+                 calculate_activations(state_combinations, state_activations);
+
+                 calculate_output_combinations(current_inputs, new_output_weights, new_output_recurrent_weights, new_output_biases, output_combinations); // change combinations, add parameters
+                 calculate_recurrent_activations(output_combinations, output_activations);
              }
 
 
              cell_states = forget_activations * cell_states + input_activations * state_activations;
-             hidden_states = output_activations * calculate_activations(cell_states);
+             calculate_activations(cell_states, hidden_states);
+             hidden_states *= output_activations;
 
 //             outputs.set_row(i, hidden_states);
              for(Index j = 0; j < neurons_number; j++)
@@ -2350,7 +2396,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 //    return dot(next_layer_delta, synaptic_weights_transpose);
 //    return next_layer_delta.contract(synaptic_weights, A_BT);
 
-//    return Tensor<type, 2>();
+    return Tensor<type, 2>();
 }
 
 
