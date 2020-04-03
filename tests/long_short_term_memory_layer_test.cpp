@@ -846,7 +846,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    Tensor<type, 2> inputs;
 //   Tensor<type, 2> outputs;

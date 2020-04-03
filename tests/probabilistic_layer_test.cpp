@@ -407,7 +407,7 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
    probabilistic_layer.set_device_pointer(&device);
 
    // Test 0
@@ -440,7 +440,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
    probabilistic_layer.set_device_pointer(&device);
 
    // Test 1
@@ -538,7 +538,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> activations_2d;
     Tensor<type, 3> activations_derivatives;
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer.set_device_pointer(&device);
 
     // Test 1
@@ -614,7 +614,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer.set_device_pointer(&device);
 
     // Test 1
@@ -717,7 +717,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     ProbabilisticLayer probabilistic_layer(2,2);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer.set_device_pointer(&device);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
@@ -751,7 +751,7 @@ void ProbabilisticLayerTest::test_calculate_output_delta()
 
     ProbabilisticLayer probabilistic_layer(2,2);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer.set_device_pointer(&device);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
@@ -793,7 +793,7 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
     probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer_0.set_device_pointer(&device);
     probabilistic_layer_1.set_device_pointer(&device);
 
@@ -842,7 +842,7 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     probabilistic_layer.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);

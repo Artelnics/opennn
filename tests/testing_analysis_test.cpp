@@ -115,7 +115,7 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -159,7 +159,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -208,7 +208,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -251,7 +251,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -290,7 +290,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -339,7 +339,7 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -377,7 +377,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 
 //    // Device
 
-//    Device device(Device::EigenSimpleThreadPool);
+//    Device device(Device::EigenThreadPool);
 
 //    // DataSet
 
@@ -418,7 +418,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -458,7 +458,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -499,7 +499,7 @@ void TestingAnalysisTest::test_linear_regression()
 
    // Device
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    // DataSet
 
@@ -541,7 +541,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    // Device
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    // DataSet
 
@@ -578,7 +578,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -631,7 +631,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Device
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
 
     // DataSet
 
@@ -732,7 +732,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    // Device
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    // DataSet
 

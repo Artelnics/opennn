@@ -304,7 +304,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
    NumericalDifferentiation numerical_differentiation;
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    RecurrentLayer recurrent_layer;
    Tensor<type, 1> parameters;
@@ -455,7 +455,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
 
    RecurrentLayer recurrent_layer;
    Tensor<type, 2> inputs;
