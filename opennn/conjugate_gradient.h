@@ -311,7 +311,6 @@ public:
 
        // Update stuff
 
-//       optimization_data.old_loss = back_propagation.loss;
        optimization_data.old_gradient = back_propagation.gradient;
 
        optimization_data.old_training_direction = optimization_data.training_direction;

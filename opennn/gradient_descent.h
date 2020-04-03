@@ -260,8 +260,6 @@ public:
 
        // Training slope
 
-//       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
-
        optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
        if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
