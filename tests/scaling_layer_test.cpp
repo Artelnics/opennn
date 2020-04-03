@@ -111,6 +111,22 @@ void ScalingLayerTest::test_get_inputs_number()
 
 
 
+void ScalingLayerTest::test_get_descriptives()
+{
+   cout << "test_get_descriptives\n";
+
+   ScalingLayer sl;
+
+
+}
+
+void ScalingLayerTest::test_get_descriptives_matrix()
+{
+   cout << "test_get_descriptives_matrix\n";
+
+   ScalingLayer sl;
+}
+
 void ScalingLayerTest::test_get_means()
 {
    cout << "test_get_means\n";
@@ -181,6 +197,30 @@ void ScalingLayerTest::test_get_standard_deviations()
     assert_true(sl.get_standard_deviations()(0) == 3.0, LOG);
 }
 
+void ScalingLayerTest::test_get_scaling_method()
+{
+   cout << "test_get_scaling_method\n";
+
+   ScalingLayer sl(1);
+
+   // Test
+
+   sl.set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
+   assert_true(sl.get_scaling_methods()[0] == ScalingLayer::MeanStandardDeviation, LOG);
+
+   // Test
+
+   sl.set_scaling_methods(ScalingLayer::MinimumMaximum);
+
+   assert_true(sl.get_scaling_methods()[0] == ScalingLayer::MinimumMaximum, LOG);
+}
+
+void ScalingLayerTest::test_get_scaling_method_name()
+{
+   cout << "test_get_scaling_method_name\n";
+}
+
 
 
 void ScalingLayerTest::test_get_display_inputs_warning()
@@ -196,6 +236,7 @@ void ScalingLayerTest::test_get_display()
 
    assert_true(sl.get_display(), LOG);
 }
+
 
 
 void ScalingLayerTest::test_set()
@@ -330,9 +371,181 @@ void ScalingLayerTest::test_set_default()
 
 
 
-void ScalingLayerTest::test_set_scaling_method()
+void ScalingLayerTest::test_set_descriptives()
 {
-   cout << "test_set_scaling_method\n";
+   cout << "test_set_descriptives\n";
+
+   ScalingLayer sl;
+
+   // Test 0
+
+   Tensor<Descriptives, 1> descriptives(1);
+
+   sl.set_descriptives(descriptives);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) + 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,1) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,2) - 0 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,3) - 1 < static_cast<type>(1e-3), LOG);
+
+   // Test 1
+
+   Descriptives des_0(1,1,1,0);
+   Descriptives des_1(2,2,2,0);
+
+   descriptives.resize(2);
+   descriptives.setValues({des_0,des_1});
+
+   sl.set_descriptives(descriptives);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,2) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,1) - 2 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,3) - 0 < static_cast<type>(1e-3), LOG);
+}
+
+void ScalingLayerTest::test_set_descriptives_eigen()
+{
+   cout << "test_set_descriptives_eigen\n";
+
+   ScalingLayer sl(1);
+
+   // Test 0
+
+   Tensor<type, 2> descriptives_eigen(1,4);
+
+   sl.set_descriptives_eigen(descriptives_eigen);
+/*
+   assert_true(sl.get_descriptives_matrix()(0,0) + 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,1) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,2) - 0 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,3) - 1 < static_cast<type>(1e-3), LOG);
+*/
+   // Test 1
+
+   ScalingLayer sl_(2);
+
+   Tensor<type, 2> descriptives_eigen_(2,4);
+   descriptives_eigen_.setValues({{1,1,1,0},{2,2,2,0}});
+
+   sl_.set_descriptives_eigen(descriptives_eigen_);
+
+   assert_true(sl_.get_descriptives_matrix()(0,0) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl_.get_descriptives_matrix()(0,2) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl_.get_descriptives_matrix()(1,1) - 2 < static_cast<type>(1e-3), LOG);
+   assert_true(sl_.get_descriptives_matrix()(1,3) - 0 < static_cast<type>(1e-3), LOG);
+}
+
+void ScalingLayerTest::test_set_item_descriptives()
+{
+   cout << "test_set_item_descriptives\n";
+
+   ScalingLayer sl(2);
+
+   // Test
+
+   Descriptives des_0(1,1,1,0);
+   Descriptives des_1(2,2,2,0);
+
+   sl.set_item_descriptives(0,des_0);
+   sl.set_item_descriptives(1,des_1);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(0,2) - 1 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,1) - 2 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,3) - 0 < static_cast<type>(1e-3), LOG);
+
+}
+
+
+
+void ScalingLayerTest::test_set_minimum()
+{
+   cout << "test_set_minimum\n";
+
+   ScalingLayer sl(2);
+
+   // Test 1
+
+   Tensor<Descriptives, 1> descriptives(2);
+
+   sl.set_descriptives(descriptives);
+
+   sl.set_minimum(0, -5);
+   sl.set_minimum(1, -6);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) + 5 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,0) + 6 < static_cast<type>(1e-3), LOG);
+}
+
+void ScalingLayerTest::test_set_maximum()
+{
+   cout << "test_set_maximum\n";
+
+   ScalingLayer sl(2);
+
+   // Test 1
+
+   Tensor<Descriptives, 1> descriptives(2);
+
+   sl.set_descriptives(descriptives);
+
+   sl.set_maximum(0, 5);
+   sl.set_maximum(1, 6);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) - 5 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,0) - 6 < static_cast<type>(1e-3), LOG);
+}
+
+void ScalingLayerTest::test_set_mean()
+{
+   cout << "test_set_mean\n";
+
+   ScalingLayer sl(2);
+
+   // Test 1
+
+   Tensor<Descriptives, 1> descriptives(2);
+
+   sl.set_descriptives(descriptives);
+
+   sl.set_mean(0, 5);
+   sl.set_mean(1, 6);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) - 5 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,0) - 6 < static_cast<type>(1e-3), LOG);
+}
+
+void ScalingLayerTest::test_set_standard_deviation()
+{
+   cout << "test_set_standard_deviation\n";
+
+   ScalingLayer sl(2);
+
+   // Test 1
+
+   Tensor<Descriptives, 1> descriptives(2);
+
+   sl.set_descriptives(descriptives);
+
+   sl.set_standard_deviation(0, 5);
+   sl.set_standard_deviation(1, 6);
+
+   assert_true(sl.get_descriptives_matrix()(0,0) - 5 < static_cast<type>(1e-3), LOG);
+   assert_true(sl.get_descriptives_matrix()(1,0) - 6 < static_cast<type>(1e-3), LOG);
+}
+
+
+
+
+void ScalingLayerTest::test_set_minimums()
+{
+   cout << "test_set_minimums\n";
+}
+
+void ScalingLayerTest::test_set_maximums()
+{
+   cout << "test_set_maximums\n";
 }
 
 void ScalingLayerTest::test_set_means()
@@ -345,39 +558,120 @@ void ScalingLayerTest::test_set_standard_deviations()
    cout << "test_set_standard_deviations\n";
 }
 
-void ScalingLayerTest::test_set_mean()
-{
-   cout << "test_set_mean\n";
-}
 
-void ScalingLayerTest::test_set_standard_deviation()
-{
-   cout << "test_set_standard_deviation\n";
-}
 
-void ScalingLayerTest::test_set_minimums()
-{
-   cout << "test_set_minimums\n";
-}
-
-void ScalingLayerTest::test_set_maximums()
-{
-   cout << "test_set_maximums\n";
-}
-
-void ScalingLayerTest::test_set_minimum()
-{
-   cout << "test_set_minimum\n";
-}
-
-void ScalingLayerTest::test_set_maximum()
-{
-   cout << "test_set_maximum\n";
-}
 
 void ScalingLayerTest::test_set_statistics()
 {
    cout << "test_set_statistics\n";
+}
+
+void ScalingLayerTest::test_set_scaling_method()
+{
+   cout << "test_set_scaling_method\n";
+
+    ScalingLayer sl(4);
+
+    // Test 1
+
+    Tensor<ScalingLayer::ScalingMethod, 1> method_tensor_1(4);
+    method_tensor_1.setValues({ScalingLayer::ScalingMethod::NoScaling,
+                                ScalingLayer::ScalingMethod::MinimumMaximum,
+                                ScalingLayer::ScalingMethod::MeanStandardDeviation,
+                                ScalingLayer::ScalingMethod::StandardDeviation});
+
+    sl.set_scaling_methods(method_tensor_1);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::NoScaling, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 0, LOG);
+
+    assert_true(sl.get_scaling_methods()(1) == ScalingLayer::ScalingMethod::MinimumMaximum, LOG);
+    assert_true(sl.get_scaling_methods()(1) == 1, LOG);
+
+    assert_true(sl.get_scaling_methods()(2) == ScalingLayer::ScalingMethod::MeanStandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(2) == 2, LOG);
+
+    assert_true(sl.get_scaling_methods()(3) == ScalingLayer::ScalingMethod::StandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(3) == 3, LOG);
+
+    // Test 2
+
+    Tensor<string, 1> method_tensor_2(4);
+    method_tensor_2.setValues({"NoScaling",
+                                "MinimumMaximum",
+                                "MeanStandardDeviation",
+                                "StandardDeviation"});
+
+    sl.set_scaling_methods(method_tensor_2);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::NoScaling, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 0, LOG);
+
+    assert_true(sl.get_scaling_methods()(1) == ScalingLayer::ScalingMethod::MinimumMaximum, LOG);
+    assert_true(sl.get_scaling_methods()(1) == 1, LOG);
+
+    assert_true(sl.get_scaling_methods()(2) == ScalingLayer::ScalingMethod::MeanStandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(2) == 2, LOG);
+
+    assert_true(sl.get_scaling_methods()(3) == ScalingLayer::ScalingMethod::StandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(3) == 3, LOG);
+
+    // Test 3
+
+    string no_scaling = "NoScaling";
+    string minimum_maximum = "MinimumMaximum";
+    string mean_standard_deviation = "MeanStandardDeviation";
+    string standard_deviation = "StandardDeviation";
+
+    sl.set_scaling_methods(no_scaling);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::NoScaling, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 0, LOG);
+
+    sl.set_scaling_methods(minimum_maximum);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::MinimumMaximum, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 1, LOG);
+
+    sl.set_scaling_methods(mean_standard_deviation);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::MeanStandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 2, LOG);
+
+    sl.set_scaling_methods(standard_deviation);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::StandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 3, LOG);
+
+    // Test 4
+
+    ScalingLayer::ScalingMethod no_scaling_4 = ScalingLayer::ScalingMethod::NoScaling;
+
+    ScalingLayer::ScalingMethod minimum_maximum_4 = ScalingLayer::ScalingMethod::MinimumMaximum;
+
+    ScalingLayer::ScalingMethod mean_standard_deviation_4 = ScalingLayer::ScalingMethod::MeanStandardDeviation;
+
+    ScalingLayer::ScalingMethod standard_deviation_4 = ScalingLayer::ScalingMethod::StandardDeviation;
+
+    sl.set_scaling_methods(no_scaling_4);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::NoScaling, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 0, LOG);
+
+    sl.set_scaling_methods(minimum_maximum_4);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::MinimumMaximum, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 1, LOG);
+
+    sl.set_scaling_methods(mean_standard_deviation_4);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::MeanStandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 2, LOG);
+
+    sl.set_scaling_methods(standard_deviation_4);
+
+    assert_true(sl.get_scaling_methods()(0) == ScalingLayer::ScalingMethod::StandardDeviation, LOG);
+    assert_true(sl.get_scaling_methods()(0) == 3, LOG);
 }
 
 void ScalingLayerTest::test_set_display_inputs_warning()
@@ -388,7 +682,19 @@ void ScalingLayerTest::test_set_display_inputs_warning()
 void ScalingLayerTest::test_set_display()
 {
    cout << "test_set_display\n";
+
+   bool display_true = true;
+   bool display_false = false;
+
+   set_display(display_true);
+   assert_true(get_display() == true, LOG);
+
+   set_display(display_false);
+   assert_true(get_display() == false, LOG);
 }
+
+
+
 
 void ScalingLayerTest::test_check_range()
 {
@@ -477,31 +783,6 @@ void ScalingLayerTest::test_write_expression()
 */
 }
 
-void ScalingLayerTest::test_get_scaling_method()
-{
-   cout << "test_get_scaling_method\n";
-
-   ScalingLayer sl(1);
-
-   // Test
-
-   sl.set_scaling_methods(ScalingLayer::MeanStandardDeviation);
-
-   assert_true(sl.get_scaling_methods()[0] == ScalingLayer::MeanStandardDeviation, LOG);
-
-   // Test
-
-   sl.set_scaling_methods(ScalingLayer::MinimumMaximum);
-
-   assert_true(sl.get_scaling_methods()[0] == ScalingLayer::MinimumMaximum, LOG);
-}
-
-void ScalingLayerTest::test_get_scaling_method_name()
-{
-   cout << "test_get_scaling_method_name\n";
-}
-
-
 void ScalingLayerTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -560,12 +841,12 @@ void ScalingLayerTest::run_test_case()
 
    // Input variables descriptives
 
+   test_get_descriptives();
+   test_get_descriptives_matrix();
+
    test_get_minimums();
-
    test_get_maximums();
-
    test_get_means();
-
    test_get_standard_deviations();
 
    // Variables scaling and unscaling
@@ -591,6 +872,10 @@ void ScalingLayerTest::run_test_case()
    test_set_default();
 
    // Input variables descriptives
+
+   test_set_descriptives();
+   test_set_descriptives_eigen();
+   test_set_item_descriptives();
 
    test_set_minimums();
    test_set_minimum();
