@@ -1191,6 +1191,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
     type parameters_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
@@ -1216,9 +1217,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     type learning_rate = 0;
 
-    Tensor<type, 1> minimal_selection_parameters;
-
     type minimum_selection_error = numeric_limits<type>::max();
+    Tensor<type, 1> minimal_selection_parameters = parameters;
 
     bool stop_training = false;
 
@@ -1266,7 +1266,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -1281,11 +1280,10 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             {
                 selection_error_increases++;
             }
-            else if(selection_error < minimum_selection_error)
+            else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-
-                minimal_selection_parameters = optimization_data.parameters;
+                minimal_selection_parameters = parameters;
             }
         }
 
@@ -1297,12 +1295,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         if(reserve_training_error_history)
         {
-            results.training_error_history[epoch] = training_back_propagation.loss;
+            results.training_error_history(epoch) = training_back_propagation.loss;
         }
 
         if(reserve_selection_error_history)
         {
-            results.selection_error_history[epoch] = selection_error;
+            results.selection_error_history(epoch) = selection_error;
         }
 
         // Stopping Criteria       
@@ -1326,18 +1324,18 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        /*else if(epoch != 0 && training_loss_decrease <= minimum_loss_decrease)
+        else if(epoch != 0 && abs(training_loss_decrease) <= minimum_loss_decrease)
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n";
-                cout << "Loss decrease: " << training_loss_decrease << endl;
+                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                     << "Loss decrease: " << training_loss_decrease << endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
-        }*/
+        }
 
         else if(training_back_propagation.loss <= training_loss_goal)
         {
@@ -1357,7 +1355,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(apply_early_stopping && selection_error_increases > maximum_selection_error_increases)
+        else if(apply_early_stopping && selection_error_increases >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1418,7 +1416,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                 }
             }
 
-            results.resize_training_history(1+epoch);
+            results.resize_error_history(1+epoch);
 
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;

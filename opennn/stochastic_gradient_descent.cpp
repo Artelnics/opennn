@@ -625,11 +625,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     bool shuffle = true;
 
-//    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
         training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                          batch_instances_number,
@@ -758,7 +756,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_error << endl << endl;
             }
 
-            results.resize_training_history(1 + epoch);
+            results.resize_error_history(1 + epoch);
             results.final_parameters = optimization_data.parameters;
             results.final_training_error = training_loss;
             results.final_selection_error = selection_error;
