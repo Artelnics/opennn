@@ -119,8 +119,8 @@ Tensor<type, 2> ScalingLayer::get_descriptives_matrix() const
     {
         statistics_matrix(i,0) = descriptives(i).minimum;
         statistics_matrix(i,1) = descriptives(i).maximum;
-        statistics_matrix(i,2) = descriptives(i).standard_deviation;
-        statistics_matrix(i,3) = descriptives(i).mean;
+        statistics_matrix(i,2) = descriptives(i).mean;
+        statistics_matrix(i,3) = descriptives(i).standard_deviation;
     }
 
     return statistics_matrix;
@@ -741,7 +741,7 @@ bool ScalingLayer::is_empty() const
 /// This method chechs whether the inputs to the scaling layer have the right size.
 /// If not, it displays an error message and exits the program.
 /// It also checks whether the input values are inside the range defined by the minimums and maximum values, and
-/// displays a warning message if they are outside.
+/// displays a v fg warning message if they are outside.
 /// @param inputs Set of inputs to the scaling layer.
 
 void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
