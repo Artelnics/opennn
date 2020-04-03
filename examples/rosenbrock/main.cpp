@@ -38,7 +38,7 @@ int main(void)
         const Index samples = 1000000;
         const Index variables = 1000;
 
-        Device device(Device::EigenSimpleThreadPool);
+        Device device(Device::EigenThreadPool);
 
         DataSet data_set;
 

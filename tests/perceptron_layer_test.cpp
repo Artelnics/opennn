@@ -672,7 +672,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
    perceptron_layer.set_device_pointer(&device);
 
    // Test 0
@@ -774,7 +774,7 @@ void PerceptronLayerTest::test_calculate_activations()
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
    perceptron_layer.set_device_pointer(&device);
 
    // Test 1
@@ -957,7 +957,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> activations_2d(1,1);
    Tensor<type, 2> activations_derivatives(1,1);
 
-   Device device(Device::EigenSimpleThreadPool);
+   Device device(Device::EigenThreadPool);
    perceptron_layer.set_device_pointer(&device);
 
    // Test 1
@@ -1151,7 +1151,7 @@ void PerceptronLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     perceptron_layer.set_device_pointer(&device);
 
     // Test 1
@@ -1276,7 +1276,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     perceptron_layer.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);
@@ -1336,7 +1336,7 @@ void PerceptronLayerTest::test_calculate_output_delta()
 
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     perceptron_layer.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);
@@ -1394,7 +1394,7 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     PerceptronLayer perceptron_layer_0(2,2, PerceptronLayer::Linear);
     PerceptronLayer perceptron_layer_1(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     perceptron_layer_0.set_device_pointer(&device);
     perceptron_layer_1.set_device_pointer(&device);
 
@@ -1469,7 +1469,7 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenSimpleThreadPool);
+    Device device(Device::EigenThreadPool);
     perceptron_layer.set_device_pointer(&device);
 
     Tensor<type, 1> parameters(6);
