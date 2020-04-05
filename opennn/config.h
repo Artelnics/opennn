@@ -14,6 +14,15 @@
 #define EIGEN_USE_THREADS
 #endif
 
+#ifdef __OPENNN_CUDA__
+
+#include "cuda.h"
+#include "cuda_runtime.h"
+#include "cublas_v2.h"
+
+#endif
+
+
 //#define EIGEN_USE_BLAS
 
 //#define EIGEN_TEST_NO_LONGDOUBLE
