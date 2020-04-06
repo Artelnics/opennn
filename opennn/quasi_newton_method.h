@@ -387,6 +387,8 @@ public:
        optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
        optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+       optimization_data.old_training_loss = back_propagation.loss;
    }
 
 

@@ -220,41 +220,6 @@ public:
             ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
             : learning_rate = initial_learning_rate;
 
-           switch(device_pointer->get_type())
-           {
-           case Device::EigenDefault:
-           {
-               DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-               optimization_data.parameters_increment.device(*default_device) = -learning_rate*back_propagation.gradient;
-
-               optimization_data.parameters.device(*default_device) += optimization_data.parameters_increment;
-
-               break;
-           }
-
-           case Device::EigenThreadPool:
-           {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               optimization_data.parameters_increment.device(*thread_pool_device) = -learning_rate*back_propagation.gradient;
-
-               optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
-
-               break;
-           }
-
-           case Device::EigenGpu:
-           {
-               //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-               //y.device(gpu_device) = x.tanh();
-
-               break;
-           }
-           }
-/*
-
        if(momentum > 0 && !nesterov)
        {
            optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
@@ -272,11 +237,11 @@ public:
        }
        else
        {
+           optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
+
            optimization_data.parameters += optimization_data.parameters_increment;
        }
 
-       optimization_data.parameters += optimization_data.parameters_increment;
-*/
        optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
        optimization_data.iteration++;
