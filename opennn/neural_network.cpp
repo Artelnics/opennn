@@ -653,6 +653,14 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 }
 
 
+/// Sets a new neural network with a given convolutional neural network architecture (CNN).
+/// It also sets the rest of members to their default values.
+/// @param input_variables_dimensions Define the dimensions of the input varibales.
+/// @param blocks_number Number of blocks.
+/// @param filters_dimensions Architecture of the neural network.
+/// @param outputs_number Architecture of the neural network.
+/// @todo
+
 void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Index& blocks_number,
                         const Tensor<Index, 1>& filters_dimensions,
@@ -724,11 +732,17 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
 }
 
 
+/// Sets the names of inputs in neural network
+/// @param new_inputs_names Tensor with the new names of inputs.
+
 void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 {
     inputs_names = new_inputs_names;
 }
 
+
+/// Sets the names of outputs in neural network.
+/// @param new_outputs_names Tensor with the new names of outputs.
 
 void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
