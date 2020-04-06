@@ -1184,8 +1184,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type parameters_norm = 0;
 
-//    type parameters_increment_norm = 0;
-
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
@@ -1199,8 +1197,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
     // Optimization algorithm
-
-    Tensor<type, 0> training_slope;
 
     Tensor<type, 1> minimal_selection_parameters;
 
@@ -1253,7 +1249,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
             else if(selection_back_propagation.error < minimum_selection_error)
             {
-//                minimum_selection_error = selection_error;
                 minimum_selection_error = selection_back_propagation.error;
 
                 minimal_selection_parameters = optimization_data.parameters;
@@ -1417,7 +1412,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-        optimization_data.old_training_loss = training_back_propagation.loss;
+        old_selection_error = selection_back_propagation.error;
 
         if(stop_training) break;
     }
