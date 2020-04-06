@@ -1244,6 +1244,64 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 }
 
 
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     forward_propagation.layers(i));
+    }
+}
+
+
+
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param paramters Parameters of neural network.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   Tensor<type, 1>& parameters,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
+
+    const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+
+    Index index = parameters_number;
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     potential_parameters,
+                                                                     forward_propagation.layers(i));
+
+         index += parameters_number;
+    }
+}
+
+
 /// Calculates the outputs vector from the neural network in response to an inputs vector.
 /// The activity for that is the following:
 /// <ul>
