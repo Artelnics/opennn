@@ -132,6 +132,8 @@ public:
 
     string get_type_string() const;
 
+    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
+
 protected:
 
         /// Layer type object.

@@ -184,6 +184,8 @@ public:
 
    string object_to_string() const;
 
+   void write_XML(tinyxml2::XMLPrinter& file_stream) const;
+
 protected:
 
    // MEMBERS

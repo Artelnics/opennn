@@ -1221,6 +1221,69 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_names, con
    return buffer.str();
 }
 
+void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    file_stream.OpenElement("PerceptronLayer");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs number
+
+    file_stream.OpenElement("NeuronsNumber");
+
+    buffer.str("");
+    buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+
+    const Vector<double> parameters = get_parameters();
+    const size_t parameters_size = parameters.size();
+
+    for(size_t i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters[i];
+
+        if(i != (parameters_size-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Peceptron layer (end tag)
+
+    file_stream.CloseElement();
+}
+
 
 string PerceptronLayer::object_to_string() const
 {

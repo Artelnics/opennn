@@ -88,7 +88,7 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
 

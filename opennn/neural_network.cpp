@@ -1480,6 +1480,8 @@ Matrix<string> NeuralNetwork::get_information() const
 }
 
 
+
+
 /// Serializes the neural network object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
 ///@todo
@@ -1539,7 +1541,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
     return document;
 }
 
-
+/*
 /// Serializes the neural network object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1563,7 +1565,118 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 }
+*/
 
+/// Serializes the neural network object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
+void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    file_stream.OpenElement("NeuralNetwork");
+
+    // Inputs
+
+    file_stream.OpenElement("Inputs");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs names
+
+    for(size_t i = 0; i < inputs_names.size(); i++)
+    {
+        file_stream.OpenElement("Input");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(inputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Inputs (end tag)
+
+    file_stream.CloseElement();
+
+    // Layers
+
+    file_stream.OpenElement("Layers");
+
+    // Layers number
+
+    file_stream.OpenElement("LayersTypes");
+
+    buffer.str("");
+
+    for(size_t i = 0; i < layers_pointers.size(); i++)
+    {
+        buffer << layers_pointers[i]->get_type_string();
+        if(i != (layers_pointers.size()-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Layers information
+
+    for(size_t i = 0; i < layers_pointers.size(); i++)
+    {
+        layers_pointers[i]->write_XML(file_stream);
+    }
+
+    // Layers (end tag)
+
+    file_stream.CloseElement();
+
+    // Ouputs
+
+    file_stream.OpenElement("Outputs");
+
+    // Outputs number
+
+    const size_t outputs_number = outputs_names.size();
+
+    file_stream.OpenElement("OutputsNumber");
+
+    buffer.str("");
+    buffer << outputs_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs names
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+        file_stream.OpenElement("Output");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(outputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    //Outputs (end tag)
+
+    file_stream.CloseElement();
+
+    // Neural network (end tag)
+
+    file_stream.CloseElement();
+}
 
 /// Deserializes a TinyXML document into this neural network object.
 /// @param document XML document containing the member data.
@@ -1664,11 +1777,20 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
+
+    tinyxml2::XMLPrinter filestream;
+    write_XML(filestream);
+
+    tinyxml2::XMLDocument document(filestream.CStr());
+
+    document.SaveFile(file_name.c_str());
+
+    delete &document;
 }
 
 

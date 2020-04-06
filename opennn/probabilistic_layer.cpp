@@ -1013,7 +1013,7 @@ tinyxml2::XMLDocument* ProbabilisticLayer::to_XML() const
     return document;
 }
 
-
+/*
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1041,6 +1041,85 @@ void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    file_stream.CloseElement();
+}
+*/
+
+
+/// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
+void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Probabilistic layer
+
+    file_stream.OpenElement("ProbabilisticLayer");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Neurons number
+
+    file_stream.OpenElement("NeuronsNumber");
+
+    buffer.str("");
+    buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+
+    const Vector<double> parameters = get_parameters();
+    const size_t parameters_size = parameters.size();
+
+    for(size_t i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters[i];
+
+        if(i != (parameters_size-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Decision threshold
+
+    file_stream.OpenElement("DecisionThreshold");
+
+    buffer.str("");
+    buffer << decision_threshold;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Probabilistic layer (end tag)
 
     file_stream.CloseElement();
 }
