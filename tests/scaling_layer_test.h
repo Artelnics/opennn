@@ -139,9 +139,7 @@ public:
    // Scaling 
 
    void test_calculate_outputs();
-
    void test_calculate_minimum_maximum_output();
-
    void test_calculate_mean_standard_deviation_output();
 
    // XML expression methods
