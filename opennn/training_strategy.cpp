@@ -857,7 +857,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
     {
         set_optimization_method(STOCHASTIC_GRADIENT_DESCENT);
     }
-    else if(new_optimization_method == "ADAPTIVE_MOMENT_ESTIMATION")
+    else if(new_optimization_method == "ADAPTATIVE_MOMENT_ESTIMATION")
     {
         set_optimization_method(ADAPTIVE_MOMENT_ESTIMATION);
     }

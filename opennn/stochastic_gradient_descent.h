@@ -76,6 +76,10 @@ public:
             parameters_increment.resize(parameters_number);
             nesterov_increment.resize(parameters_number);
             last_parameters_increment.resize(parameters_number);
+
+            parameters_increment.setZero();
+            nesterov_increment.setZero();
+            last_parameters_increment.setZero();
         }
 
         void print() const
@@ -214,11 +218,9 @@ public:
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
                          OptimizationData& optimization_data)
    {
-       type learning_rate = 0;
+       const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
-       initial_decay > 0
-            ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
-            : learning_rate = initial_learning_rate;
+       optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
 
        if(momentum > 0 && !nesterov)
        {
@@ -237,8 +239,6 @@ public:
        }
        else
        {
-           optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
-
            optimization_data.parameters += optimization_data.parameters_increment;
        }
 
