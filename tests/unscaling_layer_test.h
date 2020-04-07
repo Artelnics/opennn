@@ -42,6 +42,7 @@ public:
 
    // Multilayer perceptron architecture 
 
+   void test_get_inputs_number();
    void test_get_neurons_number();
 
    // Statistics
@@ -59,6 +60,7 @@ public:
    void test_get_standard_deviation();
 
    void test_get_descriptives();
+   void test_get_descriptives_matrix();
 
    // Variables scaling and unscaling
 
@@ -76,6 +78,8 @@ public:
    // Set methods
 
    void test_set();
+   void test_set_imputs_number();
+   void test_set_neurons_number();
    void test_set_default();
 
    // Output variables descriptives

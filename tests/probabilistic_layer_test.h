@@ -110,6 +110,10 @@ public:
 
    void test_calculate_error_gradient();
 
+   // Write expression
+
+   void test_write_expression();
+
    // Unit testing methods
 
    void run_test_case();

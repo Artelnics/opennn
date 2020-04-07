@@ -953,8 +953,10 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 
     buffer.str("");
 
-    // buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
-
+    for(Index j = 0; j < outputs_names.size(); j++)
+    {
+        buffer << outputs_names(j) << " = binary(" << inputs_names(j) << ");\n";
+    }
     return buffer.str();
 }
 
@@ -967,9 +969,11 @@ string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>&
         const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = probability(" << inputs_names.vector_to_string(',') << ");\n";
-    */
+
+    for(Index j = 0; j < outputs_names.size(); j++)
+    {
+        buffer << outputs_names(j) << " = probability(" << inputs_names(j) << ");\n";
+    }
     return buffer.str();
 }
 
@@ -981,9 +985,11 @@ string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>&
 string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = competitive(" << inputs_names.vector_to_string(',') << ");\n";
-    */
+
+    for(Index j = 0; j < outputs_names.size(); j++)
+    {
+        buffer << outputs_names(j) << " = competitive(" << inputs_names(j) << ");\n";
+    }
     return buffer.str();
 }
 
@@ -995,9 +1001,12 @@ string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>&
 string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = softmax(" << inputs_names.vector_to_string(',') << ");\n";
-    */
+
+    for(Index j = 0; j < outputs_names.size(); j++)
+    {
+        buffer << outputs_names(j) << " = softmax(" << inputs_names(j) << ");\n";
+    }
+
     return buffer.str();
 }
 
@@ -1010,9 +1019,11 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string
         const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
-    /*
-        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
-    */
+
+    for(Index j = 0; j < outputs_names.size(); j++)
+    {
+        buffer << outputs_names(j) << " = (" << inputs_names(j) << ");\n";
+    }
     return buffer.str();
 }
 

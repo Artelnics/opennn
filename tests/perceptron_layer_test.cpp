@@ -1517,29 +1517,19 @@ void PerceptronLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
 
-   PerceptronLayer perceptron_layer;
+   PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Logistic);
 
-   Tensor<type, 2> biases(1,1);
-   Tensor<type, 2> synaptic_weights(1,1);
-   Tensor<type, 1> parameters(1);
+   Tensor<string, 1> inputs_names(2);
+   inputs_names.setValues({"Uno_in","Dos_in"});
 
-   Tensor<type, 2> inputs(1,1);
-   Tensor<type, 2> combinations_2d(1,1);
+   Tensor<string, 1> outputs_names(2);
+   outputs_names.setValues({"Uno_out","Dos_out"});
 
-   perceptron_layer.set_biases_constant(1);
-   perceptron_layer.set_synaptic_weights_constant(1);
+   string expression;
 
-   perceptron_layer.get_biases();
-   perceptron_layer.get_synaptic_weights();
+   expression = perceptron_layer.write_expression(inputs_names,outputs_names);
 
-   Tensor<string, 1> inputs_names(1);
-   inputs_names.setValues({"Uno_in"});
-
-   Tensor<string, 1> outputs_names(1);
-   outputs_names.setValues({"Uno_out"});
-
-   perceptron_layer.write_expression(inputs_names,outputs_names);
-
+   assert_true(expression.empty() == false, LOG);
 }
 
 
