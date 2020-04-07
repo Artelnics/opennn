@@ -1221,6 +1221,100 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_names, con
    return buffer.str();
 }
 
+
+void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("PerceptronLayer");
+
+    if(!perceptron_layer_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "PerceptronLayer element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(inputs_number_element->GetText())
+    {
+        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
+    }
+
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
+
+    if(!neurons_number_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuronsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(neurons_number_element->GetText())
+    {
+        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+    }
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
+
+    if(!activation_function_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ActivationFunction element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(activation_function_element->GetText())
+    {
+        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Parameters element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+
+        set_parameters(to_double_vector(parameters_string, ' '));
+    }
+}
+
+
 void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;

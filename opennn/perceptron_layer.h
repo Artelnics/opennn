@@ -184,6 +184,7 @@ public:
 
    string object_to_string() const;
 
+   void from_XML(const tinyxml2::XMLDocument& );
    void write_XML(tinyxml2::XMLPrinter& file_stream) const;
 
 protected:

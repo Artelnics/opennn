@@ -1,0 +1,49 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/airfoil_self_noise.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <missing_values_label>NA</missing_values_label>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>140728344690992</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>6</ColumnsNumber>
+      <Column Item="0">
+         <Name>frequency</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="1">
+         <Name>angle_of_attack</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name>chord_lenght</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="3">
+         <Name>free-stream_velocity</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="4">
+         <Name>suction_side_displacement_thickness</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="5">
+         <Name>scaled_sound_pressure_level</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+   </Columns>
+   <Instances>
+      <InstancesNumber>1503</InstancesNumber>
+      <InstancesUses>0 0 1 0 2 2 1 0 2 0 1 2 0 0 0 0 2 0 1 1 2 0 2 1 0 0 1 0 0 2 2 1 1 1 2 2 0 2 2 0 0 1 0 2 0 0 0 2 0 0 0 0 0 0 1 0 1 0 0 0 0 0 2 0 0 0 0 1 0 2 1 2 2 0 0 2 0 2 0 0 0 1 2 0 1 1 1 0 0 0 0 0 2 0 0 0 2 1 2 0 0 0 1 2 2 0 0 2 2 1 1 1 1 2 0 0 0 0 2 2 0 1 0 2 2 0 0 2 0 1 0 0 2 0 2 2 0 0 1 2 0 2 0 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 2 2 0 2 0 1 2 1 2 0 0 1 0 2 0 2 0 1 0 0 0 0 0 2 0 2 0 0 2 0 0 0 0 1 0 0 0 0 1 1 1 0 0 2 0 2 0 1 0 0 2 1 2 2 1 0 2 0 0 0 0 0 0 1 0 1 0 0 0 1 1 0 0 0 0 1 0 1 0 0 0 1 0 0 0 0 0 0 0 1 2 0 0 0 0 0 0 0 2 0 1 0 0 1 0 0 0 0 0 0 0 1 2 2 0 0 0 2 0 0 0 0 1 0 0 2 0 2 0 0 0 0 1 1 0 2 0 0 0 0 1 2 0 0 2 0 2 0 2 0 0 1 0 1 1 0 0 1 0 1 2 0 2 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 2 1 0 2 0 0 0 1 0 0 0 0 2 0 0 1 0 0 0 1 0 0 1 1 0 0 0 0 1 1 2 0 0 0 2 2 1 2 2 2 0 0 0 2 0 0 0 1 0 1 0 2 1 0 0 0 0 0 0 0 1 1 2 2 1 0 1 0 0 1 0 0 0 2 1 0 0 2 2 1 0 0 0 0 0 0 0 1 0 1 0 0 1 1 0 2 2 0 2 0 2 2 0 2 1 1 1 1 0 0 0 2 0 0 0 0 0 0 0 0 2 1 2 2 0 2 0 0 0 2 1 2 2 2 2 0 1 0 0 2 0 2 1 2 0 0 0 0 0 0 1 0 2 2 0 0 0 0 0 1 0 0 0 0 2 1 0 2 1 0 0 0 0 0 0 2 2 0 1 0 1 2 2 1 0 0 0 2 2 0 0 1 0 0 0 0 0 0 1 1 2 0 0 1 0 0 0 0 0 1 0 1 0 0 0 1 2 0 0 0 2 1 0 1 2 2 0 1 0 2 0 2 0 0 0 0 0 1 0 0 0 0 1 0 1 1 0 0 2 0 0 2 1 0 0 2 0 0 0 2 0 0 0 0 0 2 0 0 2 1 0 0 0 0 0 0 0 1 1 1 0 2 0 2 1 0 2 1 0 0 0 0 0 2 1 0 1 0 0 0 1 0 0 0 0 0 0 0 1 1 0 1 0 1 2 1 0 2 0 0 0 0 0 0 0 2 0 2 1 1 0 0 0 2 1 0 0 2 0 2 0 2 1 0 0 2 2 0 2 2 0 2 0 0 2 2 0 1 0 1 0 0 0 1 0 0 0 0 0 0 1 0 0 0 1 0 2 1 0 0 2 2 0 2 1 1 2 0 0 2 0 1 0 1 1 0 1 1 0 0 0 1 1 1 2 0 0 1 0 1 0 0 0 0 2 0 0 1 0 0 0 2 0 1 0 2 0 0 0 0 2 1 1 0 0 0 0 2 0 0 1 0 0 2 0 0 0 0 0 1 0 2 0 1 0 2 0 0 0 0 2 2 0 2 1 0 1 0 0 1 2 2 0 0 0 0 0 1 0 0 0 2 0 1 1 2 0 1 0 2 0 0 0 0 0 0 2 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 1 2 1 2 0 0 0 0 2 0 1 1 2 2 0 1 0 0 0 0 0 0 0 2 0 0 2 0 2 0 0 2 2 2 0 0 0 0 0 0 1 0 0 2 0 0 2 0 2 2 0 2 0 0 0 0 0 2 0 0 0 1 0 0 0 1 2 1 0 1 1 1 0 0 1 1 1 2 0 1 0 0 0 0 1 0 0 0 0 1 0 0 1 2 0 0 0 0 1 0 0 0 2 1 1 2 2 0 1 0 2 2 1 0 2 1 0 0 0 2 1 0 1 0 0 0 1 0 0 0 1 0 0 0 2 0 2 0 0 0 1 2 0 2 0 0 0 1 0 1 2 2 0 0 1 2 0 2 0 1 0 0 2 1 2 1 0 0 0 1 2 0 0 1 0 1 0 0 1 1 0 0 2 0 0 1 0 1 0 2 0 1 0 0 0 2 0 1 2 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 0 0 0 2 0 2 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 2 0 1 0 2 0 0 2 2 0 0 0 0 0 2 1 0 1 0 0 0 2 0 2 2 2 2 0 0 0 2 1 0 0 0 2 0 0 1 0 2 0 2 0 0 0 0 0 0 0 0 0 0 0 0 1 2 0 0 1 0 0 2 0 2 1 0 0 0 0 2 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 1 0 0 2 1 0 1 0 1 0 0 0 1 2 1 0 1 0 0 2 2 0 0 0 1 0 0 1 0 0 0 0 2 0 0 2 2 0 2 2 0 0 1 2 0 1 0 2 2 2 0 2 1 2 0 0 2 1 1 1 0 0 0 0 0 1 1 1 0 0 0 0 2 0 0 0 2 1 0 0 1 0 0 2 0 1 0 2 0 0 0 2 0 0 1 0 2 0 2 1 0 0 0 0 0 0 0 1 0 0 1 2 1 0 1 0 1 2 1 0 0 0 1 0 1 0 2 2 2 2 0 0 2 0 0 2 0 0 0 1 2 0 0 1 2 0 2 0 2 0 0 0 0 2 0 1 0 0 0 0 1 0 1 0 0 1 0 0 0 0 2 1 2 0 0 2 0 0 0 2 0 1 0 0 0 0 0 2 0 0 0 0 2 1 0 2 0 0 2 1 1 0 2 0 1 0 0 2 1 1 0 0 0 0 0 1 0 2 0 0 0 1 0 0 0 0 1 0 0 0 2 0 0 0 0 0 0 2 1 2 0 1 1 0 0 0 0 2 1 2 0 1 0 2 1 2 0 0 1 1 0 2 0 1 1 0 1 0 1 1 0 0 2 2 0 0 0 0 0 2 0 1 0 0 0 0 2 0 1 0 0 0 0 0 1 1 0 0 0 2 0 2 0 1 0 0 1 2 2 0 1 2 0 1 0 0 0</InstancesUses>
+   </Instances>

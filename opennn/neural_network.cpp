@@ -1680,7 +1680,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 /// Deserializes a TinyXML document into this neural network object.
 /// @param document XML document containing the member data.
-
+/*
 void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
@@ -1749,7 +1749,482 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 }
+*/
 
+void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Neural network element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Inputs
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Inputs");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument inputs_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&inputs_document);
+
+            inputs_document.InsertFirstChild(element_clone);
+
+            inputs_from_XML(inputs_document);
+        }
+    }
+
+    cout << "inputs" << endl;
+
+    // Layers
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Layers");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument layers_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&layers_document);
+
+            layers_document.InsertFirstChild(element_clone);
+
+            layers_from_XML(layers_document);
+        }
+    }
+
+    // Outputs
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
+
+        if(element)
+        {
+
+            tinyxml2::XMLDocument outputs_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&outputs_document);
+
+            outputs_document.InsertFirstChild(element_clone);
+
+            outputs_from_XML(outputs_document);
+
+        }
+    }
+    cout << "outputs" << endl;
+
+    // Display
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+
+        if(element)
+        {
+            const string new_display_string = element->GetText();
+
+            try
+            {
+                set_display(new_display_string != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+}
+
+
+void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Inputs");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Inputs element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = root_element->FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Inputs number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    size_t new_inputs_number = 0;
+
+    if(inputs_number_element->GetText())
+    {
+        new_inputs_number = static_cast<size_t>(atoi(inputs_number_element->GetText()));
+
+        set_inputs_number(new_inputs_number);
+    }
+
+    // Inputs names
+
+    const tinyxml2::XMLElement* start_element = inputs_number_element;
+
+    if(new_inputs_number > 0)
+    {
+        for(size_t i = 0; i < new_inputs_number; i++)
+        {
+            const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
+            start_element = input_element;
+
+            if(input_element->Attribute("Index") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: NeuralNetwork class.\n"
+                       << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Input index number (" << i+1 << ") does not match (" << input_element->Attribute("Item") << ").\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            inputs_names[i] = input_element->GetText();
+        }
+    }
+}
+
+
+void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Layers");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Layers element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Layers types
+
+    const tinyxml2::XMLElement* layers_types_element = root_element->FirstChildElement("LayersTypes");
+
+    if(!layers_types_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Layers types element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    Vector<string> layers_types;
+
+    if(layers_types_element->GetText())
+    {
+        layers_types = get_tokens(layers_types_element->GetText(), ' ');
+    }
+
+    // Add layers
+
+    const tinyxml2::XMLElement* start_element = layers_types_element;
+
+    for(size_t i = 0; i < layers_types.size(); i++)
+    {
+        if(layers_types[i] == "Scaling")
+        {
+            ScalingLayer* scaling_layer = new ScalingLayer();
+
+            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer");
+            start_element = scaling_element;
+
+            if(scaling_element)
+            {
+                tinyxml2::XMLDocument scaling_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = scaling_element->DeepClone(&scaling_document);
+
+                scaling_document.InsertFirstChild(element_clone);
+
+                scaling_layer->from_XML(scaling_document);
+            }
+
+            add_layer(scaling_layer);
+        }
+        else if(layers_types[i] == "Convolutional")
+        {
+            ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
+
+            const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
+            start_element = convolutional_element;
+
+            if(convolutional_element)
+            {
+                tinyxml2::XMLDocument convolutional_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = convolutional_element->DeepClone(&convolutional_document);
+
+                convolutional_document.InsertFirstChild(element_clone);
+
+//                convolutional_layer->from_XML(convolutional_document);
+            }
+
+            add_layer(convolutional_layer);
+        }
+        else if(layers_types[i] == "Perceptron")
+        {
+            PerceptronLayer* perceptron_layer = new PerceptronLayer();
+
+            const tinyxml2::XMLElement* perceptron_element = start_element->NextSiblingElement("PerceptronLayer");
+            start_element = perceptron_element;
+
+            if(perceptron_element)
+            {
+                tinyxml2::XMLDocument perceptron_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = perceptron_element->DeepClone(&perceptron_document);
+
+                perceptron_document.InsertFirstChild(element_clone);
+
+                perceptron_layer->from_XML(perceptron_document);
+            }
+
+            add_layer(perceptron_layer);
+        }
+        else if(layers_types[i] == "Pooling")
+        {
+            PoolingLayer* pooling_layer = new PoolingLayer();
+
+            const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("PoolingLayer");
+            start_element = pooling_element;
+
+            if(pooling_element)
+            {
+                tinyxml2::XMLDocument pooling_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = pooling_element->DeepClone(&pooling_document);
+
+                pooling_document.InsertFirstChild(element_clone);
+
+//                pooling_layer->from_XML(pooling_document);
+            }
+
+            add_layer(pooling_layer);
+        }
+        else if(layers_types[i] == "Probabilistic")
+        {
+            ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+
+            const tinyxml2::XMLElement* probabilistic_element = start_element->NextSiblingElement("ProbabilisticLayer");
+            start_element = probabilistic_element;
+
+            if(probabilistic_element)
+            {
+                tinyxml2::XMLDocument probabilistic_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = probabilistic_element->DeepClone(&probabilistic_document);
+
+                probabilistic_document.InsertFirstChild(element_clone);
+                probabilistic_layer->from_XML(probabilistic_document);
+            }
+
+            add_layer(probabilistic_layer);
+        }
+        else if(layers_types[i] == "LongShortTermMemory")
+        {
+            LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
+
+            const tinyxml2::XMLElement* long_short_term_memory_element = start_element->NextSiblingElement("LongShortTermMemoryLayer");
+            start_element = long_short_term_memory_element;
+
+            if(long_short_term_memory_element)
+            {
+                tinyxml2::XMLDocument long_short_term_memory_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = long_short_term_memory_element->DeepClone(&long_short_term_memory_document);
+
+                long_short_term_memory_document.InsertFirstChild(element_clone);
+
+//                long_short_term_memory_layer->from_XML(long_short_term_memory_document);
+            }
+
+            add_layer(long_short_term_memory_layer);
+        }
+        else if(layers_types[i] == "Recurrent")
+        {
+            RecurrentLayer* recurrent_layer = new RecurrentLayer();
+
+            const tinyxml2::XMLElement* recurrent_element = start_element->NextSiblingElement("RecurrentLayer");
+            start_element = recurrent_element;
+
+            if(recurrent_element)
+            {
+                tinyxml2::XMLDocument recurrent_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = recurrent_element->DeepClone(&recurrent_document);
+
+                recurrent_document.InsertFirstChild(element_clone);
+
+//                recurrent_layer->from_XML(recurrent_document);
+            }
+
+            add_layer(recurrent_layer);
+        }
+        else if(layers_types[i] == "Unscaling")
+        {
+            UnscalingLayer* unscaling_layer = new UnscalingLayer();
+
+            const tinyxml2::XMLElement* unscaling_element = start_element->NextSiblingElement("UnscalingLayer");
+            start_element = unscaling_element;
+
+            if(unscaling_element)
+            {
+                tinyxml2::XMLDocument unscaling_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = unscaling_element->DeepClone(&unscaling_document);
+
+                unscaling_document.InsertFirstChild(element_clone);
+
+                unscaling_layer->from_XML(unscaling_document);
+            }
+
+            add_layer(unscaling_layer);
+        }
+        else if(layers_types[i] == "Bounding")
+        {
+            BoundingLayer* bounding_layer = new BoundingLayer();
+
+            const tinyxml2::XMLElement* bounding_element = start_element->NextSiblingElement("BoundingLayer");
+
+            start_element = bounding_element;
+
+            if(bounding_element)
+            {
+                tinyxml2::XMLDocument bounding_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = bounding_element->DeepClone(&bounding_document);
+
+                bounding_document.InsertFirstChild(element_clone);
+
+                bounding_layer->from_XML(bounding_document);
+            }
+
+            add_layer(bounding_layer);
+        }
+        else if(layers_types[i]== "PrincipalComponents")
+        {
+            PrincipalComponentsLayer* principal_components_layer = new PrincipalComponentsLayer();
+
+            const tinyxml2::XMLElement* principal_components_element = start_element->NextSiblingElement("PrincipalComponentsLayer");
+            start_element = principal_components_element;
+
+            if(principal_components_element)
+            {
+                tinyxml2::XMLDocument principal_components_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = principal_components_element->DeepClone(&principal_components_document);
+
+                principal_components_document.InsertFirstChild(element_clone);
+
+                principal_components_layer->from_XML(principal_components_document);
+            }
+
+            add_layer(principal_components_layer);
+        }
+    }
+}
+
+
+void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Outputs");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Outputs element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Outputs number
+
+    const tinyxml2::XMLElement* outputs_number_element = root_element->FirstChildElement("OutputsNumber");
+
+    if(!outputs_number_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Outputs number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    size_t new_outputs_number = 0;
+
+    if(outputs_number_element->GetText())
+    {
+        new_outputs_number = static_cast<size_t>(atoi(outputs_number_element->GetText()));
+    }
+
+    // Outputs names
+
+    const tinyxml2::XMLElement* start_element = outputs_number_element;
+
+    if(new_outputs_number > 0)
+    {
+        outputs_names.resize(new_outputs_number);
+
+        for(size_t i = 0; i < new_outputs_number; i++)
+        {
+            const tinyxml2::XMLElement* output_element = start_element->NextSiblingElement("Output");
+            start_element = output_element;
+
+            if(output_element->Attribute("Index") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: NeuralNetwork class.\n"
+                       << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Output index number (" << i+1 << ") does not match (" << output_element->Attribute("Item") << ").\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            outputs_names[i] = output_element->GetText();
+        }
+    }
+}
 
 /// Prints to the screen the members of a neural network object in a XML-type format.
 
@@ -1777,20 +2252,12 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE* file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
-
-//    delete document;
-
-    tinyxml2::XMLPrinter filestream;
+    tinyxml2::XMLPrinter filestream(file);
     write_XML(filestream);
 
-    tinyxml2::XMLDocument document(filestream.CStr());
-
-    document.SaveFile(file_name.c_str());
-
-    delete &document;
+    fclose(file);
 }
 
 

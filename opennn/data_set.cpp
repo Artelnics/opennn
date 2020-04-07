@@ -6966,17 +6966,12 @@ void DataSet::print_summary() const
 
 void DataSet::save(const string& file_name) const
 {
-//   tinyxml2::XMLDocument* document = write_XML();
+    FILE* file = fopen(file_name.c_str(), "w");
 
-//    tinyxml2::XMLPrinter filestream;
-//    write_XML(filestream);
+    tinyxml2::XMLPrinter filestream(file);
+    write_XML(filestream);
 
-//    document.
-
-
-//   document->SaveFile(file_name.c_str());
-
-//   delete document;
+    fclose(file);
 }
 
 

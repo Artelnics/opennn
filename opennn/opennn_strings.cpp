@@ -520,6 +520,36 @@ time_t date_to_timestamp(const string& date, const int& gmt)
 }
 
 
+/// Returns a new vector with the elements of this string vector casted to type.
+
+Vector<double> to_double_vector(const string& str, const char& separator)
+{
+    const Vector<string> tokens = get_tokens(str, separator);
+
+    const size_t tokens_size = tokens.size();
+
+    Vector<double> type_vector(tokens_size);
+
+    for(size_t i = 0; i < tokens_size; i++)
+    {
+        try
+        {
+            stringstream buffer;
+
+            buffer << tokens[i];
+
+            type_vector[i] = stof(buffer.str());
+        }
+        catch(const logic_error&)
+        {
+            type_vector[i] = static_cast<double>(nan(""));
+        }
+    }
+
+    return type_vector;
+}
+
+
 /// Returns true if the string contains the given substring, false otherwise.
 /// @param str String.
 /// @param sub_str Substring to search.

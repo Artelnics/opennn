@@ -32,6 +32,8 @@ namespace OpenNN
 
     time_t date_to_timestamp(const string& date, const int& gmt = 0);
 
+    Vector<double> to_double_vector(const string& , const char&);
+
     bool contains_substring(const string&, const string&);
 
     void trim(string&);
