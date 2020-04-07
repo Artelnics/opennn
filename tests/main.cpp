@@ -163,7 +163,7 @@ int main()
          tests_passed_count += scaling_layer_test.get_tests_passed_count();
          tests_failed_count += scaling_layer_test.get_tests_failed_count();
       }
-      else if(test == "unscaling_layer" || test == "")
+      else if(test == "unscaling_layer" || test == "ul")
       {
          UnscalingLayerTest unscaling_layer_test;
          unscaling_layer_test.run_test_case();

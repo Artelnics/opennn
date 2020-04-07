@@ -671,9 +671,7 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
       Tensor<type, 1> s_w_column =  synaptic_weights.chip(j,1);
 
-      cout << s_w_column  << endl;
-
-/*               buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
+               buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
                for(Index i = 0; i < inputs_names.size() - 1; i++)
                {
@@ -681,8 +679,7 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
                    buffer << " (" << inputs_names[i] << "*" << s_w_column(i) << ")+";
                }
 
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << s_w_column[inputs_names.size() - 1] << "));\n";
-*/
+               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << s_w_column[inputs_names.size() - 1] << ") ];\n";
     }
 
     return buffer.str();
@@ -868,11 +865,38 @@ string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)
     {
+    case Threshold:
+        return "threshold";
+
+    case SymmetricThreshold:
+        return "symmetric_threshold";
+
+    case Logistic:
+        return "sigma";
+
     case HyperbolicTangent:
         return "tanh";
 
     case Linear:
         return "";
+
+    case RectifiedLinear:
+        return "ReLU";
+
+    case ExponentialLinear:
+        return "ELU";
+
+    case ScaledExponentialLinear:
+        return "SELU";
+
+    case SoftPlus:
+        return "soft_plus";
+
+    case SoftSign:
+        return "soft_sign";
+
+    case HardSigmoid:
+        return "hard_sigmoid";
 
     default:
         return write_activation_function();

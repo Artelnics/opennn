@@ -887,6 +887,28 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 }
 
 
+void ProbabilisticLayerTest::test_write_expression()
+{
+   cout << "test_write_expression\n";
+
+   ProbabilisticLayer probabilistic_layer(2,2);
+
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+
+   Tensor<string, 1> inputs_names(2);
+   inputs_names.setValues({"Uno_in","Dos_in"});
+
+   Tensor<string, 1> outputs_names(2);
+   outputs_names.setValues({"Uno_out","Dos_out"});
+
+   string expression;
+
+   expression = probabilistic_layer.write_expression(inputs_names,outputs_names);
+
+   assert_true(expression.empty() == false, LOG);
+}
+
+
 
 void ProbabilisticLayerTest::run_test_case()
 {
@@ -967,6 +989,10 @@ void ProbabilisticLayerTest::run_test_case()
    // Gradient
 
    test_calculate_error_gradient();
+
+   //Write expression
+
+   test_write_expression();
 
    cout << "End of probabilistic layer test case.\n";
 }
