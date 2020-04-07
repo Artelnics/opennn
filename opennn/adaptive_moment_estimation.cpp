@@ -536,6 +536,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
 
+    type training_error = 0;
     type training_loss = 0;
     type selection_error = numeric_limits<type>::max();
 
@@ -565,7 +566,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                                                          batch_instances_number,
@@ -600,6 +601,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             loss_index_pointer->back_propagate(training_batch, training_forward_propagation, back_propagation);
 
+            training_error += back_propagation.error;
             training_loss += back_propagation.loss;
 
             // Gradient
@@ -716,7 +718,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
-            results.resize_training_history(1+epoch);
+            results.resize_error_history(1+epoch);
 
             results.final_parameters = optimization_data.parameters;
 
