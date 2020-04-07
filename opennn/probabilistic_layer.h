@@ -283,8 +283,8 @@ public:
 
 
    void calculate_output_delta(ForwardPropagation& forward_propagation,
-                                  const Tensor<type, 2>& output_gradient,
-                                  Tensor<type, 2>& output_delta) const
+                               const Tensor<type, 2>& output_gradient,
+                               Tensor<type, 2>& output_delta) const
    {
        const Index neurons_number = get_neurons_number();
        const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
@@ -312,29 +312,16 @@ public:
 
                return;
            }
-
-           case Device::EigenGpu:
-           {
-               //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-               break;
-           }
            }
        }
        else
        {
 
-           Tensor<type, 3> activations_derivatives = forward_propagation.activations_derivatives_3d;
-/*
-           cout << "Activations derivatives: " << activations_derivatives << endl;
+           const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
 
-           cout << "output_gradient: " << output_gradient << endl;
-*/
-           const Index items_number = output_gradient.dimension(1);
-
-           const Index rows_number = activations_derivatives.dimension(0);
-           const Index columns_number = activations_derivatives.dimension(1);
-           const Index matrix_number = activations_derivatives.dimension(2);
+           const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
+           const Index columns_number = forward_propagation.activations_derivatives_3d.dimension(1);
+           const Index matrix_number = forward_propagation.activations_derivatives_3d.dimension(2);
            /*
               if(output_gradient.dimension(0) != matrix_number)
               {
@@ -358,11 +345,11 @@ public:
               }
 */
 
-           Tensor<type, 1> row_values(items_number);
+           Tensor<type, 1> output_gradient_row(batch_instances_number);
            Tensor<type, 1> output_delta_row(neurons_number);
 
            Index index = 0;
-           Index step = rows_number*columns_number;
+           Index step = batch_instances_number*columns_number;
 
            switch(device_pointer->get_type())
            {
@@ -372,12 +359,12 @@ public:
 
                for(Index i = 0; i < matrix_number; i++)
                {
-                   row_values = output_gradient.chip(i,0);
+                   output_gradient_row = output_gradient.chip(i,1);
 
-                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(activations_derivatives.data()+index,
+                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
                                                                                batch_instances_number, neurons_number);
 
-                   output_delta_row.device(*default_device) = row_values.contract(activations_derivatives_matrix, A_B);
+                   output_delta_row.device(*default_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
 
                    for(Index j = 0; j < neurons_number; j++)
                    {
@@ -396,14 +383,14 @@ public:
 
                for(Index i = 0; i < matrix_number; i++)
                {
-                   row_values = output_gradient.chip(i,0);
+                   output_gradient_row = output_gradient.chip(i,1);
 
-                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(activations_derivatives.data()+index,
+                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
                                                                                batch_instances_number, neurons_number);
 
-                   output_delta_row.device(*thread_pool_device) = row_values.contract(activations_derivatives_matrix, AT_B);
+                   output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
 
-                   for(Index j = 0; j < items_number; j++)
+                   for(Index j = 0; j < neurons_number; j++)
                    {
                        output_delta(i,j) = output_delta_row(j);
                    }
@@ -412,13 +399,6 @@ public:
                }
 
                return;
-           }
-
-           case Device::EigenGpu:
-           {
-               //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-               break;
            }
            }
        }
@@ -452,13 +432,6 @@ public:
 
                 return;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
    }
 

@@ -106,7 +106,7 @@ public:
             }
             else // Probabilistic
             {
-                activations_derivatives_3d.resize(neurons_number, neurons_number, batch_instances_number);
+                activations_derivatives_3d.resize(batch_instances_number, neurons_number, neurons_number);
             }
         }
 
@@ -247,7 +247,7 @@ public:
 
     virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,
-                                        const Tensor<type, 2>&,
+                                        ForwardPropagation&,
                                         const Tensor<type, 2>&,
                                         Tensor<type, 2>&) const {}
 

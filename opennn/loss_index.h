@@ -391,8 +391,6 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
-
         // Hidden layers
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
@@ -402,7 +400,7 @@ public:
           trainable_layers_pointers(i)
           ->calculate_hidden_delta(previous_layer_pointer,
                                    forward_propagation.layers(i).activations_2d,
-                                   forward_propagation.layers(i).activations_derivatives_2d,
+                                   forward_propagation.layers(i),
                                    back_propagation.neural_network.layers(i+1).delta,
                                    back_propagation.neural_network.layers(i).delta);
       }
@@ -507,13 +505,6 @@ public:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        return norm(0);
@@ -542,13 +533,6 @@ public:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        return norm(0);
@@ -579,13 +563,6 @@ public:
 
                return gradient;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        return Tensor<type, 1>();
@@ -618,13 +595,6 @@ public:
 
                    return hessian;
                 }
-
-               case Device::EigenGpu:
-               {
-    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                    break;
-               }
            }
 
            return Tensor<type, 2>();
@@ -665,13 +635,6 @@ public:
 
                return gradient;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return Tensor<type, 1>();
-           }
        }
 
        return Tensor<type, 1>();
@@ -713,13 +676,6 @@ public:
                return hessian;
 
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-               return hessian;
-           }
        }
 
        return Tensor<type, 2>();
