@@ -65,6 +65,36 @@ void ScalingLayerTest::test_assignment_operator()
    assert_true(sl_2.get_neurons_number() == 0, LOG);
 }
 
+void ScalingLayerTest::test_get_dimensions()
+{
+   cout << "test_get_neurons_number\n";
+
+   Tensor<Index, 1 > new_inputs_dimensions(1);
+   new_inputs_dimensions.setConstant(0);
+
+   ScalingLayer sl1;
+
+   sl1.set(new_inputs_dimensions);
+
+   // Test 0
+
+   assert_true(sl1.get_input_variables_dimensions().dimension(0) == 1, LOG);
+   assert_true(sl1.get_outputs_dimensions().dimension(0) == sl1.get_input_variables_dimensions().dimension(0), LOG);
+   assert_true(sl1.get_input_variables_dimensions()(0) == 0, LOG);
+   assert_true(sl1.get_outputs_dimensions()(0) == sl1.get_input_variables_dimensions()(0), LOG);
+
+   // Test 1
+
+   Tensor<Index, 1 > new_inputs_dimensions_1(3);
+   new_inputs_dimensions_1.setConstant(1);
+   sl1.set(new_inputs_dimensions_1);
+
+   assert_true(sl1.get_input_variables_dimensions().dimension(0) == 3, LOG);
+   assert_true(sl1.get_outputs_dimensions().dimension(0) == sl1.get_input_variables_dimensions().dimension(0), LOG);
+   assert_true(sl1.get_input_variables_dimensions()(1) == 1, LOG);
+   assert_true(sl1.get_outputs_dimensions()(1) == sl1.get_input_variables_dimensions()(1), LOG);
+}
+
 void ScalingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
@@ -900,9 +930,9 @@ void ScalingLayerTest::test_calculate_outputs()
 
    // Test 0_0
 
+   scaling_layer.set(1);
    scaling_layer.set_scaling_methods(ScalingLayer::NoScaling);
 
-   scaling_layer.set(1);
    inputs.resize(1,1);
    Tensor<type, 2> outputs = scaling_layer.calculate_outputs(inputs);
    assert_true(outputs.dimension(0) == 1, LOG);
@@ -912,6 +942,7 @@ void ScalingLayerTest::test_calculate_outputs()
    // Test 0_1
 
    scaling_layer.set(3);
+   scaling_layer.set_scaling_methods(ScalingLayer::NoScaling);
 
    inputs.resize(1,3);
    inputs.setConstant(0);
@@ -925,9 +956,9 @@ void ScalingLayerTest::test_calculate_outputs()
 
    // Test 1_0
 
+   scaling_layer.set(1);
    scaling_layer.set_scaling_methods(ScalingLayer::MinimumMaximum);
 
-   scaling_layer.set(1);
    inputs.resize(1,1);
    Tensor<type, 2> outputs_1 = scaling_layer.calculate_outputs(inputs);
    assert_true(outputs_1.dimension(0) == 1, LOG);
@@ -937,6 +968,8 @@ void ScalingLayerTest::test_calculate_outputs()
    // Test 1_1
 
    scaling_layer.set(3);
+   scaling_layer.set_scaling_methods(ScalingLayer::MinimumMaximum);
+
    Tensor<type, 2> minimums_maximums(3,4);
    minimums_maximums.setValues({{-1,2,0,0},{-2,4,0,0},{-3,6,0,0}});
 
@@ -953,9 +986,9 @@ void ScalingLayerTest::test_calculate_outputs()
 
    // Test 2_0
 
+   scaling_layer.set(1);
    scaling_layer.set_scaling_methods(ScalingLayer::MeanStandardDeviation);
 
-   scaling_layer.set(1);
    inputs.resize(1,1);
    Tensor<type, 2> outputs_2 = scaling_layer.calculate_outputs(inputs);
    assert_true(outputs_2.dimension(0) == 1, LOG);
@@ -965,26 +998,26 @@ void ScalingLayerTest::test_calculate_outputs()
    // Test 2_1
 
    scaling_layer.set(2);
+   scaling_layer.set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
    Tensor<type, 2> mean_standard_deviation(2,4);
    mean_standard_deviation.setValues({{-1,1,-1,2},{-1,1,1,4}});
 
    scaling_layer.set_descriptives_eigen(mean_standard_deviation);
-   inputs.resize(1,3);
+   inputs.resize(1,2);
    inputs.setConstant(0);
    outputs_2 = scaling_layer.calculate_outputs(inputs);
-/*
-   cout << outputs_2 << endl;
-*/
+
    assert_true(outputs_2.dimension(0) == 1, LOG);
    assert_true(outputs_2.dimension(1) == 2, LOG);
-   assert_true(abs(outputs_2(0) + static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_2(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(outputs_2(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
    // Test 3_0
 
+   scaling_layer.set(1);
    scaling_layer.set_scaling_methods(ScalingLayer::StandardDeviation);
 
-   scaling_layer.set(1);
    inputs.resize(1,1);
    Tensor<type, 2> outputs_3 = scaling_layer.calculate_outputs(inputs);
    assert_true(outputs_3.dimension(0) == 1, LOG);
@@ -994,6 +1027,8 @@ void ScalingLayerTest::test_calculate_outputs()
    // Test 3_1
 
    scaling_layer.set(2);
+   scaling_layer.set_scaling_methods(ScalingLayer::StandardDeviation);
+
    Tensor<type, 2> standard_deviation(2,4);
    standard_deviation.setValues({{-1,1,-1,2},{-1,1,1,4}});
 
@@ -1001,14 +1036,11 @@ void ScalingLayerTest::test_calculate_outputs()
    inputs.resize(1,2);
    inputs.setConstant(1);
    outputs_3 = scaling_layer.calculate_outputs(inputs);
-/*
-   cout << outputs_3 << endl;
-*/
+
    assert_true(outputs_3.dimension(0) == 1, LOG);
    assert_true(outputs_3.dimension(1) == 2, LOG);
-   assert_true(abs(outputs_3(0) + static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs_3(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-
+   assert_true(abs(outputs_3(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_3(1) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
 void ScalingLayerTest::test_calculate_minimum_maximum_output()
@@ -1030,8 +1062,6 @@ void ScalingLayerTest::test_calculate_minimum_maximum_output()
    assert_true(outputs_1.dimension(1) == 1, LOG);
    assert_true(abs(outputs_1(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
 
-   cout << outputs_1 << endl;
-
    // Test 1
 
    scaling_layer.set(3);
@@ -1042,9 +1072,7 @@ void ScalingLayerTest::test_calculate_minimum_maximum_output()
    inputs.resize(1,3);
    inputs.setConstant(0);
    outputs_1 = scaling_layer.calculate_minimum_maximum_outputs(inputs);
-/*
-   cout << outputs_1 << endl;
-*/
+
    assert_true(outputs_1.dimension(0) == 1, LOG);
    assert_true(outputs_1.dimension(1) == 3, LOG);
    assert_true(abs(outputs_1(0) + static_cast<type>(0.333)) < static_cast<type>(1e-3), LOG);
@@ -1084,7 +1112,7 @@ void ScalingLayerTest::test_calculate_mean_standard_deviation_output()
 
    assert_true(outputs_1.dimension(0) == 1, LOG);
    assert_true(outputs_1.dimension(1) == 3, LOG);
-   assert_true(abs(outputs_1(0) + static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_1(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(outputs_1(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
@@ -1163,11 +1191,12 @@ void ScalingLayerTest::run_test_case()
 
    // Get methods
 
+   test_get_dimensions();
+
    // Scaling layer architecture
 
-   test_get_neurons_number();
-
    test_get_inputs_number();
+   test_get_neurons_number();
 
    // Input variables descriptives
 

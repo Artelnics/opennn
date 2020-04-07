@@ -40,7 +40,7 @@ public:
 
    // Get methods
 
-
+   void test_get_dimensions();
 
    // Multilayer perceptron architecture 
 

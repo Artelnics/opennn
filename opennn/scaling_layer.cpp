@@ -351,6 +351,12 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
     scaling_methods.setConstant(MinimumMaximum);
 
     input_variables_dimensions.resize(new_inputs_dimensions.size());
+/*
+    cout << "input_variables_dimensions.dimension(0)"<< endl;
+    cout << input_variables_dimensions.dimension(0)<< endl;
+*/
+    input_variables_dimensions = new_inputs_dimensions;
+
 //    input_variables_dimensions.resize(new_inputs_dimensions);
 
     set_default();
@@ -985,7 +991,7 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
         }
         else
         {
-            outputs(j) = static_cast<type>(2.0)*(inputs(j)) - descriptives(j).minimum/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
+            outputs(j) = static_cast<type>(2.0)*(inputs(j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
         }
     }
 
