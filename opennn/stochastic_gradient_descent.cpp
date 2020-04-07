@@ -703,14 +703,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(training_loss <= training_loss_goal)
+        /*if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
-        }
+        }*/
 
         if(epoch == maximum_epochs_number)
         {

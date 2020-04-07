@@ -243,8 +243,21 @@ void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
     const Index n = x.size();
 
-    #pragma omp parallel for
+    Tensor<bool, 1> if_sentence = x < x.constant(-2.5);
+    Tensor<bool, 1> elif_sentence = x > x.constant(2.5);
 
+    Tensor<type, 1> f1(x.dimension(0));
+    Tensor<type, 1> f2(x.dimension(0));
+    Tensor<type, 1> f3(x.dimension(0));
+
+    f1.setZero();
+    f2.setConstant(1);
+    f3 = static_cast<type>(0.2) * x + static_cast<type>(0.5);
+
+    y = if_sentence.select(f1,elif_sentence.select(f2,f3));
+
+    #pragma omp parallel for
+/*
     for(Index i = 0; i < n; i++)
     {
         if(x(i) < static_cast<type>(-2.5))
@@ -260,6 +273,7 @@ void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
             y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
         }
     }
+*/
 }
 
 
