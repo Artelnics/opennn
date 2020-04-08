@@ -14,6 +14,8 @@
 #define EIGEN_USE_THREADS
 #endif
 
+#define OPENNN_CUDA
+
 #ifdef OPENNN_CUDA
 
 #include "cuda.h"

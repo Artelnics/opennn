@@ -339,6 +339,11 @@ private:
 
    Index batch_instances_number = 1000;
 
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+#endif
+
 };
 
 }

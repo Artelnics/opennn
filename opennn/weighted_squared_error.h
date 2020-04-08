@@ -267,6 +267,11 @@ private:
    /// Coefficient of normalization for the calculation of the selection error.
 
    type selection_normalization_coefficient;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/weighted_squared_error_cuda.h"
+#endif
+
 };
 
 }

@@ -281,6 +281,10 @@ protected:
        return norm(0);
    }
 
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
+#endif
+
 };
 
 }
