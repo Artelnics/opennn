@@ -822,9 +822,9 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
     output_gradient.setValues({{1,0}});
 
     probabilistic_layer_1.calculate_output_delta(forward_propagation_1, output_gradient, output_delta);
-
+/*
     probabilistic_layer_0.calculate_hidden_delta(&probabilistic_layer_1, {0,0} ,forward_propagation_0.activations_derivatives_2d, output_delta, hidden_delta);
-
+*/
 //    cout << hidden_delta << endl;  --->>> third  input shoudl be: "forward_propagation_0.activations_derivatives_3d"
 
     assert_true(hidden_delta.rank() == 2, LOG);
