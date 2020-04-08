@@ -857,7 +857,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
     {
         set_optimization_method(STOCHASTIC_GRADIENT_DESCENT);
     }
-    else if(new_optimization_method == "ADAPTATIVE_MOMENT_ESTIMATION")
+    else if(new_optimization_method == "ADAPTIVE_MOMENT_ESTIMATION")
     {
         set_optimization_method(ADAPTIVE_MOMENT_ESTIMATION);
     }
@@ -1566,7 +1566,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.PushAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
 
-        stochastic_gradient_descent_pointer->write_XML(file_stream);
+        adaptive_moment_estimation_pointer->write_XML(file_stream);
 
         file_stream.CloseElement();
     }
