@@ -36,10 +36,6 @@
 #include "recurrent_layer.h"
 #include "tinyxml2.h"
 
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
-#endif
-
 namespace OpenNN
 {
 
@@ -366,7 +362,7 @@ protected:
 
    bool display = true;
 
-#ifdef __OPENNN_CUDA__
+#ifdef OPENNN_CUDA
     #include "../../artelnics/opennn_cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
