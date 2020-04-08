@@ -214,6 +214,12 @@ protected:
    PaddingOption padding_option = NoPadding;
 
    ActivationFunction activation_function = RectifiedLinear;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
+#endif
+
+
 };
 }
 

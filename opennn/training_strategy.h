@@ -254,6 +254,10 @@ private:
 
     bool display;
 
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/training_strategy_cuda.h"
+#endif
+
 };
 
 }

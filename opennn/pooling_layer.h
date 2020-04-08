@@ -211,6 +211,10 @@ protected:
 
     PoolingMethod pooling_method = AveragePooling;
 
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
+#endif
+
 };
 }
 

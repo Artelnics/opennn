@@ -285,6 +285,12 @@ private:
    type normalization_coefficient;
 
    type selection_normalization_coefficient;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"
+#endif
+
+
 };
 
 }

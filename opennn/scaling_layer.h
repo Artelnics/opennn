@@ -177,10 +177,6 @@ protected:
 
    bool display;
 
-#ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/scaling_layer_cuda.h"
-#endif
-
 };
 
 }

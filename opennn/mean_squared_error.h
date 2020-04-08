@@ -268,6 +268,11 @@ public:
    tinyxml2::XMLDocument* to_XML() const;   
 
    void write_XML(tinyxml2::XMLPrinter &) const;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
+#endif
+
 };
 
 }
