@@ -101,13 +101,6 @@ public:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        back_propagation.error = minkowski_error(0);
@@ -172,13 +165,6 @@ public:
 
                  return;
              }
-
-            case Device::EigenGpu:
-            {
- //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
    }
 

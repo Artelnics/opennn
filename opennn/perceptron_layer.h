@@ -166,17 +166,6 @@ public:
 
                 return;
             }
-
-           case Device::EigenGpu:
-           {
-#ifdef EIGEN_USE_GPU
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
-#endif
-
-                return;
-           }
        }
    }
 
@@ -379,11 +368,6 @@ public:
 
                   return;
                }
-
-              case Device::EigenGpu:
-              {
-                   break;
-              }
           }
       }
 

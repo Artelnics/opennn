@@ -1160,11 +1160,6 @@ void LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 
             return;
 
          }
-
-        case Device::EigenGpu:
-        {
-             return;
-        }
     }
 }
 
@@ -1219,10 +1214,6 @@ void LongShortTermMemoryLayer::calculate_input_combinations(const Tensor<type, 1
 
             return;
          }
-
-        case Device::EigenGpu:
-        {
-        }
     }
 }
 
@@ -1278,10 +1269,6 @@ void LongShortTermMemoryLayer::calculate_state_combinations(const Tensor<type, 1
              return;
          }
 
-        case Device::EigenGpu:
-        {
-             return;
-        }
     }
 }
 
@@ -1338,10 +1325,6 @@ void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 
              return;
          }
 
-        case Device::EigenGpu:
-        {
-             return;
-        }
     }
 }
 
@@ -2387,10 +2370,6 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 
          }
 
-        case Device::EigenGpu:
-        {
-             return Tensor<type, 2>();
-        }
     }
 
 //    return dot(next_layer_delta, synaptic_weights_transpose);

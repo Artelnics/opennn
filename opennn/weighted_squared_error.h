@@ -144,13 +144,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
 
 //        back_propagation.output_gradient = (outputs-targets)*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
@@ -198,13 +191,6 @@ public:
 
                return;
             }
-
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return;
-           }
        }
   }
 
@@ -241,13 +227,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
    }
 
