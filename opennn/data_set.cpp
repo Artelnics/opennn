@@ -9972,15 +9972,15 @@ void DataSet::read_csv_1()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
-        {
-            columns(i).type = DateTime;
-        }
-        else if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+        if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
                 || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
         {
             columns(i).type = Numeric;
+        }
+        else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+        {
+            columns(i).type = DateTime;
         }
         else
         {
@@ -10092,6 +10092,8 @@ void DataSet::read_csv_3_simple()
         throw logic_error(buffer.str());
     }
 
+    const bool is_float = is_same<type, float>::value;
+
     const char separator_char = get_separator_char();
 
     const Index variables_number = get_variables_number();
@@ -10142,9 +10144,13 @@ void DataSet::read_csv_3_simple()
             {
                 data(instance_index, j) = static_cast<type>(NAN);
             }
+            else if(is_float)
+            {
+                data(instance_index, j) = stof(tokens(j));
+            }
             else
             {
-                data(instance_index, j) = static_cast<type>(stod(tokens(j)));
+                data(instance_index, j) = stod(tokens(j));
             }
         }
 

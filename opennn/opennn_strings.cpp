@@ -185,6 +185,7 @@ bool is_numeric_string(const string& str)
 
 bool is_date_time_string(const string& str)
 {
+    if(is_numeric_string(str)) return false;
 
     const regex regular_expression("20[0-9][0-9]|19[0-9][0-9]+[-|/|.](0[1-9]|1[0-2])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
