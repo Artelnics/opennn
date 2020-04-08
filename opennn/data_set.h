@@ -38,10 +38,6 @@
 #include "opennn_strings.h"
 #include "tinyxml2.h"
 
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/cublas_opennn.h"
-#endif
-
 // Eigen includes
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
@@ -946,7 +942,7 @@ private:
 
    Tensor<Descriptives, 1> variables_descriptives;
 
-#ifdef __OPENNN_CUDA__
+#ifdef OPENNN_CUDA
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
 #endif
 
