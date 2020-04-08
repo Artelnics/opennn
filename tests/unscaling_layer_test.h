@@ -84,6 +84,10 @@ public:
 
    // Output variables descriptives
 
+   void test_set_descriptives();
+   void test_set_descriptives_eigen();
+   void test_set_item_descriptives();
+
    void test_set_means();
    void test_set_mean();
 
