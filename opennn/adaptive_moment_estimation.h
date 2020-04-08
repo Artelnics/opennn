@@ -37,7 +37,7 @@ namespace OpenNN
 {
 
 /// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
-/// based on adaptative estimates of lower-order moments.
+/// based on adaptive estimates of lower-order moments.
 
 ///
 /// For more information visit:
@@ -231,11 +231,10 @@ public:
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
                                  OptimizationData& optimization_data)
    {
-
        const type learning_rate =
-               initial_learning_rate*sqrt(static_cast<type>(1.0)
-               - pow(beta_2, static_cast<type>(optimization_data.iteration)))/(static_cast<type>(1.0)
-               - pow(beta_1, static_cast<type>(optimization_data.iteration)));
+               initial_learning_rate*
+               sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+               (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
 
        optimization_data.gradient_exponential_decay
                = optimization_data.last_gradient_exponential_decay*beta_1
@@ -251,7 +250,8 @@ public:
 
        // Update parameters
 
-       optimization_data.parameters -= optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+       optimization_data.parameters -=
+               optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
    }
 
 
