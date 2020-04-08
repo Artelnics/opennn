@@ -35,7 +35,7 @@ namespace OpenNN
 /// Unscaling layers are included in the definition of a neural network.
 /// They are used to unnormalize variables so they are in the original range after computer processing.
 
-class UnscalingLayer : public Layer
+class   UnscalingLayer : public Layer
 {
 
 public:

@@ -587,6 +587,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     case MeanStandardDeviation:
     {
+
         return calculate_mean_standard_deviation_outputs(inputs);
     }
 
@@ -670,7 +671,7 @@ Tensor<type, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const 
             }
             else
             {
-//            outputs(i,j) = inputs[j]*descriptives[j].standard_deviation + descriptives[j].mean;
+                outputs(i,j) = inputs(0,j)*descriptives[j].standard_deviation + descriptives[j].mean;
             }
         }
     }
@@ -708,7 +709,7 @@ Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type,
             }
             else
             {
-                outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j)-1))*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
+                outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j))+1)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
             }
         }
     }
@@ -1130,15 +1131,9 @@ string UnscalingLayer::write_none_expression(const Tensor<string, 1>& inputs_nam
 {
     ostringstream buffer;
 
-    buffer.str("");
-
-    if(outputs_names.size() > 1)
+    for (Index i = 0; i < outputs_names.size(); i++)
     {
-//        buffer << " (" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
-    }
-    else
-    {
-//        buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
     }
 
     return buffer.str();
@@ -1178,12 +1173,13 @@ string UnscalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>&
     for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
-        buffer << "0.5*(" << inputs_names[i] << "+1.0)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+        buffer << outputs_names[i] << " = " <<
+        "0.5*(" << inputs_names[i] << "+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ");\n";
 
         expressions[i] = buffer.str();
     }
 
-    buffer.str("");
+//    buffer.str("");
     /*
         if(outputs_names.size() > 1)
         {
@@ -1250,12 +1246,13 @@ string UnscalingLayer::write_mean_standard_deviation_expression(const Tensor<str
     for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
-        buffer <<   descriptives[i].mean << "+" << descriptives[i].standard_deviation << "*" << inputs_names[i];
+        buffer << outputs_names(i) << " = (" <<
+        descriptives[i].mean << ")+(" << descriptives[i].standard_deviation << ")*" << inputs_names[i] << ";\n";
 
         expressions[i] = buffer.str();
     }
 
-    buffer.str("");
+//    buffer.str("");
     /*
         if(outputs_names.size() > 1)
         {
@@ -1313,12 +1310,13 @@ string UnscalingLayer::write_logarithmic_expression(const Tensor<string, 1>& inp
     for(Index i = 0; i < neurons_number; i++)
     {
         buffer.str("");
-        buffer << "0.5*exp(" << inputs_names[i] << "-1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+        buffer << outputs_names(i) << " = " <<
+                  "0.5*exp(" << inputs_names[i] << "-1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ");\n";
 
         expressions[i] = buffer.str();
     }
 
-    buffer.str("");
+//    buffer.str("");
     /*
         if(outputs_names.size() > 1)
         {
