@@ -113,13 +113,6 @@ public:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        const Index batch_instances_number = batch.get_instances_number();
@@ -177,13 +170,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-        //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 break;
-            }
         }
    }
 
@@ -236,13 +222,6 @@ public:
 
                return;
             }
-
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return;
-           }
        }
   }
 
@@ -279,13 +258,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
    }
 

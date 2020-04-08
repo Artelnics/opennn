@@ -232,11 +232,6 @@ public:
 
                 return;
             }
-
-           case Device::EigenGpu:
-           {
-                return;
-           }
        }
    }
 

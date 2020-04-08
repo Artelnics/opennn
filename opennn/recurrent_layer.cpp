@@ -1260,11 +1260,6 @@ Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer
 
 //            return;
          }
-
-        case Device::EigenGpu:
-        {
-             return Tensor<type, 2>();
-        }
     }
 
     return Tensor<type, 2>();
