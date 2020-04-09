@@ -22,7 +22,7 @@ class Device
 {
     public:
 
-        enum Type{EigenDefault, EigenThreadPool, EigenGpu};
+        enum Type{EigenDefault, EigenThreadPool};
 
         explicit Device() {}
 
@@ -51,19 +51,13 @@ class Device
                 {
                     const int n = omp_get_max_threads();
 
-                    #pragma warning( push )
+                    #pragma warning(push)
                     #pragma warning(disable:4267)
                     simple_thread_pool = new NonBlockingThreadPool(n);
-                    #pragma warning( pop )
+                    #pragma warning(pop)
 
                     thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
                 }
-                break;
-
-                case EigenGpu:
-
-                    //gpu_device = new GpuDevice();
-
                 break;
             }
         }

@@ -628,7 +628,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     results.resize_training_history(maximum_epochs_number + 1);
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     // Main loop
 
@@ -647,7 +647,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             // Data set
 
-            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+            batch.fill(training_batches.chip(iteration,0),
+                       input_variables_indices, target_variables_indices);
 
             // Neural network
 
