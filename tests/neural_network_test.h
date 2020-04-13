@@ -53,6 +53,10 @@ public:
    // Set methods
 
    void test_set();
+
+   void test_set_names();
+   void test_set_number();
+
    void test_set_default();
 
    // Architecture
