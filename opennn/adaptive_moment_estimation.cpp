@@ -1285,6 +1285,96 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+
+void AdaptiveMomentEstimation::set_batch_instances_number(const Index& new_batch_instances_number)
+{
+    batch_instances_number = new_batch_instances_number;
+}
+
+
+
+void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
+                              OptimizationData& optimization_data)
+{
+    const type learning_rate =
+            initial_learning_rate*
+            sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+            (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
+
+    optimization_data.gradient_exponential_decay
+            = optimization_data.last_gradient_exponential_decay*beta_1
+            + back_propagation.gradient*(1 - beta_1);
+
+    optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
+
+    optimization_data.square_gradient_exponential_decay
+            = optimization_data.last_square_gradient_exponential_decay*beta_2
+            + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
+
+    optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+
+    // Update parameters
+
+    optimization_data.parameters -=
+            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+}
+
+
+AdaptiveMomentEstimation::OptimizationData::OptimizationData()
+{
+}
+
+
+AdaptiveMomentEstimation::OptimizationData::OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
+{
+    set(new_stochastic_gradient_descent_pointer);
+}
+
+
+AdaptiveMomentEstimation::OptimizationData::~OptimizationData()
+{
+}
+
+
+void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+{
+    adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
+
+    LossIndex* loss_index_pointer = new_adaptive_moment_estimation_pointer->get_loss_index_pointer();
+
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+    parameters.resize(parameters_number);
+    parameters = neural_network_pointer->get_parameters();
+
+    minimal_selection_parameters.resize(parameters_number);
+
+    gradient_exponential_decay.resize(parameters_number);
+    gradient_exponential_decay.setZero();
+
+    square_gradient_exponential_decay.resize(parameters_number);
+    square_gradient_exponential_decay.setZero();
+
+    last_gradient_exponential_decay.resize(parameters_number);
+    last_gradient_exponential_decay.setZero();
+
+    last_square_gradient_exponential_decay.resize(parameters_number);
+    last_square_gradient_exponential_decay.setZero();
+}
+
+void AdaptiveMomentEstimation::OptimizationData::print() const
+{
+    cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
+
+    cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
+
+    cout << "Parmeters:" << endl << parameters << endl;
+}
+
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

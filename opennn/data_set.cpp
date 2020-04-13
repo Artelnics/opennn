@@ -10788,6 +10788,42 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances,
     }
 }
 
+DataSet::Batch::Batch(const Index& new_instances_number, DataSet* new_data_set_pointer)
+{
+    instances_number = new_instances_number;
+
+    data_set_pointer = new_data_set_pointer;
+
+    const Index input_variables_number = data_set_pointer->get_input_variables_number();
+    const Index target_variables_number = data_set_pointer->get_target_variables_number();
+
+    const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+    inputs_2d = Tensor<type, 2>(instances_number, input_variables_number);
+    targets_2d = Tensor<type, 2>(instances_number, target_variables_number);
+}
+
+
+Index DataSet::Batch::get_instances_number() const
+{
+    return instances_number;
+}
+
+
+void DataSet::Batch::print()
+{
+    cout << "Batch structure" << endl;
+
+    cout << "Inputs:" << endl;
+    cout << inputs_2d << endl;
+
+    cout << "Targets:" << endl;
+    cout << targets_2d << endl;
+}
+
+
+
 }
 
 

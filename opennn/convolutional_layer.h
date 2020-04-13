@@ -34,7 +34,6 @@ class PoolingLayer;
 class PerceptronLayer;
 class ProbabilisticLayer;
 
-
 class ConvolutionalLayer : public Layer
 {
 
@@ -50,17 +49,15 @@ public:
 
         void allocate()
         {
-/*
-            const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+//            const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
 
-            const Index outputs_channels_number = convolutional_layer->get_filters_number();
-            const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-            const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+//            const Index outputs_channels_number = convolutional_layer->get_filters_number();
+//            const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+//            const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 
-            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-*/
+//            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+//            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+//            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
         }
 
     };
