@@ -22,60 +22,107 @@ void NeuralNetworkTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-  // Default constructor
+  // Test 0 / Default constructor
 
-  NeuralNetwork neural_network_1;
+  NeuralNetwork neural_network_0;
 
-  assert_true(neural_network_1.is_empty(), LOG);
-  assert_true(neural_network_1.get_layers_number() == 0, LOG);
+  assert_true(neural_network_0.is_empty(), LOG);
+  assert_true(neural_network_0.get_layers_number() == 0, LOG);
 
-  // Layers constructor
-
-  Tensor<Layer*, 1> layers_2;
-
-  NeuralNetwork neural_network_2(layers_2);
-
-  assert_true(neural_network_2.is_empty(), LOG);
-  assert_true(neural_network_2.get_layers_number() == 0, LOG);
-
-  PerceptronLayer* perceptron_layer_2 = new PerceptronLayer(1, 1);
-
-  neural_network_2.add_layer(perceptron_layer_2);
-
-  assert_true(!neural_network_2.is_empty(), LOG);
-
-  // Layers constructor
-
-  PerceptronLayer* perceptron_layer_3 = new PerceptronLayer(1, 1);
-
-  Tensor<Layer*, 1> layers_3(1);
-
-  layers_3(0) = perceptron_layer_3;
-
-  NeuralNetwork neural_network_3(layers_3);
-
-  assert_true(!neural_network_3.is_empty(), LOG);
-  assert_true(neural_network_3.get_layers_number() == 1, LOG);
-
-  // Model type constructor
+  // Test 1 / Model type constructor
 
   Tensor<Index, 1> architecture(3);
 
   architecture.setValues({1,4,2});
 
-  NeuralNetwork neural_network_4(NeuralNetwork::Approximation, architecture);
+  NeuralNetwork neural_network_1_1(NeuralNetwork::Approximation, architecture); //CC -> architecture = {inp_n, hddn_neurns_n, out_n}
 
-  assert_true(neural_network_4.get_layers_number() == 5, LOG);
-  assert_true(neural_network_4.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
-  assert_true(neural_network_4.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
-  assert_true(neural_network_4.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
-  assert_true(neural_network_4.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
-  assert_true(neural_network_4.get_layer_pointer(4)->get_type() == Layer::Bounding, LOG);
+  assert_true(neural_network_1_1.get_layers_number() == 5, LOG);
+  assert_true(neural_network_1_1.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+  assert_true(neural_network_1_1.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_1_1.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_1_1.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
+  assert_true(neural_network_1_1.get_layer_pointer(4)->get_type() == Layer::Bounding, LOG);
+
+  NeuralNetwork neural_network_1_2(NeuralNetwork::Classification, architecture);
+
+  assert_true(neural_network_1_2.get_layers_number() == 3, LOG);
+  assert_true(neural_network_1_2.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+  assert_true(neural_network_1_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_1_2.get_layer_pointer(2)->get_type() == Layer::Probabilistic, LOG);
+
+  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
+
+  assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(1)->get_type() == Layer::LongShortTermMemory, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
+
+  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, architecture);
+
+  assert_true(neural_network_1_4.get_layers_number() == 1, LOG);
+  assert_true(neural_network_1_4.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+
+  NeuralNetwork neural_network_1_5(NeuralNetwork::ImageClassification, architecture);
+
+  assert_true(neural_network_1_5.get_layers_number() == 1, LOG);
+  assert_true(neural_network_1_5.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+
+  // Test 2 / Convolutional layer constructor
+/*
+  Tensor<Index, 1> new_inputs_dimensions(1);
+  new_inputs_dimensions.setConstant(1);
+
+  Index new_blocks_number = 1;
+
+  Tensor<Index, 1> new_filters_dimensions(1);
+  new_filters_dimensions.setConstant(1);
+
+  Index new_outputs_number = 1;
+
+  ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+
+  NeuralNetwork neural_network_2(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+
+  assert_true(neural_network_2.is_empty(), LOG);
+  assert_true(neural_network_2.get_layers_number() == 0, LOG);
+*/
+
+  // Test 3_1 / Layers constructor
+
+  Tensor<Layer*, 1> layers_2;
+
+  NeuralNetwork neural_network_3_1(layers_2);
+
+  assert_true(neural_network_3_1.is_empty(), LOG);
+  assert_true(neural_network_3_1.get_layers_number() == 0, LOG);
+
+  PerceptronLayer* perceptron_layer_3_1 = new PerceptronLayer(1, 1);   //CC -> PerceptronLayer(inputs_numb, neurons_numb)
+
+  neural_network_3_1.add_layer(perceptron_layer_3_1);
+
+  assert_true(!neural_network_3_1.is_empty(), LOG);
+
+  // Test 3_2
+
+  PerceptronLayer* perceptron_layer_3_2 = new PerceptronLayer(1, 1);
+
+  Tensor<Layer*, 1> layers_3(1);     //CC -> {l1, l2, ... , ln} --- i.e {pl, pbl, sl}
+
+  layers_3(0) = perceptron_layer_3_2;
+
+  NeuralNetwork neural_network_3_2(layers_3);
+
+  assert_true(!neural_network_3_2.is_empty(), LOG);
+  assert_true(neural_network_3_2.get_layers_number() == 1, LOG);
 
   // Copy constructor
 
-//  NeuralNetwork neural_network_5(neural_network_4);
-//  assert_true(neural_network_5.get_layers_number() == 5, LOG);
+/*
+  NeuralNetwork neural_network_4(neural_network_1_1);
+  assert_true(neural_network_4.get_layers_number() == 5, LOG);
+*/
 
    // File constructor
 
@@ -83,8 +130,6 @@ void NeuralNetworkTest::test_constructor()
 //   NeuralNetwork nn6(file_name);
 
 }
-
-
 
 void NeuralNetworkTest::test_destructor()
 {
@@ -94,6 +139,8 @@ void NeuralNetworkTest::test_destructor()
 
    delete neural_network_1;
 }
+
+
 
 void NeuralNetworkTest::test_assignment_operator()
 {
@@ -115,6 +162,8 @@ void NeuralNetworkTest::test_set()
    NeuralNetwork neural_network;
 
    // Test
+
+
 }
 
 void NeuralNetworkTest::test_set_default()
