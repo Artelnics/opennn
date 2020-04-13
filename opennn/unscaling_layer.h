@@ -70,8 +70,8 @@ public:
    Index get_neurons_number() const;
 
    Tensor<Descriptives, 1> get_descriptives() const;
-
    Tensor<type, 2> get_descriptives_matrix() const;
+
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
