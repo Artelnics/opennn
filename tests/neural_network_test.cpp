@@ -161,10 +161,161 @@ void NeuralNetworkTest::test_set()
 
    NeuralNetwork neural_network;
 
-   // Test
+   // Test 0
 
+   neural_network.set();
 
+   assert_true(neural_network.get_inputs_names().size() == 0, LOG);
+   assert_true(neural_network.get_outputs_names().size() == 0, LOG);
+   assert_true(neural_network.get_layers_pointers().size() == 0, LOG);
+
+   // Test 1
+
+   Tensor<Index, 1> architecture(3);
+
+   architecture.setValues({1,0,1}); //CC -> architecture = {inp_n, hddn_neurns_n, out_n}
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 5, LOG);
+
+   neural_network.set(NeuralNetwork::Classification, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 3, LOG);
+
+   neural_network.set(NeuralNetwork::Forecasting, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
+
+   neural_network.set(NeuralNetwork::ImageApproximation, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+
+   neural_network.set(NeuralNetwork::ImageClassification, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+
+   // Test 2 / Convolutional layer set
+   /*
+   Tensor<Index, 1> new_inputs_dimensions(1);
+   new_inputs_dimensions.setConstant(1);
+
+   Index new_blocks_number = 1;
+
+   Tensor<Index, 1> new_filters_dimensions(1);
+   new_filters_dimensions.setConstant(1);
+
+   Index new_outputs_number = 1;
+
+   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+
+   neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+
+   assert_true(neural_network.is_empty(), LOG);
+   assert_true(neural_network.get_layers_number() == 0, LOG);
+   */
+
+   // Test 3 / Copy layer set
+/*
+   NeuralNetwork neural_network_3_0;
+   NeuralNetwork neural_network_3_1;
+
+   Tensor<Index, 1> architecture_3_0(3);
+   architecture_3_0.setValues({1,0,1});
+
+   Tensor<Index, 1> architecture_3_1(3);
+   architecture_3_1.setValues({5,0,5});
+
+   neural_network_3_0.set(NeuralNetwork::Approximation, architecture_3_0);
+   neural_network_3_1.set(NeuralNetwork::Approximation, architecture_3_1);
+
+   neural_network_3_1.set(neural_network_3_0);
+
+   assert_true(neural_network_3_1.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network_3_1.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network_3_1.get_layers_pointers().size() == 1, LOG);
+   */
 }
+
+void NeuralNetworkTest::test_set_names()
+{
+   cout << "test_set_names\n";
+
+   NeuralNetwork neural_network;
+
+   // Test 0
+
+   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> outputs_names;
+
+   neural_network.set_inputs_names(inputs_names);
+   neural_network.set_outputs_names(outputs_names);
+   assert_true(neural_network.get_inputs_names().size() == 0, LOG);
+   assert_true(neural_network.get_outputs_names().size() == 0, LOG);
+
+   // Test 1
+
+   Tensor<string, 1> inputs_names_1(2);
+   inputs_names_1.setValues({"in_1","in_2"});
+   Tensor<string, 1> outputs_names_1(2);
+   outputs_names_1.setValues({"out_1","out_2"});
+
+   neural_network.set_inputs_names(inputs_names_1);
+   neural_network.set_outputs_names(outputs_names_1);
+   assert_true(neural_network.get_inputs_names().size() == 2, LOG);
+   assert_true(neural_network.get_inputs_names()(0) == "in_1", LOG);
+   assert_true(neural_network.get_inputs_names()(1) == "in_2", LOG);
+   assert_true(neural_network.get_outputs_names().size() == 2, LOG);
+   assert_true(neural_network.get_outputs_names()(0) == "out_1", LOG);
+   assert_true(neural_network.get_outputs_names()(1) == "out_2", LOG);
+}
+
+void NeuralNetworkTest::test_set_number()
+{
+   cout << "test_set_number\n";
+
+   NeuralNetwork neural_network;
+
+   // Test 0_0
+
+   Index inputs_names;
+   neural_network.set_inputs_number(inputs_names);
+
+   assert_true(neural_network.get_inputs_names().size() == 0, LOG);
+   //has_scaling_layer_assert
+
+   // Test 0_1
+
+   inputs_names = 3;
+
+   neural_network.set_inputs_number(inputs_names);
+   assert_true(neural_network.get_inputs_names().size() == 3, LOG);
+   //has_scaling_layer_assert
+
+   // Test 1_0
+/*
+   Tensor<bool, 1> inputs_names_1;
+   neural_network.set_inputs_number(inputs_names_1);
+
+   assert_true(neural_network.get_inputs_names().size() == 0, LOG);
+   //has_scaling_layer_assert
+
+   // Test 1_1
+
+   Tensor<bool, 1> inputs_names_1_1;
+   inputs_names_1_1.setValues({true,false});
+
+   neural_network.set_inputs_number(inputs_names_1_1);
+   assert_true(neural_network.get_inputs_names().size() == 2, LOG);
+   //has_scaling_layer_assert*/
+}
+
+
 
 void NeuralNetworkTest::test_set_default()
 {
@@ -1838,7 +1989,7 @@ void NeuralNetworkTest::run_test_case()
 // test_assignment_operator();
 
    // Parameters methods
-
+/*
    test_get_parameters_number();
    test_get_parameters();
    test_get_trainable_layers_parameters_number();
@@ -1853,7 +2004,7 @@ void NeuralNetworkTest::run_test_case()
 
 
 
-   /*
+
 
    // Parameters norm
 
@@ -1873,8 +2024,13 @@ void NeuralNetworkTest::run_test_case()
    test_add_layer();
 
    // Set methods
-
+*/
    test_set();
+
+   test_set_names();
+   test_set_number();
+
+   /*
    test_set_default();
 
    // Parameters methods
