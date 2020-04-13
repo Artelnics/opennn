@@ -398,14 +398,10 @@ Index Histogram::calculate_frequency(const type&value) const
 
 
 /// Returns the smallest element of a type vector.
-/// @param vector
+/// @param vector Vector to obtain the minimum value.
 
 type minimum(const Tensor<type, 1>& vector)
 {
-//    const Tensor<type,0> min_element = vector.minimum();
-
-//    return min_element(0);
-
     const Index size = vector.dimension(0);
 
     type minimum = numeric_limits<type>::max();
@@ -434,14 +430,10 @@ time_t minimum(const Tensor<time_t, 1>& vector)
 
 
 /// Returns the largest element in the vector.
-/// @param vector
+/// @param vector Vector to obtain the maximum value.
 
 type maximum(const Tensor<type, 1>& vector)
 {
-//    const Tensor<type,0> max_element = vector.maximum();
-
-//    return max_element(0);
-
     const Index size = vector.dimension(0);
 
     type maximum = -numeric_limits<type>::max();
@@ -529,7 +521,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
 
 
 /// Returns the mean of the subvector defined by a start and end elements.
-/// @param vector
+/// @param vector Vector to be evaluated.
 /// @param begin Start element.
 /// @param end End element.
 
@@ -564,13 +556,10 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
 
 /// Returns the mean of the elements in the vector.
-/// @param vector
+/// @param vector Vector to be evaluated.
 
 type mean(const Tensor<type, 1>& vector)
 {
-//    Tensor<type, 0> mean = vector.mean();
-
-//    return mean(0);
 
     const Index size = vector.dimension(0);
 
@@ -610,7 +599,7 @@ type mean(const Tensor<type, 1>& vector)
 
 
 /// Returns the variance of the elements in the vector.
-/// @param vector
+/// @param vector Vector to be evaluated.
 
 type variance(const Tensor<type, 1>& vector)
 {
@@ -661,7 +650,7 @@ type variance(const Tensor<type, 1>& vector)
 
 
 /// Returns the standard deviation of the elements in the vector.
-/// @param vector
+/// @param vector Vector to be evaluated.
 
 type standard_deviation(const Tensor<type, 1>& vector)
 {
@@ -721,7 +710,7 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
 
 /// Returns the asymmetry of the elements in the vector.
-/// @param vector
+/// @param vector Vector to be evaluated.
 
 type asymmetry(const Tensor<type, 1>& vector)
 {
@@ -774,7 +763,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 }
 
 /// Returns the kurtosis of the elements in the vector.
-/// @param vector
+/// @param vector Vector to be evaluated.
 
 type kurtosis(const Tensor<type, 1>& vector)
 {
@@ -826,6 +815,7 @@ type kurtosis(const Tensor<type, 1>& vector)
 
 
 /// Returns the median of the elements in the vector
+/// @param vector Vector to be evaluated.
 
 type median(const Tensor<type, 1>& vector)
 {
@@ -880,6 +870,7 @@ type median(const Tensor<type, 1>& vector)
 
 
 /// Returns the quartiles of the elements in the vector.
+/// @param vector Vector to be evaluated.
 
 Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 {
@@ -970,6 +961,8 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
 
 /// Returns the quartiles of the elements of the vector that correspond to the given indices.
+/// @param vector Vector to be evaluated.
+/// @param indices Indices of the elements of the vector to be evaluated.
 
 Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -1068,6 +1061,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
 
 
 /// Returns the box and whispers for a vector.
+/// @param vector Vector to be evaluated.
 
 BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
@@ -1088,6 +1082,8 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 
 
 /// Returns the box and whispers for the elements of the vector that correspond to the given indices.
+/// @param vector Vector to be evaluated.
+/// @param indices Indices of the elements of the vector to be evaluated.
 
 BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -1113,8 +1109,8 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 /// The size of both subvectors is the number of bins.
 /// The first subvector contains the frequency of the bins.
 /// The second subvector contains the center of the bins.
-/// @param vector
-/// @param bins_number
+/// @param vector Vector to obtain the histogram.
+/// @param bins_number Number of bins to split the histogram.
 
 Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 {
@@ -1360,8 +1356,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 /// The second subvector contains the center of the bins.
 
 Histogram histogram(const Tensor<bool, 1>& vector)
-{
-    /*
+{/*
     Tensor<type, 1> minimums(2);
     minimums.setZero();
     Tensor<type, 1> maximums(2);
@@ -1655,11 +1650,9 @@ Tensor<type, 1> rows_means(const Tensor<type, 2>& matrix, const Tensor<Index, 1>
 
     Tensor<Index, 1> used_row_indices;
 
-//    if(row_indices.empty())
     if(matrix.dimension(0) == 0 && matrix.dimension(1) == 0)
     {
         used_row_indices.resize(matrix.dimension(0));
-//        used_row_indices.initialize_sequential(); @todo
     }
     else
     {
@@ -1674,8 +1667,6 @@ Tensor<type, 1> rows_means(const Tensor<type, 2>& matrix, const Tensor<Index, 1>
 
     for(Index i = 0; i < columns_number; i++)
     {
-//        column = matrix.get_column(i, used_row_indices);
-
         for(Index j = 0; j < row_indices_size; j++)
         {
             Index row_index = row_indices(j);
@@ -1775,11 +1766,9 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
 
     Tensor<Index, 1> used_columns_indices;
 
-//    if(columns_indices.empty())
     if(columns_indices.dimension(0) == 0 && columns_indices.dimension(1) == 0)
     {
         used_columns_indices.resize(columns_number);
-//        used_columns_indices.initialize_sequential();@todo
     }
     else
     {
@@ -1797,7 +1786,6 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     {
         column_index = used_columns_indices(i);
 
-//        column = matrix.get_column(index);
         column = matrix.chip(column_index,1);
 
         maximums(i) = maximum(column);
@@ -1815,12 +1803,12 @@ type range(const Tensor<type, 1>& vector)
     return abs(max - min);
 }
 
-
+/*
 /// Calculates the box plots for a set of rows of each of the given columns of this matrix.
 /// @param matrix Used matrix.
 /// @param rows_indices Rows to be used for the box plot.
 /// @param columns_indices Indices of the columns for which box plots are going to be calculated.
-/// @todo
+/// @todo remove?
 
 Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
 {
@@ -1849,7 +1837,7 @@ Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<
 
 
     }
-    /*
+
         Tensor<type, 1> column;
 
          #pragma omp parallel for private(column)
@@ -1905,13 +1893,13 @@ Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<
 
             box_plots(i)[4] = column[rows_number-1];
         }
-    */
+
     return box_plots;
 }
-
+*/
 
 /// Returns the minimum, maximum, mean and standard deviation of the elements in the vector.
-/// @param vector Used vector.
+/// @param vector Vector to be evaluated.
 
 Descriptives descriptives(const Tensor<type, 1>& vector)
 {
@@ -2007,9 +1995,9 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     const Index n = vector.dimension(0);
 
     Tensor<type, 1> sorted_vector(vector);
-    /*
-        sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-    */
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
     const Descriptives descriptives = OpenNN::descriptives(vector);
 
     const type mean = descriptives.mean;
@@ -2068,7 +2056,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 }
 
 
-
+/*
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
 /// @param matrix Matrix used.
@@ -2108,7 +2096,7 @@ Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
     return columns_mean;
 }
 
-
+*/
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
 /// @param matrix Matrix used.
@@ -2310,9 +2298,10 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
 
 #ifdef __OPENNN_DEBUG__
+
+    const Index columns_number = matrix.dimension(1);
 
     if(rows_number == 0)
     {
@@ -2411,10 +2400,11 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
 type median(const Tensor<type, 2>& matrix, const Index& column_index)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);    
 
 #ifdef __OPENNN_DEBUG__
+
+    const Index columns_number = matrix.dimension(1);
 
     if(rows_number == 0)
     {
@@ -2507,13 +2497,14 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
 
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
 #ifdef __OPENNN_DEBUG__
+
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     // Rows check
 
@@ -2592,7 +2583,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
     {
         column_index = columns_indices(j);
 
-        Tensor<type, 1> sorted_column(row_indices_size);//(matrix.get_column(column_index, row_indices));
+        Tensor<type, 1> sorted_column(row_indices_size);
 
         for(Index k = 0; k < row_indices_size; k++)
         {
@@ -2617,92 +2608,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 }
 
 
-
-/// Returns true if the elements in the vector have a normal distribution with a given critical value.
-/// @param critical_value Critical value to be used in the test.
-/*
-bool perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const type& critical_value)
-{
-#ifndef Cpp11__
-
-    const Index n = vector.dimension(0);
-
-    const type mean = OpenNN::mean(vector);
-    const type standard_deviation = OpenNN::standard_deviation(vector);
-
-    Tensor<type, 1> sorted_vector(vector);
-
-    sort(sorted_vector.begin(), sorted_vector.end(), less<type>());
-
-    type Fx;
-    type Snx;
-
-    type D = -1;
-
-    for(Index i = 0; i < n; i++)
-    {
-        Fx = 0.5 * erfc((mean - vector(i))/(standard_deviation*sqrt(2)));
-
-        if(vector(i) < sorted_vector[0])
-        {
-            Snx = 0;
-        }
-        else if(vector(i) >= sorted_vector[n-1])
-        {
-            Snx = 1.0;
-        }
-        else
-        {
-            for(Index j = 0; j < n-1; j++)
-            {
-                if(vector(i) >= sorted_vector(j) && vector(i) < sorted_vector[j+1])
-                {
-                    Snx = static_cast<type>(j+1)/static_cast<type>(n);
-                }
-            }
-        }
-
-        if(D < abs(Fx - Snx))
-        {
-            D = abs(Fx - Snx);
-        }
-    }
-
-    if(D < critical_value)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-
-#else
-    return false;
-#endif
-}
-
-
-/// Returns true if the elements in the vector have a normal distribution with a given set of critical values.
-/// @param critical_values Critical values to be used in the test.
-
-Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>& vector, const Tensor<type, 1>& critical_values)
-{
-    const Index size = critical_values.size();
-
-    Tensor<bool, 1> normality_tests(size);
-
-    for(Index i = 0; i < size; i++)
-    {
-        normality_tests(i) = perform_Lilliefors_normality_test(vector, critical_values(i));
-    }
-
-    return normality_tests;
-}
-*/
-
 /// Calculates the distance between the empirical distribution of the vector and the
 /// normal distribution.
+/// @param vector Vector to be evaluated.
 
 type normal_distribution_distance(const Tensor<type, 1>& vector)
 {
@@ -2750,6 +2658,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// half normal distribution.
+/// @param vector Vector to be evaluated.
 
 type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 {
@@ -2796,6 +2705,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// uniform distribution.
+/// @param vector Vector to be evaluated.
 
 type uniform_distribution_distance(const Tensor<type, 1>& vector)
 {
@@ -2840,9 +2750,10 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
     return uniform_distribution_distance;
 }
 
-
+/*
 /// Performs the Lilliefors normality tests varying the confindence level from 0.05 to 0.5.
 /// It returns a vector containing the results of the tests.
+/// @param vector Vector to be evaluated.
 /// @todo review.
 
 Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
@@ -2883,7 +2794,7 @@ Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
     return Tensor<bool,1> ();
 
 }
-
+*/
 
 ///@todo
 
