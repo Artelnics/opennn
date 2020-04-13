@@ -10100,7 +10100,7 @@ void DataSet::read_csv_3_simple()
 
     string line;
 
-    Tensor<string, 1> tokens;
+//    Tensor<string, 1> tokens;
 
     Index instance_index = 0;
 
@@ -10121,6 +10121,9 @@ void DataSet::read_csv_3_simple()
     // Read data
 
     Index j = 0;
+    const Index columns_number = get_columns_number(); // columns number = tokens_number
+
+    Tensor<string, 1> tokens(columns_number);
 
     cout << "Reading data..." << endl;
 
@@ -10134,7 +10137,8 @@ void DataSet::read_csv_3_simple()
 
         if(line.empty()) continue;
 
-        tokens = get_tokens(line, separator_char);
+//        tokens = get_tokens(line, separator_char);
+        get_tokens(line, separator_char, tokens);
 
         for(j = 0; j < variables_number; j++)
         {
@@ -10146,7 +10150,7 @@ void DataSet::read_csv_3_simple()
             }
             else if(is_float)
             {
-                data(instance_index, j) = stof(tokens(j));
+                data(instance_index, j) = strtof(tokens(j).data(), NULL);
             }
             else
             {
