@@ -698,7 +698,6 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
     add_layer(probabilistic_layer);
-
 }
 
 

@@ -847,6 +847,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    assert_true(abs(outputs_3(1) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
 }
 
+
 void UnscalingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
