@@ -1480,6 +1480,8 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
 
+        cout << "activations: " << activations << endl;
+
         // Activations Derivatives
 
         Index dim = combinations.dimension(1);
@@ -1492,6 +1494,8 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
         ad_3d.chip(0,0) = ad_2d;
 
         activations_derivatives.device(*default_device) = ad_3d;
+
+        cout << "activations derivatives: " << activations_derivatives << endl;
 
         return;
     }

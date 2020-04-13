@@ -275,7 +275,7 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
+   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation(LossIndex*) const;
 
    // ERROR TERMS METHODS
 
@@ -305,13 +305,13 @@ public:
        // Loss index
 
        calculate_error(batch, forward_propagation, back_propagation);
-
+cout << "Calculate error" << endl;
        calculate_output_gradient(batch, forward_propagation, back_propagation);
-
+cout << "Calculate output gradient" << endl;
        calculate_layers_delta(forward_propagation, back_propagation);
-
+cout << "Calculate layers delta" << endl;
        calculate_error_gradient(batch, forward_propagation, back_propagation);
-
+cout << "Calculate error gradient" << endl;
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
@@ -386,10 +386,14 @@ public:
 
         // Output layer
 
+        cout << "Begin calculate output delta" << endl;
+
         trainable_layers_pointers(trainable_layers_number-1)
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
+
+        cout << "End calculate output delta" << endl;
 
         // Hidden layers
 

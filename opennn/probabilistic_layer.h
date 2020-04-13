@@ -171,6 +171,8 @@ public:
                           ForwardPropagation& forward_propagation) const
    {
 
+       cout << "Forward_propagate" << endl;
+
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
        calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
@@ -273,36 +275,48 @@ public:
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
    {
+       cout << "Probabilistic output delta" << endl;
+
        const Index neurons_number = get_neurons_number();
        const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
 
        if(neurons_number == 1)
        {
+           cout << "forward_propagation.activations_derivatives_3d: "
+                << forward_propagation.activations_derivatives_3d
+                << endl;
+
+
            TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
+
+           cout << "Activations derivativeS: " << activations_derivatives << endl;
 
            switch(device_pointer->get_type())
            {
-           case Device::EigenDefault:
-           {
-               DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+               case Device::EigenDefault:
+               {
+                   DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-               output_delta.device(*default_device) = activations_derivatives*output_gradient;
+                   output_delta.device(*default_device) = activations_derivatives*output_gradient;
 
-               return;
-           }
+                   return;
+               }
 
-           case Device::EigenThreadPool:
-           {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+               case Device::EigenThreadPool:
+               {
+                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+                   output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
-               return;
-           }
+                   cout << "output delta: " << output_delta << endl;
+
+                   return;
+               }
            }
        }
        else
        {
+           cout << "else" << endl;
 
            const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
 
