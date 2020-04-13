@@ -805,7 +805,7 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
+Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
 {
     const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -816,6 +816,11 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     batch.fill(instances_indices, input_indices, target_indices);
+
+    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+
+    BackPropagation back_propagation(instances_number, loss_index_pointer);
+
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -835,11 +840,19 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
        h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
-       error_forward = calculate_error(batch, parameters_forward);
+
+       neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+       loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+       error_forward = back_propagation.error;
+
        parameters_forward(i) -= h;
 
        parameters_backward(i) -= h;
-       error_backward = calculate_error(batch, parameters_backward);
+
+       neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
+       loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+       error_backward = back_propagation.error;
+
        parameters_backward(i) += h;
 
        numerical_gradient(i) = (error_forward - error_backward)/(static_cast<type>(2.0)*h);

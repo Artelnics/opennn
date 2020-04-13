@@ -173,7 +173,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
-//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    // Test trivial
 {
@@ -216,7 +216,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
    error_gradient = training_back_propagation.gradient;
 
-//   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(training_back_propagation);
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
 
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
@@ -247,11 +247,11 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
-//   probabilistic_layer->set(outputs_number, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
    neural_network.add_layer(output_perceptron_layer);
-//   neural_network.add_layer(probabilistic_layer);
+   neural_network.add_layer(probabilistic_layer);
 
    neural_network.set_device_pointer(&device);
 
@@ -259,21 +259,28 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_normalization_coefficient();
 
+
+
    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
-
+cout << "Before forward propagate" << endl;
    neural_network.forward_propagate(batch, forward_propagation);
-
+cout << "After forward propagate" << endl;
    nse.set_device_pointer(&device);
 
+cout << "Before back propagate" << endl;
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
-   error_gradient = training_back_propagation.gradient;
+cout << "After back propagate" << endl;
+//   error_gradient = training_back_propagation.gradient;
 
-//   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(training_back_propagation);
+//   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
 
-   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
+//   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+//   cout << "Error gradient: " << error_gradient << endl;
+//   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+
+//   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -599,13 +606,13 @@ void NormalizedSquaredErrorTest::run_test_case(void)
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
 
    test_calculate_normalization_coefficient();
 
-/*
+
    // Get methods
 
    // Set methods
