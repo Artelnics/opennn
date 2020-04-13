@@ -1049,7 +1049,7 @@ string ScalingLayer::write_no_scaling_expression(const Tensor<string, 1>& inputs
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << "=" << inputs_names(i) << ";\n";
+        buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
     }
 
     return buffer.str();
@@ -1070,7 +1070,7 @@ string ScalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& i
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << "=2*(" << inputs_names(i) << "-" << descriptives(i).minimum << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")-1;\n";
+        buffer << outputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
     }
 
     return buffer.str();
@@ -1091,7 +1091,7 @@ string ScalingLayer::write_mean_standard_deviation_expression(const Tensor<strin
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << "= (" << inputs_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
+        buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
     }
 
     return buffer.str();
@@ -1112,7 +1112,7 @@ string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_names(i) << "=" << inputs_names(i) << "/" << descriptives(i).standard_deviation << ";\n";
+        buffer << outputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
     }
 
     return buffer.str();
@@ -1181,9 +1181,9 @@ string ScalingLayer::object_to_string() const
                << "Mean: " << descriptives(i).mean << "\n"
                << "Standard deviation: " << descriptives(i).standard_deviation << "\n";
     }
-    /*
+
         buffer << "Scaling methods: " << write_scaling_methods() << "\n";
-    */
+
     return buffer.str();
 }
 

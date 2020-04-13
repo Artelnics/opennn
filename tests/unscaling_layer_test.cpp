@@ -63,7 +63,27 @@ void UnscalingLayerTest::test_assignment_operator()
 }
 
 
-// GET DIMENSIONS -> (GET_INPUT_VARIABLES_DIM ; GET_OUTPUTS_DIMENSIONS)
+void UnscalingLayerTest::test_get_dimensions()
+{
+   cout << "test_get_dimensions\n";
+
+   UnscalingLayer ul1;
+
+   ul1.set(1);
+
+   // Test 0
+
+   assert_true(ul1.get_input_variables_dimensions().dimension(0) == 1, LOG);
+   assert_true(ul1.get_input_variables_dimensions()(0) == 1, LOG);
+
+   // Test 1
+
+   ul1.set(3);
+
+   assert_true(ul1.get_input_variables_dimensions().dimension(0) == 1, LOG);
+   assert_true(ul1.get_input_variables_dimensions()(0) == 3, LOG);
+}
+
 
 void UnscalingLayerTest::test_get_neurons_number()
 {
@@ -108,7 +128,6 @@ void UnscalingLayerTest::test_get_inputs_number()
    assert_true(ul1.get_inputs_number() == 3, LOG);
    assert_true(ul1.get_inputs_number() == ul1.get_neurons_number(), LOG);
 }
-
 
 
 void UnscalingLayerTest::test_get_descriptives()
@@ -188,7 +207,6 @@ void UnscalingLayerTest::test_get_descriptives_matrix()
 }
 
 
-
 void UnscalingLayerTest::test_get_minimums()
 {
    cout << "test_get_minimums\n";
@@ -241,87 +259,6 @@ void UnscalingLayerTest::test_get_maximums()
    assert_true(abs(ul.get_maximums()(1) + 1) < static_cast<type>(1e-3), LOG);
 }
 
-/*
-void UnscalingLayerTest::test_get_means()
-{
-   cout << "test_get_means\n";
-
-   UnscalingLayer ul(2);
-
-   // Test 0
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   ul.set_descriptives(descriptives);
-
-   assert_true(abs(ul.get_means()(0) - 0) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_means()(1) - 0) < static_cast<type>(1e-3), LOG);
-
-   // Test 1
-
-   descriptives(0).mean = 1;
-   descriptives(1).mean = -1;
-
-   sl.set_descriptives(descriptives);
-
-   assert_true(abs(ul.get_means()(0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_means()(1) + 1) < static_cast<type>(1e-3), LOG);
-}*/
-
-/*
-void UnscalingLayerTest::test_get_standard_deviations()
-{
-   cout << "test_get_standard_deviations\n";
-
-   UnscalingLayer ul(2);
-
-   // Test 0
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   ul.set_descriptives(descriptives);
-
-   assert_true(abs(ul.get_standard_deviations()(0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_standard_deviations()(1) - 1) < static_cast<type>(1e-3), LOG);
-
-   // Test 1
-
-   descriptives(0).standard_deviation = 1;
-   descriptives(1).standard_deviation = -1;
-
-   ul.set_descriptives(descriptives);
-
-   assert_true(abs(ul.get_standard_deviations()(0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_standard_deviations()(1) + 1) < static_cast<type>(1e-3), LOG);
-}*/
-
-/*
-void UnscalingLayerTest::test_get_minimum()
-{
-   cout << "test_get_minimum\n";
-}
-*/
-
-/*
-void UnscalingLayerTest::test_get_maximum()
-{
-   cout << "test_get_maximum\n";
-}
-*/
-
-/*
-void UnscalingLayerTest::test_get_mean()
-{
-   cout << "test_get_mean\n";
-}*/
-
-/*
-void UnscalingLayerTest::test_get_standard_deviation()
-{
-   cout << "test_get_standard_deviation\n";
-}
-*/
-
 void UnscalingLayerTest::test_get_unscaling_method()
 {
    cout << "test_get_unscaling_method\n";
@@ -361,6 +298,47 @@ void UnscalingLayerTest::test_get_unscaling_method()
 }
 
 
+void UnscalingLayerTest::test_get_unscaling_method_name()
+{
+   cout << "test_get_unscaling_method\n";
+
+   UnscalingLayer ul(1);
+
+   // Test
+
+   UnscalingLayer::UnscalingMethod no_unscaling = UnscalingLayer::UnscalingMethod::NoUnscaling;
+
+   UnscalingLayer::UnscalingMethod minimum_maximum = UnscalingLayer::UnscalingMethod::MinimumMaximum;
+
+   UnscalingLayer::UnscalingMethod mean_standard_deviation = UnscalingLayer::UnscalingMethod::MeanStandardDeviation;
+
+   UnscalingLayer::UnscalingMethod logarithmic = UnscalingLayer::UnscalingMethod::Logarithmic;
+
+
+   ul.set_unscaling_method(no_unscaling);
+
+   assert_true(ul.write_unscaling_method() == "NoUnscaling", LOG);
+   assert_true(ul.write_unscaling_method_text() == "no unscaling", LOG);
+
+   ul.set_unscaling_method(minimum_maximum);
+
+   assert_true(ul.write_unscaling_method() == "MinimumMaximum", LOG);
+   assert_true(ul.write_unscaling_method_text() == "minimum and maximum", LOG);
+
+   ul.set_unscaling_method(mean_standard_deviation);
+
+   assert_true(ul.write_unscaling_method() == "MeanStandardDeviation", LOG);
+   assert_true(ul.write_unscaling_method_text() == "mean and standard deviation", LOG);
+
+
+   ul.set_unscaling_method(logarithmic);
+
+   assert_true(ul.write_unscaling_method() == "Logarithmic", LOG);
+   assert_true(ul.write_unscaling_method_text() == "logarithmic", LOG);
+
+}
+
+
 void UnscalingLayerTest::test_get_display()
 {
    cout << "test_get_display\n";
@@ -369,7 +347,6 @@ void UnscalingLayerTest::test_get_display()
 
    assert_true(ul.get_display(), LOG);
 }
-
 
 
 void UnscalingLayerTest::test_set()
@@ -476,7 +453,6 @@ void UnscalingLayerTest::test_set_default()
 }
 
 
-
 void UnscalingLayerTest::test_set_descriptives()
 {
    cout << "test_set_descriptives\n";
@@ -546,23 +522,34 @@ void UnscalingLayerTest::test_set_item_descriptives()
 {
    cout << "test_set_item_descriptives\n";
 
-   UnscalingLayer ul(2);
+   ScalingLayer ul(1);
+
+   // Test 0
+
+   Descriptives des;
+
+   ul.set_item_descriptives(0,des);
+
+   assert_true(abs(ul.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
+
+   UnscalingLayer ul1(2);
 
    // Test
 
    Descriptives des_0(1,1,1,0);
    Descriptives des_1(2,2,2,0);
 
-   ul.set_item_descriptives(0,des_0);
-   ul.set_item_descriptives(1,des_1);
+   ul1.set_item_descriptives(0,des_0);
+   ul1.set_item_descriptives(1,des_1);
 
-   assert_true(abs(ul.get_descriptives_matrix()(0,0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul1.get_descriptives_matrix()(0,0) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul1.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul1.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul1.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
 }
-
-
 
 
 void UnscalingLayerTest::test_set_minimum()
@@ -618,8 +605,8 @@ void UnscalingLayerTest::test_set_mean()
    ul.set_mean(0, 5);
    ul.set_mean(1, 6);
 
-   assert_true(abs(ul.get_descriptives_matrix()(0,0)) - 5 < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_descriptives_matrix()(1,0)) - 6 < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(0,2) - 5) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(1,2) - 6) < static_cast<type>(1e-3), LOG);
 }
 
 void UnscalingLayerTest::test_set_standard_deviation()
@@ -637,30 +624,9 @@ void UnscalingLayerTest::test_set_standard_deviation()
    ul.set_standard_deviation(0, 5);
    ul.set_standard_deviation(1, 6);
 
-   assert_true(abs(ul.get_descriptives_matrix()(0,0) - 5) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(ul.get_descriptives_matrix()(1,0) - 6) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(0,3) - 5) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(ul.get_descriptives_matrix()(1,3) - 6) < static_cast<type>(1e-3), LOG);
 }
-
-/*
-void UnscalingLayerTest::test_set_minimums()
-{
-   cout << "test_set_minimums\n";
-}
-*/
-
-/*
-void UnscalingLayerTest::test_set_maximums()
-{
-   cout << "test_set_outputs_maximum\n";
-}
-*/
-
-/*
-void UnscalingLayerTest::test_set_statistics()
-{
-   cout << "test_set_statistics\n";
-}
-*/
 
 
 void UnscalingLayerTest::test_set_unscaling_method()
@@ -720,6 +686,18 @@ void UnscalingLayerTest::test_set_display()
    assert_true(get_display() == false, LOG);
 }
 
+
+void UnscalingLayerTest::test_is_empty()
+{
+    cout << "test_is_empty\n";
+
+    UnscalingLayer ul;
+
+    UnscalingLayer ul1(1);
+
+    assert_true(ul.is_empty() == true, LOG);
+    assert_true(ul1.is_empty() == false, LOG);
+}
 
 
 void UnscalingLayerTest::test_calculate_outputs()
@@ -847,6 +825,122 @@ void UnscalingLayerTest::test_calculate_outputs()
    assert_true(abs(outputs_3(1) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
 }
 
+void UnscalingLayerTest::test_calculate_minimum_maximum_outputs()
+{
+   cout << "test_calculate_minimum_maximum_outputs\n";
+
+   UnscalingLayer unscaling_layer;
+
+   Tensor<type, 2> inputs;
+
+   unscaling_layer.set_display(false);
+
+   // Test 0
+
+   unscaling_layer.set(1);
+
+   inputs.resize(1,1);
+   Tensor<type, 2> outputs_1 = unscaling_layer.calculate_minimum_maximum_outputs(inputs);
+   assert_true(outputs_1.dimension(0) == 1, LOG);
+   assert_true(outputs_1.dimension(1) == 1, LOG);
+   assert_true(abs(outputs_1(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
+
+   // Test 1
+
+   unscaling_layer.set(2);
+
+   Tensor<type, 2> minimums_maximums(2,4);
+   minimums_maximums.setValues({{-1000,1000,0,0},{-100,100,0,0}});
+
+   unscaling_layer.set_descriptives_eigen(minimums_maximums);
+   inputs.resize(1,2);
+   inputs.setValues({{0.1f,0}});
+   outputs_1 = unscaling_layer.calculate_minimum_maximum_outputs(inputs);
+
+   assert_true(outputs_1.dimension(0) == 1, LOG);
+   assert_true(outputs_1.dimension(1) == 2, LOG);
+   assert_true(abs(outputs_1(0) - static_cast<type>(100)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_1(1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+}
+
+void UnscalingLayerTest::test_calculate_mean_standard_deviation_outputs()
+{
+   cout << "test_calculate_mean_standard_deviation_outputs\n";
+
+   UnscalingLayer unscaling_layer;
+
+   Tensor<type, 2> inputs;
+
+   unscaling_layer.set_display(false);
+
+   // Test 0
+
+   unscaling_layer.set(1);
+
+   inputs.resize(1,1);
+   Tensor<type, 2> outputs_2 = unscaling_layer.calculate_mean_standard_deviation_outputs(inputs);
+   assert_true(outputs_2.dimension(0) == 1, LOG);
+   assert_true(outputs_2.dimension(1) == 1, LOG);
+   assert_true(abs(outputs_2(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
+
+   // Test 1
+
+   unscaling_layer.set(2);
+
+   Tensor<type, 2> mean_standard_deviation(2,4);
+   mean_standard_deviation.setValues({{-1,1,-1,-2},{-1,1,2,3}});
+
+   unscaling_layer.set_descriptives_eigen(mean_standard_deviation);
+   inputs.resize(1,2);
+   inputs.setValues({{-1,1}});
+   outputs_2 = unscaling_layer.calculate_mean_standard_deviation_outputs(inputs);
+
+   assert_true(outputs_2.dimension(0) == 1, LOG);
+   assert_true(outputs_2.dimension(1) == 2, LOG);
+   assert_true(abs(outputs_2(0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_2(1) - static_cast<type>(5)) < static_cast<type>(1e-3), LOG);
+
+}
+
+void UnscalingLayerTest::test_calculate_logarithmic_outputs()
+{
+   cout << "test_calculate_logarithmic_outputs\n";
+
+   UnscalingLayer unscaling_layer;
+
+   Tensor<type, 2> inputs;
+
+   unscaling_layer.set_display(false);
+
+   // Test 0
+
+   unscaling_layer.set(1);
+
+   inputs.resize(1,1);
+   Tensor<type, 2> outputs_3 = unscaling_layer.calculate_logarithmic_outputs(inputs);
+   assert_true(outputs_3.dimension(0) == 1, LOG);
+   assert_true(outputs_3.dimension(1) == 1, LOG);
+
+   assert_true(abs(outputs_3(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
+
+   // Test 1
+
+   unscaling_layer.set(2);
+
+   Tensor<type, 2> standard_deviation(2,4);
+   standard_deviation.setValues({{-1,1,-1,2},{-1,1,1,4}});
+
+   unscaling_layer.set_descriptives_eigen(standard_deviation);
+   inputs.resize(1,2);
+   inputs.setConstant(1);
+   outputs_3 = unscaling_layer.calculate_logarithmic_outputs(inputs);
+
+   assert_true(outputs_3.dimension(0) == 1, LOG);
+   assert_true(outputs_3.dimension(1) == 2, LOG);
+   assert_true(abs(outputs_3(0) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs_3(1) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
+}
+
 
 void UnscalingLayerTest::test_write_expression()
 {
@@ -903,7 +997,6 @@ void UnscalingLayerTest::test_write_expression()
 }
 
 
-
 void UnscalingLayerTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -954,6 +1047,8 @@ void UnscalingLayerTest::run_test_case()
 
    // Get methods
 
+   test_get_dimensions();
+
    // Unscaling layer architecture
 
    test_get_inputs_number();
@@ -963,17 +1058,6 @@ void UnscalingLayerTest::run_test_case()
 
    test_get_minimums();
    test_get_maximums();
-
-   /*
-   test_get_means();
-   test_get_standard_deviations();*/
-
-   /*
-   test_get_minimum();
-   test_get_maximum();
-   test_get_mean();
-   test_get_standard_deviation();
-*/
 
    // Variables descriptives
 
@@ -1001,30 +1085,33 @@ void UnscalingLayerTest::run_test_case()
    test_set_minimum();
    test_set_maximum();
 
-/*   test_set_mean();
-   test_set_standard_deviation();*/
+   test_set_mean();
+   test_set_standard_deviation();
 
-   /*
-   test_set_minimums();
-   test_set_maximums();
-   test_set_means();
-   test_set_standard_deviations();*/
 
    // Variables descriptives
-
-//   test_set_statistics();
 
    // Variables scaling and unscaling
 
    test_get_unscaling_method();
 
+   test_get_unscaling_method_name();
+
    // Display messages
 
    test_set_display();
 
+   // Check methods
+
+   test_is_empty();
+
    // Output methods
 
    test_calculate_outputs();
+
+   test_calculate_minimum_maximum_outputs();
+   test_calculate_mean_standard_deviation_outputs();
+   test_calculate_logarithmic_outputs();
 
    // Expression methods
 

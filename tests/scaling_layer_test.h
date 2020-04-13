@@ -44,8 +44,8 @@ public:
 
    // Multilayer perceptron architecture 
 
-   void test_get_neurons_number();
    void test_get_inputs_number();
+   void test_get_neurons_number();
 
    // Statistics
 
@@ -61,10 +61,6 @@ public:
 
    void test_get_scaling_method();
    void test_get_scaling_method_name();
-
-   // Display warning 
-
-   void test_get_display_inputs_warning();
 
    // Display messages
 
@@ -119,15 +115,12 @@ public:
    void test_set_minimum();
    void test_set_maximum();
 
-   void test_set_statistics();
-
    // Scaling method
 
    void test_set_scaling_method();
 
    // Display messages
 
-   void test_set_display_inputs_warning();
    void test_set_display();
 
    // Input range
@@ -145,6 +138,7 @@ public:
    // XML expression methods
 
    void test_write_expression();
+   void test_object_to_string();
 
    // Serialization methods
 
