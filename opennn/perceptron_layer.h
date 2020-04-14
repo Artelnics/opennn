@@ -464,7 +464,15 @@ public:
 
                hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
-               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+               cout << "Hidden delta 1: " << hidden_delta << endl;
+
+               cout << "Activations derivatives: " << activations_derivatives << endl;
+
+
+
+//               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+
+//               cout << "Hidden delta 2: " << hidden_delta << endl;
 
                return;
             }

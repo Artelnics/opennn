@@ -265,12 +265,17 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
 cout << "Before forward propagate" << endl;
    neural_network.forward_propagate(batch, forward_propagation);
+
+
+
+
 cout << "After forward propagate" << endl;
    nse.set_device_pointer(&device);
 
 cout << "Before back propagate" << endl;
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
 cout << "After back propagate" << endl;
+/*
 //   error_gradient = training_back_propagation.gradient;
 
 //   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
@@ -283,6 +288,7 @@ cout << "After back propagate" << endl;
 //   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+*/
 }
 /*
    neural_network.set();
