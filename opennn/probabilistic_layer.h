@@ -175,9 +175,9 @@ public:
 
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_2d, forward_propagation.activations_derivatives_3d);
+       calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                         forward_propagation.activations_2d,
+                                         forward_propagation.activations_derivatives_3d);
    }
 
    // Activations
@@ -262,11 +262,11 @@ public:
 
         switch(activation_function)
         {
-
             case Logistic: logistic_derivatives(combinations_2d, activations, activations_derivatives); return;
 
             case Softmax: softmax_derivatives(combinations_2d, activations, activations_derivatives); return;
 
+            default: return;
        }
    }
 
@@ -289,7 +289,9 @@ public:
 
            TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
 
-           cout << "Activations derivativeS: " << activations_derivatives << endl;
+           cout << "Activations derivative: " << activations_derivatives << endl;
+
+           cout << "output gradient: " << output_gradient << endl;
 
            switch(device_pointer->get_type())
            {
@@ -309,6 +311,8 @@ public:
                    output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
                    cout << "output delta: " << output_delta << endl;
+
+                   cout << "Output delta diemsions: " << output_delta.dimensions().size() << endl;
 
                    return;
                }
