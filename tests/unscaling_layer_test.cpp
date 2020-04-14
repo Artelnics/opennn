@@ -448,8 +448,11 @@ void UnscalingLayerTest::test_set_default()
 
    UnscalingLayer ul;
 
-   assert_true( ul.get_type() == Layer::Unscaling, LOG);
-   assert_true( ul.get_type() == 7, LOG);
+   ul.set_default();
+
+   assert_true(ul.get_type() == Layer::Unscaling, LOG);
+   assert_true(ul.get_type() == 7, LOG);
+   assert_true(ul.get_unscaling_method() == UnscalingLayer::MinimumMaximum, LOG);
 }
 
 

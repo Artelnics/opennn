@@ -50,6 +50,22 @@ public:
 
    void test_get_display();
 
+   // Appending layers
+
+   void test_add_layer();
+   void check_layer_type();
+
+   // Get methods
+
+   void test_has_methods();
+
+   void test_get_inputs();
+   void test_get_outputs();
+
+   void test_get_trainable_layers();
+   void test_get_layers_type_pointers();
+   void test_get_layer_pointer();
+
    // Set methods
 
    void test_set();
@@ -57,7 +73,18 @@ public:
    void test_set_names();
    void test_set_number();
 
+   void test_set_pointers();
+
    void test_set_default();
+
+   // Layers
+
+   void test_get_layers_number();
+
+   // Architecture
+
+   void test_inputs_outputs_number();
+   void test_get_architecture();
 
    // Architecture
 
@@ -92,8 +119,6 @@ public:
 
    void test_write_expression();
    void test_save_expression();
-
-   void test_add_layer();
 
    // Serialization methods
 
