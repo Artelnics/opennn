@@ -1989,12 +1989,27 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 {
 
-    /// @todo for missing values
     Tensor<type, 1> distances(2);
+
+    const Index nans = count_nan(vector);
+    const Index new_size = vector.size() - nans;
+
+    Tensor<type, 1> new_vector(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(!::isnan(vector(i)))
+        {
+            new_vector(index) = vector(i);
+            index++;
+        }
+    }
 
     const Index n = vector.dimension(0);
 
-    Tensor<type, 1> sorted_vector(vector);
+    Tensor<type, 1> sorted_vector(new_vector);
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
@@ -2010,7 +2025,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     for(Index i = 0; i < n; i++)
     {
         const type normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc((mean - sorted_vector(i)))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2)))));
-        /*        const type half_normal_distribution = erf((sorted_vector(i))/(standard_deviation * sqrt(2))); */
+
         const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
 
         type empirical_distribution;
@@ -2047,7 +2062,6 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         #pragma omp critical
         {
             distances(0) += abs(normal_distribution - empirical_distribution);
-            /*            distances(1) += abs(half_normal_distribution - empirical_distribution); */
             distances(1) += abs(uniform_distribution - empirical_distribution);
         }
     }
@@ -3136,60 +3150,60 @@ type strongest(const Tensor<type, 1>& vector)
 
 Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 {
-    /*
-        const Index integers_number = matrix.size();
-        Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
-        Tensor<type, 1> values = matrix.chip(1,1);
+/*
+    const Index integers_number = matrix.size();
+    Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
+    Tensor<type, 1> values = matrix.chip(1,1);
 
-        #ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-        if(integers_number == 0)
+    if(integers_number == 0)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Tensor<type, 1> calculate_means_integers(const Tensor<type, 2>& \n"
+              << "Number of integers must be greater than 0.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    const Index rows_number = matrix.dimension(0);
+
+    Tensor<type, 1> means(elements_uniques);
+
+    type sum = 0;
+    Index count = 0;
+
+    for(Index i = 0; i < integers_number; i++)
+    {
+        sum = 0;
+        count = 0;
+
+        for(unsigned j = 0; j < rows_number; j++)
         {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: Matrix template.\n"
-                  << "Tensor<type, 1> calculate_means_integers(const Tensor<type, 2>& \n"
-                  << "Number of integers must be greater than 0.\n";
-
-           throw logic_error(buffer.str());
-        }
-
-        #endif
-
-        const Index rows_number = matrix.dimension(0);
-
-        Tensor<type, 1> means(elements_uniques);
-
-        type sum = 0;
-        Index count = 0;
-
-        for(Index i = 0; i < integers_number; i++)
-        {
-            sum = 0;
-            count = 0;
-
-            for(unsigned j = 0; j < rows_number; j++)
+            if(matrix(j,0) == elements_uniques(i) && !::isnan(values(j)))
             {
-                if(matrix(j,0) == elements_uniques(i) && !::isnan(values(j)))
-                {
-                    sum += matrix(j,1);
-                    count++;
-                }
-            }
-
-            if(count != 0)
-            {
-                means(i) = static_cast<type>(sum)/static_cast<type>(count);
-
-            }
-            else
-            {
-                means(i) = 0;
+                sum += matrix(j,1);
+                count++;
             }
         }
 
-        return means;
-    */
+        if(count != 0)
+        {
+            means(i) = static_cast<type>(sum)/static_cast<type>(count);
+
+        }
+        else
+        {
+            means(i) = 0;
+        }
+    }
+
+    return means;
+*/
     return Tensor<type, 1>();
 }
 

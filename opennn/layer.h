@@ -289,16 +289,16 @@ protected:
     void hyperbolic_tangent(const Tensor<type,1>&, Tensor<type,1>&) const;
     void logistic(const Tensor<type,1>&, Tensor<type,1>&) const;
     void linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void binary(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const;
 
     void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
     void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
