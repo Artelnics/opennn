@@ -1050,7 +1050,7 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         maximum_index = maximal_index(x.chip(i, 1));
 
-        y(i,maximum_index) = 1;
+        y(i, maximum_index) = 1;
     }
 
 }
@@ -1072,7 +1072,6 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
             return;
         }
-
         case Device::EigenThreadPool:
         {
             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
@@ -1184,9 +1183,6 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
 
             activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
 
-            //activations_derivatives.setConstant(1);
-            //activations_derivatives.device(*thread_pool_device) -= activations.square();
-
             return;
         }
     }
@@ -1199,35 +1195,35 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 {
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
+            activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+            activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
 
-        return;
-    }
+            return;
+        }
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
+            activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+            activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
 
-        return;
-    }
+            return;
+        }
     }
 
 }
@@ -1248,53 +1244,46 @@ void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
+
+    const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
+
+    Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
+    ones.setConstant(1);
+
+    Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
+    zeros.setConstant(0);
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
+            activations.device(*default_device) = if_sentence.select(ones, zeros);
 
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
-        ones.setConstant(1);
+            // Activations Derivatives
 
-        Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
-        zeros.setConstant(0);
+            activations_derivatives.setZero();
 
-        activations.device(*default_device) = if_sentence.select(ones, zeros);
+            break;
+        }
 
-        // Activations Derivatives
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        activations_derivatives.setZero();
+            // Activations
 
-        break;
-    }
+            activations.device(*thread_pool_device) = if_sentence.select(ones, zeros);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+            // Activations Derivatives
 
-        // Activations
+            activations_derivatives.setZero();
 
-        const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
-
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
-        ones.setConstant(1);
-
-        Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
-        zeros.setConstant(0);
-
-        activations.device(*thread_pool_device) = if_sentence.select(ones, zeros);
-
-        // Activations Derivatives
-
-        activations_derivatives.setZero();
-
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1304,49 +1293,44 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>& combinations,
                                             Tensor<type, 2>& activations,
                                             Tensor<type, 2>& activations_derivatives) const
 {
+
+    const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
+
+    Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
+
+    ones.setConstant(1);
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
+            activations.device(*default_device) = if_sentence.select(ones, -ones);
 
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
+            // Activations Derivatives
 
-        ones.setConstant(1);
+            activations_derivatives.setZero();
 
-        activations.device(*default_device) = if_sentence.select(ones, -ones);
+            break;
+        }
 
-        // Activations Derivatives
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        activations_derivatives.setZero();
+            // Activations
 
-        break;
-    }
+            activations.device(*thread_pool_device) = if_sentence.select(ones, -ones);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+            // Activations Derivatives
 
-        // Activations
+            activations_derivatives.setZero();
 
-        const Tensor<bool, 2> if_sentence = combinations > combinations.constant(0);
-
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
-
-        ones.setConstant(1);
-
-        activations.device(*thread_pool_device) = if_sentence.select(ones, -ones);
-
-        // Activations Derivatives
-
-        activations_derivatives.setZero();
-
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1356,53 +1340,46 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& combinations,
                                          Tensor<type, 2>& activations,
                                          Tensor<type, 2>& activations_derivatives) const
 {
+
+    const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+
+    Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
+    zeros.setZero();
+
+    Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
+    ones.setConstant(1.);
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+            activations.device(*default_device) = if_sentence.select(zeros, combinations);
 
-        Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
-        zeros.setZero();
+            // Activations Derivatives
 
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
-        ones.setConstant(1.);
+            activations_derivatives.device(*default_device) = if_sentence.select(zeros, ones);
 
-        activations.device(*default_device) = if_sentence.select(zeros, combinations);
+            break;
+        }
 
-        // Activations Derivatives
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        activations_derivatives.device(*default_device) = if_sentence.select(zeros, ones);
+            // Activations
 
-        break;
-    }
+            activations.device(*thread_pool_device) = if_sentence.select(zeros, combinations);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+            // Activations Derivatives
 
-        // Activations
+            activations_derivatives.device(*thread_pool_device) = if_sentence.select(zeros, ones);
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
-
-        Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
-        zeros.setZero();
-
-        Tensor<type, 2> ones(combinations.dimension(0), combinations.dimension(1));
-        ones.setConstant(1.);
-
-        activations.device(*thread_pool_device) = if_sentence.select(zeros, combinations);
-
-        // Activations Derivatives
-
-        activations_derivatives.device(*thread_pool_device) = if_sentence.select(zeros, ones);
-
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1412,73 +1389,60 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& combina
                                                   Tensor<type, 2>& activations,
                                                   Tensor<type, 2>& activations_derivatives) const
 {
+
+    const type lambda = static_cast<type>(1.0507);
+
+    const type alpha = static_cast<type>(1.67326);
+
+    const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+
+    Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+
+    Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+
+    f_1 = lambda*alpha*(combinations.exp()-static_cast<type>(1.0));
+
+    f_2 = lambda*combinations;
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const type lambda = static_cast<type>(1.0507);
+            activations.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        const type alpha = static_cast<type>(1.67326);
+            // Activations Derivatives
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+            f_1 = lambda*alpha*combinations.exp();
 
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+            f_2 = combinations.constant(1)*lambda;
 
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+            activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        f_1 = lambda*alpha*(combinations.exp()-static_cast<type>(1.0));
+            break;
+        }
 
-        f_2 = lambda*combinations;
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        activations.device(*default_device) = if_sentence.select(f_1, f_2);
+            // Activations
 
-        // Activations Derivatives
+            activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-        f_1 = lambda*alpha*combinations.exp();
+            // Activations Derivatives
 
-        f_2 = combinations.constant(1)*lambda;
+            f_1 = lambda*alpha*combinations.exp();
 
-        activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
+            f_2 = combinations.constant(1)*lambda;
 
-        break;
-    }
+            activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        // Activations
-
-        const type lambda = static_cast<type>(1.0507);
-
-        const type alpha = static_cast<type>(1.67326);
-
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
-
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
-
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
-
-        f_1 = lambda*alpha*(combinations.exp()-static_cast<type>(1.0));
-
-        f_2 = lambda*combinations;
-
-        activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        // Activations Derivatives
-
-        f_1 = lambda*alpha*combinations.exp();
-
-        f_2 = combinations.constant(1)*lambda;
-
-        activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1488,37 +1452,38 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*default_device) = (combinations.constant(1) + combinations.exp()).log();
+            activations.device(*default_device) = (combinations.constant(1) + combinations.exp()).log();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
+            activations_derivatives.device(*default_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
 
-        break;
-    }
+            break;
+        }
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*thread_pool_device) = (combinations.constant(1) + combinations.exp()).log();
+            activations.device(*thread_pool_device) = (combinations.constant(1) + combinations.exp()).log();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        activations_derivatives.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
+            activations_derivatives.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
 
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1528,64 +1493,56 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
+
+    const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+
+    Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+
+    Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+
+    f_1 = combinations / (static_cast<type>(1) - combinations);
+
+    f_2 = combinations / (static_cast<type>(1) + combinations);
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+            activations.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+            // Activations Derivatives
 
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+            f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - combinations).pow(2);
 
-        f_1 = combinations / (static_cast<type>(1) - combinations);
+            f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations).pow(2);
 
-        f_2 = combinations / (static_cast<type>(1) + combinations);
+            activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        activations.device(*default_device) = if_sentence.select(f_1, f_2);
+            break;
+        }
 
-        // Activations Derivatives
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - combinations).pow(2);
+            // Activations
 
-        f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations).pow(2);
+            activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-        activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
+            // Activations Derivatives
 
-        break;
-    }
+            f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - combinations).pow(2);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-        // Activations
+            f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations).pow(2);
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+            activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
-
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
-
-        f_1 = combinations / (static_cast<type>(1) - combinations);
-
-        f_2 = combinations / (static_cast<type>(1) + combinations);
-
-        activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        // Activations Derivatives
-
-        f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - combinations).pow(2);
-
-        f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations).pow(2);
-
-        activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
+            break;
+        }
     }
 
 }
@@ -1595,74 +1552,64 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
 {
+
+    const type alpha = static_cast<type>(1.0);
+
+    const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
+
+    Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+
+    Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+
+    f_1 = alpha*(combinations.exp() - static_cast<type>(1));
+
+    f_2 = combinations;
+
+
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations <= combinations.constant(0);
+            activations.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        const type alpha = static_cast<type>(1.0);
+            // Activations Derivatives
 
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
+            f_1 = alpha * combinations.exp();
 
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
+            f_2 = combinations.constant(1.);
 
-        f_1 = alpha*(combinations.exp() - static_cast<type>(1));
+            activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
 
-        f_2 = combinations;
+            break;
+        }
 
-        activations.device(*default_device) = if_sentence.select(f_1, f_2);
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        // Activations Derivatives
+            // Activations
 
-        f_1 = alpha * combinations.exp();
+            activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-        f_2 = combinations.constant(1.);
+            // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = if_sentence.select(f_1, f_2);
+            f_1 = alpha * combinations.exp();
 
-        break;
-    }
+            f_2 = combinations.constant(1.);
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+            activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 
-        // Activations
-
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
-
-        const type alpha = static_cast<type>(1.0);
-
-        Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
-
-        Tensor<type, 2> f_2(combinations.dimension(0), combinations.dimension(1));
-
-        f_1 = alpha*(combinations.exp() - static_cast<type>(1));
-
-        f_2 = combinations;
-
-        activations.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        // Activations Derivatives
-
-        f_1 = alpha * combinations.exp();
-
-        f_2 = combinations.constant(1.);
-
-        activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
+            break;
+        }
     }
 
 }
 
-
+// Activations 3d
 
 void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
