@@ -1209,7 +1209,9 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+//        activations_derivatives.device(*default_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+
+        activations_derivatives.device(*default_device) = activations*(1-activations);
 
         return;
     }
@@ -1224,7 +1226,8 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations Derivatives
 
-        activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+//        activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+        activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 
         return;
     }
@@ -1678,8 +1681,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
 
-        cout << "activations: " << activations << endl;
-
         // Activations Derivatives
 
         Index dim = combinations.dimension(1);
@@ -1692,8 +1693,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
         ad_3d.chip(0,0) = ad_2d;
 
         activations_derivatives.device(*default_device) = ad_3d;
-
-        cout << "activations derivatives: " << activations_derivatives << endl;
 
         return;
     }
@@ -1708,16 +1707,12 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations Derivatives
 
-        Index dim = combinations.dimension(1);
+        activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 
-        Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
-
-        Tensor<type,3> ad_3d(1, dim, 1);
-        ad_3d.setZero();
-
-        ad_3d.chip(0,0) = ad_2d;
-
-        activations_derivatives.device(*thread_pool_device) = ad_3d;
+        cout << "Activations derivatives: " << activations_derivatives(0,0,0) << endl;
+        cout << "Activations derivatives dimension 0: " << activations_derivatives.dimension(0) << endl;
+        cout << "Activations derivatives dimension 1: " << activations_derivatives.dimension(1) << endl;
+        cout << "Activations derivatives dimensiion 2: " << activations_derivatives.dimension(2) << endl;
 
         return;
     }

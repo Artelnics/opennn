@@ -305,11 +305,13 @@ public:
        // Loss index
 
        calculate_error(batch, forward_propagation, back_propagation);
-cout << "Calculate error" << endl;
+cout << "Calculate error: " << back_propagation.error << endl;
        calculate_output_gradient(batch, forward_propagation, back_propagation);
-cout << "Calculate output gradient" << endl;
+cout << "Calculate output gradient: " << back_propagation.output_gradient << endl;
        calculate_layers_delta(forward_propagation, back_propagation);
 cout << "Calculate layers delta" << endl;
+
+/*cout << "Calculate layers delta" << endl;
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 cout << "Calculate error gradient" << endl;
        // Regularization
@@ -322,6 +324,7 @@ cout << "Calculate error gradient" << endl;
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
+       */
    }
 
    // Second Order loss
