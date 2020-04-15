@@ -1091,8 +1091,7 @@ Index NeuralNetwork::get_layers_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
-
-    Tensor<Index, 1> layers_neurons_number;
+    Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
