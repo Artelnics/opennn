@@ -125,6 +125,15 @@ public:
 
    void set_parameters_random();
 
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
+   {
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
+
+       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+   }
+
    // Combinations
 
    void calculate_combinations(const Tensor<type, 2>& inputs,
@@ -347,58 +356,9 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation) const
-   {
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+                                 Layer::BackPropagation& back_propagation) const;
 
-                back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
-
-                return;
-            }
-
-            case Device::EigenThreadPool:
-            {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
-
-                return;
-            }
-       }
-   }
-
-
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
-
-
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(gradient.data() + index,
-              back_propagation.biases_derivatives.data(),
-              static_cast<size_t>(biases_number)*sizeof(type));
-
-       memcpy(gradient.data() + index + biases_number,
-              back_propagation.synaptic_weights_derivatives.data(),
-              static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
+   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
    // Expression methods
 
