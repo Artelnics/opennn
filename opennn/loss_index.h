@@ -311,7 +311,7 @@ cout << "Calculate output gradient: " << back_propagation.output_gradient << end
        calculate_layers_delta(forward_propagation, back_propagation);
 cout << "Calculate layers delta" << endl;
 
-/*cout << "Calculate layers delta" << endl;
+cout << "Calculate layers delta" << endl;
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 cout << "Calculate error gradient" << endl;
        // Regularization
@@ -324,7 +324,6 @@ cout << "Calculate error gradient" << endl;
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
-       */
    }
 
    // Second Order loss
@@ -391,6 +390,8 @@ cout << "Calculate error gradient" << endl;
 
         cout << "Begin calculate output delta" << endl;
 
+        cout << "Trainable layers number: " << trainable_layers_number-1 << endl;
+
         trainable_layers_pointers(trainable_layers_number-1)
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
@@ -402,6 +403,8 @@ cout << "Calculate error gradient" << endl;
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
       {
+          cout << "i+1: " << i+1 << endl;
+
           Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
 
           trainable_layers_pointers(i)
