@@ -38,14 +38,6 @@ public:
 
    void test_assignment_operator();
 
-  // Parameters methods
-
-   void test_get_parameters_number();
-   void test_get_parameters();   
-
-   void test_get_trainable_layers_parameters_number();
-   void test_get_trainable_layers_parameters();
-
    // Display messages
 
    void test_get_display();
@@ -92,21 +84,30 @@ public:
 
    // Parameters
 
+   // Parameters methods
+
+   void test_get_parameters();
+   void test_get_trainable_layers_parameters();
+
    void test_set_parameters();
-
-   // Display messages
-
-   void test_set_display_inputs_warning();
-   void test_set_display();
 
    // Parameters initialization methods
 
    void test_set_parameters_constant();
    void test_set_parameters_random();
 
-   // Parameters norm 
+   // Display messages
+
+   void test_set_display_inputs_warning();
+   void test_set_display();
+
+   // Parameters norm / descriptives / histogram
 
    void test_calculate_parameters_norm();
+   void test_calculate_parameters_descriptives();
+   void test_calculate_parameters_histogram();
+
+   void test_perturbate_parameters();
 
    // Output 
 
