@@ -42,25 +42,25 @@ int main(void)
 
         DataSet data_set;
 
+        data_set.generate_Rosenbrock_data(samples, variables+1);
+/*
         data_set.set_default();
 
         data_set.set_separator(',');
 
         data_set.set_has_columns_names(true);
-//        data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_data_file_name("D:/z.data/rosenbrock_400000_100.csv");
 
         data_set.read_csv();
 
-//        data_set.save_data();
+        data_set.save_data();
 
-//        DataSet data_set("D:/z.data/rosenbrock_1000000_1000.csv",',',false);
-
+*/
         data_set.set_device_pointer(&device);
 
         data_set.set_training();
-/*
+
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
@@ -105,7 +105,7 @@ int main(void)
         stochastic_gradient_descent_pointer->set_batch_size(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
-*/
+
         cout << "End" << endl;
 
         return 0;
