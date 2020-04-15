@@ -332,7 +332,7 @@ Tensor<type, 1> MeanSquaredError::calculate_training_error_terms(const Tensor<ty
 
     return Tensor<type, 1>();
 }
-*/
+
 /// This method calculates the second order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
@@ -436,9 +436,9 @@ void MeanSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& b
 //        terms_second_order_loss.gradient += calculate_regularization_gradient();
 //        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
-*/
-}
 
+}
+*/
 
 /// Returns a string with the name of the mean squared error loss type, "MEAN_SQUARED_ERROR".
 

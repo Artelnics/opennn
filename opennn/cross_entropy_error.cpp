@@ -86,6 +86,95 @@ CrossEntropyError::~CrossEntropyError()
 }
 
 
+void CrossEntropyError::calculate_error(const DataSet::Batch& batch,
+                     const NeuralNetwork::ForwardPropagation& forward_propagation,
+                     LossIndex::BackPropagation& back_propagation) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    const Index rows_number = outputs.dimension(0);
+    const Index columns_number = outputs.dimension(1);
+
+    type cross_entropy_error = 0.0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            const type target = targets(i,j);
+            const type output = outputs(i,j);
+
+            if(abs(target) < numeric_limits<type>::min() && abs(output) < numeric_limits<type>::min())
+            {
+                // Do nothing
+            }
+            else if(abs(target - 1) < numeric_limits<type>::min()
+                 && abs(output - 1) < numeric_limits<type>::min())
+            {
+                // Do nothing
+            }
+            else if(abs(output) < numeric_limits<type>::min())
+            {
+                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.000000001));
+            }
+            else if(abs(output - 1) < numeric_limits<type>::min())
+            {
+                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.999999999));
+            }
+            else
+            {
+                cross_entropy_error -= (1 - target)*log(1-output) + target*log(output);
+            }
+        }
+    }
+
+    back_propagation.error = cross_entropy_error;
+}
+
+
+void CrossEntropyError::calculate_output_gradient(const DataSet::Batch& batch,
+                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
+{
+     #ifdef __OPENNN_DEBUG__
+
+     check();
+
+     #endif
+
+     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+     const Tensor<type, 2>& targets = batch.targets_2d;
+     const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+
+     switch(device_pointer->get_type())
+     {
+          case Device::EigenDefault:
+          {
+              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+              back_propagation.output_gradient.device(*default_device) =
+                      -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+
+              return;
+          }
+
+          case Device::EigenThreadPool:
+          {
+             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             back_propagation.output_gradient.device(*thread_pool_device) =
+                     -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+
+             return;
+          }
+     }
+}
+
+
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
 string CrossEntropyError::get_error_type() const
@@ -216,95 +305,6 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 //     }
 //  }
 }
-
-void CrossEntropyError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    const Index rows_number = outputs.dimension(0);
-    const Index columns_number = outputs.dimension(1);
-
-    type cross_entropy_error = 0.0;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            const type target = targets(i,j);
-            const type output = outputs(i,j);
-
-            if(abs(target) < numeric_limits<type>::min() && abs(output) < numeric_limits<type>::min())
-            {
-                // Do nothing
-            }
-            else if(abs(target - 1) < numeric_limits<type>::min()
-                 && abs(output - 1) < numeric_limits<type>::min())
-            {
-                // Do nothing
-            }
-            else if(abs(output) < numeric_limits<type>::min())
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.000000001));
-            }
-            else if(abs(output - 1) < numeric_limits<type>::min())
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.999999999));
-            }
-            else
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(output);
-            }
-        }
-    }
-
-    back_propagation.error = cross_entropy_error;
-}
-
-
-void CrossEntropyError::calculate_output_gradient(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
-{
-     #ifdef __OPENNN_DEBUG__
-
-     check();
-
-     #endif
-
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     const Tensor<type, 2>& targets = batch.targets_2d;
-     const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-              back_propagation.output_gradient.device(*default_device) =
-                      -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             back_propagation.output_gradient.device(*thread_pool_device) =
-                     -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-             return;
-          }
-     }
-}
-
 
 }
 

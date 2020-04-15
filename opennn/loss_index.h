@@ -331,39 +331,7 @@ cout << "Calculate error gradient" << endl;
    void calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                           NeuralNetwork::ForwardPropagation& forward_propagation,
                                           BackPropagation& back_propagation,
-                                          SecondOrderLoss& second_order_loss) const
-   {
-       // First Order
-
-       calculate_error(batch, forward_propagation, back_propagation);
-
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
-
-       calculate_layers_delta(forward_propagation, back_propagation);
-
-       // Second Order
-
-       calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-
-       calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-
-       calculate_hessian_approximation(second_order_loss);
-
-       // Loss
-
-       second_order_loss.loss = back_propagation.error;
-
-       // Regularization
-
-       if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-           second_order_loss.loss += regularization_weight*calculate_regularization(parameters);
-           second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-           second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
-       }
-   }
+                                          SecondOrderLoss& second_order_loss) const;
 
    virtual void calculate_Jacobian_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, SecondOrderLoss&) const {}
 
