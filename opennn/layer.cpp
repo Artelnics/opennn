@@ -1619,49 +1619,49 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 {
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+            DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
+            activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        Index dim = combinations.dimension(1);
+            Index dim = combinations.dimension(1);
 
-        Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
+            Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
 
-        Tensor<type,3> ad_3d(1, dim, 1);
-        ad_3d.setZero();
+            Tensor<type,3> ad_3d(1, dim, 1);
+            ad_3d.setZero();
 
-        ad_3d.chip(0,0) = ad_2d;
+            ad_3d.chip(0,0) = ad_2d;
 
-        activations_derivatives.device(*default_device) = ad_3d;
+            activations_derivatives.device(*default_device) = ad_3d;
 
-        return;
-    }
+            return;
+        }
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        // Activations
+            // Activations
 
-        activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
+            activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
 
-        // Activations Derivatives
+            // Activations Derivatives
 
-        activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
+            activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 
-        cout << "Activations derivatives: " << activations_derivatives(0,0,0) << endl;
-        cout << "Activations derivatives dimension 0: " << activations_derivatives.dimension(0) << endl;
-        cout << "Activations derivatives dimension 1: " << activations_derivatives.dimension(1) << endl;
-        cout << "Activations derivatives dimensiion 2: " << activations_derivatives.dimension(2) << endl;
+            cout << "Activations derivatives: " << activations_derivatives(0,0,0) << endl;
+            cout << "Activations derivatives dimension 0: " << activations_derivatives.dimension(0) << endl;
+            cout << "Activations derivatives dimension 1: " << activations_derivatives.dimension(1) << endl;
+            cout << "Activations derivatives dimensiion 2: " << activations_derivatives.dimension(2) << endl;
 
-        return;
-    }
+            return;
+        }
     }
 
 }
@@ -1677,42 +1677,42 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
     switch(device_pointer->get_type())
     {
-    case Device::EigenDefault:
-    {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        case Device::EigenDefault:
+        {
+    //        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        return;
-    }
+            return;
+        }
 
-    case Device::EigenThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        case Device::EigenThreadPool:
+        {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        //Activations
+            //Activations
 
-        sum.device(*thread_pool_device) = combinations.exp().sum();
+            sum.device(*thread_pool_device) = combinations.exp().sum();
 
-        activations.device(*thread_pool_device) = combinations.exp() / sum(0);
+            activations.device(*thread_pool_device) = combinations.exp() / sum(0);
 
-        //Activations derivatives
+            //Activations derivatives
 
-        Tensor<type,3> activations_derivatives_(dim, dim, 1);
+            Tensor<type,3> activations_derivatives_(dim, dim, 1);
 
-        for(Index i = 0; i < dim; i++)
-        {            
-            for(Index j = 0; j < dim; j++)
-            {                
-                Index delta = 0;
-                if(i == j) delta = 1;
+            for(Index i = 0; i < dim; i++)
+            {
+                for(Index j = 0; j < dim; j++)
+                {
+                    Index delta = 0;
+                    if(i == j) delta = 1;
 
-                activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
-            }
-       }
+                    activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
+                }
+           }
 
-        activations_derivatives.device(*thread_pool_device) = activations_derivatives_;
+            activations_derivatives.device(*thread_pool_device) = activations_derivatives_;
 
-        return;
-    }
+            return;
+        }
 }
 
     /*

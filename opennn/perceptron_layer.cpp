@@ -563,6 +563,42 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
+void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
+                            const Tensor<type, 2>& biases,
+                            const Tensor<type, 2>& synaptic_weights,
+                            Tensor<type, 2>& combinations_2d) const
+{
+    const Index batch_instances_number = inputs.dimension(0);
+    const Index biases_number = get_biases_number();
+
+    for(Index i = 0; i < biases_number; i++)
+    {
+        fill_n(combinations_2d.data() + i*batch_instances_number, batch_instances_number, biases(i));
+    }
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
+
+             return;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+
+             return;
+         }
+    }
+}
+
+
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     const Index inputs_dimensions_number = inputs.rank();
