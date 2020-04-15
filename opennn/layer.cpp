@@ -1205,7 +1205,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
             // Activations Derivatives
 
-        activations_derivatives.device(*default_device) = activations*(1-activations);
+            activations_derivatives.device(*default_device) = activations*(1-activations);
 
             return;
         }
@@ -1220,8 +1220,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
             // Activations Derivatives
 
-
-//        activations_derivatives.device(*thread_pool_device) = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
             activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 
             return;

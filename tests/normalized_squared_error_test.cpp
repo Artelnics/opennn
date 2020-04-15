@@ -226,9 +226,10 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    // Test perceptron and probabilistic
 {
+
    instances_number = 10;
-   inputs_number = 5;
-   hidden_neurons = 7;
+   inputs_number = 2;
+   hidden_neurons = 3;
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
@@ -259,36 +260,30 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_normalization_coefficient();
 
-
-
    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
 cout << "Before forward propagate" << endl;
    neural_network.forward_propagate(batch, forward_propagation);
 
-
-
-
 cout << "After forward propagate" << endl;
    nse.set_device_pointer(&device);
-
 cout << "Before back propagate" << endl;
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
 cout << "After back propagate" << endl;
-/*
-//   error_gradient = training_back_propagation.gradient;
 
-//   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
+   error_gradient = training_back_propagation.gradient;
 
-//   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
+   cout << "Before numerical differentiation" << endl;
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
+   cout << "After numerical differentiation" << endl;
 
-//   cout << "Error gradient: " << error_gradient << endl;
-//   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-//   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+   cout << "Error gradient: " << error_gradient << endl;
+   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "Difference: " << difference << endl;
 
-//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
-*/
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 /*
    neural_network.set();

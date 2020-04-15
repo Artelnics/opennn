@@ -1278,7 +1278,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 }
 
 
-
 /// Calculates the forward propagation in the neural network.
 /// @param batch Batch of data set that contains the inputs and targets to be trained.
 /// @param paramters Parameters of neural network.
