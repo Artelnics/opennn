@@ -2175,11 +2175,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
             activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 
-            cout << "Activations derivatives: " << activations_derivatives(0,0,0) << endl;
-            cout << "Activations derivatives dimension 0: " << activations_derivatives.dimension(0) << endl;
-            cout << "Activations derivatives dimension 1: " << activations_derivatives.dimension(1) << endl;
-            cout << "Activations derivatives dimensiion 2: " << activations_derivatives.dimension(2) << endl;
-
             return;
         }
     }
