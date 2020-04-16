@@ -900,7 +900,7 @@ Tensor<type, 1> LossIndex:: calculate_training_error_gradient_numerical_differen
 
        parameters_backward(i) += h;
 
-       numerical_gradient(i) = (error_forward - error_backward)/(static_cast<type>(2.0)*h);
+       numerical_gradient(i) = (error_forward - error_backward)/(2*h);
     }
 
     return numerical_gradient;

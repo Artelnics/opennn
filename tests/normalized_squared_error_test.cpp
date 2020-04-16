@@ -174,7 +174,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-
+/*
    // Test trivial
 {
    data_set.set_device_pointer(&device);
@@ -220,21 +220,23 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
-}
+}*/
 
    neural_network.set();
 
    // Test perceptron and probabilistic
 {
 
-   instances_number = 10;
-   inputs_number = 2;
-   hidden_neurons = 3;
+   instances_number = 2;
+   inputs_number = 1;
+   hidden_neurons = 1;
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
+
+   cout << "Data: " << data_set.get_data() << endl;
 
    data_set.set_training();
 
@@ -246,7 +248,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    batch.fill(instances_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(outputs_number, outputs_number);
 
@@ -260,16 +262,14 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_normalization_coefficient();
 
+   nse.set_device_pointer(&device);
+
    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
-cout << "Before forward propagate" << endl;
+
    neural_network.forward_propagate(batch, forward_propagation);
 
-cout << "After forward propagate" << endl;
-   nse.set_device_pointer(&device);
-cout << "Before back propagate" << endl;
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
-cout << "After back propagate" << endl;
 
    error_gradient = training_back_propagation.gradient;
 

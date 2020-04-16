@@ -106,9 +106,13 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     const Tensor<type, 1> targets_mean = data_set_pointer->calculate_used_targets_mean();
 
+    cout << "Targets mean: " << targets_mean << endl;
+
     //Targets matrix
 
     const Tensor<type, 2> targets = data_set_pointer->get_target_data();
+
+    cout << "Targets: " << targets << endl;
 
     //Normalization coefficient
 

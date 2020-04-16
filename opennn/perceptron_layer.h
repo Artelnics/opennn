@@ -167,7 +167,7 @@ public:
        }
 
 #endif
-
+cout << "perceptron" << endl;
        calculate_combinations(inputs,
                               biases,
                               synaptic_weights,
@@ -176,6 +176,9 @@ public:
        calculate_activations_derivatives(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
                                          forward_propagation.activations_derivatives_2d);
+
+       cout << "Activations_2d: " << forward_propagation.activations_2d << endl;
+       cout << "Activations_derivatives_2d: " << forward_propagation.activations_derivatives_2d << endl;
    }
 
 
@@ -207,7 +210,10 @@ public:
        const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
                                                                    inputs_number, neurons_number);
 
-       calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
+       calculate_combinations(inputs,
+                              potential_biases,
+                              potential_synaptic_weights,
+                              forward_propagation.combinations_2d);
 
        calculate_activations_derivatives(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
