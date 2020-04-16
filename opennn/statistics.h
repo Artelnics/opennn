@@ -229,7 +229,6 @@ struct Histogram
      Tensor<type, 1> mean(const Tensor<type, 2>&);
      Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&);
      Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-//     Tensor<type, 1> columns_mean(const Tensor<type, 2>&);
      Tensor<type, 1> rows_means(const Tensor<type, 2>&, const Tensor<Index, 1>&);
 
      // Median
@@ -259,7 +258,6 @@ struct Histogram
      // Box plot
      BoxPlot box_plot(const Tensor<type, 1>&);
      BoxPlot box_plot(const Tensor<type, 1>&, const Tensor<Index, 1>&);
-//     Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>&, const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&);
 
      // Descriptives vector
      Descriptives descriptives(const Tensor<type, 1>&);
@@ -278,13 +276,12 @@ struct Histogram
 
      // Distribution
      Index perform_distribution_distance_analysis(const Tensor<type, 1>&);
-     Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&, const Tensor<Index, 1>&); ///@todo, to remove?
      type normal_distribution_distance(const Tensor<type, 1>&);
      type half_normal_distribution_distance(const Tensor<type, 1>&);
      type uniform_distribution_distance(const Tensor<type, 1>&);
 
      // Normality
-     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
+//     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
      type normality_parameter(const Tensor<type, 1>&);
      //bool perform_Lilliefors_normality_test(const Tensor<type, 1>&, const type&);
      //Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -312,15 +309,13 @@ struct Histogram
      Tensor<Index, 1> maximal_indices();
      Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
-     // Percentiles @todo, mix mising values with percentiles
+     // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);
-     Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>&);
 
      // Means by categories
      Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
      // NAN methods
-
      Index count_nan(const Tensor<type,1>&);
 }
 

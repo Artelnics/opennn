@@ -941,8 +941,6 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
-//    Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
-
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
     Tensor<type, 1> final_correlations = correlations.sum(rows_sum).abs();
@@ -1243,11 +1241,11 @@ void GeneticAlgorithm::calculate_rank_fitness()
 void GeneticAlgorithm::evolve_population()
 {
     Index zero_ocurrences;
-cout <<"selection" << endl;
+
     perform_selection();
-cout << "crossover" << endl;
+
     perform_crossover();
-cout << "mutation" << endl;
+
     perform_mutation();
 
     for(Index i = 0; i < population.dimension(0); i++)
@@ -1366,10 +1364,6 @@ void GeneticAlgorithm::perform_selection()
         }
 
         fitness_copy[selected_index] = -1;
-
-//        Tensor<type, 0> stop = fitness_copy.mean();
-
-//        if(stop(0) == -1.) break;
     }
 
     // Roulette wheel
