@@ -736,6 +736,62 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
 }
 
 
+void GradientDescent::update_epoch(
+        const DataSet::Batch& batch,
+        NeuralNetwork::ForwardPropagation& forward_propagation,
+        const LossIndex::BackPropagation& back_propagation,
+        OptimizationData& optimization_data)
+{
+
+    optimization_data.training_direction = calculate_training_direction(back_propagation.gradient);
+
+    if(l2_norm(optimization_data.training_direction) < numeric_limits<type>::min())
+        throw logic_error("Training direction is zero");
+
+    // Training slope
+
+    optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+
+    if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
+        throw logic_error("Training slope is equal or greater than zero");
+
+    // Get initial learning_rate
+
+    type initial_learning_rate = 0;
+
+    optimization_data.epoch == 0
+            ? initial_learning_rate = first_learning_rate
+            : initial_learning_rate = optimization_data.old_learning_rate;
+
+    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+                            batch,
+                            optimization_data.parameters,
+                            forward_propagation,
+                            back_propagation.loss,
+                            optimization_data.training_direction,
+                            initial_learning_rate);
+
+    optimization_data.learning_rate = directional_point.first;
+
+    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+        throw logic_error("Training rate is zero");
+
+    optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
+
+    optimization_data.old_parameters = optimization_data.parameters;
+
+    optimization_data.parameters += optimization_data.parameters_increment;
+
+    optimization_data.old_gradient = back_propagation.gradient;
+
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    optimization_data.old_training_loss = back_propagation.loss;
+}
+
+
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.

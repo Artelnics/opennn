@@ -247,19 +247,7 @@ public:
 
     type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    static vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor)
-    {
-        const size_t size = static_cast<size_t>(tensor.dimension(0));
-
-        vector<bool> new_vector(static_cast<size_t>(size));
-
-        for(size_t i = 0; i < size; i++)
-        {
-            new_vector[i] = tensor(static_cast<Index>(i));
-        }
-
-        return new_vector;
-    }
+    vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor);
 
     bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
 
