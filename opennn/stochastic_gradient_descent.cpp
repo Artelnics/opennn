@@ -549,6 +549,39 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 }
 
 
+void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
+                      OptimizationData& optimization_data)
+{
+    const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
+
+    optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
+
+    if(momentum > 0 && !nesterov)
+    {
+        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+        optimization_data.parameters += optimization_data.parameters_increment;
+    }
+    else if(momentum > 0 && nesterov)
+    {
+        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+        optimization_data.nesterov_increment
+                = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+
+        optimization_data.parameters += optimization_data.nesterov_increment;
+    }
+    else
+    {
+        optimization_data.parameters += optimization_data.parameters_increment;
+    }
+
+    optimization_data.last_parameters_increment = optimization_data.parameters_increment;
+
+    optimization_data.iteration++;
+}
+
+
 /// Trains a neural network with an associated loss index,
 /// according to the stochastic gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
