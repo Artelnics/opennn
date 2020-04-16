@@ -274,6 +274,12 @@ public:
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
+   void update_epoch(
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           const LossIndex::BackPropagation& back_propagation,
+           OptimizationData& optimization_data);
+
    Results perform_training();
 
    void perform_training_void();
@@ -293,104 +299,6 @@ public:
 
    string object_to_string() const;
    Tensor<string, 2> to_string_matrix() const;
-
-   void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data)
-   {
-       const Index parameters_number = optimization_data.parameters.dimension(0);
-
-       if(optimization_data.epoch == 0
-       || l2_norm(optimization_data.old_parameters - optimization_data.parameters) < numeric_limits<type>::min()
-       || l2_norm(optimization_data.old_gradient - back_propagation.gradient) < numeric_limits<type>::min())
-       {
-           optimization_data.inverse_hessian.setZero();
-
-           for(Index i = 0; i < parameters_number; i++) optimization_data.inverse_hessian(i,i) = 1.0;
-       }
-       else
-       {
-           optimization_data.inverse_hessian = calculate_inverse_hessian_approximation(
-                                 optimization_data.old_parameters,
-                                 optimization_data.parameters,
-                                 optimization_data.old_gradient,
-                                 back_propagation.gradient,
-                                 optimization_data.old_inverse_hessian);
-       }
-
-       // Optimization algorithm
-
-       optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
-
-       optimization_data.training_direction = -normalized(optimization_data.training_direction);
-
-       // Calculate training slope
-
-       optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
-
-       // Check for a descent direction
-
-       if(optimization_data.training_slope(0) >= 0)
-       {
-           //cout << "Training slope is greater than zero." << endl;
-
-           optimization_data.training_direction = -normalized(back_propagation.gradient);
-       }
-
-       // Get initial training rate
-
-       type initial_learning_rate;
-
-       optimization_data.epoch == 0
-               ? initial_learning_rate = first_learning_rate
-               : initial_learning_rate = optimization_data.old_learning_rate;
-
-       pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
-                batch,
-                optimization_data.parameters,
-                forward_propagation,
-                back_propagation.loss,
-                optimization_data.training_direction,
-                initial_learning_rate);
-
-       optimization_data.learning_rate = directional_point.first;
-
-       // Reset training direction when training rate is 0
-
-       if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-       {
-           optimization_data.training_direction = back_propagation.gradient;
-
-           optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
-
-           directional_point = learning_rate_algorithm.calculate_directional_point(batch,
-                               optimization_data.parameters, forward_propagation,
-                               back_propagation.loss,
-                               optimization_data.training_direction,
-                               first_learning_rate);
-
-           optimization_data.learning_rate = directional_point.first;
-       }
-
-       optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
-
-       optimization_data.old_parameters = optimization_data.parameters;
-
-       optimization_data.parameters += optimization_data.parameters_increment;
-
-       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-       optimization_data.old_gradient = back_propagation.gradient;
-
-       optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
-
-       optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-       optimization_data.old_training_loss = back_propagation.loss;
-   }
-
 
 private: 
 
