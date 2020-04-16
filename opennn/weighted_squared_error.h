@@ -108,7 +108,6 @@ public:
 
    // Error terms methods
 
-   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
 //   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;

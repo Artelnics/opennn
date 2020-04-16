@@ -89,8 +89,6 @@ public:
 
    void calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const;
 
-   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
-
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;   
