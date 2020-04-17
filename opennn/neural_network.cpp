@@ -1269,13 +1269,8 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
     trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
 
-    cout << "Type 0: " << trainable_layers_pointers(0)->get_type_string() << endl;
-
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-
-        cout << "Type " << i << ": " << trainable_layers_pointers(i)->get_type_string() << endl;
-
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
     }
