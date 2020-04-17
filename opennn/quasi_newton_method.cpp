@@ -1326,11 +1326,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        cout << "Before backpropagation" << endl;
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        cout << "After backpropagation" << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 

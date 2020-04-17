@@ -2149,16 +2149,7 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
             // Activations Derivatives
 
-            Index dim = combinations.dimension(1);
-
-            Tensor<type,2> ad_2d = combinations.exp().inverse() / (static_cast<type>(1.0) + combinations.exp().inverse()).pow(2);
-
-            Tensor<type,3> ad_3d(1, dim, 1);
-            ad_3d.setZero();
-
-            ad_3d.chip(0,0) = ad_2d;
-
-            activations_derivatives.device(*default_device) = ad_3d;
+            activations_derivatives.device(*default_device) = activations*(1-activations);
 
             return;
         }
@@ -2189,6 +2180,13 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
     Tensor<type, 0> sum;
 
     const Index dim = combinations.dimension(1);
+
+    const Index rows_number = activations.dimension(0);
+
+    Tensor<type,2> identity(dim,dim);
+    identity.setZero();
+
+    for(Index i = 0; i < dim; i++) identity(i,i) = 1;
 
     switch(device_pointer->get_type())
     {

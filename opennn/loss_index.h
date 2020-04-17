@@ -305,15 +305,13 @@ public:
        // Loss index
 
        calculate_error(batch, forward_propagation, back_propagation);
-cout << "Calculate error: " << back_propagation.error << endl;
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
-cout << "Calculate output gradient: " << back_propagation.output_gradient << endl;
-       calculate_layers_delta(forward_propagation, back_propagation);
-cout << "Calculate layers delta" << endl;
 
-cout << "Calculate layers delta" << endl;
+       calculate_output_gradient(batch, forward_propagation, back_propagation);
+
+       calculate_layers_delta(forward_propagation, back_propagation);
+
        calculate_error_gradient(batch, forward_propagation, back_propagation);
-cout << "Calculate error gradient" << endl;
+
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
@@ -356,23 +354,15 @@ cout << "Calculate error gradient" << endl;
 
         // Output layer
 
-        cout << "Begin calculate output delta" << endl;
-
-        cout << "Trainable layers number: " << trainable_layers_number-1 << endl;
-
         trainable_layers_pointers(trainable_layers_number-1)
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-        cout << "End calculate output delta" << endl;
-
         // Hidden layers
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
       {
-          cout << "i+1: " << i+1 << endl;
-
           Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
 
           trainable_layers_pointers(i)

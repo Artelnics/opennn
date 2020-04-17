@@ -157,21 +157,11 @@ public:
    void forward_propagate(const Tensor<type, 2>& inputs,
                           ForwardPropagation& forward_propagation) const
    {
-
-       cout << "FORWARD PROPAGATE PROBABILISTIC ---------------------------------------" << endl;
-
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
-
-       cout << "Combinations: " << forward_propagation.combinations_2d << endl;
 
        calculate_activations_derivatives(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
                                          forward_propagation.activations_derivatives_3d);
-
-       cout << "Activations: " << forward_propagation.combinations_2d << endl;
-
-       cout << "------------------------------------------------------------------------" << endl;
-
    }
 
 
@@ -217,23 +207,12 @@ public:
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
    {
-       cout << "Probabilistic output delta" << endl;
-
        const Index neurons_number = get_neurons_number();
        const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
 
        if(neurons_number == 1)
        {
-           cout << "forward_propagation.activations_derivatives_3d: "
-                << forward_propagation.activations_derivatives_3d
-                << endl;
-
-
            TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
-
-           cout << "Activations derivative: " << activations_derivatives << endl;
-
-           cout << "output gradient: " << output_gradient << endl;
 
            switch(device_pointer->get_type())
            {
@@ -252,18 +231,12 @@ public:
 
                    output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
-                   cout << "output delta: " << output_delta << endl;
-
-                   cout << "Output delta diemsions: " << output_delta.dimensions().size() << endl;
-
                    return;
                }
            }
        }
        else
        {
-           cout << "else" << endl;
-
            const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
 
            const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
