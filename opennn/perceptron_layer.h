@@ -167,7 +167,7 @@ public:
        }
 
 #endif
-cout << "perceptron" << endl;
+
        calculate_combinations(inputs,
                               biases,
                               synaptic_weights,
@@ -176,9 +176,6 @@ cout << "perceptron" << endl;
        calculate_activations_derivatives(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
                                          forward_propagation.activations_derivatives_2d);
-
-       cout << "Activations_2d: " << forward_propagation.activations_2d << endl;
-       cout << "Activations_derivatives_2d: " << forward_propagation.activations_derivatives_2d << endl;
    }
 
 
@@ -270,12 +267,6 @@ cout << "perceptron" << endl;
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-               cout << "Hidden delta 1: " << hidden_delta << endl;
-
-               cout << "Activations derivatives: " << activations_derivatives << endl;
-
-
 
 //               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
