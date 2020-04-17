@@ -455,9 +455,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-    cout << "ouputs_minimum: " << outputs_minimum << endl;
-    cout << "ouputs_maximum: " << outputs_maximum << endl;
-
     // Error data
 
     Tensor<type, 3> error_data(testing_instances_number, 3, outputs_number);
@@ -582,6 +579,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
         const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (targets-outputs).abs();
+
     return descriptives(diff);
 }
 
@@ -1322,7 +1320,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(4);
+    Tensor<type, 1> errors(3);
 
     // Results
 

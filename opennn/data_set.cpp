@@ -1632,9 +1632,7 @@ void DataSet::split_instances_sequential(const type& training_instances_ratio,
 
 void DataSet::set_selection_to_testing_instances()
 {
-    /*
-        instances_uses.replace_value(Selection, Testing);
-    */
+    std::replace(instances_uses.data(), instances_uses.data() + instances_uses.size(), Selection, Testing);
 }
 
 
@@ -1642,9 +1640,7 @@ void DataSet::set_selection_to_testing_instances()
 
 void DataSet::set_testing_to_selection_instances()
 {
-    /*
-        instances_uses.replace_value(Testing, Selection);
-    */
+    std::replace(instances_uses.data(), instances_uses.data() + instances_uses.size(), Testing, Selection);
 }
 
 

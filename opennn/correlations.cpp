@@ -1912,10 +1912,9 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 
     Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
     Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
-//    Tensor<int, 1> b = a.sum(dims);
 
-    const Tensor<type, 1> sum_columns = matrix.sum(columns);//.calculate_columns_sum();
-    const Tensor<type, 1> sum_rows = matrix.sum(rows);//.calculate_rows_sum();
+    const Tensor<type, 1> sum_columns = matrix.sum(columns);
+    const Tensor<type, 1> sum_rows = matrix.sum(rows);
 
     const Tensor<type, 0> total = sum_columns.sum();
 
@@ -2297,40 +2296,40 @@ type one_way_anova_correlation_missing_values(const Tensor<type, 2>& matrix, con
 
 type f_snedecor_critical_point(const Tensor<type, 2>& matrix, const type& alpha)
 {
-    /*
-        const Index degrees_of_freedom1 = matrix.dimension(1) - 1;
-        const Index degrees_of_freedom2 = matrix.dimension(1) * matrix.dimension(0) - matrix.count_equal_to(0) - matrix.dimension(1);
+/*
+    const Index degrees_of_freedom1 = matrix.dimension(1) - 1;
+    const Index degrees_of_freedom2 = matrix.dimension(1) * matrix.dimension(0) - matrix.count_equal_to(0) - matrix.dimension(1);
 
-        const type zeta1 = degrees_of_freedom1/2.0;
-        const type zeta2 = degrees_of_freedom2/2.0;
-        const type zeta3 = zeta1 + zeta2;
+    const type zeta1 = degrees_of_freedom1/2.0;
+    const type zeta2 = degrees_of_freedom2/2.0;
+    const type zeta3 = zeta1 + zeta2;
 
-        const type gamma1 = pow((zeta1+1),zeta1-0.5)/exp(zeta1+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta1));
-        const type gamma2 = pow((zeta2+1),zeta2-0.5)/exp(zeta2+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta2));
-        const type gamma3 = pow((zeta3+1),zeta3-0.5)/exp(zeta3+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta3));
+    const type gamma1 = pow((zeta1+1),zeta1-0.5)/exp(zeta1+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta1));
+    const type gamma2 = pow((zeta2+1),zeta2-0.5)/exp(zeta2+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta2));
+    const type gamma3 = pow((zeta3+1),zeta3-0.5)/exp(zeta3+1)*(sqrt(2*3.14159265)+(pow(1,0.5)*exp(1)/zeta3));
 
-        const type beta = gamma1 * gamma2 / gamma3;
+    const type beta = gamma1 * gamma2 / gamma3;
 
-        type x = 0;
-        type step = 0.00001;
+    type x = 0;
+    type step = 0.00001;
 
-        type p_0 = 0;
-        type p_1 = 0;
-        type f_x = 0;
+    type p_0 = 0;
+    type p_1 = 0;
+    type f_x = 0;
 
-        while (p_1 < 1- alpha){
+    while (p_1 < 1- alpha){
 
-            x += step;
+        x += step;
 
-            f_x = pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), 0.5) / (x * beta);
+        f_x = pow(pow(degrees_of_freedom1 * x,degrees_of_freedom1) * pow(degrees_of_freedom2, degrees_of_freedom2) / pow(degrees_of_freedom1 * x + degrees_of_freedom2, (degrees_of_freedom1 + degrees_of_freedom2)), 0.5) / (x * beta);
 
-            p_1 = p_0 + step * static_cast<type>(f_x);
+        p_1 = p_0 + step * static_cast<type>(f_x);
 
-            p_0 = p_1;
-        }
+        p_0 = p_1;
+    }
 
-        return x;
-    */
+    return x;
+*/
     return 0.0;
 }
 
@@ -2476,7 +2475,7 @@ type f_snedecor_critical_point_missing_values(const Tensor<type, 2>& matrix)
 /// @param index Index of the input variable
 /// @param indices Vector of indices of the target variables
 
-type one_way_anova_correlation(const Tensor<type, 2>& matrix,const Index& index, const Tensor<Index, 1>& indices)
+type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Index& index, const Tensor<Index, 1>& indices)
 {
     /*
         const Tensor<type, 0> total_average = matrix.sum() / matrix.dimension(0);
