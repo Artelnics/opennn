@@ -79,7 +79,7 @@ void Descriptives::set_standard_deviation(const type &new_standard_deviation)
 
 
 /// Returns all the statistical parameters contained in a single vector.
-/// The size of that vector is seven.
+/// The size of that vector is four.
 /// The elements correspond to the minimum, maximum, mean and standard deviation
 /// values respectively.
 

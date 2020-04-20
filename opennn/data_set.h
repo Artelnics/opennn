@@ -473,6 +473,8 @@ public:
 
    bool is_empty() const;
 
+   bool is_less_than(const Tensor<type, 1>&, const type&) const;
+
    bool is_instance_used(const Index&) const;
    bool is_instance_unused(const Index&) const;
 
@@ -539,6 +541,7 @@ public:
    Tensor<type, 1> calculate_target_variables_maximums() const;
 
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
+   Tensor<type, 1> calculate_used_variables_minimums() const;
 
    Descriptives calculate_inputs_descriptives(const Index&) const;
 

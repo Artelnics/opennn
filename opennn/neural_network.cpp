@@ -1866,8 +1866,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    cout << "inputs" << endl;
-
     // Layers
 
     {
