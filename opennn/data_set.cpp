@@ -3046,6 +3046,24 @@ bool DataSet::is_empty() const
 }
 
 
+/// Returns true if any value is less or equal than a given value, and false otherwise.
+
+bool DataSet::is_less_than(const Tensor<type, 1>& column, const type& value) const
+{
+    Tensor<bool, 1> if_sentence = column <= column.constant(value);
+
+    Tensor<bool, 1> sentence(column.size());
+    sentence.setConstant(true);
+
+    Tensor<bool, 1> else_sentence(column.size());
+    else_sentence.setConstant(false);
+
+    Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
+
+    return is_less(0);
+}
+
+
 /// Returns a reference to the data matrix in the data set.
 /// The number of rows is equal to the number of instances.
 /// The number of columns is equal to the number of variables.
@@ -5262,6 +5280,13 @@ Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
     return columns_maximums(data, get_used_instances_indices(), get_target_variables_indices());
 }
 
+
+/// Returns a vector containing the maximum of the used variables.
+
+Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_used_variables_indices());
+}
 
 /// Returns a vector containing the means of a set of given variables.
 /// @param variables_indices Indices of the variables.
