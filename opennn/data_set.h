@@ -325,6 +325,7 @@ public:
    Tensor<type, 2> get_instance_target_data(const Index&) const;
 
    Tensor<type, 2> get_column_data(const Index&) const;
+   Tensor<type, 2> get_column_data(const Index&, Tensor<Index, 1>&) const;
    Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_column_data(const string&) const;
 

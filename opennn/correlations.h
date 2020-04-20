@@ -59,13 +59,13 @@ struct RegressionResults
     {
         switch(regression_type)
         {
-            case Linear: return "Linear";
-            case Logistic: return "Logistic";
-            case Logarithmic: return "Logarithmic";
-            case Exponential: return "Exponential";
-            case Power: return "Power";
+            case Linear: return "linear";
+            case Logistic: return "logistic";
+            case Logarithmic: return "logarithmic";
+            case Exponential: return "exponential";
+            case Power: return "power";
             case KarlPearson: return "KarlPearson";
-            case OneWayAnova: return "OneWayAnova";
+            case OneWayAnova: return "one-way-anova";
         }
     }
 

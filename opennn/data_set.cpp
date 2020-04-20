@@ -2944,34 +2944,63 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 
 void DataSet::set_binary_simple_columns()
 {
-    Tensor<type, 1> values;
-
     bool is_binary = true;
 
-    for(Index column_index = 0; column_index < data.dimension(1); column_index++)
+    Index variable_index = 0;
+
+    Index different_values = 0;
+
+    for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
-        is_binary = true;
-        /*
-                values.clear();
+        if(columns(column_index).type == Numeric)
+        {
+            Tensor<type, 1> values(3);
+            values.setRandom();
+            different_values = 0;
+            is_binary = true;
 
-                for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            {
+                if(!::isnan(data(row_index, variable_index))
+                && data(row_index, variable_index) != values(0)
+                && data(row_index, variable_index) != values(1))
                 {
-                    if(std::find(values.begin(), values.end(), data(row_index, column_index)) == values.end()
-                    && !::isnan(data(row_index, column_index)))
-                    {
-                        values.push_back(data(row_index, column_index));
-                    }
+                    values(different_values) = data(row_index, column_index);
 
-                    if(values.size() > 2)
-                    {
-                        is_binary = false;
-                        break;
-                    }
-
+                    different_values++;
                 }
 
-                if(is_binary) columns(column_index).type = Binary;
-        */
+                if(different_values > 2)
+                {
+                    is_binary = false;
+                    break;
+                }
+            }
+
+            if(is_binary)
+            {
+                columns(column_index).type = Binary;
+
+                columns(column_index).categories.resize(2);
+                columns(column_index).categories(0) = "Class_" + std::to_string(values(0));
+                columns(column_index).categories(1) = "Class_" + std::to_string(values(1));
+
+                const VariableUse column_use = columns(column_index).column_use;
+                columns(column_index).categories_uses.resize(2);
+                columns(column_index).categories_uses(0) = column_use;
+                columns(column_index).categories_uses(1) = column_use;
+            }
+
+            variable_index++;
+        }
+        else if(columns(column_index).type == Categorical)
+        {
+            variable_index += columns(column_index).get_categories_number();
+        }
+        else
+        {
+            variable_index++;
+        }
     }
 }
 
@@ -3654,6 +3683,17 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
     Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
 
     return data.slice(offsets, extents);
+}
+
+
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+/// @param rows_indices Rows of the indices.
+
+Tensor<type, 2> DataSet::get_column_data(const Index& column_index, Tensor<Index, 1>& rows_indices) const
+{
+    return get_subtensor_data(rows_indices, get_variable_indices(column_index));
 }
 
 
