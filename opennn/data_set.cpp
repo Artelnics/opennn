@@ -3668,6 +3668,17 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 }
 
 
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+/// @param rows_indices Rows of the indices.
+
+Tensor<type, 2> DataSet::get_column_data(const Index& column_index, Tensor<Index, 1>& rows_indices) const
+{
+    return get_subtensor_data(rows_indices, get_variable_indices(column_index));
+}
+
+
 /// Returns the data from the data set column with a given name,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
 /// @param column_name Name of the column.
