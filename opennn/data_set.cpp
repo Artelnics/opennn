@@ -3278,16 +3278,18 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 
 Tensor<type, 2> DataSet::get_training_data() const
 {
-    /*
-       const Index variables_number = get_variables_number();
 
-       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+//       const Index variables_number = get_variables_number();
+
+//       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+
+       Tensor<Index, 1> variables_indices = get_used_variables_indices();
 
        const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
        return get_subtensor_data(training_indices, variables_indices);
-       */
-    return Tensor<type,2>();
+
+//    return Tensor<type,2>();
 }
 
 
@@ -3924,6 +3926,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
     Index row_index;
     Index variable_index;
+
+    const Tensor<type, 2>& data = get_data();
 
     for(Index i = 0; i < rows_number; i++)
     {

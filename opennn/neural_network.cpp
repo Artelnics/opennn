@@ -1369,7 +1369,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
     }
-
     return outputs;
 }
 
@@ -1415,8 +1414,6 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-
-    cout << outputs.size() << endl;
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1578,7 +1575,7 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& po
 
 Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
 {
-    const Tensor<type, 2> outputs = calculate_outputs(inputs);
+    Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     return histograms(outputs, bins_number);
 }
