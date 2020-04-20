@@ -114,6 +114,9 @@ public:
    void test_calculate_trainable_outputs();
    void test_calculate_outputs();
 
+   void test_calculate_directional_inputs();
+   void test_calculate_outputs_histograms();
+
    // Expression methods
 
    // XML expression methods

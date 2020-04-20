@@ -1171,7 +1171,7 @@ void PerceptronLayerTest::test_calculate_outputs()
 
     perceptron_layer.set_activation_function(PerceptronLayer::Linear);
 
-    Tensor<type,2>outputs = perceptron_layer.calculate_outputs(inputs);
+    Tensor<type,2> outputs = perceptron_layer.calculate_outputs(inputs);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
