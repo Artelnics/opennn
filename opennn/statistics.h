@@ -240,9 +240,11 @@ struct Histogram
 
      // Variance
      type variance(const Tensor<type, 1>&);
+     type variance(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
      // Standard deviation
      type standard_deviation(const Tensor<type, 1>&);
+     type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Tensor<type, 1> standard_deviation(const Tensor<type, 1>&, const Index&);
 
      // Assymetry

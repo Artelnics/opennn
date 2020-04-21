@@ -649,6 +649,61 @@ type variance(const Tensor<type, 1>& vector)
 }
 
 
+/// Returns the variance of the elements in the vector.
+/// @param vector Vector to be evaluated.
+
+type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    const Index size = indices.dimension(0);
+
+#ifdef __OPENNN_DEBUG__
+
+    if(size == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Statistics Class.\n"
+               << "type variance(const Tensor<type, 1>&, const Tensor<Index, 1>&) "
+               "const method.\n"
+               << "Indeces size must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    type sum = 0;
+    type squared_sum = 0;
+
+    Index count = 0;
+
+    Index index = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        index = indices(i);
+
+        if(!::isnan(vector(index)))
+        {
+            sum += vector(index);
+            squared_sum += vector(index) * vector(index);
+
+            count++;
+        }
+    }
+
+    if(count <= 1)
+    {
+        return 0.0;
+    }
+
+    const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
+    const type denominator = static_cast<type>(count - 1);
+
+    return numerator/denominator;
+}
+
+
 /// Returns the standard deviation of the elements in the vector.
 /// @param vector Vector to be evaluated.
 
@@ -673,6 +728,33 @@ type standard_deviation(const Tensor<type, 1>& vector)
 
     return sqrt(variance(vector));
 }
+
+
+/// Returns the standard deviation of the elements in the vector.
+/// @param vector Vector to be evaluated.
+
+type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index size = vector.dimension(0);
+
+    if(size == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Statistics Class.\n"
+               << "type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&) const method.\n"
+               << "Size must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    return sqrt(variance(vector, indices));
+}
+
 
 
 /// @todo check
