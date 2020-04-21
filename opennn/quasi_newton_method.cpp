@@ -1378,7 +1378,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-               cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+               cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
@@ -1391,7 +1391,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-               cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+               cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                     << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
             }
 
@@ -1403,7 +1403,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
             }
 
             stop_training = true;
@@ -1414,7 +1414,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
+                cout << "Iteration " << epoch+1 << ": Gradient norm goal reached.\n";
             }
 
             stop_training = true;
@@ -1425,7 +1425,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection loss increases: "<< selection_failures << endl;
             }
 
@@ -1437,7 +1437,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -1448,7 +1448,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
             }
 
             stop_training = true;
@@ -1495,7 +1495,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"

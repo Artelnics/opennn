@@ -946,7 +946,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n";
+                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n";
                 cout << "Parameters increment norm: " << parameters_increment_norm << endl;
             }
 
@@ -959,7 +959,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -972,7 +972,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
             }
 
             stop_training = true;
@@ -984,7 +984,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection error increases: " << selection_error_increases << endl;
             }
 
@@ -997,7 +997,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
             }
 
             stop_training = true;
@@ -1009,7 +1009,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -1021,7 +1021,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
             }
 
             stop_training = true;
@@ -1068,7 +1068,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"

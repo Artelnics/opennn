@@ -741,7 +741,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         /*if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Training loss goal reached.\n";
 
             stop_training = true;
 
@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -759,7 +759,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
 
             stop_training = true;
 
@@ -794,7 +794,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << "/"<<maximum_epochs_number << ":\n"
+            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training error: " << training_error << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()
