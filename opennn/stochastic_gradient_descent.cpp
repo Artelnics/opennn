@@ -829,7 +829,7 @@ void StochasticGradientDescent::perform_training_void()
 
 string StochasticGradientDescent::write_optimization_algorithm_type() const
 {
-    return "GRADIENT_DESCENT";
+    return "STOCHASTIC_GRADIENT_DESCENT";
 }
 
 
