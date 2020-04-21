@@ -940,7 +940,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
                      << "Parameters increment norm: " << parameters_increment_norm << endl;
             }
 
@@ -951,7 +951,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
 
             stop_training = true;
 
@@ -962,7 +962,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -973,7 +973,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
+            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached." << endl;
 
             stop_training = true;
 
@@ -984,7 +984,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection loss increases: "<< selection_failures << endl;
             }
 
@@ -995,7 +995,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached." << endl;
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
 
             stop_training = true;
 
@@ -1006,7 +1006,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached." << endl;
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached." << endl;
             }
 
             stop_training = true;
@@ -1054,7 +1054,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
