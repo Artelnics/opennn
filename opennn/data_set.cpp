@@ -9628,25 +9628,26 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
     filtered_indices.setZero();
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+    const Index used_instances_number = used_instances_indices.size();
 
-    for(Index j = 0; j < used_variables_number; j++)
+    Index instance_index = 0;
+
+    for(Index i = 0; i < used_variables_number; i++)
     {
-        const Index current_variable_index = used_variables_indices(j);
+        const Index variable_index = used_variables_indices(i);
 
-        const Tensor<Index, 1> current_instances_indices = used_instances_indices;
-
-        const Index current_instances_number = current_instances_indices.size();
-
-        for(Index i = 0; i < current_instances_number; i++)
+        for(Index j = 0; j < used_instances_number; j++)
         {
-            const Index current_instance_index = current_instances_indices(i);
+            instance_index = used_instances_indices(j);
 
-            if(data(current_instance_index,current_variable_index) < minimums(j)
-                    || data(current_instance_index,current_variable_index) > maximums(j))
+            if(get_instance_use(instance_index) == UnusedInstance) continue;
+
+            if(data(instance_index,variable_index) < minimums(i)
+                    || data(instance_index,variable_index) > maximums(i))
             {
-                filtered_indices(current_instance_index) = 1.0;
+                filtered_indices(instance_index) = 1.0;
 
-                set_instance_use(current_instance_index, UnusedInstance);
+                set_instance_use(instance_index, UnusedInstance);
             }
         }
     }
