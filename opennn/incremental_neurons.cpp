@@ -199,8 +199,9 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     {
         // Calculate losses
 
-        trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number); // Fix
-        trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number); // Fix
+        trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number);
+
+        trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number);
 
         // Loss index
 
@@ -243,45 +244,14 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-//        results->neurons_data.push_back(neurons_number);
-
         if(reserve_training_error_data)
         {
-            /*           const Tensor<type, 1> old_training_loss_history(training_loss_history);
-
-                       const Index size = training_loss_history.size();
-
-                       training_loss_history.resize(size+1);
-
-                       for(Index i = 0; i < size; i++)
-                       {
-                           training_loss_history(i) = old_training_loss_history(i);
-                       }
-
-                       training_loss_history(size) = current_training_loss;
-            */
             training_loss_history = insert_result(current_training_loss, training_loss_history);
-
-//            results->training_loss_data.push_back(current_training_loss);
         }
 
         if(reserve_selection_error_data)
         {
-            /*            const Tensor<type, 1> old_selection_error_history(selection_error_history);
-
-                        const Index size = selection_error_history.size();
-
-                        selection_error_history.resize(size+1);
-
-                        for(Index i = 0; i < size; i++)
-                        {
-                            selection_error_history(i) = old_selection_error_history(i);
-                        }
-
-                        selection_error_history(size) = current_selection_error;
-            */
             selection_error_history = insert_result(current_selection_error, selection_error_history);
-//            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(iterations == 0
@@ -367,9 +337,6 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     }
 
     // Save neural network
-
-//    neural_network->set_order(optimal_neurons_number);
-//    neural_network_pointer->set_layer_neurons_number(optimal_neurons_number);
 
     trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(optimal_neurons_number);
     trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(optimal_neurons_number);
