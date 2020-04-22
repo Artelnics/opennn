@@ -1506,145 +1506,95 @@ string ConjugateGradient::write_optimization_algorithm_type() const
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
+    Tensor<string, 2> labels_values(12, 2);
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    // Training direction method
 
-        // Training direction method
+    labels_values(0,0) = "Training direction method";
 
-        labels.push_back("Training direction method");
+    labels_values(0,1) = write_training_direction_method();
 
-        const string training_direction_method_string = write_training_direction_method();
+    // Learning rate method
 
-        values.push_back(training_direction_method_string);
+    labels_values(1,0) = "Learning rate method";
 
-       // Training rate method
+    labels_values(1,1) = learning_rate_algorithm.write_learning_rate_method();
 
-       labels.push_back("Training rate method");
+    // Learning rate tolerance
 
-       const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
+    labels_values(2,0) = "Learning rate tolerance";
 
-       values.push_back(learning_rate_method);
+    labels_values(2,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
-       // Loss tolerance
+    // Minimum parameters increment norm
 
-       labels.push_back("Loss tolerance");
+    labels_values(3,0) = "Minimum parameters increment norm";
 
-       buffer.str("");
-       buffer << learning_rate_algorithm.get_loss_tolerance();
+    labels_values(3,1) = std::to_string(minimum_parameters_increment_norm);
 
-       values.push_back(buffer.str());
+    // Minimum loss decrease
 
-       // Minimum parameters increment norm
+    labels_values(4,0) = "Minimum loss decrease";
 
-       labels.push_back("Minimum parameters increment norm");
+    labels_values(4,1) = std::to_string(minimum_loss_decrease);
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    // Loss goal
 
-       values.push_back(buffer.str());
+    labels_values(5,0) = "Loss goal";
 
-       // Minimum loss decrease
+    labels_values(5,1) = std::to_string(training_loss_goal);
 
-       labels.push_back("Minimum loss decrease");
+    // Gradient norm goal
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    labels_values(6,0) = "Gradient norm goal";
 
-       values.push_back(buffer.str());
+    labels_values(6,1) = std::to_string(gradient_norm_goal);
 
-       // Loss goal
+    // Maximum selection error increases
 
-       labels.push_back("Loss goal");
+    labels_values(7,0) = "Maximum selection error increases";
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    labels_values(7,1) = std::to_string(maximum_selection_error_increases);
 
-       values.push_back(buffer.str());
+    // Maximum epochs number
 
-       // Gradient norm goal
+    labels_values(8,0) = "Maximum epochs number";
 
-       labels.push_back("Gradient norm goal");
+    labels_values(8,1) = std::to_string(maximum_epochs_number);
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    // Maximum time
 
-       values.push_back(buffer.str());
+    labels_values(9,0) = "Maximum time";
 
-       // Maximum selection error increases
+    labels_values(9,1) = std::to_string(maximum_time);
 
-       labels.push_back("Maximum selection error increases");
+    // Reserve training error history
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    labels_values(10,0) = "Reserve training error history";
 
-       values.push_back(buffer.str());
+    if(reserve_training_error_history)
+    {
+        labels_values(10,1) = "true";
+    }
+    else
+    {
+        labels_values(10,1) = "false";
+    }
 
-       // Maximum iterations number
+    // Reserve selection error history
 
-       labels.push_back("Maximum iterations number");
+    labels_values(11,0) = "Reserve selection error history";
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    if(reserve_training_error_history)
+    {
+        labels_values(11,1) = "true";
+    }
+    else
+    {
+        labels_values(11,1) = "false";
+    }
 
-       values.push_back(buffer.str());
-
-       // Maximum time
-
-       labels.push_back("Maximum time");
-
-       buffer.str("");
-       buffer << maximum_time;
-
-       values.push_back(buffer.str());
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-        return string_matrix;
-
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 

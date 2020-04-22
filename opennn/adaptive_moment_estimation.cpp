@@ -749,17 +749,15 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 }
 
 
-/// @todo Gives error
-
 void AdaptiveMomentEstimation::perform_training_void()
 {
-//   perform_training();
+   perform_training();
 }
 
 
 string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 {
-    return "GRADIENT_DESCENT";
+    return "ADAPTIVE_MOMENT_ESTIMATION";
 }
 
 
@@ -767,102 +765,102 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
+    Tensor<string, 2> labels_values(11, 2);
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    Index row_index = 0;
 
-       // Loss goal
+    // Initial learning rate
 
-       labels.push_back(" Loss goal");
+    labels_values(row_index,0) = "Initial learning rate";
+    labels_values(row_index,1) = std::to_string(initial_learning_rate);
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    row_index++;
 
-       values.push_back(buffer.str());
+    // Initial decay
 
-       // Gradient norm goal
+    labels_values(row_index,0) = "Initial decay";
+    labels_values(row_index,1) = std::to_string(initial_decay);
 
-       labels.push_back("Gradient norm goal");
+    row_index++;
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    // Beta 1
 
-       values.push_back(buffer.str());
+    labels_values(row_index,0) = "Beta 1";
+    labels_values(row_index,1) = std::to_string(beta_1);
 
-       // Maximum selection error increases
+    row_index++;
 
-       labels.push_back("Maximum selection error increases");
+    // Beta 2
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    labels_values(row_index,0) = "Beta 2";
+    labels_values(row_index,1) = std::to_string(beta_2);
 
-       values.push_back(buffer.str());
+    row_index++;
 
-       // Maximum iterations number
+    // Epsilon
 
-       labels.push_back("Maximum epoch number");
+    labels_values(row_index,0) = "Epsilon";
+    labels_values(row_index,1) = std::to_string(epsilon);
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    row_index++;
 
-       values.push_back(buffer.str());
+    // Training loss goal
 
-       // Maximum time
+    labels_values(row_index,0) = "Training loss goal";
+    labels_values(row_index,1) = std::to_string(training_loss_goal);
 
-       labels.push_back("Maximum time");
+    row_index++;
 
-       buffer.str("");
-       buffer << maximum_time;
+    // Maximum epochs number
 
-       values.push_back(buffer.str());
+    labels_values(row_index,0) = "Maximum epochs number";
+    labels_values(row_index,1) = std::to_string(maximum_epochs_number);
 
-       // Reserve training error history
+    row_index++;
 
-       labels.push_back("Reserve loss history");
+    // Maximum time
 
-       buffer.str("");
+    labels_values(row_index,0) = "Maximum time";
+    labels_values(row_index,1) = std::to_string(maximum_time);
 
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    row_index++;
 
-       values.push_back(buffer.str());
+    // Batch instances number
 
-       // Reserve selection error history
+    labels_values(row_index,0) = "Batch instances number";
+    labels_values(row_index,1) = std::to_string(batch_instances_number);
 
-       labels.push_back("Reserve selection error history");
+    row_index++;
 
-       buffer.str("");
+    // Reserve training error history
 
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    labels_values(row_index,0) = "Reserve training error history";
 
-       values.push_back(buffer.str());
+    if(reserve_training_error_history)
+    {
+        labels_values(row_index,1) = "true";
+    }
+    else
+    {
+        labels_values(row_index,1) = "false";
+    }
 
-       const Index rows_number = labels.dimension(0);
-       const Index columns_number = 2;
+    row_index++;
 
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
+    // Reserve selection error history
 
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
+    labels_values(row_index,0) = "Reserve selection error history";
 
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    if(reserve_training_error_history)
+    {
+        labels_values(row_index,1) = "true";
+    }
+    else
+    {
+        labels_values(row_index,1) = "false";
+    }
+
+    return labels_values;
 }
 
 

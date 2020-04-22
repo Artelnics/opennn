@@ -231,18 +231,6 @@ private:
 
    type training_loss_goal;
 
-   /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
-
-   Index maximum_iterations_number;
-
-   /// Initial batch size
-
-   Index training_initial_batch_size;
-
-   /// Maximum training batch size
-
-   Index training_maximum_batch_size;
-
    /// Maximum epochs number
 
    Index maximum_epochs_number;
