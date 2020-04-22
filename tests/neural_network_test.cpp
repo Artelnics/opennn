@@ -29,7 +29,7 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_0.is_empty(), LOG);
   assert_true(neural_network_0.get_layers_number() == 0, LOG);
 
-  // Test 1 / Model type constructor
+  // Test 1 / Model type constructorr
 
   Tensor<Index, 1> architecture(3);
 
