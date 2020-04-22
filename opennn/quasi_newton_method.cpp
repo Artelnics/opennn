@@ -2023,144 +2023,99 @@ string QuasiNewtonMethod::object_to_string() const
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
-    ostringstream buffer;
-
-    Tensor<string, 1> labels;
-    Tensor<string, 1> values;
+    Tensor<string, 2> labels_values(12, 2);
 
     // Inverse hessian approximation method
-    /*
-        labels.push_back("Inverse hessian approximation method");
 
-        const string inverse_hessian_approximation_method_string = write_inverse_hessian_approximation_method();
+    labels_values(0,0) = "Inverse hessian approximation method";
 
-        values.push_back(inverse_hessian_approximation_method_string);
+    const string inverse_hessian_approximation_method_string = write_inverse_hessian_approximation_method();
 
-       // Training rate method
+    labels_values(0,1) = inverse_hessian_approximation_method_string;
 
-       labels.push_back("Training rate method");
+    // Learning rate method
 
-       const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
+    labels_values(1,0) = "Learning rate method";
 
-       values.push_back(learning_rate_method);
+    const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
 
-       // Loss tolerance
+    labels_values(1,1) = "learning_rate_method";
 
-       labels.push_back("Loss tolerance");
+    // Loss tolerance
 
-       buffer.str("");
-       buffer << learning_rate_algorithm.get_loss_tolerance();
+    labels_values(2,0) = "Learning rate tolerance";
 
-       values.push_back(buffer.str());
+    labels_values(2,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
-       // Minimum parameters increment norm
+    // Minimum parameters increment norm
 
-       labels.push_back("Minimum parameters increment norm");
+    labels_values(3,0) = "Minimum parameters increment norm";
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    labels_values(3,1) = std::to_string(minimum_parameters_increment_norm);
 
-       values.push_back(buffer.str());
+    // Minimum loss decrease
 
-       // Minimum loss decrease
+    labels_values(4,0) = "Minimum loss decrease";
 
-       labels.push_back("Minimum loss decrease");
+    labels_values(4,1) = std::to_string(minimum_loss_decrease);
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    // Loss goal
 
-       values.push_back(buffer.str());
+    labels_values(5,0) = "Loss goal";
 
-       // Loss goal
+    labels_values(5,1) = std::to_string(training_loss_goal);
 
-       labels.push_back("Loss goal");
+    // Gradient norm goal
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    labels_values(6,0) = "Gradient norm goal";
 
-       values.push_back(buffer.str());
+    labels_values(6,1) = std::to_string(gradient_norm_goal);
 
-       // Gradient norm goal
+    // Maximum selection error increases
 
-       labels.push_back("Gradient norm goal");
+    labels_values(7,0) = "Maximum selection error increases";
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    labels_values(7,1) = std::to_string(maximum_selection_error_increases);
 
-       values.push_back(buffer.str());
+    // Maximum epochs number
 
-       // Maximum selection error increases
+    labels_values(8,0) = "Maximum epochs number";
 
-       labels.push_back("Maximum selection error increases");
+    labels_values(8,1) = std::to_string(maximum_epochs_number);
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    // Maximum time
 
-       values.push_back(buffer.str());
+    labels_values(9,0) = "Maximum time";
 
-       // Maximum iterations number
+    labels_values(9,1) = std::to_string(maximum_time);
 
-       labels.push_back("Maximum iterations number");
+    // Reserve training error history
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    labels_values(10,0) = "Reserve training error history";
 
-       values.push_back(buffer.str());
+    if(reserve_training_error_history)
+    {
+        labels_values(10,1) = "true";
+    }
+    else
+    {
+        labels_values(10,1) = "false";
+    }
 
-       // Maximum time
+    // Reserve selection error history
 
-       labels.push_back("Maximum time");
+    labels_values(11,0) = "Reserve selection error history";
 
-       buffer.str("");
-       buffer << maximum_time;
+    if(reserve_selection_error_history)
+    {
+        labels_values(11,1) = "true";
+    }
+    else
+    {
+        labels_values(11,1) = "false";
+    }
 
-       values.push_back(buffer.str());
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 
