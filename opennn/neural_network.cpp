@@ -1093,6 +1093,8 @@ Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
     Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
+//    cout << layers_pointers.size() << endl;
+
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
         layers_neurons_number(i) = layers_pointers[i]->get_neurons_number();
