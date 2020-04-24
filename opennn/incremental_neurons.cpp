@@ -170,7 +170,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     Tensor<type, 1> optimal_parameters;
 
-    type optimum_training_loss = 0;
+    type optimum_training_error = 0;
     type optimum_selection_error = 0;
 
     type current_training_loss = 0;
@@ -197,11 +197,11 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     for(Index i = 0; i < maximum_neurons; i++)
     {
-        // Calculate losses
+        // Set new neurons number
 
-        trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number);
-
-        trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number);
+        trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
+        trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
+        results->neurons_data = insert_index_result(neurons_number, results->neurons_data);
 
         // Loss index
 
@@ -246,12 +246,12 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         if(reserve_training_error_data)
         {
-            training_loss_history = insert_result(current_training_loss, training_loss_history);
+            results->training_error_data = insert_result(current_training_loss, results->training_error_data);
         }
 
         if(reserve_selection_error_data)
         {
-            selection_error_history = insert_result(current_selection_error, selection_error_history);
+            results->selection_error_data = insert_result(current_selection_error, results->selection_error_data);
         }
 
         if(iterations == 0
@@ -259,7 +259,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
                    && abs(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_neurons_number = neurons_number;
-            optimum_training_loss = current_training_loss;
+            optimum_training_error = current_training_loss;
             optimum_selection_error = current_selection_error;
             optimal_parameters = current_parameters;
         }
@@ -325,7 +325,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         if(end) break;
 
-        neurons_number++;
+        neurons_number += step;
     }
 
     if(display)
@@ -333,7 +333,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
         cout << endl
              << "Optimal order: " << optimal_neurons_number <<  endl
              << "Optimum selection error: " << optimum_selection_error << endl
-             << "Corresponding training loss: " << optimum_training_loss << endl;
+             << "Corresponding training error: " << optimum_training_error << endl;
     }
 
     // Save neural network
@@ -352,7 +352,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     results->optimal_neurons_number = optimal_neurons_number;
     results->final_selection_error = optimum_selection_error;
-    results->final_training_loss = optimum_training_loss;
+    results->final_training_error = optimum_training_error;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 

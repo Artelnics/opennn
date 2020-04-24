@@ -531,7 +531,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     {
         if(neurons_history[i] == neurons_number)
         {
-            final_losses[0] = training_loss_history[i];
+            final_losses[0] = training_error_history[i];
             flag_training = true;
         }
     }
@@ -587,7 +587,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
     neurons_history = insert_result(neurons_number, neurons_history.cast<type>()).cast<Index>();
 
-    training_loss_history = insert_result(final_losses(0), training_loss_history);
+    training_error_history = insert_result(final_losses(0), training_error_history);
 
     selection_error_history = insert_result(final_losses(1), selection_error_history);
 
@@ -603,6 +603,25 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     */
     return final_losses;
 }
+
+
+Tensor<Index, 1> NeuronsSelection::insert_index_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
+{
+    const Index size = old_tensor.size();
+
+    Tensor<Index, 1> new_tensor(size+1);
+
+    for(Index i = 0; i < size; i++)
+    {
+        new_tensor(i) = old_tensor(i);
+    }
+
+    new_tensor(size) = value;
+
+    return new_tensor;
+}
+
+
 
 Tensor<type, 1> NeuronsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
 {
@@ -728,10 +747,10 @@ void NeuronsSelection::delete_selection_history()
 
 /// Delete the history of the loss values.
 
-void NeuronsSelection::delete_training_loss_history()
+void NeuronsSelection::delete_training_error_history()
 {
 
-    training_loss_history.resize(0);
+    training_error_history.resize(0);
 
 }
 
@@ -953,10 +972,10 @@ string NeuronsSelection::Results::object_to_string() const
 
     // Final loss
 
-    if(final_training_loss > numeric_limits<type>::epsilon())
+    if(final_training_error > numeric_limits<type>::epsilon())
     {
-        buffer << "% Final loss:\n"
-               << final_training_loss << "\n";
+        buffer << "% Final error:\n"
+               << final_training_error << "\n";
     }
 
     // Optimal neurons
