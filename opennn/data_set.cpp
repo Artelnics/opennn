@@ -9953,6 +9953,8 @@ void DataSet::read_csv_1()
 
     const char separator_char = get_separator_char();
 
+    cout << "Separator_char---------------"<< separator_char << endl;
+
     cout << "Setting data file preview..." << endl;
 
     Index lines_number = has_columns_names ? 4 : 3;

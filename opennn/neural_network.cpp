@@ -2437,316 +2437,349 @@ string NeuralNetwork::write_expression() const
 
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
-    /*
-        cout << "Inputs names: " << inputs_names << endl;
-        cout << "Outputs names: " << outputs_names << endl;
 
-        Index position = 0;
+//    cout << "Inputs names: " << inputs_names << endl;
+//    cout << "Outputs names: " << outputs_names << endl;
 
-        string search;
-        string replace;
+    Index position = 0;
 
-        for(Index i = 0; i < inputs_number; i++)
+    string search;
+    string replace;
+
+    for(Index i = 0; i < inputs_number; i++)
+    {
+        position = 0;
+
+        search = "(";
+        replace = "_";
+
+        while((position = inputs_names[i].find(search, position)) != string::npos)
         {
-            position = 0;
-
-            search = "(";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-            inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-            position = 0;
-
-            search = "-";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = "/";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ")";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ":";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
+            inputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
-        for(Index i = 0; i < outputs_number; i++)
+        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
+        inputs_names[i].erase(end_pos, inputs_names[i].end());
+
+        position = 0;
+
+        search = "-";
+        replace = "_";
+
+        while((position = inputs_names[i].find(search, position)) != string::npos)
         {
-            position = 0;
-
-            search = "(";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-            outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-            position = 0;
-
-            search = "-";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = "/";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ")";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ":";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
+            inputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
-        // Scaled inputs
+        position = 0;
 
-        Tensor<string, 1> scaled_inputs_name(inputs_names.size());
+        search = "/";
+        replace = "_";
 
-        for(Index i = 0; i < inputs_names.size(); i++)
+        while((position = inputs_names[i].find(search, position)) != string::npos)
         {
-            buffer.str("");
-
-            buffer << "scaled_" << inputs_names[i];
-
-            scaled_inputs_name[i] = buffer.str();
+            inputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
-        // Principal components
+        position = 0;
 
-        Tensor<string, 1> principal_components_name(inputs_number);
+        search = ")";
+        replace = "_";
 
-        for(Index i = 0; i < inputs_number; i++)
+        while((position = inputs_names[i].find(search, position)) != string::npos)
         {
-            buffer.str("");
-
-            buffer << "principal_component_" <<(i+1);
-
-            principal_components_name[i] = buffer.str();
+            inputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
-        // Scaled outputs
+        position = 0;
 
-        Tensor<string, 1> scaled_outputs_name(outputs_names.size());
+        search = ":";
+        replace = "_";
 
-        for(Index i = 0; i < outputs_names.size(); i++)
+        while((position = inputs_names[i].find(search, position)) != string::npos)
         {
-            buffer.str("");
+            inputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
+    }
 
-            buffer << "scaled_" << outputs_names[i];
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        position = 0;
 
-            scaled_outputs_name[i] = buffer.str();
+        search = "(";
+        replace = "_";
+
+        while((position = outputs_names[i].find(search, position)) != string::npos)
+        {
+            outputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
-        // Non probabilistic outputs
+        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
+        outputs_names[i].erase(end_pos, outputs_names[i].end());
 
-        Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
+        position = 0;
 
-        for(Index i = 0; i < outputs_number; i++)
+        search = "-";
+        replace = "_";
+
+        while((position = outputs_names[i].find(search, position)) != string::npos)
         {
-            buffer.str("");
-
-            buffer << "non_probabilistic_" << outputs_names[i];
-
-            non_probabilistic_outputs_name[i] = buffer.str();
+            outputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
         }
 
+        position = 0;
+
+        search = "/";
+        replace = "_";
+
+        while((position = outputs_names[i].find(search, position)) != string::npos)
+        {
+            outputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
+
+        position = 0;
+
+        search = ")";
+        replace = "_";
+
+        while((position = outputs_names[i].find(search, position)) != string::npos)
+        {
+            outputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
+
+        position = 0;
+
+        search = ":";
+        replace = "_";
+
+        while((position = outputs_names[i].find(search, position)) != string::npos)
+        {
+            outputs_names[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
+
+    }
+
+    // Scaled inputs
+
+    Tensor<string, 1> scaled_inputs_name(inputs_names.size());
+
+    for(Index i = 0; i < inputs_names.size(); i++)
+    {
         buffer.str("");
 
-        ///@todo write expression for each layer
+        buffer << "scaled_" << inputs_names[i];
 
-    //    // Scaling layer
-    //    if(has_scaling_layer())
-    //    {
-    //        buffer << scaling_layer_pointer->write_expression(inputs_name, scaled_inputs_name);
-    //    }
-    //    // Principal components layer
-    //    if(has_principal_components_layer())
-    //    {
-    //        buffer << principal_components_layer_pointer->write_expression(scaled_inputs_name, principal_components_name);
-    //    }
-    //    // Multilayer perceptron
-    //    if(has_multilayer_perceptron())
-    //    {
-    //        if(scaling_layer_pointer && unscaling_layer_pointer)
-    //        {
-    //            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
-    //            }
-    //            else
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, scaled_outputs_name);
-    //            }
-    //        }
-    //        else if(scaling_layer_pointer && probabilistic_layer_pointer)
-    //        {
-    //            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
-    //            }
-    //            else
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, non_probabilistic_outputs_name);
-    //            }
-    //        }
-    //        else
-    //        {
-    //            buffer << multilayer_perceptron_pointer->write_expression(inputs_name, outputs_name);
-    //        }
-    //    }
-    //    // Outputs unscaling
-    //    if(has_unscaling_layer())
-    //    {
-    //        buffer << unscaling_layer_pointer->write_expression(scaled_outputs_name, outputs_name);
-    //    }
-    //    // Outputs trending layer
-    //    if(has_outputs_trending_layer())
-    //    {
-    //        buffer << outputs_trending_layer_pointer->write_expression(outputs_name, outputs_name);
-    //    }
-    //    // Probabilistic layer
-    //    if(has_probabilistic_layer())
-    //    {
-    //        buffer << probabilistic_layer_pointer->write_expression(non_probabilistic_outputs_name, outputs_name);
-    //    }
-    //    // Bounding layer
-    //    if(has_bounding_layer())
-    //    {
-    //        buffer << bounding_layer_pointer->write_expression(outputs_name, outputs_name);
-    //    }
+        scaled_inputs_name[i] = buffer.str();
+    }
 
-        string expression = buffer.str();
+    // Principal components
 
-        position = 0;
+    Tensor<string, 1> principal_components_name(inputs_number);
 
-        search = "--";
-        replace = "+";
+    for(Index i = 0; i < inputs_number; i++)
+    {
+        buffer.str("");
 
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
+        buffer << "principal_component_" <<(i+1);
 
-        position = 0;
+        principal_components_name[i] = buffer.str();
+    }
 
-        search = "+-";
-        replace = "-";
+    // Scaled outputs
 
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
+    Tensor<string, 1> scaled_outputs_name(outputs_names.size());
 
-        position = 0;
+    for(Index i = 0; i < outputs_names.size(); i++)
+    {
+        buffer.str("");
 
-        search = "\n-";
-        replace = "-";
+        buffer << "scaled_" << outputs_names[i];
 
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
+        scaled_outputs_name[i] = buffer.str();
+    }
 
-        position = 0;
+    // Non probabilistic outputs
 
-        search = "\n+";
-        replace = "+";
+    Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
 
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        buffer.str("");
 
-        position = 0;
+        buffer << "non_probabilistic_" << outputs_names[i];
 
-        search = "\"";
-        replace = "";
+        non_probabilistic_outputs_name[i] = buffer.str();
+    }
 
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
+    buffer.str("");
 
-        return expression;
-        */
+    ///@todo write expression for each layer
 
-    return "";
+    Index layer_index = 0;
+
+    // Scaling layer expression
+
+    if(has_scaling_layer())
+    {
+        buffer << get_scaling_layer_pointer()->write_expression(inputs_names, scaled_inputs_name);
+
+        layer_index++;
+    }
+
+    // Hidden layers
+
+//    const Index hidden_layers_number = get_hidden_layers_number();
+
+    Tensor<string, 1> hidden_layer_names(get_first_perceptron_layer_pointer()->get_neurons_number());
+    hidden_layer_names.setConstant("y_1_");
+
+    if(has_scaling_layer())
+    {
+        buffer << get_first_perceptron_layer_pointer()->write_hidden_layer_expression(scaled_inputs_name, hidden_layer_names);
+
+        layer_index++;
+    }
+    else
+    {
+        buffer << get_first_perceptron_layer_pointer()->write_hidden_layer_expression(inputs_names, hidden_layer_names);
+
+        layer_index++;
+    }
+
+    // Output Layer
+
+    if(has_unscaling_layer())
+    {
+        buffer << layers_pointers[layer_index]->write_expression(hidden_layer_names, scaled_outputs_name);
+    }
+    else
+    {
+        buffer << layers_pointers[layer_index]->write_expression(hidden_layer_names, outputs_names);
+    }
+
+    // Unscaling layer
+
+    if(has_unscaling_layer())
+    {
+        buffer << get_unscaling_layer_pointer()->write_expression(scaled_outputs_name, outputs_names);
+    }
+/*
+    // Scaling layer
+    if(has_scaling_layer())
+    {
+        buffer << get_scaling_layer_pointer()->write_expression(inputs_names, scaled_inputs_name);
+    }
+    // Principal components layer
+//    if(has_principal_components_layer())
+//    {
+//        buffer << principal_components_layer_pointer->write_expression(scaled_inputs_name, principal_components_name);
+//    }
+
+    // Perceptron layer
+    if(get_scaling_layer_pointer() && get_unscaling_layer_pointer())
+    {
+        buffer << get_perceptron_layer_pointer()->write_expression(scaled_inputs_name, scaled_outputs_name);
+    }
+    else if(get_scaling_layer_pointer() && get_probabilistic_layer_pointer())
+    {
+        buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, non_probabilistic_outputs_name);
+    }
+    else
+    {
+        buffer << multilayer_perceptron_pointer->write_expression(inputs_names, outputs_names);
+    }
+
+    // Outputs unscaling
+    if(has_unscaling_layer())
+    {
+        buffer << get_unscaling_layer_pointer()->write_expression(scaled_outputs_name, outputs_names);
+    }
+    // Outputs trending layer
+//    if(has_outputs_trending_layer())
+//    {
+//        buffer << outputs_trending_layer_pointer->write_expression(outputs_name, outputs_name);
+//    }
+    // Probabilistic layer
+    if(has_probabilistic_layer())
+    {
+        buffer << get_probabilistic_layer_pointer()->write_expression(non_probabilistic_outputs_name, outputs_names);
+    }
+    // Bounding layer
+    if(has_bounding_layer())
+    {
+//        buffer << get_bounding_layer_pointer()->write_expression(outputs_name, outputs_name);
+    }
+*/
+    string expression = buffer.str();
+
+    position = 0;
+
+    search = "--";
+    replace = "+";
+
+    while((position = expression.find(search, position)) != string::npos)
+    {
+        expression.replace(position, search.length(), replace);
+        position += replace.length();
+    }
+
+    position = 0;
+
+    search = "+-";
+    replace = "-";
+
+    while((position = expression.find(search, position)) != string::npos)
+    {
+        expression.replace(position, search.length(), replace);
+        position += replace.length();
+    }
+
+    position = 0;
+
+    search = "\n-";
+    replace = "-";
+
+    while((position = expression.find(search, position)) != string::npos)
+    {
+        expression.replace(position, search.length(), replace);
+        position += replace.length();
+    }
+
+    position = 0;
+
+    search = "\n+";
+    replace = "+";
+
+    while((position = expression.find(search, position)) != string::npos)
+    {
+        expression.replace(position, search.length(), replace);
+        position += replace.length();
+    }
+
+    position = 0;
+
+    search = "\"";
+    replace = "";
+
+    while((position = expression.find(search, position)) != string::npos)
+    {
+        expression.replace(position, search.length(), replace);
+        position += replace.length();
+    }
+
+    return expression;
+
+//    return "";
 }
 
 

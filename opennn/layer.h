@@ -276,6 +276,10 @@ public:
 
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
+    // Expression methods
+
+    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
 protected:
 
     Device* device_pointer = nullptr;

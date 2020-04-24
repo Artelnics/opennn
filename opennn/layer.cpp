@@ -226,6 +226,17 @@ void Layer::set_neurons_number(const Index &)
 }
 
 
+string Layer::write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "get_inputs_number() const method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw logic_error(buffer.str());
+}
+
 string Layer::object_to_string() const
 {
     ostringstream buffer;

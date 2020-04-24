@@ -45,6 +45,8 @@ public:
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
                             ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
+    enum PerceptronLayerType{HiddenLayer, OutputLayer};
+
    // Constructors
 
    explicit PerceptronLayer();
@@ -288,6 +290,10 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
+   string write_hidden_layer_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_output_layer_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
    string write_activation_function_expression() const;
 
    string object_to_string() const;
@@ -313,6 +319,10 @@ protected:
    /// Activation function variable.
 
    ActivationFunction activation_function;
+
+   /// Layer type variable.
+
+   PerceptronLayerType perceptron_layer_type = OutputLayer;
 
    /// Display messages to screen. 
 
