@@ -1135,14 +1135,14 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names,
+string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_names,
         const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-        buffer << outputs_names(j) << " = probability(" << inputs_names(j) << ");\n";
+        buffer << outputs_names(j) << " = logistic(" << inputs_names(j) << ");\n";
     }
     return buffer.str();
 }
@@ -1211,7 +1211,7 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
         return write_binary_expression(inputs_names, outputs_names);
 
     case Logistic:
-        return write_probability_expression(inputs_names, outputs_names);
+        return write_logistic_expression(inputs_names, outputs_names);
 
     case Competitive:
         return write_competitive_expression(inputs_names, outputs_names);

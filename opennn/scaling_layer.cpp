@@ -1133,19 +1133,19 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
     {
         if(scaling_methods(i) == NoScaling)
         {
-            buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
+            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << outputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+            buffer << "scaled_" << inputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
-            buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
+            buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
         }
         else if(scaling_methods(i) == StandardDeviation)
         {
-            buffer << outputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
         }
         else
         {

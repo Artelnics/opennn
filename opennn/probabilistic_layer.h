@@ -336,7 +336,7 @@ public:
    // Expression methods
 
    string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_probability_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
