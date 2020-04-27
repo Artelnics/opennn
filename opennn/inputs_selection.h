@@ -82,7 +82,7 @@ public:
        
        /// Performance of the different neural networks.
 
-       Tensor<type, 1> loss_data;
+       Tensor<type, 1> training_error_data;
 
        /// Selection loss of the different neural networks.
 
@@ -131,7 +131,7 @@ public:
 
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_error_data() const;
+    const bool& get_reserve_training_error_data() const;
     const bool& get_reserve_selection_error_data() const;
     const bool& get_reserve_minimal_parameters() const;
 
@@ -154,7 +154,7 @@ public:
 
     void set_trials_number(const Index&);
 
-    void set_reserve_error_data(const bool&);
+    void set_reserve_training_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
@@ -240,7 +240,7 @@ protected:
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_error_data;
+    bool reserve_training_error_data;
 
     /// True if the selection error of all neural networks are to be reserved.
 
@@ -262,7 +262,7 @@ protected:
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
-    Index maximum_epochs_number;
+    Index maximum_iterations_number;
 
     /// Maximum value for the correlations.
 

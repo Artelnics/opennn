@@ -110,9 +110,9 @@ const Index& InputsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_error_data() const
+const bool& InputsSelection::get_reserve_training_error_data() const
 {
-    return reserve_error_data;
+    return reserve_training_error_data;
 }
 
 
@@ -154,7 +154,7 @@ const type& InputsSelection::get_selection_error_goal() const
 
 const Index& InputsSelection::get_maximum_iterations_number() const
 {
-    return maximum_epochs_number;
+    return maximum_iterations_number;
 }
 
 
@@ -218,7 +218,7 @@ void InputsSelection::set_default()
 
     // Results
 
-    reserve_error_data = true;
+    reserve_training_error_data = true;
     reserve_selection_error_data = true;
     reserve_minimal_parameters = true;
 
@@ -228,7 +228,7 @@ void InputsSelection::set_default()
 
     selection_error_goal = 0;
 
-    maximum_epochs_number = 1000;
+    maximum_iterations_number = 1000;
 
     maximum_correlation = 1.0;
     minimum_correlation = 0;
@@ -265,9 +265,9 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 /// Sets the reserve flag for the loss data.
 /// @param new_reserve_error_data Flag value.
 
-void InputsSelection::set_reserve_error_data(const bool& new_reserve_error_data)
+void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_error_data = new_reserve_error_data;
+    reserve_training_error_data = new_reserve_training_error_data;
 }
 
 
@@ -329,7 +329,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 
 void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
 {
-    maximum_epochs_number = new_maximum_iterations_number;
+    maximum_iterations_number = new_maximum_iterations_number;
 }
 
 
