@@ -109,7 +109,7 @@ void NumericalDifferentiation::set_numerical_differentiation_method
 /// The argument is a string with the name of the numerical differentiation method.
 /// @param new_numerical_differentiation_method Numerical differentiation method name string.
 
-void NumericalDifferentiation::set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
+void NumericalDifferentiation:: set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
 {
     if(new_numerical_differentiation_method == "ForwardDifferences")
     {
@@ -197,7 +197,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
     for(Index i = 0; i < n; i++)
     {
-        h(i) = sqrt(eta)*(static_cast<type>(1.0) + abs(x(i)));
+        h(i) = sqrt(eta)*(1 + abs(x(i)));
     }
 
     return h;
@@ -259,7 +259,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
         const type numerator = y(i) - y[i-1];
         const type denominator = x(i) - x[i-1];
 
-        if(abs(denominator) < numeric_limits<float>::min())
+        if(abs(denominator) > numeric_limits<float>::min())
         {
             derivatives(i) = numerator/denominator;
         }
