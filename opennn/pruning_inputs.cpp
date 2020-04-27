@@ -270,9 +270,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
+    if(used_columns_number < maximum_iterations_number) maximum_iterations_number = used_columns_number;
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
     {
         OptimizationAlgorithm::Results training_results;
 
@@ -283,7 +283,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         Index column_index;
         string column_name;
 
-        if(epoch == 0)
+        if(iteration == 0)
         {
             training_results = training_strategy_pointer->perform_training();
 
@@ -293,7 +293,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
         else
         {
-            column_index = correlations_ascending_indices[epoch-1];
+            column_index = correlations_ascending_indices[iteration-1];
 
             column_name = used_columns_names[column_index];
 
@@ -321,7 +321,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << endl << "Trial number: " << epoch << endl;
+            cout << endl << "Trial number: " << iteration << endl;
             cout << "Training error: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
             cout << "Stopping condition: " << training_results.write_stopping_condition() << endl << endl;
@@ -363,11 +363,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(epoch >= maximum_epochs_number)
+        else if(iteration >= maximum_iterations_number)
         {
             end_algorithm = true;
 
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "Maximum number of iterations reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumIterations;
         }
@@ -399,9 +399,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << "Iteration: " << epoch << endl;
+            cout << "Iteration: " << iteration << endl;
 
-            if(end_algorithm == false && epoch != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
+            if(end_algorithm == false && iteration != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
             cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
@@ -730,7 +730,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << maximum_epochs_number;
+        buffer << maximum_iterations_number;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -754,7 +754,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_error_data;
+        buffer << reserve_training_error_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -916,7 +916,7 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumEpochsNumber");
 
     buffer.str("");
-    buffer << maximum_epochs_number;
+    buffer << maximum_iterations_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -938,7 +938,7 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_error_data;
+    buffer << reserve_training_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1024,11 +1024,11 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_error_data = element->GetText();
+            const string new_reserve_training_error_data = element->GetText();
 
             try
             {
-                set_reserve_error_data(new_reserve_error_data != "0");
+                set_reserve_training_error_data(new_reserve_training_error_data != "0");
             }
             catch(const logic_error& e)
             {

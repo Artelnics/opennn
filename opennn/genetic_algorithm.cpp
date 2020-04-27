@@ -266,7 +266,7 @@ void GeneticAlgorithm::set_default()
     if(training_strategy_pointer == nullptr
             || !training_strategy_pointer->has_neural_network())
     {
-        maximum_epochs_number = 100;
+        maximum_iterations_number = 100;
 
         mutation_rate = 0.5;
 
@@ -275,7 +275,7 @@ void GeneticAlgorithm::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_epochs_number = static_cast<Index>(max(100.,inputs_number*5.));
+        maximum_iterations_number = static_cast<Index>(max(100.,inputs_number*5.));
 
         mutation_rate = static_cast<type>(1.0/inputs_number);
 
@@ -1909,9 +1909,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     initialize_population();
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
     {cout << "1" << endl;
-        if(epoch != 0)
+        if(iteration != 0)
         {
             evolve_population();
         }
@@ -1949,7 +1949,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             optimal_inputs = current_inputs;
             optimum_training_error = current_training_error;
             optimum_selection_error = current_selection_error;
-            optimal_generation = epoch;
+            optimal_generation = iteration;
             optimal_parameters = current_parameters;
         }
 
@@ -2001,13 +2001,13 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(epoch >= maximum_epochs_number-1)
+        else if(iteration >= maximum_iterations_number-1)
         {
             end_algortihm = true;
 
             if(display)
             {
-                cout << "Maximum number of epochs reached." << endl;
+                cout << "Maximum number of iterations reached." << endl;
             }
 
             results->stopping_condition = InputsSelection::MaximumIterations;
@@ -2034,7 +2034,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if(display)
         {
-            cout << "Generation: " << epoch+1 << endl;
+            cout << "Generation: " << iteration+1 << endl;
             cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
                  << " " << endl;
             cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
@@ -2490,7 +2490,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << maximum_epochs_number;
+        buffer << maximum_iterations_number;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -2783,7 +2783,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumGenerationsNumber");
 
     buffer.str("");
-    buffer << maximum_epochs_number;
+    buffer << maximum_iterations_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -3174,11 +3174,11 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_error_data = element->GetText();
+            const string new_reserve_training_error_data = element->GetText();
 
             try
             {
-                set_reserve_error_data(new_reserve_error_data != "0");
+                set_reserve_training_error_data(new_reserve_training_error_data != "0");
             }
             catch(const logic_error& e)
             {
