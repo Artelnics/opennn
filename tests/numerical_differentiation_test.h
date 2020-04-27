@@ -41,6 +41,9 @@ public:
    void test_constructor();
    void test_destructor();
 
+   void test_set_get_methods();
+   void test_calculate_methods();
+
    // Derivative methods
 
    void test_calculate_forward_differences_derivatives();
@@ -93,6 +96,7 @@ private:
 
    // Constant methods
 
+
    type f1(const type& var_x) const
    {
        return var_x;
@@ -121,7 +125,49 @@ private:
 
    Tensor<type,1> f4(const Index& cte, const Tensor<type,1>& vect_x) const
    {
-       return vect_x.square();
+       return cte*vect_x.square();
+   }
+
+/*
+   Tensor<type,2> f5(const Tensor<type,1>& vect_x, const Tensor<type,1>& vect_x) const
+   {
+       return cte*vect_x.square();
+   }
+*/
+
+   type f6(const Tensor<type,1>& vect_x) const
+   {
+       Tensor<type, 0> sum_ = vect_x.sum();
+
+       return sum_(0);
+   }
+
+   type f6_(const Tensor<type,1>& vect_x) const
+   {
+       Tensor<type, 0> sum_ = vect_x.sum();
+
+       return sum_(0);
+   }
+
+   type f7(const Index& dummy, const Tensor<type,1>& vect_x) const
+   {
+       Tensor<type, 0> sum_ = dummy*vect_x.square().sum();
+
+       return sum_(0);
+   }
+
+   type f8(const Tensor<type,1>& dummy, const Tensor<type,1>& vect_x) const
+   {
+       Tensor<type, 0> sum_ = (vect_x * dummy).sum();
+
+       return sum_(0);
+   }
+
+   type f9(const Tensor<Index,1>& dummy, const Tensor<type,1>& vect_x) const
+   {
+       Tensor<type, 0> sum_ = (vect_x * dummy).sum();
+
+       return sum_(0);
    }
 
    /*   type f2(const Tensor<type, 1>&) const;
