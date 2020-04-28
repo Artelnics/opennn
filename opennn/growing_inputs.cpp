@@ -446,6 +446,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     neural_network_pointer->set_parameters(optimal_parameters);
 
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
     if(display)
     {
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
