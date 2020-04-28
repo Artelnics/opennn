@@ -61,7 +61,7 @@ public:
 
    SumSquaredError(const SumSquaredError&);
 
-   virtual ~SumSquaredError();    
+   virtual ~SumSquaredError();
 
    // Error methods
 
