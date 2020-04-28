@@ -142,7 +142,7 @@ private:
        return sum_(0);
    }
 
-   type f4_1(const Tensor<type,1>& vect_x)
+   type f4_1(const Tensor<type,1>& vect_x) const
    {
        Tensor<type, 0> sum_ = vect_x.sum();
 
