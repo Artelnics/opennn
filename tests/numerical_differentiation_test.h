@@ -118,6 +118,11 @@ private:
        return cte*vect_x.square();
    }
 
+   Tensor<type,1> f2_2(const Index& cte, const Tensor<type,2>& matrix_x) const
+   {
+       return cte*matrix_x.maximum();
+   }
+
    Tensor<type,1> f2_2(const Tensor<type,1>& dummy, const Tensor<type,1>& vect_x) const
    {
        return dummy*vect_x.square();
