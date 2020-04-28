@@ -94,27 +94,27 @@ public:
 
         inline void resize_history(const Index& new_size)
         {
-            generation_optimum_loss_history.resize(new_size);
-            generation_minimum_selection_history.resize(new_size);
-            generation_mean_history.resize(new_size);
-            generation_standard_deviation_history.resize(new_size);
+            generation_optimum_training_error_history.resize(new_size);
+            generation_minimum_selection_error_history.resize(new_size);
+            generation_selection_error_mean_history.resize(new_size);
+            generation_selection_error_standard_deviation_history.resize(new_size);
         }
 
-        /// Values of the minimum loss in each generation.
+        /// Values of the minimum training error in each generation.
 
-        Tensor<type, 1> generation_optimum_loss_history;
+        Tensor<type, 1> generation_optimum_training_error_history;
 
         /// Values of the minimum selection error in each generation.
 
-        Tensor<type, 1> generation_minimum_selection_history;
+        Tensor<type, 1> generation_minimum_selection_error_history;
 
         /// Mean of the selection error in each generation.
 
-        Tensor<type, 1> generation_mean_history;
+        Tensor<type, 1> generation_selection_error_mean_history;
 
         /// Standard deviation of the selection error in each generation.
 
-        Tensor<type, 1> generation_standard_deviation_history;
+        Tensor<type, 1> generation_selection_error_standard_deviation_history;
     };
 
     // Get methods

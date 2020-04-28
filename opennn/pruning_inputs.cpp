@@ -301,8 +301,6 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             current_columns_indices = delete_result(column_index, current_columns_indices);
 
-//            current_columns_indices.push_back(column_index);
-
             const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
             data_set_pointer->set_input_variables_dimensions({input_variables_number});
@@ -340,6 +338,16 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
 
         previus_selection_error = current_selection_error;
+
+        if(reserve_training_error_data)
+        {
+            results->training_error_data = insert_result(current_training_error, results->training_error_data);
+        }
+
+        if(reserve_selection_error_data)
+        {
+            results->selection_error_data = insert_result(current_selection_error, results->selection_error_data);
+        }
 
         time(&current_time);
 
@@ -412,17 +420,20 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algorithm == true) break;
+        if(end_algorithm == true)
+        {
+            // Save results
+
+            results->optimal_inputs_indices = optimal_columns_indices;
+            results->final_selection_error = optimum_selection_error;
+            results->final_training_error = optimum_training_error;
+            results->iterations_number = iteration+1;
+            results->elapsed_time = elapsed_time;
+            results->minimal_parameters = optimal_parameters;
+
+            break;
+        }
     }
-
-    // Save results
-
-    results->optimal_inputs_indices = optimal_columns_indices;
-    results->final_selection_error = optimum_selection_error;
-    results->final_training_error = optimum_training_error;
-//    results->iterations_number = iteration;
-    results->elapsed_time = elapsed_time;
-    results->minimal_parameters = optimal_parameters;
 
     // Set Data set stuff
 
@@ -430,11 +441,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const Index optimal_inputs_number = optimal_columns_indices.size();
 
-    for(Index i = 0; i< optimal_inputs_number; i++)
+    for(Index i = 0; i < optimal_inputs_number; i++)
     {
         Index optimal_input_index = optimal_columns_indices[i];
 
-        data_set_pointer->set_column_use(optimal_input_index,DataSet::Input);
+        data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
     data_set_pointer->set_input_variables_dimensions({optimal_inputs_number});
@@ -444,6 +455,8 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     neural_network_pointer->set_inputs_number(optimal_inputs_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(display)
     {

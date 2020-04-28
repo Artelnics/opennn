@@ -198,7 +198,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     type optimum_training_error = numeric_limits<type>::max();
     type optimum_selection_error = numeric_limits<type>::max();
-    type previus_selection_error = numeric_limits<type>::max();
+    type previus_selection_error = numeric_limits< type>::max();
 
     // Data set
 

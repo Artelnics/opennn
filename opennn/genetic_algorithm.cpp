@@ -1133,7 +1133,6 @@ void GeneticAlgorithm::evaluate_population()
     }
 
     calculate_fitness();
-
 }
 
 
@@ -1244,9 +1243,15 @@ void GeneticAlgorithm::evolve_population()
 
     perform_selection();
 
+    cout << "perform selection" << endl;
+
     perform_crossover();
 
+    cout << "perform crossover" << endl;
+
     perform_mutation();
+
+    cout << "perform mutation" << endl;
 
     for(Index i = 0; i < population.dimension(0); i++)
     {
@@ -1330,15 +1335,15 @@ void GeneticAlgorithm::perform_selection()
 
         selected_population[selected_index] = true;
 
-        vector<bool> selected_inputs = tensor_to_vector(population.chip(selected_index, 0));
-        population_vector_copy.push_back(selected_inputs);
+        population_vector_copy.push_back(tensor_to_vector(population.chip(selected_index, 0)));
 
         fitness_copy[selected_index] = -1;
     }
 
     // Natural selection
 
-    while(static_cast<Index>(population_vector_copy.size()) < elitism_size && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
+    while(static_cast<Index>(population_vector_copy.size()) < elitism_size
+       && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
     {
         selected_index = maximal_index(fitness_copy);
 
@@ -1399,7 +1404,7 @@ void GeneticAlgorithm::perform_selection()
             random_loops++;
         }
     }
-
+cout << "wheel" << endl;
     population_copy.resize(static_cast<Index>(population_vector_copy.size()), static_cast<Index>(population_vector_copy[0].size()));
 
     population.setZero();
@@ -1882,8 +1887,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     bool end_algortihm = false;
 
-    Index iterations = 0;
-
     Index index = 0;
 
     time_t beginning_time, current_time;
@@ -1910,13 +1913,21 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     initialize_population();
 
     for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
-    {cout << "1" << endl;
+    {
+        cout << "iteration: " << iteration << endl;
+
         if(iteration != 0)
         {
+            cout << "Before evolve" << endl;
+
             evolve_population();
+
+            cout << "Evolve" << endl;
         }
 
         evaluate_population();
+
+        cout << "Evaluate" << endl;
 
         minimal_index = get_optimal_individual_index();
 
@@ -1956,27 +1967,36 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-/*
         if(reserve_generation_mean)
         {
-            results->generation_mean_history.push_back(current_mean);
+            results->generation_selection_error_mean_history
+                    = insert_result(current_mean(), results->generation_selection_error_mean_history);
         }
 
         if(reserve_generation_standard_deviation)
         {
-            results->generation_standard_deviation_history.push_back(current_standard_deviation);
+//            results->generation_standard_deviation_history.push_back(current_standard_deviation);
+
+            results->generation_selection_error_standard_deviation_history
+                    = insert_result(current_standard_deviation, results->generation_selection_error_standard_deviation_history);
         }
 
         if(reserve_generation_minimum_selection)
         {
-            results->generation_minimum_selection_history.push_back(current_selection_error);
+//            results->generation_minimum_selection_history.push_back(current_selection_error);
+
+            results->generation_minimum_selection_error_history
+                    = insert_result(current_selection_error, results->generation_minimum_selection_error_history);
         }
 
         if(reserve_generation_optimum_loss)
         {
-            results->generation_optimum_loss_history.push_back(current_training_error);
+//            results->generation_optimum_loss_history.push_back(current_training_error);
+
+            results->generation_optimum_training_error_history
+                    = insert_result(current_training_error, results->generation_optimum_training_error_history);
         }
-*/
+
         // Stopping criteria
 
         if(elapsed_time >= maximum_time)
@@ -2019,11 +2039,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             if(current_inputs[j] == false)
             {
-                current_uses[index] = DataSet::UnusedVariable;
+                current_uses(index) = DataSet::UnusedVariable;
             }
             else
             {
-                current_uses[index] = DataSet::Input;
+                current_uses(index) = DataSet::Input;
             }
         }
 
@@ -2047,17 +2067,21 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             cout << endl;
         }
 
-        if(end_algortihm == true) break;
+        if(end_algortihm == true)
+        {
+            // Save results
+
+            results->optimal_inputs = optimal_inputs;
+            results->final_selection_error = optimum_selection_error;
+            results->final_training_error = optimum_training_error;
+            results->iterations_number = iteration+1;
+            results->elapsed_time = elapsed_time;
+            results->minimal_parameters = optimal_parameters;
+
+            break;
+        }
     }
 
-    // Save results
-
-    results->optimal_inputs = optimal_inputs;
-    results->final_selection_error = optimum_selection_error;
-    results->final_training_error = optimum_training_error;
-    results->iterations_number = iterations;
-    results->elapsed_time = elapsed_time;
-    results->minimal_parameters = optimal_parameters;
 
     Index original_index;
 
@@ -2068,11 +2092,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         original_index = get_input_index(original_uses, i);
         if(optimal_inputs[i] == 1)
         {
-            optimal_uses[original_index] = DataSet::Input;
+            optimal_uses(original_index) = DataSet::Input;
         }
         else
         {
-            optimal_uses[original_index] = DataSet::UnusedVariable;
+            optimal_uses(original_index) = DataSet::UnusedVariable;
         }
     }
 
@@ -2080,15 +2104,27 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     data_set_pointer->set_columns_uses(optimal_uses);
 
+    cout << "data set results" << endl;
+
     // Set Neural network results
 
     neural_network_pointer->set_inputs_number(optimal_inputs);
 
+    cout << "inputs number" << endl;
+
     neural_network_pointer->set_parameters(optimal_parameters);
+
+    cout << "set parameters" << endl;
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+        cout << "inputs names" << endl;
 
     time(&current_time);
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
+
+        cout << "time" << endl;
 
     if(display)
     {
