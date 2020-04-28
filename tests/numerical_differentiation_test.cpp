@@ -1516,6 +1516,15 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
    assert_true(abs(H4[1](1,0) - 0) < static_cast<type>(1e-1), LOG);
 }
 
+void NumericalDifferentiationTest::test_calculate_central_differences_gradient_matrix()
+{
+    cout << "test_calculate_hessian_form\n";
+}
+
+void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices()
+{
+    cout << "test_calculate_hessian_form\n";
+}
 
 void NumericalDifferentiationTest::run_test_case()
 {

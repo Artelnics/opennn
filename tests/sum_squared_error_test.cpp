@@ -18,7 +18,7 @@ SumSquaredErrorTest::~SumSquaredErrorTest()
 {
 }
 
-/*
+
 void SumSquaredErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -54,7 +54,7 @@ void SumSquaredErrorTest::test_destructor()
    cout << "test_destructor\n";
 }
 
-
+/*
 void SumSquaredErrorTest::test_calculate_training_error()
 {
    cout << "test_calculate_training_error\n";
@@ -666,12 +666,12 @@ void SumSquaredErrorTest::test_from_XML()
 void SumSquaredErrorTest::run_test_case()
 {
    cout << "Running sum squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
-
+/*
    // Get methods
 
    // Set methods
