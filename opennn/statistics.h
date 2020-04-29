@@ -204,6 +204,7 @@ struct Histogram
      // Minimum
 
      type minimum(const Tensor<type, 1>&);
+     type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index minimum(const Tensor<Index, 1>&);
      time_t minimum(const Tensor<time_t, 1>&);
      type minimum(const Tensor<type, 2>&);
@@ -212,6 +213,7 @@ struct Histogram
      // Maximum
 
      type maximum(const Tensor<type, 1>&);
+     type maximum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index maximum(const Tensor<Index, 1>&);
      time_t maximum(const Tensor<time_t, 1>&);
      type maximum(const Tensor<type, 2>&);
