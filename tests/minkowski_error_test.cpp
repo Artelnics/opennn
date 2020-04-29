@@ -72,46 +72,77 @@ void MinkowskiErrorTest::test_set_Minkowski_parameter()
    cout << "test_set_Minkowski_parameter\n";
 }
 
-
+*/
 void MinkowskiErrorTest::test_calculate_training_error()
 {
    cout << "test_calculate_training_error\n";
 
+   NeuralNetwork neural_network;
+   Device device(Device::EigenThreadPool);
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
-   neural_network.set_parameters_constant(0.0);
+   DataSet data_set;
+   Tensor<type, 2> data;
 
-   DataSet data_set(1,1,1);
-   data_set.initialize_data(0.0);
+   Index instances_number;
+   Index inputs_number;
+   Index target_number;
 
    MinkowskiError minkowski_error(&neural_network, &data_set);
-
-   assert_true(minkowski_error.calculate_training_loss() == 0.0, LOG);
+   minkowski_error.set_Minkowski_parameter(1.5);
+   minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+   minkowski_error.set_device_pointer(&device);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 2});
+   instances_number = 10;
+   inputs_number = 2;
+   target_number = 2;
+
+   data_set.set(1, 2, 2);
+   data_set.set_data_random();
+   data_set.set_training();
+
+   DataSet::Batch batch(1, &data_set);
+
+   Tensor<Index,1> training_instances_indices = data_set.get_training_instances_indices();
+   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
+   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
+
+   batch.fill(training_instances_indices, inputs_indices, targets_indices);
+
+   Tensor<Index, 1>architecture(2);
+   architecture.setValues({inputs_number,target_number});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_device_pointer(&device);
    neural_network.set_parameters_random();
 
-   parameters = neural_network.get_parameters();
+   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
+   LossIndex::BackPropagation training_back_propagation(data_set.get_training_instances_number(), &minkowski_error);
 
-   data_set.set(1, 1, 2);
-   data_set.set_data_random();
+   neural_network.forward_propagate(batch, forward_propagation);
+   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   assert_true(abs(minkowski_error.calculate_training_error() - minkowski_error.calculate_training_error(parameters)) < numeric_limits<type>::min(), LOG);
+   minkowski_error.calculate_error(batch, forward_propagation, training_back_propagation);
+
+   cout << "Minkowski error: " << training_back_propagation.error << endl;
+
+   assert_true(training_back_propagation.error == 0.0, LOG);
 }
-
+/*
 
 void MinkowskiErrorTest::test_calculate_selection_error()
 {
    cout << "test_calculate_selection_error\n";  
 }
 
-
+*/
 void MinkowskiErrorTest::test_calculate_training_error_gradient()
 {
    cout << "test_calculate_training_error_gradient\n";
+
+   Device device(Device::EigenThreadPool);
 
    NeuralNetwork neural_network;
 
@@ -127,15 +158,81 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    Index outputs_number;
    Index hidden_neurons;
 
-   RecurrentLayer* recurrent_layer = new RecurrentLayer;
+//   ScalingLayer* scaling_layer = new ScalingLayer();
 
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
+//   RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
-   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer;
-   PerceptronLayer* output_perceptron_layer = new PerceptronLayer;
+//   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer;
+   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
+   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+
+   // Test perceptron and probabilistic
+{
+
+   instances_number = 2;
+   inputs_number = 1;
+   hidden_neurons = 1;
+   outputs_number = 1;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.set_data_random();
+
+   cout << "Data: " << data_set.get_data() << endl;
+
+   data_set.set_training();
+
+   DataSet::Batch batch(instances_number, &data_set);
+
+   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(instances_indices, input_indices, target_indices);
+
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
+
+   neural_network.add_layer(hidden_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
+
+   neural_network.set_device_pointer(&device);
+
+   neural_network.set_parameters_random();
+
+   me.set_Minkowski_parameter(1.5);
+
+   me.set_device_pointer(&device);
+
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation training_back_propagation(instances_number, &me);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+
+   me.back_propagate(batch, forward_propagation, training_back_propagation);
+
+   error_gradient = training_back_propagation.gradient;
+
+   cout << "Before numerical differentiation" << endl;
+   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation(&me);
+   cout << "After numerical differentiation" << endl;
+
+   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
+
+   cout << "Error gradient: " << error_gradient << endl;
+   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "Difference: " << difference << endl;
+
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+}
+
+
+/*
    // Test trivial
 {
    instances_number = 10;
@@ -322,9 +419,10 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
+   */
 }
 
-
+/*
 void MinkowskiErrorTest::test_to_XML()   
 {
    cout << "test_to_XML\n";  
@@ -391,9 +489,11 @@ void MinkowskiErrorTest::run_test_case()
    // Error methods
 
    test_calculate_training_error();
-   test_calculate_selection_error();
-   test_calculate_training_error_gradient();
 
+   test_calculate_selection_error();
+*/
+   test_calculate_training_error_gradient();
+/*
    // Serialization methods
 
    test_to_XML();

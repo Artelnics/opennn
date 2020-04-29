@@ -139,7 +139,6 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-
     switch(device_pointer->get_type())
     {
          case Device::EigenDefault:
