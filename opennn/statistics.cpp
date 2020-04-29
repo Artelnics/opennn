@@ -418,6 +418,33 @@ type minimum(const Tensor<type, 1>& vector)
 }
 
 
+/// Returns the smallest element of a type vector.
+/// @param vector Vector to obtain the minimum value.
+/// @param indices Vector of used indices.
+
+type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    const Index size = indices.dimension(0);
+
+    type minimum = numeric_limits<type>::max();
+
+    Index index;
+
+    for(Index i = 0; i < size; i++)
+    {
+        index = indices(i);
+
+        if(vector(index) < minimum && !::isnan(vector(index)))
+        {
+            minimum = vector(index);
+        }
+    }
+
+    return minimum;
+}
+
+
+
 /// Returns the smallest element of a Index vector.
 
 time_t minimum(const Tensor<time_t, 1>& vector)
@@ -448,6 +475,33 @@ type maximum(const Tensor<type, 1>& vector)
 
     return maximum;
 }
+
+
+/// Returns the largest element in the vector.
+/// @param vector Vector to obtain the maximum value.
+/// @param indices Vector of used indices.
+
+type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    const Index size = indices.dimension(0);
+
+    type maximum = -numeric_limits<type>::max();
+
+    Index index;
+
+    for(Index i = 0; i < size; i++)
+    {
+        index = indices(i);
+
+        if(!::isnan(vector(index)) && vector(index) > maximum)
+        {
+            maximum = vector(index);
+        }
+    }
+
+    return maximum;
+}
+
 
 
 time_t maximum(const Tensor<time_t, 1>& vector)
@@ -1175,11 +1229,11 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
 
-    boxplot.minimum = minimum(vector);
+    boxplot.minimum = minimum(vector, indices);
     boxplot.first_quartile = quartiles(0);
     boxplot.median = quartiles(1);
     boxplot.third_quartile = quartiles(2);
-    boxplot.maximum = maximum(vector);
+    boxplot.maximum = maximum(vector, indices);
 
     return boxplot;
 }
