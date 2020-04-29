@@ -44,9 +44,11 @@ public:
 
    // Gradient methods
 
-   void test_calculate_layers_delta();
+   void test_calculate_output_gradient();
 
    void test_calculate_training_error_gradient();
+
+   void test_calculate_Jacobian_gradient();
 
    // Error terms methods
 
