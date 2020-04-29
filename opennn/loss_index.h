@@ -306,11 +306,17 @@ public:
 
        calculate_error(batch, forward_propagation, back_propagation);
 
+       cout << "error: " << back_propagation.error << endl;
+
        calculate_output_gradient(batch, forward_propagation, back_propagation);
+
+       cout << "output error gradient: " << back_propagation.output_gradient(0) << endl;
 
        calculate_layers_delta(forward_propagation, back_propagation);
 
        calculate_error_gradient(batch, forward_propagation, back_propagation);
+
+       cout << "gradient: " << back_propagation.gradient(0) << endl;
 
        // Regularization
 
