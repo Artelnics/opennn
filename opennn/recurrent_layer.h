@@ -291,7 +291,7 @@ protected:
    bool display;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"
 #endif
 
 };

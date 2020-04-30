@@ -869,7 +869,7 @@ private:
    Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
 
 };

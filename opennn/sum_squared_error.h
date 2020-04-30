@@ -99,7 +99,7 @@ private:
    Tensor<type, 1> calculate_squared_errors() const;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/sum_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
 #endif
 
 };

@@ -354,7 +354,7 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
 #endif
 
 };
