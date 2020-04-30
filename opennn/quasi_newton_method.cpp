@@ -1313,8 +1313,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        cout << "-------------------" << endl;
-
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -1530,8 +1528,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         //training_loss = training_back_propagation.loss;
 
         //selection_error = minimum_selection_error;
-
-        cout << "-------------------" << endl;
     }
 
     return results;
