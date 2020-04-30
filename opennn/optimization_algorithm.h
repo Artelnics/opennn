@@ -282,7 +282,7 @@ protected:
    }
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"
 #endif
 
 };

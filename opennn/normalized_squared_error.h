@@ -116,7 +116,7 @@ private:
    type selection_normalization_coefficient;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/normalized_squared_error_cuda.h"
 #endif
 
 

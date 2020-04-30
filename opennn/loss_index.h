@@ -495,7 +495,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/loss_index_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
 
 
