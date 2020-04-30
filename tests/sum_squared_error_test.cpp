@@ -410,8 +410,8 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
 void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 {
-   cout << "test_calculate_output_gradient\n";
-
+   cout << "test_calculate_Jacobian_gradient\n";
+/*
    NeuralNetwork neural_network;
    Device device(Device::EigenThreadPool);
    Tensor<type, 1> parameters;
@@ -427,7 +427,10 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
         //Dataset
 
-   data_set.set(1, 2, 2);
+   Index inputs_number = 2;
+   Index target_number = 3;
+
+   data_set.set(1, inputs_number, target_number);
    data_set.initialize_data(0.0);
    data_set.set_training();
 
@@ -441,8 +444,6 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
         //Neural network
 
-   Index inputs_number = 2;
-   Index target_number = 2;
    Tensor<Index, 1>architecture(2);
    architecture.setValues({inputs_number,target_number});
 
@@ -453,158 +454,18 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
 
-   LossIndex::SecondOrderLoss second_order_loss(neural_network.get_parameters_number(), training_instances_indices.size());
+   LossIndex::BackPropagation training_back_propagation(data_set.get_training_instances_number(), &sum_squared_error);
+   sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
+   LossIndex::SecondOrderLoss second_order_loss(neural_network.get_parameters_number(), training_instances_indices.size());
+   sum_squared_error.calculate_error_terms_Jacobian(batch, forward_propagation, training_back_propagation, second_order_loss);
    sum_squared_error.calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
    cout << second_order_loss.gradient << endl;
 
-
-//   assert_true(second_order_loss.gradient(0) == 0.0, LOG);
-//   assert_true(second_order_loss.gradient(1) == 0.0, LOG);
-
-   /*
-   NumericalDifferentiation nd;
-
-   NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
-   Tensor<type, 1> parameters;
-
-   DataSet data_set;
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-   Tensor<type, 1> gradient;
-
-   Tensor<type, 1> terms;
-   Tensor<type, 2> terms_Jacobian;
-   Tensor<type, 2> numerical_Jacobian_terms;
-
-   Tensor<Index, 1> instances;
-
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> targets;
-
-   Tensor<type, 2> outputs;
-   Tensor<type, 2> output_gradient;
-
-   Tensor<Tensor<type, 2>, 1> layers_activations;
-
-   Tensor<Tensor<type, 2>, 1> layers_activations_derivatives;
-
-   Tensor<Tensor<type, 2>, 1> layers_delta;
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-
-   neural_network.set_parameters_constant(0.0);
-
-   data_set.set(1, 1, 1);
-
-   data_set.initialize_data(0.0);
-
-   instances.set(1,0);
-   //instances.initialize_sequential();
-
-   inputs = data_set.get_input_data(instances);
-   targets = data_set.get_target_data(instances);
-
-   outputs = neural_network.calculate_outputs(inputs);
-   output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
-
-   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
-
-   layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
-
-   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.set_parameters_constant(0.0);
-
-   data_set.set(3, 2, 5);
-   sum_squared_error.set(&neural_network, &data_set);
-   data_set.initialize_data(0.0);
-
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-   architecture.resize(3);
-   architecture[0] = 5;
-   architecture[1] = 1;
-   architecture[2] = 2;
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_parameters_constant(0.0);
-
-   data_set.set(5, 2, 3);
-   sum_squared_error.set(&neural_network, &data_set);
-   data_set.initialize_data(0.0);
-
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.set_parameters_random();
-   parameters = neural_network.get_parameters();
-
-   data_set.set(1, 1, 1);
-   data_set.set_data_random();
-
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
-
-   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.set_parameters_random();
-   parameters = neural_network.get_parameters();
-
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
-
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
-
-   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
-
-   // Test
-
-   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.set_parameters_random();
-
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
-
-//   gradient = sum_squared_error.calculate_gradient();
-
-//   terms = sum_squared_error.calculate_training_error_terms();
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-
-//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(terms)*2.0 - gradient) < 1.0e-3, LOG);
-*/
+   assert_true(second_order_loss.gradient(0) == 0.0, LOG);
+   assert_true(second_order_loss.gradient(1) == 0.0, LOG);*/
 }
-
-
-
 
 /*
 void SumSquaredErrorTest::test_calculate_layers_delta()
