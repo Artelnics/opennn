@@ -1902,7 +1902,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         }
     }
-    cout << "outputs" << endl;
 
     // Display
     {
