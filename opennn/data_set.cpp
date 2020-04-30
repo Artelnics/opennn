@@ -2982,8 +2982,8 @@ void DataSet::set_binary_simple_columns()
                 columns(column_index).type = Binary;
 
                 columns(column_index).categories.resize(2);
-                columns(column_index).categories(0) = "Class_" + std::to_string(values(0));
-                columns(column_index).categories(1) = "Class_" + std::to_string(values(1));
+                columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
+                columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
 
                 const VariableUse column_use = columns(column_index).column_use;
                 columns(column_index).categories_uses.resize(2);
@@ -4792,7 +4792,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(abs(data(training_index, target_index) - 1) < numeric_limits<type>::min())
+        else if(abs(data(training_index, target_index) - static_cast<type>(1)) < static_cast<type>(1.0e-3))
         {
             ostringstream buffer;
 
