@@ -151,8 +151,6 @@ void NeuralNetworkTest::test_destructor()
    delete neural_network_1;
 }
 
-
-
 void NeuralNetworkTest::test_assignment_operator()
 {
    cout << "test_assignment_operator\n";
@@ -165,8 +163,6 @@ void NeuralNetworkTest::test_get_display()
 {
    cout << "test_get_display\n";
 }
-
-// APPENDING LAYERS
 
 void NeuralNetworkTest::test_add_layer()
 {
@@ -277,8 +273,6 @@ void NeuralNetworkTest::check_layer_type()
    assert_true(neural_network_2.check_layer_type(Layer::LongShortTermMemory), LOG);
    assert_true(neural_network_2.check_layer_type(Layer::Recurrent), LOG);
 }
-
-// Get methods
 
 void NeuralNetworkTest::test_has_methods()
 {
@@ -425,8 +419,6 @@ void NeuralNetworkTest::test_get_layer_pointer()
 
    assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
 }
-
-// Set methods
 
 void NeuralNetworkTest::test_set()
 {
@@ -649,8 +641,6 @@ void NeuralNetworkTest::test_set_display()
    assert_true(neural_network.get_display() == false, LOG);
 }
 
-// Layers
-
 void NeuralNetworkTest::test_get_layers_number()
 {
    cout << "test_get_layers_number\n";
@@ -683,8 +673,6 @@ void NeuralNetworkTest::test_get_layers_number()
    assert_true(neural_network_1.get_probabilistic_layers_number() == 1, LOG);
 //   assert_true(neural_network.get_layers_neurons_numbers()(0) == 0, LOG);
 }
-
-// Architecture
 
 void NeuralNetworkTest::test_inputs_outputs_number()
 {
@@ -738,7 +726,6 @@ void NeuralNetworkTest::test_get_architecture()
    assert_true(neural_network_1_1.get_architecture()(3) == 2, LOG);
    assert_true(neural_network_1_1.get_architecture()(4) == 2, LOG);
 }
-
 
 void NeuralNetworkTest::test_get_parameters()
 {
@@ -984,7 +971,6 @@ void NeuralNetworkTest::test_set_parameters_random()
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
 }
 
-
 void NeuralNetworkTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
@@ -1114,7 +1100,6 @@ void NeuralNetworkTest::test_calculate_parameters_histogram()
    assert_true(abs(parameters_histogram.frequencies(2) - 2) < static_cast<type>(1e-5), LOG);
 }
 
-
 void NeuralNetworkTest::test_perturbate_parameters()
 {
    cout << "test_perturbate_parameters\n";
@@ -1144,8 +1129,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
    assert_true(abs(parameters(0) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(3) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
 }
-
-// Outputs
 
 void NeuralNetworkTest::test_calculate_outputs()
 {
@@ -1676,8 +1659,6 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
    assert_true(outputs_histograms(1).frequencies(1) - 1 < static_cast<type>(1e-5), LOG);
 }
 
-// XML
-
 void NeuralNetworkTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -1747,8 +1728,6 @@ void NeuralNetworkTest::test_load()
    neural_network.load(file_name);
 }
 
-// Expression
-
 void NeuralNetworkTest::test_print()
 {
    cout << "test_print\n";
@@ -1782,7 +1761,7 @@ void NeuralNetworkTest::test_write_expression()
 
    // Test
 
-   expression = neural_network.write_expression();
+//   expression = neural_network.write_expression();
 
    // Test
 
@@ -1829,9 +1808,7 @@ void NeuralNetworkTest::test_write_expression()
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(-1.0);
 //   expression = neural_network.write_expression();
-
 }
-
 
 void NeuralNetworkTest::test_forward_propagate()
 {
@@ -1860,7 +1837,6 @@ void NeuralNetworkTest::test_forward_propagate()
 
     DataSet dataset(data);
 
-//    dataset.set_instances_number(3);
     dataset.set_training();
 
     DataSet::Batch batch(5, &dataset);
@@ -1922,7 +1898,6 @@ void NeuralNetworkTest::test_forward_propagate()
 
     dataset.set(data);
 
-//    dataset.set_instances_number(3);
     dataset.set_training();
 
     DataSet::Batch batch_3(3, &dataset);
