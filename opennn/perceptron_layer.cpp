@@ -310,6 +310,7 @@ void PerceptronLayer::set_inputs_number(const size_t& new_inputs_number)
     biases.set(neurons_number);
 
     synaptic_weights.set(new_inputs_number, neurons_number);
+
 }
 
 
@@ -1239,24 +1240,6 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsNumber element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(inputs_number_element->GetText())
-    {
-        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
-    }
-
     // Neurons number
 
     const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
@@ -1273,6 +1256,24 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(neurons_number_element->GetText())
     {
         set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(inputs_number_element->GetText())
+    {
+        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
     }
 
     // Activation function
@@ -1391,7 +1392,7 @@ string PerceptronLayer::object_to_string() const
     buffer << "Activation function: " << write_activation_function() << endl;
     buffer << "Neurons number: " << neurons_number << endl;
     buffer << "Biases:\n " << biases << endl;
-    buffer << "Synaptic_weights:\n" << synaptic_weights;
+    buffer << "Synaptic_weights:\n" << synaptic_weights << endl;
 
     return buffer.str();
 }
