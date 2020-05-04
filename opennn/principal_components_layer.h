@@ -25,8 +25,6 @@
 
 #include "layer.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 

@@ -35,7 +35,6 @@
 #include "statistics.h"
 #include "correlations.h"
 #include "opennn_strings.h"
-#include "tinyxml2.h"
 
 using namespace std;
 using namespace Eigen;

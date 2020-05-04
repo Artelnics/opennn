@@ -26,9 +26,6 @@
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-#include "tinyxml2.h"
-
-//Eigen includes
 
 namespace OpenNN
 {

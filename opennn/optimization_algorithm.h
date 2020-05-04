@@ -25,7 +25,6 @@
 #include "config.h"
 #include "loss_index.h"
 
-#include "tinyxml2.h"
 
 using namespace std;
 using namespace Eigen;

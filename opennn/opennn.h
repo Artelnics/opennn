@@ -67,7 +67,6 @@
 // Utilities
 
 #include "numerical_differentiation.h"
-#include "tinyxml2.h"
 #include "correlations.h"
 #include "response_optimization.h"
 #include "statistics.h"

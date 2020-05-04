@@ -24,7 +24,6 @@
 
 #include "neural_network.h"
 #include "loss_index.h"
-#include "tinyxml2.h"
 #include "config.h"
 
 namespace OpenNN

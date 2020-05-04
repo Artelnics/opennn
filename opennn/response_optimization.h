@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "neural_network.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

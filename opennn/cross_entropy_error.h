@@ -21,8 +21,6 @@
 #include "data_set.h"
 #include "config.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 

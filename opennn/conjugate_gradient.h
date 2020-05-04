@@ -27,7 +27,6 @@
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 #include "config.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

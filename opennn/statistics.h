@@ -20,11 +20,6 @@
 // OpenNN includes
 
 #include "config.h"
-//
-
-// Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;

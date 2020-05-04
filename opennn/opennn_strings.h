@@ -18,8 +18,6 @@
 
 #include "config.h"
 
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-
 using namespace std;
 using namespace Eigen;
 
