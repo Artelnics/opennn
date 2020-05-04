@@ -289,10 +289,8 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 
 #endif
 
-//    type weighted_sum_squared_error = 0.0;
-
-    const Tensor<bool, 2> if_sentence = x == x.constant(1);
-    const Tensor<bool, 2> else_sentence = x == x.constant(0);
+    const Tensor<bool, 2> if_sentence = y == y.constant(1);
+    const Tensor<bool, 2> else_sentence = y == y.constant(0);
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
@@ -307,31 +305,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
     f_3 = x.constant(0);
 
     Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
-/*
-    for(Index i = 0; i < x.size(); i++)
-    {
-        error = x(i) - y(i);
 
-        if(static_cast<double>(y(i)) == 1.0)
-        {
-            weighted_sum_squared_error += positives_weight*(error*error);
-        }
-        else if(static_cast<double>(y(i)) == 0.0)
-        {
-            weighted_sum_squared_error += negatives_weight*(error*error);
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: Metrics functions.\n"
-                   << "double calculate_error() method.\n"
-                   << "Other matrix is neither a positive nor a negative.\n";
-
-            throw logic_error(buffer.str());
-        }
-    }
-*/
     return weighted_sum_squared_error(0);
 }
 
@@ -370,32 +344,26 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
      const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
      const Tensor<type, 2>& targets = batch.targets_2d;
 
-     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+     const Index batch_instances_number = batch.targets_2d.size();
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_instances_number);
 
-              errors.device(*default_device) = outputs - targets;
+     const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
+     const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
 
-              back_propagation.output_gradient.device(*default_device) = errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+     Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
 
-              return;
-          }
+     Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
 
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+     Tensor<type, 2> f_3(outputs.dimension(0), outputs.dimension(1));
 
-             errors.device(*thread_pool_device) = outputs - targets;
+     f_1 = coefficient*(outputs - targets)*positives_weight;
 
-             back_propagation.output_gradient.device(*thread_pool_device) =errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+     f_2 = coefficient*(outputs - targets)*negatives_weight;
 
-             return;
-          }
-     }
+     f_3 = outputs.constant(0);
+
+     back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
 }
 
 void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
