@@ -31,8 +31,6 @@
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
-#include "tinyxml2.h"
-
 // Eigen Includes
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"

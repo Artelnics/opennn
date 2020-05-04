@@ -34,7 +34,6 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

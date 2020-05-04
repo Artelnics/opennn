@@ -25,7 +25,6 @@
 #include "data_set.h"
 #include "neural_network.h"
 #include "numerical_differentiation.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

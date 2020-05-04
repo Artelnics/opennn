@@ -5808,6 +5808,10 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
         const Tensor<type, 2> input_i = get_column_data(input_columns_indices(i));
 
+        cout << "Calculating " << columns(i).name << " correlations." << endl;
+
+        #pragma omp parallel for
+
         for(Index j = i; j < input_columns_number; j++)
         {
             const ColumnType type_j = columns(j).type;
@@ -7581,7 +7585,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    cout << "data set from_XML" << endl;
     ostringstream buffer;
 
     // Data set element
@@ -8520,6 +8523,9 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     cout << "Rows number: " << rows_number << endl;
     cout << "Columns number: " << columns_number << endl;
 
+    cout << "Saving binary data file..." << endl;
+
+
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -8538,6 +8544,9 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     }
 
     file.close();
+
+    cout << "Binary data file saved" << endl;
+
 }
 
 
@@ -9948,8 +9957,6 @@ void DataSet::read_csv_1()
     }
 
     const char separator_char = get_separator_char();
-
-    cout << "Separator_char---------------"<< separator_char << endl;
 
     cout << "Setting data file preview..." << endl;
 

@@ -25,10 +25,8 @@
 #include "layer.h"
 
 #include "statistics.h"
-#include "tinyxml2.h"
 
 #include "perceptron_layer.h"
-//#include "probabilistic_layer.h"
 #include "convolutional_layer.h"
 
 namespace OpenNN

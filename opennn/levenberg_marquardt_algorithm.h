@@ -25,7 +25,6 @@
 
 #include "config.h"
 #include "optimization_algorithm.h"
-#include "tinyxml2.h"
 
 // Eigen includes
 

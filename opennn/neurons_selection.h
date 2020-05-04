@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "training_strategy.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

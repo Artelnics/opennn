@@ -23,9 +23,7 @@
 
 #include "training_strategy.h"
 #include "inputs_selection.h"
-#include "tinyxml2.h"
 #include "config.h"
-
 
 namespace OpenNN
 {

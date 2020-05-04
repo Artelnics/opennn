@@ -22,7 +22,6 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {

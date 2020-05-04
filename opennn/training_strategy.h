@@ -39,9 +39,6 @@
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 
-#include "tinyxml2.h"
-
-//Eigen Includes
 
 namespace OpenNN
 {
