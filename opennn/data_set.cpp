@@ -4788,11 +4788,11 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
     {
         const Index training_index = training_indices(i);
 
-        if(abs(data(training_index, target_index)) < numeric_limits<type>::min())
+        if(fabsf(data(training_index, target_index)) < numeric_limits<type>::min())
         {
             negatives++;
         }
-        else if(abs(data(training_index, target_index) - static_cast<type>(1)) < static_cast<type>(1.0e-3))
+        else if(fabsf(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
         {
             ostringstream buffer;
 
@@ -4823,11 +4823,11 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
     {
         const Index selection_index = selection_indices(i);
 
-        if(abs(data(selection_index, target_index)) < numeric_limits<type>::min())
+        if(fabsf(data(selection_index, target_index)) < numeric_limits<type>::min())
         {
             negatives++;
         }
-        else if(abs(data(selection_index, target_index) - 1) < numeric_limits<type>::min())
+        else if(fabsf(data(selection_index, target_index) - 1) > numeric_limits<type>::min())
         {
             ostringstream buffer;
 
