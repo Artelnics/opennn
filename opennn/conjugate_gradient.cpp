@@ -1270,7 +1270,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            selection_error = selection_back_propagation.loss;
+            selection_error = selection_back_propagation.error;
 
             if(epoch == 0)
             {
@@ -1406,7 +1406,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training loss: " << training_back_propagation.loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
-                     << information
+//                     << information
                      << "Training rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -1421,7 +1421,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
 
-            results.final_training_error = training_back_propagation.loss;
+            results.final_training_error = training_back_propagation.error;
             results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
@@ -1439,11 +1439,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << training_back_propagation.loss << "\n"
+                 << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-                 << information
-                 << "Training rate: " << optimization_data.learning_rate << "\n";
-//                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+//                 << information
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << "\n";
 
             if(has_selection)
             {
@@ -1476,7 +1476,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     results.final_parameters = optimization_data.parameters;
     results.final_parameters_norm = parameters_norm;
 
-    results.final_training_error = training_back_propagation.loss;
+    results.final_training_error = training_back_propagation.error;
     results.final_selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;

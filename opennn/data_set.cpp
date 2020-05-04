@@ -8151,8 +8151,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_method(missing_values_method_element->GetText());
     }
 
-    cout << "missing values method" << endl;
-
     // Preview data
 
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
@@ -8211,8 +8209,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             data_file_preview(i) = get_tokens(row_element->GetText(), ',');
         }
     }
-
-    cout << "preview data" << endl;
 
     // Display
 
