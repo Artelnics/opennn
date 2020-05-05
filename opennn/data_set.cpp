@@ -5464,22 +5464,25 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+        Tensor<type, 2> input = get_column_data(input_columns_indices(i));
 
         const ColumnType input_type = columns(input_columns_indices(i)).type;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+            Tensor<type, 2> target = get_column_data(target_columns_indices(j));
 
             const ColumnType target_type = columns(target_columns_indices(j)).type;
 
             if(input_type == Numeric && target_type == Numeric)
             {
-                const CorrelationResults linear_correlation = linear_correlations(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults exponential_correlation = exponential_correlations(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults logarithmic_correlation = logarithmic_correlations(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults power_correlation = power_correlations(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                const CorrelationResults linear_correlation = linear_correlations(input_column, target_column);
+                const CorrelationResults exponential_correlation = exponential_correlations(input_column, target_column);
+                const CorrelationResults logarithmic_correlation = logarithmic_correlations(input_column, target_column);
+                const CorrelationResults power_correlation = power_correlations(input_column, target_column);
 
                 CorrelationResults strongest_correlation = linear_correlation;
 
@@ -5491,7 +5494,10 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                correlations(i,j) = linear_correlations(input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
@@ -5499,19 +5505,29 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                correlations(i,j) = logistic_correlations(input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                correlations(i,j) = logistic_correlations(input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
-                correlations(i,j) = one_way_anova_correlations(input, target.chip(0,1));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlations(input, target_column);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
-                correlations(i,j) = one_way_anova_correlations(target, input.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlations(target, input_column);
             }
             else
             {
@@ -5806,7 +5822,7 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
     {
         const ColumnType type_i = columns(i).type;
 
-        const Tensor<type, 2> input_i = get_column_data(input_columns_indices(i));
+        Tensor<type, 2> input_i = get_column_data(input_columns_indices(i));
 
         cout << "Calculating " << columns(i).name << " correlations." << endl;
 
@@ -5816,16 +5832,19 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
         {
             const ColumnType type_j = columns(j).type;
 
-            const Tensor<type, 2> input_j = get_column_data(input_columns_indices(j));
+            Tensor<type, 2> input_j = get_column_data(input_columns_indices(j));
 
             if(type_i == Numeric && type_j == Numeric)
             {
-                correlations(i,j) = linear_correlation(input_i.chip(0,1), input_j.chip(0,1));
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                const type linear_correlation = OpenNN::linear_correlation(input_i.chip(0,1), input_j.chip(0,1));
-                const type exponential_correlation = OpenNN::exponential_correlation(input_i.chip(0,1), input_j.chip(0,1));
-                const type logarithmic_correlation = OpenNN::logarithmic_correlation(input_i.chip(0,1), input_j.chip(0,1));
-                const type power_correlation = OpenNN::power_correlation(input_i.chip(0,1), input_j.chip(0,1));
+                correlations(i,j) = linear_correlation(current_input_i, current_input_j);
+
+                const type linear_correlation = OpenNN::linear_correlation(current_input_i, current_input_j);
+                const type exponential_correlation = OpenNN::exponential_correlation(current_input_i, current_input_j);
+                const type logarithmic_correlation = OpenNN::logarithmic_correlation(current_input_i, current_input_j);
+                const type power_correlation = OpenNN::power_correlation(current_input_i, current_input_j);
 
                 type strongest_correlation = linear_correlation;
 
@@ -5837,7 +5856,10 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             }
             else if(type_i == Binary && type_j == Binary)
             {
-                correlations(i,j) = linear_correlation(input_i.chip(0,1), input_j.chip(0,1));
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                correlations(i,j) = linear_correlation(current_input_i, current_input_j);
             }
             else if(type_i == Categorical && type_j == Categorical)
             {
@@ -5845,19 +5867,29 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             }
             else if(type_i == Numeric && type_j == Binary)
             {
-                correlations(i,j) = logistic_correlations(input_i.chip(0,1), input_j.chip(0,1)).correlation;
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                correlations(i,j) = logistic_correlations(current_input_i, current_input_j).correlation;
             }
             else if(type_i == Binary && type_j == Numeric)
             {
-                correlations(i,j) = logistic_correlations(input_j.chip(0,1), input_i.chip(0,1)).correlation;
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                correlations(i,j) = logistic_correlations(current_input_i, current_input_j).correlation;
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
-                correlations(i,j) = one_way_anova_correlation(input_i, input_j.chip(0,1));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlation(input_i, current_input_j);
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
-                correlations(i,j) = one_way_anova_correlation(input_j, input_i.chip(0,1));
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlation(input_j, current_input_i);
             }
             else
             {
