@@ -5558,15 +5558,21 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+        const Index input_index = input_columns_indices(i);
 
-        const ColumnType input_type = columns(input_columns_indices(i)).type;
+        Tensor<type, 2> input = get_column_data(input_index);
+
+        const ColumnType input_type = columns(input_index).type;
+
+        cout << "Calculating " << columns(input_index).name << " correlations." << endl;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+            const Index target_index = input_columns_indices(j);
 
-            const ColumnType target_type = columns(target_columns_indices(j)).type;
+            Tensor<type, 2> target = get_column_data(target_index);
+
+            const ColumnType target_type = columns(target_index).type;
 
             if(input_type == Numeric && target_type == Numeric)
             {
@@ -9302,6 +9308,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     Index used_column_index = 0;
     Index variable_index = 0;
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < columns_number; i++)
     {
