@@ -5914,26 +5914,28 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        const ColumnType type_i = columns(i).type;
+        const Index current_input_index_i = input_columns_indices(i);
 
-        Tensor<type, 2> input_i = get_column_data(input_columns_indices(i));
+        const ColumnType type_i = columns(current_input_index_i).type;
 
-        cout << "Calculating " << columns(i).name << " correlations." << endl;
+        Tensor<type, 2> input_i = get_column_data(current_input_index_i);
+
+        cout << "Calculating " << columns(current_input_index_i).name << " correlations." << endl;
 
         #pragma omp parallel for
 
         for(Index j = i; j < input_columns_number; j++)
         {
-            const ColumnType type_j = columns(j).type;
+            const Index current_input_index_j = input_columns_indices(j);
 
-            Tensor<type, 2> input_j = get_column_data(input_columns_indices(j));
+            const ColumnType type_j = columns(current_input_index_j).type;
+
+            Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             if(type_i == Numeric && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = linear_correlation(current_input_i, current_input_j);
 
                 const type linear_correlation = OpenNN::linear_correlation(current_input_i, current_input_j);
                 const type exponential_correlation = OpenNN::exponential_correlation(current_input_i, current_input_j);
