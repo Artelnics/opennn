@@ -1433,7 +1433,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             break;
         }
 
-        else if(display && epoch % display_period == 0)
+        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
         {
             information = loss_index_pointer->write_information();
 
