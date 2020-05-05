@@ -1496,9 +1496,11 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
 /// @param outputs Testing output data.
 /// @param decision_threshold Decision threshold.
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& decision_threshold) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets,
+                                                                            const Tensor<type, 2>& outputs,
+                                                                            const type& decision_threshold) const
 {
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
     Tensor<Index, 2> confusion(2, 2);
 
@@ -1507,9 +1509,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     Index false_positive = 0;
     Index true_negative = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    type target = 0;
+    type output = 0;
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        if(static_cast<Index>(decision_threshold) == static_cast<Index>(0.0) && static_cast<Index>(targets(i,0)) == static_cast<Index>(0.0) )
+        target = targets(i,0);
+        output = outputs(i,0);
+/*
+        if(static_cast<Index>(decision_threshold) == 0 && static_cast<Index>(target) == 0 )
         {
             false_positive++;
         }
@@ -1517,21 +1525,33 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             true_positive++;
         }
-        else if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
+        else
+*/
+        if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
         }
-        else if(targets(i,0) >= decision_threshold && outputs(i,0) < decision_threshold)
+        else if(target >= decision_threshold && output < decision_threshold)
         {
             false_negative++;
         }
-        else if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
+        else if(target < decision_threshold && output >= decision_threshold)
         {
             false_positive++;
         }
-        else if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
+        else if(target < decision_threshold && output < decision_threshold)
         {
             true_negative++;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: TestingAnalysis class.\n"
+                   << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
+                   << "Unknown case.\n";
+
+            throw logic_error(buffer.str());
         }
     }
 
@@ -1540,15 +1560,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
 
-    const Tensor<Index, 0> confusion_sum = confusion.sum();
+    const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
-    if(confusion_sum() != rows_number)
+    if(confusion_sum != testing_instances_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
-               << "Number of elements in confusion matrix (" << confusion.sum() << ") must be equal to number of testing instances (" << rows_number << ").\n";
+               << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing instances (" << testing_instances_number << ").\n";
 
         throw logic_error(buffer.str());
     }
