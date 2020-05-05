@@ -41,40 +41,29 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-    type s_x = 0;
-    type s_y = 0;
+    Tensor<type, 0> s_x = new_x.sum();
+    Tensor<type, 0> s_y = new_y.sum();
 
-    type s_xx = 0;
-    type s_yy = 0;
+    Tensor<type, 0> s_xx = (new_x*new_x).sum();
+    Tensor<type, 0> s_yy = (new_y*new_y).sum();
 
-    type s_xy = 0;
-
-    for(Index i = 0; i < n; i++)
-    {
-        s_x += new_x(i);
-        s_y += new_y(i);
-
-        s_xx += new_x(i) * new_x(i);
-        s_yy += new_y(i) * new_y(i);
-
-        s_xy += new_y(i) * new_x(i);
-    }
+    Tensor<type, 0> s_xy = (new_x*new_y).sum();
 
     type linear_correlation;
 
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
+    if(abs(s_x() - 0) < numeric_limits<type>::epsilon()
+            && abs(s_y() - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xx() - 0) < numeric_limits<type>::epsilon()
+            && abs(s_yy() - 0) < numeric_limits<type>::epsilon()
+            && abs(s_xy() - 0) < numeric_limits<type>::epsilon())
     {
         linear_correlation = 1.0;
     }
     else
     {
-        const type numerator = (n * s_xy - s_x * s_y);
+        const type numerator = (n * s_xy() - s_x() * s_y());
 
-        const type radicand = (n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y);
+        const type radicand = (n * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y());
 
         if(radicand <= static_cast<type>(0.0))
         {
@@ -974,46 +963,33 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 
     n = new_vector_x.size();
 
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < new_vector_x.size(); i++)
-    {
-        s_x += new_vector_x(i);
-        s_y += new_vector_y(i);
-
-        s_xx += new_vector_x(i) * new_vector_x(i);
-        s_yy += new_vector_y(i) * new_vector_y(i);
-
-        s_xy += new_vector_x(i) * new_vector_y(i);
-    }
+    Tensor<type, 0> s_x = new_vector_x.sum();
+    Tensor<type, 0> s_y = new_vector_y.sum();
+    Tensor<type, 0> s_xx = (new_vector_x*new_vector_x).sum();
+    Tensor<type, 0> s_yy = (new_vector_y*new_vector_y).sum();
+    Tensor<type, 0> s_xy = (new_vector_x*new_vector_y).sum();
 
     CorrelationResults linear_correlations;
 
     linear_correlations.correlation_type = Linear_correlation;
 
-    if(abs(s_x) < numeric_limits<type>::min() && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min() && abs(s_yy) < numeric_limits<type>::min()
-            && abs(s_xy) < numeric_limits<type>::min())
+    if(abs(s_x()) < numeric_limits<type>::min() && abs(s_y()) < numeric_limits<type>::min()
+            && abs(s_xx()) < numeric_limits<type>::min() && abs(s_yy()) < numeric_limits<type>::min()
+            && abs(s_xy()) < numeric_limits<type>::min())
     {
         linear_correlations.correlation = 1.0;
     }
     else
     {
-        if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < numeric_limits<type>::min())
+        if(sqrt((n * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y())) < numeric_limits<type>::min())
         {
             linear_correlations.correlation = 1.0;
         }
         else
         {
             linear_correlations.correlation =
-                (n * s_xy - s_x * s_y) /
-                sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y));
+                (n * s_xy() - s_x() * s_y()) /
+                sqrt((n * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y()));
         }
     }
 
@@ -1045,42 +1021,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
     }
 
 #endif
-/*
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
-
-    const Index new_size = new_x.size();
-
-    type s_x = 0;
-    type s_y = 0;
-    type s_xx = 0;
-    type s_yy = 0;
-    type s_xy = 0;
-
-    type x_sum = 0;
-    type y_sum = 0;
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        x_sum += log(new_x(i));
-        y_sum += new_y(i);
-    }
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        s_x += new_x(i);
-
-        s_y += new_y(i);
-
-        s_xx += pow(log(new_x(i)) - x_sum / static_cast<type>(new_size), 2);
-
-        s_yy += pow(new_y(i) - y_sum / new_size, 2);
-
-        s_xy += (log(new_x(i)) - x_sum / static_cast<type>(new_size)) * (new_y(i) - y_sum / static_cast<type>(new_size));
-    }
-*/
     CorrelationResults logarithmic_correlation;
 
     logarithmic_correlation.correlation_type = Logarithmic_correlation;
@@ -1088,39 +1029,6 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
     logarithmic_correlation.correlation = OpenNN::logarithmic_correlation(x, y);
 
     return logarithmic_correlation;
-/*
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
-    {
-        logarithmic_correlation.correlation = 1.0;
-    }
-    else
-    {
-        const type numerator = (new_size * s_xy - s_x * s_y);
-
-        const type radicand = (new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y);
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            logarithmic_correlation.correlation = 1.0;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            logarithmic_correlation.correlation = 0;
-        }
-        else
-        {
-            logarithmic_correlation.correlation = numerator / denominator;
-        }
-    }
-*/
-
 }
 
 
@@ -1150,76 +1058,13 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
     }
 
 #endif
-/*
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
-
-    const  type new_size = static_cast<type>(new_x.size());
-
-    // Sums
-
-    type s_x = 0;
-    type s_y = 0;
-
-    type s_xx = 0;
-    type s_yy = 0;
-
-    type s_xy = 0;
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        if(new_x(i) > static_cast<type>(0.0) && new_y(i) > static_cast<type>(0.0))
-        {
-            s_x += new_x(i);
-
-            s_y += log(new_y(i));
-
-            s_xx += new_x(i) * new_x(i);
-            s_yy += new_y(i) * new_y(i);
-
-            s_xy += new_x(i) * log(new_y(i));
-        }
-    }
-*/
     CorrelationResults exponential_correlation;
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
     exponential_correlation.correlation = OpenNN::exponential_correlation(x, y);
-/*
-    if(abs(s_x - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy - 0) < numeric_limits<type>::epsilon())
-    {
-        exponential_correlation.correlation = 1.0;
-    }
-    else
-    {
-        const type numerator = (n * s_xy - s_x * s_y);
 
-        const type radicand = (n * s_xx - s_x * s_x) * (n * s_yy - s_y * s_y);
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            exponential_correlation.correlation = 1.0;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            exponential_correlation.correlation = 0;
-        }
-        else
-        {
-            exponential_correlation.correlation = numerator / denominator;
-        }
-    }
-*/
     return exponential_correlation;
 }
 
