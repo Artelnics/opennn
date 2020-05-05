@@ -1698,6 +1698,75 @@ void DataSet::set_default_columns_uses()
 }
 
 
+/// This method sets the n columns of the dataset by default,
+/// i.e. until column n-1 are Input and column n is Target.
+
+void DataSet::set_default_classification_columns_uses()
+{
+    const Index size = columns.size();
+
+    if(size == 0)
+    {
+        return;
+    }
+    else if(size == 1)
+    {
+        columns(0).set_use(UnusedVariable);
+    }
+    else
+    {
+        set_input();
+
+        const Index binary_columns_number = count_binary_columns();
+        const Index categorical_columns_number = count_categorical_columns();
+
+        if(categorical_columns_number > 0)
+        {
+            Index counter = 0;
+
+            for(Index i = 0; i < columns.size(); i++)
+            {
+                if(columns(i).type == Categorical)
+                {
+                    counter++;
+                }
+
+                if(counter == categorical_columns_number)
+                {
+                    columns(i).set_use(Target);
+                    break;
+                }
+            }
+        }
+        else if(binary_columns_number > 0)
+        {
+            Index counter = 0;
+
+            for(Index i = 0; i < columns.size(); i++)
+            {
+                if(columns(i).type == Binary)
+                {
+                    counter++;
+                }
+
+                if(counter == binary_columns_number)
+                {
+                    columns(i).set_use(Target);
+                    break;
+                }
+            }
+        }
+
+        const Index inputs_number = get_input_variables_number();
+        const Index targets_number = get_target_variables_number();
+
+        input_variables_dimensions.resize(inputs_number);
+
+        target_variables_dimensions.resize(targets_number);
+    }
+}
+
+
 /// This method puts the names of the columns in the dataset.
 /// This is used when the dataset does not have a header,
 /// the default names are: column_0, column_1, ..., column_n.
@@ -3005,6 +3074,36 @@ void DataSet::set_binary_simple_columns()
 }
 
 
+/// Counts the number of binary columns.
+
+Index DataSet::count_binary_columns() const
+{
+    Index binary_columns_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == Binary) binary_columns_number++;
+    }
+
+    return binary_columns_number;
+}
+
+
+/// Counts the number of categorical columns.
+
+Index DataSet::count_categorical_columns() const
+{
+    Index categorical_columns_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == Categorical) categorical_columns_number++;
+    }
+
+    return categorical_columns_number;
+}
+
+
 /// Sets new input dimensions in the data set.
 
 void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
@@ -3029,12 +3128,7 @@ bool DataSet::is_binary_classification() const
     {
         return false;
     }
-    /*
-        if(!get_target_data().is_binary())
-        {
-            return false;
-        }
-    */
+
     return true;
 }
 
@@ -10649,6 +10743,19 @@ void DataSet::check_separators(const string& line) const
             throw logic_error(message);
         }
     }
+}
+
+
+bool DataSet::has_binary_columns() const
+{
+    const Index variables_number = columns.size();
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+        if(columns(i).type == Binary) return true;
+    }
+
+    return false;
 }
 
 
