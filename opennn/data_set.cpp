@@ -8679,7 +8679,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     file.close();
 
-    cout << "Binary data file saved" << endl;
+    cout << "Binary data file saved." << endl;
 
 }
 
@@ -11011,6 +11011,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances,
         }
     }
 }
+
 
 DataSet::Batch::Batch(const Index& new_instances_number, DataSet* new_data_set_pointer)
 {
