@@ -1835,7 +1835,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         throw logic_error(buffer.str());
     }
 
-    const Index maximum_points_number = 101;
+    const Index maximum_points_number = 21;
 
     Index step_size;
 

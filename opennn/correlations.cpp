@@ -521,23 +521,14 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 
     Tensor<type, 1> error_gradient(2);
 
-    type sum_a = 0;
-    type sum_b = 0;
+    const Tensor<type, 1> activation = logistic(a, b, x);
+    const Tensor<type, 1> error = activation - y;
 
-    #pragma omp parallel for
+    Tensor<type, 0> sum_a = (2*error*activation*(-1+activation)).sum();
+    Tensor<type, 0> sum_b = (2*error*activation*(-1+activation)*(-x)).sum();
 
-    for(Index i = 0; i < n; i ++)
-    {
-        const type logistic_x = logistic(a, b, x(i));
-
-        const type logistic_error = logistic_x - y(i);
-
-        sum_a += 2*logistic_error*logistic_x*(logistic_x-1);
-        sum_b += 2*logistic_error*logistic_x*(logistic_x-1)*(-x(i));
-    }
-
-    error_gradient(0) = sum_a;
-    error_gradient(1) = sum_b;
+    error_gradient(0) = sum_a();
+    error_gradient(1) = sum_b();
 
     return error_gradient;
 }
@@ -559,14 +550,9 @@ type logistic(const type& a, const type& b, const type& x)
 
 Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
 {
-    Tensor<type, 1> logistic_x(x);
+    const Tensor<type, 1> combination = b*x+a;
 
-    for(Index i = 0; i < x.dimension(0); i++)
-    {
-        logistic_x(i) = static_cast<type>(1.0)/(static_cast<type>(1.0) + exp(-(a+b*logistic_x(i))));
-    }
-
-    return logistic_x;
+    return (1 + combination.exp().inverse()).inverse();
 }
 
 
@@ -594,18 +580,9 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 
 #endif
 
-    type error;
+    Tensor<type, 0> error = (logistic(a, b, x) - y).square().sum();
 
-    type sum_squared_error = 0;
-
-    for(Index i = 0; i < x.size(); i ++)
-    {
-        error = logistic(a, b, x(i)) - y(i);
-
-        sum_squared_error += error*error;
-    }
-
-    return sum_squared_error/n;
+    return error()/static_cast<type>(n);
 }
 
 
@@ -867,7 +844,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "static type logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1144,25 +1121,37 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
+    coefficients.setRandom();
 
-    const Index epochs_number = 10000;
+    const Index epochs_number = 1000;
     type step_size = static_cast<type>(0.01);
 
-    const type error_goal = static_cast<type>(1.0e-8);
-    const type gradient_norm_goal = static_cast<type>(1.0e-8);
+    const type error_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = static_cast<type>(1.0e-3);
 
-    type error;
+    Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;
 
     Tensor<type, 1> gradient(2);
 
+    Tensor<type, 1> activation;
+    Tensor<type, 1> error;
+
     for(Index i = 0; i < epochs_number; i++)
     {
-        error = logistic_error(coefficients(0), coefficients(1), new_x, new_y);
+        activation = logistic(coefficients(0), coefficients(1), new_x);
 
-        if(error < error_goal) break;
+        error = activation - new_y;
 
-        gradient = logistic_error_gradient(coefficients(0), coefficients(1), new_x, new_y);
+        mean_squared_error = error.square().sum()/static_cast<type>(new_size);
+
+        if(mean_squared_error() < error_goal) break;
+
+        Tensor<type, 0> sum_a = (2*error*activation*(-1+activation)).sum();
+        Tensor<type, 0> sum_b = (2*error*activation*(-1+activation)*(-new_x)).sum();
+
+        gradient(0) = sum_a();
+        gradient(1) = sum_b();
 
         gradient_norm = gradient.square().sum().sqrt();
 
@@ -1177,6 +1166,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     const Tensor<type, 1> logistic_x = logistic(coefficients(0), coefficients(1), new_x);
 
+    logistic_correlations.correlation_type = Logistic_correlation;
     logistic_correlations.correlation = linear_correlation(logistic_x, new_y);
 
     return logistic_correlations;
