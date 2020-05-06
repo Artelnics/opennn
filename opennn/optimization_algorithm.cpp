@@ -487,24 +487,45 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 void OptimizationAlgorithm::Results::resize_training_history(const Index& new_size)
 {
     training_error_history.resize(new_size);
+}
+
+
+/// Resizes all the selection history variables.
+/// @param new_size Size of selection history variables.
+
+void OptimizationAlgorithm::Results::resize_selection_history(const Index& new_size)
+{
     selection_error_history.resize(new_size);
 }
 
 
-/// Resizes the training and selection error history keeping the values.
+/// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_error_history(const Index& new_size)
+void OptimizationAlgorithm::Results::resize_training_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_training_error_history = training_error_history;
-    const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
     training_error_history.resize(new_size);
-    selection_error_history.resize(new_size);
 
     for(Index i = 0; i < new_size; i++)
     {
         training_error_history(i) = old_training_error_history(i);
+    }
+}
+
+
+/// Resizes the training error history keeping the values.
+/// @param new_size Size of training history variables.
+
+void OptimizationAlgorithm::Results::resize_selection_error_history(const Index& new_size)
+{
+    const Tensor<type, 1> old_selection_error_history = selection_error_history;
+
+    selection_error_history.resize(new_size);
+
+    for(Index i = 0; i < new_size; i++)
+    {
         selection_error_history(i) = old_selection_error_history(i);
     }
 }

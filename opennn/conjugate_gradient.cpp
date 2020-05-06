@@ -1224,7 +1224,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     type minimum_selection_error = numeric_limits<type>::max();
     Tensor<type, 1> minimal_selection_parameters;
 
-    if(has_selection) minimal_selection_parameters = parameters;
+    if(has_selection)
+    {
+        minimal_selection_parameters = parameters;
+        if(has_selection)results.resize_selection_history(maximum_epochs_number + 1);
+    }
 
     bool stop_training = false;
 
@@ -1422,7 +1426,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                 }
             }
 
-            results.resize_error_history(1+epoch);
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;

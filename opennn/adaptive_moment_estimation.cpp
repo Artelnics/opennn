@@ -562,6 +562,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     type elapsed_time = 0;
 
     results.resize_training_history(maximum_epochs_number + 1);
+    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     OptimizationData optimization_data(this);
 
@@ -700,7 +701,9 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
                 if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
             }
-            results.resize_error_history(1+epoch);
+
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
 
