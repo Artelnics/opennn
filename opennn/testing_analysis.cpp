@@ -1765,11 +1765,20 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 
     RocAnalysisResults roc_analysis_results;
 
+    cout << "Calculating ROC curve..." << endl;
+
     roc_analysis_results.roc_curve = calculate_roc_curve(targets, outputs);
 
-    roc_analysis_results.area_under_curve = calculate_area_under_curve(targets, outputs);
+    cout << "Calculating area under curve..." << endl;
+
+    roc_analysis_results.area_under_curve = calculate_area_under_curve(roc_analysis_results.roc_curve);
+//    roc_analysis_results.area_under_curve = calculate_area_under_curve(targets, outputs);
+
+    cout << "Calculating confident limits..." << endl;
 
     roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs, roc_analysis_results.area_under_curve);
+
+    cout << "Calculating optimal threshold..." << endl;
 
     roc_analysis_results.optimal_threshold = calculate_optimal_threshold(targets, outputs, roc_analysis_results.roc_curve);
 
@@ -1835,7 +1844,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         throw logic_error(buffer.str());
     }
 
-    const Index maximum_points_number = 21;
+    const Index maximum_points_number = 501;
 
     Index step_size;
 
@@ -1930,7 +1939,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 }
 
 
-/// Returns the area under a ROC curve.
+/// Returns the area under a ROC curve using Wilcoxon parameter test.
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 
@@ -1988,6 +1997,22 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
     area_under_curve = static_cast<type>(sum)/static_cast<type>(total_positives*total_negatives);
 
     return area_under_curve;
+}
+
+
+/// Returns the area under a ROC curve using trapezoidal integration.
+/// @param roc_curve ROC curve.
+
+type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curve) const
+{
+    type area_under_curve = 0;
+
+    for(Index i = 1; i < roc_curve.dimension(0); i++)
+    {
+        area_under_curve += (roc_curve(i,0)-roc_curve(i-1,0))*(roc_curve(i,1)+roc_curve(i-1,1));
+    }
+
+    return area_under_curve/2;
 }
 
 

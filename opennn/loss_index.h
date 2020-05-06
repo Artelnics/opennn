@@ -321,6 +321,10 @@ public:
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
+       else
+       {
+           back_propagation.loss = back_propagation.error;
+       }
    }
 
    // Second Order loss
