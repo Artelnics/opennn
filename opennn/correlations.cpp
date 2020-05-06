@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "config.h"
+#include "device.h"
 #include "correlations.h"
 
 namespace OpenNN
@@ -147,7 +149,7 @@ type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -499,10 +501,10 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
 
 Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index n = y.size();
 
 #ifdef __OPENNN_DEBUG__
 
+    const Index n = y.size();
     const Index x_size = x.size();
 
     ostringstream buffer;
@@ -549,7 +551,7 @@ type logistic(const type& a, const type& b, const type& x)
 /// @param b Parameter b.
 
 Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
-{
+{      
     const Tensor<type, 1> combination = b*x+a;
 
     return (1 + combination.exp().inverse()).inverse();
@@ -1104,12 +1106,15 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
 #endif
 
+    Device device(OpenNN::Device::EigenThreadPool);
+    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+
     // Filter missing values
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1>& new_x = filter_vectors.first;
+    const Tensor<type, 1>& new_y = filter_vectors.second;
 
     const Index new_size = new_x.size();
 
@@ -1124,7 +1129,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     coefficients.setRandom();
 
     const Index epochs_number = 1000;
-    type step_size = static_cast<type>(0.01);
+    const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
     const type gradient_norm_goal = static_cast<type>(1.0e-3);
@@ -1134,21 +1139,30 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     Tensor<type, 1> gradient(2);
 
-    Tensor<type, 1> activation;
-    Tensor<type, 1> error;
+    Tensor<type, 1> combination(new_size);
+    Tensor<type, 1> activation(new_size);
+    Tensor<type, 1> error(new_size);
 
     for(Index i = 0; i < epochs_number; i++)
     {
-        activation = logistic(coefficients(0), coefficients(1), new_x);
+//        activation = logistic(coefficients(0), coefficients(1), new_x);
 
-        error = activation - new_y;
 
-        mean_squared_error = error.square().sum()/static_cast<type>(new_size);
+
+        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
+
+        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
+
+        error.device(*thread_pool_device) = activation - new_y;
+
+        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(new_size);
 
         if(mean_squared_error() < error_goal) break;
 
-        Tensor<type, 0> sum_a = (2*error*activation*(-1+activation)).sum();
-        Tensor<type, 0> sum_b = (2*error*activation*(-1+activation)*(-new_x)).sum();
+        Tensor<type, 0> sum_a;
+        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
+        Tensor<type, 0> sum_b;
+        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-new_x)).sum();
 
         gradient(0) = sum_a();
         gradient(1) = sum_b();
@@ -1158,6 +1172,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients -= gradient*step_size;
+
     }
 
     // Logistic correlation

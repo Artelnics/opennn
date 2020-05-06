@@ -35,9 +35,6 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the space of correlations and regression analysis.
-
-
 /// The enum RegressionMethod represents the different regression methods provided by OpenNN.
 
 enum RegressionMethod{Linear, Logistic, Logarithmic, Exponential, Power, KarlPearson, OneWayAnova};
@@ -234,6 +231,7 @@ struct CorrelationResults
 
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
 }
+
 
 #endif
 
