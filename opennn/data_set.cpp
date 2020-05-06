@@ -5554,7 +5554,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5564,15 +5564,15 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
         const ColumnType input_type = columns(input_index).type;
 
-        cout << "Calculating " << columns(input_index).name << " correlations." << endl;
-
         for(Index j = 0; j < target_columns_number; j++)
         {
-            const Index target_index = input_columns_indices(j);
+            const Index target_index = target_columns_indices(j);
 
             Tensor<type, 2> target = get_column_data(target_index);
 
             const ColumnType target_type = columns(target_index).type;
+
+            cout << "Calculating " << columns(input_index).name << " - " << columns(target_index).name << " correlations." << endl;
 
             if(input_type == Numeric && target_type == Numeric)
             {
