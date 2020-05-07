@@ -1772,9 +1772,8 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
     cout << "Calculating area under curve..." << endl;
 
     roc_analysis_results.area_under_curve = calculate_area_under_curve(roc_analysis_results.roc_curve);
-//    roc_analysis_results.area_under_curve = calculate_area_under_curve(targets, outputs);
 
-    cout << "Calculating confident limits..." << endl;
+    cout << "Calculating confidence limits..." << endl;
 
     roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs, roc_analysis_results.area_under_curve);
 
@@ -2186,51 +2185,20 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
 type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<type, 2>& roc_curve) const
 {
-    const Index maximum_points_number = 1000;
+    const Index points_number = roc_curve.dimension(0);
 
-    Index step_size;
-
-    const Index testing_instances_number = targets.dimension(0);
-    Index points_number;
-
-    if(testing_instances_number > maximum_points_number)
-    {
-        step_size = testing_instances_number/maximum_points_number;
-
-        points_number = testing_instances_number/step_size;
-    }
-    else
-    {
-        points_number = testing_instances_number;
-
-        step_size = 1;
-    }
-
-    // Sort by ascending values of outputs vector
-
-    Tensor<type, 1> sorted_outputs = outputs.chip(0,1);
-
-    stable_sort(sorted_outputs.data(), sorted_outputs.data()+sorted_outputs.size(), less<type>());
-
-    type threshold = 0;
     type optimal_threshold = 0.5;
 
     type minimun_distance = numeric_limits<type>::max();
     type distance;
 
-    Index current_index;
-
     for(Index i = 0; i < points_number; i++)
     {
-        current_index = i*step_size;
-
-        threshold = sorted_outputs(current_index);
-
         distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - static_cast<type>(1))*(roc_curve(i,1) - static_cast<type>(1)));
 
         if(distance < minimun_distance)
         {
-            optimal_threshold = threshold;
+            optimal_threshold = roc_curve(i,2);
 
             minimun_distance = distance;
         }
@@ -2306,7 +2274,6 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
     return cumulative_gain;
-
 }
 
 

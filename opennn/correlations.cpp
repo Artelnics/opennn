@@ -46,8 +46,8 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     Tensor<type, 0> s_x = new_x.sum();
     Tensor<type, 0> s_y = new_y.sum();
 
-    Tensor<type, 0> s_xx = (new_x*new_x).sum();
-    Tensor<type, 0> s_yy = (new_y*new_y).sum();
+    Tensor<type, 0> s_xx = new_x.square().sum();
+    Tensor<type, 0> s_yy = new_y.square().sum();
 
     Tensor<type, 0> s_xy = (new_x*new_y).sum();
 
@@ -1145,10 +1145,6 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     for(Index i = 0; i < epochs_number; i++)
     {
-//        activation = logistic(coefficients(0), coefficients(1), new_x);
-
-
-
         combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
 
         activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
@@ -1160,9 +1156,9 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
         if(mean_squared_error() < error_goal) break;
 
         Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
+        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)/static_cast<type>(new_size)).sum();
         Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-new_x)).sum();
+        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-scaled_x)/static_cast<type>(new_size)).sum();
 
         gradient(0) = sum_a();
         gradient(1) = sum_b();

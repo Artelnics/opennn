@@ -207,7 +207,7 @@ void AdaptiveMomentEstimation::set_default()
     // UTILITIES
 
     display = true;
-    display_period = 1;
+    display_period = 5;
 }
 
 
