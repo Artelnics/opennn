@@ -101,6 +101,9 @@ public:
     #include "../../opennn-cuda/opennn_cuda/mean_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/mean_squared_error_mkl.h"
+#endif
 };
 
 }

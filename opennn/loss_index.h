@@ -496,6 +496,10 @@ protected:
 #endif
 
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/loss_index_mkl.h"
+#endif
+
 };
 
 }

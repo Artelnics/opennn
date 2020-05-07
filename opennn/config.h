@@ -36,7 +36,11 @@
 #pragma warning(pop)
 
 
+//#define OPENNN_MKL
 
+#ifdef OPENNN_MKL
+#include "mkl.h"
+#endif
 //#define EIGEN_USE_BLAS
 
 //#define EIGEN_TEST_NO_LONGDOUBLE

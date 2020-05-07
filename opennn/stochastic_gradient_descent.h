@@ -290,6 +290,9 @@ private:
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+#endif
 };
 
 }
