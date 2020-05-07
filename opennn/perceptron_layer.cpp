@@ -807,7 +807,7 @@ void PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
          case Probabilistic:
 
-         calculate_hidden_delta_probabilistic(next_layer_pointer, forward_propagation.activations_derivatives_3d, next_layer_delta, hidden_delta);
+         calculate_hidden_delta_probabilistic(next_layer_pointer, forward_propagation.activations_derivatives_2d, next_layer_delta, hidden_delta);
 
          return;
 
@@ -851,6 +851,43 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointe
          }
     }
 }
+
+
+void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
+                                                           const Tensor<type, 2>& activations_derivatives,
+                                                           const Tensor<type, 2>& next_layer_delta,
+                                                           Tensor<type, 2>& hidden_delta) const
+{
+    const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
+
+             hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
+
+             return;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
+
+            hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+
+            return;
+         }
+    }
+}
+
 
 // Gradient methods
 

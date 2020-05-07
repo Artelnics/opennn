@@ -238,46 +238,9 @@ public:
                                           Tensor<type, 2>& hidden_delta) const;
 
    void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                             Tensor<type, 3>& activations_derivatives_3d,
+                                             const Tensor<type, 2>& activations_derivatives,
                                              const Tensor<type, 2>& next_layer_delta,
-                                             Tensor<type, 2>& hidden_delta) const
-   {
-       const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-       const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
-
-       const Index batch_instances_number = activations_derivatives_3d.dimension(0);
-       const Index neurons_number = next_probabilistic_layer->get_neurons_number();
-
-       TensorMap < Tensor<type, 2> > activations_derivatives(activations_derivatives_3d.data(), batch_instances_number, neurons_number);
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-                hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
-
-                return;
-            }
-
-            case Device::EigenThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-//               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
-
-//               cout << "Hidden delta 2: " << hidden_delta << endl;
-
-               return;
-            }
-       }
-   }
+                                             Tensor<type, 2>& hidden_delta) const;
 
    // Gradient methods
 
