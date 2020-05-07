@@ -311,19 +311,19 @@ public:
 
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 
+       // Loss
+
+       back_propagation.loss = back_propagation.error;
+
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
+           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-       }
-       else
-       {
-           back_propagation.loss = back_propagation.error;
        }
    }
 
