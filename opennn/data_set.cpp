@@ -5572,7 +5572,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             const ColumnType target_type = columns(target_index).type;
 
-            cout << "Calculating " << columns(input_index).name << " - " << columns(target_index).name << " correlations." << endl;
+            cout << "Calculating " << columns(input_index).name << " - " << columns(target_index).name << " correlations. \n" ;
 
             if(input_type == Numeric && target_type == Numeric)
             {
@@ -5615,7 +5615,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = logistic_correlations(input_column, target_column);
+                correlations(i,j) = logistic_correlations(input_column, target_column);                
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -5639,6 +5639,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
                 throw logic_error(buffer.str());
             }
+
+            cout << "Correlation: " << correlations(i,j).correlation << endl;
         }
     }
 
