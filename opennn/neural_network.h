@@ -364,6 +364,9 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/neural_network_mkl.h"
+#endif
 };
 
 }

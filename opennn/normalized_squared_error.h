@@ -119,6 +119,9 @@ private:
 #endif
 
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+#endif
 };
 
 }
