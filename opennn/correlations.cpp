@@ -19,6 +19,9 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
+    Device device(OpenNN::Device::EigenThreadPool);
+    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
@@ -43,13 +46,19 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
 #endif
 
-    Tensor<type, 0> s_x = new_x.sum();
-    Tensor<type, 0> s_y = new_y.sum();
+    Tensor<type, 0> s_x;
+    Tensor<type, 0> s_y;
 
-    Tensor<type, 0> s_xx = new_x.square().sum();
-    Tensor<type, 0> s_yy = new_y.square().sum();
+    Tensor<type, 0> s_xx;
+    Tensor<type, 0> s_yy;
+                        ;
+    Tensor<type, 0> s_xy;
 
-    Tensor<type, 0> s_xy = (new_x*new_y).sum();
+    s_x.device(thread_pool_device) = new_x.sum();
+    s_y.device(thread_pool_device) = new_y.sum();
+    s_xx.device(thread_pool_device) = new_x.square().sum();
+    s_yy.device(thread_pool_device) = new_y.square().sum();
+    s_xy.device(thread_pool_device) = (new_y*new_x).sum();
 
     type linear_correlation;
 
@@ -611,6 +620,9 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
 #endif
 
+    Device device(OpenNN::Device::EigenThreadPool);
+    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
@@ -618,34 +630,29 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
     const Index new_size = new_x.size();
 
-    type s_x = 0;
-    type s_y = 0;
+    Tensor<type, 0> s_x;
+    Tensor<type, 0> s_y;
 
-    type s_xx = 0;
-    type s_yy = 0;
+    Tensor<type, 0> s_xx;
+    Tensor<type, 0> s_yy;
+                        ;
+    Tensor<type, 0> s_xy;
 
-    type s_xy = 0;
-
-    for(Index i = 0; i < new_size; i++)
-    {
-        s_x += new_x(i);
-        s_y += new_y(i);
-
-        s_xx += new_x(i) * new_x(i);
-        s_yy += new_y(i) * new_y(i);
-
-        s_xy += new_x(i) * new_y(i);
-    }
+    s_x.device(thread_pool_device) = new_x.sum();
+    s_y.device(thread_pool_device) = new_y.sum();
+    s_xx.device(thread_pool_device) = new_x.square().sum();
+    s_yy.device(thread_pool_device) = new_y.square().sum();
+    s_xy.device(thread_pool_device) = (new_y*new_x).sum();
 
     RegressionResults linear_regression;
 
     linear_regression.regression_type = Linear;
 
-    if(abs(s_x) < numeric_limits<type>::min()
-            && abs(s_y) < numeric_limits<type>::min()
-            && abs(s_xx) < numeric_limits<type>::min()
-            && abs(s_yy) < numeric_limits<type>::min()
-            && abs(s_xy) < numeric_limits<type>::min())
+    if(abs(s_x()) < numeric_limits<type>::min()
+            && abs(s_y()) < numeric_limits<type>::min()
+            && abs(s_xx()) < numeric_limits<type>::min()
+            && abs(s_yy()) < numeric_limits<type>::min()
+            && abs(s_xy()) < numeric_limits<type>::min())
     {
         linear_regression.a = 0;
 
@@ -656,20 +663,20 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
     else
     {
         linear_regression.a =
-            (s_y * s_xx - s_x * s_xy) /(new_size * s_xx - s_x * s_x);
+            (s_y() * s_xx() - s_x() * s_xy()) /(static_cast<type>(new_size) * s_xx() - s_x() * s_x());
 
         linear_regression.b =
-            ((new_size * s_xy) - (s_x * s_y)) /((new_size * s_xx) - (s_x * s_x));
+            ((static_cast<type>(new_size) * s_xy()) - (s_x() * s_y())) /((static_cast<type>(new_size) * s_xx()) - (s_x() * s_x()));
 
-        if(sqrt((new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y)) < numeric_limits<type>::min())
+        if(sqrt((static_cast<type>(new_size) * s_xx() - s_x() * s_x()) *(static_cast<type>(new_size) * s_yy() - s_y() * s_y())) < numeric_limits<type>::min())
         {
             linear_regression.correlation = 1.0;
         }
         else
         {
             linear_regression.correlation =
-                (new_size * s_xy - s_x * s_y) /
-                sqrt((new_size * s_xx - s_x * s_x) *(new_size * s_yy - s_y * s_y));
+                (static_cast<type>(new_size) * s_xy() - s_x() * s_y()) /
+                sqrt((static_cast<type>(new_size) * s_xx() - s_x() * s_x()) *(static_cast<type>(new_size) * s_yy() - s_y() * s_y()));
         }
     }
 
