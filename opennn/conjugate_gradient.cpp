@@ -2596,7 +2596,7 @@ void ConjugateGradient::update_epoch(
     {
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
 
-        cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
+        //cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
     }
 
     // Get initial training rate

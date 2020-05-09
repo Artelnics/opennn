@@ -36,7 +36,7 @@ int main(void)
         // Data Set
 
         const Index samples = 1000000;
-        const Index variables = 100;
+        const Index variables = 10;
 
         Device device(Device::EigenThreadPool);
 
@@ -44,7 +44,7 @@ int main(void)
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
-        data_set.set_data_file_name("D:/rosenbrock_100000_100.csv");
+        data_set.set_data_file_name("D:/rosenbrock_100000_10.csv");
         data_set.set_separator(',');
         data_set.save_data();
 
