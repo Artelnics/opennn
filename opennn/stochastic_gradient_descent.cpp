@@ -554,26 +554,65 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
 {
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
-    optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
-
-    if(momentum > 0 && !nesterov)
+    switch(device_pointer->get_type())
     {
-        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-        optimization_data.parameters += optimization_data.parameters_increment;
-    }
-    else if(momentum > 0 && nesterov)
-    {
-        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+             optimization_data.parameters_increment.device(*default_device) = back_propagation.gradient*(-learning_rate);
 
-        optimization_data.nesterov_increment
-                = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+             if(momentum > 0)
+             {
+                 optimization_data.parameters_increment.device(*default_device) += momentum*optimization_data.last_parameters_increment;
 
-        optimization_data.parameters += optimization_data.nesterov_increment;
-    }
-    else
-    {
-        optimization_data.parameters += optimization_data.parameters_increment;
+                 if(!nesterov)
+                 {
+                     optimization_data.parameters.device(*default_device) += optimization_data.parameters_increment;
+                 }
+                 else
+                 {
+                     optimization_data.nesterov_increment.device(*default_device) = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+
+                     optimization_data.parameters.device(*default_device) += optimization_data.nesterov_increment;
+                 }
+             }
+             else
+             {
+                 optimization_data.parameters.device(*default_device) += optimization_data.parameters_increment;
+             }
+
+             break;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
+
+            if(momentum > 0)
+            {
+                optimization_data.parameters_increment.device(*thread_pool_device) += momentum*optimization_data.last_parameters_increment;
+
+                if(!nesterov)
+                {
+                    optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+                }
+                else
+                {
+                    optimization_data.nesterov_increment.device(*thread_pool_device) = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+
+                    optimization_data.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+                }
+            }
+            else
+            {
+                optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+            }
+
+             break;
+         }
     }
 
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;

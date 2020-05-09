@@ -54,11 +54,11 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
                         ;
     Tensor<type, 0> s_xy;
 
-    s_x.device(thread_pool_device) = new_x.sum();
-    s_y.device(thread_pool_device) = new_y.sum();
-    s_xx.device(thread_pool_device) = new_x.square().sum();
-    s_yy.device(thread_pool_device) = new_y.square().sum();
-    s_xy.device(thread_pool_device) = (new_y*new_x).sum();
+    s_x.device(*thread_pool_device) = new_x.sum();
+    s_y.device(*thread_pool_device) = new_y.sum();
+    s_xx.device(*thread_pool_device) = new_x.square().sum();
+    s_yy.device(*thread_pool_device) = new_y.square().sum();
+    s_xy.device(*thread_pool_device) = (new_y*new_x).sum();
 
     type linear_correlation;
 
@@ -638,11 +638,11 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
                         ;
     Tensor<type, 0> s_xy;
 
-    s_x.device(thread_pool_device) = new_x.sum();
-    s_y.device(thread_pool_device) = new_y.sum();
-    s_xx.device(thread_pool_device) = new_x.square().sum();
-    s_yy.device(thread_pool_device) = new_y.square().sum();
-    s_xy.device(thread_pool_device) = (new_y*new_x).sum();
+    s_x.device(*thread_pool_device) = new_x.sum();
+    s_y.device(*thread_pool_device) = new_y.sum();
+    s_xx.device(*thread_pool_device) = new_x.square().sum();
+    s_yy.device(*thread_pool_device) = new_y.square().sum();
+    s_xy.device(*thread_pool_device) = (new_y*new_x).sum();
 
     RegressionResults linear_regression;
 

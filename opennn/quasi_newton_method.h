@@ -53,20 +53,20 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct QNMOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit QNMOptimizationData()
         {
         }
 
-        explicit OptimizationData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+        explicit QNMOptimizationData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
         {
             set(new_quasi_newton_method_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~QNMOptimizationData() {}
 
         void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
         {
@@ -85,6 +85,7 @@ public:
 
             old_parameters.resize(parameters_number);
 
+            potential_parameters.resize(parameters_number);
             parameters_increment.resize(parameters_number);
 
             // Loss index data
@@ -119,7 +120,6 @@ public:
 
         // Neural network data
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
         Tensor<type, 1> parameters_increment;
@@ -138,8 +138,6 @@ public:
         // Optimization algorithm data
 
         Index epoch = 0;
-
-        Tensor<type, 1> training_direction;
 
         Tensor<type, 0> training_slope;
 
@@ -251,23 +249,26 @@ public:
 
    // Training methods
 
-   Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 2>&) const;
+   void calculate_DFP_inverse_hessian(const Tensor<type, 1>&,
+                                      const Tensor<type, 1>&,
+                                      const Tensor<type, 1>&,
+                                      const Tensor<type, 1>&,
+                                      const Tensor<type, 2>&,
+                                      Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 2>&) const;
+   void calculate_BFGS_inverse_hessian(const Tensor<type, 1>&,
+                                       const Tensor<type, 1>&,
+                                       const Tensor<type, 1>&,
+                                       const Tensor<type, 1>&,
+                                       const Tensor<type, 2>&,
+                                       Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_inverse_hessian_approximation(const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 2>&) const;
+   void calculate_inverse_hessian_approximation(const Tensor<type, 1>&,
+                                                const Tensor<type, 1>&,
+                                                const Tensor<type, 1>&,
+                                                const Tensor<type, 1>&,
+                                                const Tensor<type, 2>&,
+                                                Tensor<type, 2>&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -275,8 +276,8 @@ public:
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data);
+           LossIndex::BackPropagation& back_propagation,
+           QNMOptimizationData& optimization_data);
 
    Results perform_training();
 

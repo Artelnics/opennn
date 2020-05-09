@@ -739,8 +739,8 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
 void GradientDescent::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
-        const LossIndex::BackPropagation& back_propagation,
-        OptimizationData& optimization_data)
+        LossIndex::BackPropagation& back_propagation,
+        GDOptimizationData& optimization_data)
 {
 
     optimization_data.training_direction = calculate_training_direction(back_propagation.gradient);
@@ -748,28 +748,26 @@ void GradientDescent::update_epoch(
     if(l2_norm(optimization_data.training_direction) < numeric_limits<type>::min())
         throw logic_error("Training direction is zero");
 
-    // Training slope
+    // Training slope    
 
-    optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+    optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
     if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
         throw logic_error("Training slope is equal or greater than zero");
 
     // Get initial learning_rate
 
-    type initial_learning_rate = 0;
+    optimization_data.initial_learning_rate = 0;
 
     optimization_data.epoch == 0
-            ? initial_learning_rate = first_learning_rate
-            : initial_learning_rate = optimization_data.old_learning_rate;
+            ? optimization_data.initial_learning_rate = first_learning_rate
+            : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
     pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
-                            optimization_data.parameters,
                             forward_propagation,
-                            back_propagation.loss,
-                            optimization_data.training_direction,
-                            initial_learning_rate);
+                            back_propagation,
+                            optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
 
@@ -789,6 +787,7 @@ void GradientDescent::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     optimization_data.old_training_loss = back_propagation.loss;
+
 }
 
 
@@ -857,7 +856,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Optimization algorithm
 
-    OptimizationData optimization_data(this);
+    GDOptimizationData optimization_data(this);
 
     Index selection_error_increases = 0;
 

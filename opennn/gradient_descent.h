@@ -48,20 +48,20 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct GDOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit GDOptimizationData()
         {
         }
 
-        explicit OptimizationData(GradientDescent* new_gradient_descent_pointer)
+        explicit GDOptimizationData(GradientDescent* new_gradient_descent_pointer)
         {
             set(new_gradient_descent_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~GDOptimizationData() {}
 
         void set(GradientDescent* new_gradient_descent_pointer)
         {
@@ -79,6 +79,7 @@ public:
             parameters = neural_network_pointer->get_parameters();
 
             old_parameters.resize(parameters_number);
+            potential_parameters.resize(parameters_number);
 
             parameters_increment.resize(parameters_number);
 
@@ -111,6 +112,7 @@ public:
         Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
+        Tensor<type, 1> potential_parameters;
         Tensor<type, 1> parameters_increment;
 
         type parameters_increment_norm = 0;
@@ -234,8 +236,8 @@ public:
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data);
+           LossIndex::BackPropagation& back_propagation,
+           GDOptimizationData& optimization_data);
 
    Results perform_training();
 
