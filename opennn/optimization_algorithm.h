@@ -56,6 +56,25 @@ public:
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
+    struct OptimizationData
+    {
+        explicit OptimizationData()
+        {
+        }
+
+        virtual ~OptimizationData()
+        {
+        }
+
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> potential_parameters;
+        Tensor<type, 1> training_direction;
+        type initial_learning_rate;
+
+
+    };
+
    /// This structure contains the optimization algorithm results.    
 
    struct Results
@@ -250,13 +269,13 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-   Tensor<type, 1> normalized(const Tensor<type, 1>& tensor) const
+   void normalized(Tensor<type, 1>& tensor) const
    {
+       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
        const type norm = l2_norm(tensor);
 
-       const Tensor<type, 1> new_tensor = tensor/norm;
-
-       return new_tensor;
+       tensor.device(*thread_pool_device) = tensor/norm;
    }
 
 

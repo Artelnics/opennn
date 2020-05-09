@@ -45,15 +45,15 @@ class ConjugateGradient : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct GGOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData();
+        explicit GGOptimizationData();
 
-        explicit OptimizationData(ConjugateGradient*);
+        explicit GGOptimizationData(ConjugateGradient*);
 
-        virtual ~OptimizationData();
+        virtual ~GGOptimizationData();
 
         void set(ConjugateGradient*);
 
@@ -61,14 +61,14 @@ public:
 
         ConjugateGradient* conjugate_gradient_pointer = nullptr;
 
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> old_parameters;
+//        Tensor<type, 1> parameters;
+//        Tensor<type, 1> potential_parameters;
 
         Tensor<type, 1> parameters_increment;
 
         Tensor<type, 1> old_gradient;
 
-        Tensor<type, 1> training_direction;
+//        Tensor<type, 1> training_direction;
         Tensor<type, 1> old_training_direction;
 
         Index epoch = 0;
@@ -190,10 +190,10 @@ public:
    type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
    type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   void calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    // Training methods
 
@@ -215,8 +215,8 @@ public:
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data);
+           LossIndex::BackPropagation& back_propagation,
+           GGOptimizationData& optimization_data);
 
 private:
 

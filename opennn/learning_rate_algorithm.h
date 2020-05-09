@@ -22,9 +22,10 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "neural_network.h"
 #include "loss_index.h"
-#include "config.h"
+#include "optimization_algorithm.h"
 
 namespace OpenNN
 {
@@ -269,24 +270,29 @@ public:
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSet::Batch&,
-                                        const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                        const type&, const Tensor<type, 1>&, const type&) const;
+                                        NeuralNetwork::ForwardPropagation&,
+                                        LossIndex::BackPropagation&,
+                                        OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_fixed_directional_point(const DataSet::Batch&,
-                                                      const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                      const type&, const Tensor<type, 1>&, const type&) const;
+                                                      NeuralNetwork::ForwardPropagation&,
+                                                      LossIndex::BackPropagation&,
+                                                      OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_golden_section_directional_point(const DataSet::Batch&,
-                                                               const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                               const type&, const Tensor<type, 1>&, const type&) const;
+                                                               NeuralNetwork::ForwardPropagation&,
+                                                               LossIndex::BackPropagation&,
+                                                               OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_Brent_method_directional_point(const DataSet::Batch&,
-                                                             const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                             const type&, const Tensor<type, 1>&, const type&) const;
+                                                             NeuralNetwork::ForwardPropagation&,
+                                                             LossIndex::BackPropagation&,
+                                                             OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSet::Batch&,
-                                                const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                const type&, const Tensor<type, 1>&, const type&) const;
+                                                NeuralNetwork::ForwardPropagation&,
+                                                LossIndex::BackPropagation&,
+                                                OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods
 
@@ -330,6 +336,9 @@ protected:
    bool display;
 
    const type golden_ratio = static_cast<type>(1.618);
+
+   Device* device_pointer = new Device(Device::EigenThreadPool);
+
 
 };
 

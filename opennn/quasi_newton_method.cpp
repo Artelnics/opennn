@@ -732,18 +732,23 @@ void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
 /// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(
     const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
     const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient,
-    const Tensor<type, 2>& old_inverse_hessian) const
+    const Tensor<type, 2>& old_inverse_hessian,
+    Tensor<type, 2>& inverse_hessian) const
 {
     switch(inverse_hessian_approximation_method)
     {
     case DFP:
-        return calculate_DFP_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian);
+        calculate_DFP_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian, inverse_hessian);
+
+        return;
 
     case BFGS:
-        return calculate_BFGS_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian);
+        calculate_BFGS_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian, inverse_hessian);
+
+        return;
     }
 
     ostringstream buffer;
@@ -814,11 +819,12 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old_parameters,
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old_parameters,
         const Tensor<type, 1>& parameters,
         const Tensor<type, 1>& old_gradient,
         const Tensor<type, 1>& gradient,
-        const Tensor<type, 2>& old_inverse_hessian) const
+        const Tensor<type, 2>& old_inverse_hessian,
+        Tensor<type, 2>&) const
 {
     ostringstream buffer;
 
@@ -975,8 +981,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
 
-    return inverse_hessian_approximation;
-
     /*
        inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 
@@ -994,9 +998,13 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
-    const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
-    const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 2>& old_inverse_hessian) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
+    const Tensor<type, 1>& old_parameters,
+    const Tensor<type, 1>& parameters,
+    const Tensor<type, 1>& old_gradient,
+    const Tensor<type, 1>& gradient,
+    const Tensor<type, 2>& old_inverse_hessian,
+    Tensor<type, 2>& inverse_hessian) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1134,16 +1142,16 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
 
     inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
-
-    return inverse_hessian_approximation;
 }
+
 
 void QuasiNewtonMethod::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
-        const LossIndex::BackPropagation& back_propagation,
-        OptimizationData& optimization_data)
+        LossIndex::BackPropagation& back_propagation,
+        QNMOptimizationData& optimization_data)
 {
+
     const Index parameters_number = optimization_data.parameters.dimension(0);
 
     if(optimization_data.epoch == 0
@@ -1156,23 +1164,22 @@ void QuasiNewtonMethod::update_epoch(
     }
     else
     {
-        optimization_data.inverse_hessian = calculate_inverse_hessian_approximation(
+        calculate_inverse_hessian_approximation(
                               optimization_data.old_parameters,
                               optimization_data.parameters,
                               optimization_data.old_gradient,
                               back_propagation.gradient,
-                              optimization_data.old_inverse_hessian);
+                              optimization_data.old_inverse_hessian,
+                              optimization_data.inverse_hessian);
     }
 
     // Optimization algorithm
 
-    optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
-
-    optimization_data.training_direction = -normalized(optimization_data.training_direction);
+    optimization_data.training_direction = -optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
 
     // Calculate training slope
 
-    optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+    optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
     // Check for a descent direction
 
@@ -1180,24 +1187,24 @@ void QuasiNewtonMethod::update_epoch(
     {
         //cout << "Training slope is greater than zero." << endl;
 
-        optimization_data.training_direction = -normalized(back_propagation.gradient);
+        optimization_data.training_direction = -back_propagation.gradient;
     }
+
+    normalized(optimization_data.training_direction);
 
     // Get initial training rate
 
-    type initial_learning_rate;
+    optimization_data.initial_learning_rate = 0;
 
     optimization_data.epoch == 0
-            ? initial_learning_rate = first_learning_rate
-            : initial_learning_rate = optimization_data.old_learning_rate;
+            ? optimization_data.initial_learning_rate = first_learning_rate
+            : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
     pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
              batch,
-             optimization_data.parameters,
              forward_propagation,
-             back_propagation.loss,
-             optimization_data.training_direction,
-             initial_learning_rate);
+             back_propagation,
+             optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
 
@@ -1205,15 +1212,14 @@ void QuasiNewtonMethod::update_epoch(
 
     if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
     {
-        optimization_data.training_direction = back_propagation.gradient;
+        optimization_data.training_direction = -back_propagation.gradient;
 
-        optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
+        normalized(optimization_data.training_direction);
 
         directional_point = learning_rate_algorithm.calculate_directional_point(batch,
-                            optimization_data.parameters, forward_propagation,
-                            back_propagation.loss,
-                            optimization_data.training_direction,
-                            first_learning_rate);
+                            forward_propagation,
+                            back_propagation,
+                            optimization_data);
 
         optimization_data.learning_rate = directional_point.first;
     }
@@ -1233,6 +1239,7 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     optimization_data.old_training_loss = back_propagation.loss;
+
 }
 
 
@@ -1309,7 +1316,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     time(&beginning_time);
     type elapsed_time;
 
-    OptimizationData optimization_data(this);
+    QNMOptimizationData optimization_data(this);
 
     // Main loop
 
