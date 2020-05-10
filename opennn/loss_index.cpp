@@ -230,9 +230,9 @@ void LossIndex::set(const LossIndex& other_error_term)
 }
 
 
-void LossIndex::set_device_pointer(Device* new_device_pointer)
+void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    device_pointer = new_device_pointer;
+    thread_pool_device = new_thread_pool_device;
 }
 
 
@@ -633,11 +633,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 {
     switch(regularization_method)
     {
+        case NoRegularization: return 0.0;
+
         case L1: return l1_norm(parameters);
 
         case L2: return l2_norm(parameters);
-
-        case NoRegularization: return 0.0;
     }
 
     return 0.0;
@@ -950,26 +950,7 @@ type LossIndex::l2_norm(const Tensor<type, 1>& parameters) const
 {
     Tensor<type, 0> norm;
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-             norm.device(*default_device) = parameters.square().sum().sqrt();
-
-             break;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
-
-             break;
-         }
-    }
+    norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
 
     return norm(0);
 }
@@ -978,26 +959,7 @@ type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 {
     Tensor<type, 0> norm;
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-             norm.device(*default_device) = parameters.abs().sum();
-
-             break;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            norm.device(*thread_pool_device) = parameters.abs().sum();
-
-             break;
-         }
-    }
+    norm.device(*thread_pool_device) = parameters.abs().sum();
 
     return norm(0);
 }
@@ -1008,28 +970,10 @@ Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) c
 
     Tensor<type, 1> gradient(parameters_number);
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    gradient.device(*thread_pool_device) = parameters.sign();
 
-             gradient.device(*default_device) = parameters.sign();
+    return gradient;
 
-             return gradient;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            gradient.device(*thread_pool_device) = parameters.sign();
-
-            return gradient;
-         }
-    }
-
-    return Tensor<type, 1>();
 }
 
 
@@ -1039,29 +983,9 @@ Tensor<type, 2> LossIndex::l1_norm_hessian(const Tensor<type, 1>& parameters) co
 
     Tensor<type, 2> hessian(parameters_number, parameters_number);
 
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
 
-                 hessian.device(*default_device) = hessian.setZero();  //<---
-
-                 return hessian;
-
-             }
-
-             case Device::EigenThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
-
-                return hessian;
-             }
-        }
-
-        return Tensor<type, 2>();
+        return hessian;
 }
 
 
@@ -1080,28 +1004,9 @@ Tensor<type, 1> LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters) c
         return gradient;
     }
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    gradient.device(*thread_pool_device) = parameters/norm;
 
-             gradient.device(*default_device) = parameters/norm;
-
-             return gradient;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            gradient.device(*thread_pool_device) = parameters/norm;
-
-            return gradient;
-         }
-    }
-
-    return Tensor<type, 1>();
+    return gradient;
 }
 
 
@@ -1120,29 +1025,9 @@ Tensor<type, 2> LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters) co
         return hessian;
     }
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
 
-             hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-             return hessian;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
-
-            return hessian;
-
-         }
-    }
-
-    return Tensor<type, 2>();
+    return hessian;
 }
 
 }

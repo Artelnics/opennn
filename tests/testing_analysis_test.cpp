@@ -113,16 +113,20 @@ void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -136,7 +140,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -157,16 +161,20 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
     cout << "test_calculate_percentage_error_data\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -180,7 +188,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -206,16 +214,20 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
 {
     cout << "test_calculate_absolute_error_statistics\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -229,7 +241,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -249,16 +261,20 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
 {
     cout << "test_calculate_percentage_error_statistics\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -272,7 +288,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -288,16 +304,20 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
 {
     cout << "test_calculate_error_data_statistics\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -311,7 +331,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -337,16 +357,20 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 {
     cout << "test_print_error_data_statistics\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Device
 
-    Device device(Device::EigenThreadPool);
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -360,7 +384,7 @@ void TestingAnalysisTest::test_print_error_data_statistics()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -377,14 +401,14 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 
 //    // Device
 
-//    Device device(Device::EigenThreadPool);
+//
 
 //    // DataSet
 
 //    DataSet data_set;
 //    data_set.set(1,2);
 
-//    data_set.set_device_pointer(&device);
+//    data_set.set_thread_pool_device(thread_pool_device);
 
 //    data_set.initialize_data(0.0);
 
@@ -398,7 +422,7 @@ void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 //    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 //    neural_network.set_parameters_constant(0.0);
 
-//    neural_network.set_device_pointer(&device);
+//    neural_network.set_thread_pool_device(thread_pool_device);
 
 //    // Testing Analysis
 
@@ -418,14 +442,18 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     // Device
 
-    Device device(Device::EigenThreadPool);
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -439,7 +467,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -458,14 +486,19 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     // Device
 
-    Device device(Device::EigenThreadPool);
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(4,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -479,7 +512,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -499,14 +532,18 @@ void TestingAnalysisTest::test_linear_regression()
 
    // Device
 
-   Device device(Device::EigenThreadPool);
+
+
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    // DataSet
 
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.set_device_pointer(&device);
+   data_set.set_thread_pool_device(thread_pool_device);
 
    data_set.initialize_data(0.0);
 
@@ -520,7 +557,7 @@ void TestingAnalysisTest::test_linear_regression()
    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    // Testing Analysis
 
@@ -541,14 +578,18 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    // Device
 
-   Device device(Device::EigenThreadPool);
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
 
    // DataSet
 
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.set_device_pointer(&device);
+   data_set.set_thread_pool_device(thread_pool_device);
 
    data_set.initialize_data(0.0);
 
@@ -562,7 +603,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    // Testing Analysis
 
@@ -578,14 +619,18 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     // Device
 
-    Device device(Device::EigenThreadPool);
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -599,7 +644,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -631,14 +676,18 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Device
 
-    Device device(Device::EigenThreadPool);
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
 
     // DataSet
 
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_device_pointer(&device);
+    data_set.set_thread_pool_device(thread_pool_device);
 
     data_set.initialize_data(0.0);
 
@@ -652,7 +701,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -732,14 +781,18 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    // Device
 
-   Device device(Device::EigenThreadPool);
+
+
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    // DataSet
 
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.set_device_pointer(&device);
+   data_set.set_thread_pool_device(thread_pool_device);
 
    data_set.initialize_data(0.0);
 
@@ -753,7 +806,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    // Testing Analysis
 

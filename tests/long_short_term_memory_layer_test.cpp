@@ -844,9 +844,13 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
-   Device device(Device::EigenThreadPool);
+
 
    Tensor<type, 2> inputs;
 //   Tensor<type, 2> outputs;
@@ -887,7 +891,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
    parameters = long_short_term_memory_layer.get_parameters();
 
-   long_short_term_memory_layer.set_device_pointer(&device);
+   long_short_term_memory_layer.set_thread_pool_device(thread_pool_device);
 
    long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
    long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));

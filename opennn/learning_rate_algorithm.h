@@ -244,6 +244,7 @@ public:
    void set(LossIndex*);
 
    void set_loss_index_pointer(LossIndex*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    // Training operators
 
@@ -337,9 +338,19 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
-   Device* device_pointer = new Device(Device::EigenThreadPool);
+   ThreadPoolDevice* thread_pool_device = nullptr;
 
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
 
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
+   }
 };
 
 }

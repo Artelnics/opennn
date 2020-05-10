@@ -206,6 +206,8 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
+   void set_thread_pool_device(ThreadPoolDevice*);
+
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
 

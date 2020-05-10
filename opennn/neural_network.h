@@ -78,6 +78,8 @@ public:
 
        ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
+           if(new_batch_instances_number == 0) return;
+
            batch_instances_number = new_batch_instances_number;
 
            neural_network_pointer = new_neural_network_pointer;
@@ -234,7 +236,7 @@ public:
 
    virtual void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 

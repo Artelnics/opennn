@@ -32,12 +32,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("D:/Artelnics/opennn/examples/simple_function_regression/data/simple_function_regression.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         // Variables
 
@@ -56,7 +56,7 @@ int main(void)
         neural_network_architecture.setValues({1, 2, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);

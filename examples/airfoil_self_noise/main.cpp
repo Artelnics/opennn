@@ -33,12 +33,14 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -60,7 +62,7 @@ int main(void)
         neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -81,7 +83,7 @@ int main(void)
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(5);
 
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
@@ -90,7 +92,7 @@ int main(void)
         data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
         data_set.unscale_targets_minimum_maximum(targets_descriptives);
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);        
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 

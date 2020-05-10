@@ -597,6 +597,10 @@ void NeuralNetworkTest::test_set_pointers()
 {
    cout << "test_set_pointers\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    Tensor<Index, 1> architecture(3);
    architecture.setValues({1,0,1});
 
@@ -604,11 +608,9 @@ void NeuralNetworkTest::test_set_pointers()
 
    // Test 1 // Device
 
-   Device device(Device::EigenThreadPool);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    assert_true(neural_network.get_layers_number() == 3, LOG);
-   assert_true(device.get_type() == Device::EigenThreadPool, LOG);
 //   assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
    //CCH -> Need get_device_pointer method?
 
@@ -1134,8 +1136,12 @@ void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
 
 
    Index inputs_number;
@@ -1157,7 +1163,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setConstant(3);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(0);
 
    inputs.resize(1,3);
@@ -1179,7 +1185,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setValues({2, 1, 5});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters_constant(0);
 
@@ -1203,7 +1209,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setValues({1, 2});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    inputs.resize(1, 1);
 
@@ -1223,7 +1229,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setValues({4, 3, 3});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
 
    inputs.resize(1, 4);
@@ -1246,7 +1252,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setValues({1, 2});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    inputs_number = neural_network.get_inputs_number();
    parameters_number = neural_network.get_parameters_number();
@@ -1273,7 +1279,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setConstant(1);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters_constant(0);
 
@@ -1291,7 +1297,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setConstant(1);
 
    neural_network.set(NeuralNetwork::Classification, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters_constant(0);
 
@@ -1325,7 +1331,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    neural_network_7.add_layer(scaling_layer_3);
    neural_network_7.add_layer(perceptron_layer_4);
    neural_network_7.add_layer(probabilistic_layer_5);
-   neural_network_7.set_device_pointer(&device);
+   neural_network_7.set_thread_pool_device(thread_pool_device);
 
    neural_network_7.set_parameters_constant(-5);
 
@@ -1346,7 +1352,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    architecture.setValues({1,3,3,3,1});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    inputs_number = neural_network.get_inputs_number();
    outputs_number = neural_network.get_outputs_number();
@@ -1371,8 +1377,12 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
 {
    cout << "test_calculate_trainable_outputs\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
 
    Tensor<Index, 1> architecture;
 
@@ -1388,7 +1398,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    architecture.setConstant(3);
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(1);
 
    inputs.resize(1,3);
@@ -1415,7 +1425,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    architecture.setValues({2, 1, 5});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    parameters.resize(neural_network.get_parameters_number());
    parameters.setValues({-1,-1,-3, -1,0,1, -1,0,1, 1,1,1, 1});
@@ -1458,7 +1468,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    architecture.setValues({4, 3, 3});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    inputs.resize(1, 4);
    inputs.setValues({{1,3,-1,-5}});
@@ -1490,7 +1500,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
    architecture.setValues({4, 3, 3});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    inputs.resize(1, 4);
    inputs.setValues({{1,3,-1,-5}});
@@ -1586,8 +1596,12 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
 {
    cout << "test_calculate_outputs_histograms\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
 
    Tensor<Index, 1> architecture;
 
@@ -1603,7 +1617,7 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
    architecture.setValues({1, 1});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    parameters.resize(neural_network.get_parameters_number());
    parameters.setConstant(1);
@@ -1626,7 +1640,7 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
    architecture.setValues({3, 4, 4});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    parameters.resize(neural_network.get_parameters_number());
    parameters.setValues({2,2,2,7, 3,3,3,3, 4,4,4,4, 0,0,0,0, 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4, 0,0});
@@ -1812,13 +1826,9 @@ void NeuralNetworkTest::test_write_expression()
 
 void NeuralNetworkTest::test_forward_propagate()
 {
-    int n = omp_get_max_threads();
-
-    cout << "Threads: " << n << endl;
-
-    NonBlockingThreadPool simple_thread_pool(n);
-    ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
-    Device device(Device::EigenThreadPool);
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // Test 1
 
@@ -1850,7 +1860,7 @@ void NeuralNetworkTest::test_forward_propagate()
         //NeuralNetwork
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     const Index neurons_number = perceptron_layer->get_neurons_number();
@@ -1914,7 +1924,7 @@ void NeuralNetworkTest::test_forward_propagate()
     Tensor<Layer*, 1> layers_tensor(2);
     layers_tensor.setValues({new PerceptronLayer(inputs_number,7), new ProbabilisticLayer(7,target_number)});
     neural_network.set_layers_pointers(layers_tensor);
-    neural_network.set_device_pointer(&device);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
     PerceptronLayer* perceptron_layer_3 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(0));
     const Index neurons_number_3_0 = perceptron_layer_3->get_neurons_number();

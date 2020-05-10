@@ -33,12 +33,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("../data/yachtresistance.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.print_data_preview();
 
@@ -60,7 +60,7 @@ int main(void)
         neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_outputs_names(targets_names);
 
@@ -79,7 +79,7 @@ int main(void)
 //        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 

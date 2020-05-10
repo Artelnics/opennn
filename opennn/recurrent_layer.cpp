@@ -681,35 +681,13 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
                             Tensor<type, 1>& combinations_1d) const
 {
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, AT_B).eval();
 
-             combinations_1d.device(*default_device) = inputs.contract(input_weights, AT_B).eval();
+    combinations_1d.device(*thread_pool_device) += biases.chip(0,0);
 
-             combinations_1d.device(*default_device) += biases.chip(0,0);
-
-             combinations_1d.device(*default_device) += hidden_states.contract(recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, AT_B).eval();
-
-            combinations_1d.device(*thread_pool_device) += biases.chip(0,0);
-
-            combinations_1d.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, AT_B).eval();
-
-             return;
-         }
-    }
+    combinations_1d.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, AT_B).eval();
 }
+
 
 // Activations
 
@@ -1478,32 +1456,11 @@ Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer
 
     Tensor<type, 2> hidden_delta(next_layer_delta.dimension(0), synaptic_weights.dimension(1));
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
 
-             hidden_delta.device(*default_device) = next_layer_delta.contract(synaptic_weights, A_BT);
+    hidden_delta.device(*thread_pool_device) = activations_derivatives*hidden_delta;
 
-             hidden_delta.device(*default_device) = activations_derivatives*hidden_delta;
-
-             return hidden_delta;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
-
-            hidden_delta.device(*thread_pool_device) = activations_derivatives*hidden_delta;
-
-            return hidden_delta;
-         }
-    }
-
-    return Tensor<type, 2>();
+    return hidden_delta;
 }
 
 

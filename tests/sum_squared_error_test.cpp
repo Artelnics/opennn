@@ -72,8 +72,12 @@ void SumSquaredErrorTest::test_calculate_training_error()
 {
    cout << "test_calculate_training_error\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -81,7 +85,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   sum_squared_error.set_device_pointer(&device);
+   sum_squared_error.set_thread_pool_device(thread_pool_device);
 
    // Test 0
 
@@ -107,7 +111,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
@@ -175,7 +179,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
    PerceptronLayer* perceptron_layer = new PerceptronLayer(1,1);
    neural_network.add_layer(perceptron_layer);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -221,7 +225,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    architecture.setValues({3,1,2});
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(1.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation_3(data_set.get_training_instances_number(), &neural_network);
@@ -240,8 +244,12 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 {
    cout << "test_calculate_output_gradient\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -249,7 +257,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   sum_squared_error.set_device_pointer(&device);
+   sum_squared_error.set_thread_pool_device(thread_pool_device);
 
    // Test 0
 
@@ -275,7 +283,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
@@ -355,7 +363,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    PerceptronLayer* perceptron_layer = new PerceptronLayer(hidden_neurons,outputs_number);
    neural_network.add_layer(perceptron_layer);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    Tensor<type, 1> parameters_(16);
    parameters_.setValues({1,1,2,0, 1,2,1,1, 1,2,1,0, 1,1,2,1});
@@ -387,7 +395,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    recurrent_layer->set_timesteps(10);
    neural_network.add_layer(recurrent_layer);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters(parameters_);
 
@@ -413,7 +421,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
    cout << "test_calculate_Jacobian_gradient\n";
 /*
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -421,7 +429,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   sum_squared_error.set_device_pointer(&device);
+   sum_squared_error.set_thread_pool_device(thread_pool_device);
 
    // Test 0
 
@@ -448,7 +456,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);

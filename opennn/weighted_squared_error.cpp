@@ -385,30 +385,9 @@ void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& bat
 
     const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
 
-             second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
-
-             second_order_loss.gradient.device(*default_device) = second_order_loss.gradient*coefficient;
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
-
-            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
-
-            return;
-         }
-    }
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
 }
 
 // Hessian method
@@ -423,30 +402,9 @@ void WeightedSquaredError::calculate_hessian_approximation(LossIndex::SecondOrde
 
      const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 
-              second_order_loss.hessian.device(*default_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-
-              second_order_loss.hessian.device(*default_device) = coefficient*second_order_loss.hessian;
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-
-             second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
-
-             return;
-          }
-     }
+     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
 
 

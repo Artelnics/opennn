@@ -57,6 +57,14 @@ ConjugateGradient::~ConjugateGradient()
 }
 
 
+void ConjugateGradient::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+{
+    thread_pool_device = new_thread_pool_device;
+
+    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
+}
+
+
 /// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object.
 
 const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
@@ -818,8 +826,6 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
 #endif
 
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
     type FR_parameter = 0;
 
     Tensor<type, 0> numerator;
@@ -842,10 +848,13 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     // Bound the Fletcher-Reeves parameter between 0 and 1
 
     if(FR_parameter < static_cast<type>(0.0))
+    {
         FR_parameter = 0;
-
-    if(FR_parameter > static_cast<type>(1.0))
+    }
+    else if(FR_parameter > static_cast<type>(1.0))
+    {
         FR_parameter = 1;
+    }
 
     return FR_parameter;
 }
@@ -899,28 +908,23 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
 #endif
 
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
     type PR_parameter = 0;
 
-    Tensor<type, 0> dot_numerator;
-    Tensor<type, 0> dot_denominator;
+    Tensor<type, 0> numerator;
+    Tensor<type, 0> denominator;
 
-    dot_numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, AT_B);
-    dot_denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
-
-    const type numerator = dot_numerator(0);
-    const type denominator = dot_denominator(0);
+    numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, AT_B);
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
     // Prevent a possible division by 0
 
-    if(abs(denominator) < numeric_limits<type>::min())
+    if(abs(denominator(0)) < numeric_limits<type>::min())
     {
         PR_parameter = 0;
     }
     else
     {
-        PR_parameter = numerator/denominator;
+        PR_parameter = numerator(0)/denominator(0);
     }
 
     // Bound the Polak-Ribiere parameter between 0 and 1
@@ -929,8 +933,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     {
         PR_parameter = 0;
     }
-
-    if(PR_parameter > static_cast<type>(1.0))
+    else if(PR_parameter > static_cast<type>(1.0))
     {
         PR_parameter = 1.0;
     }
@@ -1001,8 +1004,6 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     }
 
 #endif
-
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
     const type PR_parameter = calculate_PR_parameter(old_gradient, gradient);
 
@@ -1079,8 +1080,6 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 
 #endif
 
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
     const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
 
 //    const Tensor<type, 1> gradient_descent_term = -gradient;
@@ -1093,6 +1092,15 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     normalized(training_direction);
 }
 
+
+void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
+                                                                      Tensor<type, 1>& training_direction) const
+{
+    training_direction.device(*thread_pool_device) = -gradient;
+
+    normalized(training_direction);
+
+}
 
 /// Returns the conjugate gradient training direction, which has been previously normalized.
 /// @param old_gradient Gradient vector in the previous iteration.
@@ -1195,13 +1203,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const bool has_selection = data_set_pointer->has_selection();
 
     Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
     Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
-
-    const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
@@ -1254,7 +1261,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     if(has_selection)
     {
         minimal_selection_parameters = optimization_data.parameters;
-        if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
+        results.resize_selection_history(maximum_epochs_number + 1);
     }
 
     // Main loop
@@ -1438,7 +1445,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                      << "Training loss: " << training_back_propagation.loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
 //                     << information
-                     << "Training rate: " << learning_rate << "\n"
+                     << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
@@ -1474,7 +1481,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
 //                 << information
-                 << "Training rate: " << optimization_data.learning_rate << "\n"
+                 << "Learning rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << "\n";
 
             if(has_selection)
@@ -2570,16 +2577,14 @@ void ConjugateGradient::update_epoch(
         NeuralNetwork::ForwardPropagation& forward_propagation,
         LossIndex::BackPropagation& back_propagation,
         GGOptimizationData& optimization_data)
-{
-    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
+{      
     const Index parameters_number = optimization_data.parameters.dimension(0);
 
     if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
     {
-        optimization_data.training_direction.device(*thread_pool_device) = -1*back_propagation.gradient;
-
-        normalized(optimization_data.training_direction);
+        calculate_gradient_descent_training_direction(
+                    back_propagation.gradient,
+                    optimization_data.training_direction);
     }
     else
     {       
@@ -2590,16 +2595,21 @@ void ConjugateGradient::update_epoch(
                     optimization_data.training_direction);
     }
 
-    optimization_data.training_slope.device(*thread_pool_device) = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+    const type gradient_norm = l2_norm(back_propagation.gradient);
+
+    optimization_data.training_slope.device(*thread_pool_device)
+            = (back_propagation.gradient/gradient_norm).contract(optimization_data.training_direction, AT_B);
 
     if(optimization_data.training_slope(0) >= 0)
     {
-        optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
+        calculate_gradient_descent_training_direction(
+                    back_propagation.gradient,
+                    optimization_data.training_direction);
 
         //cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
     }
 
-    // Get initial training rate
+    // Get initial learning rate
 
     optimization_data.initial_learning_rate = 0;
 
@@ -2619,7 +2629,9 @@ void ConjugateGradient::update_epoch(
     {
         // Reset training direction
 
-        optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
+        calculate_gradient_descent_training_direction(
+                    back_propagation.gradient,
+                    optimization_data.training_direction);
 
         directional_point = learning_rate_algorithm.calculate_directional_point(batch,
                             forward_propagation,

@@ -19,8 +19,8 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    Device device(OpenNN::Device::EigenThreadPool);
-    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
@@ -620,8 +620,7 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
 #endif
 
-    Device device(OpenNN::Device::EigenThreadPool);
-    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
@@ -1113,8 +1112,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
 #endif
 
-    Device device(OpenNN::Device::EigenThreadPool);
-    ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     // Filter missing values
 

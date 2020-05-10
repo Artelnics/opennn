@@ -29,12 +29,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("../data/pima_indians_diabetes.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.split_instances_random(0.60,0.20,0.20);
 
@@ -63,7 +63,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);

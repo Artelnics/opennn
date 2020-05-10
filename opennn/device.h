@@ -53,7 +53,9 @@ class Device
                     simple_thread_pool = new NonBlockingThreadPool(n);
                     #pragma warning(pop)
 
+
                     thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
+
                 }
                 break;
             }

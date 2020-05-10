@@ -432,6 +432,10 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -441,8 +445,8 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
 
-   Device device(Device::EigenThreadPool);
-   probabilistic_layer.set_device_pointer(&device);
+
+   probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
    biases.setConstant(1.0);
    synaptic_weights.setConstant(2.0);
@@ -462,6 +466,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -472,8 +480,8 @@ void ProbabilisticLayerTest::test_calculate_activations()
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
 
-   Device device(Device::EigenThreadPool);
-   probabilistic_layer.set_device_pointer(&device);
+
+   probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
    // Test 1
 
@@ -563,6 +571,10 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_derivatives_activations\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;
 
@@ -570,8 +582,8 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> activations_2d;
     Tensor<type, 3> activations_derivatives;
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
     // Test 1
 
@@ -637,6 +649,10 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     ProbabilisticLayer probabilistic_layer;
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> biases;
@@ -644,8 +660,8 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
     // Test 1
 
@@ -741,14 +757,19 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
 }
 
+
 void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     ProbabilisticLayer probabilistic_layer(2,2);
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
@@ -776,10 +797,14 @@ void ProbabilisticLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     ProbabilisticLayer probabilistic_layer(2,2);
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
@@ -811,15 +836,19 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     ProbabilisticLayer probabilistic_layer_0(2,2);
     ProbabilisticLayer probabilistic_layer_1(2,2);
 
     probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer_0.set_device_pointer(&device);
-    probabilistic_layer_1.set_device_pointer(&device);
+
+    probabilistic_layer_0.set_thread_pool_device(thread_pool_device);
+    probabilistic_layer_1.set_thread_pool_device(thread_pool_device);
 
     Tensor<type,2> output_delta(1,2);
     Tensor<type,2> hidden_delta(1,2);
@@ -860,12 +889,16 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     ProbabilisticLayer probabilistic_layer(2,2);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-    Device device(Device::EigenThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
+
+    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);

@@ -219,10 +219,6 @@ bool is_numeric_string(const string& str)
     {
         return false;
     }
-
-//    return std::all_of(str.begin(), str.end(), is_digit_string);
-
-//    return iss.rdbuf()->in_avail() == 0;
 }
 
 

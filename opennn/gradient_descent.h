@@ -109,10 +109,8 @@ public:
 
         // Neural network data
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
-        Tensor<type, 1> potential_parameters;
         Tensor<type, 1> parameters_increment;
 
         type parameters_increment_norm = 0;
@@ -129,8 +127,6 @@ public:
         // Optimization algorithm data
 
         Index epoch = 0;
-
-        Tensor<type, 1> training_direction;
 
         Tensor<type, 0> training_slope;
 
@@ -194,6 +190,8 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
+   void set_thread_pool_device(ThreadPoolDevice*);
+
    // Training parameters
 
    void set_warning_parameters_norm(const type&);
@@ -231,7 +229,7 @@ public:
 
    // Training methods
 
-   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const;
+   void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_epoch(
            const DataSet::Batch& batch,

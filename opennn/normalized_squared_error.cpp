@@ -228,30 +228,10 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    errors.device(*thread_pool_device) = outputs - targets;
 
-             errors.device(*default_device) = outputs - targets;
+    sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
 
-             sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
-
-             break;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            errors.device(*thread_pool_device) = outputs - targets;
-
-            sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
-
-             break;
-         }
-    }
 
     const Index batch_instances_number = batch.get_instances_number();
     const Index total_instances_number = data_set_pointer->get_instances_number();
@@ -285,30 +265,9 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 
      const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     errors.device(*thread_pool_device) = outputs - targets;
 
-              errors.device(*default_device) = outputs - targets;
-
-              back_propagation.output_gradient.device(*default_device) = coefficient*errors;
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             errors.device(*thread_pool_device) = outputs - targets;
-
-             back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
-
-             return;
-          }
-     }
+     back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
 }
 
 
@@ -332,35 +291,13 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
 
     const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
-             errors.device(*default_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
 
-             second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
-
-             second_order_loss.gradient.device(*default_device) = second_order_loss.gradient*coefficient;
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
-
-            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
-
-            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
-
-            return;
-         }
-    }
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
 }
+
 
 void NormalizedSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
 {
@@ -372,30 +309,9 @@ void NormalizedSquaredError::calculate_hessian_approximation(LossIndex::SecondOr
 
      const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 
-              second_order_loss.hessian.device(*default_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-
-              second_order_loss.hessian.device(*default_device) = coefficient*second_order_loss.hessian;
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-
-             second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
-
-             return;
-          }
-     }
+     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
 
 

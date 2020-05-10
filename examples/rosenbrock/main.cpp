@@ -33,36 +33,24 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
         // Data Set
 
-        const Index samples = 1000000;
+        const Index samples = 10000;
         const Index variables = 10;
-
-        Device device(Device::EigenThreadPool);
 
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
-        data_set.set_data_file_name("D:/rosenbrock_100000_10.csv");
-        data_set.set_separator(',');
-        data_set.save_data();
+//        data_set.set_data_file_name("D:/rosenbrock_100000_10.csv");
+//        data_set.set_separator(',');
+//        data_set.save_data();
 
-/*
-        data_set.set_default();
-
-        data_set.set_separator(',');
-
-        data_set.set_has_columns_names(true);
-
-        data_set.set_data_file_name("D:/z.data/rosenbrock_400000_100.csv");
-
-        data_set.read_csv();
-
-        data_set.save_data();
-
-*/
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.set_training();
 
@@ -82,7 +70,7 @@ int main(void)
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
@@ -94,22 +82,24 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
+        training_strategy.get_quasi_Newton_method_pointer()->set_thread_pool_device(thread_pool_device);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
+//        training_strategy.get_gradient_descent_pointer()->set_display_period(10);
 
-        training_strategy.set_device_pointer(&device);
+//        StochasticGradientDescent* stochastic_gradient_descent_pointer
+//                = training_strategy.get_stochastic_gradient_descent_pointer();
 
-        StochasticGradientDescent* stochastic_gradient_descent_pointer
-                = training_strategy.get_stochastic_gradient_descent_pointer();
+//        stochastic_gradient_descent_pointer->set_batch_size(variables);
 
-        stochastic_gradient_descent_pointer->set_batch_size(variables);
+//        stochastic_gradient_descent_pointer->perform_training();
 
-        stochastic_gradient_descent_pointer->perform_training();
+        training_strategy.perform_training();
 
         cout << "End" << endl;
 
