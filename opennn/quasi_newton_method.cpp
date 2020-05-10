@@ -740,21 +740,18 @@ void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
 /// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(
-    const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
-    const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient,
-    const Tensor<type, 2>& old_inverse_hessian,
-    Tensor<type, 2>& inverse_hessian) const
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const LossIndex::BackPropagation& back_propagation,
+                                                                QNMOptimizationData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
     {
     case DFP:
-        calculate_DFP_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian, inverse_hessian);
+        calculate_DFP_inverse_hessian(back_propagation, optimization_data);
 
         return;
 
     case BFGS:
-        calculate_BFGS_inverse_hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_hessian, inverse_hessian);
+        calculate_BFGS_inverse_hessian(back_propagation, optimization_data);
 
         return;
     }
@@ -776,6 +773,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 
     auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0), 1);
+
     auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0), 1);
 
@@ -827,12 +825,8 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old_parameters,
-        const Tensor<type, 1>& parameters,
-        const Tensor<type, 1>& old_gradient,
-        const Tensor<type, 1>& gradient,
-        const Tensor<type, 2>& old_inverse_hessian,
-        Tensor<type, 2>& inverse_hessian) const
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
+                                                      QNMOptimizationData& optimization_data) const
 {
     ostringstream buffer;
 
@@ -964,17 +958,14 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old
 
     // Dots
 
-    Tensor<type, 1> parameters_difference = parameters - old_parameters;
-
-    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
-
-    const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B); // Ok
+    Tensor<type, 0> parameters_dot_gradient;
+    parameters_dot_gradient.device(*thread_pool_device) = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B); // Ok
 
     Tensor<type, 1> hessian_dot_gradient_difference
-        = old_inverse_hessian.contract(gradient_difference, A_B); // Ok
+        = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B); // Ok
 
     Tensor<type, 0> gradient_dot_hessian_dot_gradient
-        = gradient_difference.contract(hessian_dot_gradient_difference, AT_B); // Ok , auto?
+        = optimization_data.gradient_difference.contract(hessian_dot_gradient_difference, AT_B); // Ok , auto?
 
 //    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix); // Only for exceptions and repeated above
 
@@ -983,11 +974,11 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old
 
     // Calculates Approximation
 
-    inverse_hessian = old_inverse_hessian; // TensorMap?
+    optimization_data.inverse_hessian = optimization_data.old_inverse_hessian; // TensorMap?
 
-    inverse_hessian += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
+    optimization_data.inverse_hessian += kronecker_product(optimization_data.parameters_difference, optimization_data.parameters_difference)/parameters_dot_gradient(0); // Ok
 
-    inverse_hessian -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
+    optimization_data.inverse_hessian -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
 
     /*
        inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
@@ -1006,21 +997,16 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
-    const Tensor<type, 1>& old_parameters,
-    const Tensor<type, 1>& parameters,
-    const Tensor<type, 1>& old_gradient,
-    const Tensor<type, 1>& gradient,
-    const Tensor<type, 2>& old_inverse_hessian,
-    Tensor<type, 2>& inverse_hessian) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
+                                                       QNMOptimizationData& optimization_data) const
 {
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
 
     const Index old_parameters_size = old_parameters.size();
     const Index parameters_size = parameters.size();
@@ -1128,28 +1114,32 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     // BGFS Vector
 
-    Tensor<type, 1> parameters_difference = parameters - old_parameters;
+    Tensor<type, 0> parameters_dot_gradient;
 
-    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
+    parameters_dot_gradient.device(*thread_pool_device) = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B);
 
-    const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
+    Tensor<type, 1> hessian_dot_gradient(parameters_number);
 
-    Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
+    hessian_dot_gradient.device(*thread_pool_device) = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B);
 
-    const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, AT_B);
+    Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
-    Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
-                               - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
+    gradient_dot_hessian_dot_gradient.device(*thread_pool_device) = optimization_data.gradient_difference.contract(hessian_dot_gradient, AT_B);
+
+    Tensor<type, 1> BFGS(parameters_number);
+
+    BFGS.device(*thread_pool_device)
+            = optimization_data.parameters_difference/parameters_dot_gradient(0) - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
 
     // Calculates Approximation
 
-    inverse_hessian = old_inverse_hessian;
+    optimization_data.inverse_hessian = optimization_data.old_inverse_hessian;
 
-    inverse_hessian += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
+    optimization_data.inverse_hessian += kronecker_product(optimization_data.parameters_difference, optimization_data.parameters_difference)/parameters_dot_gradient(0); // Ok
 
-    inverse_hessian -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
+    optimization_data.inverse_hessian -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
 
-    inverse_hessian += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+    optimization_data.inverse_hessian += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
 }
 
 
@@ -1162,9 +1152,15 @@ void QuasiNewtonMethod::update_epoch(
 
     const Index parameters_number = optimization_data.parameters.dimension(0);
 
+    optimization_data.parameters_difference.device(*thread_pool_device)
+            = optimization_data.old_parameters - optimization_data.parameters;
+
+    optimization_data.gradient_difference.device(*thread_pool_device)
+            = optimization_data.old_gradient - back_propagation.gradient;
+
     if(optimization_data.epoch == 0
-    || l2_norm(optimization_data.old_parameters - optimization_data.parameters) < numeric_limits<type>::min()
-    || l2_norm(optimization_data.old_gradient - back_propagation.gradient) < numeric_limits<type>::min())
+    || l2_norm(optimization_data.parameters_difference) < numeric_limits<type>::min()
+    || l2_norm(optimization_data.gradient_difference) < numeric_limits<type>::min())
     {
         optimization_data.inverse_hessian.setZero();
 
@@ -1172,13 +1168,7 @@ void QuasiNewtonMethod::update_epoch(
     }
     else
     {
-        calculate_inverse_hessian_approximation(
-                              optimization_data.old_parameters,
-                              optimization_data.parameters,
-                              optimization_data.old_gradient,
-                              back_propagation.gradient,
-                              optimization_data.old_inverse_hessian,
-                              optimization_data.inverse_hessian);
+        calculate_inverse_hessian_approximation(back_propagation, optimization_data);
     }
 
     // Optimization algorithm
