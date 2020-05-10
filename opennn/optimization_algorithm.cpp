@@ -145,9 +145,9 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 }
 
 
-void OptimizationAlgorithm::set_device_pointer(Device* new_device_pointer)
+void OptimizationAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    device_pointer = new_device_pointer;
+    thread_pool_device = new_thread_pool_device;
 }
 
 

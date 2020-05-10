@@ -140,7 +140,7 @@ public:
    void set();
    void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    void set_loss_index_pointer(LossIndex*);
 

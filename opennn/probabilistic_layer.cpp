@@ -632,26 +632,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
         fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
     }
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-             combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
-
-             break;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
-             break;
-         }
-    }
+    combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 }
 
 
@@ -789,30 +770,9 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                               const Layer::ForwardPropagation&,
                               Layer::BackPropagation& back_propagation) const
 {
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-             back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-             back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-             back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-    }
+    back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 }
 
 

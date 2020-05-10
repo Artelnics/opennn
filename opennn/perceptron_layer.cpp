@@ -576,26 +576,8 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
         fill_n(combinations_2d.data() + i*batch_instances_number, batch_instances_number, biases(i));
     }
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
-             combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
-            return;
-         }
-    }
 }
 
 
@@ -765,27 +747,8 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
-   {
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                output_delta.device(*default_device) = forward_propagation.activations_derivatives_2d*output_gradient;
-
-                return;
-            }
-
-            case Device::EigenThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
-
-               return;
-            }
-       }
+   {      
+       output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
    }
 
 
@@ -826,30 +789,10 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointe
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
-             hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
+    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
-             hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-            hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
-
-            return;
-         }
-    }
 }
 
 
@@ -862,30 +805,9 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 
     const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
-             hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-             hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-            hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
-
-            return;
-         }
-    }
+    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 }
 
 
@@ -894,35 +816,13 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                               const Layer::ForwardPropagation&,
                               Layer::BackPropagation& back_propagation) const
-{
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+{   
+    back_propagation.biases_derivatives.device(*thread_pool_device)
+            = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-             back_propagation.biases_derivatives.device(*default_device)
-                     = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
+    back_propagation.synaptic_weights_derivatives.device(*thread_pool_device)
+            = inputs.contract(back_propagation.delta, AT_B);
 
-             back_propagation.synaptic_weights_derivatives.device(*default_device)
-                     = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             back_propagation.biases_derivatives.device(*thread_pool_device)
-                     = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-             back_propagation.synaptic_weights_derivatives.device(*thread_pool_device)
-                     = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-    }
 }
 
 ///

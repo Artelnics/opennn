@@ -212,26 +212,9 @@ public:
        {
            TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
 
-           switch(device_pointer->get_type())
-           {
-               case Device::EigenDefault:
-               {
-                   DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+           output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
-                   output_delta.device(*default_device) = activations_derivatives*output_gradient;
-
-                   return;
-               }
-
-               case Device::EigenThreadPool:
-               {
-                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                   output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
-
-                   return;
-               }
-           }
+           return;
        }
        else
        {
@@ -269,56 +252,24 @@ public:
            Index index = 0;
            Index step = batch_instances_number*columns_number;
 
-           switch(device_pointer->get_type())
+           for(Index i = 0; i < matrix_number; i++)
            {
-           case Device::EigenDefault:
-           {
-               DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+               output_gradient_row = output_gradient.chip(i,1);
 
-               for(Index i = 0; i < matrix_number; i++)
+               TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
+                                                                           batch_instances_number, neurons_number);
+
+               output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
+
+               for(Index j = 0; j < neurons_number; j++)
                {
-                   output_gradient_row = output_gradient.chip(i,1);
-
-                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
-                                                                               batch_instances_number, neurons_number);
-
-                   output_delta_row.device(*default_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
-
-                   for(Index j = 0; j < neurons_number; j++)
-                   {
-                       output_delta(i,j) = output_delta_row(j);
-                   }
-
-                   index += step;
+                   output_delta(i,j) = output_delta_row(j);
                }
 
-               return;
+               index += step;
            }
 
-           case Device::EigenThreadPool:
-           {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               for(Index i = 0; i < matrix_number; i++)
-               {
-                   output_gradient_row = output_gradient.chip(i,1);
-
-                   TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
-                                                                               batch_instances_number, neurons_number);
-
-                   output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
-
-                   for(Index j = 0; j < neurons_number; j++)
-                   {
-                       output_delta(i,j) = output_delta_row(j);
-                   }
-
-                   index += step;
-               }
-
-               return;
-           }
-           }
+           return;
        }
    }
 

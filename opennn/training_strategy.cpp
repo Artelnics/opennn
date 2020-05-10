@@ -874,11 +874,11 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 }
 
 
-void TrainingStrategy::set_device_pointer(Device* new_device_pointer)
+void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    get_loss_index_pointer()->set_device_pointer(new_device_pointer);
+    get_loss_index_pointer()->set_thread_pool_device(new_thread_pool_device);
 
-    get_optimization_algorithm_pointer()->set_device_pointer(new_device_pointer);
+    get_optimization_algorithm_pointer()->set_thread_pool_device(new_thread_pool_device);
 }
 
 

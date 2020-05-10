@@ -55,6 +55,14 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 }
 
 
+void QuasiNewtonMethod::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+{
+    thread_pool_device = new_thread_pool_device;
+
+    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
+}
+
+
 /// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
@@ -824,7 +832,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old
         const Tensor<type, 1>& old_gradient,
         const Tensor<type, 1>& gradient,
         const Tensor<type, 2>& old_inverse_hessian,
-        Tensor<type, 2>&) const
+        Tensor<type, 2>& inverse_hessian) const
 {
     ostringstream buffer;
 
@@ -975,11 +983,11 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<type, 1>& old
 
     // Calculates Approximation
 
-    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian; // TensorMap?
+    inverse_hessian = old_inverse_hessian; // TensorMap?
 
-    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
+    inverse_hessian += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
 
-    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
+    inverse_hessian -= kronecker_product(hessian_dot_gradient_difference, hessian_dot_gradient_difference)/ gradient_dot_hessian_dot_gradient(0); // Ok
 
     /*
        inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
@@ -1135,13 +1143,13 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     // Calculates Approximation
 
-    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
+    inverse_hessian = old_inverse_hessian;
 
-    inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
+    inverse_hessian += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
 
-    inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
+    inverse_hessian -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
 
-    inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+    inverse_hessian += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
 }
 
 
@@ -1192,7 +1200,7 @@ void QuasiNewtonMethod::update_epoch(
 
     normalized(optimization_data.training_direction);
 
-    // Get initial training rate
+    // Get initial learning rate
 
     optimization_data.initial_learning_rate = 0;
 
@@ -1268,15 +1276,17 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const bool has_selection = data_set_pointer->has_selection();
 
     Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
     Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    const bool has_selection = data_set_pointer->has_selection();
-
-    if(has_selection) results.resize_selection_history(maximum_epochs_number);
+    training_instances_indices.resize(0);
+    selection_instances_indices.resize(0);
+    inputs_indices.resize(0);
+    target_indices.resize(0);
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
@@ -1317,6 +1327,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type elapsed_time;
 
     QNMOptimizationData optimization_data(this);
+
+    if(has_selection) results.resize_selection_history(maximum_epochs_number);
 
     // Main loop
 
@@ -1492,7 +1504,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                      << "Training error: " << training_back_propagation.error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << optimization_data.learning_rate <<  "\n"
+                     << "Learning rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
@@ -1510,7 +1522,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << optimization_data.learning_rate << "\n"
+                 << "Learning rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection)

@@ -29,12 +29,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         // Variables
 
@@ -51,7 +51,7 @@ int main(void)
         neural_network_architecture.setValues({2, 2, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
 

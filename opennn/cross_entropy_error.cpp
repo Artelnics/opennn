@@ -150,28 +150,9 @@ void CrossEntropyError::calculate_output_gradient(const DataSet::Batch& batch,
      const Tensor<type, 2>& targets = batch.targets_2d;
      const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     back_propagation.output_gradient.device(*thread_pool_device) =
+             -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
 
-              back_propagation.output_gradient.device(*default_device) =
-                      -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             back_propagation.output_gradient.device(*thread_pool_device) =
-                     -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
-
-             return;
-          }
-     }
 }
 
 

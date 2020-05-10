@@ -31,7 +31,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "opennn_strings.h"
@@ -373,7 +372,7 @@ public:
 
    void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    // Instances set methods
 
@@ -780,7 +779,7 @@ public:
 
 private:
 
-   Device* device_pointer = nullptr;
+   ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Data file name.
 

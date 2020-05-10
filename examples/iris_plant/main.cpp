@@ -33,12 +33,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         Tensor<string, 1> uses(5);
         uses.setValues({"Input","Input","Input","Input","Target"});
@@ -60,7 +60,7 @@ int main(void)
         architecture.setValues({4, 6, 3});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
 
@@ -75,7 +75,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);

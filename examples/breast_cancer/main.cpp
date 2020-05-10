@@ -29,12 +29,12 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Data set
 
         DataSet data_set("../data/breast_cancer.csv",';',true);
-        data_set.set_device_pointer(&device);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.split_instances_random();
 
@@ -49,7 +49,7 @@ int main(void)
         neural_netowrk_architecture.setValues({9, 3, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_netowrk_architecture);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
@@ -60,7 +60,7 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
 

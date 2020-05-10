@@ -582,8 +582,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         const Index batches_number = training_batches.dimension(0);
 
-        cout << "Batches number: " << batches_number << endl;
-
         parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
@@ -1297,18 +1295,21 @@ void AdaptiveMomentEstimation::set_batch_instances_number(const Index& new_batch
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
+
+
+
     const type learning_rate =
             initial_learning_rate*
             sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
             (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
 
-    optimization_data.gradient_exponential_decay
+    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.last_gradient_exponential_decay*beta_1
             + back_propagation.gradient*(1 - beta_1);
 
     optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
 
-    optimization_data.square_gradient_exponential_decay
+    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.last_square_gradient_exponential_decay*beta_2
             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
 
@@ -1316,7 +1317,7 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
 
     // Update parameters
 
-    optimization_data.parameters -=
+    optimization_data.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
 }
 

@@ -214,7 +214,7 @@ public:
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
-    void set_device_pointer(Device*);
+    void set_thread_pool_device(ThreadPoolDevice*);
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
 
@@ -276,7 +276,7 @@ public:
 
 protected:
 
-    Device* device_pointer = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     /// Layer type object.
 

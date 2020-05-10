@@ -651,6 +651,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    PerceptronLayer perceptron_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -660,8 +664,8 @@ void PerceptronLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
 
-   Device device(Device::EigenThreadPool);
-   perceptron_layer.set_device_pointer(&device);
+
+   perceptron_layer.set_thread_pool_device(thread_pool_device);
 
    // Test 0
 
@@ -751,6 +755,10 @@ void PerceptronLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    PerceptronLayer perceptron_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -761,8 +769,8 @@ void PerceptronLayerTest::test_calculate_activations()
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
 
-   Device device(Device::EigenThreadPool);
-   perceptron_layer.set_device_pointer(&device);
+
+   perceptron_layer.set_thread_pool_device(thread_pool_device);
 
    // Test 1
 
@@ -925,6 +933,10 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activations_derivatives\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NumericalDifferentiation numerical_differentiation;
    PerceptronLayer perceptron_layer;
 
@@ -934,8 +946,8 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> activations_2d(1,1);
    Tensor<type, 2> activations_derivatives(1,1);
 
-   Device device(Device::EigenThreadPool);
-   perceptron_layer.set_device_pointer(&device);
+
+   perceptron_layer.set_thread_pool_device(thread_pool_device);
 
    // Test 1
 
@@ -1116,6 +1128,10 @@ void PerceptronLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     PerceptronLayer perceptron_layer;
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> biases;
@@ -1123,8 +1139,8 @@ void PerceptronLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
 
-    Device device(Device::EigenThreadPool);
-    perceptron_layer.set_device_pointer(&device);
+
+    perceptron_layer.set_thread_pool_device(thread_pool_device);
 
     // Test 1
 
@@ -1244,10 +1260,14 @@ void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenThreadPool);
-    perceptron_layer.set_device_pointer(&device);
+
+    perceptron_layer.set_thread_pool_device(thread_pool_device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
@@ -1274,7 +1294,7 @@ void PerceptronLayerTest::test_forward_propagate()
     // Test 2
 
     PerceptronLayer perceptron_layer_2(2,2, PerceptronLayer::HyperbolicTangent);
-    perceptron_layer_2.set_device_pointer(&device);
+    perceptron_layer_2.set_thread_pool_device(thread_pool_device);
 
     Tensor<type, 1> potential_parameters(6);
 
@@ -1304,10 +1324,14 @@ void PerceptronLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenThreadPool);
-    perceptron_layer.set_device_pointer(&device);
+
+    perceptron_layer.set_thread_pool_device(thread_pool_device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
@@ -1337,7 +1361,7 @@ void PerceptronLayerTest::test_calculate_output_delta()
     // Test 2
 
     PerceptronLayer perceptron_layer_2(2,2, PerceptronLayer::HyperbolicTangent);
-    perceptron_layer_2.set_device_pointer(&device);
+    perceptron_layer_2.set_thread_pool_device(thread_pool_device);
 
     perceptron_layer_2.set_parameters_constant(1);
     inputs.setConstant(1);
@@ -1361,12 +1385,16 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     PerceptronLayer perceptron_layer_0(2,2, PerceptronLayer::Linear);
     PerceptronLayer perceptron_layer_1(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenThreadPool);
-    perceptron_layer_0.set_device_pointer(&device);
-    perceptron_layer_1.set_device_pointer(&device);
+
+    perceptron_layer_0.set_thread_pool_device(thread_pool_device);
+    perceptron_layer_1.set_thread_pool_device(thread_pool_device);
 
     Tensor<type,2> output_delta(1,2);
     Tensor<type,2> hidden_delta(1,2);
@@ -1407,8 +1435,8 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     PerceptronLayer perceptron_layer_2_0(2,2, PerceptronLayer::Linear);
     PerceptronLayer perceptron_layer_2_1(2,2, PerceptronLayer::Logistic);
 
-    perceptron_layer_2_0.set_device_pointer(&device);
-    perceptron_layer_2_1.set_device_pointer(&device);
+    perceptron_layer_2_0.set_thread_pool_device(thread_pool_device);
+    perceptron_layer_2_1.set_thread_pool_device(thread_pool_device);
 
     perceptron_layer_2_0.set_parameters_constant(1);
     inputs_0.setConstant(1);
@@ -1438,10 +1466,14 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     PerceptronLayer perceptron_layer(2,2, PerceptronLayer::Linear);
 
-    Device device(Device::EigenThreadPool);
-    perceptron_layer.set_device_pointer(&device);
+
+    perceptron_layer.set_thread_pool_device(thread_pool_device);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);

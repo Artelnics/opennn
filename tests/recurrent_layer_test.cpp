@@ -302,9 +302,13 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activation_derivative\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NumericalDifferentiation numerical_differentiation;
 
-   Device device(Device::EigenThreadPool);
+
 
    RecurrentLayer recurrent_layer;
    Tensor<type, 1> parameters;
@@ -318,7 +322,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
    // Test
 
-   recurrent_layer.set_device_pointer(&device);
+   recurrent_layer.set_thread_pool_device(thread_pool_device);
 
    recurrent_layer.set(1, 1);
    combinations_2d.resize(1,1);
@@ -455,7 +459,11 @@ void RecurrentLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   Device device(Device::EigenThreadPool);
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+
 
    RecurrentLayer recurrent_layer;
    Tensor<type, 2> inputs;
@@ -470,7 +478,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    //Test
 
-   recurrent_layer.set_device_pointer(&device);
+   recurrent_layer.set_thread_pool_device(thread_pool_device);
 
    recurrent_layer.set(2,2);
 

@@ -66,11 +66,25 @@ public:
         {
         }
 
+        void print() const
+        {
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
+
+            cout << "Potential parameters:" << endl;
+            cout << potential_parameters << endl;
+
+            cout << "Training direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Initial learning rate:" << endl;
+            cout << initial_learning_rate << endl;
+        }
 
         Tensor<type, 1> parameters;
         Tensor<type, 1> potential_parameters;
         Tensor<type, 1> training_direction;
-        type initial_learning_rate;
+        type initial_learning_rate = 0;
 
 
     };
@@ -197,7 +211,7 @@ public:
 
    virtual void set_default();
 
-   void set_device_pointer(Device*);
+   virtual void set_thread_pool_device(ThreadPoolDevice*);
 
    virtual void set_loss_index_pointer(LossIndex*);
 
@@ -237,7 +251,7 @@ public:
 
 protected:
 
-   Device* device_pointer;
+   ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.
 
@@ -270,9 +284,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
    void normalized(Tensor<type, 1>& tensor) const
-   {
-       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
+   {      
        const type norm = l2_norm(tensor);
 
        tensor.device(*thread_pool_device) = tensor/norm;
@@ -283,29 +295,11 @@ protected:
    {
        Tensor<type, 0> norm;
 
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                norm.device(*default_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-
-            case Device::EigenThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-       }
+       norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
 
        return norm(0);
    }
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"

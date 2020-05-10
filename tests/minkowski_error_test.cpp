@@ -77,8 +77,12 @@ void MinkowskiErrorTest::test_calculate_training_error()
 {
    cout << "test_calculate_training_error\n";
 
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
    NeuralNetwork neural_network;
-   Device device(Device::EigenThreadPool);
+
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -91,7 +95,7 @@ void MinkowskiErrorTest::test_calculate_training_error()
    MinkowskiError minkowski_error(&neural_network, &data_set);
    minkowski_error.set_Minkowski_parameter(1.5);
    minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   minkowski_error.set_device_pointer(&device);
+   minkowski_error.set_thread_pool_device(thread_pool_device);
 
    // Test
 
@@ -115,7 +119,7 @@ void MinkowskiErrorTest::test_calculate_training_error()
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_random();
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
@@ -142,7 +146,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 {
    cout << "test_calculate_training_error_gradient\n";
 
-   Device device(Device::EigenThreadPool);
+
 
    NeuralNetwork neural_network;
 
@@ -171,6 +175,10 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    // Test perceptron and probabilistic
 {
+
+       const int n = omp_get_max_threads();
+       NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+       ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    instances_number = 2;
    inputs_number = 1;
@@ -201,13 +209,13 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   neural_network.set_device_pointer(&device);
+   neural_network.set_thread_pool_device(thread_pool_device);
 
    neural_network.set_parameters_random();
 
    me.set_Minkowski_parameter(1.5);
 
-   me.set_device_pointer(&device);
+   me.set_thread_pool_device(thread_pool_device);
 
    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(instances_number, &me);

@@ -86,6 +86,8 @@ public:
 
        explicit BackPropagation(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
        {
+           if(new_batch_instances_number == 0) return;
+
            set(new_batch_instances_number, new_loss_index_pointer);
        }
 
@@ -107,11 +109,13 @@ public:
 
            // First order loss
 
+           neural_network.set(batch_instances_number, neural_network_pointer);
+
+           error = 0;
+
            loss = 0;
 
            output_gradient.resize(batch_instances_number, outputs_number);
-
-           neural_network.set(batch_instances_number, neural_network_pointer);
 
            gradient.resize(parameters_number);
        }
@@ -138,11 +142,11 @@ public:
 
        NeuralNetwork::BackPropagation neural_network;
 
-       Tensor<type, 2> output_gradient;
-
        type error;
 
        type loss;
+
+       Tensor<type, 2> output_gradient;
 
        Tensor<type, 1> gradient;
    };
@@ -247,7 +251,7 @@ public:
 
    void set(const LossIndex&);
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    void set_neural_network_pointer(NeuralNetwork*);
 
@@ -284,7 +288,20 @@ public:
    virtual void calculate_error(const DataSet::Batch&,
                                 const NeuralNetwork::ForwardPropagation&,
                                 BackPropagation&) const = 0;
+/*
+   void calculate_loss(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        BackPropagation& back_propagation) const
+   {
+       calculate_error(batch, forward_propagation, back_propagation);
 
+       const type regularization = calculate_regularization(optimization_data.potential_parameters);
+
+       V.second = back_propagation.error + regularization_weight*regularization;
+
+   }
+*/
+/*
    type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
    {
        const Index instances_number = batch.get_instances_number();
@@ -296,7 +313,7 @@ public:
 //       return calculate_error(batch, forward_propagation);
        return 0;
    }
-
+*/
    void back_propagate(const DataSet::Batch& batch,
                        NeuralNetwork::ForwardPropagation& forward_propagation,
                        BackPropagation& back_propagation) const
@@ -464,7 +481,7 @@ public:
 
 protected:
 
-   Device* device_pointer = nullptr;
+   ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to a neural network object.
 

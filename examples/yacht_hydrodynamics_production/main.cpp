@@ -32,14 +32,14 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        
 
         // Neural network
 
         const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
-        neural_network.set_device_pointer(&device);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
         double longitudinal_position_center_buoyancy;
         double prismatic_coefficient;
