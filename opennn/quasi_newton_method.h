@@ -81,9 +81,8 @@ public:
             // Neural network data
 
             parameters.resize(parameters_number);
-            parameters = neural_network_pointer->get_parameters();
-
             old_parameters.resize(parameters_number);
+            parameters_difference.resize(parameters_number);
 
             potential_parameters.resize(parameters_number);
             parameters_increment.resize(parameters_number);
@@ -92,6 +91,8 @@ public:
 
             old_gradient.resize(parameters_number);
             old_gradient.setZero();
+
+            gradient_difference.resize(parameters_number);
 
             inverse_hessian.resize(parameters_number, parameters_number);
             inverse_hessian.setZero();
@@ -121,6 +122,7 @@ public:
         // Neural network data
 
         Tensor<type, 1> old_parameters;
+        Tensor<type, 1> parameters_difference;
 
         Tensor<type, 1> parameters_increment;
 
@@ -131,6 +133,7 @@ public:
         type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
+        Tensor<type, 1> gradient_difference;
 
         Tensor<type, 2> inverse_hessian;
         Tensor<type, 2> old_inverse_hessian;
@@ -251,26 +254,11 @@ public:
 
    // Training methods
 
-   void calculate_DFP_inverse_hessian(const Tensor<type, 1>&,
-                                      const Tensor<type, 1>&,
-                                      const Tensor<type, 1>&,
-                                      const Tensor<type, 1>&,
-                                      const Tensor<type, 2>&,
-                                      Tensor<type, 2>&) const;
+   void calculate_DFP_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
-   void calculate_BFGS_inverse_hessian(const Tensor<type, 1>&,
-                                       const Tensor<type, 1>&,
-                                       const Tensor<type, 1>&,
-                                       const Tensor<type, 1>&,
-                                       const Tensor<type, 2>&,
-                                       Tensor<type, 2>&) const;
+   void calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
-   void calculate_inverse_hessian_approximation(const Tensor<type, 1>&,
-                                                const Tensor<type, 1>&,
-                                                const Tensor<type, 1>&,
-                                                const Tensor<type, 1>&,
-                                                const Tensor<type, 2>&,
-                                                Tensor<type, 2>&) const;
+   void calculate_inverse_hessian_approximation(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
