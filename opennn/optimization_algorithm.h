@@ -300,6 +300,17 @@ protected:
        return norm(0);
    }
 
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
+
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
+   }
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"

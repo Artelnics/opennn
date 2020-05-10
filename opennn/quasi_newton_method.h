@@ -81,7 +81,10 @@ public:
             // Neural network data
 
             parameters.resize(parameters_number);
+            parameters = neural_network_pointer->get_parameters();
+
             old_parameters.resize(parameters_number);
+
             parameters_difference.resize(parameters_number);
 
             potential_parameters.resize(parameters_number);
@@ -258,6 +261,7 @@ public:
 
    void calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
+   void initialize_inverse_hessian_approximation(QNMOptimizationData&) const;
    void calculate_inverse_hessian_approximation(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
