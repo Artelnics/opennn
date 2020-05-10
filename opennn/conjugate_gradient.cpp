@@ -122,7 +122,7 @@ const type& ConjugateGradient::get_warning_gradient_norm() const
 }
 
 
-/// Returns the training rate value at wich a warning message is written to the screen during line minimization.
+/// Returns the learning rate value at wich a warning message is written to the screen during line minimization.
 
 const type& ConjugateGradient::get_warning_learning_rate() const
 {
@@ -147,7 +147,7 @@ const type& ConjugateGradient::get_error_gradient_norm() const
 }
 
 
-/// Returns the training rate value at wich the line minimization algorithm is assumed to fail when
+/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
 
 const type& ConjugateGradient::get_error_learning_rate() const
@@ -330,7 +330,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 /// Training parameters:
 /// <ul>
-/// <li> First training rate: 1.0.
+/// <li> First learning rate: 1.0.
 /// <li> Bracketing factor: 2.0.
 /// <li> Training rate tolerance: 1.0e-3.
 /// </ul>
@@ -343,8 +343,8 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 /// User stuff:
 /// <ul>
-/// <li> Warning training rate: 1.0e6.
-/// <li> Error training rate: 1.0e12.
+/// <li> Warning learning rate: 1.0e6.
+/// <li> Error learning rate: 1.0e12.
 /// <li> Display: true.
 /// <li> Display period: 10.
 /// <li> Save period: 0.
@@ -353,7 +353,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// <ul>
 /// <li> Reserve training direction history: false.
 /// <li> Reserve training direction norm history: false.
-/// <li> Reserve training rate history: false.
+/// <li> Reserve learning rate history: false.
 /// </ul>
 ///
 
@@ -452,9 +452,9 @@ void ConjugateGradient::set_warning_gradient_norm(const type& new_warning_gradie
 }
 
 
-/// Sets a new training rate value at which a warning message is written to the screen during line
+/// Sets a new learning rate value at which a warning message is written to the screen during line
 /// minimization.
-/// @param new_warning_learning_rate Warning training rate value.
+/// @param new_warning_learning_rate Warning learning rate value.
 
 void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learning_rate)
 {
@@ -466,7 +466,7 @@ void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learni
 
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning training rate must be equal or greater than 0.\n";
+               << "Warning learning rate must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -531,9 +531,9 @@ void ConjugateGradient::set_error_gradient_norm(const type& new_error_gradient_n
 }
 
 
-/// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when
+/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
-/// @param new_error_learning_rate Error training rate value.
+/// @param new_error_learning_rate Error learning rate value.
 
 void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_rate)
 {
@@ -545,14 +545,14 @@ void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_r
 
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "void set_error_learning_rate(const type&) method.\n"
-               << "Error training rate must be equal or greater than 0.\n";
+               << "Error learning rate must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    // Set error training rate
+    // Set error learning rate
 
     error_learning_rate = new_error_learning_rate;
 }
@@ -578,7 +578,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
 #endif
 
-    // Set error training rate
+    // Set error learning rate
 
     minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
@@ -1724,7 +1724,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-    // Warning training rate
+    // Warning learning rate
 //   {
 //      element = document->NewElement("WarningLearningRate");
 //      root_element->LinkEndChild(element);
@@ -1760,7 +1760,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-    // Error training rate
+    // Error learning rate
 //   {
 //      element = document->NewElement("ErrorLearningRate");
 //      root_element->LinkEndChild(element);
@@ -2191,7 +2191,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
          }
       }
 
-      // Warning training rate
+      // Warning learning rate
       {
          const tinyxml2::XMLElement* warning_learning_rate_element = root_element->FirstChildElement("WarningLearningRate");
 
@@ -2248,7 +2248,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
          }
       }
 
-      // Error training rate
+      // Error learning rate
       {
          const tinyxml2::XMLElement* error_learning_rate_element = root_element->FirstChildElement("ErrorLearningRate");
 

@@ -300,7 +300,7 @@ private:
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   /// Variable containing the actual method used to obtain a suitable training rate. 
+   /// Variable containing the actual method used to obtain a suitable learning rate.
 
    InverseHessianApproximationMethod inverse_hessian_approximation_method;
 

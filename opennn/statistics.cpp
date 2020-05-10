@@ -8,7 +8,6 @@
 
 #include "statistics.h"
 
-
 namespace OpenNN
 {
 

@@ -654,9 +654,9 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Inde
 
     final_results(3,1) = buffer.str();
 
-    // Final training rate
+    // Final learning rate
 
-    //   names.push_back("Final training rate");
+    //   names.push_back("Final learning rate");
 
     //   buffer.str("");
     //   buffer << setprecision(precision) << final_learning_rate;

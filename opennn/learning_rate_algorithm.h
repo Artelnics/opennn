@@ -33,7 +33,7 @@ namespace OpenNN
 /// A learning rate that is adjusted according to an algorithm during training to minimize training time.
 
 ///
-/// This class is used by many different optimization algorithms to calculate the training rate given a training direction.
+/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
 ///
 /// It implements the golden section method and the Brent's method.
 
@@ -68,9 +68,9 @@ public:
 
        Triplet()
        {
-           A = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
-           U = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
-           B = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
+           A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+           U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+           B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
        }
 
        /// Destructor.
@@ -98,17 +98,16 @@ public:
           }
        }
 
-
        inline type get_length() const
        {
-           return B.first - A.first;
+           return abs(B.first - A.first);
        }
 
 
        inline pair<type,type> minimum() const
        {
-
            Tensor<type, 1> losses(3);
+
            losses.setValues({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
@@ -183,6 +182,8 @@ public:
 
            if(A.first > U.first || U.first > B.first)
            {
+              cout << "Uncorrect triplet" << endl; system("pause");
+
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
                      << "Uncorrect triplet:\n"
@@ -191,8 +192,24 @@ public:
               throw logic_error(buffer.str());
            }
 
+           if(abs(A.first - B.first) < numeric_limits<type>::min()
+           || abs(A.first - U.first) < numeric_limits<type>::min()
+           || abs(B.first - U.first) < numeric_limits<type>::min())
+           {
+              cout << "Uncorrect triplet" << endl; system("pause");
+              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                     << "void check() const method.\n"
+                     << "Uncorrect triplet:\n"
+                     << struct_to_string()
+                     << "Length: " << get_length() << endl;
+
+              throw logic_error(buffer.str());
+           }
+
            if(A.second < U.second || U.second > B.second)
            {
+               cout << "Triplet does not satisfy minimum condition:\n" << endl; system("pause");
+
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
                      << "Triplet does not satisfy minimum condition:\n"
@@ -200,6 +217,21 @@ public:
 
               throw logic_error(buffer.str());
            }
+
+           if(abs(A.second - B.second) < numeric_limits<type>::min()
+           || abs(A.second - U.second) < numeric_limits<type>::min()
+           || abs(B.second - U.second) < numeric_limits<type>::min())
+           {
+              cout << "Uncorrect triplet" << endl; system("pause");
+              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                     << "void check() const method.\n"
+                     << "Uncorrect triplet:\n"
+                     << struct_to_string()
+                     << "Length: " << get_length() << endl;
+
+              throw logic_error(buffer.str());
+           }
+
        }
 
        /// Left point of the triplet.
@@ -316,17 +348,17 @@ protected:
 
    LearningRateMethod learning_rate_method;
 
-   /// Maximum interval length for the training rate.
+   /// Maximum interval length for the learning rate.
 
    type learning_rate_tolerance;
 
    type loss_tolerance = static_cast<type>(1.0e-3);
 
-   /// Big training rate value at which the algorithm displays a warning. 
+   /// Big learning rate value at which the algorithm displays a warning.
 
    type warning_learning_rate;
 
-   /// Big training rate value at which the algorithm throws an exception. 
+   /// Big learning rate value at which the algorithm throws an exception.
 
    type error_learning_rate;
 

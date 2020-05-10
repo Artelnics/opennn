@@ -4530,7 +4530,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
                 {
                     const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_instances_indices);
 
-                    if((column_standard_deviation - 0) > std::numeric_limits<type>::min())
+                    if((column_standard_deviation - 0) > numeric_limits<type>::min())
                     {
                         is_constant = false;
                         break;
@@ -4547,7 +4547,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
                 cout << "column " << i << ": " << column_standard_deviation << endl;
 
-                if((column_standard_deviation - 0) < std::numeric_limits<type>::min())
+                if((column_standard_deviation - 0) < numeric_limits<type>::min())
                 {
                     columns(i).set_use(UnusedVariable);
 
