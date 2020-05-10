@@ -497,7 +497,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(
 
 #endif
 
-    // Set error training rate
+    // Set error learning rate
 
     minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
@@ -665,7 +665,7 @@ void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_pe
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }

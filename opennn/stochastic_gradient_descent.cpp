@@ -538,7 +538,7 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 
         buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }

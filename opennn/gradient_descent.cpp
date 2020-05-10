@@ -92,7 +92,7 @@ const type& GradientDescent::get_warning_gradient_norm() const
 }
 
 
-/// Returns the training rate value at wich a warning message is written to the screen during line
+/// Returns the learning rate value at wich a warning message is written to the screen during line
 /// minimization.
 
 const type& GradientDescent::get_warning_learning_rate() const
@@ -119,7 +119,7 @@ const type& GradientDescent::get_error_gradient_norm() const
 }
 
 
-/// Returns the training rate value at wich the line minimization algorithm is assumed to fail when
+/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
 
 const type& GradientDescent::get_error_learning_rate() const
@@ -358,9 +358,9 @@ void GradientDescent::set_warning_gradient_norm(const type& new_warning_gradient
 }
 
 
-/// Sets a new training rate value at wich a warning message is written to the screen during line
+/// Sets a new learning rate value at wich a warning message is written to the screen during line
 /// minimization.
-/// @param new_warning_learning_rate Warning training rate value.
+/// @param new_warning_learning_rate Warning learning rate value.
 
 void GradientDescent::set_warning_learning_rate(const type& new_warning_learning_rate)
 {
@@ -374,7 +374,7 @@ void GradientDescent::set_warning_learning_rate(const type& new_warning_learning
 
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning training rate must be equal or greater than 0.\n";
+               << "Warning learning rate must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -443,9 +443,9 @@ void GradientDescent::set_error_gradient_norm(const type& new_error_gradient_nor
 }
 
 
-/// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when
+/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
 /// bracketing a minimum.
-/// @param new_error_learning_rate Error training rate value.
+/// @param new_error_learning_rate Error learning rate value.
 
 void GradientDescent::set_error_learning_rate(const type& new_error_learning_rate)
 {
@@ -459,14 +459,14 @@ void GradientDescent::set_error_learning_rate(const type& new_error_learning_rat
 
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "void set_error_learning_rate(const type&) method.\n"
-               << "Error training rate must be equal or greater than 0.\n";
+               << "Error learning rate must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    // Set error training rate
+    // Set error learning rate
 
     error_learning_rate = new_error_learning_rate;
 }
@@ -522,7 +522,7 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
 #endif
 
-    // Set error training rate
+    // Set error learning rate
 
     minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
@@ -688,7 +688,7 @@ void GradientDescent::set_display_period(const Index& new_display_period)
 
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1279,7 +1279,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-    // Warning training rate
+    // Warning learning rate
 
 //   element = document->NewElement("WarningLearningRate");
 //   root_element->LinkEndChild(element);
@@ -1312,7 +1312,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-    // Error training rate
+    // Error learning rate
 
 //   element = document->NewElement("ErrorLearningRate");
 //   root_element->LinkEndChild(element);
