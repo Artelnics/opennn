@@ -18,9 +18,12 @@
 
 #ifdef OPENNN_CUDA
 
+#include "../../opennn-cuda/opennn_cuda/kernels.h"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"
+#include <cublasXt.h>
+#include <curand.h>
 
 #endif
 
@@ -36,11 +39,13 @@
 #pragma warning(pop)
 
 
-//#define OPENNN_MKL
+// #define OPENNN_MKL
 
 #ifdef OPENNN_MKL
-#include "mkl.h"
+    #include "mkl.h"
 #endif
+
+
 //#define EIGEN_USE_BLAS
 
 //#define EIGEN_TEST_NO_LONGDOUBLE
