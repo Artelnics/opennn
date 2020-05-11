@@ -315,11 +315,11 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 {
     biases.resize(1, new_neurons_number);
 
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     synaptic_weights.resize(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     set_default();
 }
@@ -593,7 +593,7 @@ void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 
 void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum, const type& maximum)
 {
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -613,9 +613,9 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 

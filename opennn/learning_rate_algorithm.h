@@ -284,9 +284,7 @@ public:
 
    void set_default();
 
-   // Training rate method
-
-   pair<type, type> calculate_V(const Triplet&) const;
+   // Learning rate methods
 
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
@@ -324,7 +322,7 @@ protected:
 
    /// Maximum interval length for the learning rate.
 
-   type learning_rate_tolerance;
+   type learning_rate_tolerance = static_cast<type>(1.0e-3);
 
    type loss_tolerance = static_cast<type>(1.0e-3);
 

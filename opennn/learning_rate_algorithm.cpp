@@ -186,6 +186,7 @@ void LearningRateAlgorithm::set_default()
     // TRAINING PARAMETERS
 
     learning_rate_tolerance = static_cast<type>(1.0e-3);
+    loss_tolerance = static_cast<type>(1.0e-3);
 
     warning_learning_rate = 1.0e6;
 
@@ -213,7 +214,7 @@ void LearningRateAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_
 
 
 /// Sets a new learning rate method to be used for training.
-/// @param new_learning_rate_method Training rate method.
+/// @param new_learning_rate_method Learning rate method.
 
 void LearningRateAlgorithm::set_learning_rate_method(
         const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
@@ -337,43 +338,6 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 }
 
 
-pair<type, type> LearningRateAlgorithm::calculate_V(const Triplet& triplet) const
-{
-    // Calculate V
-/*
-    try
-    {
-        switch(learning_rate_method)
-        {
-            case GoldenSection: V.first = calculate_golden_section_learning_rate(triplet); break;
-
-            case BrentMethod: V.first = calculate_Brent_method_learning_rate(triplet); break;
-        }
-    }
-    catch(const logic_error& error)
-    {
-        cout << error.what() << endl;
-
-        system("pause");
-    }
-
-    // Calculate loss for V
-
-    optimization_data.potential_parameters.device(*thread_pool_device)
-            = optimization_data.parameters + optimization_data.training_direction*V.first;
-
-    neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
-
-    loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-    const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
-
-    V.second = back_propagation.error + regularization_weight*regularization;
-*/
-    return pair<type, type>();
-}
-
-
 /// Returns a vector with two elements:
 ///(i) the learning rate calculated by means of the corresponding algorithm, and
 ///(ii) the loss for that learning rate.
@@ -426,7 +390,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
 #endif
 
-
     ostringstream buffer;
 
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
@@ -439,13 +402,24 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                                                    back_propagation,
                                                    optimization_data);
 
-    triplet.check();
+    try
+    {
+        triplet.check();
+    }
+    catch(const logic_error& error)
+    {
+        //cout << "Triplet bracketing" << endl;
+
+        //cout << error.what() << endl;
+
+        return triplet.minimum();
+    }
 
     pair<type, type> V;
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first-triplet.B.first) < 1.0e-3)
+    while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance)
     {
         try
         {
@@ -458,9 +432,11 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         }
         catch(const logic_error& error)
         {
-            cout << error.what() << endl;
+            cout << "Learning rate" << endl;
 
-            system("pause");
+            //cout << error.what() << endl;
+
+            return triplet.minimum();
         }
 
         // Calculate loss for V
@@ -517,10 +493,19 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
         // Check triplet
 
-        triplet.check();
+        try
+        {
+            triplet.check();
+        }
+        catch(const logic_error& error)
+        {
+            //cout << "Triplet reduction" << endl;
 
+            //cout << error.what() << endl;
+
+            return triplet.minimum();
+        }
     }
-
 
     return triplet.U;
 
@@ -738,18 +723,15 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.U.second = back_propagation.error + regularization_weight*regularization;
 
-            if(triplet.U.first - triplet.A.first <= loss_tolerance)
+            if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
             {
                 triplet.U = triplet.A;
                 triplet.B = triplet.A;
-                triplet.check();
 
                 return triplet;
             }
         }
     }
-
-    triplet.check();
 
     return triplet;
 }
@@ -780,7 +762,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Training rate(" << learning_rate << ") is less than left point("
+               << "Learning rate(" << learning_rate << ") is less than left point("
                << triplet.A.first << ").\n";
 
         throw logic_error(buffer.str());
@@ -792,7 +774,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "type calculate_golden_section_learning_rate(const Triplet&) const method.\n"
-               << "Training rate(" << learning_rate << ") is greater than right point("
+               << "Learning rate(" << learning_rate << ") is greater than right point("
                << triplet.B.first << ").\n";
 
         throw logic_error(buffer.str());
@@ -879,7 +861,7 @@ tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
     tinyxml2::XMLElement* element = nullptr;
     tinyxml2::XMLText* text = nullptr;
 
-    // Training rate method
+    // Learning rate method
     {
         element = document->NewElement("LearningRateMethod");
         root_element->LinkEndChild(element);
@@ -964,7 +946,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("LearningRateAlgorithm");
 
-    // Training rate method
+    // Learning rate method
 
     file_stream.OpenElement("LearningRateMethod");
 
@@ -972,7 +954,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Training rate tolerance
+    // Learning rate tolerance
 
     file_stream.OpenElement("LearningRateTolerance");
 

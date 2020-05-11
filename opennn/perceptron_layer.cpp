@@ -285,11 +285,11 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 {
     biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     activation_function = new_activation_function;
 
@@ -557,9 +557,9 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 
 void PerceptronLayer::set_parameters_random()
 {
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 

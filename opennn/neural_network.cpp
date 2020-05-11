@@ -1535,7 +1535,7 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& po
 
                 if(scaling_methods[i] == ScalingLayer::NoScaling)
                 {
-                    input_column.setRandom();
+                    input_column.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
                 }
                 else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
                 {

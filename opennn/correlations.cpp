@@ -884,7 +884,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom();
+    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     const Index epochs_number = 1000;
     const type step_size = static_cast<type>(0.01);
@@ -1161,7 +1161,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom();
+    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     const Index epochs_number = 1000;
     const type step_size = static_cast<type>(0.01);

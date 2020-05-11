@@ -775,10 +775,10 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
         const Index filters_columns_number = new_filters_dimensions[2];
 
         biases.resize(filters_number);
-        biases.setRandom();
+        biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
         synaptic_weights.resize(filters_number, filters_channels_number, filters_rows_number, filters_columns_number);
-        synaptic_weights.setRandom();
+        synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
     */
 }
 

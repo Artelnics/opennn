@@ -289,7 +289,7 @@ void GradientDescent::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_d
 /// <li> Selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm.
-/// <li> Training rate.
+/// <li> Learning rate.
 /// </ul>
 /// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
 /// false otherwise.
@@ -736,9 +736,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 #endif
 
-    const type gradient_norm = l2_norm(gradient);
-
-    training_direction.device(*thread_pool_device) = -gradient/gradient_norm;
+    training_direction.device(*thread_pool_device) = -gradient;
 }
 
 
@@ -749,9 +747,9 @@ void GradientDescent::update_epoch(
         GDOptimizationData& optimization_data)
 {
 
-     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
+    calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
-    if(l2_norm(optimization_data.training_direction) < numeric_limits<type>::min())
+    if(is_zero(optimization_data.training_direction))
         throw logic_error("Training direction is zero");
 
     // Training slope    
@@ -779,8 +777,8 @@ void GradientDescent::update_epoch(
 
     optimization_data.learning_rate = directional_point.first;
 
-    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-        throw logic_error("Training rate is zero");
+//    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+//        throw logic_error("Learning rate is zero");
 
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
@@ -904,7 +902,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Loss index
 
-        loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         if(has_selection)
         {
@@ -926,8 +924,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         if(epoch != 0) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 
@@ -1117,7 +1113,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(11, 2);
 
-    // Training rate method
+    // Learning rate method
 
     labels_values(0,0) = "Learning rate method";
 
@@ -1221,7 +1217,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
     tinyxml2::XMLElement* element = nullptr;
     tinyxml2::XMLText* text = nullptr;
 
-    // Training rate algorithm
+    // Learning rate algorithm
     {
         const tinyxml2::XMLDocument* learning_rate_algorithm_document = learning_rate_algorithm.to_XML();
 
@@ -1475,7 +1471,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    // Training rate algorithm
+    // Learning rate algorithm
 
     learning_rate_algorithm.write_XML(file_stream);
 

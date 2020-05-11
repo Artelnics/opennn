@@ -221,7 +221,7 @@ void AdaptiveMomentEstimation::set_default()
 /// <li> Selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm.
-/// <li> Training rate.
+/// <li> Learning rate.
 /// </ul>
 /// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
 

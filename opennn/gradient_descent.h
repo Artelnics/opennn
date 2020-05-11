@@ -256,7 +256,7 @@ private:
 
    // TRAINING OPERATORS
 
-   /// Training rate algorithm object for one-dimensional minimization. 
+   /// Learning rate algorithm object for one-dimensional minimization. 
 
    LearningRateAlgorithm learning_rate_algorithm;
 
@@ -272,7 +272,7 @@ private:
 
    type warning_gradient_norm;
 
-   /// Training rate value at wich a warning message is written to the screen.
+   /// Learning rate value at wich a warning message is written to the screen.
 
    type warning_learning_rate;
 
@@ -284,7 +284,7 @@ private:
 
    type error_gradient_norm;
 
-   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
+   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
    type error_learning_rate;
 

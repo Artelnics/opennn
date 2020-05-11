@@ -1374,7 +1374,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
     }
 
 
-    // Training rate algorithm
+    // Learning rate algorithm
     {
         const tinyxml2::XMLDocument* learning_rate_algorithm_document = learning_rate_algorithm.to_XML();
 
@@ -1681,7 +1681,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Training rate algorithm
+    // Learning rate algorithm
 
     learning_rate_algorithm.write_XML(file_stream);
 
