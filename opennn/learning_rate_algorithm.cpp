@@ -350,6 +350,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     LossIndex::BackPropagation& back_propagation,
     OptimizationAlgorithm::OptimizationData& optimization_data) const
 {
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
 #ifdef __OPENNN_DEBUG__
 
     if(loss_index_pointer == nullptr)
@@ -362,8 +364,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
         throw logic_error(buffer.str());
     }
-
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     if(neural_network_pointer == nullptr)
     {
