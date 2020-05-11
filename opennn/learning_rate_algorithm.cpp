@@ -108,9 +108,6 @@ string LearningRateAlgorithm::write_learning_rate_method() const
 {
     switch(learning_rate_method)
     {
-    case Fixed:
-        return "Fixed";
-
     case GoldenSection:
         return "GoldenSection";
 
@@ -230,11 +227,7 @@ void LearningRateAlgorithm::set_learning_rate_method(
 
 void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_rate_method)
 {
-    if(new_learning_rate_method == "Fixed")
-    {
-        learning_rate_method = Fixed;
-    }
-    else if(new_learning_rate_method == "GoldenSection")
+    if(new_learning_rate_method == "GoldenSection")
     {
         learning_rate_method = GoldenSection;
     }
@@ -396,30 +389,187 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
 #endif
 
-    switch(learning_rate_method)
+
+    ostringstream buffer;
+
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
+    const type loss = back_propagation.loss;
+
+    // Bracket minimum
+
+    Triplet triplet = calculate_bracketing_triplet(batch,
+                                                   forward_propagation,
+                                                   back_propagation,
+                                                   optimization_data);
+
+    triplet.check();
+
+    pair<type, type> V;
+
+    try
     {
-    case Fixed:
-
-        return calculate_fixed_directional_point(batch,
-                                                 forward_propagation,
-                                                 back_propagation,
-                                                 optimization_data);
-
-    case GoldenSection:
-
-        return calculate_golden_section_directional_point(batch,
-                                                          forward_propagation,
-                                                          back_propagation,
-                                                          optimization_data);
-
-
-    case BrentMethod:
-
-        return calculate_Brent_method_directional_point(batch,
-                                                        forward_propagation,
-                                                        back_propagation,
-                                                        optimization_data);
+        V.first = calculate_Brent_method_learning_rate(triplet);
     }
+    catch(const logic_error& error)
+    {
+        cout << error.what() << endl;
+
+        triplet.print();
+    }
+
+
+    system("pause");
+
+    // Reduce the interval
+
+    while(true)
+    {
+        switch(learning_rate_method)
+        {
+            case GoldenSection: V.first = calculate_golden_section_learning_rate(triplet); break;
+
+            case BrentMethod: V.first = calculate_Brent_method_learning_rate(triplet); break;
+        }
+
+
+
+
+
+
+        try
+        {
+            V.first = calculate_Brent_method_learning_rate(triplet);
+        }
+        catch(const logic_error& error)
+        {
+            cout << error.what() << endl;
+
+            triplet.print();
+
+            system("pause");
+
+            return triplet.minimum();
+        }
+
+        // Calculate loss for V
+
+        optimization_data.potential_parameters.device(*thread_pool_device)
+                = optimization_data.parameters + optimization_data.training_direction*V.first;
+
+        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+
+        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+
+        V.second = back_propagation.error + regularization_weight*regularization;
+
+//        count++;
+
+        // Update points
+
+        if(V.first <= triplet.U.first)
+        {
+            if(V.second >= triplet.U.second)
+            {
+                triplet.A = V;
+            }
+            else if(V.second <= triplet.U.second)
+            {
+                triplet.B = triplet.U;
+                triplet.U = V;
+            }
+        }
+        else if(V.first >= triplet.U.first)
+        {
+            if(V.second >= triplet.U.second)
+            {
+                triplet.B = V;
+            }
+            else if(V.second <= triplet.U.second)
+            {
+                triplet.A = triplet.U;
+                triplet.U = V;
+            }
+        }
+        else
+        {
+            buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                   << "Tensor<type, 1> calculate_Brent_method_directional_point() const method.\n"
+                   << "Unknown set:\n"
+                   << "A = (" << triplet.A.first << "," << triplet.A.second << ")\n"
+                   << "B = (" << triplet.B.first << "," << triplet.B.second << ")\n"
+                   << "U = (" << triplet.U.first << "," << triplet.U.second << ")\n"
+                   << "V = (" << V.first << "," << V.second << ")\n";
+
+            cout << "hello" << endl;
+
+            throw logic_error(buffer.str());
+        }
+
+        // Check triplet
+
+        triplet.check();
+
+//            cout << count << endl;
+
+//            cout << triplet.B.first - triplet.A.first << endl;system("pause");
+
+        if(triplet.B.first - triplet.A.first < 1.0e-3)
+        {
+            //cout << "Iterations: " << count << endl;
+            break;
+        }
+
+
+    } while(false);
+
+    return triplet.U;
+
+
+/*
+    catch(range_error& e) // Interval is of length 0
+    {
+        cout << "Interval is of length 0" << endl;
+        cerr << e.what() << endl;
+
+        pair<type, type> A;
+        A.first = 0;
+        A.second = loss;
+
+        return A;
+    }
+    catch(const logic_error& e)
+    {
+        cout << "Other exception" << endl;
+        cerr << e.what() << endl;
+
+        pair<type, type> X;
+        X.first = optimization_data.initial_learning_rate;
+
+        optimization_data.potential_parameters.device(*thread_pool_device)
+                = optimization_data.parameters + optimization_data.training_direction*X.first;
+
+        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+
+        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+
+        X.second = back_propagation.error + regularization_weight*regularization;
+
+        if(X.second > loss)
+        {
+            X.first = 0;
+            X.second = 0;
+        }
+
+        return X;
+    }
+*/
+
+
 
     return pair<type,type>();
 }
@@ -608,39 +758,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 }
 
 
-/// Returns a vector with two elements, a fixed learning rate,
-/// and the loss for that learning rate.
-/// @param training_direction Training direction for the directional point.
-/// @param initial_learning_rate Training rate for the directional point.
-
-pair<type,type> LearningRateAlgorithm::calculate_fixed_directional_point(
-    const DataSet::Batch& batch,
-    NeuralNetwork::ForwardPropagation& forward_propagation,
-    LossIndex::BackPropagation& back_propagation,
-    OptimizationAlgorithm::OptimizationData& optimization_data) const
-{
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-
-    
-
-    pair<type,type> directional_point;
-
-    directional_point.first = optimization_data.initial_learning_rate;
-
-    optimization_data.potential_parameters.device(*thread_pool_device)
-            = optimization_data.parameters + optimization_data.training_direction*optimization_data.initial_learning_rate;
-
-    neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
-
-    loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-    directional_point.second = back_propagation.loss;
-
-    return directional_point;
-}
-
-
 /// Returns the learning rate by searching in a given direction to locate the minimum of the error
 /// function in that direction. It uses the golden section method.
 /// @param loss Neural neural_network_pointer's loss value.
@@ -653,23 +770,23 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
     LossIndex::BackPropagation& back_propagation,
     OptimizationAlgorithm::OptimizationData& optimization_data) const
 {
-    ostringstream buffer;
-
-    
+    ostringstream buffer;    
 
     // Bracket minimum
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+
+    Triplet triplet = calculate_bracketing_triplet(batch,
+                                                   forward_propagation,
+                                                   back_propagation,
+                                                   optimization_data);
+
+    triplet.check();
+
+
     try
     {
-        Triplet triplet = calculate_bracketing_triplet(batch,
-                                                       forward_propagation,
-                                                       back_propagation,
-                                                       optimization_data);
-
-        if(triplet.has_length_zero()) return triplet.A;
-
         pair<type,type> V;
 
         // Reduce the interval
@@ -740,8 +857,7 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
             triplet.check();
 
-        }
-        while(triplet.B.second - triplet.A.second > learning_rate_tolerance);
+        } while(triplet.B.second - triplet.A.second > learning_rate_tolerance);
 
         return triplet.U;
     }
@@ -801,8 +917,6 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
                                                    optimization_data);
 
     triplet.check();
-
-
 
     pair<type, type> V;
 
