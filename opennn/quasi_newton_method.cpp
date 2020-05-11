@@ -992,7 +992,7 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.learning_rate = directional_point.first;
 
     // Reset training direction when learning rate is 0
-
+/*
     if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
     {
         cout << "Learning rate is 0." << endl;
@@ -1006,8 +1006,9 @@ void QuasiNewtonMethod::update_epoch(
 
         optimization_data.learning_rate = directional_point.first;
     }
-
-    optimization_data.parameters_increment.device(*thread_pool_device) = optimization_data.training_direction*optimization_data.learning_rate;
+*/
+    optimization_data.parameters_increment.device(*thread_pool_device)
+            = optimization_data.training_direction*optimization_data.learning_rate;
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 

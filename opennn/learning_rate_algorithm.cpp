@@ -419,7 +419,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance)
+    while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance
+      ||  fabs(triplet.A.second-triplet.B.second) > loss_tolerance)
     {
         try
         {
@@ -791,7 +792,22 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
 {
+    const type a = triplet.A.first;
+    const type u = triplet.U.first;
+    const type b = triplet.B.first;
 
+    const type fa = triplet.A.second;
+    const type fu = triplet.U.second;
+    const type fb = triplet.B.second;
+
+
+    type numerator = (u-a)*(u-a)*(fu-fb) - (u-b)*(u-b)*(fu-fa);
+
+    type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
+
+    return u - 0.5*numerator/denominator;
+
+/*
     const type c = -(triplet.A.second*(triplet.U.first-triplet.B.first)
                      + triplet.U.second*(triplet.B.first-triplet.A.first)
                      + triplet.B.second*(triplet.A.first-triplet.U.first))
@@ -840,6 +856,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
     }
 
     return Brent_method_learning_rate;
+*/
 }
 
 
