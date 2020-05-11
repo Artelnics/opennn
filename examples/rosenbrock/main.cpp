@@ -39,7 +39,7 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 10000;
+        const Index samples = 100000;
         const Index variables = 10;
 
         DataSet data_set;
@@ -57,12 +57,11 @@ int main(void)
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
 
-        const Index hidden_neurons_number = variables;
+        const Index hidden_neurons_number = variables*10;
 
         const Index outputs_number = data_set.get_target_variables_number();
 
@@ -83,13 +82,13 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
         training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_quasi_Newton_method_pointer()->set_thread_pool_device(thread_pool_device);
+        training_strategy.get_conjugate_gradient_pointer()->set_thread_pool_device(thread_pool_device);
 
 //        training_strategy.get_gradient_descent_pointer()->set_display_period(10);
 
@@ -102,7 +101,7 @@ int main(void)
 
         training_strategy.perform_training();
 
-        cout << "End" << endl;
+        cout << "End Rosenbrock" << endl;
 
         return 0;
 

@@ -295,7 +295,7 @@ public:
 
 private: 
 
-   /// Training rate algorithm object. 
+   /// Learning rate algorithm object.
    /// It is used to calculate the step for the quasi-Newton training direction.
 
    LearningRateAlgorithm learning_rate_algorithm;
@@ -314,7 +314,7 @@ private:
 
    type warning_gradient_norm;
 
-   /// Training rate value at wich a warning message is written to the screen.
+   /// Learning rate value at wich a warning message is written to the screen.
 
    type warning_learning_rate;
 
@@ -326,7 +326,7 @@ private:
 
    type error_gradient_norm;
 
-   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
+   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
    type error_learning_rate;
 

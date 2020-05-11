@@ -1073,20 +1073,20 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 
 void LongShortTermMemoryLayer::set_parameters_random()
 {
-    forget_biases.setRandom();
-    input_biases.setRandom();
-    state_biases.setRandom();
-    output_biases.setRandom();
+    forget_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    forget_weights.setRandom();
-    input_weights.setRandom();
-    state_weights.setRandom();
-    output_weights.setRandom();
+    forget_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    forget_recurrent_weights.setRandom();
-    input_recurrent_weights.setRandom();
-    state_recurrent_weights.setRandom();
-    output_recurrent_weights.setRandom();
+    forget_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 

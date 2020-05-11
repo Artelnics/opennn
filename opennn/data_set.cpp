@@ -3024,7 +3024,7 @@ void DataSet::set_binary_simple_columns()
         if(columns(column_index).type == Numeric)
         {
             Tensor<type, 1> values(3);
-            values.setRandom();
+            values.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
             different_values = 0;
             is_binary = true;
 
@@ -7216,7 +7216,7 @@ void DataSet::initialize_data(const type& new_value)
 
 void DataSet::set_data_random()
 {
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -9547,7 +9547,7 @@ void DataSet::generate_random_data(const Index& instances_number, const Index& v
 {
     set(instances_number, variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
     /*
         data.setRandom(0.0, 1.0);
     */
@@ -9584,7 +9584,7 @@ void DataSet::generate_paraboloid_data(const Index& instances_number, const Inde
 
     set(instances_number, variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -9611,7 +9611,7 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
     /*
         data.setRandom(-2.048, 2.048);
     */
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     #pragma omp parallel for
 
@@ -9659,7 +9659,7 @@ void DataSet::generate_sum_data(const Index& instances_number, const Index& vari
 {
     set(instances_number,variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -9718,7 +9718,7 @@ void DataSet::generate_data_multiple_classification(const Index& instances_numbe
 {
     Tensor<type, 2> new_data(instances_number, inputs_number);
 
-    new_data.setRandom();
+    new_data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     Tensor<type, 2> targets(instances_number, outputs_number);
 
