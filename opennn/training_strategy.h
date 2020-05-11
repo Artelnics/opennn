@@ -255,6 +255,10 @@ private:
     #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/training_strategy_mkl.h"
+#endif
+
 };
 
 }
