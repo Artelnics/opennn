@@ -19,15 +19,16 @@ namespace OpenNN
 
 type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
-    const Index n = new_x.size();
+    const Index x_size = new_x.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -35,7 +36,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 
     ostringstream buffer;
 
-    if(y_size != n)
+    if(y_size != x_size)
     {
         buffer << "OpenNN Exception: Correlations.\n"
                << "static type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
@@ -72,9 +73,9 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     }
     else
     {
-        const type numerator = (n * s_xy() - s_x() * s_y());
+        const type numerator = (x_size * s_xy() - s_x() * s_y());
 
-        const type radicand = (n * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y());
+        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y());
 
         if(radicand <= static_cast<type>(0.0))
         {
@@ -620,7 +621,9 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
 
 #endif
 
-    ThreadPoolDevice* thread_pool_device = nullptr;
+        const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
@@ -860,45 +863,70 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
 #endif
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     // Filter missing values
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1>& new_x = filter_vectors.first;
+    const Tensor<type, 1>& new_y = filter_vectors.second;
+
+    const Index new_size = new_x.size();
+
+    // Scale data
 
     Tensor<type, 1> scaled_x(new_x);
     scale_minimum_maximum(scaled_x);
 
-    // Coefficients
+    // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setZero();
+    coefficients.setRandom();
 
-    const Index epochs_number = 10000;
-    type step_size = static_cast<type>(0.01);
+    const Index epochs_number = 1000;
+    const type step_size = static_cast<type>(0.01);
 
-    const type error_goal = static_cast<type>(1.0e-8);
-    const type gradient_norm_goal = static_cast<type>(1.0e-8);
+    const type error_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = static_cast<type>(1.0e-3);
 
-    type error;
-
-    Tensor<type, 1> gradient;
+    Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;
+
+    Tensor<type, 1> gradient(2);
+
+    Tensor<type, 1> combination(new_size);
+    Tensor<type, 1> activation(new_size);
+    Tensor<type, 1> error(new_size);
 
     for(Index i = 0; i < epochs_number; i++)
     {
-        error = logistic_error(coefficients(0), coefficients(1), new_x, new_y);
+        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
 
-        if(error < error_goal) break;
+        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
 
-        gradient = logistic_error_gradient(coefficients(0), coefficients(1), new_x, new_y);
+        error.device(*thread_pool_device) = activation - new_y;
+
+        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(new_size);
+
+        if(mean_squared_error() < error_goal) break;
+
+        Tensor<type, 0> sum_a;
+        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)/static_cast<type>(new_size)).sum();
+        Tensor<type, 0> sum_b;
+        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-scaled_x)/static_cast<type>(new_size)).sum();
+
+        gradient(0) = sum_a();
+        gradient(1) = sum_b();
 
         gradient_norm = gradient.square().sum().sqrt();
 
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients -= gradient*step_size;
+
     }
 
     // Regression results
@@ -1112,7 +1140,9 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
 #endif
 
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // Filter missing values
 
