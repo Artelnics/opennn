@@ -178,7 +178,7 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index_pointer)
 /// Sets the members of the learning rate algorithm to their default values.
 
 void LearningRateAlgorithm::set_default()
-{
+{       
     // TRAINING OPERATORS
 
     learning_rate_method = BrentMethod;
