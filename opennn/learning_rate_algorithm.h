@@ -46,7 +46,7 @@ public:
 
    /// Available training operators for obtaining the perform_training rate.
 
-   enum LearningRateMethod{Fixed, GoldenSection, BrentMethod};
+   enum LearningRateMethod{GoldenSection, BrentMethod};
 
    // Constructors
 
@@ -306,11 +306,6 @@ public:
                                         NeuralNetwork::ForwardPropagation&,
                                         LossIndex::BackPropagation&,
                                         OptimizationAlgorithm::OptimizationData&) const;
-
-   pair<type, type> calculate_fixed_directional_point(const DataSet::Batch&,
-                                                      NeuralNetwork::ForwardPropagation&,
-                                                      LossIndex::BackPropagation&,
-                                                      OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_golden_section_directional_point(const DataSet::Batch&,
                                                                NeuralNetwork::ForwardPropagation&,
