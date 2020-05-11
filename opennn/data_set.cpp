@@ -10485,8 +10485,8 @@ void DataSet::read_csv_2_complete()
         if(static_cast<unsigned>(tokens_count) != columns_number)
         {
             const string message =
-//                    "Instance " + to_string(lines_count+1) + " error:\n"
-//                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
+                "Instance " + to_string(lines_count+1) + " error:\n"
+                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(columns_number) + ").\n"
                 "Please check the format of the data file.";
 
             throw logic_error(message);
