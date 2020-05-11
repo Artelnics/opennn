@@ -180,58 +180,45 @@ public:
        {
            ostringstream buffer;
 
-           if(A.first > U.first || U.first > B.first)
+           if(U.first < A.first)
            {
-              cout << "Uncorrect triplet" << endl; system("pause");
-
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "Uncorrect triplet:\n"
+                     << "U is less than A:\n"
                      << struct_to_string();
 
               throw logic_error(buffer.str());
            }
 
-           if(abs(A.first - B.first) < numeric_limits<type>::min()
-           || abs(A.first - U.first) < numeric_limits<type>::min()
-           || abs(B.first - U.first) < numeric_limits<type>::min())
+           if(U.first > B.first)
            {
-              cout << "Uncorrect triplet" << endl; system("pause");
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "Uncorrect triplet:\n"
-                     << struct_to_string()
-                     << "Length: " << get_length() << endl;
-
-              throw logic_error(buffer.str());
-           }
-
-           if(A.second < U.second || U.second > B.second)
-           {
-               cout << "Triplet does not satisfy minimum condition:\n" << endl; system("pause");
-
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "Triplet does not satisfy minimum condition:\n"
+                     << "U is greater than A:\n"
                      << struct_to_string();
 
               throw logic_error(buffer.str());
            }
 
-           if(abs(A.second - B.second) < numeric_limits<type>::min()
-           || abs(A.second - U.second) < numeric_limits<type>::min()
-           || abs(B.second - U.second) < numeric_limits<type>::min())
+           if(U.second >= A.second)
            {
-              cout << "Uncorrect triplet" << endl; system("pause");
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "Uncorrect triplet:\n"
-                     << struct_to_string()
-                     << "Length: " << get_length() << endl;
+                     << "fU is equal or greater than fA:\n"
+                     << struct_to_string();
 
               throw logic_error(buffer.str());
            }
 
+           if(U.second >= B.second)
+           {
+              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                     << "void check() const method.\n"
+                     << "fU is equal or greater than fB:\n"
+                     << struct_to_string();
+
+              throw logic_error(buffer.str());
+           }
        }
 
        /// Left point of the triplet.
@@ -299,6 +286,8 @@ public:
 
    // Training rate method
 
+   pair<type, type> calculate_V(const Triplet&) const;
+
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
@@ -306,16 +295,6 @@ public:
                                         NeuralNetwork::ForwardPropagation&,
                                         LossIndex::BackPropagation&,
                                         OptimizationAlgorithm::OptimizationData&) const;
-
-   pair<type, type> calculate_golden_section_directional_point(const DataSet::Batch&,
-                                                               NeuralNetwork::ForwardPropagation&,
-                                                               LossIndex::BackPropagation&,
-                                                               OptimizationAlgorithm::OptimizationData&) const;
-
-   pair<type, type> calculate_Brent_method_directional_point(const DataSet::Batch&,
-                                                             NeuralNetwork::ForwardPropagation&,
-                                                             LossIndex::BackPropagation&,
-                                                             OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSet::Batch&,
                                                 NeuralNetwork::ForwardPropagation&,
