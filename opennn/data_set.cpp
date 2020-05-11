@@ -5814,22 +5814,31 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+        cout << endl;
+
+        Tensor<type, 2> input = get_column_data(input_columns_indices(i));
 
         const ColumnType input_type = columns(input_columns_indices(i)).type;
 
+        cout << "Calculating " << columns(input_columns_indices(i)).name;
+
         for(Index j = 0; j < target_columns_number; j++)
         {
-            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+            Tensor<type, 2> target = get_column_data(target_columns_indices(j));
 
             const ColumnType target_type = columns(target_columns_indices(j)).type;
 
+            cout << " - " << columns(target_columns_indices(j)).name << " regressions. \n" ;
+
             if(input_type == Numeric && target_type == Numeric)
             {
-                const RegressionResults linear_regression = OpenNN::linear_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults power_regression = OpenNN::power_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                const RegressionResults linear_regression = OpenNN::linear_regression(input_column, target_column);
+                const RegressionResults exponential_regression = OpenNN::exponential_regression(input_column, target_column);
+                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input_column, target_column);
+                const RegressionResults power_regression = OpenNN::power_regression(input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
@@ -5843,7 +5852,10 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
 
                 target_variable_index++;
             }
@@ -5854,13 +5866,19 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                 target_variable_index++;
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                 target_variable_index++;
             }
@@ -5872,18 +5890,26 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
                 for(Index k = 0; k < target.dimension(1); k++)
                 {
-                    regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(k,1));
+                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
+
+                    regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                     target_variable_index++;
                 }
             }
             else if(input_type == Binary && target_type == Categorical)
             {
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
                 for(Index k = 0; k < target.dimension(1); k++)
                 {
-                    regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(k,1));
+                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
+
+                    regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
 
                     target_variable_index++;
                 }
