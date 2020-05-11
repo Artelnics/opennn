@@ -1126,10 +1126,6 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
 {
 
-
-
-
-
     const type c = -(triplet.A.second*(triplet.U.first-triplet.B.first)
                      + triplet.U.second*(triplet.B.first-triplet.A.first)
                      + triplet.B.second*(triplet.A.first-triplet.U.first))
@@ -1172,6 +1168,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
                << "Brent method learning rate is not inside interval.\n"
                << "Interval:(" << triplet.A.first << "," << triplet.B.first << ")\n"
                << "Brent method learning rate: " << Brent_method_learning_rate << endl;
+
 
         throw logic_error(buffer.str());
     }
