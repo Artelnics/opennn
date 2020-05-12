@@ -395,7 +395,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         {
             const string new_categories = categories_element->GetText();
 
-            categories = get_tokens(new_categories, ' ');
+            categories = get_tokens(new_categories, ';');
         }
 
         // Categories uses
@@ -415,7 +415,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         {
             const string new_categories_uses = categories_uses_element->GetText();
 
-            set_categories_uses(get_tokens(new_categories_uses, ' '));
+            set_categories_uses(get_tokens(new_categories_uses, ';'));
         }
     }
 }
@@ -489,7 +489,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != categories.size()-1)
             {
-                file_stream.PushText(" ");
+                file_stream.PushText(";");
             }
         }
 
@@ -520,7 +520,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != categories_uses.size()-1)
             {
-                file_stream.PushText(" ");
+                file_stream.PushText(";");
             }
         }
 
@@ -534,7 +534,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.OpenElement("Categories");
             file_stream.PushText(categories(0).c_str());
-            file_stream.PushText(" ");
+            file_stream.PushText(";");
             file_stream.PushText(categories(1).c_str());
             file_stream.CloseElement();
 
@@ -559,7 +559,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
                 file_stream.PushText("Unused");
             }
 
-            file_stream.PushText(" ");
+            file_stream.PushText(";");
 
             if(categories_uses(1) == Input)
             {
@@ -7355,8 +7355,6 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // @todo inputs_dimensions, targets_dimensions
-
     ostringstream buffer;
 
     file_stream.OpenElement("DataSet");
@@ -8071,7 +8069,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    columns(i).categories = get_tokens(new_categories, ' ');
+                    columns(i).categories = get_tokens(new_categories, ';');
                 }
 
                 // Categories uses
@@ -8091,7 +8089,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
+                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
                 }
             }
         }
