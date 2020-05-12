@@ -610,14 +610,14 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
+    case NoRegularization:
+        return "NO_REGULARIZATION";
+
     case L1:
         return "L1_NORM";
 
     case L2:
         return "L2_NORM";
-
-    case NoRegularization:
-        return "NO_REGULARIZATION";
     }
 
     return string();

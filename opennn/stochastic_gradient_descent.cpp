@@ -552,6 +552,9 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
                       OptimizationData& optimization_data)
 {
+
+
+/*
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -566,7 +569,8 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
         }
         else
         {
-            optimization_data.nesterov_increment.device(*thread_pool_device) = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+            optimization_data.nesterov_increment.device(*thread_pool_device)
+                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
             optimization_data.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
         }
@@ -576,10 +580,10 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
         optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
     }
 
-
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
     optimization_data.iteration++;
+*/
 }
 
 
@@ -620,7 +624,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
-    const Index training_batches_number = batch_instances_number > training_instances_number ? 1 : training_instances_number/batch_instances_number;
+    const Index training_batches_number
+            = batch_instances_number > training_instances_number
+            ? 1 : training_instances_number/batch_instances_number;
 
     Tensor<Index, 2> training_batches(training_batches_number, batch_instances_number);
 
@@ -651,7 +657,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     OptimizationData optimization_data(this);
 
-    Tensor<type, 1> minimal_selection_parameters(parameters_number);
+    Tensor<type, 1> minimal_selection_parameters;
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
