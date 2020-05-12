@@ -39,7 +39,7 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 100000;
+        const Index samples = 10000;
         const Index variables = 10;
 
         DataSet data_set;
@@ -61,7 +61,7 @@ int main(void)
 
         const Index inputs_number = data_set.get_input_variables_number();
 
-        const Index hidden_neurons_number = variables*10;
+        const Index hidden_neurons_number = variables;
 
         const Index outputs_number = data_set.get_target_variables_number();
 

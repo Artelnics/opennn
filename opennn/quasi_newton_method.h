@@ -106,6 +106,9 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
+
+            old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
+
         }
 
         void print() const
@@ -140,6 +143,8 @@ public:
 
         Tensor<type, 2> inverse_hessian;
         Tensor<type, 2> old_inverse_hessian;
+
+        Tensor<type, 1> old_inverse_hessian_dot_gradient_difference;
 
         // Optimization algorithm data
 
