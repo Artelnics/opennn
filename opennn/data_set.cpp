@@ -4840,12 +4840,18 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
     Index used_column_index = 0;
     Index variable_index = 0;
 
+    cout << "Row 0:_ " << data.chip(0,0) << endl;
+
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == Numeric || columns(i).type == Binary)
         {
             if(columns(i).column_use != UnusedVariable)
             {
+                cout << "Variable index: " << get_variable_indices(i) << endl;
+
+                cout << "data: " << data(0, get_variable_indices(i)(0)) << endl;
+
                 box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_instances_indices);
 
                 used_column_index++;
@@ -10210,12 +10216,14 @@ void DataSet::read_csv_1()
     for(Index i = 0; i < columns_number; i++)
     {
         if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+        || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+        || (is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(i).type = Numeric;
         }
         else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+             || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+             || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(i).type = DateTime;
         }
