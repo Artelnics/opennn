@@ -10574,6 +10574,7 @@ void DataSet::read_csv_3_complete()
     string token;
 
     unsigned instance_index = 0;
+    unsigned variable_index = 0;
 
     // Skip header
 
@@ -10607,6 +10608,8 @@ void DataSet::read_csv_3_complete()
 
         tokens = get_tokens(line, separator_char);
 
+        variable_index = 0;
+
         for(Index j = 0; j < columns_number; j++)
         {
             trim(tokens(j));
@@ -10615,13 +10618,15 @@ void DataSet::read_csv_3_complete()
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
-                    data(instance_index, j) = static_cast<type>(NAN);
+                    data(instance_index, variable_index) = static_cast<type>(NAN);
+                    variable_index++;
                 }
                 else
                 {
                     try
                     {
-                        data(instance_index, j) = static_cast<type>(stod(tokens(j)));
+                        data(instance_index, variable_index) = static_cast<type>(stod(tokens(j)));
+                        variable_index++;
                     }
                     catch (invalid_argument)
                     {
@@ -10639,45 +10644,47 @@ void DataSet::read_csv_3_complete()
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
-                    data(instance_index, j) = static_cast<type>(NAN);
+                    data(instance_index, variable_index) = static_cast<type>(NAN);
+                    variable_index++;
                 }
                 else
                 {
-                    data(instance_index, j) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
+                    data(instance_index, variable_index) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
+                    variable_index++;
                 }
             }
             else if(columns(j).type == Categorical)
             {
-                const Tensor<Index, 1> variable_indices = get_variable_indices(j);
-
-                for(Index k = 0; k < variable_indices.size(); k++)
+                for(Index k = 0; k < columns(j).get_categories_number(); k++)
                 {
                     if(tokens(j) == missing_values_label)
                     {
-                        data(instance_index, variable_indices(k)) = static_cast<type>(NAN);
+                        data(instance_index, variable_index) = static_cast<type>(NAN);
                     }
                     else if(tokens(j) == columns(j).categories(k))
                     {
-                        data(instance_index, variable_indices(k)) = 1.0;
+                        data(instance_index, variable_index) = 1.0;
                     }
+
+                    variable_index++;
                 }
             }
             else if(columns(j).type == Binary)
             {
-                const Tensor<Index, 1> variable_indices = get_variable_indices(j);
-
                 if(tokens(j) == missing_values_label)
                 {
-                    data(instance_index, variable_indices(0)) = static_cast<type>(NAN);
+                    data(instance_index, variable_index) = static_cast<type>(NAN);
                 }
                 else if(columns(j).categories.size() > 0 && tokens(j) == columns(j).categories(0))
                 {
-                    data(instance_index, variable_indices(0)) = 1.0;
+                    data(instance_index, variable_index) = 1.0;
                 }
                 else if(tokens(j) == columns(j).name)
                 {
-                    data(instance_index, variable_indices(0)) = 1.0;
+                    data(instance_index, variable_index) = 1.0;
                 }
+
+                variable_index++;
             }
         }
 
