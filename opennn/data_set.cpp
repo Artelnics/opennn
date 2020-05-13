@@ -5665,8 +5665,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                       << "Case not found: Column i " << input_type << " and Column j " << target_type << ".\n";
+                       << "Tensor<type, 2> calculate_input_target_columns_correlations() const method.\n"
+                       << "Case not found: Column " << columns(input_index).name << " and Column " << columns(target_index).name << ".\n";
 
                 throw logic_error(buffer.str());
             }
@@ -5951,7 +5951,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
 
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "Tensor<type, 2> calculate_input_target_columns_regressions() const method.\n"
-                       << "Case not found: Column i " << input_type << " and Column j " << target_type << ".\n";
+                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(target_columns_indices(j)).name << ".\n";
 
                 throw logic_error(buffer.str());
             }
@@ -5985,7 +5985,7 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
         Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
-        cout << "Calculating " << columns(current_input_index_i).name << " correlations." << endl;
+        cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
         #pragma omp parallel for
 
@@ -6009,9 +6009,9 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
                 type strongest_correlation = linear_correlation;
 
-                if(abs(exponential_correlation) > abs(strongest_correlation)) strongest_correlation = exponential_correlation;
-                if(abs(logarithmic_correlation) > abs(strongest_correlation)) strongest_correlation = logarithmic_correlation;
-                if(abs(power_correlation) > abs(strongest_correlation)) strongest_correlation = power_correlation;
+                if(fabsf(exponential_correlation) > fabsf(strongest_correlation)) strongest_correlation = exponential_correlation;
+                if(fabsf(logarithmic_correlation) > fabsf(strongest_correlation)) strongest_correlation = logarithmic_correlation;
+                if(fabsf(power_correlation) > fabsf(strongest_correlation)) strongest_correlation = power_correlation;
 
                 correlations(i,j) = strongest_correlation;
             }
@@ -6052,13 +6052,25 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
                 correlations(i,j) = one_way_anova_correlation(input_j, current_input_i);
             }
+            else if(type_i == Categorical && type_j == Binary)
+            {
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlation(input_i, current_input_j);
+            }
+            else if(type_i == Binary && type_j == Categorical)
+            {
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+
+                correlations(i,j) = one_way_anova_correlation(input_j, current_input_i);
+            }
             else
             {
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                       << "Case not found: Column i " << type_i << " and Column j " << type_j << ".\n";
+                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(input_columns_indices(j)).name << ".\n";
 
                 throw logic_error(buffer.str());
             }
@@ -10001,12 +10013,12 @@ void DataSet::impute_missing_values_unuse()
 void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
 
-    const Tensor<type, 1> means = mean(data, used_instances_indices, used_columns_indices);
+    const Tensor<type, 1> means = mean(data, used_instances_indices, used_variables_indices);
 
     const Index instances_number = get_instances_number();
-    const Index variables_number = used_columns_indices.size();
+    const Index variables_number = used_variables_indices.size();
 
 #pragma omp parallel for schedule(dynamic)
 
@@ -10025,11 +10037,11 @@ void DataSet::impute_missing_values_mean()
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
 
-    const Tensor<type, 1> medians = median(data, used_instances_indices, used_columns_indices);
+    const Tensor<type, 1> medians = median(data, used_instances_indices, used_variables_indices);
 
-    const Index variables_number = used_columns_indices.size();
+    const Index variables_number = used_variables_indices.size();
     const Index instances_number = get_instances_number();
 
 #pragma omp parallel for schedule(dynamic)
