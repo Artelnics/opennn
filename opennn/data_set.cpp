@@ -4737,74 +4737,99 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_number) const
 {
     const Index used_columns_number = get_used_columns_number();
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Index used_instances_number = used_instances_indices.size();
 
     Tensor<Histogram, 1> histograms(used_columns_number);
 
     Index variable_index = 0;
+    Index used_column_index = 0;
 
     for(Index i = 0; i < used_columns_number; i++)
     {
         if(columns(i).type == Numeric)
         {
-            Tensor<type, 1> column(used_instances_number);
-
-            for(Index j = 0; j < used_instances_number; j++)
+            if(columns(i).column_use == UnusedVariable)
             {
-                column(j) = data(used_instances_indices(j), variable_index);
+                variable_index++;
             }
+            else
+            {
+                Tensor<type, 1> column(used_instances_number);
 
-            histograms(i) = histogram(column, bins_number);
-            variable_index++;
+                for(Index j = 0; j < used_instances_number; j++)
+                {
+                    column(j) = data(used_instances_indices(j), variable_index);
+                }
+
+                histograms(used_column_index) = histogram(column, bins_number);
+
+                variable_index++;
+                used_column_index++;
+            }
         }
         else if(columns(i).type == Categorical)
         {
             const Index categories_number = columns(i).get_categories_number();
 
-            Tensor<Index, 1> categories_frequencies(categories_number);
-            categories_frequencies.setZero();
-            Tensor<type, 1> centers(categories_number);
-
-            for(Index j = 0; j < categories_number; j++)
+            if(columns(i).column_use == UnusedVariable)
             {
-                for(Index k = 0; k < used_instances_number; k++)
+                variable_index += categories_number;
+            }
+            else
+            {
+                Tensor<Index, 1> categories_frequencies(categories_number);
+                categories_frequencies.setZero();
+                Tensor<type, 1> centers(categories_number);
+
+                for(Index j = 0; j < categories_number; j++)
                 {
-                    if(abs(data(used_instances_indices(k), variable_index) - 1) < numeric_limits<type>::min())
+                    for(Index k = 0; k < used_instances_number; k++)
                     {
-                        categories_frequencies(j)++;
+                        if(abs(data(used_instances_indices(k), variable_index) - 1) < numeric_limits<type>::min())
+                        {
+                            categories_frequencies(j)++;
+                        }
                     }
+
+                    centers(j) = static_cast<type>(j);
+
+                    variable_index++;
                 }
 
-                centers(j) = static_cast<type>(j);
+                histograms(used_column_index).frequencies = categories_frequencies;
+                histograms(used_column_index).centers = centers;
 
-                variable_index++;
+                used_column_index++;
             }
-
-            histograms(i).frequencies = categories_frequencies;
-            histograms(i).centers = centers;
         }
         else if(columns(i).type == Binary)
         {
-            Tensor<Index, 1> binary_frequencies(2);
-            binary_frequencies.setZero();
-
-            for(Index j = 0; j < used_instances_number; j++)
+            if(columns(i).column_use == UnusedVariable)
             {
-                if(abs(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
-                {
-                    binary_frequencies(0)++;
-                }
-                else
-                {
-                    binary_frequencies(1)++;
-                }
+                variable_index++;
             }
+            else
+            {
+                Tensor<Index, 1> binary_frequencies(2);
+                binary_frequencies.setZero();
 
-            histograms(i).frequencies = binary_frequencies;
+                for(Index j = 0; j < used_instances_number; j++)
+                {
+                    if(abs(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
+                    {
+                        binary_frequencies(0)++;
+                    }
+                    else
+                    {
+                        binary_frequencies(1)++;
+                    }
+                }
 
-            variable_index++;
+                histograms(used_column_index).frequencies = binary_frequencies;
+                variable_index++;
+                used_column_index++;
+            }
         }
         else // Time @todo
         {
@@ -4840,19 +4865,19 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
     Index used_column_index = 0;
     Index variable_index = 0;
 
-    cout << "Row 0:_ " << data.chip(0,0) << endl;
-
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == Numeric || columns(i).type == Binary)
         {
             if(columns(i).column_use != UnusedVariable)
             {
-                cout << "Variable index: " << get_variable_indices(i) << endl;
-
-                cout << "data: " << data(0, get_variable_indices(i)(0)) << endl;
+                cout << "Column: " << columns(i).name << endl;
 
                 box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_instances_indices);
+
+                cout << "min: " << box_plots(used_column_index).minimum << endl;
+                cout << "max: " << box_plots(used_column_index).maximum << endl;
+
 
                 used_column_index++;
             }
@@ -4861,7 +4886,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         }
         else if(columns(i).type == Categorical)
         {
-            variable_index += columns(i).categories.size();
+            variable_index += columns(i).get_categories_number();
         }
         else
         {
