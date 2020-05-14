@@ -3034,7 +3034,7 @@ void DataSet::set_binary_simple_columns()
                 && data(row_index, variable_index) != values(0)
                 && data(row_index, variable_index) != values(1))
                 {
-                    values(different_values) = data(row_index, column_index);
+                    values(different_values) = data(row_index, variable_index);
 
                     different_values++;
                 }
@@ -10447,6 +10447,8 @@ void DataSet::read_csv_3_simple()
 
     data_file_preview(data_file_preview_index) = tokens;
 
+    file.close();
+
     cout << "Data read succesfully..." << endl;
 
     // Check Binary
@@ -10454,8 +10456,6 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
-    file.close();
 }
 
 
@@ -10735,6 +10735,7 @@ void DataSet::read_csv_3_complete()
     cout << "Data read succesfully..." << endl;
 
     // Read header
+
     /*
         for (Index j = 0; j < columns_number; j++)
         {
@@ -10754,6 +10755,10 @@ void DataSet::read_csv_3_complete()
         }
     */
     file.close();
+
+    cout << "Checking binary columns..." << endl;
+
+    set_binary_simple_columns();
 }
 
 
