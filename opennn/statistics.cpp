@@ -1300,6 +1300,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
     if(unique_values_number <= bins_number)
     {
+        sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
+
         centers = unique_values;
         minimums = unique_values;
         maximums = unique_values;
@@ -2273,12 +2275,16 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
     // Mean
 
     Tensor<type, 1> mean(columns_number);
+    mean.setZero();
 
     for(Index j = 0; j < columns_number; j++)
     {
         for(Index i = 0; i < rows_number; i++)
         {
-            mean(j) += matrix(i,j);
+            if(!::isnan(matrix(i,j)))
+            {
+                mean(j) += matrix(i,j);
+            }
         }
 
         mean(j) /= static_cast<type>(rows_number);

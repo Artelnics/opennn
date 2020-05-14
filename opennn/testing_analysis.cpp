@@ -1346,19 +1346,19 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> normalization_coefficient;
-    normalization_coefficient.setZero();
-
     Tensor<type, 0> sum_squared_error = (outputs - targets).square().sum();
 
-//#pragma omp parallel for reduction(+: normalization_coefficient)
+    type normalization_coefficient = 0;
 
+#pragma omp parallel for reduction(+: normalization_coefficient)
     for(Index i = 0; i < instances_number; i++)
     {
-        normalization_coefficient += (targets.chip(i,0)-targets_mean).square().sum();
+        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+
+        normalization_coefficient += norm_1(0);
     }
 
-    return sum_squared_error()/normalization_coefficient();
+    return sum_squared_error()/normalization_coefficient;
 }
 
 
