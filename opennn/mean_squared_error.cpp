@@ -88,6 +88,28 @@ MeanSquaredError::~MeanSquaredError()
 }
 
 
+/// calculate_error
+
+float MeanSquaredError::calculate_error(const DataSet& data_set,
+                                        const NeuralNetwork& neural_network) const
+{
+    Tensor<type, 0> sum_squared_error;
+
+    const Tensor<type, 2>& targets = data_set.get_target_data();
+    const Tensor<type, 2>& outputs = neural_network.calculate_trainable_outputs(data_set.get_input_data());
+
+    Tensor<type, 2> errors(data_set.get_instances_number(), outputs.dimension(1));
+
+    errors = outputs - targets;
+
+    sum_squared_error = errors.contract(errors, SSE);
+
+    float mean_squared_error = sum_squared_error(0) / static_cast<type>(data_set.get_instances_number());
+
+    return mean_squared_error;
+}
+
+
 ///
 
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
@@ -110,6 +132,9 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+//    cout << "MSE:\n" << back_propagation.error << endl;
+//    system("pause");
 }
 
 
@@ -138,7 +163,14 @@ void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
 
      errors.device(*thread_pool_device) = outputs - targets;
 
+//     cout << "Outputs:\n" << outputs << endl;
+
+//     cout << "Errors:\n" << errors << endl;
+
      back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
+
+//     cout << "Output_gradient:\n" << back_propagation.output_gradient << endl;
+//     system("pause");
 }
 
 
