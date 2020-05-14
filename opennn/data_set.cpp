@@ -2609,7 +2609,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
         }
         else if(columns(i).column_use != UnusedVariable)
         {
-            used_indices(used_index) = i;
+            used_indices(used_index) = used_variable_index;
             used_index++;
             used_variable_index++;
         }
@@ -4736,6 +4736,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
 Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_number) const
 {
+    const Index columns_number = columns.size();
     const Index used_columns_number = get_used_columns_number();
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Index used_instances_number = used_instances_indices.size();
@@ -4745,7 +4746,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     Index variable_index = 0;
     Index used_column_index = 0;
 
-    for(Index i = 0; i < used_columns_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == Numeric)
         {
@@ -4816,7 +4817,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
                 for(Index j = 0; j < used_instances_number; j++)
                 {
-                    if(abs(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
+                    if(fabsf(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
                     {
                         binary_frequencies(0)++;
                     }
@@ -5129,6 +5130,8 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+
+    cout << "Used variables indices: " << used_variables_indices << endl;
 
     return descriptives(data, used_instances_indices, used_variables_indices);
 }
