@@ -259,6 +259,9 @@ public:
    Index get_inputs_number() const;
    Index get_outputs_number() const;
 
+   Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
+   Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
+
    Tensor<Index, 1> get_architecture() const;
 
    // Parameters
