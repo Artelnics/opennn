@@ -69,17 +69,17 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
             && abs(s_yy() - 0) < numeric_limits<type>::epsilon()
             && abs(s_xy() - 0) < numeric_limits<type>::epsilon())
     {
-        linear_correlation = 1.0;
+        linear_correlation = 0.0;
     }
     else
     {
         const type numerator = (x_size * s_xy() - s_x() * s_y());
 
-        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y());
+        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(x_size * s_yy() - s_y() * s_y());
 
         if(radicand <= static_cast<type>(0.0))
         {
-            return 1.0;
+            return 0.0;
         }
 
         const type denominator = sqrt(radicand);
@@ -1047,9 +1047,9 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults logarithmic_correlation;
 
-    logarithmic_correlation.correlation_type = Logarithmic_correlation;
-
     logarithmic_correlation.correlation = OpenNN::logarithmic_correlation(x, y);
+
+    logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
     return logarithmic_correlation;
 }
@@ -1084,9 +1084,9 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults exponential_correlation;
 
-    exponential_correlation.correlation_type = Exponential_correlation;
-
     exponential_correlation.correlation = OpenNN::exponential_correlation(x, y);
+
+    exponential_correlation.correlation_type = Exponential_correlation;
 
     return exponential_correlation;
 }
@@ -1121,9 +1121,9 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 
     CorrelationResults power_correlation;
 
-    power_correlation.correlation_type = Power_correlation;
-
     power_correlation.correlation = OpenNN::power_correlation(x, y);
+
+    power_correlation.correlation_type = Power_correlation;
 
     return power_correlation;
 }
@@ -2037,7 +2037,6 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type,
     const Tensor<type, 0> total_average = vector.sum() / n;
 
     type total_sum_of_squares = 0;
-    type treatment_sum_of_squares = 0;
 
     const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
     const Tensor<type, 1> number_elements = matrix.sum(columns);
@@ -2060,6 +2059,8 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type,
         total_sum_of_squares += pow(vector[i] - total_average(0),2);
 
     }
+
+    type treatment_sum_of_squares = 0;
 
     for(Index i = 0; i < matrix.dimension(1); i ++)
     {
