@@ -6000,6 +6000,12 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
             Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
+            if(current_input_index_i == current_input_index_j)
+            {
+                correlations(i,j) = 1;
+                continue;
+            }
+
             if(type_i == Numeric && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
