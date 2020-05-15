@@ -2701,9 +2701,9 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
                 target_variable_index++;
             }
         }
-        else if(columns(i).column_use == Target)
+        else if(columns(i).column_use == Target) // Binary, numeric
         {
-            target_variables_indices(target_index) = i;
+            target_variables_indices(target_index) = target_variable_index;
             target_index++;
             target_variable_index++;
         }
