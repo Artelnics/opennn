@@ -223,7 +223,7 @@ bool is_numeric_string(const string& str)
     */
 
     return !str.empty() && std::find_if(str.begin(),
-        str.end(), [](unsigned char c) { return (!std::isdigit(c) && c != '-' && c != '.' && c != 'e'); }) == str.end();
+        str.end(), [](unsigned char c) { return (!std::isdigit(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'); }) == str.end();
 }
 
 
