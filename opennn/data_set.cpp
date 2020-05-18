@@ -1792,12 +1792,12 @@ void DataSet::set_default_columns_names()
         {
             if(columns(i).column_use == Input)
             {
-                columns(i).name = "input_" + std::to_string(input_index);
+                columns(i).name = "input_" + std::to_string(input_index+1);
                 input_index++;
             }
             else if(columns(i).column_use == Target)
             {
-                columns(i).name = "target_" + std::to_string(target_index);
+                columns(i).name = "target_" + std::to_string(target_index+1);
                 target_index++;
             }
         }
@@ -4111,12 +4111,12 @@ void DataSet::set(const Index& new_instances_number, const Index& new_variables_
 
     for(Index index = 0; index < new_variables_number-1; index++)
     {
-        columns(index).name = "column_" + to_string(index);
+        columns(index).name = "column_" + to_string(index+1);
         columns(index).column_use = Input;
         columns(index).type = Numeric;
     }
 
-    columns(new_variables_number-1).name = "column_" + to_string(new_variables_number-1);
+    columns(new_variables_number-1).name = "column_" + to_string(new_variables_number);
     columns(new_variables_number-1).column_use = Target;
     columns(new_variables_number-1).type = Numeric;
 
@@ -4151,13 +4151,13 @@ void DataSet::set(const Index& new_instances_number,
     {
         if(i < new_inputs_number)
         {
-            columns(i).name = "column_" + to_string(i);
+            columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = Input;
             columns(i).type = Numeric;
         }
         else
         {
-            columns(i).name = "column_" + to_string(i);
+            columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = Target;
             columns(i).type = Numeric;
         }
