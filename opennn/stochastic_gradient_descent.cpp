@@ -554,7 +554,6 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
 {
 
 
-/*
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -583,7 +582,7 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
     optimization_data.iteration++;
-*/
+
 }
 
 
