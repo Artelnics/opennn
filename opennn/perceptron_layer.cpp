@@ -533,9 +533,19 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
     scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
     limit = sqrt(static_cast<type>(3.0) * scale);
 
-    /*
-        synaptic_weights.setRandom(-limit, limit);
-    */
+    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+
+    synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+
+    Eigen::Tensor<float, 0> min_weight = synaptic_weights.minimum();
+    Eigen::Tensor<float, 0> max_weight = synaptic_weights.maximum();
+
+    synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
+    synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
+
+//    cout << "Limit:" << endl << limit << endl;
+//    cout << "SW:" << endl << synaptic_weights << endl;
+//    system("pause");
 }
 
 
@@ -558,8 +568,8 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 void PerceptronLayer::set_parameters_random()
 {
     biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-
     synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+
 }
 
 

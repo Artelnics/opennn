@@ -93,6 +93,17 @@ void Layer::set_parameters_random()
     throw logic_error(buffer.str());
 }
 
+void Layer::set_synaptic_weights_constant_glorot_uniform()
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "set_synaptic_weights_constant_glorot_uniform() method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw logic_error(buffer.str());
+}
+
 
 void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
