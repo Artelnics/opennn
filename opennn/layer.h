@@ -207,6 +207,8 @@ public:
 
     virtual void set_parameters_random();
 
+    virtual void set_synaptic_weights_constant_glorot_uniform();
+
     // Architecture
 
     virtual Tensor<type, 1> get_parameters() const;
