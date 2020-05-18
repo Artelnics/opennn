@@ -10412,7 +10412,7 @@ void DataSet::read_csv_3_simple()
     // Read data
 
     Index j = 0;
-    const Index columns_number = get_columns_number(); // columns number = tokens_number
+    const Index columns_number = get_columns_number();
 
     Tensor<string, 1> tokens(columns_number);
 
@@ -10428,7 +10428,6 @@ void DataSet::read_csv_3_simple()
 
         if(line.empty()) continue;
 
-//        tokens = get_tokens(line, separator_char);
         get_tokens(line, separator_char, tokens);
 
         for(j = 0; j < variables_number; j++)
