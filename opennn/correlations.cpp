@@ -1173,8 +1173,8 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-//    coefficients.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
-    coefficients.setRandom();
+    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+//    coefficients.setRandom();
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
