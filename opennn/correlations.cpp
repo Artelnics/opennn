@@ -888,15 +888,15 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
     // Scale data
 
-    Tensor<type, 1> scaled_x(new_x);
-    scale_minimum_maximum(scaled_x);
+    const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+//    coefficients.setRandom();
 
-    const Index epochs_number = 1000;
+    const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
@@ -919,14 +919,14 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
         error.device(*thread_pool_device) = activation - new_y;
 
-        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(new_size);
+        mean_squared_error.device(*thread_pool_device) = error.square().sum();
 
         if(mean_squared_error() < error_goal) break;
 
         Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)/static_cast<type>(new_size)).sum();
+        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
         Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-scaled_x)/static_cast<type>(new_size)).sum();
+        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
 
         gradient(0) = sum_a();
         gradient(1) = sum_b();
@@ -936,19 +936,22 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients -= gradient*step_size;
-
     }
 
     // Regression results
 
     RegressionResults regression_results;
+
+    regression_results.a = -coefficients(0);
+    regression_results.b = -coefficients(1);
+
+    const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
+
+    regression_results.correlation = linear_correlation(logistic_y, new_y);
+
+    if(regression_results.b < 0) regression_results.correlation *= (-1);
+
     regression_results.regression_type = Logistic;
-    regression_results.a = coefficients(0);
-    regression_results.b = coefficients(1);
-
-    const Tensor<type, 1> logistic_x = logistic(regression_results.a,regression_results.b, new_x);
-
-    regression_results.correlation = linear_correlation(logistic_x, new_y);
 
     return regression_results;
 }
@@ -1165,15 +1168,15 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     // Scale data
 
-    Tensor<type, 1> scaled_x(new_x);
-    scale_minimum_maximum(scaled_x);
+    Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+//    coefficients.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+    coefficients.setRandom();
 
-    const Index epochs_number = 1000;
+    const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
@@ -1196,14 +1199,14 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
         error.device(*thread_pool_device) = activation - new_y;
 
-        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(new_size);
+        mean_squared_error.device(*thread_pool_device) = error.square().sum();
 
         if(mean_squared_error() < error_goal) break;
 
         Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)/static_cast<type>(new_size)).sum();
+        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
         Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(-scaled_x)/static_cast<type>(new_size)).sum();
+        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
 
         gradient(0) = sum_a();
         gradient(1) = sum_b();
@@ -1213,17 +1216,19 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients -= gradient*step_size;
-
     }
 
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
 
-    const Tensor<type, 1> logistic_x = logistic(coefficients(0), coefficients(1), new_x);
+    const Tensor<type, 1> logistic_y = logistic(-coefficients(0), -coefficients(1), scaled_x);
+
+    logistic_correlations.correlation = linear_correlation(logistic_y, new_y);
+
+    if((-coefficients(1)) < 0) logistic_correlations.correlation *= (-1);
 
     logistic_correlations.correlation_type = Logistic_correlation;
-    logistic_correlations.correlation = linear_correlation(logistic_x, new_y);
 
     return logistic_correlations;
 }
