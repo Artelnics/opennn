@@ -935,15 +935,16 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
         if(gradient_norm() < gradient_norm_goal) break;
 
-        coefficients -= gradient*step_size;
+        coefficients += gradient*step_size;
+
     }
 
     // Regression results
 
     RegressionResults regression_results;
 
-    regression_results.a = -coefficients(0);
-    regression_results.b = -coefficients(1);
+    regression_results.a = coefficients(0);
+    regression_results.b = coefficients(1);
 
     const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
 
@@ -1215,18 +1216,18 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
         if(gradient_norm() < gradient_norm_goal) break;
 
-        coefficients -= gradient*step_size;
+        coefficients += gradient*step_size;
     }
 
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
 
-    const Tensor<type, 1> logistic_y = logistic(-coefficients(0), -coefficients(1), scaled_x);
+    const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
 
     logistic_correlations.correlation = linear_correlation(logistic_y, new_y);
 
-    if((-coefficients(1)) < 0) logistic_correlations.correlation *= (-1);
+    if(coefficients(1) < 0) logistic_correlations.correlation *= (-1);
 
     logistic_correlations.correlation_type = Logistic_correlation;
 
