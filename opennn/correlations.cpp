@@ -556,7 +556,7 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 }
 
 
-/// Calculate the logistic function with specifics parameters 'a' and 'b'.
+/// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
 /// @param b Parameter b.
 
@@ -566,7 +566,7 @@ type logistic(const type& a, const type& b, const type& x)
 }
 
 
-/// Calculate the logistic function with specifics parameters 'a' and 'b'.
+/// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
 /// @param b Parameter b.
 
@@ -576,6 +576,35 @@ Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
 
     return (1 + combination.exp().inverse()).inverse();
 }
+
+
+/// Calculate the logistic function with specific parameters 'a' and 'b'.
+/// @param a Parameter a.
+/// @param b Parameter b.
+
+Tensor<type, 2> logistic(const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
+{
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+    const Index instances_number = x.dimension(0);
+    const Index biases_number = a.dimension(0);
+
+    Tensor<type, 2> combinations(instances_number, biases_number);
+
+    for(Index i = 0; i < biases_number; i++)
+    {
+        fill_n(combinations.data() + i*instances_number, instances_number, a(i));
+    }
+
+    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
+    combinations.device(*thread_pool_device) += x.contract(b, A_B);
+
+    return (1 + combinations.exp().inverse()).inverse();
+}
+
 
 
 ///Calculate the mean square error of the logistic function.
@@ -1175,7 +1204,6 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-//    coefficients.setRandom();
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -1232,6 +1260,126 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     logistic_correlations.correlation_type = Logistic_correlation;
 
     return logistic_correlations;
+}
+
+
+
+
+CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+{
+
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(y.size() != x.dimension(0))
+    {
+        buffer << "OpenNN Exception: Correlations.\n"
+               << "static type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+    // Filter missing values
+
+    pair <Tensor<type, 2>, Tensor<type, 2>> filter_vectors = filter_missing_values(x,y);
+
+    const Tensor<type, 2>& new_x = filter_vectors.first;
+    const Tensor<type, 2>& new_y = filter_vectors.second;
+
+    const Index new_rows = new_x.dimension(0);
+    const Index new_columns = new_x.dimension(1);
+
+    // Scale data
+
+    Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
+    Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
+/*
+    // Calculate coefficients
+
+    Tensor<type, 1> coefficients(new_columns);
+    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+*/
+    Tensor<type, 2> weights(new_columns, 1);
+    weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+
+    Tensor<type, 1> bias(1);
+    bias.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+
+    const Index epochs_number = 10000;
+    const type step_size = static_cast<type>(0.01);
+
+    const type error_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+
+    Tensor<type, 0> sum_squared_error;
+    Tensor<type, 0> gradient_norm;
+
+    Tensor<type, 1> gradient(new_columns+1);
+
+    Tensor<type, 2> combination(new_rows, 1);
+    Tensor<type, 2> activation(new_rows, 1);
+    Tensor<type, 2> error(new_rows, 1);
+
+    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
+
+    for(Index i = 0; i < epochs_number; i++)
+    {
+        combination.setConstant(bias(0));
+
+        combination.device(*thread_pool_device) = new_x.contract(weights, A_B);
+
+        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
+
+        error.device(*thread_pool_device) = activation - scaled_y;
+
+        sum_squared_error.device(*thread_pool_device) = error.square().sum();
+
+        if(sum_squared_error() < error_goal) break;
+
+        Tensor<type, 1> bias_derivative;
+        bias_derivative.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum(Eigen::array<Index, 1>({0}));
+
+        Tensor<type, 2> weights_derivative;
+        weights_derivative.device(*thread_pool_device) = scaled_x.contract((2*error*activation*(-1+activation)), AT_B);
+
+        memcpy(gradient.data(),
+               bias_derivative.data(),
+               sizeof(type));
+
+        memcpy(gradient.data() + 1,
+               weights_derivative.data(),
+               static_cast<size_t>(weights.size())*sizeof(type));
+
+        gradient_norm = gradient.square().sum().sqrt();
+
+        if(gradient_norm() < gradient_norm_goal) break;
+
+        bias += bias_derivative*step_size;
+        weights += weights_derivative*step_size;
+
+    }
+
+    // Logistic correlation
+
+    CorrelationResults logistic_correlations;
+
+    const Tensor<type, 2> logistic_y = logistic(bias, weights, scaled_x);
+
+    logistic_correlations.correlation = linear_correlation(logistic_y.chip(0,1), scaled_y.chip(0,1));
+
+    logistic_correlations.correlation_type = Logistic_correlation;
+
+    return logistic_correlations;
+
 }
 
 
@@ -2457,6 +2605,69 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 }
 
 
+pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+{
+    Index rows_number = x.dimension(0);
+    Index columns_number = x.dimension(1);
+
+    Index new_rows_number = 0;
+
+    Tensor<bool, 1> not_NAN_row(rows_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        not_NAN_row(i) = true;
+
+        if(isnan(y(i)))
+        {
+            not_NAN_row(i) = false;
+        }
+        else
+        {
+            for(Index j = 0; j < columns_number; j++)
+            {
+                if(isnan(x(i,j)))
+                {
+                    not_NAN_row(i) = false;
+                    break;
+                }
+            }
+        }
+
+        if(not_NAN_row(i)) new_rows_number++;
+    }
+
+    /*if(new_rows_number == x.dimension(0))
+    {
+        return make_pair(x, Tensor<type, 2>(y));
+    }*/
+
+    Tensor<type, 2> new_x(new_rows_number, columns_number);
+
+    Tensor<type, 2> new_y(new_rows_number,1);
+
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(not_NAN_row(i))
+        {
+            new_y(index, 0) = y(i);
+
+            for(Index j = 0; j < columns_number; j++)
+            {
+                new_x(index, j) = x(i, j);
+            }
+
+            index++;
+        }
+    }
+
+    return make_pair(new_x, new_y);
+
+}
+
+
 Index count_NAN(const Tensor<type, 1>& x)
 {
     Index NAN_number = 0;
@@ -2484,6 +2695,34 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
 
     return scaled_x;
 }
+
+
+Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    Tensor<type, 2> scaled_x(rows_number, columns_number);
+
+    const Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(scaled_x);
+    const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(scaled_x);
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type minimum = columns_minimums(j);
+        const type maximum = columns_maximums(j);
+
+        Tensor<type, 2> scaled_x(rows_number, columns_number);
+
+        for(Index i = 0; i < scaled_x.size(); i++)
+        {
+            scaled_x(i,j) = static_cast<type>(2.0)*(x(i,j)-minimum)/(maximum-minimum)-static_cast<type>(1.0);
+        }
+    }
+
+    return scaled_x;
+}
+
 
 }
 

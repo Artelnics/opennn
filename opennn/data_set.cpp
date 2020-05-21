@@ -5656,12 +5656,16 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
                 correlations(i,j) = one_way_anova_correlations(input, target_column);
+
+//                correlations(i,j) = multiple_logistic_correlations(input, target_column);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
                 correlations(i,j) = one_way_anova_correlations(target, input_column);
+
+//                correlations(i,j) = multiple_logistic_correlations(target, input_column);
             }
             else
             {
