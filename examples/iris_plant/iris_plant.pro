@@ -70,7 +70,10 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS += -fopenmp
 }
-
+else:!macx{
+QMAKE_CXXFLAGS+= -fopenmp -lgomp
+QMAKE_LFLAGS += -fopenmp -lgomp
+}
 mac{
 INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
