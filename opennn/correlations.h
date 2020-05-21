@@ -24,7 +24,7 @@
 
 // OpenNN includes
 
-//#include "statistics.h"
+#include "statistics.h"
 //
 //
 #include "config.h"
@@ -155,6 +155,8 @@ struct CorrelationResults
     type logistic(const type&, const type&, const type&);
     Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
+    Tensor<type, 2> logistic(const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
     type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -182,6 +184,8 @@ struct CorrelationResults
     CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
@@ -224,12 +228,14 @@ struct CorrelationResults
     // Missing values methods
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     Index count_NAN(const Tensor<type, 1>&);
 
     // Other methods
 
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
+    Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
 }
 
 
