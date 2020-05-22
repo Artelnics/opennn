@@ -1301,12 +1301,9 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
 
     Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
     Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
-/*
+
     // Calculate coefficients
 
-    Tensor<type, 1> coefficients(new_columns);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-*/
     Tensor<type, 2> weights(new_columns, 1);
     weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
@@ -1328,6 +1325,9 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
     Tensor<type, 2> activation(new_rows, 1);
     Tensor<type, 2> error(new_rows, 1);
 
+    Tensor<type, 1> bias_derivative(1);
+    Tensor<type, 2> weights_derivative(1, new_columns);
+
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
 
@@ -1335,7 +1335,7 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
     {
         combination.setConstant(bias(0));
 
-        combination.device(*thread_pool_device) = new_x.contract(weights, A_B);
+        combination.device(*thread_pool_device) = scaled_x.contract(weights, A_B);
 
         activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
 
@@ -1345,27 +1345,17 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
 
         if(sum_squared_error() < error_goal) break;
 
-        Tensor<type, 1> bias_derivative;
         bias_derivative.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum(Eigen::array<Index, 1>({0}));
 
-        Tensor<type, 2> weights_derivative;
         weights_derivative.device(*thread_pool_device) = scaled_x.contract((2*error*activation*(-1+activation)), AT_B);
 
-        memcpy(gradient.data(),
-               bias_derivative.data(),
-               sizeof(type));
-
-        memcpy(gradient.data() + 1,
-               weights_derivative.data(),
-               static_cast<size_t>(weights.size())*sizeof(type));
-
-        gradient_norm = gradient.square().sum().sqrt();
+        gradient_norm = bias_derivative.square().sum().sqrt() + weights_derivative.square().sum().sqrt();
 
         if(gradient_norm() < gradient_norm_goal) break;
 
         bias += bias_derivative*step_size;
-        weights += weights_derivative*step_size;
 
+        weights += weights_derivative*step_size;
     }
 
     // Logistic correlation
@@ -2704,17 +2694,16 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     Tensor<type, 2> scaled_x(rows_number, columns_number);
 
-    const Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(scaled_x);
-    const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(scaled_x);
+    const Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(x);
+
+    const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
 
     for(Index j = 0; j < columns_number; j++)
     {
         const type minimum = columns_minimums(j);
-        const type maximum = columns_maximums(j);
+        const type maximum = columns_maximums(j);        
 
-        Tensor<type, 2> scaled_x(rows_number, columns_number);
-
-        for(Index i = 0; i < scaled_x.size(); i++)
+        for(Index i = 0; i < rows_number; i++)
         {
             scaled_x(i,j) = static_cast<type>(2.0)*(x(i,j)-minimum)/(maximum-minimum)-static_cast<type>(1.0);
         }
