@@ -923,7 +923,7 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 //               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
 //    }
 
-//    return buffer.str();
+    return string();
 }
 
 
