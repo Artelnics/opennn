@@ -5655,17 +5655,19 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlations(input, target_column);
+//                correlations(i,j) = one_way_anova_correlations(input, target_column);
 
-//                correlations(i,j) = multiple_logistic_correlations(input, target_column);
+                correlations(i,j) = multiple_logistic_correlations(input, target_column);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlations(target, input_column);
+//                correlations(i,j) = one_way_anova_correlations(target, input_column);
 
-//                correlations(i,j) = multiple_logistic_correlations(target, input_column);
+                cout << "Multiple logistic correlations" << endl;
+
+                correlations(i,j) = multiple_logistic_correlations(target, input_column);
             }
             else
             {
@@ -6057,25 +6059,25 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlation(input_i, current_input_j);
+                correlations(i,j) = multiple_logistic_correlations(input_i, current_input_j).correlation;
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlation(input_j, current_input_i);
+                correlations(i,j) = multiple_logistic_correlations(input_j, current_input_i).correlation;
             }
             else if(type_i == Categorical && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlation(input_i, current_input_j);
+                correlations(i,j) = multiple_logistic_correlations(input_i, current_input_j).correlation;
             }
             else if(type_i == Binary && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = one_way_anova_correlation(input_j, current_input_i);
+                correlations(i,j) = multiple_logistic_correlations(input_j, current_input_i).correlation;
             }
             else
             {
@@ -10237,6 +10239,8 @@ void DataSet::read_csv_1()
 
     if(has_columns_names && has_numbers(data_file_preview(0)))
     {
+        cout << "Datafilepreview(0): " << data_file_preview(0) << endl;
+
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
