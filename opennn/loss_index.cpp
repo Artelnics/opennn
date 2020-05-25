@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "loss_index.h"
-#include "device.h"
+
 
 namespace OpenNN
 {

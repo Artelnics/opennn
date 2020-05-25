@@ -25,7 +25,6 @@
 #include "config.h"
 #include "loss_index.h"
 
-
 using namespace std;
 using namespace Eigen;
 

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "config.h"
-#include "device.h"
 #include "correlations.h"
 
 namespace OpenNN

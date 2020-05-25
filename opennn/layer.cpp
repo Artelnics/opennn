@@ -8,8 +8,6 @@
 
 #include "layer.h"
 
-#include "statistics.h"
-
 namespace OpenNN
 {
 
