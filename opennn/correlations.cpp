@@ -384,8 +384,6 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
         }
     }
 
-    cout << "contingencytable: " << contingency_table << endl;
-
     Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
@@ -393,15 +391,7 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
 
     const type chi_squared = chi_square_test(contingency_table.cast<type>());
 
-    cout << "chi_squared: " << chi_squared << endl;
-
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
-
-    cout << "Sum: " << contingency_table_sum() << endl;
-
-    cout << "k: " << k << endl;
-
-    cout << "Value: " << sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0))) << endl;
 
     return sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 }
