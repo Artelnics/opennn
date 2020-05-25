@@ -569,11 +569,8 @@ Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
 /// @param a Parameter a.
 /// @param b Parameter b.
 
-Tensor<type, 2> logistic(const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
+Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
 {
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     const Index instances_number = x.dimension(0);
     const Index biases_number = a.dimension(0);
@@ -628,7 +625,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -646,10 +643,6 @@ RegressionResults linear_regression(const Tensor<type, 1>& x, const Tensor<type,
     }
 
 #endif
-
-        const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
@@ -1246,7 +1239,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 }
 
 
-CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -1263,10 +1256,6 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const
     }
 
 #endif
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // Filter missing values
 
@@ -1343,7 +1332,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const
 
     CorrelationResults logistic_correlations;
 
-    const Tensor<type, 2> logistic_y = logistic(bias, weights, scaled_x);
+    const Tensor<type, 2> logistic_y = logistic(thread_pool_device,bias, weights, scaled_x);
 
     logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1));
 
