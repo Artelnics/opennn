@@ -1205,70 +1205,22 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
      //Activations derivatives
 
+     type delta = 0;
+
      for (Index row = 0; row < rows_number; row++)
      {
          for (Index i = 0; i < dim; i++)
          {
              for (Index j = 0; j < dim; j++)
              {
-                 Index delta = 0;
-                 if (i == j) delta = 1;
+                 (i == j) ? delta = 1 : delta = 0;
 
-                 activations_derivatives(rows_number, i, j) = activations(i) * (delta - activations(j));
+                 activations_derivatives(row, i, j) = activations(row,i) * (delta - activations(row,j));
              }
          }
      }
 
-    /*
-   Tensor<type, 0> sum;
-
-    const Index dim = combinations.dimension(1);
-
-    const Index rows_number = activations.dimension(0);
-
-    //Activations
-
-    sum.device(*thread_pool_device) = combinations.exp().sum();
-
-    activations.device(*thread_pool_device) = combinations.exp() / sum(0);
-
-    //Activations derivatives
-
-    for (Index row = 0; row < rows_number; row++)
-    {
-        for (Index i = 0; i < dim; i++)
-        {
-            for (Index j = 0; j < dim; j++)
-            {
-                Index delta = 0;
-                if (i == j) delta = 1;
-
-                activations_derivatives(rows_number, i, j) = activations(i) * (delta - activations(j));
-            }
-        }
-    }
-     */
-
-    /*
-#ifdef __OPENNN_DEBUG__
-
-    if(combinations.dimension(0) != activations.dimension(2))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Layer Class.\n"
-               << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<< combinations.dimension(0)
-               << ") must be equal to number of rows in y(" <<activations.dimension(2)<< ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-
-    return;
-*/
+     return;
 }
 
 
