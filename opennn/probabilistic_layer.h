@@ -123,14 +123,7 @@ public:
 
    void set_parameters_random();
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& );
 
    // Combinations
 
@@ -152,126 +145,15 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation& forward_propagation) const
-   {
-       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_2d,
-                                         forward_propagation.activations_2d,
-                                         forward_propagation.activations_derivatives_3d);
-   }
-
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const;
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       Tensor<type, 1> potential_parameters,
-                                      ForwardPropagation& forward_propagation) const
-      {
-       const Index neurons_number = get_neurons_number();
-       const Index inputs_number = get_inputs_number();
-
-#ifdef __OPENNN_DEBUG__
-
-       if(inputs_number != inputs.dimension(1))
-       {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
-                  << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
-                  << inputs_number << ").\n";
-
-           throw logic_error(buffer.str());
-       }
-
-#endif
-
-       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
-
-       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
-                                                                   inputs_number, neurons_number);
-
-       calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_2d,
-                                         forward_propagation.activations_2d,
-                                         forward_propagation.activations_derivatives_3d);
-   }
-
-
-
+                                      ForwardPropagation& forward_propagation) const;
 
    void calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const
-   {
-       const Index neurons_number = get_neurons_number();
-       const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
-
-       if(neurons_number == 1)
-       {
-           TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
-
-           output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
-
-           return;
-       }
-       else
-       {
-           const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
-
-           const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
-           const Index columns_number = forward_propagation.activations_derivatives_3d.dimension(1);
-           const Index matrix_number = forward_propagation.activations_derivatives_3d.dimension(2);
-           /*
-              if(output_gradient.dimension(0) != matrix_number)
-              {
-                  ostringstream buffer;
-
-                  buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                         << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-                         << "Pointer to neural network is nullptr.\n";
-
-                  throw logic_error(buffer.str());
-              }
-              if(items_number != rows_number)
-              {
-                  ostringstream buffer;
-
-                  buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                         << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-                         << "Pointer to neural network is nullptr.\n";
-
-                  throw logic_error(buffer.str());
-              }
-*/
-
-           Tensor<type, 1> output_gradient_row(batch_instances_number);
-           Tensor<type, 1> output_delta_row(neurons_number);
-
-           Index index = 0;
-           Index step = batch_instances_number*columns_number;
-
-           for(Index i = 0; i < matrix_number; i++)
-           {
-               output_gradient_row = output_gradient.chip(i,1);
-
-               TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
-                                                                           batch_instances_number, neurons_number);
-
-               output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
-
-               for(Index j = 0; j < neurons_number; j++)
-               {
-                   output_delta(i,j) = output_delta_row(j);
-               }
-
-               index += step;
-           }
-
-           return;
-       }
-   }
+                               Tensor<type, 2>& output_delta) const;
 
 
    // Gradient methods
