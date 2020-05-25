@@ -22,7 +22,6 @@ CONFIG(debug, debug|release) {
 #DEFINES += __Cpp11__
 
 # OpenMP library
-
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 
