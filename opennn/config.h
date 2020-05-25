@@ -1,4 +1,3 @@
-#include<omp.h>
 
 
 //Eigen includes

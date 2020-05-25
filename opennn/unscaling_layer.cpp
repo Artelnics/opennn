@@ -777,7 +777,7 @@ tinyxml2::XMLDocument* UnscalingLayer::to_XML() const
     for(Index i = 0; i < neurons_number; i++)
     {
         tinyxml2::XMLElement* statistics_element = document->NewElement("Descriptives");
-        statistics_element->SetAttribute("Index", i+1);
+        statistics_element->SetAttribute("Index", int(i+1));
 
         unscaling_layer_element->LinkEndChild(statistics_element);
 
@@ -881,7 +881,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Descriptives");
 
-        file_stream.PushAttribute("Index", i+1);
+        file_stream.PushAttribute("Index", int(i+1));
 
         // Minimum
 
