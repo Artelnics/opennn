@@ -1,5 +1,6 @@
 #include "omp.h"
 
+
 //Eigen includes
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
