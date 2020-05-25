@@ -66,15 +66,15 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 
 # OpenMP library
-!win32{
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS  += -openmp
+}
+
+unix:!macx{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS += -fopenmp
-}
-else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp -lgomp
-QMAKE_LFLAGS += -fopenmp -lgomp
-}
-mac{
-INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
-LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
+
+QMAKE_CXXFLAGS+= -std=c++11
+QMAKE_LFLAGS += -std=c++11
 }
