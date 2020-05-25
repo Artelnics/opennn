@@ -23,7 +23,7 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "device.h"
+
 
 namespace OpenNN
 {

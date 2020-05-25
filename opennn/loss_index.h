@@ -21,7 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
+
 #include "data_set.h"
 #include "neural_network.h"
 #include "numerical_differentiation.h"
