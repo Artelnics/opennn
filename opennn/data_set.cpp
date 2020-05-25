@@ -5655,17 +5655,11 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-//                correlations(i,j) = one_way_anova_correlations(input, target_column);
-
                 correlations(i,j) = multiple_logistic_correlations(input, target_column);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-
-//                correlations(i,j) = one_way_anova_correlations(target, input_column);
-
-                cout << "Multiple logistic correlations" << endl;
 
                 correlations(i,j) = multiple_logistic_correlations(target, input_column);
             }
@@ -5833,21 +5827,15 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressions() const
+Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
 
-    const Index input_variables_number = get_input_variables_number();
-    const Index target_variables_number = get_target_variables_number();
-
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<RegressionResults, 2> regressions(input_variables_number, target_variables_number);
-
-    Index input_variable_index = 0;
-    Index target_variable_index = 0;
+    Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
 
     //@todo check pragma, if uncommented, for does not work well.
 //#pragma omp parallel for
@@ -5856,19 +5844,23 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
     {
         cout << endl;
 
-        Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+        const Index input_index = input_columns_indices(i);
 
-        const ColumnType input_type = columns(input_columns_indices(i)).type;
+        Tensor<type, 2> input = get_column_data(input_index);
+
+        const ColumnType input_type = columns(input_index).type;
 
         cout << "Calculating " << columns(input_columns_indices(i)).name;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+            const Index target_index = target_columns_indices(j);
 
-            const ColumnType target_type = columns(target_columns_indices(j)).type;
+            Tensor<type, 2> target = get_column_data(target_index);
 
-            cout << " - " << columns(target_columns_indices(j)).name << " regressions. \n" ;
+            const ColumnType target_type = columns(target_index).type;
+
+            cout << " - " << columns(target_columns_indices(j)).name << " regression. \n" ;
 
             if(input_type == Numeric && target_type == Numeric)
             {
@@ -5886,73 +5878,44 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
                 if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
                 if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
 
-                regressions(input_variable_index,target_variable_index) = strongest_regression;
-
-                target_variable_index++;
+                regressions(i,j) = strongest_regression;
             }
             else if(input_type == Binary && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
-
-                target_variable_index++;
-            }
-            else if(input_type == Categorical && target_type == Categorical)
-            {
-                //@todo what to do?
-//                regressions(i,j) = karl_pearson_correlation(input, target);
+                regressions(i,j) = linear_regression(input_column, target_column);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
-
-                target_variable_index++;
+                regressions(i,j) = logistic_regression(input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
-
-                target_variable_index++;
+                regressions(i,j) = logistic_regression(input_column, target_column);
+            }
+            else if(input_type == Categorical && target_type == Categorical)
+            {
+                // Nothing
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
-                // @todo
-                // Logistic?
-//                regressions(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
+                // Nothing
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-
-                for(Index k = 0; k < target.dimension(1); k++)
-                {
-                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
-
-                    regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
-
-                    target_variable_index++;
-                }
+                // Nothing
             }
             else if(input_type == Binary && target_type == Categorical)
             {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-
-                for(Index k = 0; k < target.dimension(1); k++)
-                {
-                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
-
-                    regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
-
-                    target_variable_index++;
-                }
+                // nothing
             }
             else
             {
@@ -5960,14 +5923,11 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
 
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "Tensor<type, 2> calculate_input_target_columns_regressions() const method.\n"
-                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(target_columns_indices(j)).name << ".\n";
+                       << "Case not found: Column " << columns(input_index).name << " and Column " << columns(target_index).name << ".\n";
 
                 throw logic_error(buffer.str());
             }
         }
-
-        input_variable_index += columns(i).type == Categorical ? columns(i).get_categories_number() : 1;
-        target_variable_index = 0;
     }
 
     return regressions;

@@ -1195,14 +1195,38 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 {
     Tensor<type, 0> sum;
 
+     const Index dim = combinations.dimension(1);
+
+     const Index rows_number = activations.dimension(0);
+
+     //Activations
+
+     sum.device(*thread_pool_device) = combinations.exp().sum();
+
+     activations.device(*thread_pool_device) = combinations.exp() / sum(0);
+
+     //Activations derivatives
+
+     for (Index row = 0; row < rows_number; row++)
+     {
+         for (Index i = 0; i < dim; i++)
+         {
+             for (Index j = 0; j < dim; j++)
+             {
+                 Index delta = 0;
+                 if (i == j) delta = 1;
+
+                 activations_derivatives(rows_number, i, j) = activations(i) * (delta - activations(j));
+             }
+         }
+     }
+
+    /*
+   Tensor<type, 0> sum;
+
     const Index dim = combinations.dimension(1);
 
     const Index rows_number = activations.dimension(0);
-
-    Tensor<type,2> identity(dim,dim);
-    identity.setZero();
-
-    for(Index i = 0; i < dim; i++) identity(i,i) = 1;
 
     //Activations
 
@@ -1212,20 +1236,20 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
     //Activations derivatives
 
-    Tensor<type,3> activations_derivatives_(dim, dim, 1);
-
-    for(Index i = 0; i < dim; i++)
+    for (Index row = 0; row < rows_number; row++)
     {
-        for(Index j = 0; j < dim; j++)
+        for (Index i = 0; i < dim; i++)
         {
-            Index delta = 0;
-            if(i == j) delta = 1;
+            for (Index j = 0; j < dim; j++)
+            {
+                Index delta = 0;
+                if (i == j) delta = 1;
 
-            activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
+                activations_derivatives(rows_number, i, j) = activations(i) * (delta - activations(j));
+            }
         }
-   }
-
-    activations_derivatives.device(*thread_pool_device) = activations_derivatives_;
+    }
+     */
 
     /*
 #ifdef __OPENNN_DEBUG__

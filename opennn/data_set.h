@@ -583,7 +583,7 @@ public:
 
    // Inputs-targets regressions
 
-   Tensor<RegressionResults, 2> calculate_input_target_variables_regressions() const;
+   Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
 
    // Principal components
 
