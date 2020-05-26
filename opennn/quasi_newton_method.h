@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
+
 
 #include "loss_index.h"
 

@@ -24,7 +24,7 @@
 
 // OpenNN includes
 
-//#include "statistics.h"
+#include "statistics.h"
 //
 //
 #include "config.h"
@@ -118,32 +118,32 @@ struct CorrelationResults
 };
     // Linear
 
-    type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Rank linear
 
-    type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type rank_linear_correlation_missing_values(const Tensor<type, 1>&x, const Tensor<type, 1>&);
+    type rank_linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type rank_linear_correlation_missing_values(const ThreadPoolDevice*, const Tensor<type, 1>&x, const Tensor<type, 1>&);
 
     // Exponential
 
-    type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type exponential_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Logarithmic
 
-    type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Rank Logistic
 
-    type rank_logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type rank_logistic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Power
 
-    type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type power_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Karl Pearson
 
-    type karl_pearson_correlation(const Tensor<type,2>&, const Tensor<type,2>&);
+    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
 
     // Time series correlation methods
 
@@ -154,6 +154,8 @@ struct CorrelationResults
 
     type logistic(const type&, const type&, const type&);
     Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
+
+    Tensor<type, 2> logistic(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -169,23 +171,25 @@ struct CorrelationResults
 
     RegressionResults power_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults logistic_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Correlation methods
 
-    CorrelationResults linear_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults logarithmic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    CorrelationResults logarithmic_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults exponential_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    CorrelationResults exponential_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults power_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    CorrelationResults power_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    CorrelationResults logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-    CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
+    CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    CorrelationResults one_way_anova_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     // Covariance
 
@@ -224,12 +228,14 @@ struct CorrelationResults
     // Missing values methods
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     Index count_NAN(const Tensor<type, 1>&);
 
     // Other methods
 
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
+    Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
 }
 
 

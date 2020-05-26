@@ -8,8 +8,6 @@
 
 #include "layer.h"
 
-#include "statistics.h"
-
 namespace OpenNN
 {
 
@@ -207,6 +205,17 @@ Index Layer::get_neurons_number() const
 
     buffer << "OpenNN Exception: Layer class.\n"
            << "get_neurons_number() const method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw logic_error(buffer.str());
+}
+
+Index Layer::get_synaptic_weights_number() const
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "get_synaptic_weight_number() const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
@@ -1184,58 +1193,34 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 {
     Tensor<type, 0> sum;
 
-    const Index dim = combinations.dimension(1);
+     const Index dim = combinations.dimension(1);
 
-    const Index rows_number = activations.dimension(0);
+     const Index rows_number = activations.dimension(0);
 
-    Tensor<type,2> identity(dim,dim);
-    identity.setZero();
+     //Activations
 
-    for(Index i = 0; i < dim; i++) identity(i,i) = 1;
+     sum.device(*thread_pool_device) = combinations.exp().sum();
 
-    //Activations
+     activations.device(*thread_pool_device) = combinations.exp() / sum(0);
 
-    sum.device(*thread_pool_device) = combinations.exp().sum();
+     //Activations derivatives
 
-    activations.device(*thread_pool_device) = combinations.exp() / sum(0);
+     type delta = 0;
 
-    //Activations derivatives
+     for (Index row = 0; row < rows_number; row++)
+     {
+         for (Index i = 0; i < dim; i++)
+         {
+             for (Index j = 0; j < dim; j++)
+             {
+                 (i == j) ? delta = 1 : delta = 0;
 
-    Tensor<type,3> activations_derivatives_(dim, dim, 1);
+                 activations_derivatives(row, i, j) = activations(row,i) * (delta - activations(row,j));
+             }
+         }
+     }
 
-    for(Index i = 0; i < dim; i++)
-    {
-        for(Index j = 0; j < dim; j++)
-        {
-            Index delta = 0;
-            if(i == j) delta = 1;
-
-            activations_derivatives_(i,j,0) = activations(i) * (delta - activations(j));
-        }
-   }
-
-    activations_derivatives.device(*thread_pool_device) = activations_derivatives_;
-
-    /*
-#ifdef __OPENNN_DEBUG__
-
-    if(combinations.dimension(0) != activations.dimension(2))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Layer Class.\n"
-               << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x("<< combinations.dimension(0)
-               << ") must be equal to number of rows in y(" <<activations.dimension(2)<< ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-
-    return;
-*/
+     return;
 }
 
 

@@ -21,7 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
+
 #include "data_set.h"
 #include "neural_network.h"
 #include "numerical_differentiation.h"
@@ -316,33 +316,7 @@ public:
 */
    void back_propagate(const DataSet::Batch& batch,
                        NeuralNetwork::ForwardPropagation& forward_propagation,
-                       BackPropagation& back_propagation) const
-   {
-       // Loss index
-
-       calculate_error(batch, forward_propagation, back_propagation);
-
-       calculate_output_gradient(batch, forward_propagation, back_propagation);
-
-       calculate_layers_delta(forward_propagation, back_propagation);
-
-       calculate_error_gradient(batch, forward_propagation, back_propagation);
-
-       // Loss
-
-       back_propagation.loss = back_propagation.error;
-
-       // Regularization
-
-       if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
-
-           back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-       }
-   }
+                       BackPropagation& back_propagation) const;
 
    // Second Order loss
 
@@ -364,7 +338,7 @@ public:
    // Delta methods
 
    void calculate_layers_delta(NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
+                               BackPropagation& back_propagation) const;/*
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -392,11 +366,11 @@ public:
                                    back_propagation.neural_network.layers(i+1).delta,
                                    back_propagation.neural_network.layers(i).delta);
       }
-   }
+   }*/
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                 BackPropagation& back_propagation) const
+                                 BackPropagation& back_propagation) const;/*
    {
        #ifdef __OPENNN_DEBUG__
 
@@ -435,7 +409,7 @@ public:
 
            index += trainable_layers_parameters_number(i);
        }
-   }
+   }*/
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 

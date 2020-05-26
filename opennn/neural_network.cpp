@@ -924,6 +924,31 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
     return layers_neurons_number;
 }
 
+
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_synaptic_weight_numbers() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        if(layers_pointers(i)->get_type() != Layer::Scaling
+                && layers_pointers(i)->get_type() != Layer::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Bounding)
+        {
+            layers_neurons_number(count) = layers_pointers[i]->get_synaptic_weights_number();
+
+            count++;
+        }
+
+    }
+
+    return layers_neurons_number;
+}
+
 /// Returns a vector with the architecture of the neural network.
 /// The elements of this vector are as follows;
 /// <UL>

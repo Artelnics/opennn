@@ -528,6 +528,11 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(columns_indices.dimension(0) == 0)
     {
         used_columns_indices.resize(columns_number);
+
+        for (Index i = 0; i < columns_number; i++)
+        {
+            used_columns_indices(i) = i;
+        }
     }
     else
     {
@@ -539,6 +544,11 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(rows_indices.dimension(0) == 0)
     {
         used_rows_indices.resize(rows_number);
+
+        for (Index i = 0; i < rows_number; i++)
+        {
+            used_rows_indices(i) = i;
+        }
     }
     else
     {

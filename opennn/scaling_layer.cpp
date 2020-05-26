@@ -1319,7 +1319,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("ScalingNeuron");
 
-        file_stream.PushAttribute("Index",i+1);
+        file_stream.PushAttribute("Index",int(i+1));
 
         // Minimum
 
