@@ -533,7 +533,8 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
     scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
     limit = sqrt(static_cast<type>(3.0) * scale);
 
-    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+//    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+    biases.setZero();
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
