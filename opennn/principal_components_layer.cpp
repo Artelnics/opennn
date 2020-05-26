@@ -650,7 +650,7 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
         {
             file_stream.OpenElement("PrincipalComponent");
 
-            file_stream.PushAttribute("Index", i+1);
+            file_stream.PushAttribute("Index", int(i+1));
 
             // Principal component
             /*

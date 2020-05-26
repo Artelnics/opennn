@@ -619,6 +619,16 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
+void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index& )
+{
+    const Index biases_number = get_biases_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
+
+    memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+}
+
+
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             const Tensor<type, 2>& biases,
                             const Tensor<type, 2>& synaptic_weights,
@@ -761,6 +771,135 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 //    return calculate_outputs(inputs, biases, synaptic_weights);
 
     return Tensor<type, 2>();
+}
+
+
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
+{
+    calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
+
+    calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                      forward_propagation.activations_2d,
+                                      forward_propagation.activations_derivatives_3d);
+}
+
+
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
+                                   Tensor<type, 1> potential_parameters,
+                                   ForwardPropagation& forward_propagation) const
+   {
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+
+#ifdef __OPENNN_DEBUG__
+
+    if(inputs_number != inputs.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
+               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
+               << inputs_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+
+    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
+                                                                inputs_number, neurons_number);
+
+    calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
+
+    calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                      forward_propagation.activations_2d,
+                                      forward_propagation.activations_derivatives_3d);
+}
+
+
+
+
+void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
+                            const Tensor<type, 2>& output_gradient,
+                            Tensor<type, 2>& output_delta) const
+{
+    const Index neurons_number = get_neurons_number();
+    const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
+
+    if(neurons_number == 1)
+    {
+        TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
+
+        output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+        return;
+    }
+    else
+    {
+        const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
+
+        if(outputs_number != neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
+                   << "Number of columns in output gradient (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(forward_propagation.activations_derivatives_3d.dimension(1) != neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
+                   << "Dimension 1 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(forward_propagation.activations_derivatives_3d.dimension(2) != neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
+                   << "Dimension 2 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        Tensor<type, 1> output_gradient_row(batch_instances_number);
+        Tensor<type, 1> output_delta_row(neurons_number);
+
+        Index index = 0;
+        Index step = neurons_number*neurons_number;
+
+        for(Index i = 0; i < batch_instances_number; i++)
+        {
+            output_gradient_row = output_gradient.chip(i,0);
+
+
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index*i,
+                                                                        neurons_number, neurons_number);
+
+            output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
+
+            for(Index j = 0; j < neurons_number; j++)
+            {
+                output_delta(i,j) = output_delta_row(j);
+            }
+
+            index += step;
+        }
+
+        return;
+    }
 }
 
 

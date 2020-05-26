@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
+
 #include "loss_index.h"
 #include "mean_squared_error.h"
 #include "optimization_algorithm.h"
@@ -284,7 +284,7 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 1000;
+   Index batch_instances_number = 10;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
