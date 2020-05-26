@@ -711,7 +711,7 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 ///
 /// @todo check
 
-RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -749,7 +749,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
         }
     }
 
-    logarithmic_regression = linear_regression(x.log(), y);
+    logarithmic_regression = linear_regression(thread_pool_device, x.log(), y);
 
     logarithmic_regression.regression_type = Logarithmic;
 
@@ -762,7 +762,7 @@ RegressionResults logarithmic_regression(const Tensor<type, 1>& x, const Tensor<
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults exponential_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -795,7 +795,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
         }
     }
 
-    exponential_regression = linear_regression(x, y.log());
+    exponential_regression = linear_regression(thread_pool_device, x, y.log());
 
     exponential_regression.regression_type = Exponential;
     exponential_regression.a = exp(exponential_regression.a);
@@ -809,7 +809,7 @@ RegressionResults exponential_regression(const Tensor<type, 1>& x, const Tensor<
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults power_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -851,7 +851,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
         }
     }
 
-    power_regression = linear_regression(x.log(), y.log());
+    power_regression = linear_regression(thread_pool_device, x.log(), y.log());
 
     power_regression.regression_type = Power;
 
