@@ -178,6 +178,12 @@ void TestingAnalysis::set_default()
 }
 
 
+void TestingAnalysis::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+{
+    thread_pool_device = new_thread_pool_device;
+}
+
+
 /// Sets a new neural network object to be tested.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
@@ -286,7 +292,7 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression(const Tensor<typ
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        linear_regression[i] = OpenNN::linear_regression(output.chip(i,1), target.chip(i,1));
+        linear_regression[i] = OpenNN::linear_regression(thread_pool_device, output.chip(i,1), target.chip(i,1));
     }
 
     return linear_regression;
@@ -370,7 +376,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const RegressionResults linear_regression = OpenNN::linear_regression(outputs, targets);
+        const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, outputs, targets);
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;

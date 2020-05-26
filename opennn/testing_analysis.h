@@ -157,6 +157,8 @@ public:
 
    void set_default();
 
+   void set_thread_pool_device(ThreadPoolDevice* );
+
    // Checking methods
 
    void check() const;
@@ -305,6 +307,8 @@ public:
 
 
 private: 
+
+   ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to the neural network object to be tested. 
 
