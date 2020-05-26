@@ -43,7 +43,6 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 HEADERS += \
     numerical_differentiation.h \
     config.h \
-    device.h \
     opennn_strings.h \
     statistics.h \
     correlations.h \
