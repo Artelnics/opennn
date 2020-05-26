@@ -5867,10 +5867,10 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression = OpenNN::linear_regression(input_column, target_column);
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(input_column, target_column);
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input_column, target_column);
-                const RegressionResults power_regression = OpenNN::power_regression(input_column, target_column);
+                const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults exponential_regression = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults power_regression = OpenNN::power_regression(thread_pool_device, input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
@@ -5885,7 +5885,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = linear_regression(input_column, target_column);
+                regressions(i,j) = linear_regression(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
