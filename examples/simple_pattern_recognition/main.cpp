@@ -28,8 +28,10 @@ int main(void)
         cout << "OpenNN. Simple classification example." << endl;
 
         // Device
-
         
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
         // Data set
 
