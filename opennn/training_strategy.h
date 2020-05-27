@@ -142,6 +142,9 @@ public:
 
    void set_thread_pool_device(ThreadPoolDevice*);
 
+   void set_loss_thread_pool_device(ThreadPoolDevice*);
+   void set_optimization_thread_pool_device(ThreadPoolDevice*);
+
    void set_loss_index_pointer(LossIndex*);
 
    void set_loss_method(const LossMethod&);
