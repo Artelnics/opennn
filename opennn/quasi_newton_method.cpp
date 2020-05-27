@@ -1047,9 +1047,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     results.resize_training_history(maximum_epochs_number);
 
     // Data set
-
+cout << "before loss" << endl;
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
+cout << "after" << endl;
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
     const bool has_selection = data_set_pointer->has_selection();
@@ -1109,7 +1109,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {
+    {cout << "Epoch: " << epoch << endl;
         optimization_data.epoch = epoch;
 
         // Neural network
