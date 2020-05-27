@@ -15,6 +15,8 @@
 #include <string>
 #include <time.h>
 
+#include <omp.h>
+
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -32,7 +34,6 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-
 
 
         const int n = omp_get_max_threads();

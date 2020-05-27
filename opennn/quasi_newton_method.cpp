@@ -1051,6 +1051,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
+
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
     const bool has_selection = data_set_pointer->has_selection();
 
@@ -1121,9 +1122,15 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
         }
 
+        cout << "before forward propagate" << endl;
+
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
+        cout << "after forward propagate" << endl;
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        cout << "after back propagate" << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
