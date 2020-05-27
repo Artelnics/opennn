@@ -31,6 +31,10 @@ LIBS += -fopenmp -pthread -lgomp
 QMAKE_CXXFLAGS+= -fopenmp -lgomp
 QMAKE_LFLAGS += -fopenmp -lgomp
 }
+macx{
+INCLUDEPATH += /usr/local/opt/libomp/include
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib
+}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
