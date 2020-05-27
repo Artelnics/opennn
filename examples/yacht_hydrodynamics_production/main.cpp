@@ -16,6 +16,7 @@
 #include <string>
 #include <cstring>
 #include <time.h>
+#include <omp.h>
 
 // OpenNN includes
 

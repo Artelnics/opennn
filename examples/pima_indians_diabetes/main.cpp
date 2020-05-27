@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <time.h>
+#include <omp.h>
 
 // OpenNN includes
 

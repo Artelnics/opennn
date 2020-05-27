@@ -8,6 +8,7 @@
 
 #include "perceptron_layer_test.h"
 #include "loss_index.h"
+#include <omp.h>
 
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {
