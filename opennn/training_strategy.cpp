@@ -29,7 +29,6 @@ TrainingStrategy::TrainingStrategy()
 
     set_loss_index_pointer(loss_index_pointer);
 
-
     set_default();
 }
 
@@ -48,11 +47,10 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
 
     set_loss_method(NORMALIZED_SQUARED_ERROR);
 
+    set_loss_index_data_set_pointer(data_set_pointer);
+    set_loss_index_neural_network_pointer(neural_network_pointer);
+
     LossIndex* loss_index_pointer = get_loss_index_pointer();
-
-    loss_index_pointer->set_data_set_pointer(new_data_set_pointer);
-    loss_index_pointer->set_neural_network_pointer(new_neural_network_pointer);
-
     set_loss_index_pointer(loss_index_pointer);
 
     set_default();
@@ -651,88 +649,23 @@ void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_
 
 void TrainingStrategy::set_loss_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    switch (loss_method)
-    {
-    case SUM_SQUARED_ERROR:
-    {
-        sum_squared_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case MEAN_SQUARED_ERROR:
-    {
-        mean_squared_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case NORMALIZED_SQUARED_ERROR:
-    {
-        normalized_squared_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case MINKOWSKI_ERROR:
-    {
-        Minkowski_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case WEIGHTED_SQUARED_ERROR:
-    {
-        weighted_squared_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case CROSS_ENTROPY_ERROR:
-    {
-        cross_entropy_error.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-   }
+    sum_squared_error.set_thread_pool_device(new_thread_pool_device);
+    mean_squared_error.set_thread_pool_device(new_thread_pool_device);
+    normalized_squared_error.set_thread_pool_device(new_thread_pool_device);
+    Minkowski_error.set_thread_pool_device(new_thread_pool_device);
+    weighted_squared_error.set_thread_pool_device(new_thread_pool_device);
+    cross_entropy_error.set_thread_pool_device(new_thread_pool_device);
 }
 
 
 void TrainingStrategy::set_optimization_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    switch (optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_thread_pool_device(new_thread_pool_device);
-    }
-        break;
-   }
-
+    gradient_descent.set_thread_pool_device(new_thread_pool_device);
+    conjugate_gradient.set_thread_pool_device(new_thread_pool_device);
+    stochastic_gradient_descent.set_thread_pool_device(new_thread_pool_device);
+    adaptive_moment_estimation.set_thread_pool_device(new_thread_pool_device);
+    quasi_Newton_method.set_thread_pool_device(new_thread_pool_device);
+    Levenberg_Marquardt_algorithm.set_thread_pool_device(new_thread_pool_device);
 }
 
 
@@ -741,46 +674,34 @@ void TrainingStrategy::set_optimization_thread_pool_device(ThreadPoolDevice* new
 
 void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-    // Main
+    gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
+    conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
+    stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
+    adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
+    quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
+    Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+}
 
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
 
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
+void TrainingStrategy::set_loss_index_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    sum_squared_error.set_data_set_pointer(new_data_set_pointer);
+    mean_squared_error.set_data_set_pointer(new_data_set_pointer);
+    normalized_squared_error.set_data_set_pointer(new_data_set_pointer);
+    cross_entropy_error.set_data_set_pointer(new_data_set_pointer);
+    weighted_squared_error.set_data_set_pointer(new_data_set_pointer);
+    Minkowski_error.set_data_set_pointer(new_data_set_pointer);
+}
 
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
 
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-    }
+void TrainingStrategy::set_loss_index_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+{
+    sum_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    mean_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    normalized_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    cross_entropy_error.set_neural_network_pointer(new_neural_network_pointer);
+    weighted_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    Minkowski_error.set_neural_network_pointer(new_neural_network_pointer);
 }
 
 
@@ -792,45 +713,12 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 void TrainingStrategy::set_display(const bool& new_display)
 {
     display = new_display;
-
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_display(display);
-    }
-    break;
-
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_display(display);
-    }
-    break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_display(display);
-    }
-    break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_display(display);
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_display(display);
-    }
-    break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_display(display);
-    }
-    break;
-    }
+    gradient_descent.set_display(display);
+    conjugate_gradient.set_display(display);
+    stochastic_gradient_descent.set_display(display);
+    adaptive_moment_estimation.set_display(display);
+    quasi_Newton_method.set_display(display);
+    Levenberg_Marquardt_algorithm.set_display(display);
 }
 
 

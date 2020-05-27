@@ -541,11 +541,19 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
+    cout << "error" << endl;
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
+
+    cout << "output gradient" << endl;
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
+    cout << "layers delta" << endl;
+
     calculate_error_gradient(batch, forward_propagation, back_propagation);
+
+    cout << "error gradient" << endl;
 
     // Loss
 
