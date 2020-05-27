@@ -137,10 +137,7 @@ QMAKE_CXXFLAGS+= -std=c++11
 QMAKE_LFLAGS += -std=c++11
 }
 
-mac{
-#QMAKE_CXXFLAGS+= -fopenmp
-#QMAKE_LFLAGS += -fopenmp
-
-#INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
-#LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
+macx{
+INCLUDEPATH += /usr/local/opt/libomp/include
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib
 }
