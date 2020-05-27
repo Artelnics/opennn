@@ -1206,6 +1206,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
      //Activations derivatives
 
      type delta = 0;
+     Index index= 0;
 
      for (Index row = 0; row < rows_number; row++)
      {
@@ -1215,7 +1216,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
              {
                  (i == j) ? delta = 1 : delta = 0;
 
-                 activations_derivatives(row, i, j) = activations(row,i) * (delta - activations(row,j));
+                 activations_derivatives(/*row, i, j*/index) = activations(row,i) * (delta - activations(row,j));
+                 index++;
              }
          }
      }

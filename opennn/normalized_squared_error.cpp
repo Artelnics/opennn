@@ -232,7 +232,6 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
     sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
 
-
     const Index batch_instances_number = batch.get_instances_number();
     const Index total_instances_number = data_set_pointer->get_instances_number();
 
