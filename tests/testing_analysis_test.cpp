@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis_test.h"
-
+#include <omp.h>
 
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {

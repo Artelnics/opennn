@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "recurrent_layer_test.h"
-
+#include <omp.h>
 
 RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
 {

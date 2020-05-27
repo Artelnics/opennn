@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "long_short_term_memory_layer_test.h"
+#include <omp.h>
 
 
 LongShortTermMemoryLayerTest::LongShortTermMemoryLayerTest() : UnitTesting()

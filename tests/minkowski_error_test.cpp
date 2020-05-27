@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error_test.h"
+#include <omp.h>
 
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
