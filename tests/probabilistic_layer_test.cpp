@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "probabilistic_layer_test.h"
-
+#include <omp.h>
 
 ProbabilisticLayerTest::ProbabilisticLayerTest() : UnitTesting()
 {

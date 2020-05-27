@@ -22,16 +22,17 @@ CONFIG(debug, debug|release) {
 #DEFINES += __Cpp11__
 
 # OpenMP library
-win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp
+
+QMAKE_LFLAGS += -fopenmp -pthread #-lgomp
+LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp -lgomp
-QMAKE_LFLAGS += -fopenmp -lgomp
-}
-macx{
+QMAKE_CXXFLAGS+= -fopenmp #-lgomp
+QMAKE_LFLAGS += -fopenmp #-lgomp
+LIBS += -openmp -pthread #-lgomp
+}else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib
 }
