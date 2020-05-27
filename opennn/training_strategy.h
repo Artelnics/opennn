@@ -146,6 +146,8 @@ public:
    void set_optimization_thread_pool_device(ThreadPoolDevice*);
 
    void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_data_set_pointer(DataSet*);
+   void set_loss_index_neural_network_pointer(NeuralNetwork*);
 
    void set_loss_method(const LossMethod&);
    void set_optimization_method(const OptimizationMethod&);

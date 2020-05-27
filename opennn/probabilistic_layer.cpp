@@ -884,8 +884,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
         {
             output_gradient_row = output_gradient.chip(i,0);
 
-
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index*i,
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
                                                                         neurons_number, neurons_number);
 
             output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
@@ -897,6 +896,8 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
 
             index += step;
         }
+
+        cout << "output_delta: " << output_delta << endl;
 
         return;
     }
