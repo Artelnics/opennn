@@ -101,8 +101,8 @@ public:
 
    NeuralNetwork* get_neural_network_pointer() const;
 
-   LossIndex* get_loss_index_pointer() const;
-   OptimizationAlgorithm* get_optimization_algorithm_pointer() const;
+   LossIndex* get_loss_index_pointer();
+   OptimizationAlgorithm* get_optimization_algorithm_pointer();
 
    bool has_neural_network() const;
    bool has_data_set() const;

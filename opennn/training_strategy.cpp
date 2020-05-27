@@ -25,6 +25,11 @@ TrainingStrategy::TrainingStrategy()
 
     set_optimization_method(QUASI_NEWTON_METHOD);
 
+    LossIndex* loss_index_pointer = get_loss_index_pointer();
+
+    set_loss_index_pointer(loss_index_pointer);
+
+
     set_default();
 }
 
@@ -42,6 +47,13 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_optimization_method(QUASI_NEWTON_METHOD);
 
     set_loss_method(NORMALIZED_SQUARED_ERROR);
+
+    LossIndex* loss_index_pointer = get_loss_index_pointer();
+
+    loss_index_pointer->set_data_set_pointer(new_data_set_pointer);
+    loss_index_pointer->set_neural_network_pointer(new_neural_network_pointer);
+
+    set_loss_index_pointer(loss_index_pointer);
 
     set_default();
 }
@@ -95,34 +107,82 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 /// Returns a pointer to the LossIndex class.
 
-LossIndex* TrainingStrategy::get_loss_index_pointer() const
+LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
-/*
-    if(loss_method == SUM_SQUARED_ERROR && sum_squared_error_pointer != nullptr) return sum_squared_error_pointer;
-    else if(loss_method == MEAN_SQUARED_ERROR && mean_squared_error_pointer != nullptr) return mean_squared_error_pointer;
-    else if(loss_method == NORMALIZED_SQUARED_ERROR && normalized_squared_error_pointer != nullptr) return normalized_squared_error_pointer;
-    else if(loss_method == MINKOWSKI_ERROR && Minkowski_error_pointer != nullptr) return Minkowski_error_pointer;
-    else if(loss_method == WEIGHTED_SQUARED_ERROR && weighted_squared_error_pointer != nullptr) return weighted_squared_error_pointer;
-    else if(loss_method == CROSS_ENTROPY_ERROR && cross_entropy_error_pointer != nullptr) return cross_entropy_error_pointer;
-    else return nullptr;
-*/
+    switch (loss_method)
+    {
+    case SUM_SQUARED_ERROR:
+    {
+        return &sum_squared_error;
+    }
+
+    case MEAN_SQUARED_ERROR:
+    {
+        return &mean_squared_error;
+    }
+
+    case NORMALIZED_SQUARED_ERROR:
+    {
+        return &normalized_squared_error;
+    }
+
+    case MINKOWSKI_ERROR:
+    {
+        return &Minkowski_error;
+    }
+
+    case WEIGHTED_SQUARED_ERROR:
+    {
+        return &weighted_squared_error;
+    }
+
+    case CROSS_ENTROPY_ERROR:
+    {
+        return &cross_entropy_error;
+    }
+    }
+
     return nullptr;
 }
 
 
 /// Returns a pointer to the OptimizationAlgorithm class.
 
-OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer() const
+OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
-/*
-    if(optimization_method == GRADIENT_DESCENT && gradient_descent_pointer != nullptr) return gradient_descent_pointer;
-    else if(optimization_method == CONJUGATE_GRADIENT && conjugate_gradient_pointer != nullptr) return conjugate_gradient_pointer;
-    else if(optimization_method == QUASI_NEWTON_METHOD && quasi_Newton_method_pointer != nullptr) return quasi_Newton_method_pointer;
-    else if(optimization_method == LEVENBERG_MARQUARDT_ALGORITHM && Levenberg_Marquardt_algorithm_pointer != nullptr) return Levenberg_Marquardt_algorithm_pointer;
-    else if(optimization_method == STOCHASTIC_GRADIENT_DESCENT && stochastic_gradient_descent_pointer != nullptr) return stochastic_gradient_descent_pointer;
-    else if(optimization_method == ADAPTIVE_MOMENT_ESTIMATION && adaptive_moment_estimation_pointer != nullptr) return adaptive_moment_estimation_pointer;
-    else return nullptr;
-*/
+    switch (optimization_method)
+    {
+    case GRADIENT_DESCENT:
+    {
+        return &gradient_descent;
+    }
+
+    case CONJUGATE_GRADIENT:
+    {
+        return &conjugate_gradient;
+    }
+
+    case STOCHASTIC_GRADIENT_DESCENT:
+    {
+        return &stochastic_gradient_descent;
+    }
+
+    case ADAPTIVE_MOMENT_ESTIMATION:
+    {
+        return &adaptive_moment_estimation;
+    }
+
+    case QUASI_NEWTON_METHOD:
+    {
+        return &quasi_Newton_method;
+    }
+
+    case LEVENBERG_MARQUARDT_ALGORITHM:
+    {
+        return &Levenberg_Marquardt_algorithm;
+    }
+    }
+
     return nullptr;
 }
 
@@ -147,27 +207,31 @@ bool TrainingStrategy::has_data_set() const
 
 bool TrainingStrategy::has_loss_index() const
 {
-    if(get_loss_index_pointer() == nullptr)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return true;
+
+//    if(get_loss_index_pointer() == nullptr)
+//    {
+//        return false;
+//    }
+//    else
+//    {
+//        return true;
+//    }
 }
 
 
 bool TrainingStrategy::has_optimization_algorithm() const
 {
-    if(get_optimization_algorithm_pointer() == nullptr)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return true;
+
+//    if(get_optimization_algorithm_pointer() == nullptr)
+//    {
+//        return false;
+//    }
+//    else
+//    {
+//        return true;
+//    }
 }
 
 
