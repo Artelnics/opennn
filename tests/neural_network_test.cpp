@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "neural_network_test.h"
+#include <omp.h>
 
 NeuralNetworkTest::NeuralNetworkTest() : UnitTesting()
 {

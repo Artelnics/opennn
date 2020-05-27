@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "normalized_squared_error_test.h"
+#include <omp.h>
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting() 
 {

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error_test.h"
-
+#include <omp.h>
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
