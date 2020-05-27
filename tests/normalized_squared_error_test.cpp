@@ -228,7 +228,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    // Test perceptron and probabilistic
 {
 
-       const int n = omp_get_max_threads();
+       const int n = 4;
        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
@@ -253,7 +253,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    batch.fill(instances_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(outputs_number, outputs_number);
 

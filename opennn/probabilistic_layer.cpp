@@ -874,7 +874,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
             throw logic_error(buffer.str());
         }
 
-        Tensor<type, 1> output_gradient_row(batch_instances_number);
+        Tensor<type, 1> output_gradient_row(neurons_number);
         Tensor<type, 1> output_delta_row(neurons_number);
 
         Index index = 0;
@@ -894,10 +894,9 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
                 output_delta(i,j) = output_delta_row(j);
             }
 
+
             index += step;
         }
-
-        cout << "output_delta: " << output_delta << endl;
 
         return;
     }
