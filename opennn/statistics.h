@@ -308,6 +308,10 @@ struct Histogram
      Tensor<Index, 1> maximal_indices();
      Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
+     // Sum mehtods
+
+     Tensor<type, 1> rows_sums(const Tensor<type,2>&);
+
      // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 

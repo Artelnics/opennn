@@ -213,7 +213,7 @@ public:
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
-   {
+   {/*
 
        const Index instances_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
@@ -238,6 +238,7 @@ public:
                forward_propagation.activations_derivatives_2d(i,j) = activations_derivatives_1d(j);
            }
        }
+       */
    }
 
    // Gradient

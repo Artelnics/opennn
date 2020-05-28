@@ -232,14 +232,37 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
-   instances_number = 2;
+   instances_number = 3;
    inputs_number = 1;
    hidden_neurons = 1;
-   outputs_number = 1;
+   outputs_number = 3;
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+   Tensor<type,2> data(3,4);
+
+   data(0,0) = static_cast<type>(0.2);
+   data(0,1) = 1;
+   data(0,2) = 0;
+   data(0,3) = 0;
+   data(1,0) = static_cast<type>(0.3);
+   data(1,1) = 0;
+   data(1,2) = 1;
+   data(1,3) = 0;
+   data(2,0) = static_cast<type>(0.5);
+   data(2,1) = 0;
+   data(2,2) = 0;
+   data(2,3) = 1;
+
+   data_set.set_data(data);
+
+   Tensor<string, 1> columns_uses(4);
+   columns_uses(0) = "Input";
+   columns_uses(1) = "Target";
+   columns_uses(2) = "Target";
+   columns_uses(3) = "Target";
+
+   data_set.set_columns_uses(columns_uses);
 
    cout << "Data: " << data_set.get_data() << endl;
 
@@ -253,17 +276,55 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    batch.fill(instances_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
+//   output_perceptron_layer->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(outputs_number, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
-   neural_network.add_layer(output_perceptron_layer);
+//   neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
    neural_network.set_thread_pool_device(thread_pool_device);
 
+   Tensor<type,2> perceptron_weights(1,3);
+   perceptron_weights(0,0) = static_cast<type>(-0.318137);
+   perceptron_weights(0,1) = static_cast<type>(-0.0745666);
+   perceptron_weights(0,2) = static_cast<type>(-0.0732468);
+
+   Tensor<type,2> perceptron_biases(1,3);
+   perceptron_biases(0,0) = static_cast<type>(1.88443);
+   perceptron_biases(0,1) = static_cast<type>(0.776795);
+   perceptron_biases(0,2) = static_cast<type>(0.0126074);
+
+   Tensor<type,2> probabilistic_weights(3,3);
+   probabilistic_weights(0,0) = static_cast<type>(-0.290916);
+   probabilistic_weights(0,1) = static_cast<type>(2.1764);
+   probabilistic_weights(0,2) = static_cast<type>(-1.71237);
+   probabilistic_weights(1,0) = static_cast<type>(-0.147688);
+   probabilistic_weights(1,1) = static_cast<type>(1.71663);
+   probabilistic_weights(1,2) = static_cast<type>(0.349156);
+   probabilistic_weights(2,0) = static_cast<type>(-0.302181);
+   probabilistic_weights(2,1) = static_cast<type>(1.18804);
+   probabilistic_weights(2,2) = static_cast<type>(0.754033);
+
+   Tensor<type,2> probabilistic_biases(1,3);
+   probabilistic_biases(0,0) = static_cast<type>(1.95245);
+   probabilistic_biases(0,1) = static_cast<type>(0.68821);
+   probabilistic_biases(0,2) = static_cast<type>(1.75451);
+
    neural_network.set_parameters_random();
+
+   hidden_perceptron_layer->set_synaptic_weights(perceptron_weights);
+   hidden_perceptron_layer->set_biases(perceptron_biases);
+
+   probabilistic_layer->set_synaptic_weights(probabilistic_weights);
+   probabilistic_layer->set_biases(probabilistic_biases);
+
+//   cout << "perceptron w: " << hidden_perceptron_layer->get_synaptic_weights() << endl;
+//   cout << "perceptron b: " << hidden_perceptron_layer->get_biases() << endl;
+
+//   cout << "probabilistic w: " << probabilistic_layer->get_synaptic_weights() << endl;
+//   cout << "probabilistic b: " << probabilistic_layer->get_biases() << endl;
 
    nse.set_normalization_coefficient();
 
@@ -278,15 +339,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    error_gradient = training_back_propagation.gradient;
 
-   cout << "Before numerical differentiation" << endl;
    numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
-   cout << "After numerical differentiation" << endl;
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
-
-   cout << "Error gradient: " << error_gradient << endl;
-   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
-   cout << "Difference: " << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
