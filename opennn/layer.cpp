@@ -281,7 +281,7 @@ void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 
     f1.setZero();
     f2.setConstant(1);
-    f3 = static_cast<type>(0.2) * x + static_cast<type>(0.5);    
+    f3 = static_cast<type>(0.2) * x + static_cast<type>(0.5);
 
     y.device(*thread_pool_device) = if_sentence.select(f1,elif_sentence.select(f2,f3));
 }
@@ -905,11 +905,24 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-    Tensor<type, 0> sum;
+    const Index dim = x.dimension(1);
 
-    sum.device(*thread_pool_device) = x.exp().sum();
+    const Index rows_number = y.dimension(0);
 
-    y.device(*thread_pool_device) = x.exp() / sum(0);
+    //Activations
+
+    Tensor<type, 1> sums = rows_sums(x.exp());
+
+    y.device(*thread_pool_device) = x.exp();
+
+    for(Index row = 0; row < rows_number; row++)
+    {
+        for(Index i = 0; i < dim; i++)
+        {
+            y(row, i) = y(row, i) / sums(row);
+        }
+    }
+
 }
 
 
