@@ -1122,15 +1122,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
         }
 
-        cout << "before forward propagate" << endl;
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        cout << "after forward propagate" << endl;
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        cout << "after back propagate" << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 

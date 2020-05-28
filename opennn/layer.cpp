@@ -1191,17 +1191,23 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
-    Tensor<type, 0> sum;
-
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
 
      //Activations
 
-     sum.device(*thread_pool_device) = combinations.exp().sum();
+     Tensor<type, 1> sums = rows_sums(combinations.exp());
 
-     activations.device(*thread_pool_device) = combinations.exp() / sum(0);
+     activations.device(*thread_pool_device) = combinations.exp();
+
+     for(Index row = 0; row < rows_number; row++)
+     {
+         for(Index i = 0; i < dim; i++)
+         {
+             activations(row, i) = activations(row, i) / sums(row);
+         }
+     }
 
      //Activations derivatives
 
