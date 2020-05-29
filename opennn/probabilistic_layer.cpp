@@ -776,11 +776,22 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
 {
+//    cout << "Probabilistic forward propagate ------------------------------" << endl;
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_3d);
+
+
+//    cout << "Inputs: " << inputs << endl;
+
+//    cout << "Combinations : " << forward_propagation.combinations_2d << endl;
+//    cout << "activations_2d : " << forward_propagation.activations_2d << endl;
+//    cout << "activations_derivatives_3d : " << forward_propagation.activations_derivatives_3d << endl;
+
+//    cout << "--------------------------------------------------------------" << endl;
+
 }
 
 

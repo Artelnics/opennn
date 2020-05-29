@@ -259,7 +259,7 @@ public:
    // Long short term memory layer forward_propagate
 
    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
-   {
+   {/*
        const Index instances_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
 
@@ -313,7 +313,7 @@ public:
                calculate_recurrent_activations_derivatives(input_combinations, input_activations, input_activations_derivatives);
 
                calculate_state_combinations(current_inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
-               calculate_activations_derivatives(state_combinations, state_activations, state_activations_derivatives);
+//               calculate_activations_derivatives(state_combinations, state_activations, state_activations_derivatives);
 
                calculate_output_combinations(current_inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
                calculate_recurrent_activations_derivatives(output_combinations, output_activations, output_activations_derivatives);
@@ -357,6 +357,7 @@ public:
 //       return layers;
 
 //       return Layer::ForwardPropagation();
+*/
    }
 
    // Long short term memory layer error gradient

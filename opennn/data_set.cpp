@@ -4258,9 +4258,6 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-
-    data = new_data;
-
     set_instances_number(data.dimension(0));
 
 //   set_variables_number(data.dimension(1));
@@ -4272,6 +4269,7 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
     set(instances_number, variables_number);
 
+    data = new_data;
 }
 
 
