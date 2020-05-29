@@ -142,6 +142,9 @@ public:
 
    void set_thread_pool_device(ThreadPoolDevice*);
 
+   void set_data_set_pointer(DataSet*);
+   void set_neural_network_pointer(NeuralNetwork*);
+
    void set_loss_thread_pool_device(ThreadPoolDevice*);
    void set_optimization_thread_pool_device(ThreadPoolDevice*);
 

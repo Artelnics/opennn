@@ -647,6 +647,22 @@ void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_
 }
 
 
+void TrainingStrategy::set_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    data_set_pointer = new_data_set_pointer;
+
+    set_loss_index_data_set_pointer(data_set_pointer);
+}
+
+
+void TrainingStrategy::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+{
+    neural_network_pointer = new_neural_network_pointer;
+
+    set_loss_index_neural_network_pointer(neural_network_pointer);
+}
+
+
 void TrainingStrategy::set_loss_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
     sum_squared_error.set_thread_pool_device(new_thread_pool_device);
@@ -1156,7 +1172,51 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Loss index
 
-    switch(loss_method)
+    file_stream.OpenElement("LossIndex");
+
+    // Loss method
+
+    file_stream.OpenElement("LossMethod");
+    file_stream.PushText(write_loss_method().c_str());
+    file_stream.CloseElement();
+
+    sum_squared_error.write_XML(file_stream);
+    mean_squared_error.write_XML(file_stream);
+    normalized_squared_error.write_XML(file_stream);
+    Minkowski_error.write_XML(file_stream);
+    cross_entropy_error.write_XML(file_stream);
+    weighted_squared_error.write_XML(file_stream);
+
+    sum_squared_error.write_regularization_XML(file_stream);
+
+
+    file_stream.CloseElement();
+
+    // Optimization algorithm
+
+    file_stream.OpenElement("OptimizationAlgorithm");
+
+    file_stream.OpenElement("OptimizationMethod");
+    file_stream.PushText(write_optimization_method().c_str());
+    file_stream.CloseElement();
+
+    gradient_descent.write_XML(file_stream);
+    conjugate_gradient.write_XML(file_stream);
+    stochastic_gradient_descent.write_XML(file_stream);
+    adaptive_moment_estimation.write_XML(file_stream);
+    quasi_Newton_method.write_XML(file_stream);
+    Levenberg_Marquardt_algorithm.write_XML(file_stream);
+
+    file_stream.CloseElement();
+
+    // Close TrainingStrategy
+
+    file_stream.CloseElement();
+
+
+
+
+    /*switch(loss_method)
     {
     case SUM_SQUARED_ERROR:
     {
@@ -1293,7 +1353,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
     break;
 
-    }
+    }*/
 
     file_stream.CloseElement();
 }

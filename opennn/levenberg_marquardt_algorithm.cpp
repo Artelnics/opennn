@@ -1477,6 +1477,10 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 {
     ostringstream buffer;
 
+    file_stream.OpenElement("Main");
+
+    file_stream.PushAttribute("Type", "LEVENBERG_MARQUARDT");
+
     // Damping paramterer factor.
 
     file_stream.OpenElement("DampingParameterFactor");
@@ -1609,6 +1613,8 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 }

@@ -554,7 +554,7 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Regularization
 
-    write_regularization_XML(file_stream);
+//    write_regularization_XML(file_stream);
 }
 
 

@@ -1476,6 +1476,10 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Learning rate algorithm
 
+    file_stream.OpenElement("Main");
+
+    file_stream.PushAttribute("Type", "GRADIENT_DESCENT");
+
     learning_rate_algorithm.write_XML(file_stream);
 
     // Return minimum selection error neural network
@@ -1596,6 +1600,8 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 }
