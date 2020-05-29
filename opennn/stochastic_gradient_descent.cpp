@@ -1121,9 +1121,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 {
     ostringstream buffer;
 
-    file_stream.OpenElement("Main");
-
-    file_stream.PushAttribute("Type", "STOCHASTIC_GRADIENT_DESCENT");
+    file_stream.OpenElement("StochasticGradientDescent");
 
     // Batch size
 

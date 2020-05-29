@@ -211,9 +211,7 @@ void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "CROSS_ENTROPY_ERROR");
+    file_stream.OpenElement("CrossEntropyError");
 
     file_stream.CloseElement();
 
@@ -243,7 +241,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
+    /*tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -252,39 +250,9 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+    regularization_from_XML(regularization_document);*/
 
-//    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
 
-//    if(!root_element)
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: CrossEntropyError class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Cross entropy error element is nullptr.\n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//  // Display
-//  {
-//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-//     if(display_element)
-//     {
-//        const string new_display_string = display_element->GetText();
-
-//        try
-//        {
-//           set_display(new_display_string != "0");
-//        }
-//        catch(const logic_error& e)
-//        {
-//           cerr << e.what() << endl;
-//        }
-//     }
-//  }
 }
 
 }

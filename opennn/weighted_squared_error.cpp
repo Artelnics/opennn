@@ -196,12 +196,25 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
+    if(data_set_pointer)
+    {
+        const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
-    const Index negatives = target_distribution[0];
-    const Index positives = target_distribution[1];
+        const Index negatives = target_distribution[0];
+        const Index positives = target_distribution[1];
 
-    if(positives == 0 || negatives == 0)
+        if(positives == 0 || negatives == 0)
+        {
+            positives_weight = 1.0;
+            negatives_weight = 1.0;
+
+            return;
+        }
+
+        negatives_weight = 1.0;
+        positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
+    }
+    else
     {
         positives_weight = 1.0;
         negatives_weight = 1.0;
@@ -209,8 +222,6 @@ void WeightedSquaredError::set_weights()
         return;
     }
 
-    negatives_weight = 1.0;
-    positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
 }
 
 
@@ -522,9 +533,7 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "WEIGHTED_SQUARED_ERROR");
+    file_stream.OpenElement("WeightedSquaredError");
 
     // Positives weight
 
@@ -578,9 +587,9 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Positives weight
 
-    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
-    const tinyxml2::XMLElement* positives_weight_element = error_element->FirstChildElement("PositivesWeight");
+    const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
 
     if(positives_weight_element)
     {
@@ -598,7 +607,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Negatives weight
 
-    const tinyxml2::XMLElement* negatives_weight_element = error_element->FirstChildElement("NegativesWeight");
+    const tinyxml2::XMLElement* negatives_weight_element = root_element->FirstChildElement("NegativesWeight");
 
     if(negatives_weight_element)
     {
@@ -616,16 +625,16 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
-    tinyxml2::XMLNode* element_clone;
+//    tinyxml2::XMLDocument regularization_document;
+//    tinyxml2::XMLNode* element_clone;
 
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+//    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
 
-    element_clone = regularization_element->DeepClone(&regularization_document);
+//    element_clone = regularization_element->DeepClone(&regularization_document);
 
-    regularization_document.InsertFirstChild(element_clone);
+//    regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+//    regularization_from_XML(regularization_document);
 }
 
 

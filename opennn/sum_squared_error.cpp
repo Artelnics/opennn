@@ -240,9 +240,7 @@ void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "SUM_SQUARED_ERROR");
+    file_stream.OpenElement("SumSquaredError");
 
     file_stream.CloseElement();
 
@@ -272,7 +270,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
+    /*tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -281,7 +279,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+    regularization_from_XML(regularization_document);*/
 }
 
 }

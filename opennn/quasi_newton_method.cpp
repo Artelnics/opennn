@@ -1671,9 +1671,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    file_stream.OpenElement("Main");
-
-    file_stream.PushAttribute("Type", "QUASI_NEWTON_METHOD");
+    file_stream.OpenElement("QuasiNewtonMethod");
 
     // Inverse hessian approximation method
 

@@ -1056,9 +1056,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 {
     ostringstream buffer;
 
-    file_stream.OpenElement("Main");
-
-    file_stream.PushAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
+    file_stream.OpenElement("AdaptiveMomentEstimation");
 
     // Batch size
 

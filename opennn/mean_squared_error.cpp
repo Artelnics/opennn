@@ -281,9 +281,7 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "MEAN_SQUARED_ERROR");
+    file_stream.OpenElement("MeanSquaredError");
 
     file_stream.CloseElement();
 
