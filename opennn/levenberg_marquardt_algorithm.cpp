@@ -416,8 +416,6 @@ void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const type& new_warn
 
 #endif
 
-    // Set warning gradient norm
-
     warning_gradient_norm = new_warning_gradient_norm;
 }
 
@@ -442,8 +440,6 @@ void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const type& new_erro
     }
 
 #endif
-
-    // Set error parameters norm
 
     error_parameters_norm = new_error_parameters_norm;
 }
@@ -470,8 +466,6 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const type& new_error_
 
 #endif
 
-    // Set error gradient norm
-
     error_gradient_norm = new_error_gradient_norm;
 }
 
@@ -496,8 +490,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(
     }
 
 #endif
-
-    // Set error learning rate
 
     minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
