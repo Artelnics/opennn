@@ -515,8 +515,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
 
 #endif
 
-    // Set minimum loss improvement
-
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
@@ -551,8 +549,6 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
     }
 
 #endif
-
-    // Set gradient norm goal
 
     gradient_norm_goal = new_gradient_norm_goal;
 }
@@ -597,8 +593,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
     }
 
 #endif
-
-    // Set maximum time
 
     maximum_time = new_maximum_time;
 }
@@ -825,7 +819,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Loss index
 
-        loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
+        loss_index_pointer->calculate_terms_second_order_loss(training_batch,
+                                                              training_forward_propagation,
+                                                              training_back_propagation,
+                                                              terms_second_order_loss);
 
         training_loss = terms_second_order_loss.loss;
 

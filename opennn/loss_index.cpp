@@ -427,27 +427,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 #endif
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-#ifdef __OPENNN_DEBUG__
 
-    // Hidden errors size
-
-    const Index layers_delta_size = layers_delta.size();
-
-    if(layers_delta_size != layers_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "Tensor<type, 2> calculate_layers_error_Jacobian() method.\n"
-               << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers("
-               << layers_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-*/
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -522,17 +502,6 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 }
 
 
-/// Returns the value of the loss function at some step along some direction.
-/*
-type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const type& rate) const
-{
-    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-    return calculate_training_loss(parameters + direction*rate);
-}
-*/
-
-
 void LossIndex::back_propagate(const DataSet::Batch& batch,
                     NeuralNetwork::ForwardPropagation& forward_propagation,
                     BackPropagation& back_propagation) const
@@ -563,8 +532,6 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
     }
 }
 
-
-// Second Order loss
 
 /// This method calculates the second order loss.
 /// It is used for optimization of parameters during training.
@@ -800,7 +767,6 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
         index += trainable_layers_parameters_number(i);
     }
 }
-
 
 
 /// Serializes a default error term object into a XML document of the TinyXML library.
@@ -1063,6 +1029,7 @@ type LossIndex::l2_norm(const Tensor<type, 1>& parameters) const
     return norm(0);
 }
 
+
 type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 {
     Tensor<type, 0> norm;
@@ -1071,6 +1038,7 @@ type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 
     return norm(0);
 }
+
 
 Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) const
 {
@@ -1081,7 +1049,6 @@ Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) c
     gradient.device(*thread_pool_device) = parameters.sign();
 
     return gradient;
-
 }
 
 
