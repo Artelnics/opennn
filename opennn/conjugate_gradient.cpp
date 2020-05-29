@@ -1919,11 +1919,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("ConjugateGradient");
-
-    file_stream.OpenElement("Main");
-
-    file_stream.PushAttribute("Type", "CONJUGATE_GRADIENT");
+    file_stream.OpenElement("ConjugateGradient");
 
     // Training direction method
 

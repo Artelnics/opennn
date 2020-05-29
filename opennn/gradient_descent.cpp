@@ -1476,9 +1476,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Learning rate algorithm
 
-    file_stream.OpenElement("Main");
-
-    file_stream.PushAttribute("Type", "GRADIENT_DESCENT");
+    file_stream.OpenElement("GradientDescent");
 
     learning_rate_algorithm.write_XML(file_stream);
 

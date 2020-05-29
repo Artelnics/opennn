@@ -253,9 +253,7 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "MINKOWSKI_ERROR");
+    file_stream.OpenElement("MinkowskiError");
 
     // Minkowski parameter
 
@@ -298,13 +296,18 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minkowski parameter
 
-    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
-    if(error_element)
+    if(root_element)
     {
-        const tinyxml2::XMLElement* parameter_element = error_element->FirstChildElement("MinkowskiParameter");
+        const tinyxml2::XMLElement* parameter_element = root_element->FirstChildElement("MinkowskiParameter");
 
-        const type new_Minkowski_parameter = static_cast<type>(atof(parameter_element->GetText()));
+        type new_Minkowski_parameter = 1.5;
+
+        if(parameter_element)
+        {
+            new_Minkowski_parameter = static_cast<type>(atof(parameter_element->GetText()));
+        }
 
         try
         {
@@ -317,7 +320,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Regularization
-
+/*
     tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
@@ -328,25 +331,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     regularization_document.InsertFirstChild(element_clone);
 
     regularization_from_XML(regularization_document);
-
-//  // Display
-//  {
-//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-//     if(display_element)
-//     {
-//        const string new_display_string = display_element->GetText();
-
-//        try
-//        {
-//           set_display(new_display_string != "0");
-//        }
-//        catch(const logic_error& e)
-//        {
-//           cerr << e.what() << endl;
-//        }
-//     }
-//  }
+*/
 }
 }
 
