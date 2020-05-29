@@ -1921,6 +1921,10 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     //file_stream.OpenElement("ConjugateGradient");
 
+    file_stream.OpenElement("Main");
+
+    file_stream.PushAttribute("Type", "CONJUGATE_GRADIENT");
+
     // Training direction method
 
     {
@@ -2078,7 +2082,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    //file_stream.CloseElement();
+    file_stream.CloseElement();
 }
 
 
