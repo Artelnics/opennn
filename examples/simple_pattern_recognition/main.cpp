@@ -54,6 +54,7 @@ int main(void)
         neural_network_architecture.setValues({2, 2, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
+
         neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
@@ -68,7 +69,8 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        training_strategy.set_loss_method("MEAN_SQUARED_ERROR");
+        training_strategy.set_optimization_method("STOCHASTIC_GRADIENT_DESCENT");
 
         const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
 

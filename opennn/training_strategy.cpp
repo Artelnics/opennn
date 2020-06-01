@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library+
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S
@@ -44,7 +44,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     neural_network_pointer = new_neural_network_pointer;
 
     set_optimization_method(QUASI_NEWTON_METHOD);
-
     set_loss_method(NORMALIZED_SQUARED_ERROR);
 
     set_loss_index_data_set_pointer(data_set_pointer);

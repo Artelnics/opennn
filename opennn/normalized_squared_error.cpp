@@ -113,6 +113,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
     //Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
+
 }
 
 /// Sets the normalization coefficient.

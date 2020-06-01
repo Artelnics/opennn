@@ -693,6 +693,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             // Neural network
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
+
 //            forward_propagation.print();
 
 //            system("pause");
