@@ -586,6 +586,8 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
     LossIndex::RegularizationMethod regularization_method;
 
     loss_method = new_loss_method;
+
+    set_loss_index_pointer(get_loss_index_pointer());
 }
 
 
@@ -735,6 +737,17 @@ void TrainingStrategy::set_display(const bool& new_display)
     adaptive_moment_estimation.set_display(display);
     quasi_Newton_method.set_display(display);
     Levenberg_Marquardt_algorithm.set_display(display);
+}
+
+
+void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
+{
+    gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
+    conjugate_gradient.set_reserve_selection_error_history(reserve_selection_error);
+    stochastic_gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
+    adaptive_moment_estimation.set_reserve_selection_error_history(reserve_selection_error);
+    quasi_Newton_method.set_reserve_selection_error_history(reserve_selection_error);
+    Levenberg_Marquardt_algorithm.set_reserve_selection_error_history(reserve_selection_error);
 }
 
 
@@ -1240,7 +1253,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         {
             const tinyxml2::XMLElement* loss_method_element = element->FirstChildElement("LossMethod");
 
-            cout << "Method" << endl;
             set_loss_method(loss_method_element->GetText());
             /*// Sum squared error
 
@@ -1266,7 +1278,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             // Mean squared error
 
             const tinyxml2::XMLElement* mean_squared_error_element = element->FirstChildElement("MeanSquaredError");
-cout << "MSE" << endl;
+
             if(mean_squared_error_element)
             {
                 /*tinyxml2::XMLDocument new_document;
@@ -1287,7 +1299,7 @@ cout << "MSE" << endl;
             // Normalized squared error
 
             const tinyxml2::XMLElement* normalized_squared_error_element = element->FirstChildElement("NormalizedSquaredError");
-cout << "NSE" << endl;
+
             if(normalized_squared_error_element)
             {
                 /*tinyxml2::XMLDocument new_document;
@@ -1315,7 +1327,7 @@ cout << "NSE" << endl;
 
                 tinyxml2::XMLElement* Minkowski_error_element_copy = new_document.NewElement("MinkowskiError");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     Minkowski_error_element_copy->InsertEndChild(copy );
@@ -1329,7 +1341,7 @@ cout << "NSE" << endl;
             {
                 Minkowski_error.set_Minkowski_parameter(1.5);
             }
-cout << "ME" << endl;
+
             // Cross entropy error
 
             const tinyxml2::XMLElement* cross_entropy_element = element->FirstChildElement("CrossEntropyError");
@@ -1350,7 +1362,7 @@ cout << "ME" << endl;
 
                 cross_entropy_error.from_XML(new_document);*/
             }
-cout << "CEE" << endl;
+
             // Weighted squared error
 
             const tinyxml2::XMLElement* weighted_squared_error_element = element->FirstChildElement("WeightedSquaredError");
@@ -1361,7 +1373,7 @@ cout << "CEE" << endl;
 
                 tinyxml2::XMLElement* weighted_squared_error_element_copy = new_document.NewElement("WeightedSquaredError");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     weighted_squared_error_element_copy->InsertEndChild(copy );
@@ -1376,7 +1388,7 @@ cout << "CEE" << endl;
                 weighted_squared_error.set_positives_weight(1);
                 weighted_squared_error.set_negatives_weight(1);
             }
-cout << "WSE" << endl;
+
             // Regularization
 
             const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -1438,7 +1450,7 @@ cout << "WSE" << endl;
 
                 tinyxml2::XMLElement* conjugate_gradient_element_copy = new_document.NewElement("ConjugateGradient");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     conjugate_gradient_element_copy->InsertEndChild(copy );
@@ -1451,23 +1463,23 @@ cout << "WSE" << endl;
 
             // Quasi-Newton method
 
-            const tinyxml2::XMLElement* quasi_newton_method_element = element->FirstChildElement("QuasiNewtonMethod");
+            const tinyxml2::XMLElement* quasi_Newton_method_element = element->FirstChildElement("QuasiNewtonMethod");
 
-            if(quasi_newton_method_element)
+            if(quasi_Newton_method_element)
             {
-                tinyxml2::XMLDocument new_document;
+                tinyxml2::XMLDocument quasi_Newton_document;
 
-                tinyxml2::XMLElement* quasi_newton_method_element_copy = new_document.NewElement("QuasiNewtonMethod");
+                tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
                     quasi_newton_method_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(quasi_newton_method_element_copy);
+                quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
 
-                quasi_Newton_method.from_XML(new_document);
+                quasi_Newton_method.from_XML(quasi_Newton_document);
             }
 
             // Levenberg Marquardt
@@ -1480,7 +1492,7 @@ cout << "WSE" << endl;
 
                 tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardtAlgorithm");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
@@ -1501,7 +1513,7 @@ cout << "WSE" << endl;
 
                 tinyxml2::XMLElement* stochastic_gradient_descent_element_copy = new_document.NewElement("StochasticGradientDescent");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     stochastic_gradient_descent_element_copy->InsertEndChild(copy );
@@ -1522,7 +1534,7 @@ cout << "WSE" << endl;
 
                 tinyxml2::XMLElement* adaptive_moment_estimation_element_copy = new_document.NewElement("AdaptiveMomentEstimation");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     adaptive_moment_estimation_element_copy->InsertEndChild(copy );

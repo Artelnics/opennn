@@ -160,6 +160,8 @@ public:
 
    void set_display(const bool&);
 
+   void set_reserve_selection_error_history(const bool&);
+
    // Training methods
 
    // This method trains a neural network which has a loss index associated.
