@@ -26,7 +26,7 @@
 #include "config.h"
 
 #include "loss_index.h"
-#include "mean_squared_error.h"
+//#include "mean_squared_error.h"
 #include "optimization_algorithm.h"
 
 namespace OpenNN

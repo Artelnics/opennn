@@ -2590,7 +2590,7 @@ void ConjugateGradient::update_epoch(
                     optimization_data.training_direction);
 
         cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
-        system("pause");
+//        system("pause");
     }
 
     // Get initial learning rate
