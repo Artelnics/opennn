@@ -173,7 +173,7 @@ public:
 
        void sum_hessian_diagonal(const type& value)
        {
-           const Index parameters_number = gradient.size();
+           const Index parameters_number = hessian.dimension(0);
 
            for(Index i = 0; i < parameters_number; i++)
                hessian(i,i) += value;

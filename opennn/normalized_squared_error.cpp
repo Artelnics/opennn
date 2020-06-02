@@ -289,13 +289,13 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
     Tensor<type, 1> errors(outputs.dimension(0));
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
+    const type coefficient = (static_cast<type>(2)/normalization_coefficient);
 
     errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B);
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
+    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
 
 
