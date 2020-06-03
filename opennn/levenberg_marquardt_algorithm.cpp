@@ -817,6 +817,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
+
+
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch,
@@ -839,7 +841,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
              terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
 
-             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
+             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1)*terms_second_order_loss.gradient);
 
              Tensor<type, 1> new_parameters = parameters + parameters_increment;
 
@@ -847,7 +849,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-             const type new_loss = training_back_propagation.error;
+             const type new_loss = training_back_propagation.error + loss_index_pointer->calculate_regularization(new_parameters);
 
              if(new_loss <= training_loss) // succesfull step
              {
@@ -1873,9 +1875,7 @@ Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decompositio
     Tensor<type, 1> x(n);
 
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
-
     const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);

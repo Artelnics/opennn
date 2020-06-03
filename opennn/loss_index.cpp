@@ -476,6 +476,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
+    layer_error_Jacobian.setZero();
 
     Index parameter;
 
