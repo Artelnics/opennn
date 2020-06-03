@@ -643,6 +643,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     }
 
     combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+
 }
 
 

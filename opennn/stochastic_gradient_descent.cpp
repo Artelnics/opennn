@@ -696,8 +696,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //            forward_propagation.print();
 
-//            system("pause");
-
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
@@ -710,6 +708,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             update_iteration(back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
+
+
         }
 
         // Loss

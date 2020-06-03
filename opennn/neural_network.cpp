@@ -1349,6 +1349,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
+
     }
 }
 
