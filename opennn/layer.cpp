@@ -1195,7 +1195,11 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
     // Activations Derivatives
 
-    activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
+    Tensor<type, 2> derivatives_2d(activations.dimension(0), activations.dimension(1));
+
+    derivatives_2d.device(*thread_pool_device) = activations*(1-activations);
+
+    memcpy(activations_derivatives.data(), derivatives_2d.data(), static_cast<size_t>(derivatives_2d.size())*sizeof(type));
 
 }
 

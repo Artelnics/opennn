@@ -41,7 +41,7 @@ int main(void)
 
         // Data set
 
-        DataSet data_set("../data/simple_function_regression2.csv", ';', true);
+        DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
 //        DataSet data_set;
 
@@ -55,7 +55,7 @@ int main(void)
 
         Tensor<Index, 1> neural_network_architecture(3);
 
-        neural_network_architecture.setValues({2, 2, 1});
+        neural_network_architecture.setValues({1, 2, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
 
@@ -71,17 +71,17 @@ int main(void)
 
         training_strategy.set_thread_pool_device(thread_pool_device);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+//        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.perform_training();
-
-
 
 
         return 0;
