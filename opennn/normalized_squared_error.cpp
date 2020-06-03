@@ -271,7 +271,7 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 }
 
 
-void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
+void NormalizedSquaredError:: calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                     const NeuralNetwork::ForwardPropagation& forward_propagation,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
    {
@@ -286,14 +286,14 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    Tensor<type, 1> errors(outputs.dimension(0));
+    Tensor<type, 1> error_terms(outputs.dimension(0));
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
     const type coefficient = (static_cast<type>(2)/normalization_coefficient);
 
-    errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
+    error_terms.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B);
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(error_terms, AT_B);
 
     second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
