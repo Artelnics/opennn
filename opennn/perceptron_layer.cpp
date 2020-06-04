@@ -543,10 +543,6 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
-
-//    cout << "Limit:" << endl << limit << endl;
-//    cout << "SW:" << endl << synaptic_weights << endl;
-//    system("pause");
 }
 
 
@@ -782,17 +778,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_2d);
-
-//    cout << "Forward propagate perceptron ***************************************************" << endl;
-
-//    cout << "inputs: " << inputs << endl;
-
-//    cout << "combinations: " << forward_propagation.combinations_2d << endl;
-//    cout << "activations_2d: " << forward_propagation.activations_2d << endl;
-//    cout << "activations_derivatives_2d: " << forward_propagation.activations_derivatives_2d << endl;
-
-
-//    cout << "********************************************************************************" << endl;
 }
 
 
@@ -840,9 +825,9 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
-   {      
-       output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
-   }
+{
+    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
+}
 
 
 void PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
@@ -885,7 +870,6 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointe
     hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
     hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
-
 }
 
 

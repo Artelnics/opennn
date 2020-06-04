@@ -8722,7 +8722,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     file.close();
 
     cout << "Binary data file saved." << endl;
-
 }
 
 

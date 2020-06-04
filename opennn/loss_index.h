@@ -179,6 +179,7 @@ public:
                hessian(i,i) += value;
        }
 
+       type error;
        type loss;
        Tensor<type, 1> gradient;
        Tensor<type, 2> error_Jacobian;
@@ -327,7 +328,7 @@ public:
 
    virtual void calculate_Jacobian_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, SecondOrderLoss&) const {}
 
-   virtual void calculate_hessian_approximation(SecondOrderLoss&) const {}
+   virtual void calculate_hessian_approximation(const DataSet::Batch&, SecondOrderLoss&) const {}
 
    // Regularization methods
 
