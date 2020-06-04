@@ -167,7 +167,7 @@ void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
 // Hessian method
 
-void SumSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 

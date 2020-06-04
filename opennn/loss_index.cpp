@@ -439,7 +439,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     Index index = 0;
 
-    Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
+    const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
     memcpy(error_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
@@ -454,9 +454,9 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
         index += layers_parameters_number[i]*instances_number;
     }
+
     second_order_loss.error_Jacobian = error_Jacobian;
 }
-
 
 /// Calculates the <i>Jacobian</i> matrix of the error terms of the layer.
 /// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
@@ -469,14 +469,19 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas, const Tensor<type, 2>& layer_inputs) const
 {
+    cout << "------------------------------" << endl;
     const Index instances_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
 
+    cout << "Instances_number: " << instances_number << endl;
+    cout << "Inputs_number: " << inputs_number << endl;
+    cout << "Neurons_number: " << neurons_number << endl;
+
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
-    layer_error_Jacobian.setZero();
+    layer_error_Jacobian.setConstant(1);
 
     Index parameter;
 
@@ -499,6 +504,10 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
         }
     }
 
+    cout << "------------------------------" << endl;
+
+    system("pause");
+
     return layer_error_Jacobian;
 }
 
@@ -516,10 +525,6 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
     calculate_layers_delta(forward_propagation, back_propagation);
 
     calculate_error_gradient(batch, forward_propagation, back_propagation);
-
-//    cout<<back_propagation.gradient;
-
-//    system("pause");
 
     // Loss
 
@@ -549,8 +554,8 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 {
     // First Order
 
-    calculate_error(batch, forward_propagation, back_propagation);
-
+//    calculate_error(batch, forward_propagation, back_propagation);
+// error terms ¿?
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
@@ -561,11 +566,13 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
-    calculate_hessian_approximation(second_order_loss);
+    calculate_error_gradient(batch,forward_propagation,back_propagation);
+
+    calculate_hessian_approximation(batch, second_order_loss);
 
     // Loss
 
-    second_order_loss.loss = back_propagation.error;
+    second_order_loss.loss = second_order_loss.error;
 
     // Regularization
 
