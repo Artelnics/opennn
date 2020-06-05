@@ -209,7 +209,7 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
 // Hessian approximation
 
-void MeanSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 
