@@ -529,10 +529,8 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
-
+/*
    // Device
-
-
 
    const int n = omp_get_max_threads();
    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
@@ -569,13 +567,14 @@ void TestingAnalysisTest::test_linear_regression()
    assert_true(static_cast<double>(linear_regression(0).a) == 0.0, LOG);
    assert_true(static_cast<double>(linear_regression(0).b) == 0.0, LOG);
    assert_true(static_cast<double>(linear_regression(0).correlation) == 1.0, LOG);
+*/
 }
 
 
 void TestingAnalysisTest::test_print_linear_regression_correlation()
 {
    cout << "test_print_linear_regression_correlation\n";
-
+/*
    // Device
 
    const int n = omp_get_max_threads();
@@ -610,13 +609,14 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
    testing_analysis.print_linear_regression_correlations();
+*/
 }
 
 
 void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 {
     cout << "test_get_linear_regression_correlations_std\n";
-
+/*
     // Device
 
     const int n = omp_get_max_threads();
@@ -654,6 +654,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     assert_true(correlations.size() == 1, LOG);
     assert_true(correlations(0) == 1.0 , LOG);
+*/
 }
 
 void TestingAnalysisTest::test_save_linear_regression()
@@ -673,7 +674,7 @@ void TestingAnalysisTest::test_save_linear_regression()
 void TestingAnalysisTest::test_perform_linear_regression()
 {
     cout << "test_perform_linear_regression\n";
-
+/*
     // Device
 
     const int n = omp_get_max_threads();
@@ -719,6 +720,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     assert_true(linear_regression_analysis.size() == 1 , LOG);
     assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
     assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
+*/
 }
 
 

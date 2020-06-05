@@ -189,8 +189,6 @@ struct CorrelationResults
 
     CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    CorrelationResults one_way_anova_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
-
     // Covariance
 
     type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -210,20 +208,6 @@ struct CorrelationResults
 
     type chi_square_critical_point(const type&, const type&);
 
-    //One way ANOVA
-
-    type one_way_anova(const Tensor<type, 2>&, const Tensor<type, 1>&);
-    type one_way_anova(const Tensor<type, 2>& ,const Index&, const Tensor<Index, 1>&);
-
-    type one_way_anova_correlation(const Tensor<type, 2>&, const Tensor<type, 1>&);
-    type one_way_anova_correlation_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
-
-    type f_snedecor_critical_point(const Tensor<type, 2>&, const type&);
-    type f_snedecor_critical_point(const Tensor<string, 2>&, const type&);
-    type f_snedecor_critical_point(const Tensor<type, 2>&);
-    type f_snedecor_critical_point_missing_values(const Tensor<type, 2>&);
-
-    type one_way_anova_correlation(const Tensor<type, 2>& ,const Index& , const Tensor<Index, 1>&);
 
     // Missing values methods
 
