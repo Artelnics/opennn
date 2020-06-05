@@ -167,10 +167,10 @@ void StatisticsTest::test_calculate_minimum_frequency()  //<--- Zero
     cout << "test_calculate_minimun_frecuency\n";
 
     //Test 0
-/*
+
     Histogram histogram;
     assert_true(histogram.calculate_minimum_frequency() == 0, LOG);
-*/
+
     //Test 1
     Tensor<type, 1> centers_1(3);
     centers_1.setValues({1,2,3});

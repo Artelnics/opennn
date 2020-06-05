@@ -403,11 +403,36 @@ type minimum(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
+    if(size == 0) return NAN;
+
     type minimum = numeric_limits<type>::max();
 
     for(Index i = 0; i < size; i++)
     {
         if(vector(i) < minimum && !::isnan(vector(i)))
+        {
+            minimum = vector(i);
+        }
+    }
+
+    return minimum;
+}
+
+
+/// Returns the smallest element of a index vector.
+/// @param vector Vector to obtain the minimum value.
+
+Index minimum(const Tensor<Index, 1>& vector)
+{
+    const Index size = vector.size();
+
+    if(size == 0) return 0;
+
+    Index minimum = numeric_limits<Index>::max();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(vector(i) < minimum)
         {
             minimum = vector(i);
         }
@@ -446,13 +471,13 @@ type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
 /// Returns the smallest element of a Index vector.
 
-time_t minimum(const Tensor<time_t, 1>& vector)
-{
+//time_t minimum(const Tensor<time_t, 1>& vector)
+//{
 
-    const Tensor<time_t, 0> min_element = vector.minimum();
+//    const Tensor<time_t, 0> min_element = vector.minimum();
 
-    return min_element(0);
-}
+//    return min_element(0);
+//}
 
 
 /// Returns the largest element in the vector.
