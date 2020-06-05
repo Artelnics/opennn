@@ -559,7 +559,6 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
-
     calculate_layers_delta(forward_propagation, back_propagation);
 
     // Second Order
@@ -571,14 +570,6 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     calculate_error_gradient(batch,forward_propagation,back_propagation);
 
     calculate_hessian_approximation(batch, second_order_loss);
-
-    cout << "Error: " << second_order_loss.error << endl;
-
-    cout << "Other error: " << back_propagation.error << endl;
-
-
-
-        system("pause");
 
     // Loss
 
