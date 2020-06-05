@@ -18,11 +18,11 @@ StatisticsTest::~StatisticsTest()
 }
 
 
-
 void StatisticsTest::test_constructor()
 {
    cout << "test_constructor\n";
 }
+
 
 void StatisticsTest::test_destructor()
 {
@@ -40,6 +40,7 @@ void StatisticsTest::test_set_minimum()
    assert_true(static_cast<Index>(descriptives.minimum) == 5, LOG);
 }
 
+
 void StatisticsTest::test_set_maximum()
 {
    cout << "test_set_maximun\n";
@@ -49,6 +50,7 @@ void StatisticsTest::test_set_maximum()
 
    assert_true(static_cast<Index>(descriptives.maximum) == 5, LOG);
 }
+
 
 void StatisticsTest::test_set_mean()
 {
@@ -60,6 +62,7 @@ void StatisticsTest::test_set_mean()
    assert_true(static_cast<Index>(descriptives.mean) == 5, LOG);
 }
 
+
 void StatisticsTest::test_set_standard_deviation()
 {
    cout << "test_set_standard_deviation\n";
@@ -70,6 +73,7 @@ void StatisticsTest::test_set_standard_deviation()
    assert_true(static_cast<Index>(descriptives.standard_deviation) == 3.0, LOG);
 }
 
+
 void StatisticsTest::test_has_mean_zero_standard_deviation_one()
 {
     cout << "test_set_standard_deviation\n";
@@ -77,16 +81,20 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
     //Test 0
     Descriptives descriptives(-4.0 ,5.0 ,0.0 ,1.0);
     assert_true(descriptives.has_mean_zero_standard_deviation_one() == true, LOG);
+
     //Test 1
     Descriptives descriptives_1(-4.0 ,5.0 ,1.0 ,1.0);
     assert_true(descriptives_1.has_mean_zero_standard_deviation_one() == false, LOG);
+
     //Test 2
     Descriptives descriptives_2(-4.0 ,5.0 ,0.0 ,2.0);
     assert_true(descriptives_2.has_mean_zero_standard_deviation_one() == false, LOG);
+
     //Test 3
     Descriptives descriptives_3(-4.0 ,5.0 ,2.0 ,2.0);
     assert_true(descriptives_3.has_mean_zero_standard_deviation_one() == false, LOG);
 }
+
 
 void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 {
@@ -95,41 +103,46 @@ void StatisticsTest::test_has_minimum_minus_one_maximum_one()
     //Test_0
     Descriptives descriptives(-1.0 ,1.0 ,0.0 ,1.0);
     assert_true(descriptives.has_minimum_minus_one_maximum_one() == true, LOG);
+
     //Test_1
     Descriptives descriptives_1(-2.0 ,1.0 ,0.0 ,1.0);
     assert_true(descriptives_1.has_minimum_minus_one_maximum_one() == false, LOG);
+
     //Test_2
     Descriptives descriptives_2(-1.0 ,2.0 ,0.0 ,1.0);
     assert_true(descriptives_2.has_minimum_minus_one_maximum_one() == false, LOG);
+
     //Test_3
     Descriptives descriptives_3(-2.0 ,2.0 ,0.0 ,1.0);
     assert_true(descriptives_3.has_minimum_minus_one_maximum_one() == false, LOG);
 }
-//12
+
+
 void StatisticsTest::test_get_bins_number()
 {
     cout << "test_get_bins_number\n";
 
-//  Test 0
+    //Test 0
     Histogram histogram;
     assert_true(histogram.get_bins_number() == 0, LOG);
 
-//  Test 1
+    //Test 1
     const Index bins_number_1 = 50;
 
     Histogram histogram_1(bins_number_1);
     assert_true(histogram_1.get_bins_number() == 50, LOG);
 }
 
+
 void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
 
-    //  Test 0
+    // Test 0
     Histogram histogram;
     assert_true(histogram.count_empty_bins() == 0, LOG);
 
-    //  Test 1
+    // Test 1
     Tensor<type, 1> centers_1(3);
     centers_1.setValues({1,2,3});
     Tensor<Index, 1> frecuencies_1(3);
@@ -147,6 +160,7 @@ void StatisticsTest::test_count_empty_bins()
     Histogram histogram_2(centers_2,frecuencies_2);
     assert_true(histogram_1.count_empty_bins() == 1, LOG);
 }
+
 
 void StatisticsTest::test_calculate_minimum_frequency()  //<--- Zero
 {
@@ -430,73 +444,6 @@ void StatisticsTest::test_maximum()     //<--- Zero
    assert_true(static_cast<Index>(maximum(vector_3)) == 0, LOG);
 }
 
-/*
-void StatisticsTest::test_minimum_missing_values()
-{
-   cout << "test_minimum_missing_values\n";
-
-   Tensor<type, 1> vector;
-   Tensor<Index, 1> missing_values;
-   type minimum;
-
-   // Test
-   vector.resize(1, 1.0);
-   minimum = minimum_missing_values(vector);
-
-   assert_true(minimum == 1.0, LOG);
-
-   vector.resize(3);
-   vector[0] = -1;
-   vector[1] = 0;
-   vector[2] = 1;
-
-   minimum = minimum_missing_values(vector);
-
-   assert_true(abs(minimum -(-1.0)) < 1.0e-3, LOG);
-
-   // Test missing values
-   vector.resize(3);
-   vector[0] = -1;
-   vector[1] = static_cast<type>(NAN);
-   vector[2] = 1;
-
-   assert_true(abs(minimum_missing_values(vector) - (-1.0)) < 1.0e-3, LOG);
-}
-*/
-
-/*
-void StatisticsTest::test_maximum_missing_values()
-{
-   cout << "test_maximum_missing_values\n";
-
-   Tensor<type, 1> vector;
-   type maximum;
-
-   //Test
-   vector.resize(1, 1);
-   maximum = maximum_missing_values(vector);
-
-   assert_true(maximum == 1.0, LOG);
-
-   //Test
-   vector.resize(3);
-   vector[0] = -1;
-   vector[1] = 0;
-   vector[2] = 1;
-
-   maximum = maximum_missing_values(vector);
-
-   assert_true(abs(maximum - 1.0) < 1.0e-3, LOG);
-
-   //Test maximum missing values
-   vector.resize(3);
-   vector[0] = -1.0;
-   vector[1] = static_cast<type>(NAN);
-   vector[2] = 1.0;
-
-   assert_true(abs(maximum_missing_values(vector) - 1.0) < 1.0e-3 , LOG);
-}
-*/
 
 void StatisticsTest::test_calculate_mean()  //<--- ERROR
 {
@@ -858,7 +805,7 @@ void StatisticsTest::test_calculate_kurtosis_missing_values()
 void StatisticsTest::test_quartiles()    //<--- ERROR
 {
    cout << "test_quartiles\n";
-
+/*
    //Test 1
    Tensor<type, 1> vector(1);
    vector.setZero();
@@ -891,11 +838,11 @@ void StatisticsTest::test_quartiles()    //<--- ERROR
    vector.setValues({0,1,2,3});
 
    Tensor<type, 1> quartiles3 = OpenNN::quartiles(vector);
-/*
+
    assert_true(vector.count_less_equal_to(quartiles3[0])*100.0/vector.size() == 25.0, LOG);
    assert_true(vector.count_less_equal_to(quartiles3[1])*100.0/vector.size() == 50.0, LOG);
    assert_true(vector.count_less_equal_to(quartiles3[2])*100.0/vector.size() == 75.0, LOG);
-*/
+
 
    assert_true(quartiles3(0) == 0.5, LOG);
    assert_true(quartiles3(1) == 1.5, LOG);
@@ -918,6 +865,7 @@ void StatisticsTest::test_quartiles()    //<--- ERROR
    assert_true(quartiles5[0] == 0.75, LOG);
    assert_true(quartiles5[1] == 2.5, LOG);
    assert_true(quartiles5[2] == 4.25, LOG);
+   */
 }
 
 void StatisticsTest::test_calculate_histogram()    //<---
@@ -1563,13 +1511,11 @@ void StatisticsTest::run_test_case()
    // Minimum
      test_set_minimum();
      test_minimum();
-//   test_minimum_missing_values();
 //   test_maximum_matrix();
 
    // Maximun
      test_set_maximum();
      test_maximum();
-//   test_maximum_missing_values();
 //   test_maximum_matrix();
 
 

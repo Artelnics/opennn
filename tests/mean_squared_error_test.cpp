@@ -117,7 +117,7 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 {
    cout << "test_calculate_training_error_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    DataSet data_set;
@@ -162,7 +162,6 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    assert_true(abs(error_gradient(1)) < static_cast<type>(1e-4), LOG);
 }
 
-/*
    neural_network.set();
 
    // Test perceptron and probabilistic

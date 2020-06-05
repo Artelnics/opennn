@@ -57,7 +57,7 @@ void IncrementalNeuronsTest::test_set_default()
 void IncrementalNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
-
+/*
     string str;
     Tensor<type, 2> data(21,2);
 
@@ -180,7 +180,7 @@ void IncrementalNeuronsTest::test_perform_neurons_selection()
 
     assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition == NeuronsSelection::AlgorithmFinished, LOG);
-
+*/
 }
 
 

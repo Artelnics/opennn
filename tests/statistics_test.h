@@ -43,13 +43,11 @@ public:
    // Minimum
    void test_set_minimum();
    void test_minimum();
-   void test_minimum_missing_values();
    void test_minimum_matrix();
 
    // Maximun
    void test_set_maximum();
    void test_maximum();
-   void test_maximum_missing_values();
    void test_maximum_matrix();
 
 
