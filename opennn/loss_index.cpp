@@ -469,14 +469,9 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas, const Tensor<type, 2>& layer_inputs) const
 {
-    cout << "------------------------------" << endl;
     const Index instances_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
-
-    cout << "Instances_number: " << instances_number << endl;
-    cout << "Inputs_number: " << inputs_number << endl;
-    cout << "Neurons_number: " << neurons_number << endl;
 
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
@@ -503,10 +498,6 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
             layer_error_Jacobian(instance, synaptic_weights_number+perceptron) = layer_delta;
         }
     }
-
-    cout << "------------------------------" << endl;
-
-    system("pause");
 
     return layer_error_Jacobian;
 }
@@ -554,9 +545,20 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 {
     // First Order
 
-//    calculate_error(batch, forward_propagation, back_propagation);
-// error terms ¿?
+    calculate_error(batch, forward_propagation, back_propagation);
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    Tensor<type, 1> error_terms(outputs.dimension(0));
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
+
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -569,6 +571,14 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     calculate_error_gradient(batch,forward_propagation,back_propagation);
 
     calculate_hessian_approximation(batch, second_order_loss);
+
+    cout << "Error: " << second_order_loss.error << endl;
+
+    cout << "Other error: " << back_propagation.error << endl;
+
+
+
+        system("pause");
 
     // Loss
 

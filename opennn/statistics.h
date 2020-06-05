@@ -201,7 +201,7 @@ struct Histogram
      type minimum(const Tensor<type, 1>&);
      type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index minimum(const Tensor<Index, 1>&);
-     time_t minimum(const Tensor<time_t, 1>&);
+//     time_t minimum(const Tensor<time_t, 1>&);
      type minimum(const Tensor<type, 2>&);
      Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
