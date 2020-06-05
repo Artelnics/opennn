@@ -427,10 +427,8 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_history()
 
    lmatr.resize_training_history(1);
 
-
    assert_true(lmatr.training_error_history.size() == 1, LOG);
    assert_true(lmatr.selection_error_history.size() == 1, LOG);
-
 }
 
 
