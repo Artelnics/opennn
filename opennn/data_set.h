@@ -666,12 +666,6 @@ public:
 
    Tensor<Index, 1> calculate_target_distribution() const;
 
-   Tensor<Index, 1> balance_binary_targets_distribution(const type& = 100.0);
-   Tensor<Index, 1> balance_multiple_targets_distribution();
-
-
-   Tensor<Index, 1> balance_approximation_targets_distribution(const type& = 10.0);
-
    // Outlier detection
 
    Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const type& = 1.5) const;
