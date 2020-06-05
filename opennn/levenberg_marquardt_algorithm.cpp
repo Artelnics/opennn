@@ -817,8 +817,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-
-
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch,
@@ -849,7 +847,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-             const type new_loss = training_back_propagation.error + loss_index_pointer->calculate_regularization(new_parameters);
+             const type new_loss = training_back_propagation.error/* + loss_index_pointer->calculate_regularization(new_parameters)*/;
 
              if(new_loss <= training_loss) // succesfull step
              {
@@ -874,7 +872,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         parameters_increment_norm = l2_norm(parameters_increment);
 
-        if(epoch == 1)
+        if(epoch == 0)
         {
             training_loss_decrease = 0;
         }

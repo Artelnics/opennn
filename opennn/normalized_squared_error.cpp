@@ -271,7 +271,7 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 }
 
 
-void NormalizedSquaredError:: calculate_Jacobian_gradient(const DataSet::Batch& batch,
+void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                     const NeuralNetwork::ForwardPropagation& forward_propagation,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
    {
@@ -283,23 +283,32 @@ void NormalizedSquaredError:: calculate_Jacobian_gradient(const DataSet::Batch& 
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+    const Index batch_instances_number = batch.get_instances_number();
+    const Index total_instances_number = data_set_pointer->get_instances_number();
+
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 1> error_terms(outputs.dimension(0));
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const type coefficient = (static_cast<type>(2)/normalization_coefficient);
+    const type coefficient = ((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type derivative_coefficient = 2/coefficient;
 
-    error_terms.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
+    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+
+    Tensor<type, 0> error;
+    error.device(*thread_pool_device) = error_terms.contract(error_terms, AT_B);
+
+    second_order_loss.error = error()/coefficient;
 
     second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(error_terms, AT_B);
 
-    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+    second_order_loss.gradient.device(*thread_pool_device) = derivative_coefficient*second_order_loss.gradient;
 }
 
 
-void NormalizedSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+void NormalizedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -307,7 +316,10 @@ void NormalizedSquaredError::calculate_hessian_approximation(LossIndex::SecondOr
 
      #endif
 
-     const type coefficient = (static_cast<type>(2.0)/normalization_coefficient);
+     const Index batch_instances_number = batch.get_instances_number();
+     const Index total_instances_number = data_set_pointer->get_instances_number();
+
+     const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
 
      second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 

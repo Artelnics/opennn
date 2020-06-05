@@ -976,7 +976,6 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
     // Activations Derivatives
 
     activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
-
 }
 
 
