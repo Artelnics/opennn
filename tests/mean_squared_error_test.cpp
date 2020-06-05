@@ -46,7 +46,6 @@ void MeanSquaredErrorTest::test_constructor()
 
    assert_true(mse3.has_neural_network() == true, LOG);
    assert_true(mse3.has_data_set() == true, LOG);
-
 }
 
 
