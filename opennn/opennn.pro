@@ -9,6 +9,7 @@
 QT = # Do not use qt
 
 TARGET = opennn
+#DESTDIR = "$$PWD/bin"
 
 TEMPLATE = lib
 
