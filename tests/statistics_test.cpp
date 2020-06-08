@@ -195,12 +195,10 @@ void StatisticsTest::test_calculate_maximum_frequency()  //<--- Zero
     cout << "test_calculate_maximum_frequency\n";
 
     //Test 0
-/*
     Histogram histogram;
     assert_true(histogram.calculate_maximum_frequency() == 0, LOG);
-*/
-    //Test 1
 
+    //Test 1
     Tensor<type, 1> centers_1(3);
     centers_1.setValues({1,2,3});
     Tensor<Index, 1> frecuencies_1(3);
@@ -214,11 +212,10 @@ void StatisticsTest::test_calculate_most_populated_bin()  //<-- Calculates de fi
 {
     cout << "test_calculate_most_populated_bin\n";
 
-    //  Test 0
-    /*
+    //  Test 0 
     Histogram histogram;
     assert_true(histogram.calculate_most_populated_bin() == 0, LOG);
-*/
+
     //Test 1
     Tensor<type, 1> centers_1(3);
     centers_1.setValues({1,2,3});
@@ -260,7 +257,7 @@ void StatisticsTest::test_calculate_minimal_centers()  //<--- Zero
     //  Test 0
 /*
     Histogram histogram;
-    assert_true(static_cast<Index>(histogram.calculate_minimal_centers()(0)) == 0, LOG);
+    assert_true(static_cast<Index>(histogram.calculate_minimal_centers(0)) == 0, LOG);
 */
     //Test 1
     Tensor<type, 1> centers_1(3);
@@ -312,10 +309,10 @@ void StatisticsTest::test_calculate_bin()    //<--- Zero //<-- Calculates de fir
     cout << "test_calculate_bin\n";
 
     // Test 0
-/*
+
     Histogram histogram;
-    assert_true(histogram.calculate_bin(0) == 0, LOG);
-*/
+    //assert_true(histogram.calculate_bin(0) == 0, LOG);
+
 
     // Test 1
     Tensor<type, 1> centers_1(3);
@@ -327,25 +324,25 @@ void StatisticsTest::test_calculate_bin()    //<--- Zero //<-- Calculates de fir
 
     assert_true(histogram_1.calculate_bin(6) == 2, LOG);
 
-    /*
-    Tensor<type, 1> vector;
+
+    Tensor<type, 1> vector(3);
     Index bin;
-    Histogram histogram;
-    vector.resize(1.0, 1.0, 11.0);
+
+    vector.setValues({1.0, 1.0, 11.0});
     histogram = OpenNN::histogram(vector, 10);
 
-    // Test
+    // Test 2
     bin = histogram.calculate_bin(vector[0]);
     assert_true(bin == 0, LOG);
 
-    // Test
+    // Test 3
     bin = histogram.calculate_bin(vector[1]);
     assert_true(bin == 1, LOG);
 
-    // Test
+    // Test 4
     bin = histogram.calculate_bin(vector[2]);
     assert_true(bin == 2, LOG);
-*/
+
 }
 
 void StatisticsTest::test_calculate_frequency()    //<--- Zero
