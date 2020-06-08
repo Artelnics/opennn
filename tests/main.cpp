@@ -59,7 +59,7 @@ int main()
    "recurrent_layer\n"
    "scaling_layer\n"
    "simulated_annealing_order\n"
-   "suite"
+   "suite\n"
    "sum_squared_error\n"
    "testing_analysis\n"
    "training_strategy\n"
@@ -89,7 +89,7 @@ int main()
       Index tests_passed_count = 0;
       Index tests_failed_count = 0;
 
-      if(test == "correlations" || test == "")
+      if(test == "correlations" || test == "cr")
       {
          CorrelationsTest correlations_test;
          correlations_test.run_test_case();
@@ -125,7 +125,7 @@ int main()
          tests_failed_count += perceptron_layer_test.get_tests_failed_count();
       }
 
-      else if(test == "statistics" || test == "")
+      else if(test == "statistics" || test == "st")
       {
          StatisticsTest matrix_test;
          matrix_test.run_test_case();
@@ -171,7 +171,7 @@ int main()
          tests_passed_count += unscaling_layer_test.get_tests_passed_count();
          tests_failed_count += unscaling_layer_test.get_tests_failed_count();
       }
-      else if(test == "bounding_layer" || test == "")
+      else if(test == "bounding_layer" || test == "bl")
       {
          BoundingLayerTest bounding_layer_test;
          bounding_layer_test.run_test_case();
@@ -195,7 +195,7 @@ int main()
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
-      else if(test == "pooling_layer" || test == "")
+      else if(test == "pooling_layer" || test == "pll")
       {
          PoolingLayerTest layer_test;
          layer_test.run_test_case();
@@ -259,7 +259,7 @@ int main()
         tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
         tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
       }
-      else if(test == "descriptives" || test == "")
+      else if(test == "descriptives" || test == "dsc")
       {
         StatisticsTest statistics_test;
         statistics_test.run_test_case();
@@ -268,7 +268,7 @@ int main()
         tests_failed_count += statistics_test.get_tests_failed_count();
       }
 
-      else if(test == "learning_rate_algorithm" || test == "")
+      else if(test == "learning_rate_algorithm" || test == "lra")
       {
         LearningRateAlgorithmTest learning_rate_algorithm_test;
         learning_rate_algorithm_test.run_test_case();
@@ -276,7 +276,7 @@ int main()
         tests_passed_count += learning_rate_algorithm_test.get_tests_passed_count();
         tests_failed_count += learning_rate_algorithm_test.get_tests_failed_count();
       }
-      else if(test == "gradient_descent" || test == "")
+      else if(test == "gradient_descent" || test == "gd")
       {
         GradientDescentTest gradient_descent_test;
         gradient_descent_test.run_test_case();
@@ -284,7 +284,7 @@ int main()
         tests_passed_count += gradient_descent_test.get_tests_passed_count();
         tests_failed_count += gradient_descent_test.get_tests_failed_count();
       }
-      else if(test == "conjugate_gradient" || test == "")
+      else if(test == "conjugate_gradient" || test == "cg")
       {
         ConjugateGradientTest conjugate_gradient_test;
         conjugate_gradient_test.run_test_case();
@@ -292,7 +292,7 @@ int main()
         tests_passed_count += conjugate_gradient_test.get_tests_passed_count();
         tests_failed_count += conjugate_gradient_test.get_tests_failed_count();
       }
-      else if(test == "quasi_newton_method" || test == "")
+      else if(test == "quasi_newton_method" || test == "qnm")
       {
         QuasiNewtonMethodTest quasi_Newton_method_test;
         quasi_Newton_method_test.run_test_case();
@@ -300,7 +300,7 @@ int main()
         tests_passed_count += quasi_Newton_method_test.get_tests_passed_count();
         tests_failed_count += quasi_Newton_method_test.get_tests_failed_count();
       }
-      else if(test == "levenberg_marquardt_algorithm" || test == "")
+      else if(test == "levenberg_marquardt_algorithm" || test == "lma")
       {
         LevenbergMarquardtAlgorithmTest Levenberg_Marquardt_algorithm_test;
         Levenberg_Marquardt_algorithm_test.run_test_case();
@@ -308,7 +308,7 @@ int main()
         tests_passed_count += Levenberg_Marquardt_algorithm_test.get_tests_passed_count();
         tests_failed_count += Levenberg_Marquardt_algorithm_test.get_tests_failed_count();
       }
-      else if(test == "stochastic_gradient_descent" || test == "")
+      else if(test == "stochastic_gradient_descent" || test == "sgd")
       {
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
