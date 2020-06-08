@@ -161,6 +161,7 @@ public:
        void add_category(const string&);
 
        void set_categories_uses(const Tensor<string, 1>&);
+       void set_categories_uses(const VariableUse&);
 
        bool is_used();
        bool is_unused();

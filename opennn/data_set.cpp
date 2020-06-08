@@ -312,6 +312,15 @@ void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categorie
 }
 
 
+/// Sets the categories uses in the data set.
+/// @param new_categories_use New categories use
+
+void DataSet::Column::set_categories_uses(const VariableUse& new_categories_use)
+{
+    categories_uses.setConstant(new_categories_use);
+}
+
+
 void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 {
     ostringstream buffer;
@@ -2816,6 +2825,11 @@ void DataSet::set_input_columns_unused()
 void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
 {
     columns(index).column_use = new_use;
+
+    if(columns(index).type == Categorical)
+    {
+        columns(index).set_categories_uses(new_use);
+    }
 }
 
 
@@ -4259,8 +4273,6 @@ void DataSet::set_default()
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
     set_instances_number(data.dimension(0));
-
-//   set_variables_number(data.dimension(1));
 
     set_instances_number(data.dimension(0));
 

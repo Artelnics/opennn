@@ -276,6 +276,10 @@ public:
    Tensor<Index, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
    Tensor<Index, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
 
+   // Multiple classification tests
+
+   Tensor<type, 1> calculate_multiple_classification_tests() const;
+
    // Multiple classification rates
 
    Tensor<Index, 2> calculate_multiple_classification_rates() const;
