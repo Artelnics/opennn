@@ -275,23 +275,22 @@ void StatisticsTest::test_calculate_maximal_centers()  //<--- Zero
 {
     cout << "test_calculate_maximal_centers\n";
 
-/*
+
     Histogram histogram;
 
-    Tensor<type, 1> vector({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 8, 8, 1, 4, 7});
+    Tensor<type, 1> vector(15);
+    vector.setValues({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 8, 8, 1, 4, 7});
 
     histogram = OpenNN::histogram(vector);
 
-    Tensor<type, 1> solution({2.75, 3.45, 4.85, 5.55});
+    Tensor<type, 1> solution(4);
+    solution.setValues({2.75, 3.45, 4.85, 5.55});
 
     assert_true((histogram.calculate_minimal_centers()[0] - 1.35) < 1.0e-7, LOG);
-*/
 
     //  Test 0
-/*
-    Histogram histogram;
     assert_true(static_cast<Index>(histogram.calculate_maximal_centers()(0)) == 0, LOG);
-*/
+
     //Test 1
     Tensor<type, 1> centers_1(3);
     centers_1.setValues({1,2,3});
@@ -373,18 +372,18 @@ void StatisticsTest::test_calculate_frequency()    //<--- Zero
     Histogram histogram_2(centers_2,frecuencies_2);
     assert_true(histogram_2.calculate_frequency(0) == 0, LOG);
 
-    /*
-    Tensor<type, 1> vector;
+    // Test 3
+
+    Tensor<type, 1> vector(3);
     Index frequency;
     Histogram histogram;
 
-    // Test
-    vector.resize(0.0, 1.0, 9.0);
+    vector.setValues({0.0, 1.0, 9.0});
     histogram = OpenNN::histogram(vector, 10);
     frequency = histogram.calculate_frequency(vector[9]);
 
     assert_true(frequency == 1, LOG);
-    */
+
 }
 
 void StatisticsTest::test_minimum()    //<--- Zero
@@ -392,10 +391,10 @@ void StatisticsTest::test_minimum()    //<--- Zero
    cout << "test_calculate_minimum\n";
 
    // Test 0
-/*
+
    Tensor<type, 1> vector;
    assert_true(static_cast<Index>(minimum(vector)) == 0, LOG);
-*/
+
 
    // Test 1
    Tensor<type, 1> vector_1(3);
@@ -419,10 +418,10 @@ void StatisticsTest::test_maximum()     //<--- Zero
    cout << "test_calculate_minimum\n";
 
    // Test 0
-/*
+
    Tensor<type, 1> vector;
    assert_true(static_cast<Index>(maximum(vector)) == 0, LOG);
-*/
+
 
    // Test 1
    Tensor<type, 1> vector_1(3);
@@ -449,9 +448,9 @@ void StatisticsTest::test_calculate_mean()  //<--- ERROR
    // Test 0
 /*
    Tensor<type, 2> matrix;
-   assert_true(static_cast<Index>(mean(matrix)(0)) == 0, LOG);
+   assert_true(mean(matrix)(0) == 0, LOG);
 */
-/*
+
    // Test 1
    Tensor<type, 2> matrix_1(3,3);
    matrix_1.setValues({{0,1,-2},{0,1,8},{0,1,6}});
@@ -464,7 +463,7 @@ void StatisticsTest::test_calculate_mean()  //<--- ERROR
    assert_true(static_cast<Index>(mean(matrix_1)(0)) == 0, LOG);
    assert_true(static_cast<Index>(mean(matrix_1)(1)) == 1, LOG);
    assert_true(static_cast<Index>(mean(matrix_1)(2)) == 6, LOG);
-*/
+
    /*
    Tensor<type, 1> vector(1, 1.0);
 
