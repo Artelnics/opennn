@@ -12,7 +12,7 @@ CONFIG += ordered
 
 #SUBDIRS += rosenbrock
 #SUBDIRS += simple_function_regression
-SUBDIRS += simple_pattern_recognition
+#SUBDIRS += simple_pattern_recognition
 #SUBDIRS += airfoil_self_noise
 #SUBDIRS += airline_passengers
 #SUBDIRS += breast_cancer
@@ -25,4 +25,4 @@ SUBDIRS += simple_pattern_recognition
 #SUBDIRS += leukemia
 #SUBDIRS += pollution_forecasting
 #SUBDIRS += temperature_forecasting
-#SUBDIRS += mnist
+SUBDIRS += mnist

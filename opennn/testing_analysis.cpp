@@ -3022,6 +3022,36 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_instances(const Tensor
 }
 
 
+Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
+{
+    Tensor<type, 1> multiple_classification_tests(2);
+
+    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+
+    const Tensor<Index, 2> confusion_matrix = calculate_confusion_multiple_classification(targets, outputs);
+
+    type diagonal_sum = 0;
+    type off_diagonal_sum = 0;
+    const Tensor<Index, 0> total_sum = confusion_matrix.sum();
+
+    for(Index i = 0; i < confusion_matrix.dimension(0); i++)
+    {
+        for(Index j = 0; j < confusion_matrix.dimension(1); j++)
+        {
+            i == j ? diagonal_sum += static_cast<type>(confusion_matrix(i,j)) : off_diagonal_sum += static_cast<type>(confusion_matrix(i,j));
+        }
+    }
+
+    multiple_classification_tests(0) = diagonal_sum/static_cast<type>(total_sum());
+    multiple_classification_tests(1) = off_diagonal_sum/static_cast<type>(total_sum());
+
+    return multiple_classification_tests;
+}
+
+
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() const
