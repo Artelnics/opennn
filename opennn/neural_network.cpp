@@ -2512,9 +2512,6 @@ string NeuralNetwork::write_expression() const
     Tensor<string, 1> inputs_names = get_inputs_names();
     Tensor<string, 1> outputs_names = get_outputs_names();
 
-//    cout << "Inputs names: " << inputs_names << endl;
-//    cout << "Outputs names: " << outputs_names << endl;
-
     Index position = 0;
 
     string search;

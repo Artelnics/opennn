@@ -750,6 +750,28 @@ void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_s
 }
 
 
+void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
+{
+    gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
+    conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
+    stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
+    adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
+    quasi_Newton_method.set_maximum_epochs_number(maximum_epochs_number);
+    Levenberg_Marquardt_algorithm.set_maximum_epochs_number(maximum_epochs_number);
+}
+
+
+void TrainingStrategy::set_display_period(const int & display_period)
+{
+    gradient_descent.set_display_period(display_period);
+    conjugate_gradient.set_display_period(display_period);
+    stochastic_gradient_descent.set_display_period(display_period);
+    adaptive_moment_estimation.set_display_period(display_period);
+    quasi_Newton_method.set_display_period(display_period);
+    Levenberg_Marquardt_algorithm.set_display_period(display_period);
+}
+
+
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.

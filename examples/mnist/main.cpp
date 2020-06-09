@@ -229,11 +229,11 @@ int main(void)
 
         // Neural network
 
-        bool display_neural_network = true;
+        bool display_neural_network = false;
 
         Tensor<Index, 1> architecture(3);
         architecture[0] = input_variables_number;
-        architecture[1] = 100;
+        architecture[1] = 50;
         architecture[2] = target_variables_number;
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
@@ -263,7 +263,11 @@ int main(void)
         NormalizedSquaredError* normalized_squared_error_pointer = training_strategy.get_normalized_squared_error_pointer();
         normalized_squared_error_pointer->set_normalization_coefficient();
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+
+        training_strategy.set_display_period(5);
+
+        training_strategy.set_maximum_epochs_number(2000);
 
         training_strategy.perform_training();
 
@@ -272,8 +276,16 @@ int main(void)
         TestingAnalysis testing_analysis(&neural_network, &data_set);
         testing_analysis.set_thread_pool_device(thread_pool_device);
 
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
+
         cout << "Confusion matrix: " << endl;
-        cout << testing_analysis.calculate_confusion() << endl;
+        cout << confusion << endl;
+
+        cout << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
+        cout << "Error: " << multiple_classification_tests(1)*100 << endl;
+
+
 
 
         return 0;
