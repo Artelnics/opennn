@@ -564,7 +564,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     // Second Order
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-
+cout << "1 " << endl;
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
     calculate_error_gradient(batch,forward_propagation,back_propagation);
