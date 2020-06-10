@@ -133,9 +133,6 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
-
-//    cout << "MSE:\n" << back_propagation.error << endl;
-//    system("pause");
 }
 
 
@@ -151,9 +148,9 @@ void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
 
      #endif
 
-     const Index instances_number = data_set_pointer->get_training_instances_number();
+     const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
-     const type coefficient = static_cast<type>(2.0)/static_cast<type>(instances_number);
+     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_instances_number);
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -164,14 +161,7 @@ void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
 
      errors.device(*thread_pool_device) = outputs - targets;
 
-//     cout << "Outputs:\n" << outputs << endl;
-
-//     cout << "Errors:\n" << errors << endl;
-
      back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
-
-//     cout << "Output_gradient:\n" << back_propagation.output_gradient << endl;
-//     system("pause");
 }
 
 
@@ -186,7 +176,7 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
     #endif
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+//    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
@@ -195,9 +185,9 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    const Index instances_number = data_set_pointer->get_training_instances_number();
+    const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
-    const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+    const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_instances_number));
 
     errors.device(*thread_pool_device) = ((outputs - targets).sum(rows_sum).square()).sqrt();
 
@@ -209,7 +199,7 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
 // Hessian approximation
 
-void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -217,9 +207,9 @@ void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch&, Lo
 
      #endif
 
-     const Index instances_number = data_set_pointer->get_training_instances_number();
+     const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
-     const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
+     const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_instances_number));
 
      second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 
