@@ -416,9 +416,9 @@ void LossIndex::check() const
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
-                                                          const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                          const BackPropagation& back_propagation,
-                                                          SecondOrderLoss& second_order_loss) const
+                                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                               const BackPropagation& back_propagation,
+                                               SecondOrderLoss& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -476,7 +476,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
-    layer_error_Jacobian.setConstant(1);
+    layer_error_Jacobian.setConstant(0);
 
     Index parameter;
 
@@ -545,17 +545,17 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 {
     // First Order
 
-    calculate_error(batch, forward_propagation, back_propagation);
+//    calculate_error(batch, forward_propagation, back_propagation);
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
+//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+//    const Tensor<type, 2>& targets = batch.targets_2d;
 
-    Tensor<type, 1> error_terms(outputs.dimension(0));
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+//    Tensor<type, 1> error_terms(outputs.dimension(0));
+//    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+//    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
 
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
@@ -564,7 +564,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     // Second Order
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-cout << "1 " << endl;
+
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
     calculate_error_gradient(batch,forward_propagation,back_propagation);
@@ -938,7 +938,7 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex:: calculate_training_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
+Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
 {
     const Index instances_number = data_set_pointer->get_training_instances_number();
 

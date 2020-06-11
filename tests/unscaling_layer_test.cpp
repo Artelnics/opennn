@@ -491,12 +491,12 @@ void UnscalingLayerTest::test_set_descriptives_eigen()
    Tensor<type, 2> descriptives_eigen(1,4);
 
    ul.set_descriptives_eigen(descriptives_eigen);
-/*
+
    assert_true(abs(ul.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(ul.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(ul.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
    assert_true(abs(ul.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
-*/
+
    // Test 1
 
    ScalingLayer sl_(2);
@@ -1114,7 +1114,7 @@ void UnscalingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

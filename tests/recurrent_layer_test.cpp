@@ -302,10 +302,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activation_derivative\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    NumericalDifferentiation numerical_differentiation;
 
 
@@ -459,12 +455,6 @@ void RecurrentLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-
-
    RecurrentLayer recurrent_layer;
    Tensor<type, 2> inputs;
 
@@ -556,7 +546,7 @@ void RecurrentLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

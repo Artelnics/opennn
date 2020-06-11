@@ -182,7 +182,7 @@ void CorrelationsTest::test_logistic_correlation()
 
 //    correlation = logistic_correlation(x.to_column_matrix(), y);
 
-////    assert_true(abs(correlation - 0.0) < numeric_limits<type>::min(), LOG);
+//    assert_true(abs(correlation - 0.0) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -953,7 +953,7 @@ void CorrelationsTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C); 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C); 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

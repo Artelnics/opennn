@@ -74,13 +74,9 @@ void MinkowskiErrorTest::test_set_Minkowski_parameter()
 }
 
 */
-void MinkowskiErrorTest::test_calculate_training_error()
+void MinkowskiErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+   cout << "test_calculate_error\n";
 
    NeuralNetwork neural_network;
 
@@ -143,9 +139,9 @@ void MinkowskiErrorTest::test_calculate_selection_error()
 }
 
 */
-void MinkowskiErrorTest::test_calculate_training_error_gradient()
+void MinkowskiErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 
 
 
@@ -176,10 +172,6 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    // Test perceptron and probabilistic
 {
-
-       const int n = omp_get_max_threads();
-       NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-       ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    instances_number = 2;
    inputs_number = 1;
@@ -228,7 +220,7 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    error_gradient = training_back_propagation.gradient;
 
    cout << "Before numerical differentiation" << endl;
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation(&me);
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation(&me);
    cout << "After numerical differentiation" << endl;
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
@@ -257,9 +249,9 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_constant(0.0);
 
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = me.calculate_training_error_gradient();
+   error_gradient = me.calculate_error_gradient();
 
    assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
    assert_true(error_gradient == 0.0, LOG);
@@ -290,9 +282,9 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = me.calculate_training_error_gradient();
+   error_gradient = me.calculate_error_gradient();
 
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -320,9 +312,9 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = me.calculate_training_error_gradient();
+   error_gradient = me.calculate_error_gradient();
 
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -350,9 +342,9 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = me.calculate_training_error_gradient();
+   error_gradient = me.calculate_error_gradient();
 
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -422,9 +414,9 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   numerical_error_gradient = me.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = me.calculate_training_error_gradient();
+   error_gradient = me.calculate_error_gradient();
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
@@ -497,11 +489,11 @@ void MinkowskiErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 
    test_calculate_selection_error();
 */
-   test_calculate_training_error_gradient();
+   test_calculate_error_gradient();
 /*
    // Serialization methods
 
@@ -513,7 +505,7 @@ void MinkowskiErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
