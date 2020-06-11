@@ -21,20 +21,23 @@ CorrelationsTest::~CorrelationsTest()
 void CorrelationsTest::test_linear_correlation()
 {
     cout << "test_calculate_linear_correlation\n";
-/*
+
     // Perfect case
 
-    const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    const Tensor<type, 1> vector2;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-
+    Tensor<type, 1> vector1(10);
+    vector1.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+     Tensor<type, 1> vector2(10);
+    vector2.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+/*
     const type solution = 1;
 
     assert_true(linear_correlation(vector1, vector2) - solution <= static_cast<type>(0.000001), LOG);
-
-    const Tensor<type, 1> vector3;//({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
-
+*/
+    Tensor<type, 1> vector3(10);
+    vector3.setValues({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
+/*
     assert_true(linear_correlation(vector1, vector3) + solution <= static_cast<type>(0.000001), LOG);
-
+*/
     // General case
 
     Index size = 100;
@@ -43,7 +46,7 @@ void CorrelationsTest::test_linear_correlation()
     Tensor<type, 1> y(size);
 
     type correlation;
-
+/*
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     correlation = linear_correlation(x,y);
@@ -64,7 +67,7 @@ void CorrelationsTest::test_linear_correlation()
 void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_calculate_spearman_linear_correlation\n";
-/*
+
     Index size = 100;
     Tensor<type, 1> x(size);
 //    x.initialize_sequential();
@@ -73,7 +76,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     type correlation;
-
+/*
     correlation = rank_linear_correlation(x,y);
 
     assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
@@ -122,14 +125,14 @@ void CorrelationsTest::test_linear_correlation_missing_values()
 void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_calculate_rank_linear_correlation()\n";
-/*
+
     Index size = 10;
     Tensor<type, 1> x(size);
 //    x.initialize_sequential();
     Tensor<type, 1> y(size);
 
     type correlation;
-
+/*
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
     correlation = rank_linear_correlation(x,y);
