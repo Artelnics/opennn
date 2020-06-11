@@ -42,13 +42,12 @@ ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimens
 /// Returns a boolean, true if convolutional layer is empty and false otherwise.
 
 bool ConvolutionalLayer::is_empty() const
-{
-    /*
-        if(biases.empty() && synaptic_weights.empty())
-        {
-            return true;
-        }
-    */
+{   
+    if(biases.size() == 0 && synaptic_weights.size() == 0)
+    {
+        return true;
+    }
+
     return false;
 }
 

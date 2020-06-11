@@ -248,13 +248,12 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
     TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_statistics();
-/*
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
-*/
+
+//    assert_true(error_data.size() == 1, LOG);
+//    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
 
 void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
@@ -295,9 +294,10 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
     TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_statistics();
-/*
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);*/
+
+//    assert_true(error_data.size() == 1, LOG);
+//    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
+
 }
 
 void TestingAnalysisTest::test_calculate_error_data_statistics()
@@ -338,18 +338,18 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
     TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //    Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = testing_analysis.calculate_error_data_statistics();
-/*
-    assert_true(error_data_statistics.size() == 1, LOG);
-    assert_true(error_data_statistics[0].size() == 3, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].standard_deviation) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0, LOG);
-*/
+
+//    assert_true(error_data_statistics.size() == 1, LOG);
+//    assert_true(error_data_statistics[0].size() == 3, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][0].minimum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][0].maximum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][0].mean) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][0].standard_deviation) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][2].minimum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][2].mean) == 0.0, LOG);
+//    assert_true(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0, LOG);
+
 }
 
 
@@ -529,7 +529,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
-/*
+
    // Device
 
    const int n = omp_get_max_threads();
@@ -561,13 +561,13 @@ void TestingAnalysisTest::test_linear_regression()
 
    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-   Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
+//   Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
 
-   assert_true(linear_regression.size() == 1, LOG);
-   assert_true(static_cast<double>(linear_regression(0).a) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_regression(0).b) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_regression(0).correlation) == 1.0, LOG);
-*/
+//   assert_true(linear_regression.size() == 1, LOG);
+//   assert_true(static_cast<double>(linear_regression(0).a) == 0.0, LOG);
+//   assert_true(static_cast<double>(linear_regression(0).b) == 0.0, LOG);
+//   assert_true(static_cast<double>(linear_regression(0).correlation) == 1.0, LOG);
+
 }
 
 
