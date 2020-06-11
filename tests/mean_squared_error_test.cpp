@@ -55,9 +55,9 @@ void MeanSquaredErrorTest::test_destructor()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_training_error()
+void MeanSquaredErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
+   cout << "test_calculate_error\n";
 
    Tensor<type, 1> parameters;
 
@@ -334,36 +334,9 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 }
 
 
-
-void MeanSquaredErrorTest::test_calculate_selection_error()
+void MeanSquaredErrorTest::test_calculate_error_terms()
 {
-   cout << "test_calculate_selection_error\n";
-
-   Tensor<Index, 1> arquitecture(3);
-   arquitecture.setValues({1,1,1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-
-   neural_network.set_parameters_constant(0.0);
-
-   DataSet data_set(1, 1, 1);
-
-   data_set.set_selection();
-
-   data_set.initialize_data(0.0);
-
-   MeanSquaredError mean_squared_error(&neural_network, &data_set);
-
-//   type selection_error = mean_squared_error.calculate_selection_error();
-
-//   assert_true(selection_error == 0.0, LOG);
-
-}
-
-
-void MeanSquaredErrorTest::test_calculate_training_error_terms()
-{
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> hidden_layers_size;
@@ -404,9 +377,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
+void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -611,17 +584,14 @@ void MeanSquaredErrorTest::run_test_case()
 
    // Error methods
 
-//   test_calculate_training_error();
+//   test_calculate_error();
 
    test_calculate_error_gradient();
 
-
-   test_calculate_selection_error();
-
    // Error terms methods
 
-//   test_calculate_training_error_terms();
-//   test_calculate_training_error_terms_Jacobian();
+//   test_calculate_error_terms();
+//   test_calculate_error_terms_Jacobian();
 
    // Serialization methods
 
@@ -633,7 +603,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lemser General Public

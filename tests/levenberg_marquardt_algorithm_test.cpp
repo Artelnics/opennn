@@ -138,6 +138,8 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
    NeuralNetwork neural_network;
 
+   Tensor<Index, 1> architecture;
+
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
    Tensor<type, 1> terms;
@@ -158,8 +160,10 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    Tensor<type, 2> inputs = data_set.get_training_input_data();
    Tensor<type, 2> targets = data_set.get_training_target_data();
 
-//   neural_network.set(NeuralNetwork::Approximation, {1, 1});
-//   neural_network.set_parameters_random();
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
 
    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
@@ -183,7 +187,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    data_set.set(1, 1, 2);
    data_set.set_data_random();
 
-//   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
 //   terms = sum_squared_error.calculate_training_error_terms();
@@ -196,7 +202,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
    // Test
 
-//   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_random();
 
@@ -220,6 +228,8 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
    NeuralNetwork neural_network;
 
    Index parameters_number;
+
+   Tensor<Index, 1> architecture;
 
    Tensor<type, 1> parameters;
 
@@ -276,7 +286,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
    data_set.set_data_random();
 
-//   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    parameters = neural_network.get_parameters();
 
@@ -561,7 +573,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

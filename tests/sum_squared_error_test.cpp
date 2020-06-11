@@ -68,13 +68,9 @@ void SumSquaredErrorTest::test_destructor()
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error()
+void SumSquaredErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+   cout << "test_calculate_error\n";
 
    NeuralNetwork neural_network;
 
@@ -243,10 +239,6 @@ void SumSquaredErrorTest::test_calculate_training_error()
 void SumSquaredErrorTest::test_calculate_output_gradient()
 {
    cout << "test_calculate_output_gradient\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    NeuralNetwork neural_network;
 
@@ -721,15 +713,15 @@ void SumSquaredErrorTest::test_calculate_error_gradient()
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms()
+void SumSquaredErrorTest::test_calculate_error_terms()
 {
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
+void SumSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {   
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -999,7 +991,7 @@ void SumSquaredErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 
    test_calculate_output_gradient();
 
@@ -1007,9 +999,9 @@ void SumSquaredErrorTest::run_test_case()
 /*
    // Error terms methods
 
-//   test_calculate_training_error_terms();
+//   test_calculate_error_terms();
 
-//   test_calculate_training_error_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 
    //Serialization methods
 
@@ -1022,7 +1014,7 @@ void SumSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
