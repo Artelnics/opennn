@@ -141,7 +141,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 
    normalized_squared_error.set_normalization_coefficient();
 
-   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-03, LOG);
+   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 }
 */
 

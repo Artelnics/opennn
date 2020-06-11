@@ -74,8 +74,8 @@ public:
 
    // Error terms methods
 
-   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
+//   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+//   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    // Gradient methods
 
