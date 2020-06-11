@@ -3,13 +3,13 @@
       <InverseHessianApproximationMethod>BFGS</InverseHessianApproximationMethod>
       <LearningRateAlgorithm>
          <LearningRateMethod>BrentMethod</LearningRateMethod>
-         <LossTolerance>0.001</LossTolerance>
+         <LearningRateTolerance>0.001</LearningRateTolerance>
       </LearningRateAlgorithm>
       <ReturnMinimumSelectionErrorNN>0</ReturnMinimumSelectionErrorNN>
       <ApplyEarlyStopping>0</ApplyEarlyStopping>
       <MinimumParametersIncrementNorm>0</MinimumParametersIncrementNorm>
       <MinimumLossDecrease>0</MinimumLossDecrease>
-      <LossGoal>-1.79769e+308</LossGoal>
+      <LossGoal>0</LossGoal>
       <GradientNormGoal>0</GradientNormGoal>
       <MaximumSelectionErrorIncreases>1000000</MaximumSelectionErrorIncreases>
       <MaximumEpochsNumber>1000</MaximumEpochsNumber>

@@ -614,7 +614,7 @@ void MeanSquaredErrorTest::run_test_case()
 //   test_calculate_training_error();
 
    test_calculate_error_gradient();
-/*
+
 
    test_calculate_selection_error();
 
@@ -627,7 +627,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 //   test_to_XML();
 //   test_from_XML();
-*/
+
    cout << "End of mean squared error test case.\n";
 }
 
