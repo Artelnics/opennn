@@ -48,16 +48,16 @@ public:
 
    // Error methods
 
-   void test_calculate_training_error();
-   void test_calculate_selection_error();
+   void test_calculate_error();
+   
 
-   void test_calculate_training_error_gradient();
+   void test_calculate_error_gradient();
 
    // Error terms methods 
 
-   void test_calculate_training_error_terms();
+   void test_calculate_error_terms();
 
-   void test_calculate_training_error_terms_Jacobian();
+   void test_calculate_error_terms_Jacobian();
 
    // Serialization methods
 
@@ -75,7 +75,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -68,13 +68,9 @@ void SumSquaredErrorTest::test_destructor()
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error()
+void SumSquaredErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+   cout << "test_calculate_error\n";
 
    NeuralNetwork neural_network;
 
@@ -103,7 +99,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+   // Neural network
 
    Index inputs_number = 2;
    Index target_number = 2;
@@ -140,7 +136,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    batch_1.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set_parameters_constant(0.0);
 
@@ -170,7 +166,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    batch_2.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -219,7 +215,7 @@ void SumSquaredErrorTest::test_calculate_training_error()
 
    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -243,10 +239,6 @@ void SumSquaredErrorTest::test_calculate_training_error()
 void SumSquaredErrorTest::test_calculate_output_gradient()
 {
    cout << "test_calculate_output_gradient\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    NeuralNetwork neural_network;
 
@@ -275,7 +267,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Index inputs_number = 2;
    Index target_number = 2;
@@ -313,7 +305,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch_1.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Tensor<type, 1> numerical_gradient;
 
@@ -327,7 +319,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    sum_squared_error.calculate_output_gradient(batch_1, forward_propagation_1, training_back_propagation_1);
 
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 
    assert_true(abs(training_back_propagation_1.output_gradient(0)-numerical_gradient(4)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_1.output_gradient(1)-numerical_gradient(5)) < static_cast<type>(1e-3), LOG);
@@ -356,7 +348,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch_2.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -378,7 +370,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2, training_back_propagation_2);
 /*
    numerical_gradient.resize(neural_network.get_parameters_number());
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 */
    assert_true(abs(training_back_propagation_2.output_gradient(0,1) + static_cast<type>(4.476)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2.output_gradient(1,0) + static_cast<type>(1.523)) < static_cast<type>(1e-3), LOG);
@@ -386,7 +378,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    // Test 2_2 / Recurrent
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -408,7 +400,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2_2, training_back_propagation_2_2);
 /*
    numerical_gradient.resize(neural_network.get_parameters_number());
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 */
    assert_true(abs(training_back_propagation_2_2.output_gradient(0,1) + 6) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2_2.output_gradient(1,0) + 0) < static_cast<type>(1e-3), LOG);
@@ -450,7 +442,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Tensor<Index, 1>architecture(2);
    architecture.setValues({inputs_number,target_number});
@@ -522,9 +514,9 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
 }
 */
 /*
-void SumSquaredErrorTest::test_calculate_training_error_gradient()
+void SumSquaredErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 
    DataSet data_set;
    NeuralNetwork neural_network;
@@ -571,9 +563,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -610,9 +602,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -640,9 +632,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     neural_network.add_layer(output_perceptron_layer);
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -712,24 +704,24 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-   gradient = sum_squared_error.calculate_training_error_gradient();
+   gradient = sum_squared_error.calculate_error_gradient();
 
    assert_true(absolute_value(numerical_gradient - gradient) < 1e-3, LOG);
 }
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms()
+void SumSquaredErrorTest::test_calculate_error_terms()
 {
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
+void SumSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {   
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -870,31 +862,6 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
 }
 
-void SumSquaredErrorTest::test_calculate_selection_error()
-{
-   cout << "test_calculate_selection_error\n";
-
-//   NeuralNetwork neural_network;
-//   DataSet data_set;
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//   type selection_error;
-
-   // Test
-
-//   nn.set();
-
-//   nn.construct_multilayer_perceptron();
-
-//   data_set.set();
-
-//   Tensor<Index, 1> indices;
-
-//   selection_error = sum_squared_error.calculate_indices_error(indices);
-   
-//   assert_true(selection_error == 0.0, LOG);
-}
-
 
 void SumSquaredErrorTest::test_calculate_squared_errors()
 {
@@ -937,7 +904,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
 //   squared_errors = sum_squared_error.calculate_squared_errors();
 
-//   error = sum_squared_error.calculate_training_error();
+//   error = sum_squared_error.calculate_error();
 
 //   assert_true(abs(squared_errors.sum() - error) < 1.0e-12, LOG);
 }
@@ -999,7 +966,7 @@ void SumSquaredErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 
    test_calculate_output_gradient();
 
@@ -1007,9 +974,9 @@ void SumSquaredErrorTest::run_test_case()
 /*
    // Error terms methods
 
-//   test_calculate_training_error_terms();
+//   test_calculate_error_terms();
 
-//   test_calculate_training_error_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 
    //Serialization methods
 
@@ -1022,7 +989,7 @@ void SumSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

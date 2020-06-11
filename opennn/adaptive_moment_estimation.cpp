@@ -1295,13 +1295,9 @@ void AdaptiveMomentEstimation::set_batch_instances_number(const Index& new_batch
 }
 
 
-
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
-
-
-
     const type learning_rate =
             initial_learning_rate*
             sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/

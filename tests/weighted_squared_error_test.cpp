@@ -18,7 +18,7 @@ WeightedSquaredErrorTest::~WeightedSquaredErrorTest()
 {
 }
 
-/*
+
 void WeightedSquaredErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -54,13 +54,16 @@ void WeightedSquaredErrorTest::test_destructor()
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_training_error()
+void WeightedSquaredErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
+   cout << "test_calculate_error\n";
 
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   Tensor<Index, 1> architecture;
+   architecture.setValues({1, 1, 1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
@@ -68,7 +71,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    WeightedSquaredError wse(&neural_network, &data_set);
 
-   assert_true(wse.calculate_training_error() == 0.0, LOG);
+//   assert_true(wse.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -81,7 +84,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    data_set.generate_data_binary_classification(instances_number, inputs_number);
    data_set.set_training();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+   architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
 //   nn.set_layer_activation_function(0, PerceptronLayer::Logistic);
@@ -92,11 +97,13 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    wse.set_negatives_weight(1.0);
    wse.set_positives_weight(2.0);
 
-   assert_true(abs(wse.calculate_training_error() - wse.calculate_training_error(parameters)) < 1.0e-3, LOG);
+//   assert_true(abs(wse.calculate_error() - wse.calculate_training_error(parameters)) < 1.0e-3, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -105,11 +112,13 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
    data_set.generate_data_binary_classification(2, 1);
    data_set.set_training();
 
-   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
+//   assert_true(wse.calculate_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, Tensor<Index, 1>({3, 1}));
+   architecture.setValues({3, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    data_set.set(2, 3, 1);
    data_set.generate_data_binary_classification(2, 3);
@@ -119,11 +128,13 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    parameters = neural_network.get_parameters();
 
-   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
+//   assert_true(wse.calculate_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {3, 1});
+   architecture.setValues({3, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -136,7 +147,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {3, 1});
+   architecture.setValues({3, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -149,9 +162,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error()
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
+void WeightedSquaredErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 
    NeuralNetwork neural_network;
 
@@ -193,12 +206,12 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_constant(0.0);
 
-   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = wse.calculate_training_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
    assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-   assert_true(error_gradient == 0.0, LOG);
+//   assert_true(error_gradient == 0.0, LOG);
 }
 
    neural_network.set();
@@ -216,25 +229,26 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    inputs.setRandom();
 
-   Tensor<type, 1> outputs(instances_number, outputs_number);
-   outputs[0] = 1.0;
-   outputs[1] = 0.0;
+
+//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-        {
-            outputs[i] = 0.0;
-        }
-        else
-        {
-            outputs[i] = 1.0;
-        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
    }
 
-   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-   data_set.set_data(data);
+//   data_set.set_data(data);
 
    data_set.set_training();
 
@@ -248,11 +262,11 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = wse.calculate_training_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
    neural_network.set();
@@ -270,25 +284,25 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    inputs.setRandom();
 
-   Tensor<type, 1> outputs(instances_number, outputs_number);
-   outputs[0] = 1.0;
-   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-        {
-            outputs[i] = 0.0;
-        }
-        else
-        {
-            outputs[i] = 1.0;
-        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
    }
 
-   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-   data_set.set_data(data);
+//   data_set.set_data(data);
 
    data_set.set_training();
 
@@ -300,11 +314,11 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = wse.calculate_training_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
    neural_network.set();
@@ -322,25 +336,25 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    inputs.setRandom();
 
-   Tensor<type, 1> outputs(instances_number, outputs_number);
-   outputs[0] = 1.0;
-   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-        {
-            outputs[i] = 0.0;
-        }
-        else
-        {
-            outputs[i] = 1.0;
-        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
    }
 
-   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-   data_set.set_data(data);
+//   data_set.set_data(data);
 
    data_set.set_training();
 
@@ -352,11 +366,11 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = wse.calculate_training_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
    // Test convolutional
@@ -370,115 +384,94 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    Tensor<type, 2> inputs(instances_number,inputs_number);
    inputs.setRandom();
 
-   Tensor<type, 1> outputs(instances_number, outputs_number);
-   outputs[0] = 1.0;
-   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
+
    for(Index i = 2; i < instances_number; i++)
    {
-        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-        {
-            outputs[i] = 0.0;
-        }
-        else
-        {
-            outputs[i] = 1.0;
-        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
    }
-   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-   data_set.set_data(data);
-   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
-   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
-   data_set.set_training();
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
+
+//   data_set.set_data(data);
+//   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+//   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
+//   data_set.set_training();
 
    const type parameters_minimum = -100.0;
    const type parameters_maximum = 100.0;
 
-   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<type, 2> filters_1({2,3,2,2}, 0);
-   filters_1.setRandom(parameters_minimum,parameters_maximum);
-   convolutional_layer_1->set_synaptic_weights(filters_1);
-   Tensor<type, 1> biases_1(2, 0);
-   biases_1.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_1->set_biases(biases_1);
+//   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
+//   Tensor<type, 2> filters_1({2,3,2,2}, 0);
+//   filters_1.setRandom(parameters_minimum,parameters_maximum);
+//   convolutional_layer_1->set_synaptic_weights(filters_1);
+//   Tensor<type, 1> biases_1(2, 0);
+//   biases_1.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_1->set_biases(biases_1);
 
-   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-   filters_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_synaptic_weights(filters_2);
-   Tensor<type, 1> biases_2(2, 0);
-   biases_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_biases(biases_2);
+//   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
+//   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_2({2,2,2,2}, 0);
+//   filters_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_synaptic_weights(filters_2);
+//   Tensor<type, 1> biases_2(2, 0);
+//   biases_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_biases(biases_2);
 
-   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+//   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
 
-   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-   filters_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_synaptic_weights(filters_3);
-   Tensor<type, 1> biases_3(1, 0);
-   biases_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_biases(biases_3);
+//   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
+//   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_3({1,2,2,2}, 0);
+//   filters_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_synaptic_weights(filters_3);
+//   Tensor<type, 1> biases_3(1, 0);
+//   biases_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_biases(biases_3);
 
-   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
+//   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
 
-   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
+//   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
-   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+//   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+//   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-   neural_network.set();
-   neural_network.add_layer(convolutional_layer_1);
-   neural_network.add_layer(convolutional_layer_2);
-   neural_network.add_layer(pooling_layer_1);
-   neural_network.add_layer(convolutional_layer_3);
-   neural_network.add_layer(pooling_layer_2);
-   neural_network.add_layer(pooling_layer_3);
-   neural_network.add_layer(perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
+//   neural_network.set();
+//   neural_network.add_layer(convolutional_layer_1);
+//   neural_network.add_layer(convolutional_layer_2);
+//   neural_network.add_layer(pooling_layer_1);
+//   neural_network.add_layer(convolutional_layer_3);
+//   neural_network.add_layer(pooling_layer_2);
+//   neural_network.add_layer(pooling_layer_3);
+//   neural_network.add_layer(perceptron_layer);
+//   neural_network.add_layer(probabilistic_layer);
 
-   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = wse.calculate_training_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
+//   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_selection_error()
+void WeightedSquaredErrorTest::test_calculate_error_terms()
 {
-   cout << "test_calculate_selection_error\n";
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
-
-   neural_network.set_parameters_constant(0.0);
-
-   DataSet data_set(1, 1, 1);
-
-   data_set.set_selection();
-
-   data_set.initialize_data(0.0);
-
-   WeightedSquaredError wse(&neural_network, &data_set);
-
-   type selection_error = wse.calculate_selection_error();
-
-   assert_true(selection_error == 0.0, LOG);
-
-}
-
-
-void WeightedSquaredErrorTest::test_calculate_training_error_terms()
-{
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> hidden_layers_size;
@@ -494,37 +487,42 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 1});
+   Tensor<Index, 1> architecture;
+   architecture.setValues({2, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    data_set.set(3, 2, 2);
    data_set.generate_data_binary_classification(3, 2);
 
-   error = wse.calculate_training_error();
+//   error = wse.calculate_error();
 
 //   error_terms = wse.calculate_training_error_terms();
 
-   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
+//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {3, 1});
+   architecture.setValues({3, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    data_set.set(9, 3, 1);
    data_set.generate_data_binary_classification(9, 3);
 
-   error = wse.calculate_training_error();
+//   error = wse.calculate_error();
 
 //   error_terms = wse.calculate_training_error_terms();
 
-   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
+//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
+void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -544,7 +542,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -560,7 +560,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
+   architecture.setValues({3, 4, 2});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 2, 5);
@@ -595,7 +597,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   architecture.setValues({1, 1, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
@@ -609,7 +613,9 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2, 1});
+   architecture.setValues({2, 2, 1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
@@ -619,7 +625,7 @@ void WeightedSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 //   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_training_error_terms, parameters);
 
-   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
    // Test
 
@@ -651,12 +657,12 @@ void WeightedSquaredErrorTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 }
-*/
+
 
 void WeightedSquaredErrorTest::run_test_case()
 {
    cout << "Running weighted squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
 //   test_constructor();
@@ -670,15 +676,13 @@ void WeightedSquaredErrorTest::run_test_case()
 
 //   test_calculate_training_loss();
 
-//   test_calculate_selection_error();
-
-   test_calculate_training_error_gradient();
+   test_calculate_error_gradient();
 
    // Error terms methods
 
-//   test_calculate_training_error_terms();
+//   test_calculate_error_terms();
 
-//   test_calculate_training_error_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 
    // Loss hessian methods
 
@@ -686,13 +690,13 @@ void WeightedSquaredErrorTest::run_test_case()
 
 //   test_to_XML();
 //   test_from_XML();
-*/
+
    cout << "End of weighted squared error test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lewser General Public
