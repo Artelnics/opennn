@@ -122,7 +122,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void)
 
    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
-//   assert_true(normalized_squared_error.calculate_training_error() == 0.0, LOG);
+//   assert_true(normalized_squared_error.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -143,7 +143,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void)
 
    normalized_squared_error.set_normalization_coefficient();
 
-//   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
+//   assert_true(abs(normalized_squared_error.calculate_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 }
 
 
@@ -517,7 +517,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void)
 
    nse.set_normalization_coefficient();
 
-//   error = nse.calculate_training_error();
+//   error = nse.calculate_error();
 
 //   error_terms = nse.calculate_training_error_terms();
 

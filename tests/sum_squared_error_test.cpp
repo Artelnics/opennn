@@ -99,7 +99,7 @@ void SumSquaredErrorTest::test_calculate_error()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+   // Neural network
 
    Index inputs_number = 2;
    Index target_number = 2;
@@ -136,7 +136,7 @@ void SumSquaredErrorTest::test_calculate_error()
 
    batch_1.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set_parameters_constant(0.0);
 
@@ -166,7 +166,7 @@ void SumSquaredErrorTest::test_calculate_error()
 
    batch_2.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -215,7 +215,7 @@ void SumSquaredErrorTest::test_calculate_error()
 
    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -267,7 +267,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Index inputs_number = 2;
    Index target_number = 2;
@@ -305,7 +305,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch_1.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Tensor<type, 1> numerical_gradient;
 
@@ -348,7 +348,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    batch_2.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -378,7 +378,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    // Test 2_2 / Recurrent
 
-        //Neural network
+        // Neural network
 
    neural_network.set();
 
@@ -442,7 +442,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-        //Neural network
+        // Neural network
 
    Tensor<Index, 1>architecture(2);
    architecture.setValues({inputs_number,target_number});
@@ -862,31 +862,6 @@ void SumSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 }
 
-void SumSquaredErrorTest::test_calculate_selection_error()
-{
-   cout << "test_calculate_selection_error\n";
-
-//   NeuralNetwork neural_network;
-//   DataSet data_set;
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//   type selection_error;
-
-   // Test
-
-//   nn.set();
-
-//   nn.construct_multilayer_perceptron();
-
-//   data_set.set();
-
-//   Tensor<Index, 1> indices;
-
-//   selection_error = sum_squared_error.calculate_indices_error(indices);
-   
-//   assert_true(selection_error == 0.0, LOG);
-}
-
 
 void SumSquaredErrorTest::test_calculate_squared_errors()
 {
@@ -929,7 +904,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
 //   squared_errors = sum_squared_error.calculate_squared_errors();
 
-//   error = sum_squared_error.calculate_training_error();
+//   error = sum_squared_error.calculate_error();
 
 //   assert_true(abs(squared_errors.sum() - error) < 1.0e-12, LOG);
 }

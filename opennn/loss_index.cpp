@@ -416,9 +416,9 @@ void LossIndex::check() const
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
-                                                          const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                          const BackPropagation& back_propagation,
-                                                          SecondOrderLoss& second_order_loss) const
+                                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                               const BackPropagation& back_propagation,
+                                               SecondOrderLoss& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
