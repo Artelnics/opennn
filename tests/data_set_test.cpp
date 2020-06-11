@@ -17,7 +17,7 @@ DataSetTest::~DataSetTest()
 {
 }
 
-/*
+
 void DataSetTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -47,7 +47,7 @@ void DataSetTest::test_constructor()
    // XML constructor
 
    tinyxml2::XMLDocument* document = ds3.to_XML();
-
+/*
    DataSet ds4(*document);
 
    assert_true(ds4.get_variables_number() == 2, LOG);
@@ -68,6 +68,7 @@ void DataSetTest::test_constructor()
 
    assert_true(ds6.get_variables_number() == 0, LOG);
    assert_true(ds6.get_instances_number() == 0, LOG);
+   */
 }
 
 
@@ -80,7 +81,7 @@ void DataSetTest::test_destructor()
    delete dsp;
 }
 
-/*
+
 void DataSetTest::test_assignment_operator()
 {
    cout << "test_assignment_operator\n";
@@ -92,8 +93,8 @@ void DataSetTest::test_assignment_operator()
    assert_true(ds2.get_variables_number() == 2, LOG);
 }
 
-
-void DataSetTest::test_get_instances_number() 
+/*
+void DataSetTest::test_get_instances_number()
 {
    cout << "test_get_instances_number\n";
 
@@ -101,8 +102,8 @@ void DataSetTest::test_get_instances_number()
 
    assert_true(data_set.get_instances_number() == 0, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_variables_number() 
 {
    cout << "test_get_variables_number\n";
@@ -111,8 +112,8 @@ void DataSetTest::test_get_variables_number()
 
    assert_true(data_set.get_variables_number() == 0, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_variables() 
 {
    cout << "test_get_variables\n";
@@ -122,8 +123,8 @@ void DataSetTest::test_get_variables()
    assert_true(data_set.get_input_variables_number() == 3, LOG);
    assert_true(data_set.get_target_variables_number() == 2, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_display() 
 {
    cout << "test_get_display\n";
@@ -138,8 +139,8 @@ void DataSetTest::test_get_display()
 
    assert_true(data_set.get_display() == false, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_data() 
 {
    cout << "test_get_data\n";
@@ -154,8 +155,8 @@ void DataSetTest::test_get_data()
    assert_true(data.dimension(1) == 2, LOG);
 //   assert_true(data == 0.0, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_training_data()
 {
    cout << "test_get_training_data\n";
@@ -176,8 +177,8 @@ void DataSetTest::test_get_training_data()
    Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(training_data == solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_selection_data()
 {
    cout << "test_get_selection_data\n";
@@ -198,8 +199,8 @@ void DataSetTest::test_get_selection_data()
    Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(selection_data == solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_testing_data()
 {
    cout << "test_get_testing_data\n";
@@ -220,8 +221,8 @@ void DataSetTest::test_get_testing_data()
    Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
    assert_true(testing_data == solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_inputs() 
 {
    cout << "test_get_inputs\n";
@@ -239,8 +240,8 @@ void DataSetTest::test_get_inputs()
    assert_true(instances_number == rows_number, LOG);
    assert_true(inputs_number == columns_number, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_targets()
 {
    cout << "test_get_targets\n";
@@ -258,8 +259,8 @@ void DataSetTest::test_get_targets()
    assert_true(instances_number == rows_number, LOG);
    assert_true(targets_number == columns_number, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_get_instance()
 {
    cout << "test_get_instance\n";
@@ -288,8 +289,8 @@ void DataSetTest::test_get_instance()
 
    assert_true(instance_0 == instance_1, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_set() 
 {
    cout << "test_set\n";
@@ -311,8 +312,8 @@ void DataSetTest::test_set()
    assert_true(data.dimension(0) == 1, LOG);
    assert_true(data.dimension(1) == 5, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_set_instances_number() 
 {
    cout << "test_set_instances_number\n";
@@ -323,8 +324,8 @@ void DataSetTest::test_set_instances_number()
 
    assert_true(data_set.get_instances_number() == 2, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_set_variables_number() 
 {
    cout << "test_set_variables_number\n";
@@ -335,14 +336,14 @@ void DataSetTest::test_set_variables_number()
 
    assert_true(data_set.get_variables_number() == 2, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_set_display() 
 {
    cout << "test_set_display\n";
 }
-
-
+*/
+/*
 void DataSetTest::test_set_data() 
 {
    cout << "test_set_data\n";
@@ -357,8 +358,8 @@ void DataSetTest::test_set_data()
 
    assert_true(data == new_data, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_set_instance()
 {
    cout << "test_set_instance\n";
@@ -373,8 +374,8 @@ void DataSetTest::test_set_instance()
 
    assert_true(instance == new_instance, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_data_descriptives() 
 {
    cout << "test_calculate_data_descriptives\n";
@@ -429,8 +430,8 @@ void DataSetTest::test_calculate_data_descriptives()
    assert_true(descriptives[3].standard_deviation == 0.0, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_data_descriptives_missing_values()
 {
     cout << "test_calculate_data_descriptives_missing_values\n";
@@ -464,8 +465,8 @@ void DataSetTest::test_calculate_data_descriptives_missing_values()
     assert_true(abs(data_set.calculate_columns_descriptives_matrix()(1, 0) - 4.0) < 1.0e-4, LOG);
     assert_true(abs(data_set.calculate_columns_descriptives_matrix()(2, 0) - 0.0) < 1.0e-4, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_training_instances_descriptives()
 {
    cout << "test_calculate_training_instances_descriptives\n";
@@ -483,8 +484,8 @@ void DataSetTest::test_calculate_training_instances_descriptives()
 
    data_set.calculate_columns_descriptives_training_instances();
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_selection_instances_descriptives()
 {
    cout << "test_calculate_selection_instances_descriptives\n";
@@ -502,8 +503,8 @@ void DataSetTest::test_calculate_selection_instances_descriptives()
 
    selection_instances_descriptives = data_set.calculate_columns_descriptives_selection_instances();
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_testing_instances_descriptives()
 {
    cout << "test_calculate_testing_instances_descriptives\n";
@@ -522,8 +523,8 @@ void DataSetTest::test_calculate_testing_instances_descriptives()
 
    testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_inputs_descriptives()
 {
    cout << "test_calculate_inputs_descriptives\n";
@@ -549,8 +550,8 @@ void DataSetTest::test_calculate_inputs_descriptives()
    assert_true(descriptives_1.minimum == 1.0, LOG);
    assert_true(descriptives_1.maximum == 3.0, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_autocorrelations()
 {
     cout << "test_calculate_autocorrelations\n";
@@ -568,8 +569,8 @@ void DataSetTest::test_calculate_autocorrelations()
     assert_true(autocorrelations.dimension(1) == 10, LOG);
     assert_true(autocorrelations.dimension(0) == 2, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_cross_correlations()
 {
     cout << "test_calculate_cross_correlations";
@@ -587,8 +588,8 @@ void DataSetTest::test_calculate_cross_correlations()
     assert_true(cross_correlations.dimension(1) == 6, LOG);
     assert_true(cross_correlations.dimension(0) == 6, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_data_histograms()
 {
    cout << "test_calculate_data_histograms\n";
@@ -621,8 +622,8 @@ void DataSetTest::test_calculate_data_histograms()
    assert_true(histograms[1].centers == centers, LOG);
    assert_true(histograms[2].centers == centers, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_filter_data()
 {
    cout << "test_filter_data\n";
@@ -649,8 +650,8 @@ void DataSetTest::test_filter_data()
    assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
    assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_inputs_mean_standard_deviation() 
 {
    cout << "test_scale_inputs_mean_standard_deviation\n";
@@ -670,8 +671,8 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
 
    assert_true(inputs_descriptives[0].has_mean_zero_standard_deviation_one(), LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_targets_mean_standard_deviation() 
 {
    cout << "test_scale_targets_mean_standard_deviation\n";
@@ -691,8 +692,8 @@ void DataSetTest::test_scale_targets_mean_standard_deviation()
 
    assert_true(abs(targets_descriptives[0].has_mean_zero_standard_deviation_one() - 1.0) < 1.0e-3, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_inputs_minimum_maximum() 
 {
    cout << "test_scale_inputs_minimum_maximum\n";
@@ -712,8 +713,8 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
 
    assert_true(inputs_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_targets_minimum_maximum() 
 {
    cout << "test_scale_targets_minimum_maximum\n";
@@ -733,8 +734,8 @@ void DataSetTest::test_scale_targets_minimum_maximum()
 
      //assert_true(targets_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_data_minimum_maximum()
 {
    cout << "test_scale_data_minimum_maximum\n";
@@ -761,8 +762,8 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    assert_true(scaled_data == data, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scale_data_mean_standard_deviation()
 {
    cout << "test_scale_data_mean_standard_deviation\n";
@@ -789,8 +790,8 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    assert_true(scaled_data == data, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_data_mean_standard_deviation()
 {
    cout << "test_unscale_data_mean_standard_deviation\n";
@@ -824,8 +825,8 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
 
    assert_true(data.get_data() == matrix_solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_data_minimum_maximum()
 {
    cout << "test_unscale_data_minimum_maximum\n";
@@ -859,8 +860,8 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 
    assert_true(data.get_data() == matrix_solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_inputs_mean_standard_deviation() 
 {
    cout << "test_unscale_inputs_mean_standard_deviation\n";
@@ -884,8 +885,8 @@ void DataSetTest::test_unscale_inputs_mean_standard_deviation()
 
    assert_true(new_inputs == inputs, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_targets_mean_standard_deviation() 
 {
    cout << "test_unscale_targets_mean_standard_deviation\n";
@@ -905,8 +906,8 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    assert_true(new_targets == targets, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_inputs_minimum_maximum() 
 {
    cout << "test_unscale_inputs_minimum_maximum\n"; 
@@ -930,8 +931,8 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    assert_true(new_inputs == inputs, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unscale_targets_minimum_maximum() 
 {
    cout << "test_unscale_targets_minimum_maximum\n";
@@ -951,8 +952,8 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    assert_true(new_targets == targets, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unuse_constant_columns()
 {
    cout << "test_unuse_constant_columns\n";
@@ -970,8 +971,8 @@ void DataSetTest::test_unuse_constant_columns()
    assert_true(data_set.get_input_columns_number() == 0, LOG);
    assert_true(data_set.get_target_columns_number() == 1, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_initialize_data()
 {
    cout << "test_initialize_data\n";
@@ -988,10 +989,10 @@ void DataSetTest::test_initialize_data()
 
    assert_true(data_set.get_data() == solution, LOG);
 }
-
+*/
 
 /// @todo Multiple classes.
-
+/*
 void DataSetTest::test_calculate_target_columns_distribution()
 {
     cout << "test_calculate_target_columns_distribution\n";
@@ -1035,8 +1036,8 @@ void DataSetTest::test_calculate_target_columns_distribution()
     assert_true(calculate_target_distribution_1[1] == 3, LOG);
     assert_true(calculate_target_distribution_1[2] == 2, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_unuse_most_populated_target()
 {
     cout << "test_unused_most_populated_target\n";
@@ -1082,8 +1083,8 @@ void DataSetTest::test_unuse_most_populated_target()
     assert_true(ds3.get_used_instances_number() == 0, LOG);
     assert_true(ds3.get_unused_instances_number() == 1, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_balance_binary_targets_distribution()
 {
     cout << "test_balance_binary_target_distribution\n";
@@ -1400,8 +1401,8 @@ void DataSetTest::test_balance_binary_targets_distribution()
     }
 
 }
-
-
+*/
+/*
 void DataSetTest::test_balance_multiple_targets_distribution()
 {
     cout << "test_balance_multiple_target_distribution\n";
@@ -1486,8 +1487,8 @@ void DataSetTest::test_balance_multiple_targets_distribution()
     assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_balance_function_regression_targets_distribution()
 {
     cout << "test_balance_function_regression_targets_distribution.\n";
@@ -1590,8 +1591,8 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
     assert_true(ds2.get_unused_instances_number() == 1000, LOG);
     assert_true(unused_instances.size() == 1000, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_clean_Tukey_outliers()
 {
     cout << "test_clean_Tukey_outliers\n";
@@ -1620,8 +1621,8 @@ void DataSetTest::test_clean_Tukey_outliers()
     assert_true(outliers_number == 1, LOG);
     assert_true(outliers_instances[0] == 9, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_generate_data_binary_classification()
 {
     cout << "test_generate_data_binary_classification\n";
@@ -1647,8 +1648,8 @@ void DataSetTest::test_generate_data_multiple_classification()
     cout << "test_generate_data_multiple_classification\n";
 
 }
-
-
+*/
+/*
 void DataSetTest::test_to_XML() 
 {
    cout << "test_to_XML\n";
@@ -1663,14 +1664,14 @@ void DataSetTest::test_to_XML()
 
    assert_true(document != nullptr, LOG);
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_from_XML() 
 {
    cout << "test_from_XML\n";
-/*
+
    DataSet data_set;
 
    tinyxml2::XMLDocument* document;
@@ -1704,8 +1705,8 @@ void DataSetTest::test_from_XML()
    assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
    assert_true(data_set.get_instance_use(1) == DataSet::Testing, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_read_csv() 
 {
    cout << "test_read_csv\n";
@@ -2093,7 +2094,8 @@ void DataSetTest::test_read_csv()
    assert_true(data.dimension(1) == 7, LOG);
 }
 
-
+*/
+/*
 void DataSetTest::test_read_adult_csv()
 {
     cout << "test_read_adult_csv\n";
@@ -2113,7 +2115,8 @@ void DataSetTest::test_read_adult_csv()
     assert_true(data_set.get_column_type(3) == DataSet::Categorical, LOG);
 
 }
-
+*/
+/*
 void DataSetTest::test_read_airline_passengers_csv()
 {
     cout << "test_read_airline_passengers_csv\n";
@@ -2134,7 +2137,8 @@ void DataSetTest::test_read_airline_passengers_csv()
 
 
 }
-
+*/
+/*
 void DataSetTest::test_read_car_csv()
 {
     cout << "test_read_car_csv\n";
@@ -2160,8 +2164,8 @@ void DataSetTest::test_read_car_csv()
 
     }
 }
-
-
+*/
+/*
 void DataSetTest::test_read_empty_csv()
 {
     cout << "test_read_empty_csv\n";
@@ -2181,7 +2185,8 @@ void DataSetTest::test_read_empty_csv()
     }
 
 }
-
+*/
+/*
 void DataSetTest::test_read_heart_csv()
 {
     cout << "test_read_heart_csv\n";
@@ -2206,7 +2211,8 @@ void DataSetTest::test_read_heart_csv()
     assert_true(data_set.get_column_type(12) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(13) == DataSet::Binary, LOG);
 }
-
+*/
+/*
 void DataSetTest::test_read_iris_csv()
 {
     cout << "test_read_iris_csv\n";
@@ -2223,8 +2229,8 @@ void DataSetTest::test_read_iris_csv()
     assert_true(data_set.get_column_type(4) == DataSet::Categorical, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_read_mnsit_csv()
 {
     cout << "test_read_mnist_csv\n";
@@ -2241,8 +2247,8 @@ void DataSetTest::test_read_mnsit_csv()
     assert_true(data_set.get_column_type(20) == DataSet::Binary, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_read_one_variable_csv()
 {
     cout << "test_read_one_variable_csv\n";
@@ -2253,8 +2259,8 @@ void DataSetTest::test_read_one_variable_csv()
     assert_true(data_set.get_variables_number() == 1, LOG);
     assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_read_pollution_csv()
 {
     cout << "test_read_pollution_csv\n";
@@ -2277,7 +2283,8 @@ void DataSetTest::test_read_pollution_csv()
     assert_true(data_set.get_column_type(11) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(12) == DataSet::Numeric, LOG);
 }
-
+*/
+/*
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
@@ -2295,7 +2302,8 @@ void DataSetTest::test_read_urinary_inflammations_csv()
     assert_true(data_set.get_column_type(6) == DataSet::Binary, LOG);
     assert_true(data_set.get_column_type(7) == DataSet::Binary, LOG);
 }
-
+*/
+/*
 void DataSetTest::test_read_wine_csv()
 {
     cout << "test_read_wine_csv\n";
@@ -2319,8 +2327,8 @@ void DataSetTest::test_read_wine_csv()
     assert_true(data_set.get_column_type(12) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(13) == DataSet::Numeric, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_read_binary_csv()
 {
     cout << "test_read_binary_csv\n";
@@ -2333,8 +2341,8 @@ void DataSetTest::test_read_binary_csv()
     assert_true(data_set.get_column_type(1) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_convert_time_series()
 {
     //@todo
@@ -2374,8 +2382,8 @@ void DataSetTest::test_convert_time_series()
    assert_true(data_set.get_variable_name(3) == "lag_1_y", LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_convert_autoassociation()
 {
    //@todo
@@ -2412,8 +2420,8 @@ void DataSetTest::test_convert_autoassociation()
    assert_true(data_set.get_variable_name(2) == "autoassociation_x", LOG);
    assert_true(data_set.get_variable_name(3) == "autoassociation_y", LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_scrub_missing_values()
 {
     cout << "test_scrub_missing_values\n";
@@ -2480,8 +2488,8 @@ void DataSetTest::test_scrub_missing_values()
     assert_true(abs(data(1,1) - 2.0) < 1.0e-3, LOG);
     assert_true(abs(data(2,2) - 3.0) < 1.0e-3, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_empty()
 {
     cout << "test_emprty\n";
@@ -2494,8 +2502,8 @@ void DataSetTest::test_empty()
 
     assert_true(abs(data_set.empty() - 0) < 1.0e-6 , LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_filter_variable()
 {
     cout << "test_filter_variable";
@@ -2518,8 +2526,8 @@ void DataSetTest::test_filter_variable()
     ds_1.set_columns_names(true);
     ds_1.set_data(matrix_1);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_variables_means()
 {
     cout << "test_calculate_variables_means\n";
@@ -2534,10 +2542,10 @@ void DataSetTest::test_calculate_variables_means()
 
     assert_true(means == solution, LOG);
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_training_targets_mean()
 {
     cout << "test_calculate_training_targets_mean\n";
@@ -2571,10 +2579,10 @@ void DataSetTest::test_calculate_training_targets_mean()
     assert_true(mean == solution, LOG);
 
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_selection_targets_mean()
 {
     cout << "test_calculate_selection_targets_mean\n";
@@ -2599,10 +2607,10 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     assert_true(means == solutions, LOG);
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_testing_targets_mean()
 {
     cout << "test_calculate_testing_targets_mean\n";
@@ -2623,10 +2631,10 @@ void DataSetTest::test_calculate_testing_targets_mean()
     assert_true(mean == 3.0, LOG);
 
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_input_target_correlations()
 {
     cout << "test_calculate_input_target_correlations\n";
@@ -2646,12 +2654,11 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     //Test logistic correlation
 
-
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_total_input_correlations()
 {
     cout << "test_calculate_total_input_correlations\n";
@@ -2671,8 +2678,8 @@ void DataSetTest::test_calculate_total_input_correlations()
     assert_true(correlations_inputs == solution, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_unuse_repeated_instances()
 {
     cout << "test_unuse_repeated_instances\n";
@@ -2699,8 +2706,8 @@ void DataSetTest::test_unuse_repeated_instances()
     assert_true(ds_2.unuse_repeated_instances() == indices_2, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_unuse_non_significant_inputs()
 {
     cout << "test_unuse_non_significant_inputs\n";
@@ -2710,10 +2717,10 @@ void DataSetTest::test_unuse_non_significant_inputs()
 
     cout << "unuse: " << data_set.unuse_non_significant_inputs() << endl;
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_unuse_columns_missing_values()
 {
     cout << "test_unuse_variables_missing_values\n";
@@ -2728,10 +2735,10 @@ void DataSetTest::test_unuse_columns_missing_values()
 
 //    data_set.unuse_variables_missing_values(1);
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_perform_principal_components_analysis()
 {
     cout << "test_perform_principal_components_analysis\n";
@@ -2746,8 +2753,8 @@ void DataSetTest::test_perform_principal_components_analysis()
     //Tensor<type, 2> PCA = data_set.get_data();
     //assert_true(PCA.get_column(2) == solution, LOG);
 }
-
-
+*/
+/*
 void DataSetTest::test_calculate_training_negatives()
 {
     cout << "test_calculate_training_negatives\n";
@@ -2774,10 +2781,10 @@ void DataSetTest::test_calculate_training_negatives()
     assert_true(training_negatives == 1, LOG);
 
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_calculate_selection_negatives()
 {
     cout << "test_calculate_selection_negatives\n";
@@ -2804,8 +2811,8 @@ void DataSetTest::test_calculate_selection_negatives()
     assert_true(selection_negatives == 0, LOG);
 
 }
-
-
+*/
+/*
 void DataSetTest::test_is_binary_classification()
 {
     cout << "test_is_binary_classification\n";
@@ -2824,10 +2831,10 @@ void DataSetTest::test_is_binary_classification()
     assert_true(classification == false, LOG);
 
 }
-
+*/
 
 /// @todo
-
+/*
 void DataSetTest::test_is_multiple_classification()
 {
     cout << "test_is_multiple_classification\n";
@@ -2850,14 +2857,15 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-/*
+
    // Constructor and destructor methods
    test_constructor();
    test_destructor();
 
+
    // Assignment operators methods
    test_assignment_operator();
-
+   /*
    // Get methods
    test_get_instances_number();
    test_get_variables_number();
