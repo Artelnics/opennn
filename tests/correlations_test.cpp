@@ -179,7 +179,7 @@ void CorrelationsTest::test_logistic_correlation()
 
 //    correlation = logistic_correlation(x.to_column_matrix(), y);
 
-////    assert_true(abs(correlation - 0.0) < numeric_limits<type>::min(), LOG);
+//    assert_true(abs(correlation - 0.0) < numeric_limits<type>::min(), LOG);
 }
 
 
