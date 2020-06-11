@@ -86,7 +86,6 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient(void)
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
-
 //   data_set.set(instances_number, inputs_number, outputs_number);
 //   data_set.set_data_random();
 
@@ -95,14 +94,15 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient(void)
    assert_true(normalization_coefficient > 0, LOG);
 }
 
-/*
-void NormalizedSquaredErrorTest::test_calculate_training_error(void)
-{
-   cout << "test_calculate_training_error\n";
 
+void NormalizedSquaredErrorTest::test_calculate_error(void)
+{
+   cout << "test_calculate_error\n";
+
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
    DataSet data_set(1,1,1);
 
@@ -131,7 +131,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
    outputs_number = 5;
    hidden_neurons = 3;
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
+   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -141,9 +143,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 
    normalized_squared_error.set_normalization_coefficient();
 
-   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
+//   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 }
-*/
+
 
 void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 {
@@ -175,7 +177,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
+
    // Test trivial
 {
    data_set.set_thread_pool_device(thread_pool_device);
@@ -221,16 +223,12 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
-}*/
+}
 
    neural_network.set();
 
    // Test perceptron and probabilistic
 {
-
-       const int n = 4;
-       NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-       ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    instances_number = 3;
    inputs_number = 1;
@@ -485,9 +483,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 }
 /*
 
-void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
+void NormalizedSquaredErrorTest::test_calculate_error_terms(void)
 {
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> architecture;
@@ -528,9 +526,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(void)
+void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void)
 {
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -550,7 +548,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(vo
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
    network_parameters = neural_network.get_parameters();
 
@@ -608,7 +608,9 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    architecture.setValues({1,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_random();
 
     data_set.set(2, 1, 1);
@@ -635,7 +637,9 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    architecture.setValues({1,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_random();
 
     data_set.set(3, 1, 1);
@@ -680,15 +684,15 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 */
    test_calculate_error_gradient();
 /*
    // Error terms methods
 
-   test_calculate_training_error_terms();
+   test_calculate_error_terms();
 
-   test_calculate_training_error_terms_Jacobian();
+   test_calculate_error_terms_Jacobian();
 
    // Squared errors methods
 
@@ -706,7 +710,7 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lenser General Public

@@ -18,9 +18,9 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 }
 
 
-void CrossEntropyErrorTest::test_calculate_training_error()
+void CrossEntropyErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
+   cout << "test_calculate_error\n";
 
    DataSet data_set;
 
@@ -65,43 +65,6 @@ void CrossEntropyErrorTest::test_calculate_training_error()
 //   cross_entropy_error = cee.calculate_training_error();
 
 //   assert_true(abs(cross_entropy_error - cee.calculate_training_error(parameters)) < 1.0e-3, LOG);
-
-}
-
-
-void CrossEntropyErrorTest::test_calculate_selection_error()
-{
-   cout << "test_calculate_selection_error\n";
-
-   Tensor<Index, 1> architecture;
-
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-   
-   CrossEntropyError cee(&neural_network, &data_set);
-
-   type selection_error;
-
-   // Test
-
-//   architecture.setValues({1,1});
-
-//   PerceptronLayer perceptron_layer(1,1);
-
-//   neural_network.add_layer(&perceptron_layer);
-
-//   neural_network.set_parameters_constant(0.0);
-
-//   const Tensor<type, 1> parameters = neural_network.get_parameters();
-   
-   data_set.set(1,1,1);
-   data_set.initialize_data(0.0);
-   data_set.set_selection();
-
-//   selection_error = cee.calculate_selection_error();
-
-//   assert_true(selection_error == 0.0, LOG);
 
 }
 
@@ -327,9 +290,7 @@ void CrossEntropyErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
-
-   test_calculate_selection_error();
+   test_calculate_error();
 
    test_calculate_error_gradient();
 
@@ -343,7 +304,7 @@ void CrossEntropyErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -74,13 +74,9 @@ void MinkowskiErrorTest::test_set_Minkowski_parameter()
 }
 
 */
-void MinkowskiErrorTest::test_calculate_training_error()
+void MinkowskiErrorTest::test_calculate_error()
 {
-   cout << "test_calculate_training_error\n";
-
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+   cout << "test_calculate_error\n";
 
    NeuralNetwork neural_network;
 
@@ -176,10 +172,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-
-       const int n = omp_get_max_threads();
-       NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-       ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    instances_number = 2;
    inputs_number = 1;
@@ -497,7 +489,7 @@ void MinkowskiErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 
    test_calculate_selection_error();
 */
@@ -513,7 +505,7 @@ void MinkowskiErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

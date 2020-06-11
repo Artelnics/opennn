@@ -82,7 +82,10 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
    DataSet data_set(2, 1, 1);
    data_set.set_data_random();
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    SumSquaredError sum_squared_error(&neural_network, &data_set);
    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
@@ -164,7 +167,10 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
    cout << "test_calculate_BFGS_inverse_hessian_approximation\n";
 
    DataSet data_set;
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -197,7 +203,9 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
    cout << "test_calculate_inverse_hessian_approximation\n";
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+   architecture.setValues({1,1});
+
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    DataSet data_set(2, 1, 1);
    data_set.set_data_random();
    SumSquaredError sum_squared_error(&neural_network, &data_set);
@@ -466,7 +474,7 @@ void QuasiNewtonMethodTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

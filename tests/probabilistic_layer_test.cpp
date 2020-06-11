@@ -432,10 +432,6 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -466,10 +462,6 @@ void ProbabilisticLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
@@ -479,7 +471,6 @@ void ProbabilisticLayerTest::test_calculate_activations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
-
 
    probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
@@ -571,17 +562,12 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_derivatives_activations\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;
 
     Tensor<type, 2> combinations_2d;
     Tensor<type, 2> activations_2d;
     Tensor<type, 3> activations_derivatives;
-
 
     probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
@@ -648,10 +634,6 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     ProbabilisticLayer probabilistic_layer;
     Tensor<type, 2> synaptic_weights;
@@ -762,12 +744,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     ProbabilisticLayer probabilistic_layer(2,2);
-
 
     probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
@@ -797,12 +774,7 @@ void ProbabilisticLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     ProbabilisticLayer probabilistic_layer(2,2);
-
 
     probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
@@ -836,16 +808,11 @@ void ProbabilisticLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     ProbabilisticLayer probabilistic_layer_0(2,2);
     ProbabilisticLayer probabilistic_layer_1(2,2);
 
     probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
-
 
     probabilistic_layer_0.set_thread_pool_device(thread_pool_device);
     probabilistic_layer_1.set_thread_pool_device(thread_pool_device);
@@ -889,14 +856,9 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     ProbabilisticLayer probabilistic_layer(2,2);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
 
     probabilistic_layer.set_thread_pool_device(thread_pool_device);
 
@@ -1055,7 +1017,7 @@ void ProbabilisticLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

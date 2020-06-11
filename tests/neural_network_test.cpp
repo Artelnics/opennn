@@ -599,10 +599,6 @@ void NeuralNetworkTest::test_set_pointers()
 {
    cout << "test_set_pointers\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    Tensor<Index, 1> architecture(3);
    architecture.setValues({1,0,1});
 
@@ -1140,13 +1136,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    NeuralNetwork neural_network;
-
-
 
    Index inputs_number;
    Index outputs_number;
@@ -1381,9 +1371,6 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
 {
    cout << "test_calculate_trainable_outputs\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
    NeuralNetwork neural_network;
 
@@ -1600,12 +1587,7 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
 {
    cout << "test_calculate_outputs_histograms\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    NeuralNetwork neural_network;
-
 
    Tensor<Index, 1> architecture;
 
@@ -1830,10 +1812,6 @@ void NeuralNetworkTest::test_write_expression()
 
 void NeuralNetworkTest::test_forward_propagate()
 {
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     // Test 1
 
     Index inputs_number = 2;
@@ -2081,7 +2059,7 @@ void NeuralNetworkTest::run_test_case()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

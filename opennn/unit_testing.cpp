@@ -10,6 +10,10 @@
 
 UnitTesting::UnitTesting()
 {
+    const int n = 4;
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     tests_count = 0;
     tests_passed_count = 0;
     tests_failed_count = 0;
@@ -206,7 +210,7 @@ void UnitTesting::print_results()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
