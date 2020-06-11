@@ -176,7 +176,6 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
     #endif
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-//    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
