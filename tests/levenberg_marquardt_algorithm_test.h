@@ -24,17 +24,9 @@ class LevenbergMarquardtAlgorithmTest : public UnitTesting
 
 public:
 
-   
-
    explicit LevenbergMarquardtAlgorithmTest(); 
 
-
-   
-
-   virtual ~LevenbergMarquardtAlgorithmTest();
-
-
-   
+   virtual ~LevenbergMarquardtAlgorithmTest();   
 
    // Constructor and destructor methods
 
