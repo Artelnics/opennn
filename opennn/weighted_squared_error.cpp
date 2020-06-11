@@ -377,6 +377,7 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
      back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
 }
 
+
 void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                     const NeuralNetwork::ForwardPropagation& forward_propagation,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
