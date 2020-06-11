@@ -71,7 +71,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    WeightedSquaredError wse(&neural_network, &data_set);
 
-//   assert_true(wse.calculate_training_error() == 0.0, LOG);
+//   assert_true(wse.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -97,7 +97,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
    wse.set_negatives_weight(1.0);
    wse.set_positives_weight(2.0);
 
-//   assert_true(abs(wse.calculate_training_error() - wse.calculate_training_error(parameters)) < 1.0e-3, LOG);
+//   assert_true(abs(wse.calculate_error() - wse.calculate_training_error(parameters)) < 1.0e-3, LOG);
 
    // Test
 
@@ -112,7 +112,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
    data_set.generate_data_binary_classification(2, 1);
    data_set.set_training();
 
-//   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
+//   assert_true(wse.calculate_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
@@ -128,7 +128,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    parameters = neural_network.get_parameters();
 
-//   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
+//   assert_true(wse.calculate_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
@@ -496,7 +496,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms()
    data_set.set(3, 2, 2);
    data_set.generate_data_binary_classification(3, 2);
 
-//   error = wse.calculate_training_error();
+//   error = wse.calculate_error();
 
 //   error_terms = wse.calculate_training_error_terms();
 
@@ -512,7 +512,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms()
    data_set.set(9, 3, 1);
    data_set.generate_data_binary_classification(9, 3);
 
-//   error = wse.calculate_training_error();
+//   error = wse.calculate_error();
 
 //   error_terms = wse.calculate_training_error_terms();
 
@@ -675,8 +675,6 @@ void WeightedSquaredErrorTest::run_test_case()
    // Error methods
 
 //   test_calculate_training_loss();
-
-//   test_calculate_selection_error();
 
    test_calculate_error_gradient();
 

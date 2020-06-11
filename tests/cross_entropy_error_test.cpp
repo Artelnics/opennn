@@ -62,7 +62,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    parameters = neural_network.get_parameters();
 
-//   cross_entropy_error = cee.calculate_training_error();
+//   cross_entropy_error = cee.calculate_error();
 
 //   assert_true(abs(cross_entropy_error - cee.calculate_training_error(parameters)) < 1.0e-3, LOG);
 
