@@ -882,7 +882,6 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 
 void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& )
 {
-
     const Index synaptic_weights_number = synaptic_weights.size();
 
     const Index parameters_number = get_parameters_number();
@@ -927,9 +926,9 @@ Tensor<type, 2> ConvolutionalLayer::get_synaptic_weights() const
 
 Tensor<type, 2> ConvolutionalLayer::extract_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
-    /*
-        return parameters.get_first(synaptic_weights.size()).to_tensor({get_filters_number(), get_filters_channels_number(), get_filters_rows_number(), get_filters_columns_number()});
-    */
+
+//  return parameters.get_first(synaptic_weights.size()).to_tensor({get_filters_number(), get_filters_channels_number(), get_filters_rows_number(), get_filters_columns_number()});
+
     return Tensor<type, 2>();
 }
 
