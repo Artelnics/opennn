@@ -18,7 +18,7 @@ PruningInputsTest::~PruningInputsTest()
 {
 }
 
-/*
+
 void PruningInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -65,6 +65,8 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     NeuralNetwork neural_network;
 
+    Tensor<Index, 1> architecture;
+
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
     PruningInputs::PruningInputsResults* pir;
@@ -75,7 +77,9 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     data_set.split_instances_random();
 
-    neural_network.set(NeuralNetwork::Approximation,{2,6,1});
+    architecture.setValues({2,6,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
     TrainingStrategy ts(&neural_network, &data_set);
 
@@ -99,7 +103,9 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     data_set.generate_sum_data(40,3);
 
-    neural_network.set(NeuralNetwork::Approximation,{2,6,1});
+    architecture.setValues({2,6,1});
+
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
     ts.set_display(false);
 
@@ -143,12 +149,12 @@ void PruningInputsTest::test_from_XML()
 
     delete document;
 }
-*/
+
 
 void PruningInputsTest::run_test_case()
 {
     cout << "Running pruning input test case...\n";
-/*
+
     // Constructor and destructor methods
 
     test_constructor();
@@ -167,6 +173,6 @@ void PruningInputsTest::run_test_case()
     test_to_XML();
 
     test_from_XML();
-*/
+
     cout << "End of pruning input test case.\n";
 }
