@@ -933,6 +933,7 @@ void NeuralNetworkTest::test_set_parameters()
    assert_true(abs(parameters(5) - 6) < static_cast<type>(1e-5), LOG);
 }
 
+
 void NeuralNetworkTest::test_set_parameters_constant()
 {
    cout << "test_set_parameters_constant\n";
@@ -954,6 +955,7 @@ void NeuralNetworkTest::test_set_parameters_constant()
    assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(5) - 1) < static_cast<type>(1e-5), LOG);
 }
+
 
 void NeuralNetworkTest::test_set_parameters_random()
 {
