@@ -327,7 +327,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    sum_squared_error.calculate_output_gradient(batch_1, forward_propagation_1, training_back_propagation_1);
 
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 
    assert_true(abs(training_back_propagation_1.output_gradient(0)-numerical_gradient(4)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_1.output_gradient(1)-numerical_gradient(5)) < static_cast<type>(1e-3), LOG);
@@ -378,7 +378,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2, training_back_propagation_2);
 /*
    numerical_gradient.resize(neural_network.get_parameters_number());
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 */
    assert_true(abs(training_back_propagation_2.output_gradient(0,1) + static_cast<type>(4.476)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2.output_gradient(1,0) + static_cast<type>(1.523)) < static_cast<type>(1e-3), LOG);
@@ -408,7 +408,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2_2, training_back_propagation_2_2);
 /*
    numerical_gradient.resize(neural_network.get_parameters_number());
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation(&sum_squared_error);
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
 */
    assert_true(abs(training_back_propagation_2_2.output_gradient(0,1) + 6) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2_2.output_gradient(1,0) + 0) < static_cast<type>(1e-3), LOG);
@@ -522,9 +522,9 @@ void SumSquaredErrorTest::test_calculate_layers_delta()
 }
 */
 /*
-void SumSquaredErrorTest::test_calculate_training_error_gradient()
+void SumSquaredErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 
    DataSet data_set;
    NeuralNetwork neural_network;
@@ -571,9 +571,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -610,9 +610,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -640,9 +640,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     neural_network.add_layer(output_perceptron_layer);
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+    gradient = sum_squared_error.calculate_error_gradient();
 
     assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
@@ -712,9 +712,9 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-   gradient = sum_squared_error.calculate_training_error_gradient();
+   gradient = sum_squared_error.calculate_error_gradient();
 
    assert_true(absolute_value(numerical_gradient - gradient) < 1e-3, LOG);
 }

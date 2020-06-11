@@ -145,9 +145,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 }
 */
 
-void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
+void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 
 
 
@@ -217,7 +217,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    nse.back_propagate(batch, forward_propagation, training_back_propagation);
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
@@ -339,7 +339,7 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation(&nse);
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -371,9 +371,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_normalization_coefficient();
 
-   error_gradient = nse.calculate_training_error_gradient();
+   error_gradient = nse.calculate_error_gradient();
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -403,9 +403,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    nse.set_normalization_coefficient();
 
-   error_gradient = nse.calculate_training_error_gradient();
+   error_gradient = nse.calculate_error_gradient();
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -475,9 +475,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = nse.calculate_training_error_gradient();
+   error_gradient = nse.calculate_error_gradient();
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
@@ -682,7 +682,7 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
    test_calculate_training_error();
 */
-   test_calculate_training_error_gradient();
+   test_calculate_error_gradient();
 /*
    // Error terms methods
 

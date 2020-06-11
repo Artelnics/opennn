@@ -49,7 +49,7 @@ public:
 
    void test_calculate_training_error(void);
 
-   void test_calculate_training_error_gradient(void);
+   void test_calculate_error_gradient(void);
 
    // Error terms methods
 

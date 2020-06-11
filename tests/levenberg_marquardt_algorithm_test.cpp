@@ -170,7 +170,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 //                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
 
 //   gradient = dot(terms_Jacobian.calculate_transpose(), terms);
-//   mse_gradient = mean_squared_error.calculate_training_error_gradient();
+//   mse_gradient = mean_squared_error.calculate_error_gradient();
 // levenberg_marquardt_algorithm
 //   cout << "columns sum: " << terms_Jacobian.calculate_columns_sum()*2.0 << endl;
 //   cout << "gradient: " << gradient << endl;

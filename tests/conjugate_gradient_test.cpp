@@ -165,11 +165,11 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
    neural_network.set_parameters_constant(2.0);
-//   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_error_gradient();
+//   Tensor<type, 1> old_gradient = sum_squared_error.calculate_error_gradient();
 //   Tensor<type, 1> old_training_direction = old_gradient;
 
    neural_network.set_parameters_constant(1.0);
-//   Tensor<type, 1> gradient = sum_squared_error.calculate_training_error_gradient();
+//   Tensor<type, 1> gradient = sum_squared_error.calculate_error_gradient();
 
 //   Tensor<type, 1> PR_training_direction
 //   = conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
@@ -198,11 +198,11 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    ConjugateGradient conjugate_gradient(&sum_squared_error);
 
    neural_network.set_parameters_constant(2.0);
-//   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_error_gradient();
+//   Tensor<type, 1> old_gradient = sum_squared_error.calculate_error_gradient();
 //   Tensor<type, 1> old_training_direction = old_gradient;
 
    neural_network.set_parameters_constant(1.0);
-//   Tensor<type, 1> gradient = sum_squared_error.calculate_training_error_gradient();
+//   Tensor<type, 1> gradient = sum_squared_error.calculate_error_gradient();
 	
 //   Tensor<type, 1> FR_training_direction
 //   = conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
