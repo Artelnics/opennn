@@ -114,9 +114,9 @@ void MeanSquaredErrorTest::test_calculate_training_error()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_training_error_gradient()
+void MeanSquaredErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_error_gradient\n";
 /*
    NeuralNetwork neural_network;
 
@@ -152,9 +152,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    numerical_error_gradient.resize(parameters_number);
 
-//   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
 
-//   error_gradient = mean_squared_error.calculate_training_error_gradient();
+//   error_gradient = mean_squared_error.calculate_error_gradient();
 
    assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
 
@@ -187,9 +187,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = mean_squared_error.calculate_training_error_gradient();
+   error_gradient = mean_squared_error.calculate_error_gradient();
 
-   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
 
    assert_true((error_gradient - numerical_error_gradient).abs() < 1.0e-3, LOG);
 }
@@ -219,9 +219,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = mean_squared_error.calculate_training_error_gradient();
+   error_gradient = mean_squared_error.calculate_error_gradient();
 
-   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -251,9 +251,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
 
    neural_network.set_parameters_random();
 
-   error_gradient = mean_squared_error.calculate_training_error_gradient();
+   error_gradient = mean_squared_error.calculate_error_gradient();
 
-   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -323,9 +323,9 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
 
-   error_gradient = mean_squared_error.calculate_training_error_gradient();
+   error_gradient = mean_squared_error.calculate_error_gradient();
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
@@ -606,7 +606,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 //   test_calculate_training_error();
 
-   test_calculate_training_error_gradient();
+   test_calculate_error_gradient();
 /*
 
    test_calculate_selection_error();

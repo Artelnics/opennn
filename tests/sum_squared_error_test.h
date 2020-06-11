@@ -46,7 +46,7 @@ public:
 
    void test_calculate_output_gradient();
 
-   void test_calculate_training_error_gradient();
+   void test_calculate_error_gradient();
 
    void test_calculate_Jacobian_gradient();
 
