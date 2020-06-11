@@ -761,7 +761,7 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
 
 }
 
-/*
+
 void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
@@ -778,11 +778,11 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
    long_short_term_memory_layer.set_parameters_constant(0.0);
    parameters=long_short_term_memory_layer.get_parameters();
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(parameters == 0.0, LOG);
-   assert_true(parameters.size() == 32, LOG);
-   assert_true(parameters_norm == 0.0, LOG);
+//   assert_true(parameters == 0.0, LOG);
+//   assert_true(parameters.size() == 32, LOG);
+//   assert_true(parameters_norm == 0.0, LOG);
 
    // Test
 
@@ -794,22 +794,24 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    parameters = long_short_term_memory_layer.get_parameters();
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
+//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
 
 
    // Test
 
    long_short_term_memory_layer.set(4, 2);
 
-   parameters.resize(56, 1.0);
+   parameters.resize(56);
+
+   parameters.setConstant(1.0);
 
    long_short_term_memory_layer.set_parameters(parameters);
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
+//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
 }
 
 void LongShortTermMemoryLayerTest::test_get_parameters()
@@ -838,9 +840,9 @@ void LongShortTermMemoryLayerTest::test_get_parameters()
 //   cout<< "weight.  "<< long_short_term_memory_layer.get_weights()<<endl;
 //   cout<< "recurrent_weight.  "<< long_short_term_memory_layer.get_recurrent_weights()<<endl;
 //   cout<< "biases "<< long_short_term_memory_layer.get_biases()<<endl;
-
 }
-*/
+
+
 void LongShortTermMemoryLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
