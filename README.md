@@ -3,7 +3,6 @@
 </div>
 
 
-
 OpenNN is a software library written in C++ for advanced analytics. It implements neural networks, the most successful machine learning method. 
 
 The main advantage of OpenNN is its high performance. 
