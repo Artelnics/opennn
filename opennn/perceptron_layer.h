@@ -187,7 +187,7 @@ public:
 
    void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
-   // Expression methods
+   // Expression methods   
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
@@ -195,6 +195,39 @@ public:
    string write_output_layer_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_activation_function_expression() const;
+
+   void layer_expression(float* inputs) const
+   {
+/*
+       Index inputs_number = get_inputs_number();
+       Index neurons_number = get_neurons_number();
+
+       float combinations[neurons_number];
+
+       for(int i = 0; i < neurons_number; i++)
+       {
+           combinations[i] = biases[i];
+
+           for(int j = 0; j < inputs_number; j++)
+           {
+               combinations[i] += synaptic_weights(i,j)*inputs[j];
+           }
+       }
+*/
+   }
+
+
+   string write_expression_c() const
+   {
+        ostringstream buffer;
+
+
+
+
+        return buffer.str();
+
+   }
+
 
    string object_to_string() const;
 

@@ -278,11 +278,18 @@ public:
 
     virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+    virtual string write_expression_c() const {return string();}
+
+
 protected:
 
     ThreadPoolDevice* thread_pool_device = nullptr;
 
-    /// Layer type object.
+    /// Layer name.
+
+    string layer_name = "layer";
+
+    /// Layer type.
 
     Type layer_type = Perceptron;
 
