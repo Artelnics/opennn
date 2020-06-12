@@ -343,6 +343,28 @@ public:
    void save_expression_python(const string&);
    void save_expression_R(const string&);
 
+   // C expression methods
+
+   string write_expression_c() const
+   {
+       const Index layers_number = get_layers_number();
+
+       Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+
+       ostringstream buffer;
+
+       for(Index i = 0; i < layers_number; i++)
+       {
+           buffer << layers_pointers[i]->write_expression_c();
+       }
+
+
+       buffer << "float* neural_network(const float* inputs){" << endl;
+       buffer << "return outputs;}" << endl;
+
+       return buffer.str();
+   }
+
    // Python methods
 
    string write_threshold_python() const
@@ -357,6 +379,166 @@ public:
 
         return buffer.str();
    }
+
+
+   string write_symmetric_threshold_python() const
+   {
+       ostringstream buffer;
+
+       buffer << "def SymmetricThreshold(x) : \n"
+                 "   if x < 0 : \n"
+                 "       return -1\n"
+                 "   else : \n"
+                 "       return 1\n\n";
+
+        return buffer.str();
+   }
+
+   string write_logistic_python() const
+   {
+       ostringstream buffer;
+
+       buffer << "from math import exp\n"
+                 "def Logistic(x) : \n"
+                 "   return 1/(1+exp(-x)) \n\n";
+
+        return buffer.str();
+   }
+
+   string write_softmax_python() const
+   {
+       ostringstream buffer;
+/*
+        buffer << "from math import exp\n"
+                  "def Softmax(";
+        for(Index i = 0; i < outputs_number; i++)
+        {
+            buffer << "x" << i;
+
+            if(i != outputs_number - 1)
+                buffer << ", ";
+        }
+        buffer << ") :\n";
+
+        buffer << "   inputs = [";
+        for(Index i = 0; i < outputs_number; i++)
+        {
+            buffer << "x" << i;
+
+            if(i != outputs_number - 1)
+                buffer << ", ";
+        }
+        buffer << "]\n";
+        buffer << "   softmax = [0 for i in range(" << outputs_number << ")]\n"
+        "   sum = 0\n"
+        "   for i in range(" << outputs_number << ") :\n"
+        "       sum += exp(inputs[i])\n"
+        "   for i in range(" << outputs_number << ") :\n"
+                                                                                                                                                                "       softmax[i] = exp(inputs[i])/sum\n";
+        buffer << "   return softmax\n\n";
+*/
+       return buffer.str();
+   }
+
+   // PHP methods
+
+   string write_threshold_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function Threshold($x)\n"
+                 "{\n"
+                 "   if($x < 0)\n"
+                 "   {\n"
+                 "       return 0;\n"
+                 "   }\n"
+                 "   else\n"
+                 "   {\n"
+                 "       return 1;\n"
+                 "   }\n"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   string write_symmetric_threshold_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function SymmetricThreshold(&x)\n"
+                 "{\n"
+                 "   if($x < 0)\n"
+                 "   {\n"
+                 "       return -1;\n"
+                 "   }\n"
+                 "   else\n"
+                 "   {\n"
+                 "       return 1;\n"
+                 "   }\n"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   string write_logistic_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function Logistic($x)\n"
+                 "{\n"
+                 "   return 1/(1+exp(-$x));"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   /// @todo
+
+   string write_softmax_php() const
+   {
+       ostringstream buffer;
+
+       return buffer.str();
+   }
+
+
+   string write_threshold_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "Threshold <- function(x) { \n"
+                 "   if(x < 0)  0 \n"
+                 "   else 1 \n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
+
+
+   string write_symmetric_threshold_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "SymmetricThreshold <- function(x) { \n"
+                 "   if(x < 0)  -1 \n"
+                 "   else 1 \n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
+
+
+   string write_logistic_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "Logistic <- function(x) { \n"
+                 "   1/(1+exp(-x))\n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
+
 
 
    /// Calculate de forward propagation in the neural network

@@ -1026,17 +1026,16 @@ string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
 
-      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-               buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
+        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
-               for(Index i = 0; i < inputs_names.size() - 1; i++)
-               {
+        for(Index i = 0; i < inputs_names.size() - 1; i++)
+        {
+           buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
+        }
 
-                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-               }
-
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
+        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
 
     return buffer.str();
