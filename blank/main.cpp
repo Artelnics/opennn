@@ -47,6 +47,17 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        Tensor<Index, 1> architecture(2);
+
+        architecture.setValues({1, 1});
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+
+
+        cout << neural_network.write_expression_c() << endl;
+
+        cout << "Bye Blank Application" << endl;
+
         return 0;
 
     }
