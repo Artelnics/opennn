@@ -451,6 +451,8 @@ void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 
 void ScalingLayer::set_default()
 {
+    layer_name = "scaling_layer";
+
     set_scaling_methods(MinimumMaximum);
 
     set_display(true);

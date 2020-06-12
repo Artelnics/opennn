@@ -323,6 +323,8 @@ void PerceptronLayer::set(const PerceptronLayer& other_perceptron_layer)
 
 void PerceptronLayer::set_default()
 {
+    layer_name = "perceptron_layer";
+
     display = true;
 
     layer_type = Perceptron;

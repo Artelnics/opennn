@@ -66,7 +66,6 @@ public:
 
         virtual ~ForwardPropagation() {}
 
-
         void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
             batch_instances_number = new_batch_instances_number;
@@ -200,6 +199,11 @@ public:
     // Destructor
 
     virtual ~Layer() {}
+
+    string get_name() const
+    {
+        return layer_name;
+    }
 
     // Parameters initialization methods
 

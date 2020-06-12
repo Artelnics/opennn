@@ -471,6 +471,8 @@ void BoundingLayer::set_display(const bool& new_display)
 
 void BoundingLayer::set_default()
 {
+    layer_name = "bounding_layer";
+
     display = true;
 
     bounding_method = Bounding;

@@ -196,6 +196,27 @@ public:
 
    string write_activation_function_expression() const;
 
+   string write_expression_c() const
+   {
+       const Index neurons_number = get_neurons_number();
+
+       ostringstream buffer;
+
+       buffer << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+       buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+       }
+
+       buffer << "\n\treturn outputs;\n}" << endl;
+
+       return buffer.str();
+   }
+
+
    void layer_expression(float* inputs) const
    {
 /*
@@ -215,19 +236,6 @@ public:
        }
 */
    }
-
-
-   string write_expression_c() const
-   {
-        ostringstream buffer;
-
-
-
-
-        return buffer.str();
-
-   }
-
 
    string object_to_string() const;
 

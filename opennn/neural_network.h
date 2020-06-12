@@ -332,6 +332,21 @@ public:
 
    void save_data(const string&) const;
 
+   Tensor<string, 1> get_layers_names() const
+   {
+       const Index layers_number = get_layers_number();
+
+       Tensor<string, 1> layers_names(layers_number);
+
+       for(Index i = 0; i < layers_number; i++)
+       {
+           layers_names[i] = layers_pointers[i]->get_name();
+       }
+
+       return layers_names;
+   }
+
+
    // Expression methods
 
    string write_expression() const;
@@ -350,17 +365,34 @@ public:
        const Index layers_number = get_layers_number();
 
        Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+       Tensor<string, 1> layers_names = get_layers_names();
 
        ostringstream buffer;
 
+       buffer << "#include <vector>\n" << endl;
+
+       buffer << "using namespace std;\n" << endl;
+
        for(Index i = 0; i < layers_number; i++)
        {
-           buffer << layers_pointers[i]->write_expression_c();
+           buffer << layers_pointers[i]->write_expression_c() << endl;
        }
 
+       buffer << "vector<float> neural_network(const vector<float>& inputs)\n{" << endl;
 
-       buffer << "float* neural_network(const float* inputs){" << endl;
-       buffer << "return outputs;}" << endl;
+       buffer << "\tvector<float> outputs;\n" << endl;
+
+       if(layers_number > 0)
+       {
+           buffer << "\toutputs = " << layers_names[0] << "(inputs);\n";
+       }
+
+       for(Index i = 1; i < layers_number; i++)
+       {
+           buffer << "\toutputs = " << layers_names[i] << "(outputs);\n";
+       }
+
+       buffer << "\n\treturn outputs;\n}" << endl;
 
        return buffer.str();
    }
@@ -547,6 +579,8 @@ public:
    void forward_propagate(const DataSet::Batch&, Tensor<type, 1>&, ForwardPropagation&) const;
 
 protected:
+
+   string name = "neural_network";
 
    /// Names of inputs
 
