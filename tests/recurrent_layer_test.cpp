@@ -282,13 +282,13 @@ void RecurrentLayerTest::test_get_parameters()
 
 //   input_weights.set_column(0,Tensor<type, 1> );
 //   input_weights.set_column(1,Tensor<type, 1> );
-   input_weights.setValues({{0.5, -2.9},{ 0.2, 7.2} , {0.8, -1.2}});
+//   input_weights.setValues({{0.5, -2.9},{ 0.2, 7.2} , {0.8, -1.2}});
 
    recurrent_layer.set_input_weights(input_weights);
 
 //   recurrent_weights.set_column(0,Tensor<type, 1> );
 //   recurrent_weights.set_column(1,Tensor<type, 1> );
-   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
+//   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
    cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;

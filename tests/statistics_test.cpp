@@ -284,7 +284,7 @@ void StatisticsTest::test_calculate_maximal_centers()  //<--- Zero
     histogram = OpenNN::histogram(vector);
 
     Tensor<type, 1> solution(4);
-    solution.setValues({2.75, 3.45, 4.85, 5.55});
+//    solution.setValues({2.75, 3.45, 4.85, 5.55});
 
     assert_true((histogram.calculate_minimal_centers()[0] - 1.35) < 1.0e-7, LOG);
 

@@ -335,14 +335,29 @@ public:
    // Expression methods
 
    string write_expression() const;
-   string write_mathematical_expression_php() const;
-   string write_expression_python() const;
    string write_expression_php() const;
+   string write_expression_python() const;
    string write_expression_R() const;
 
    void save_expression(const string&);
    void save_expression_python(const string&);
    void save_expression_R(const string&);
+
+   // Python methods
+
+   string write_threshold_python() const
+   {
+       ostringstream buffer;
+
+       buffer << "def Threshold(x) : \n"
+                 "   if x < 0 : \n"
+                 "       return 0\n"
+                 "   else : \n"
+                 "       return 1\n\n";
+
+        return buffer.str();
+   }
+
 
    /// Calculate de forward propagation in the neural network
 
