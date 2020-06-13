@@ -977,8 +977,6 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
 
     for(Index j = 0; j < neurons_number; j++)
     {
-//        if(abs(descriptives(j).maximum-descriptives(j).minimum) < numeric_limits<type>::min())
-
         if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
         {
             if(display)
