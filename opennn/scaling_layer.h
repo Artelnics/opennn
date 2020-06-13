@@ -156,13 +156,14 @@ public:
 
        ostringstream buffer;
 
-       buffer << layer_name << "(const vector<float>& inputs)\n{" << endl;
+       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
        buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
        for(Index i = 0; i < neurons_number; i++)
        {
-           buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+           buffer << "\toutputs[" << i << "] = 2.0*(inputs[" << i << "] -"
+                  <<  descriptives(i).minimum << ")/" << descriptives(i).maximum-descriptives(i).minimum << " -1.0;" << endl;
        }
 
        buffer << "\n\treturn outputs;\n}" << endl;

@@ -47,12 +47,11 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        Tensor<Index, 1> architecture(2);
+        Tensor<Index, 1> architecture(3);
 
-        architecture.setValues({1, 1});
+        architecture.setValues({2, 3, 2});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
 
         cout << neural_network.write_expression_c() << endl;
 
@@ -61,7 +60,7 @@ int main(void)
         return 0;
 
     }
-       catch(exception& e)
+    catch(exception& e)
     {
        cerr << e.what() << endl;
     }

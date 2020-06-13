@@ -176,20 +176,50 @@ public:
 
    string write_expression_c() const
    {
+       const Index inputs_number = get_inputs_number();
        const Index neurons_number = get_neurons_number();
 
        ostringstream buffer;
 
-       buffer << layer_name << "(const vector<float>& inputs)\n{" << endl;
+       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
-       buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+       buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
 
        for(Index i = 0; i < neurons_number; i++)
        {
-           buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+           buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+           for(Index j = 0; j < inputs_number; j++)
+           {
+               const string sign = synaptic_weights(i, j) < 0 ? " " : " +";
+
+                buffer << sign << synaptic_weights(i, j) << "*inputs[" << j << "]";
+           }
+
+           buffer << ";" << endl;
        }
 
-       buffer << "\n\treturn outputs;\n}" << endl;
+       buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
+
+       buffer << "\tfloat sum = 0;\n" << endl;
+
+       buffer << "\tsum += ";
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           buffer << "exp(inputs[" << i << "])";
+
+           if(i != neurons_number-1) buffer << " + ";
+       }
+
+       buffer << ";\n" << endl;
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
+       }
+
+       buffer << "\n\treturn activations;\n}" << endl;
 
        return buffer.str();
    }
