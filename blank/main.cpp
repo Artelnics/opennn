@@ -49,7 +49,7 @@ int main(void)
 
         Tensor<Index, 1> architecture(3);
 
-        architecture.setValues({2, 3, 2});
+        architecture.setValues({3, 2, 2});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
 

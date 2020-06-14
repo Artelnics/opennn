@@ -394,7 +394,13 @@ public:
 
        buffer << "\n\treturn outputs;\n}" << endl;
 
-       return buffer.str();
+       string expression = buffer.str();
+
+       replace(expression, "+-", "-");
+       replace(expression, "-+", "-");
+       replace(expression, "--", "+");
+
+       return expression;
    }
 
    // Python methods
