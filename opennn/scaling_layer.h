@@ -150,26 +150,7 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression_c() const
-   {
-       const Index neurons_number = get_neurons_number();
-
-       ostringstream buffer;
-
-       buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
-
-       buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
-
-       for(Index i = 0; i < neurons_number; i++)
-       {
-           buffer << "\toutputs[" << i << "] = 2.0*(inputs[" << i << "] -"
-                  <<  descriptives(i).minimum << ")/" << descriptives(i).maximum-descriptives(i).minimum << " -1.0;" << endl;
-       }
-
-       buffer << "\n\treturn outputs;\n}" << endl;
-
-       return buffer.str();
-   }
+   string write_expression_c() const;
 
    // Serialization methods
 

@@ -152,25 +152,25 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression_c() const
-   {
-       const Index neurons_number = get_neurons_number();
+   string write_expression_c() const;
+//   {
+//       const Index neurons_number = get_neurons_number();
 
-       ostringstream buffer;
+//       ostringstream buffer;
 
-       buffer << layer_name << "(const vector<float>& inputs)\n{" << endl;
+//       buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
-       buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+//       buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
-       for(Index i = 0; i < neurons_number; i++)
-       {
-           buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
-       }
+//       for(Index i = 0; i < neurons_number; i++)
+//       {
+//           buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+//       }
 
-       buffer << "\n\treturn outputs;\n}" << endl;
+//       buffer << "\n\treturn outputs;\n}" << endl;
 
-       return buffer.str();
-   }
+//       return buffer.str();
+//   }
 
 
 protected:
@@ -184,6 +184,7 @@ protected:
    /// Unscaling method for the output variables.
 
    UnscalingMethod unscaling_method;
+
 
    /// Display warning messages to screen. 
 
