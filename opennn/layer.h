@@ -66,7 +66,6 @@ public:
 
         virtual ~ForwardPropagation() {}
 
-
         void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
             batch_instances_number = new_batch_instances_number;
@@ -201,6 +200,11 @@ public:
 
     virtual ~Layer() {}
 
+    string get_name() const
+    {
+        return layer_name;
+    }
+
     // Parameters initialization methods
 
     virtual void set_parameters_constant(const type&);
@@ -278,11 +282,18 @@ public:
 
     virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+    virtual string write_expression_c() const {return string();}
+
+
 protected:
 
     ThreadPoolDevice* thread_pool_device = nullptr;
 
-    /// Layer type object.
+    /// Layer name.
+
+    string layer_name = "layer";
+
+    /// Layer type.
 
     Type layer_type = Perceptron;
 

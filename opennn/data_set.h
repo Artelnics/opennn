@@ -41,7 +41,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the concept of data set for data modelling problems, such as function regression, classification, time series prediction, images approximation and images classification.
+/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
 ///
 /// It basically consists of a data Matrix separated by columns.
@@ -101,7 +101,7 @@ public:
    /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
 
-   enum VariableUse{Input, Target, Time, UnusedVariable};
+   enum VariableUse{Id, Input, Target, Time, UnusedVariable};
 
    /// This enumeration represents the data type of a column
    /// (numeric, binary, categorical or time).

@@ -448,6 +448,8 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
 
 void ProbabilisticLayer::set_default()
 {
+    layer_name = "probabilistic_layer";
+
     layer_type = Probabilistic;
 
     const Index neurons_number = get_neurons_number();

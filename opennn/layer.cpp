@@ -779,7 +779,6 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
 
 void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x < x.constant(0);
 
     Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));

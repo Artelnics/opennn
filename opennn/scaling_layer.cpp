@@ -451,6 +451,8 @@ void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 
 void ScalingLayer::set_default()
 {
+    layer_name = "scaling_layer";
+
     set_scaling_methods(MinimumMaximum);
 
     set_display(true);
@@ -975,8 +977,6 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
 
     for(Index j = 0; j < neurons_number; j++)
     {
-//        if(abs(descriptives(j).maximum-descriptives(j).minimum) < numeric_limits<type>::min())
-
         if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
         {
             if(display)
