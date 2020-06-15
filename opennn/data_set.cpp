@@ -9999,7 +9999,7 @@ void DataSet::read_csv_1()
         has_rows_labels = true;
     }
 
-    const Index columns_number = data_file_preview(0).size();
+    const Index columns_number = has_rows_labels ? data_file_preview(0).size() : data_file_preview(0).size()-1;
 
     columns.resize(columns_number);
 
@@ -10007,8 +10007,6 @@ void DataSet::read_csv_1()
 
     if(has_columns_names && has_numbers(data_file_preview(0)))
     {
-        cout << "Datafilepreview(0): " << data_file_preview(0) << endl;
-
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
@@ -10024,7 +10022,9 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-        set_columns_names(data_file_preview(0));
+
+        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()})))
+                        : set_columns_names(data_file_preview(0));
     }
     else
     {
@@ -10035,23 +10035,32 @@ void DataSet::read_csv_1()
 
     cout << "Setting columns types..." << endl;
 
-    for(Index i = 0; i < columns_number; i++)
+    Index column_index = 0;
+
+    for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
     {
+        if(has_rows_labels && i == 0) continue;
+
         if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
         || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+        || (is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
         || (is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
-            columns(i).type = Numeric;
+            columns(column_index).type = Numeric;
+            column_index++;
         }
         else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
              || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+             || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
              || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
-            columns(i).type = DateTime;
+            columns(column_index).type = DateTime;
+            column_index++;
         }
         else
         {
-            columns(i).type = Categorical;
+            columns(column_index).type = Categorical;
+            column_index++;
         }
     }
 }
@@ -10071,9 +10080,6 @@ void DataSet::read_csv_2_simple()
 
         throw logic_error(buffer.str());
     }
-
-    const char separator_char = get_separator_char();
-    const Index columns_number = get_columns_number();
 
     string line;
     Index line_number = 0;
@@ -10102,6 +10108,9 @@ void DataSet::read_csv_2_simple()
 
     cout << "Setting data dimensions..." << endl;
 
+    const char separator_char = get_separator_char();
+    const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
+
     while(file.good())
     {
         line_number++;
@@ -10114,9 +10123,9 @@ void DataSet::read_csv_2_simple()
 
         if(line.empty()) continue;
 
-        tokens_count = count_tokens(line, separator_char);
+        tokens_count = count_tokens(line, separator_char);;
 
-        if(tokens_count != columns_number)
+        if(tokens_count != raw_columns_number)
         {
             ostringstream buffer;
 
@@ -10124,7 +10133,7 @@ void DataSet::read_csv_2_simple()
                    << "void read_csv_2_simple() method.\n"
                    << "Line " << line_number << ": Size of tokens("
                    << tokens_count << ") is not equal to number of columns("
-                   << columns_number << ").\n";
+                   << raw_columns_number << ").\n";
 
             throw logic_error(buffer.str());
         }
@@ -10133,6 +10142,8 @@ void DataSet::read_csv_2_simple()
     }
 
     file.close();
+
+    const Index columns_number = get_columns_number();
 
     data.resize(instances_count, columns_number);
 
@@ -10209,6 +10220,8 @@ void DataSet::read_csv_3_simple()
         for(j = 0; j < variables_number; j++)
         {
             trim(tokens(j));
+
+            if(has_rows_labels && j == 0) continue; // save row label
 
             if(tokens(j) == missing_values_label || tokens(j).empty())
             {
