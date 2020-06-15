@@ -174,6 +174,100 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+   string write_combinations_c() const
+   {
+       ostringstream buffer;
+
+       const Index inputs_number = get_inputs_number();
+       const Index neurons_number = get_neurons_number();
+
+       buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+           for(Index j = 0; j < inputs_number; j++)
+           {
+                buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+           }
+
+           buffer << ";" << endl;
+       }
+
+       return buffer.str();
+   }
+
+
+   string write_activations_c() const
+   {
+       ostringstream buffer;
+
+       const Index neurons_number = get_neurons_number();
+
+       buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
+
+       for(Index i = 0; i < neurons_number; i++)
+       {
+           switch(activation_function)
+           {
+           case Binary:
+               buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
+               break;
+
+           case Logistic:
+               buffer << "tanh(combinations[" << i << "]);\n";
+               break;
+
+           case Competitive:
+               buffer << "tanh(combinations[" << i << "]);\n";
+               break;
+
+           case Softmax:
+
+               buffer << "\tfloat sum = 0;\n" << endl;
+
+               buffer << "\tsum += ";
+
+               for(Index i = 0; i < neurons_number; i++)
+               {
+                   buffer << "exp(inputs[" << i << "])";
+
+                   if(i != neurons_number-1) buffer << " + ";
+               }
+
+               buffer << ";\n" << endl;
+
+               for(Index i = 0; i < neurons_number; i++)
+               {
+                   buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
+               }
+               break;
+           }
+       }
+
+       return buffer.str();
+   }
+
+
+   string write_expression_c() const
+   {
+       const Index inputs_number = get_inputs_number();
+       const Index neurons_number = get_neurons_number();
+
+       ostringstream buffer;
+
+       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+       buffer << write_combinations_c();
+       buffer << write_activations_c();
+
+       buffer << "\n\treturn activations;\n}" << endl;
+
+       return buffer.str();
+   }
+
+
    // Serialization methods
 
    string object_to_string() const;

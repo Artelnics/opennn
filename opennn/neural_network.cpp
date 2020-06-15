@@ -2849,250 +2849,6 @@ string NeuralNetwork::write_expression() const
     }
 
     return expression;
-
-//    return "";
-}
-
-
-/// Returns a string with the expression of the function represented by the neural network.
-
-string NeuralNetwork::write_mathematical_expression_php() const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
-
-    Index position = 0;
-
-    string search;
-    string replace;
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        position = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-        inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-        position = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-    }
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        position = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-        outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-        position = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-    }
-
-    // Scaled inputs
-
-    Tensor<string, 1> scaled_inputs_name(inputs_names.size());
-
-    for(Index i = 0; i < inputs_names.size(); i++)
-    {
-        buffer.str("");
-
-        buffer << "$scaled_" << inputs_names[i];
-
-        scaled_inputs_name[i] = buffer.str();
-    }
-
-    // Principal components
-
-    Tensor<string, 1> principal_components_name(inputs_number);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$principal_component_" <<(i+1);
-
-        principal_components_name[i] = buffer.str();
-    }
-
-    // Scaled outputs
-
-    Tensor<string, 1> scaled_outputs_name(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$scaled_" << outputs_names[i];
-
-        scaled_outputs_name[i] = buffer.str();
-    }
-
-    // Non probabilistic outputs
-
-    Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$non_probabilistic_" << outputs_names[i];
-
-        non_probabilistic_outputs_name[i] = buffer.str();
-    }
-
-    buffer.str("");
-
-    for(Index i = 0; i < inputs_names.size(); i++)
-    {
-        inputs_names[i] = "$"+inputs_names[i];
-    }
-
-    for(Index i = 0; i < outputs_names.size(); i++)
-    {
-        outputs_names[i] = "$"+outputs_names[i];
-    }
-
-    string expression = buffer.str();
-
-    position = 0;
-
-    search = "--";
-    replace = "+";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "+-";
-    replace = "-";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\n-";
-    replace = "-";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\n+";
-    replace = "+";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\"";
-    replace = "";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    return expression;
 }
 
 
@@ -3267,127 +3023,107 @@ string NeuralNetwork::write_expression_python() const
     buffer.str("");
 
     buffer << "#!/usr/bin/python\n\n";
-    /*
-        if(activations_2d.contains(PerceptronLayer::Threshold))
+
+        if(true)
         {
-            buffer << "def Threshold(x) : \n"
-                      "   if x < 0 : \n"
-                      "       return 0\n"
-                      "   else : \n"
-                      "       return 1\n\n";
+            buffer << write_threshold_python();
         }
 
-        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
+        if(true)
         {
-            buffer << "def SymmetricThreshold(x) : \n"
-                      "   if x < 0 : \n"
-                      "       return -1\n"
-                      "   else : \n"
-                      "       return 1\n\n";
+            buffer << write_symmetric_threshold_python();
         }
 
-        if(activations_2d.contains(PerceptronLayer::Logistic))
+        if(true)
         {
-            buffer << "from math import exp\n"
-                      "def Logistic(x) : \n"
-                      "   return 1/(1+exp(-x)) \n\n";
+            buffer << write_logistic_python();
         }
 
-        if(activations_2d.contains(PerceptronLayer::HyperbolicTangent))
+        if(true)
         {
             buffer << "from math import tanh\n\n";
         }
-    */
-    //    if(has_probabilistic_layer())
-    //    {
-    //        type decision_threshold = probabilistic_layer_pointer->get_decision_threshold();
 
-    //        switch(probabilistic_layer_pointer->get_activation_function())
-    //        {
-    //            case ProbabilisticLayer::Probability :
-    //            {
-    //                buffer << "def Binary(x) : \n"
-    //                          "   if x < " << decision_threshold << " : \n"
-    //                          "       return 0\n"
-    //                          "   else : \n"
-    //                          "       return 1\n\n";
-    //            }
-    //            break;
-    //        case ProbabilisticLayer::Binary :
-    //        {
-    //            buffer << "def Probability(x) : \n"
-    //                      "   if x < 0 :\n"
-    //                      "       return 0\n"
-    //                      "   elif x > 1 :\n"
-    //                      "       return 1\n"
-    //                      "   else : \n"
-    //                      "       return x\n\n";
-    //        }
-    //            break;
-    //        case ProbabilisticLayer::Competitive :
-    //        {
-    //            buffer << "def Competitive(";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
+        if(has_probabilistic_layer())
+        {
+/*
+            type decision_threshold = probabilistic_layer_pointer->get_decision_threshold();
 
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << ") :\n";
+            switch(probabilistic_layer_pointer->get_activation_function())
+            {
+            case ProbabilisticLayer::Binary :
+            {
+                buffer << "def Probability(x) : \n"
+                          "   if x < 0 :\n"
+                          "       return 0\n"
+                          "   elif x > 1 :\n"
+                          "       return 1\n"
+                          "   else : \n"
+                          "       return x\n\n";
+            }
+                break;
+            case ProbabilisticLayer::Competitive :
+            {
+                buffer << "def Competitive(";
+                for(Index i = 0; i < outputs_number; i++)
+                {
+                    buffer << "x" << i;
 
-    //            buffer << "   inputs = [";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
+                    if(i != outputs_number - 1)
+                        buffer << ", ";
+                }
+                buffer << ") :\n";
 
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << "]\n";
-    //            buffer << "   competitive = [0 for i in range(" << outputs_number << ")]\n"
-    //                                                                                  "   maximal_index = inputs.index(max(inputs))\n"
-    //                                                                                  "   competitive[maximal_index] = 1\n"
-    //                                                                                  "   return competitive\n\n";
-    //        }
+                buffer << "   inputs = [";
+                for(Index i = 0; i < outputs_number; i++)
+                {
+                    buffer << "x" << i;
 
-    //            break;
-    //        case ProbabilisticLayer::Softmax :
-    //        {
-    //            buffer << "from math import exp\n"
-    //                      "def Softmax(";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
+                    if(i != outputs_number - 1)
+                        buffer << ", ";
+                }
+                buffer << "]\n";
+                buffer << "   competitive = [0 for i in range(" << outputs_number << ")]\n"
+                                                                                      "   maximal_index = inputs.index(max(inputs))\n"
+                                                                                      "   competitive[maximal_index] = 1\n"
+                                                                                      "   return competitive\n\n";
+            }
 
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << ") :\n";
+                break;
+            case ProbabilisticLayer::Softmax :
+            {
+                buffer << "from math import exp\n"
+                          "def Softmax(";
+                for(Index i = 0; i < outputs_number; i++)
+                {
+                    buffer << "x" << i;
 
-    //            buffer << "   inputs = [";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
+                    if(i != outputs_number - 1)
+                        buffer << ", ";
+                }
+                buffer << ") :\n";
 
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << "]\n";
-    //            buffer << "   softmax = [0 for i in range(" << outputs_number << ")]\n"
-    //            "   sum = 0\n"
-    //            "   for i in range(" << outputs_number << ") :\n"
-    //            "       sum += exp(inputs[i])\n"
-    //            "   for i in range(" << outputs_number << ") :\n"
-    //                                                                                                                                                                    "       softmax[i] = exp(inputs[i])/sum\n";
-    //            buffer << "   return softmax\n\n";
-    //        }
-    //            break;
+                buffer << "   inputs = [";
+                for(Index i = 0; i < outputs_number; i++)
+                {
+                    buffer << "x" << i;
 
-    //        case ProbabilisticLayer::NoProbabilistic :
-    //            break;
-    //        }
-    //    }
+                    if(i != outputs_number - 1)
+                        buffer << ", ";
+                }
+                buffer << "]\n";
+                buffer << "   softmax = [0 for i in range(" << outputs_number << ")]\n"
+                "   sum = 0\n"
+                "   for i in range(" << outputs_number << ") :\n"
+                "       sum += exp(inputs[i])\n"
+                "   for i in range(" << outputs_number << ") :\n"
+                                                                                                                                                                        "       softmax[i] = exp(inputs[i])/sum\n";
+                buffer << "   return softmax\n\n";
+            }
+                break;
+            }
+*/
+        }
 
     buffer << "def expression(inputs) : \n\n    ";
 
@@ -3655,40 +3391,17 @@ string NeuralNetwork::write_expression_php() const
     /*
         if(activations_2d.contains(PerceptronLayer::Threshold))
         {
-            buffer << "function Threshold($x)\n"
-                      "{\n"
-                      "   if($x < 0)\n"
-                      "   {\n"
-                      "       return 0;\n"
-                      "   }\n"
-                      "   else\n"
-                      "   {\n"
-                      "       return 1;\n"
-                      "   }\n"
-                      "}\n\n";
+            buffer << write_threshold_php();
         }
 
         if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
         {
-            buffer << "function SymmetricThreshold(&x)\n"
-                      "{\n"
-                      "   if($x < 0)\n"
-                      "   {\n"
-                      "       return -1;\n"
-                      "   }\n"
-                      "   else\n"
-                      "   {\n"
-                      "       return 1;\n"
-                      "   }\n"
-                      "}\n\n";
+            buffer << write_symmetric_threshold_php();
         }
 
         if(activations_2d.contains(PerceptronLayer::Logistic))
         {
-            buffer << "function Logistic($x)\n"
-                      "{\n"
-                      "   return 1/(1+exp(-$x));"
-                      "}\n\n";
+            buffer << write_logistic_php();
         }
     */
     buffer << "function expression($inputs)\n"
@@ -3719,7 +3432,7 @@ string NeuralNetwork::write_expression_php() const
         buffer << "   " << inputs_names[i] << "=$inputs[" << i << "];\n";
     }
 
-    string neural_network_expression = write_mathematical_expression_php();
+    string neural_network_expression = write_expression_php();
 
     pos = 0;
 
@@ -3975,25 +3688,17 @@ string NeuralNetwork::write_expression_R() const
     /*
         if(activations_2d.contains(PerceptronLayer::Threshold))
         {
-            buffer << "Threshold <- function(x) { \n"
-                      "   if(x < 0)  0 \n"
-                      "   else 1 \n"
-                      "}\n\n";
+            buffer << write_threshold_r();
         }
 
         if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
         {
-            buffer << "SymmetricThreshold <- function(x) { \n"
-                      "   if(x < 0)  -1 \n"
-                      "   else 1 \n"
-                      "}\n\n";
+            buffer << write_symmetric_threshold_r();
         }
 
         if(activations_2d.contains(PerceptronLayer::Logistic))
         {
-            buffer << "Logistic <- function(x) { \n"
-                      "   1/(1+exp(-x))\n"
-                      "}\n\n";
+            buffer << write_logistic_r();
         }
     */
     buffer << "expression <- function(inputs) {\n\n    ";

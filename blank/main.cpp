@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+
 // System includes
 
 #include <iostream>
@@ -46,10 +47,20 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        Tensor<Index, 1> architecture(3);
+
+        architecture.setValues({3, 2, 2});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+
+        cout << neural_network.write_expression_c() << endl;
+
+        cout << "Bye Blank Application" << endl;
+
         return 0;
 
     }
-       catch(exception& e)
+    catch(exception& e)
     {
        cerr << e.what() << endl;
     }

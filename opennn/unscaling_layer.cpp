@@ -323,6 +323,8 @@ void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
 
 void UnscalingLayer::set_default()
 {
+    layer_name = "unscaling_layer";
+
     set_unscaling_method(MinimumMaximum);
 
     set_display(true);
