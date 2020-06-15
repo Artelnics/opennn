@@ -3489,6 +3489,52 @@ string NeuralNetwork::write_expression_php() const
     return expression;
 }
 
+string NeuralNetwork::write_expression_c() const
+{
+    const Index layers_number = get_layers_number();
+
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+    Tensor<string, 1> layers_names = get_layers_names();
+
+    ostringstream buffer;
+
+    buffer << "#include <vector>\n" << endl;
+
+    buffer << "using namespace std;\n" << endl;
+
+    cout<<"layers_number"<<layers_number<<endl;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+
+        buffer << layers_pointers[i]->write_expression_c() << endl;
+    }
+
+    buffer << "vector<float> neural_network(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs;\n" << endl;
+
+    if(layers_number > 0)
+    {
+        buffer << "\toutputs = " << layers_names[0] << "(inputs);\n";
+    }
+
+    for(Index i = 1; i < layers_number; i++)
+    {
+        buffer << "\toutputs = " << layers_names[i] << "(outputs);\n";
+    }
+
+    buffer << "\n\treturn outputs;\n}" << endl;
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "-+", "-");
+    replace(expression, "--", "+");
+
+    return expression;
+}
+
 
 /// Returns a string with the R function of the expression represented by the neural network.
 /// @todo

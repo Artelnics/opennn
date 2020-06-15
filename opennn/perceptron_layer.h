@@ -289,7 +289,7 @@ public:
    {
        ostringstream buffer;
 
-       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+       buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
        buffer << write_combinations_c();
        buffer << write_activations_c();
