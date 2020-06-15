@@ -176,6 +176,7 @@ public:
 
    string write_combinations_c() const
    {
+       cout<<"combination"<<endl;
        ostringstream buffer;
 
        const Index inputs_number = get_inputs_number();
@@ -201,6 +202,7 @@ public:
 
    string write_activations_c() const
    {
+       cout<<"activation"<<endl;
        ostringstream buffer;
 
        const Index neurons_number = get_neurons_number();
@@ -225,22 +227,26 @@ public:
 
            case Softmax:
 
-               buffer << "\tfloat sum = 0;\n" << endl;
-
-               buffer << "\tsum += ";
-
-               for(Index i = 0; i < neurons_number; i++)
+               if(i == 0)
                {
-                   buffer << "exp(inputs[" << i << "])";
+                   buffer << "\tfloat sum = 0;\n" << endl;
 
-                   if(i != neurons_number-1) buffer << " + ";
-               }
+                   buffer << "\tsum += ";
 
-               buffer << ";\n" << endl;
+                   for(Index i = 0; i < neurons_number; i++)
+                   {
+                       buffer << "exp(combinations[" << i << "])";
 
-               for(Index i = 0; i < neurons_number; i++)
-               {
-                   buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
+                       if(i != neurons_number-1) buffer << " + ";
+                   }
+
+                   buffer << ";\n" << endl;
+
+                   for(Index i = 0; i < neurons_number; i++)
+                   {
+                       buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
+                   }
+
                }
                break;
            }
@@ -257,9 +263,10 @@ public:
 
        ostringstream buffer;
 
-       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+       buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
        buffer << write_combinations_c();
+
        buffer << write_activations_c();
 
        buffer << "\n\treturn activations;\n}" << endl;
