@@ -9999,7 +9999,7 @@ void DataSet::read_csv_1()
         has_rows_labels = true;
     }
 
-    const Index columns_number = has_rows_labels ? data_file_preview(0).size() : data_file_preview(0).size()-1;
+    const Index columns_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     columns.resize(columns_number);
 
