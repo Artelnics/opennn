@@ -156,7 +156,7 @@ public:
 
        ostringstream buffer;
 
-       buffer << "void " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+       buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
 
        buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
