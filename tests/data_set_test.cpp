@@ -1414,7 +1414,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
 }
 
-/*
+
 void DataSetTest::test_balance_multiple_targets_distribution()
 {
     cout << "test_balance_multiple_target_distribution\n";
@@ -1481,7 +1481,7 @@ void DataSetTest::test_balance_multiple_targets_distribution()
     instance9[1] = 2.8;
     instance9[2] = 0.0;
     instance9[3] = 1.0;
-
+/*
     data_set.set_instance(0, instance0);
     data_set.set_instance(1, instance1);
     data_set.set_instance(2, instance2);
@@ -1497,9 +1497,9 @@ void DataSetTest::test_balance_multiple_targets_distribution()
     assert_true(data_set.get_unused_instances_number() == 9, LOG);
     assert_true(data_set.calculate_target_distribution()[0] == 0, LOG);
     assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
-
-}
 */
+}
+
 /*
 void DataSetTest::test_balance_function_regression_targets_distribution()
 {
@@ -2985,7 +2985,7 @@ void DataSetTest::run_test_case()
    // Pattern recognition methods
    //test_calculate_target_columns_distribution();
    test_unuse_most_populated_target();
-   //test_balance_multiple_targets_distribution();
+   test_balance_multiple_targets_distribution();
 /*
   // test_balance_function_regression_targets_distribution();
 
