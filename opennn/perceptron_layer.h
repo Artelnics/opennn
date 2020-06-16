@@ -51,7 +51,7 @@ public:
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    PerceptronLayer(const PerceptronLayer&);
 
@@ -332,7 +332,7 @@ protected:
    // MEMBERS
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's trabsfer function to generate the neuron's output.
+   /// and passed through the neuron's transfer function to generate the neuron's output.
 
    Tensor<type, 2> biases;
 

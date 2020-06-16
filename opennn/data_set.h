@@ -504,11 +504,7 @@ public:
 
    Tensor<Index, 1> unuse_repeated_instances();
 
-   Tensor<Index, 1> unuse_non_significant_input_columns();
-
    Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
-
-   Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
    // Initialization methods
 
@@ -531,9 +527,6 @@ public:
 
    Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;
-   Tensor<Descriptives, 1> calculate_columns_descriptives_testing_instances() const;
-
-   Tensor<type, 2> calculate_variables_descriptives_matrix() const;
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
@@ -549,9 +542,7 @@ public:
    Descriptives calculate_inputs_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_used_targets_mean() const;
-   Tensor<type, 1> calculate_training_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
-   Tensor<type, 1> calculate_testing_targets_mean() const;
 
    Index calculate_training_negatives(const Index&) const;
    Index calculate_selection_negatives(const Index&) const;
@@ -669,8 +660,6 @@ public:
 
    // Outlier detection
 
-   Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const type& = 1.5) const;
-
    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
 
    void unuse_Tukey_outliers(const type& = 1.5);
@@ -739,8 +728,6 @@ public:
 
    void fill_time_series(const Index&);
 
-   void delete_unused_instances();
-
    void numeric_to_categorical(const Index&);
 
    // Missing values
@@ -756,8 +743,6 @@ public:
    void impute_missing_values_median();
 
    void scrub_missing_values();
-
-   Tensor<string, 1> unuse_columns_missing_values(const type&);
 
    Tensor<Index, 1> count_nan_columns() const;
    Index count_rows_with_nan() const;

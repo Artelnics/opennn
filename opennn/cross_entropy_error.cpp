@@ -250,9 +250,8 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);*/
-
-
+    regularization_from_XML(regularization_document);
+    */
 }
 
 }

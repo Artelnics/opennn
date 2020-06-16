@@ -1163,6 +1163,53 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
 }
 
 
+/// \brief write_expression_c
+/// \return
+
+string ScalingLayer::write_expression_c() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        if(scaling_methods(i) == NoScaling)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+        }
+        else if(scaling_methods(i) == MinimumMaximum)
+        {
+            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).minimum << ")/" << descriptives(i).maximum-descriptives(i).minimum << " ;" << endl;
+        }
+        else if(scaling_methods(i) == MeanStandardDeviation)
+        {
+            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).mean << ")/" << descriptives(i).standard_deviation << " ;" << endl;
+        }
+        else if(scaling_methods(i) == StandardDeviation)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " ;" << endl;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "string write_expression() const method.\n"
+                   << "Unknown inputs scaling method.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    return buffer.str();
+}
+
+
+
+
 /// Returns a string representation of the current scaling layer object.
 
 string ScalingLayer::object_to_string() const
