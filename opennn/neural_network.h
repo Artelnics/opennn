@@ -534,8 +534,6 @@ public:
        return buffer.str();
    }
 
-
-
    /// Calculate de forward propagation in the neural network
 
    void forward_propagate(const DataSet::Batch&, ForwardPropagation&) const;

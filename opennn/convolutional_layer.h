@@ -79,10 +79,8 @@ public:
     bool is_empty() const;
 
     Tensor<type, 1> get_biases() const;
-    Tensor<type, 1> extract_biases(const Tensor<type, 1>&) const;
 
     Tensor<type, 2> get_synaptic_weights() const;
-    Tensor<type, 2> extract_synaptic_weights(const Tensor<type, 1>&) const;
 
     ActivationFunction get_activation_function() const;
 
