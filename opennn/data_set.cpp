@@ -7429,6 +7429,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = rows_labels.dimension(0);
 
+        cout << "rows_lables_number: " << rows_labels_number << endl;
+
         file_stream.OpenElement("RowsLabels");
 
         buffer.str("");
@@ -9836,7 +9838,7 @@ void DataSet::read_csv_3_simple()
 
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
-    Tensor<string, 1> tokens(columns_number);
+    Tensor<string, 1> tokens(raw_columns_number);
 
     const Index instances_number = data.dimension(0);
 
@@ -9846,8 +9848,6 @@ void DataSet::read_csv_3_simple()
 
     Index instance_index = 0;
     Index column_index = 0;
-
-    cout << "Rows labels size: " << rows_labels.size() << endl;
 
     while(file.good())
     {
@@ -9890,7 +9890,9 @@ void DataSet::read_csv_3_simple()
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
-    data_file_preview(data_file_preview_index) = tokens;
+    data_file_preview(data_file_preview_index) = has_rows_labels ?
+                tokens.slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({raw_columns_number-1}))
+              : tokens;
 
     file.close();
 
