@@ -9971,6 +9971,10 @@ void DataSet::read_csv_2_complete()
 
     cout << "Setting data dimensions..." << endl;
 
+    const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
+
+    Index column_index = 0;
+
     while(file.good())
     {
         getline(file, line);
@@ -9983,30 +9987,39 @@ void DataSet::read_csv_2_complete()
 
         tokens_count = tokens.size();
 
-        if(static_cast<unsigned>(tokens_count) != columns_number)
+        if(static_cast<unsigned>(tokens_count) != raw_columns_number)
         {
             const string message =
                 "Instance " + to_string(lines_count+1) + " error:\n"
-                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(columns_number) + ").\n"
+                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
                 "Please check the format of the data file.";
 
             throw logic_error(message);
         }
 
-        for(unsigned j = 0; j < columns_number; j++)
+        for(unsigned j = 0; j < raw_columns_number; j++)
         {
+            if(has_rows_labels && j == 0)
+            {
+                continue;
+            }
+
             trim(tokens(j));
 
-            if(columns(j).type == Categorical)
+            if(columns(column_index).type == Categorical)
             {
-                if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
                     if(tokens(j) == missing_values_label) continue;
 
-                    columns(j).add_category(tokens(j));
+                    columns(column_index).add_category(tokens(j));
                 }
             }
+
+            column_index++;
         }
+
+        column_index = 0;
 
         lines_count++;
     }
@@ -10035,6 +10048,8 @@ void DataSet::read_csv_2_complete()
     data.resize(static_cast<Index>(instances_number), variables_number);
     data.setZero();
 
+    if(has_rows_labels) rows_labels.resize(instances_number);
+
     set_default_columns_uses();
 
     instances_uses.resize(static_cast<Index>(instances_number));
@@ -10061,6 +10076,8 @@ void DataSet::read_csv_3_complete()
     const char separator_char = get_separator_char();
 
     const Index columns_number = columns.size();
+
+    const Index raw_columns_number = has_rows_labels ? columns_number+1 : columns_number;
 
     string line;
 
@@ -10109,7 +10126,11 @@ void DataSet::read_csv_3_complete()
         {
             trim(tokens(j));
 
-            if(columns(j).type == Numeric)
+            if(has_rows_labels && j ==0)
+            {
+                rows_labels(instance_index) = tokens(j);
+            }
+            else if(columns(j).type == Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
