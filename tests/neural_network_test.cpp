@@ -1135,7 +1135,7 @@ void NeuralNetworkTest::test_perturbate_parameters()
 void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-
+/*
    NeuralNetwork neural_network;
 
    Index inputs_number;
@@ -1365,12 +1365,13 @@ void NeuralNetworkTest::test_calculate_outputs()
    assert_true(outputs.dimension(1) == outputs_number, LOG);
    assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
    assert_true(abs(outputs(1,0) - 0) < static_cast<type>(1e-5), LOG);
+*/
 }
 
 void NeuralNetworkTest::test_calculate_trainable_outputs()
 {
    cout << "test_calculate_trainable_outputs\n";
-
+/*
 
    NeuralNetwork neural_network;
 
@@ -1519,6 +1520,7 @@ void NeuralNetworkTest::test_calculate_trainable_outputs()
                && abs(trainable_outputs(0,1) - outputs(0,1)) > static_cast<type>(1e-3), LOG);
    assert_true(abs(trainable_outputs(0,2) + static_cast<type>(1.2847)) < static_cast<type>(1e-3)
                && abs(trainable_outputs(0,2) - outputs(0,2)) < static_cast<type>(1e-3), LOG);
+*/
 }
 
 void NeuralNetworkTest::test_calculate_directional_inputs()
@@ -1586,7 +1588,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 void NeuralNetworkTest::test_calculate_outputs_histograms()
 {
    cout << "test_calculate_outputs_histograms\n";
-
+/*
    NeuralNetwork neural_network;
 
    Tensor<Index, 1> architecture;
@@ -1657,6 +1659,7 @@ void NeuralNetworkTest::test_calculate_outputs_histograms()
                abs(outputs_histograms(1).minimums(1) - outputs_histograms(1).maximums(1)) < static_cast<type>(1e-5)  &&
                abs(outputs_histograms(1).minimums(1) - outputs_histograms(1).centers(1)) < static_cast<type>(1e-5)  , LOG);
    assert_true(outputs_histograms(1).frequencies(1) - 1 < static_cast<type>(1e-5), LOG);
+*/
 }
 
 void NeuralNetworkTest::test_to_XML()
@@ -1753,7 +1756,7 @@ void NeuralNetworkTest::test_print()
 void NeuralNetworkTest::test_write_expression()
 {
    cout << "test_write_expression\n";
-
+/*
    NeuralNetwork neural_network;
    string expression;
 
@@ -1808,10 +1811,13 @@ void NeuralNetworkTest::test_write_expression()
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(-1.0);
 //   expression = neural_network.write_expression();
+*/
 }
 
 void NeuralNetworkTest::test_forward_propagate()
 {
+    cout << "test_forward_propagate\n";
+/*
     // Test 1
 
     Index inputs_number = 2;
@@ -1959,6 +1965,7 @@ void NeuralNetworkTest::test_forward_propagate()
     assert_true(abs(perceptron_activations_3_1(0,0) - static_cast<type>(0.443)) < static_cast<type>(1e-3)
              && abs(perceptron_activations_3_1(1,0) - static_cast<type>(0.341)) < static_cast<type>(1e-3)
              && abs(perceptron_activations_3_1(2,0) - static_cast<type>(0.215)) < static_cast<type>(1e-3), LOG);
+*/
 }
 
 

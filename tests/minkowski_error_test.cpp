@@ -142,9 +142,7 @@ void MinkowskiErrorTest::test_calculate_selection_error()
 void MinkowskiErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
-
-
-
+/*
    NeuralNetwork neural_network;
 
    DataSet data_set;
@@ -231,7 +229,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-
+*/
 
 /*
    // Test trivial

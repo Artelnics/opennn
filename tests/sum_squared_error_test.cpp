@@ -71,7 +71,7 @@ void SumSquaredErrorTest::test_destructor()
 void SumSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-
+/*
    NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;
@@ -233,13 +233,14 @@ void SumSquaredErrorTest::test_calculate_error()
    sum_squared_error.calculate_error(batch_3, forward_propagation_3, training_back_propagation_3);
 
    assert_true(training_back_propagation_3.error == 8.0, LOG);
+*/
 }
 
 
 void SumSquaredErrorTest::test_calculate_output_gradient()
 {
    cout << "test_calculate_output_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;
@@ -405,13 +406,14 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    assert_true(abs(training_back_propagation_2_2.output_gradient(0,1) + 6) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2_2.output_gradient(1,0) + 0) < static_cast<type>(1e-3), LOG);
    assert_true(abs(training_back_propagation_2_2.output_gradient(2,1) + 4) < static_cast<type>(1e-3), LOG);
+*/
 }
 
 
 void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 {
    cout << "test_calculate_Jacobian_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;
@@ -465,6 +467,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    assert_true(second_order_loss.gradient(0) == 0.0, LOG);
    assert_true(second_order_loss.gradient(1) == 0.0, LOG);
+*/
 }
 
 

@@ -58,7 +58,7 @@ void PruningInputsTest::test_set_default()
 void PruningInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
-
+/*
     DataSet data_set;
 
     Tensor<type, 2> data;
@@ -120,7 +120,7 @@ void PruningInputsTest::test_perform_inputs_selection()
     pi.delete_selection_history();
     pi.delete_parameters_history();
     pi.delete_loss_history();
-
+*/
 }
 
 // Serialization methods
