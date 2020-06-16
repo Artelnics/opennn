@@ -3237,6 +3237,12 @@ const bool& DataSet::get_rows_label() const
 }
 
 
+Tensor<string, 1> DataSet::get_rows_label_tensor() const
+{
+    return rows_labels;
+}
+
+
 /// Returns the separator to be used in the data file.
 
 const DataSet::Separator& DataSet::get_separator() const
@@ -7429,8 +7435,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = rows_labels.dimension(0);
 
-        cout << "rows_lables_number: " << rows_labels_number << endl;
-
         file_stream.OpenElement("RowsLabels");
 
         buffer.str("");
@@ -7441,6 +7445,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != rows_labels_number-1) buffer << ",";
         }
+
+        file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
     }
@@ -9846,6 +9852,10 @@ void DataSet::read_csv_3_simple()
 
     cout << "Reading data..." << endl;
 
+    cout << "Raw columns number: " << raw_columns_number << endl;
+
+    cout << "Rows label size: " << rows_labels.dimension(0) << endl;
+
     Index instance_index = 0;
     Index column_index = 0;
 
@@ -9861,13 +9871,16 @@ void DataSet::read_csv_3_simple()
 
         get_tokens(line, separator_char, tokens);
 
-        for(j = 0; j < raw_columns_number/*variables_number*/; j++)
+
+        for(j = 0; j < raw_columns_number; j++)
         {
             trim(tokens(j));
 
-            if(has_rows_labels && j == 0) rows_labels(instance_index) = tokens(j);
-
-            if(tokens(j) == missing_values_label || tokens(j).empty())
+            if(has_rows_labels && j == 0)
+            {
+                rows_labels(instance_index) = tokens(j);
+            }
+            else if(tokens(j) == missing_values_label || tokens(j).empty())
             {
                 data(instance_index, column_index) = static_cast<type>(NAN);
                 column_index++;
@@ -9890,9 +9903,7 @@ void DataSet::read_csv_3_simple()
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
-    data_file_preview(data_file_preview_index) = has_rows_labels ?
-                tokens.slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({raw_columns_number-1}))
-              : tokens;
+    data_file_preview(data_file_preview_index) = tokens;
 
     file.close();
 
