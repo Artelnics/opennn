@@ -1047,7 +1047,7 @@ void DataSetTest::test_calculate_target_columns_distribution()
     assert_true(calculate_target_distribution_1[2] == 2, LOG);
 }
 */
-/*
+
 void DataSetTest::test_unuse_most_populated_target()
 {
     cout << "test_unused_most_populated_target\n";
@@ -1061,11 +1061,11 @@ void DataSetTest::test_unuse_most_populated_target()
     data_set.set(5,2,5);
     data_set.initialize_data(0.0);
 
-    unused_instances_indices = data_set.unuse_most_populated_target(7);
+    //unused_instances_indices = data_set.unuse_most_populated_target(7);
 
-    assert_true(unused_instances_indices.size() == 5, LOG);
-    assert_true(data_set.get_used_instances_number() == 0, LOG);
-    assert_true(data_set.get_unused_instances_number() == 5, LOG);
+    //assert_true(unused_instances_indices.size() == 5, LOG);
+    //assert_true(data_set.get_used_instances_number() == 0, LOG);
+    //assert_true(data_set.get_unused_instances_number() == 5, LOG);
 
     // Test
 
@@ -1074,11 +1074,11 @@ void DataSetTest::test_unuse_most_populated_target()
     ds2.set(100, 7,5);
     ds2.initialize_data(1.0);
 
-    unused_instances_indices = ds2.unuse_most_populated_target(99);
+    //unused_instances_indices = ds2.unuse_most_populated_target(99);
 
-    assert_true(unused_instances_indices.size() == 99, LOG);
-    assert_true(ds2.get_used_instances_number() == 1, LOG);
-    assert_true(ds2.get_unused_instances_number() == 99, LOG);
+    //assert_true(unused_instances_indices.size() == 99, LOG);
+    //assert_true(ds2.get_used_instances_number() == 1, LOG);
+    //assert_true(ds2.get_unused_instances_number() == 99, LOG);
 
     // Test
 
@@ -1087,14 +1087,14 @@ void DataSetTest::test_unuse_most_populated_target()
     ds3.set(1, 10,10);
     ds3.set_data_random();
 
-    unused_instances_indices = ds3.unuse_most_populated_target(50);
+    //unused_instances_indices = ds3.unuse_most_populated_target(50);
 
-    assert_true(unused_instances_indices.size() == 1, LOG);
-    assert_true(ds3.get_used_instances_number() == 0, LOG);
-    assert_true(ds3.get_unused_instances_number() == 1, LOG);
+    //assert_true(unused_instances_indices.size() == 1, LOG);
+    //assert_true(ds3.get_used_instances_number() == 0, LOG);
+    //assert_true(ds3.get_unused_instances_number() == 1, LOG);
 }
-*/
-/*
+
+
 void DataSetTest::test_balance_binary_targets_distribution()
 {
     cout << "test_balance_binary_target_distribution\n";
@@ -1103,8 +1103,10 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     DataSet data_set(22, 2, 1);
     data_set.initialize_data(1.0);
-    Tensor<type, 1> instance0(3, 0.0);
-    Tensor<type, 1> instance1(3, 0.0);
+    Tensor<type, 1> instance0(2);
+    instance0.setValues({3, 0.0});
+    Tensor<type, 1> instance1(2);
+    instance1.setValues({3, 0.0});
     Tensor<type, 1> instance2(3);
     Tensor<type, 1> instance3(3);
     Tensor<type, 1> instance4(3);
@@ -1121,15 +1123,15 @@ void DataSetTest::test_balance_binary_targets_distribution()
     instance4[1] = 9.0;
     instance4[2] = 0.0;
 
-    data_set.set_instance(0, instance0);
-    data_set.set_instance(1, instance1);
-    data_set.set_instance(2, instance2);
-    data_set.set_instance(3, instance3);
-    data_set.set_instance(4, instance4);
+    //data_set.set_instance(0, instance0);
+    //data_set.set_instance(1, instance1);
+    //data_set.set_instance(2, instance2);
+    //data_set.set_instance(3, instance3);
+    //data_set.set_instance(4, instance4);
 
-    data_set.balance_binary_targets_distribution();
+    //data_set.balance_binary_targets_distribution();
 
-    assert_true(data_set.get_unused_instances_number() == 12, LOG);
+    //assert_true(data_set.get_unused_instances_number() == 12, LOG);
     //assert_true(data_set.calculate_target_distribution()[1] == 5, LOG);
     //assert_true(data_set.calculate_target_distribution()[0] == 5, LOG);
 
@@ -1199,22 +1201,22 @@ void DataSetTest::test_balance_binary_targets_distribution()
     instance9[2] = 0.0;
     instance9[3] = 0.0;
 
-    data_set.set_instance(0, instance0);
-    data_set.set_instance(1, instance1);
-    data_set.set_instance(2, instance2);
-    data_set.set_instance(3, instance3);
-    data_set.set_instance(4, instance4);
-    data_set.set_instance(5, instance5);
-    data_set.set_instance(6, instance6);
-    data_set.set_instance(7, instance7);
-    data_set.set_instance(8, instance8);
-    data_set.set_instance(9, instance9);
+    //data_set.set_instance(0, instance0);
+    //data_set.set_instance(1, instance1);
+    //data_set.set_instance(2, instance2);
+    //data_set.set_instance(3, instance3);
+    //data_set.set_instance(4, instance4);
+    //data_set.set_instance(5, instance5);
+    //data_set.set_instance(6, instance6);
+    //data_set.set_instance(7, instance7);
+    //data_set.set_instance(8, instance8);
+    //data_set.set_instance(9, instance9);
 
-    data_set.balance_binary_targets_distribution();
+    //data_set.balance_binary_targets_distribution();
 
-    assert_true(data_set.get_unused_instances_number() == 10, LOG);
-    assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
-    assert_true(data_set.calculate_target_distribution()[0] == 0, LOG);
+    //assert_true(data_set.get_unused_instances_number() == 10, LOG);
+    //assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
+    //assert_true(data_set.calculate_target_distribution()[0] == 0, LOG);
     }
 
     // Test
@@ -1283,95 +1285,95 @@ void DataSetTest::test_balance_binary_targets_distribution()
     instance9[2] = 0.0;
     instance9[3] = 0.0;
 
-    data_set.set_instance(0, instance0);
-    data_set.set_instance(1, instance1);
-    data_set.set_instance(2, instance2);
-    data_set.set_instance(3, instance3);
-    data_set.set_instance(4, instance4);
-    data_set.set_instance(5, instance5);
-    data_set.set_instance(6, instance6);
-    data_set.set_instance(7, instance7);
-    data_set.set_instance(8, instance8);
-    data_set.set_instance(9, instance9);
+    //data_set.set_instance(0, instance0);
+    //data_set.set_instance(1, instance1);
+    //data_set.set_instance(2, instance2);
+    //data_set.set_instance(3, instance3);
+    //data_set.set_instance(4, instance4);
+    //data_set.set_instance(5, instance5);
+    //data_set.set_instance(6, instance6);
+    //data_set.set_instance(7, instance7);
+    //data_set.set_instance(8, instance8);
+    //data_set.set_instance(9, instance9);
 
-    data_set.balance_binary_targets_distribution(50.0);
+    //data_set.balance_binary_targets_distribution(50.0);
 
-    assert_true(data_set.get_unused_instances_number() == 3, LOG);
-    assert_true(data_set.calculate_target_distribution()[1] == 2, LOG);
-    assert_true(data_set.calculate_target_distribution()[0] == 5, LOG);
+    //assert_true(data_set.get_unused_instances_number() == 3, LOG);
+    //assert_true(data_set.calculate_target_distribution()[1] == 2, LOG);
+    //assert_true(data_set.calculate_target_distribution()[0] == 5, LOG);
     }
 
     // Test
     {
-    DataSet ds2(9, 1, 99);
+    //DataSet ds2(9, 1, 99);
 
-    Tensor<type, 2> data1(9,10);
-    Tensor<type, 2> data2(90,10);
+    //Tensor<type, 2> data1(9,10);
+    //Tensor<type, 2> data2(90,10);
 
-    data1.setRandom();
-    data2.setRandom();
+    //data1.setRandom();
+    //data2.setRandom();
 
-    data1.set_column(9, 0.0);
-    data2.set_column(9, 1.0);
+    //data1.set_column(9, 0.0);
+    //data2.set_column(9, 1.0);
 
-    Tensor<type, 2> data = data1.assemble_rows(data2);
+    //Tensor<type, 2> data = data1.assemble_rows(data2);
 
-    ds2.set(data);
+    //ds2.set(data);
 
-    ds2.balance_binary_targets_distribution();
+    //ds2.balance_binary_targets_distribution();
 
-    assert_true(ds2.calculate_target_distribution()[0] == ds2.calculate_target_distribution()[1], LOG);
-    assert_true(ds2.calculate_target_distribution()[0] == 9, LOG);
+    //assert_true(ds2.calculate_target_distribution()[0] == ds2.calculate_target_distribution()[1], LOG);
+    //assert_true(ds2.calculate_target_distribution()[0] == 9, LOG);
     }
 
     //Test
     {
-    DataSet data_set(4,1,1);
+    //DataSet data_set(4,1,1);
 
-    const string data_file_name = "../data/data.dat";
+    //const string data_file_name = "../data/data.dat";
 
-    data_set.set_data_file_name(data_file_name);
-    data_set.set_has_columns_names(false);
-    data_set.set_separator(',');
-    data_set.set_missing_values_label("NaN");
+    //data_set.set_data_file_name(data_file_name);
+    //data_set.set_has_columns_names(false);
+    //data_set.set_separator(',');
+    //data_set.set_missing_values_label("NaN");
 
-    const string data_string =
+    //const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,NaN\n"
     "7.0,3.2,0.0\n"
     "6.3,3.3,0.0";
 
-    ofstream file;
+    //ofstream file;
 
-    file.open(data_file_name.c_str());
-    file << data_string;
-    file.close();
+    //file.open(data_file_name.c_str());
+    //file << data_string;
+    //file.close();
 
-    data_set.read_csv();
+    //data_set.read_csv();
 
-    data_set.impute_missing_values_unuse();
+    //data_set.impute_missing_values_unuse();
 
-    data_set.balance_binary_targets_distribution();
+    //data_set.balance_binary_targets_distribution();
 
-    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    assert_true(target_distribution[0] == target_distribution[1], LOG);
-    assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
-    assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
+    //assert_true(target_distribution[0] == target_distribution[1], LOG);
+    //assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
+    //assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
     }
 
     //Test
     {
-    DataSet data_set(16,1,1);
+    //DataSet data_set(16,1,1);
 
-    const string data_file_name = "../data/data.dat";
+    //const string data_file_name = "../data/data.dat";
 
-    data_set.set_data_file_name(data_file_name);
-    data_set.set_has_columns_names(false);
-    data_set.set_separator(',');
-    data_set.set_missing_values_label("NaN");
+    //data_set.set_data_file_name(data_file_name);
+    //data_set.set_has_columns_names(false);
+    //data_set.set_separator(',');
+    //data_set.set_missing_values_label("NaN");
 
-    const string data_string =
+    //const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,1.0\n"
     "7.0,3.2,0.0\n"
@@ -1393,25 +1395,25 @@ void DataSetTest::test_balance_binary_targets_distribution()
     "7.0,3.2,NaN\n"
     "6.3,3.3,NaN\n";
 
-    ofstream file;
+    //ofstream file;
 
-    file.open(data_file_name.c_str());
-    file << data_string;
-    file.close();
+    //file.open(data_file_name.c_str());
+    //file << data_string;
+    //file.close();
 
-    data_set.read_csv();
+    //data_set.read_csv();
 
-    data_set.impute_missing_values_unuse();
+    //data_set.impute_missing_values_unuse();
 
-    data_set.balance_binary_targets_distribution();
+    //data_set.balance_binary_targets_distribution();
 
-    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    assert_true(target_distribution[0] == target_distribution[1], LOG);
+    //assert_true(target_distribution[0] == target_distribution[1], LOG);
     }
 
 }
-*/
+
 /*
 void DataSetTest::test_balance_multiple_targets_distribution()
 {
@@ -2966,25 +2968,25 @@ void DataSetTest::run_test_case()
    // Target variables unscaling
    test_unscale_targets_mean_standard_deviation();
    test_unscale_targets_minimum_maximum();
-/*
+
    // Classificatios methods
-   test_get_binary_inputs_indices();
-   //test_balance_binary_targets_distribution();
+   //test_get_binary_inputs_indices();
+   test_balance_binary_targets_distribution();
 
    // Correlations
-   test_calculate_input_target_correlations();
-   test_calculate_total_input_correlations();
-   test_calculate_multiple_linear_correlations();
+   //test_calculate_input_target_correlations();
+   //test_calculate_total_input_correlations();
+   //test_calculate_multiple_linear_correlations();
 
    // Input-target variables unscaling
    //test_unscale_variables_mean_standard_deviation();
    //test_unscale_variables_minimum_maximum();
 
    // Pattern recognition methods
-   test_calculate_target_columns_distribution();
-  // test_unuse_most_populated_target();
-  //test_balance_multiple_targets_distribution();
-
+   //test_calculate_target_columns_distribution();
+   test_unuse_most_populated_target();
+   //test_balance_multiple_targets_distribution();
+/*
   // test_balance_function_regression_targets_distribution();
 
    // Outlier detection
