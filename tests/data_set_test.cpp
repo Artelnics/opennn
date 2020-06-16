@@ -93,7 +93,6 @@ void DataSetTest::test_assignment_operator()
    assert_true(ds2.get_variables_number() == 2, LOG);
 }
 
-/*
 void DataSetTest::test_get_instances_number()
 {
    cout << "test_get_instances_number\n";
@@ -102,8 +101,7 @@ void DataSetTest::test_get_instances_number()
 
    assert_true(data_set.get_instances_number() == 0, LOG);
 }
-*/
-/*
+
 void DataSetTest::test_get_variables_number() 
 {
    cout << "test_get_variables_number\n";
@@ -112,8 +110,8 @@ void DataSetTest::test_get_variables_number()
 
    assert_true(data_set.get_variables_number() == 0, LOG);
 }
-*/
-/*
+
+
 void DataSetTest::test_get_variables() 
 {
    cout << "test_get_variables\n";
@@ -123,8 +121,7 @@ void DataSetTest::test_get_variables()
    assert_true(data_set.get_input_variables_number() == 3, LOG);
    assert_true(data_set.get_target_variables_number() == 2, LOG);
 }
-*/
-/*
+
 void DataSetTest::test_get_display() 
 {
    cout << "test_get_display\n";
@@ -139,8 +136,8 @@ void DataSetTest::test_get_display()
 
    assert_true(data_set.get_display() == false, LOG);
 }
-*/
-/*
+
+
 void DataSetTest::test_get_data() 
 {
    cout << "test_get_data\n";
@@ -155,29 +152,30 @@ void DataSetTest::test_get_data()
    assert_true(data.dimension(1) == 2, LOG);
 //   assert_true(data == 0.0, LOG);
 }
-*/
-/*
+
 void DataSetTest::test_get_training_data()
 {
    cout << "test_get_training_data\n";
-/*
-   Tensor<type, 2> matrix({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
+   Tensor<type, 2> matrix(3, 3);
+   matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   data_set.set_data(matrix);
+   //DataSet data_set;
 
-   Tensor<Index, 1> training_indices({0,1});
+   //data_set.set_data(matrix);
+
+   //Tensor<Index, 1> training_indices(2);
+   //training_indices.setValues({0,1});
 
 
-   data_set.set_testing();
-   data_set.set_training(training_indices);
+   //data_set.set_testing();
+   //data_set.set_training(training_indices);
 
-   Tensor<type, 2> training_data = data_set.get_training_data();
-   Tensor<type, 2> solution({{1,4},{4,3},{7,8}});
-   assert_true(training_data == solution, LOG);
+   //Tensor<type, 2> training_data = data_set.get_training_data();
+   //Tensor<type, 2> solution(2, 3);
+   //solution.setValues({{1,4},{4,3},{7,8}});
+   //assert_true(training_data == solution, LOG);
 }
-*/
 /*
 void DataSetTest::test_get_selection_data()
 {
@@ -2865,20 +2863,26 @@ void DataSetTest::run_test_case()
 
    // Assignment operators methods
    test_assignment_operator();
-   /*
    // Get methods
    test_get_instances_number();
    test_get_variables_number();
    test_get_variables();
    test_get_display();
+/*
+ *
 //   test_is_binary_variable();
    test_is_binary_classification();
    test_is_multiple_classification();
+*/
 
+/*
    // Data methods
    test_empty();
+*/
    test_get_data();
    test_get_training_data();
+   /*
+
    test_get_selection_data();
    test_get_testing_data();
    test_get_selection_data_set();
