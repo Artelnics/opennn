@@ -1435,6 +1435,69 @@ string UnscalingLayer::write_expression_php(const Tensor<string, 1>& inputs_name
     throw logic_error(buffer.str());
 }
 
+//string UnscalingLayer::write_expression_c() const
+//{
+//    const Index neurons_number = get_neurons_number();
+
+//    ostringstream buffer;
+
+//    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+//    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
+//    for(Index i = 0; i < neurons_number; i++)
+//    {
+//        buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+//    }
+
+//    buffer << "\n\treturn outputs;\n}" << endl;
+
+//    return buffer.str();
+//}
+
+string UnscalingLayer::write_expression_c() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+//        if(unscaling_methods(i) == NoUnscaling)
+//        {
+//            buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+//        }
+//        else if(unscaling_methods(i) == MinimumMaximum)
+//        {
+//            buffer << "\toutputs[" << i << "] = (inputs[" << i << "])*(" <<  descriptives(i).maximum << "-" << descriptives(i).maximum << ")+" << descriptives.minimum()<< endl;
+//        }
+//        else if(unscaling_methods(i) == MeanStandardDeviation)
+//        {
+//            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).mean << ")/" << descriptives(i).standard_deviation << " ;" << endl;
+//        }
+//        else if(unscaling_methods(i) == StandardDeviation)
+//        {
+//            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " ;" << endl;
+//        }
+//        else
+//        {
+//            ostringstream buffer;
+
+//            buffer << "OpenNN Exception: ScalingLayer class.\n"
+//                   << "string write_expression() const method.\n"
+//                   << "Unknown inputs scaling method.\n";
+
+//            throw logic_error(buffer.str());
+//        }
+    }
+
+    return buffer.str();
+}
+
+
+
 
 }
 

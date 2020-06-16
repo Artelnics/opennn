@@ -603,6 +603,31 @@ string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names
 }
 
 
+///
+/// \brief BoundingLayer::write_expression_c
+/// \return
+
+string BoundingLayer::write_expression_c() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+    }
+
+    buffer << "\n\treturn outputs;\n}" << endl;
+
+    return buffer.str();
+}
+
+
 /// Returns a string representation of the current bonding layer object.
 
 string BoundingLayer::object_to_string() const

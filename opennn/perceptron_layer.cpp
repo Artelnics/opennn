@@ -31,11 +31,13 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// @param new_neurons_number Number of perceptrons in the layer.
 
 PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& new_neurons_number,
-                                 const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
+                                 const Index& layer_number, const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_activation_function);
 
     layer_type = Perceptron;
+
+    layer_name = "perceptron_layer_" + to_string(layer_number);
 }
 
 
