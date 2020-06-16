@@ -7423,6 +7423,26 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Rows labels
+
+    if(has_rows_labels)
+    {
+        const Index rows_labels_number = rows_labels.dimension(0);
+
+        file_stream.OpenElement("RowsLabels");
+
+        buffer.str("");
+
+        for(Index i = 0; i < rows_labels_number; i++)
+        {
+            buffer << rows_labels(i);
+
+            if(i != rows_labels_number-1) buffer << ",";
+        }
+
+        file_stream.CloseElement();
+    }
+
     // Instances
 
     file_stream.OpenElement("Instances");
@@ -7678,7 +7698,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Rows label
+    // Rows labels
 
     const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
 
@@ -8075,6 +8095,33 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 variables_descriptives(i).standard_deviation = new_standard_deviation;
             }
         }
+    }
+
+    if(has_rows_labels)
+    {
+        // Rows labels begin tag
+
+        const tinyxml2::XMLElement* rows_labels_element = data_set_element->FirstChildElement("RowsLabels");
+
+        if(!rows_labels_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Rows labels element is nullptr.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        // Rows labels
+
+        if(rows_labels_element->GetText())
+        {
+            const string new_rows_labels = rows_labels_element->GetText();
+
+            rows_labels = get_tokens(new_rows_labels, ',');
+        }
+
+
     }
 
     // Instances
@@ -9587,7 +9634,7 @@ void DataSet::read_csv_1()
         has_rows_labels = true;
     }
 
-    const Index columns_number = has_rows_labels ? data_file_preview(0).size() : data_file_preview(0).size()-1;
+    const Index columns_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     columns.resize(columns_number);
 
@@ -9611,7 +9658,7 @@ void DataSet::read_csv_1()
     if(has_columns_names)
     {
 
-        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()})))
+        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                         : set_columns_names(data_file_preview(0));
     }
     else
@@ -9697,7 +9744,11 @@ void DataSet::read_csv_2_simple()
     cout << "Setting data dimensions..." << endl;
 
     const char separator_char = get_separator_char();
-    const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
+
+    const Index columns_number = get_columns_number();
+    const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
+
+    cout << "Columns number: " << get_columns_number() << endl;
 
     while(file.good())
     {
@@ -9711,7 +9762,7 @@ void DataSet::read_csv_2_simple()
 
         if(line.empty()) continue;
 
-        tokens_count = count_tokens(line, separator_char);;
+        tokens_count = count_tokens(line, separator_char);
 
         if(tokens_count != raw_columns_number)
         {
@@ -9730,8 +9781,6 @@ void DataSet::read_csv_2_simple()
     }
 
     file.close();
-
-    const Index columns_number = get_columns_number();
 
     data.resize(instances_count, columns_number);
 
@@ -9762,13 +9811,7 @@ void DataSet::read_csv_3_simple()
 
     const char separator_char = get_separator_char();
 
-    const Index variables_number = get_variables_number();
-
     string line;
-
-//    Tensor<string, 1> tokens;
-
-    Index instance_index = 0;
 
     // Read header
 
@@ -9787,11 +9830,24 @@ void DataSet::read_csv_3_simple()
     // Read data
 
     Index j = 0;
+
     const Index columns_number = get_columns_number();
+//    const Index variables_number = get_variables_number();
+
+    const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
     Tensor<string, 1> tokens(columns_number);
 
+    const Index instances_number = data.dimension(0);
+
+    if(has_rows_labels) rows_labels.resize(instances_number);
+
     cout << "Reading data..." << endl;
+
+    Index instance_index = 0;
+    Index column_index = 0;
+
+    cout << "Rows labels size: " << rows_labels.size() << endl;
 
     while(file.good())
     {
@@ -9805,26 +9861,30 @@ void DataSet::read_csv_3_simple()
 
         get_tokens(line, separator_char, tokens);
 
-        for(j = 0; j < variables_number; j++)
+        for(j = 0; j < raw_columns_number/*variables_number*/; j++)
         {
             trim(tokens(j));
 
-            if(has_rows_labels && j == 0) continue; // save row label
+            if(has_rows_labels && j == 0) rows_labels(instance_index) = tokens(j);
 
             if(tokens(j) == missing_values_label || tokens(j).empty())
             {
-                data(instance_index, j) = static_cast<type>(NAN);
+                data(instance_index, column_index) = static_cast<type>(NAN);
+                column_index++;
             }
             else if(is_float)
             {
-                data(instance_index, j) = strtof(tokens(j).data(), NULL);
+                data(instance_index, column_index) = strtof(tokens(j).data(), NULL);
+                column_index++;
             }
             else
             {
-                data(instance_index, j) = stod(tokens(j));
+                data(instance_index, column_index) = stof(tokens(j));
+                column_index++;
             }
         }
 
+        column_index = 0;
         instance_index++;
     }
 
