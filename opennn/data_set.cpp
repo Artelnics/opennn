@@ -9903,6 +9903,8 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+    cout << "hola" << endl;
 }
 
 

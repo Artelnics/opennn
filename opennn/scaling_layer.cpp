@@ -1174,6 +1174,10 @@ string ScalingLayer::write_expression_c() const
 
     buffer.precision(10);
 
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scaling_methods(i) == NoScaling)
@@ -1182,7 +1186,7 @@ string ScalingLayer::write_expression_c() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).minimum << ")/" << descriptives(i).maximum-descriptives(i).minimum << " ;" << endl;
+            buffer << "\toutputs[" << i << "] = 2*(inputs[" << i << "] -(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
@@ -1204,11 +1208,10 @@ string ScalingLayer::write_expression_c() const
         }
     }
 
+    buffer << "\n\treturn outputs;\n}" << endl;
+
     return buffer.str();
 }
-
-
-
 
 /// Returns a string representation of the current scaling layer object.
 
