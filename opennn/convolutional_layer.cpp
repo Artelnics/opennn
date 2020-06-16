@@ -906,15 +906,6 @@ Tensor<type, 1> ConvolutionalLayer::get_biases() const
 }
 
 
-Tensor<type, 1> ConvolutionalLayer::extract_biases(const Tensor<type, 1>& parameters) const
-{
-    /*
-        return parameters.get_last(get_filters_number());
-    */
-    return Tensor<type, 1>();
-
-}
-
 
 /// Returns the layer's synaptic weights.
 
@@ -923,14 +914,6 @@ Tensor<type, 2> ConvolutionalLayer::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-
-Tensor<type, 2> ConvolutionalLayer::extract_synaptic_weights(const Tensor<type, 1>& parameters) const
-{
-
-//  return parameters.get_first(synaptic_weights.size()).to_tensor({get_filters_number(), get_filters_channels_number(), get_filters_rows_number(), get_filters_columns_number()});
-
-    return Tensor<type, 2>();
-}
 
 /// Returns the number of channels of the input.
 
