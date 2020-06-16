@@ -1263,6 +1263,218 @@ string PerceptronLayer::write_activation_function_expression() const
     }
 }
 
+string PerceptronLayer::write_combinations_c() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << ";" << endl;
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_activations_c() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tactivations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
+            break;
+
+        case HyperbolicTangent:
+            buffer << "tanh(combinations[" << i << "]);\n";
+            break;
+
+        case Threshold:
+            buffer << "tanh(combinations[" << i << "]);\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case Linear:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case SoftSign:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "combinations[" << i << "];\n";
+            break;
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_combinations_python() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tcombinations = [None] *"<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << " " << endl;
+    }
+
+    buffer << "\t" << endl;
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_activations_python() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tactivations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tactivations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]))\n";
+            break;
+
+        case HyperbolicTangent:
+            buffer << "np.tanh(combinations[" << i << "])\n";
+            break;
+
+        case Threshold:
+//            buffer << "tanh(combinations[" << i << "])\n";
+            break;
+
+        case SymmetricThreshold:
+//            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case Linear:
+            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case RectifiedLinear:
+//            buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+//            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+//            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case SoftSign:
+            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+//            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case ExponentialLinear:
+//            buffer << "combinations[" << i << "]\n";
+            break;
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_expression_c() const
+{
+    ostringstream buffer;
+
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << write_combinations_c();
+
+    buffer << write_activations_c();
+
+    buffer << "\n\treturn activations;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_expression_python() const
+{
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << write_combinations_python();
+
+    buffer << write_activations_python();
+
+    buffer << "\n\treturn activations;\n" << endl;
+
+    return buffer.str();
+}
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

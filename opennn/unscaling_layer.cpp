@@ -1099,7 +1099,6 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 /// @todo PHP
-/// @todo python
 
 /// Returns a string with the expression of the unscaling process in this layer.
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
@@ -1148,6 +1147,58 @@ string UnscalingLayer::write_expression_c() const
     }
 
     buffer << "\n\treturn outputs;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+/// Returns a string with the expression of the unscaling process in this layer.
+/// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+/// @param outputs_names Name of outputs from the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
+
+string UnscalingLayer::write_expression_python() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        if(unscaling_methods(i) == NoUnscaling)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+        }
+        else if(unscaling_methods(i) == MinimumMaximum)
+        {
+            buffer << "\toutputs[" << i << "] = 0.5*(inputs[" << i << "]+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ")\n";
+        }
+        else if(unscaling_methods(i) == MeanStandardDeviation)
+        {
+            buffer << "\toutputs[" << i << "] =" << descriptives(i).mean <<") + (" << descriptives(i).standard_deviation << ")* inputs[" << i << "]\n";
+        }
+        else if(unscaling_methods(i) == Logarithmic)
+        {
+            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "string write_expression() const method.\n"
+                   << "Unknown inputs scaling method.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    buffer << "\n\treturn outputs\n" << endl;
 
     return buffer.str();
 }
