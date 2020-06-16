@@ -280,9 +280,9 @@ public:
 
     // Expression methods
 
-    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
     virtual string write_expression_c() const {return string();}
+
+    virtual string write_expression_python() const {return string();}
 
 
 protected:

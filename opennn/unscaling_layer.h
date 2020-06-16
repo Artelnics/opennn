@@ -149,6 +149,7 @@ public:
 //   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
+   string write_expression_python() const;
 
 
 protected:
