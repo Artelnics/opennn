@@ -343,6 +343,8 @@ public:
    const bool& get_header_line() const;
    const bool& get_rows_label() const;
 
+   Tensor<string, 1> get_rows_label_tensor() const;
+
    const Separator& get_separator() const;
    char get_separator_char() const;
    string get_separator_string() const;
