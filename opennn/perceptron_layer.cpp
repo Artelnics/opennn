@@ -1328,24 +1328,25 @@ string PerceptronLayer::write_activations_c() const
             break;
 
         case ScaledExponentialLinear:
-            buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(combinations[" << i << "].exp() - 1.0) : 1.0507*combinations[" << i << "];\n";
+            buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(combinations[" << i << "]) - 1.0) : 1.0507*combinations[" << i << "];\n";
             break;
 
         case SoftPlus:
-//            buffer << "combinations[" << i << "];\n";
+            buffer << "log(1.0 + exp(combinations[" << i << "]));\n";
             break;
 
         case SoftSign:
-//            buffer << "combinations[" << i << "];\n";
-            break;
-
-        case HardSigmoid:
-            buffer << "combinations[" << i << "];\n";
+            buffer << "combinations[" << i << "] < 0.0 ? combinations[" << i << "]/(1.0 - combinations[" << i << "] ) : combinations[" << i << "]/(1.0 + combinations[" << i << "] );\n";
             break;
 
         case ExponentialLinear:
-            buffer << "combinations[" << i << "];\n";
+            buffer << "combinations[" << i << "] < 0.0 ? 1.0*(exp(combinations[" << i << "]) - 1.0) : combinations[" << i << "];\n";
             break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+
         }
     }
 
@@ -1400,7 +1401,7 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case RectifiedLinear:
-            buffer << "np.maximum(0, combinations[" << i << "])\n";
+            buffer << "np.maximum(0.0, combinations[" << i << "])\n";
             break;
 
         case Logistic:
@@ -1408,11 +1409,11 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case Threshold:
-            buffer << "1 if combinations[" << i << "] >= 0 else 0\n";
+            buffer << "1.0 if combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
         case SymmetricThreshold:
-            buffer << "1 if combinations[" << i << "] >= 0 else -1\n";
+            buffer << "1.0 if combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
         case Linear:
@@ -1424,20 +1425,21 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case SoftPlus:
-//            buffer << "combinations[" << i << "]\n";
+            buffer << "np.log(1.0 + np.exp(combinations[" << i << "]))\n";
             break;
 
         case SoftSign:
-//            buffer << "combinations[" << i << "]\n";
-            break;
-
-        case HardSigmoid:
-//            buffer << "combinations[" << i << "]\n";
+            buffer << "combinations[" << i << "]/(1.0 - combinations[" << i << "] ) if combinations[" << i << "] < 0.0 else combinations[" << i << "]/(1.0 + combinations[" << i << "] )\n";
             break;
 
         case ExponentialLinear:
-//            buffer << "combinations[" << i << "]\n";
+            buffer << "1.0*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else combinations[" << i << "]\n";
             break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+
         }
     }
 

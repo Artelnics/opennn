@@ -2510,6 +2510,26 @@ string NeuralNetwork::write_expression_c() const
 
     ostringstream buffer;
 
+    buffer <<"/*"<<endl;
+    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
+    buffer <<"artelnics@artelnics.com\t"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Your model has been exported to this file." <<endl;
+    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"Example:"<<endl;
+    buffer <<""<<endl;
+    buffer <<"\tvector<float>sample(n);\t"<<endl;
+    buffer <<"\tsample[0] = 1;\t"<<endl;
+    buffer <<"\tsample[1] = 2;\t"<<endl;
+    buffer <<"\tsample[n] = 10;\t"<<endl;
+    buffer <<"\tvector<float>outputs = neural_network(sample);"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"*/"<<endl;
+    buffer <<""<<endl;
+
+
     buffer << "#include <vector>\n" << endl;
 
     buffer << "using namespace std;\n" << endl;
@@ -2559,6 +2579,21 @@ string NeuralNetwork::write_expression_python() const
 
     ostringstream buffer;
 
+    buffer <<"'''"<<endl;
+    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
+    buffer <<"artelnics@artelnics.com\t"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Your model has been exported to this python file." <<endl;
+    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"Example:"<<endl;
+    buffer <<""<<endl;
+    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
+    buffer <<"\toutputs = neural_network(sample)"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"'''"<<endl;
+    buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
 
     cout<<"layers_number"<<layers_number<<endl;
