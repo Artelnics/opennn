@@ -343,6 +343,8 @@ public:
    const bool& get_header_line() const;
    const bool& get_rows_label() const;
 
+   Tensor<string, 1> get_rows_label_tensor() const;
+
    const Separator& get_separator() const;
    char get_separator_char() const;
    string get_separator_string() const;
@@ -627,6 +629,10 @@ public:
 
    // Target variables scaling
 
+   void scale_target_minimum_maximum(const Descriptives&, const Index&);
+   void scale_target_mean_standard_deviation(const Descriptives&, const Index&);
+   void scale_target_standard_deviation(const Descriptives&, const Index&);
+
    void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_targets_minimum_maximum();
 
@@ -637,7 +643,7 @@ public:
    Tensor<Descriptives, 1> scale_targets_logarithmic();
 
    Tensor<Descriptives, 1> scale_targets(const string&);
-   void scale_targets(const string&, const Tensor<Descriptives, 1>&);
+   void scale_targets(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Data unscaling
 

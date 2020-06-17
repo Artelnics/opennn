@@ -1174,6 +1174,10 @@ string ScalingLayer::write_expression_c() const
 
     buffer.precision(10);
 
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scaling_methods(i) == NoScaling)
@@ -1182,7 +1186,7 @@ string ScalingLayer::write_expression_c() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).minimum << ")/" << descriptives(i).maximum-descriptives(i).minimum << " ;" << endl;
+            buffer << "\toutputs[" << i << "] = 2*(inputs[" << i << "] -(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
@@ -1204,10 +1208,58 @@ string ScalingLayer::write_expression_c() const
         }
     }
 
+    buffer << "\n\treturn outputs;\n}" << endl;
+
     return buffer.str();
 }
 
 
+string ScalingLayer::write_expression_python() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        if(scaling_methods(i) == NoScaling)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+        }
+        else if(scaling_methods(i) == MinimumMaximum)
+        {
+            buffer << "\toutputs[" << i << "] = 2*(inputs[" << i << "] -(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1\n";
+        }
+        else if(scaling_methods(i) == MeanStandardDeviation)
+        {
+            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).mean << ")/" << descriptives(i).standard_deviation << " " << endl;
+        }
+        else if(scaling_methods(i) == StandardDeviation)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " " << endl;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "string write_expression() const method.\n"
+                   << "Unknown inputs scaling method.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    buffer << "\n\treturn outputs;\n" << endl;
+
+    return buffer.str();
+}
 
 
 /// Returns a string representation of the current scaling layer object.
