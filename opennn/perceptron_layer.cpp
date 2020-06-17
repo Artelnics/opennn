@@ -1302,40 +1302,41 @@ string PerceptronLayer::write_activations_c() const
 
         switch(activation_function)
         {
-        case Logistic:
-            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
-            break;
 
         case HyperbolicTangent:
             buffer << "tanh(combinations[" << i << "]);\n";
-            break;
-
-        case Threshold:
-            buffer << "tanh(combinations[" << i << "]);\n";
-            break;
-
-        case SymmetricThreshold:
-            buffer << "combinations[" << i << "];\n";
-            break;
-
-        case Linear:
-            buffer << "combinations[" << i << "];\n";
             break;
 
         case RectifiedLinear:
             buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
             buffer << "combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(combinations[" << i << "].exp() - 1.0) : 1.0507*combinations[" << i << "];\n";
             break;
 
         case SoftPlus:
-            buffer << "combinations[" << i << "];\n";
+//            buffer << "combinations[" << i << "];\n";
             break;
 
         case SoftSign:
-            buffer << "combinations[" << i << "];\n";
+//            buffer << "combinations[" << i << "];\n";
             break;
 
         case HardSigmoid:
@@ -1359,7 +1360,7 @@ string PerceptronLayer::write_combinations_python() const
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
-    buffer << "\tcombinations = [None] *"<<neurons_number<<"\n" << endl;
+    buffer << "\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -1393,32 +1394,33 @@ string PerceptronLayer::write_activations_python() const
 
         switch(activation_function)
         {
-        case Logistic:
-            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]))\n";
-            break;
 
         case HyperbolicTangent:
             buffer << "np.tanh(combinations[" << i << "])\n";
             break;
 
+        case RectifiedLinear:
+            buffer << "np.maximum(0, combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]))\n";
+            break;
+
         case Threshold:
-//            buffer << "tanh(combinations[" << i << "])\n";
+            buffer << "1 if combinations[" << i << "] >= 0 else 0\n";
             break;
 
         case SymmetricThreshold:
-//            buffer << "combinations[" << i << "]\n";
+            buffer << "1 if combinations[" << i << "] >= 0 else -1\n";
             break;
 
         case Linear:
             buffer << "combinations[" << i << "]\n";
             break;
 
-        case RectifiedLinear:
-//            buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "]\n";
-            break;
-
         case ScaledExponentialLinear:
-//            buffer << "combinations[" << i << "]\n";
+            buffer << "1.0507*1.67326*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else 1.0507*combinations[" << i << "]\n";
             break;
 
         case SoftPlus:
@@ -1426,7 +1428,7 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case SoftSign:
-            buffer << "combinations[" << i << "]\n";
+//            buffer << "combinations[" << i << "]\n";
             break;
 
         case HardSigmoid:
