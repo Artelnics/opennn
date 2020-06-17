@@ -6936,38 +6936,70 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 }
 
 
+void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2.0)*(data(i, target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum)-static_cast<type>(1.0);
+    }
+}
+
+
+void DataSet::scale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2)*(data(i, target_index) - target_statistics.mean) / target_statistics.standard_deviation;
+    }
+}
+
+
+void DataSet::scale_target_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2)*(data(i, target_index)) / target_statistics.standard_deviation;
+    }
+}
+
+
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
 {
-    switch(get_scaling_unscaling_method(scaling_unscaling_method))
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
-    case NoUnscaling:
-        break;
+        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        {
+        case NoUnscaling:
+            break;
 
-    case MinimumMaximum:
-        scale_targets_minimum_maximum(targets_descriptives);
-        break;
+        case MinimumMaximum:
+            scale_target_minimum_maximum(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    case MeanStandardDeviation:
-        scale_targets_mean_standard_deviation(targets_descriptives);
-        break;
+        case MeanStandardDeviation:
+            scale_target_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    case Logarithmic:
-        scale_targets_logarithmic(targets_descriptives);
-        break;
+        case Logarithmic:
+            scale_target_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    default:
-    {
-        ostringstream buffer;
+        default:
+        {
+            ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class\n"
-               << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
-               << "Unknown scaling and unscaling method.\n";
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown scaling and unscaling method.\n";
 
-        throw logic_error(buffer.str());
-    }
+            throw logic_error(buffer.str());
+        }
+        }
     }
 }
 
