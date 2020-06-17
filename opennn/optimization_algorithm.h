@@ -108,7 +108,7 @@ public:
 
        /// Returns a string representation of the results structure.
 
-       string object_to_string() const;
+       
 
        void save(const string&) const;
 
@@ -235,7 +235,7 @@ public:
 
    // Serialization methods
 
-   virtual string object_to_string() const;
+   virtual 
    void print() const;
 
    virtual Tensor<string, 2> to_string_matrix() const;

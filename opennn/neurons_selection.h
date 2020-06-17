@@ -69,7 +69,7 @@ public:
 
        string write_stopping_condition() const;
 
-       string object_to_string() const;
+
 
        /// Neurons of the diferent neural networks.
 

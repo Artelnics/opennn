@@ -1046,24 +1046,6 @@ string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & 
 }
 
 
-string PerceptronLayer::object_to_string() const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer << "Perceptron layer" << endl;
-    buffer << "Inputs number: " << inputs_number << endl;
-    buffer << "Activation function: " << write_activation_function() << endl;
-    buffer << "Neurons number: " << neurons_number << endl;
-    buffer << "Biases:\n " << biases << endl;
-    buffer << "Synaptic_weights:\n" << synaptic_weights;
-
-    return buffer.str();
-}
-
-
 void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;

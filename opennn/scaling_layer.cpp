@@ -340,24 +340,16 @@ void ScalingLayer::set(const Index& new_inputs_number)
 
 void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
-
     const Tensor<Index,0> dimension_product = new_inputs_dimensions.prod();
-    descriptives.resize(dimension_product(0));
-//    descriptives.resize(new_inputs_dimensions.calculate_product());
 
-//    scaling_methods.resize(new_inputs_dimensions.calculate_product(), MinimumMaximum);
+    descriptives.resize(dimension_product(0));
 
     scaling_methods.resize(dimension_product(0));
     scaling_methods.setConstant(MinimumMaximum);
 
     input_variables_dimensions.resize(new_inputs_dimensions.size());
-/*
-    cout << "input_variables_dimensions.dimension(0)"<< endl;
-    cout << input_variables_dimensions.dimension(0)<< endl;
-*/
-    input_variables_dimensions = new_inputs_dimensions;
 
-//    input_variables_dimensions.resize(new_inputs_dimensions);
+    input_variables_dimensions = new_inputs_dimensions;
 
     set_default();
 }
@@ -1261,30 +1253,6 @@ string ScalingLayer::write_expression_python() const
     return buffer.str();
 }
 
-
-/// Returns a string representation of the current scaling layer object.
-
-string ScalingLayer::object_to_string() const
-{
-    ostringstream buffer;
-
-    const Index neurons_number = get_neurons_number();
-
-    buffer << "Scaling layer\n";
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "Descriptives " << i+1 << "\n"
-               << "Minimum: " << descriptives(i).minimum << "\n"
-               << "Maximum: " << descriptives(i).maximum << "\n"
-               << "Mean: " << descriptives(i).mean << "\n"
-               << "Standard deviation: " << descriptives(i).standard_deviation << "\n";
-    }
-
-        buffer << "Scaling methods: " << write_scaling_methods() << "\n";
-
-    return buffer.str();
-}
 
 
 /// Serializes the scaling layer object into a XML document of the TinyXML library.

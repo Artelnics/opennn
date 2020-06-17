@@ -638,20 +638,6 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 //    regularization_from_XML(regularization_document);
 }
 
-
-/// Returns the model in string format.
-
-string WeightedSquaredError::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Weighted squared error.\n"
-           << "Positives weight: " << positives_weight << "\n"
-           << "Negatives weight: " << negatives_weight << endl;
-
-    return buffer.str();
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.

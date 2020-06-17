@@ -102,18 +102,6 @@ void IncrementalNeurons::set_step(const Index& new_step)
         throw logic_error(buffer.str());
     }
 
-    /*if(new_step > maximum_order-minimum_order)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
-               << "void set_step(const Index&) method.\n"
-               << "New_step must be less than the distance between maximum_order and minimum_order("
-               << maximum_order-minimum_order << ").\n";
-
-        throw logic_error(buffer.str());
-    }*/
-
 #endif
 
     step = new_step;

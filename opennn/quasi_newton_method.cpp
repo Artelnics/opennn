@@ -988,22 +988,9 @@ void QuasiNewtonMethod::update_epoch(
 
     optimization_data.learning_rate = directional_point.first;
 
+    /// @todo ?
     // Reset training direction when learning rate is 0
-/*
-    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-    {
-        cout << "Learning rate is 0." << endl;
 
-        optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
-
-        directional_point = learning_rate_algorithm.calculate_directional_point(batch,
-                            forward_propagation,
-                            back_propagation,
-                            optimization_data);
-
-        optimization_data.learning_rate = directional_point.first;
-    }
-*/
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
 
@@ -1014,7 +1001,6 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
 
     // Update stuff
-
 
     optimization_data.old_gradient = back_propagation.gradient;
 
@@ -1810,16 +1796,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-string QuasiNewtonMethod::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Quasi-Newton method\n";
-
-    return buffer.str();
-}
-
-
 /// Writes as matrix of strings the most representative atributes.
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
@@ -2180,7 +2156,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Display period
-    /*{
+    {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
 
         if(element)
@@ -2253,8 +2229,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
               cerr << e.what() << endl;
            }
         }
-    }
-    */
+    }    
 }
 
 }

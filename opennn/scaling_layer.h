@@ -156,7 +156,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);

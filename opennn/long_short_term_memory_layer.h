@@ -434,7 +434,7 @@ public:
 
    Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
-   string object_to_string() const;
+   
 
    // Serialization methods
 

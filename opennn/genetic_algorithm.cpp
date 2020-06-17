@@ -366,21 +366,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         throw logic_error(buffer.str());
     }
-/* Not right
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
 
-    if(new_population.dimension(1) != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population columns (" << new_population.dimension(1)
-               << ") must be equal to inputs number ("<<inputs_number<<").\n";
-
-        throw logic_error(buffer.str());
-    }
-*/
     if(new_population.dimension(0)  != population_size)
     {
         ostringstream buffer;
@@ -2144,7 +2130,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
-    /*
+    Tensor<string, 2> string_matrix(10, 2);
+/*
         ostringstream buffer;
 
         Tensor<string, 1> labels;
@@ -2152,38 +2139,30 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
        // Trials number
 
-       labels.push_back("Trials number");
+       string_matrix(0, 0) = "Trials number";
 
        buffer.str("");
        buffer << trials_number;
 
-       values.push_back(buffer.str());
-
        // Tolerance
 
-       labels.push_back("Tolerance");
+       string_matrix(1, 0) = "Tolerance";
 
        buffer.str("");
        buffer << tolerance;
 
-       values.push_back(buffer.str());
-
        // Population size
 
-       labels.push_back("Population size");
+       string_matrix(2, 0) = "Population size";
 
        buffer.str("");
        buffer << population_size;
 
-       values.push_back(buffer.str());
-
        // Initialization method
 
-       labels.push_back("Initialization method");
+       string_matrix(3, 0) = "Initialization method";
 
        const string initialization_method = write_initialization_method();
-
-       values.push_back(initialization_method);
 
        // Fitness assignment method
 
@@ -2208,7 +2187,6 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << elitism_size;
 
-       values.push_back(buffer.str());
 
        // Crossover first point
 
@@ -2217,8 +2195,6 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << crossover_first_point;
 
-       values.push_back(buffer.str());
-
        // Crossover second point
 
        labels.push_back("Crossover second point");
@@ -2226,16 +2202,12 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << crossover_second_point;
 
-       values.push_back(buffer.str());
-
        // Selective pressure
 
        labels.push_back("Selective pressure");
 
        buffer.str("");
        buffer << selective_pressure;
-
-       values.push_back(buffer.str());
 
        // Mutation rate
 
@@ -2341,17 +2313,8 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
+*/
         return string_matrix;
-    */
-    return Tensor<string, 2>();
 }
 
 
@@ -3433,111 +3396,6 @@ void GeneticAlgorithm::load(const string& file_name)
     from_XML(document);
 }
 
-
-/// Returns a string representation of the current genetic algorithm results structure.
-
-string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
-{
-    ostringstream buffer;
-    /*
-        // Loss history
-
-        if(!loss_data.empty())
-        {
-            buffer << "% Loss history:\n"
-                   << loss_data.to_row_matrix() << "\n";
-        }
-
-        // selection error history
-
-        if(!selection_error_data.empty())
-        {
-            buffer << "% Selection loss history:\n"
-                   << selection_error_data.to_row_matrix() << "\n";
-        }
-
-        // Generation optimum loss history
-
-        if(!generation_optimum_loss_history.empty())
-        {
-            buffer << "% Generation optimum loss history:\n"
-                   << generation_optimum_loss_history.vector_to_string() << "\n";
-        }
-
-        // Generation minimum selection history
-
-        if(!generation_minimum_selection_history.empty())
-        {
-            buffer << "% Generation minimum selection history:\n"
-                   << generation_minimum_selection_history.vector_to_string() << "\n";
-        }
-
-        // Generation mean history
-
-        if(!generation_mean_history.empty())
-        {
-            buffer << "% Generation mean history:\n"
-                   << generation_mean_history.vector_to_string() << "\n";
-        }
-
-        // Generation standard deviation history
-
-        if(!generation_standard_deviation_history.empty())
-        {
-            buffer << "% Generation standard deviation history:\n"
-                   << generation_standard_deviation_history.vector_to_string() << "\n";
-        }
-
-        // Minimal parameters
-
-        if(!minimal_parameters.empty())
-        {
-            buffer << "% Minimal parameters:\n"
-                   << minimal_parameters << "\n";
-        }
-
-        // Stopping condition
-
-        buffer << "% Stopping condition\n"
-               << write_stopping_condition() << "\n";
-
-        // Optimum selection error
-
-        if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
-        {
-            buffer << "% Optimum selection error:\n"
-                   << final_selection_error << "\n";
-        }
-
-        // Final training loss
-
-        if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
-        {
-            buffer << "% Final training loss:\n"
-                   << final_training_error << "\n";
-        }
-
-        // Optimal input
-
-        if(!optimal_inputs_indices.empty())
-        {
-            buffer << "% Optimal input:\n"
-                   << optimal_inputs_indices << "\n";
-        }
-
-        // Iterations number
-
-
-        buffer << "% Number of iterations:\n"
-               << iterations_number << "\n";
-
-        // Elapsed time
-
-        buffer << "% Elapsed time:\n"
-               << write_elapsed_time(elapsed_time) << "\n";
-    */
-    return buffer.str();
-}
 
 type GeneticAlgorithm::euclidean_distance(const Tensor<type, 1>& tensor, const Tensor<type, 1>& other_tensor)
 {

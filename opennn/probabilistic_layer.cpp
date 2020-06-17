@@ -944,19 +944,6 @@ void ProbabilisticLayer::insert_gradient(const BackPropagation& back_propagation
 }
 
 
-/// Returns a string representation of the current probabilistic layer object.
-
-string ProbabilisticLayer::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Probabilistic layer\n"
-           << "Activation function: " << write_activation_function() << "\n";
-
-    return buffer.str();
-}
-
-
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element.
 

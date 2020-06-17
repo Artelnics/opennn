@@ -163,18 +163,6 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<t
     throw logic_error(buffer.str());
 }
 
-/*
-Layer::ForwardPropagation Layer::forward_propagate(const Tensor<type, 2>&)
- {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "forward_propagate(const Tensor<type, 2>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
- }
-*/
 
 Tensor<Index, 1> Layer::get_input_variables_dimensions() const
 {
@@ -246,17 +234,6 @@ void Layer::set_neurons_number(const Index &)
     throw logic_error(buffer.str());
 }
 
-
-string Layer::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "to_string() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
 
 // Activations 1d
 

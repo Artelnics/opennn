@@ -277,7 +277,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    virtual tinyxml2::XMLDocument* to_XML() const;
 

@@ -1754,26 +1754,6 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 }
 
 
-string RecurrentLayer::object_to_string() const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer << "Recurrent layer" << endl;
-    buffer << "Inputs number: " << inputs_number << endl;
-    buffer << "Neurons number: " << neurons_number << endl;
-    buffer << "Activation function: " << write_activation_function() << endl;
-    buffer << "Biases:\n " << biases << endl;
-    buffer << "Input weights:\n" << input_weights << endl;
-    buffer << "Recurrent synaptic weights:\n" << recurrent_weights << endl;
-    buffer << "Hidden states:\n" << hidden_states << endl;
-
-    return buffer.str();
-}
-
-
 string RecurrentLayer::write_activation_function_expression() const
 {
     switch(activation_function)

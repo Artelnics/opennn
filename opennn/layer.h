@@ -264,7 +264,7 @@ public:
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
 
-    virtual string object_to_string() const;
+    virtual 
 
     // Layer type
 

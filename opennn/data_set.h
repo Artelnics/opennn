@@ -695,7 +695,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    void print() const;
    void print_summary() const;

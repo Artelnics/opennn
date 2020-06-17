@@ -411,12 +411,11 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
-                && layers_pointers[i]->get_type() != Layer::Unscaling
-                && layers_pointers[i]->get_type() != Layer::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Unscaling
+        && layers_pointers[i]->get_type() != Layer::Bounding)
         {
             trainable_layers_indices[trainable_layer_index] = i;
             trainable_layer_index++;
-            /*trainable_layers_indices.push_back(i);*/
         }
     }
 
@@ -1106,7 +1105,6 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
 void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 {
-/*
 #ifdef __OPENNN_DEBUG__
 
     const Index size = new_parameters.size();
@@ -1125,7 +1123,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
     }
 
 #endif
-*/
+
     const Index trainable_layers_number = get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -1656,36 +1654,6 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<ty
     return histograms(outputs, bins_number);
 }
 
-
-/// Returns a string representation of the current neural network object.
-
-string NeuralNetwork::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Neural network:\n";
-    /*
-        buffer << "Inputs names:\n";
-        buffer << inputs_names << endl;
-    */
-    // Layers
-
-    const Index layers_number = get_layers_number();
-
-    buffer << "Layers number: " << layers_number << endl;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        buffer << "Layer " << i+1 << ":" << endl;
-
-        buffer << layers_pointers[i]->object_to_string() << endl;
-    }
-    /*
-        buffer << "Outputs names:\n";
-        buffer << outputs_names << endl;
-    */
-    return buffer.str();
-}
 
 /// For each layer: inputs, neurons, activation function
 
@@ -2383,7 +2351,6 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::print() const
 {
-    if(display) cout << object_to_string();
 }
 
 
