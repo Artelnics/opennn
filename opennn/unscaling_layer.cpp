@@ -714,7 +714,7 @@ string UnscalingLayer::object_to_string() const
                << "Standard deviation: " << descriptives[i].standard_deviation << "\n";
     }
 
-    buffer << "Unscaling method: " << write_unscaling_method() << "\n";
+    buffer << "Unscaling method: " << write_unscaling_methods() << "\n";
     //<< "Display: " << display << "\n";
 
     return buffer.str();
