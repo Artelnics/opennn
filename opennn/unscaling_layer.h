@@ -76,7 +76,7 @@ public:
 
    const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
 
-   Tensor<string, 1> write_unscaling_method() const;
+   Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
 
    const bool& get_display() const;

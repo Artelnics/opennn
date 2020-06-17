@@ -167,7 +167,7 @@ const Tensor<UnscalingLayer::UnscalingMethod, 1> UnscalingLayer::get_unscaling_m
 
 /// Returns a vector of strings with the name of the method used for each unscaling neuron.
 
-Tensor<string, 1> UnscalingLayer::write_unscaling_method() const
+Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 {
     const Index neurons_number = get_neurons_number();
 
