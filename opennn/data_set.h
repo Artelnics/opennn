@@ -601,6 +601,7 @@ public:
    // Data scaling
 
    Tensor<string, 1> calculate_default_scaling_methods() const;
+   Tensor<string, 1> calculate_default_unscaling_methods() const;
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_data_minimum_maximum();
@@ -631,7 +632,7 @@ public:
 
    void scale_target_minimum_maximum(const Descriptives&, const Index&);
    void scale_target_mean_standard_deviation(const Descriptives&, const Index&);
-   void scale_target_standard_deviation(const Descriptives&, const Index&);
+   void scale_target_logarithmic(const Descriptives&, const Index&);
 
    void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_targets_minimum_maximum();
