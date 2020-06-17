@@ -1473,7 +1473,20 @@ string ProbabilisticLayer::write_activations_python() const
             break;
 
         case Competitive:
-            ///@todo
+
+            if(i == 0)
+            {
+                buffer << "\tfor i, value in enumerate(combinations):"<<endl;
+
+                buffer <<"\t\tif(max(combinations) == value):"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 1"<<endl;
+
+                buffer <<"\t\telse:"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 0"<<endl;
+            }
+
             break;
 
         case Softmax:
