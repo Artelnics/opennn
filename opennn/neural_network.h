@@ -355,7 +355,7 @@ public:
    string write_expression_R() const;
    string write_expression_c() const;
 
-   void save_expression(const string&);
+   void save_expression_c(const string&);
    void save_expression_python(const string&);
    void save_expression_R(const string&);
 

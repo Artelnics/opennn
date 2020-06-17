@@ -628,6 +628,31 @@ string BoundingLayer::write_expression_c() const
 }
 
 
+///
+/// \brief BoundingLayer::write_expression_python
+/// \return
+
+string BoundingLayer::write_expression_python() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+    }
+
+    buffer << "\n\treturn outputs\n" << endl;
+
+    return buffer.str();
+}
+
+
 /// Returns a string representation of the current bonding layer object.
 
 string BoundingLayer::object_to_string() const

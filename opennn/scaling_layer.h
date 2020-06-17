@@ -152,6 +152,8 @@ public:
 
    string write_expression_c() const;
 
+   string write_expression_python() const;
+
    // Serialization methods
 
    string object_to_string() const;

@@ -3237,6 +3237,12 @@ const bool& DataSet::get_rows_label() const
 }
 
 
+Tensor<string, 1> DataSet::get_rows_label_tensor() const
+{
+    return rows_labels;
+}
+
+
 /// Returns the separator to be used in the data file.
 
 const DataSet::Separator& DataSet::get_separator() const
@@ -6930,38 +6936,70 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 }
 
 
+void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2.0)*(data(i, target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum)-static_cast<type>(1.0);
+    }
+}
+
+
+void DataSet::scale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2)*(data(i, target_index) - target_statistics.mean) / target_statistics.standard_deviation;
+    }
+}
+
+
+void DataSet::scale_target_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = static_cast<type>(2)*(data(i, target_index)) / target_statistics.standard_deviation;
+    }
+}
+
+
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_targets(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
 {
-    switch(get_scaling_unscaling_method(scaling_unscaling_method))
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
-    case NoUnscaling:
-        break;
+        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        {
+        case NoUnscaling:
+            break;
 
-    case MinimumMaximum:
-        scale_targets_minimum_maximum(targets_descriptives);
-        break;
+        case MinimumMaximum:
+            scale_target_minimum_maximum(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    case MeanStandardDeviation:
-        scale_targets_mean_standard_deviation(targets_descriptives);
-        break;
+        case MeanStandardDeviation:
+            scale_target_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    case Logarithmic:
-        scale_targets_logarithmic(targets_descriptives);
-        break;
+        case Logarithmic:
+            scale_target_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            break;
 
-    default:
-    {
-        ostringstream buffer;
+        default:
+        {
+            ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class\n"
-               << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
-               << "Unknown scaling and unscaling method.\n";
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown scaling and unscaling method.\n";
 
-        throw logic_error(buffer.str());
-    }
+            throw logic_error(buffer.str());
+        }
+        }
     }
 }
 
@@ -7429,8 +7467,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = rows_labels.dimension(0);
 
-        cout << "rows_lables_number: " << rows_labels_number << endl;
-
         file_stream.OpenElement("RowsLabels");
 
         buffer.str("");
@@ -7441,6 +7477,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != rows_labels_number-1) buffer << ",";
         }
+
+        file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
     }
@@ -9846,6 +9884,10 @@ void DataSet::read_csv_3_simple()
 
     cout << "Reading data..." << endl;
 
+    cout << "Raw columns number: " << raw_columns_number << endl;
+
+    cout << "Rows label size: " << rows_labels.dimension(0) << endl;
+
     Index instance_index = 0;
     Index column_index = 0;
 
@@ -9861,13 +9903,16 @@ void DataSet::read_csv_3_simple()
 
         get_tokens(line, separator_char, tokens);
 
-        for(j = 0; j < raw_columns_number/*variables_number*/; j++)
+
+        for(j = 0; j < raw_columns_number; j++)
         {
             trim(tokens(j));
 
-            if(has_rows_labels && j == 0) rows_labels(instance_index) = tokens(j);
-
-            if(tokens(j) == missing_values_label || tokens(j).empty())
+            if(has_rows_labels && j == 0)
+            {
+                rows_labels(instance_index) = tokens(j);
+            }
+            else if(tokens(j) == missing_values_label || tokens(j).empty())
             {
                 data(instance_index, column_index) = static_cast<type>(NAN);
                 column_index++;
@@ -9890,9 +9935,7 @@ void DataSet::read_csv_3_simple()
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
-    data_file_preview(data_file_preview_index) = has_rows_labels ?
-                tokens.slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({raw_columns_number-1}))
-              : tokens;
+    data_file_preview(data_file_preview_index) = tokens;
 
     file.close();
 
@@ -9903,6 +9946,8 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+    cout << "hola" << endl;
 }
 
 
@@ -9960,6 +10005,10 @@ void DataSet::read_csv_2_complete()
 
     cout << "Setting data dimensions..." << endl;
 
+    const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
+
+    Index column_index = 0;
+
     while(file.good())
     {
         getline(file, line);
@@ -9972,30 +10021,39 @@ void DataSet::read_csv_2_complete()
 
         tokens_count = tokens.size();
 
-        if(static_cast<unsigned>(tokens_count) != columns_number)
+        if(static_cast<unsigned>(tokens_count) != raw_columns_number)
         {
             const string message =
                 "Instance " + to_string(lines_count+1) + " error:\n"
-                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(columns_number) + ").\n"
+                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
                 "Please check the format of the data file.";
 
             throw logic_error(message);
         }
 
-        for(unsigned j = 0; j < columns_number; j++)
+        for(unsigned j = 0; j < raw_columns_number; j++)
         {
+            if(has_rows_labels && j == 0)
+            {
+                continue;
+            }
+
             trim(tokens(j));
 
-            if(columns(j).type == Categorical)
+            if(columns(column_index).type == Categorical)
             {
-                if(find(columns(j).categories.data(), columns(j).categories.data() + columns(j).categories.size(), tokens(j)) == (columns(j).categories.data() + columns(j).categories.size()))
+                if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
                     if(tokens(j) == missing_values_label) continue;
 
-                    columns(j).add_category(tokens(j));
+                    columns(column_index).add_category(tokens(j));
                 }
             }
+
+            column_index++;
         }
+
+        column_index = 0;
 
         lines_count++;
     }
@@ -10024,6 +10082,8 @@ void DataSet::read_csv_2_complete()
     data.resize(static_cast<Index>(instances_number), variables_number);
     data.setZero();
 
+    if(has_rows_labels) rows_labels.resize(instances_number);
+
     set_default_columns_uses();
 
     instances_uses.resize(static_cast<Index>(instances_number));
@@ -10050,6 +10110,8 @@ void DataSet::read_csv_3_complete()
     const char separator_char = get_separator_char();
 
     const Index columns_number = columns.size();
+
+    const Index raw_columns_number = has_rows_labels ? columns_number+1 : columns_number;
 
     string line;
 
@@ -10098,7 +10160,11 @@ void DataSet::read_csv_3_complete()
         {
             trim(tokens(j));
 
-            if(columns(j).type == Numeric)
+            if(has_rows_labels && j ==0)
+            {
+                rows_labels(instance_index) = tokens(j);
+            }
+            else if(columns(j).type == Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
