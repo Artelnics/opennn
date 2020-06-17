@@ -1192,29 +1192,6 @@ void ScalingLayerTest::test_write_expression()
    assert_true(expression == "y = x/(1);\n", LOG);
 }
 
-void ScalingLayerTest::test_object_to_string()
-{
-   cout << "test_object_to_string\n";
-
-   ScalingLayer sl;
-
-   string expression;
-
-   // Test 0
-
-   sl.set(1);
-
-   expression = sl.object_to_string();
-
-   assert_true(expression.empty() == false, LOG);
-/*
-   assert_true(expression == "Descriptives 1\n"
-                             "Minimum: -1\n"
-                             "Maximum: 1\n"
-                             "Mean: 0\n"
-                             "Standard deviation: 1\n"
-                             "Scaling methods: MinimumMaximum\n", LOG);*/
-}
 
 void ScalingLayerTest::test_to_XML()
 {
@@ -1340,7 +1317,6 @@ void ScalingLayerTest::run_test_case()
    // Expression methods
 
    test_write_expression();
-   test_object_to_string();
 
    // Serialization methods
 

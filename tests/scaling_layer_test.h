@@ -138,7 +138,6 @@ public:
    // XML expression methods
 
    void test_write_expression();
-   void test_object_to_string();
 
    // Serialization methods
 
