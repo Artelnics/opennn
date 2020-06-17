@@ -323,16 +323,16 @@ void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSel
     case GROWING_INPUTS:
     {
         growing_inputs_pointer = new GrowingInputs;
-        /*
-                    if(training_strategy_pointer == nullptr)
-                    {
-                        incremental_neurons_pointer = new IncrementalNeurons();
-                    }
-                    else
-                    {
-                        incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
-                    }
-        */
+
+        if(training_strategy_pointer == nullptr)
+        {
+            incremental_neurons_pointer = new IncrementalNeurons();
+        }
+        else
+        {
+            incremental_neurons_pointer = new IncrementalNeurons(training_strategy_pointer);
+        }
+
         if(training_strategy_pointer != nullptr) growing_inputs_pointer->set_training_strategy_pointer(training_strategy_pointer);
 
         break;
@@ -1072,42 +1072,6 @@ ModelSelection::Results::Results()
     genetic_algorithm_results_pointer = nullptr;
 }
 
-
-/// Saves the results structure to a data file.
-/// @param file_name Name of model selection results data file.
-
-void ModelSelection::Results::save(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    file << "% Model Selection Results\n";
-
-    file << "\n% Order Selection Results\n";
-
-    if(incremental_neurons_results_pointer)
-    {
-        file << incremental_neurons_results_pointer->object_to_string();
-    }
-
-    file << "\n% Inputs Selection Results\n";
-
-    if(growing_inputs_results_pointer)
-    {
-        file << growing_inputs_results_pointer->object_to_string();
-    }
-
-    if(pruning_inputs_results_pointer)
-    {
-        file << pruning_inputs_results_pointer->object_to_string();
-    }
-
-    if(genetic_algorithm_results_pointer)
-    {
-        file << genetic_algorithm_results_pointer->object_to_string();
-    }
-
-    file.close();
-}
 }
 
 // OpenNN: Open Neural Networks Library.

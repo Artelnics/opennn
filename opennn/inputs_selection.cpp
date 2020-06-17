@@ -876,86 +876,6 @@ string InputsSelection::Results::write_stopping_condition() const
 }
 
 
-/// Returns a string representation of the current inputs selection results structure.
-
-string InputsSelection::Results::object_to_string() const
-{
-    ostringstream buffer;
-    /*
-       // Inputs history
-
-       if(!inputs_data.empty())
-       {
-         buffer << "% Inputs history:\n"
-                << inputs_data.to_row_matrix() << "\n";
-       }
-
-       // Loss history
-
-       if(!loss_data.empty())
-       {
-           buffer << "% Loss history:\n"
-                  << loss_data.to_row_matrix() << "\n";
-       }
-
-       // Selection loss history
-
-       if(!selection_error_data.empty())
-       {
-           buffer << "% Selection loss history:\n"
-                  << selection_error_data.to_row_matrix() << "\n";
-       }
-
-       // Minimal parameters
-
-       if(!minimal_parameters.empty())
-       {
-           buffer << "% Minimal parameters:\n"
-                  << minimal_parameters << "\n";
-       }
-
-       // Stopping condition
-
-       buffer << "% Stopping condition\n"
-              << write_stopping_condition() << "\n";
-
-       // Optimum selection error
-
-       if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
-       {
-           buffer << "% Optimum selection error:\n"
-                  << final_selection_error << "\n";
-       }
-
-       // Final training loss
-
-       if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
-       {
-           buffer << "% Final training loss:\n"
-                  << final_training_error << "\n";
-       }
-
-       // Optimal input
-
-       if(!optimal_inputs_indices.empty())
-       {
-           buffer << "% Optimal input:\n"
-                  << optimal_inputs_indices << "\n";
-       }
-
-       // Iterations number
-
-       buffer << "% Number of iterations:\n"
-              << iterations_number << "\n";
-
-       // Elapsed time
-
-       buffer << "% Elapsed time:\n"
-              << write_elapsed_time(elapsed_time) << "\n";
-    */
-    return buffer.str();
-}
-
 /// Writes the time from seconds in format HH:mm:ss.
 
 const string InputsSelection::write_elapsed_time(const type& time) const
@@ -999,6 +919,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 
     return elapsed_time.str();
 }
+
 
 /// Return the index of uses where is the(input_number)-th input.
 /// @param uses Vector of the uses of the variables.

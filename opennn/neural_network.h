@@ -308,7 +308,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
  
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
@@ -358,82 +358,6 @@ public:
    void save_expression_c(const string&);
    void save_expression_python(const string&);
    void save_expression_R(const string&);
-
-
-   // Python methods
-
-   string write_threshold_python() const
-   {
-       ostringstream buffer;
-
-       buffer << "def Threshold(x) : \n"
-                 "   if x < 0 : \n"
-                 "       return 0\n"
-                 "   else : \n"
-                 "       return 1\n\n";
-
-        return buffer.str();
-   }
-
-
-   string write_symmetric_threshold_python() const
-   {
-       ostringstream buffer;
-
-       buffer << "def SymmetricThreshold(x) : \n"
-                 "   if x < 0 : \n"
-                 "       return -1\n"
-                 "   else : \n"
-                 "       return 1\n\n";
-
-        return buffer.str();
-   }
-
-   string write_logistic_python() const
-   {
-       ostringstream buffer;
-
-       buffer << "from math import exp\n"
-                 "def Logistic(x) : \n"
-                 "   return 1/(1+exp(-x)) \n\n";
-
-        return buffer.str();
-   }
-
-   string write_softmax_python() const
-   {
-       ostringstream buffer;
-/*
-        buffer << "from math import exp\n"
-                  "def Softmax(";
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            buffer << "x" << i;
-
-            if(i != outputs_number - 1)
-                buffer << ", ";
-        }
-        buffer << ") :\n";
-
-        buffer << "   inputs = [";
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            buffer << "x" << i;
-
-            if(i != outputs_number - 1)
-                buffer << ", ";
-        }
-        buffer << "]\n";
-        buffer << "   softmax = [0 for i in range(" << outputs_number << ")]\n"
-        "   sum = 0\n"
-        "   for i in range(" << outputs_number << ") :\n"
-        "       sum += exp(inputs[i])\n"
-        "   for i in range(" << outputs_number << ") :\n"
-                                                                                                                                                                "       softmax[i] = exp(inputs[i])/sum\n";
-        buffer << "   return softmax\n\n";
-*/
-       return buffer.str();
-   }
 
    // PHP methods
 

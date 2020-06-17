@@ -3714,27 +3714,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 }
 
 
-string LongShortTermMemoryLayer::object_to_string() const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer << "Neuron layer" << endl;
-    buffer << "Inputs number: " << inputs_number << endl;
-    buffer << "Activation function: " << write_activation_function() << endl;
-    buffer << "neurons number: " << neurons_number << endl;
-    buffer << "Biases:\n " << get_biases() << endl;
-    buffer << "Weights:\n" << get_weights()<<endl;
-    buffer << " Recurrent weights:\n" << get_recurrent_weights()<<endl;
-    buffer << "Hidden states:\n" << hidden_states << endl;
-    buffer << "Cell states:\n" << cell_states << endl;
-
-    return buffer.str();
-}
-
-
 string LongShortTermMemoryLayer::write_recurrent_activation_function_expression() const
 {
     switch(recurrent_activation_function)

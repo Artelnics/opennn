@@ -653,21 +653,6 @@ string BoundingLayer::write_expression_python() const
 }
 
 
-/// Returns a string representation of the current bonding layer object.
-
-string BoundingLayer::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Bounding layer\n"
-           << "Lower bounds: " << lower_bounds << "\n"
-           << "Upper bounds: " << upper_bounds << "\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
 /// Serializes the bounding layer object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 

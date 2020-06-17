@@ -121,7 +121,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   string object_to_string() const;
+   
 
 private:
 

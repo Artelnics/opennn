@@ -72,7 +72,7 @@ public:
 
        string write_stopping_condition() const;
 
-       string object_to_string() const;
+       
 
        /// Inputs of the different neural networks.
 

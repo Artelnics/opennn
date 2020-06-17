@@ -89,7 +89,7 @@ public:
         {
         }
 
-        string object_to_string() const;
+        
 
         inline void resize_history(const Index& new_size)
         {

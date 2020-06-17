@@ -295,7 +295,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   string object_to_string() const;
+   
    Tensor<string, 2> to_string_matrix() const;
 
 private: 

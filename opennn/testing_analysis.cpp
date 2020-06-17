@@ -548,7 +548,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
        Tensor<type, 2> error_data(testing_instances_number, outputs_number);
 
-       Tensor<type, 2> difference_value = (targets - outputs)/*.abs()*/;
+       Tensor<type, 2> difference_value = (targets - outputs);
 
        for(Index i = 0; i < testing_instances_number; i++)
        {
@@ -1522,17 +1522,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     {
         target = targets(i,0);
         output = outputs(i,0);
-/*
-        if(static_cast<Index>(decision_threshold) == 0 && static_cast<Index>(target) == 0 )
-        {
-            false_positive++;
-        }
-        else if(static_cast<double>(decision_threshold) == 0.0 && static_cast<double>(targets(i,0)) == 1.0)
-        {
-            true_positive++;
-        }
-        else
-*/
+
         if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
@@ -3670,24 +3660,10 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-/// Returns a string representation of the testing analysis object.
-
-string TestingAnalysis::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Testing analysis\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
 /// Prints to the standard output the string representation of this testing analysis object.
 
 void TestingAnalysis::print() const
 {
-    cout << object_to_string();
 }
 
 

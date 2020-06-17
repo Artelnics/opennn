@@ -72,8 +72,6 @@ public:
 
         explicit Results();
 
-        void save(const string&) const;
-
         /// Pointer to a structure with the results from the incremental order selection algorithm.
 
         IncrementalNeurons::IncrementalNeuronsResults* incremental_neurons_results_pointer = nullptr;

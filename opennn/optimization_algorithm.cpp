@@ -379,19 +379,6 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Returns a default string representation of a optimization algorithm.
-
-string OptimizationAlgorithm::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Training strategy\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
 /// Returns a default(empty) string matrix containing the members
 /// of the optimization algorithm object.
 
@@ -407,7 +394,6 @@ Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 
 void OptimizationAlgorithm::print() const
 {
-    cout << object_to_string();
 }
 
 
@@ -573,33 +559,6 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
                  << setfill('0') << setw(2) << seconds;
 
     return elapsed_time.str();
-}
-
-/// Returns a string representation of the current quasi-Newton method results structure.
-
-string OptimizationAlgorithm::Results::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "% Results\n";
-
-    // Loss history
-
-    if(training_error_history.dimension(0) != 0)
-    {
-        buffer << "% Training error history:\n"
-               << training_error_history << "\n";
-    }
-
-    // Selection loss history
-
-    if(selection_error_history.dimension(0) != 0)
-    {
-        buffer << "% Selection loss history:\n"
-               << selection_error_history << "\n";
-    }
-
-    return buffer.str();
 }
 
 

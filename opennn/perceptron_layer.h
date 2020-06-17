@@ -204,7 +204,7 @@ public:
    string write_activations_python() const;
    string write_expression_python() const;
 
-   string object_to_string() const;
+   
 
    // Serialization methods
 

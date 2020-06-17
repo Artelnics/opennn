@@ -8307,7 +8307,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Display
 
-    /*
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
@@ -8322,37 +8321,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             cerr << e.what() << endl;
         }
-    }
-    */
-}
-
-
-/// Returns a string representation of the current data set object.
-
-string DataSet::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Data set object\n"
-           << "Data file name: " << data_file_name << "\n"
-           << "Header line: " << has_columns_names << "\n"
-           << "Separator: " << separator << "\n"
-           << "Missing values label: " << missing_values_label << "\n"
-           << "Data:\n" << data << "\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
-/// Prints to the screen in text format the members of the data set object.
-
-void DataSet::print() const
-{
-    if(display)
-    {
-        cout << object_to_string();
-    }
+    }    
 }
 
 

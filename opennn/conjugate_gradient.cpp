@@ -2135,7 +2135,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
         }
     }
-    /*
+
       // Warning parameters norm
       {
          const tinyxml2::XMLElement* warning_parameters_norm_element = root_element->FirstChildElement("WarningParametersNorm");
@@ -2249,7 +2249,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             }
          }
       }
-    */
+
     // Return minimum selection error neural network
 
     const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
@@ -2475,7 +2475,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-    /*
+
       // Display period
       {
          const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
@@ -2551,7 +2551,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             }
          }
       }
-        */
+
 }
 
 
@@ -2590,7 +2590,6 @@ void ConjugateGradient::update_epoch(
                     optimization_data.training_direction);
 
         cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
-//        system("pause");
     }
 
     // Get initial learning rate
@@ -2608,23 +2607,7 @@ void ConjugateGradient::update_epoch(
          optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
-/*
-    if(optimization_data.epoch != 0 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-    {
-        // Reset training direction
 
-        calculate_gradient_descent_training_direction(
-                    back_propagation.gradient,
-                    optimization_data.training_direction);
-
-        directional_point = learning_rate_algorithm.calculate_directional_point(batch,
-                            forward_propagation,
-                            back_propagation,
-                            optimization_data);
-
-        optimization_data.learning_rate = directional_point.first;
-    }
-*/
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
 

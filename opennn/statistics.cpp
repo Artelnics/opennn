@@ -1526,9 +1526,10 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 /// The size of both subvectors is the number of bins.
 /// The first subvector contains the frequency of the bins.
 /// The second subvector contains the center of the bins.
+/// @todo isnan is not defined for bool.
 
-Histogram histogram(const Tensor<bool, 1>& vector)
-{/*
+Histogram histogram(const Tensor<bool, 1>& v)
+{
     Tensor<type, 1> minimums(2);
     minimums.setZero();
     Tensor<type, 1> maximums(2);
@@ -1541,15 +1542,15 @@ Histogram histogram(const Tensor<bool, 1>& vector)
 
     // Calculate bins frequency
 
-    const Index size = vector.dimension(0);
+    const Index size = v.dimension(0);
 
     for(Index i = 0; i < size; i++)
-    {
-        if(isnan(vector(i))) continue;
+    {        
+//        if(isnan(v(i))) continue;
 
         for(Index j = 0; j < 2; j++)
         {
-            if(static_cast<Index>(vector(i)) == static_cast<Index>(minimums(j)))
+            if(static_cast<Index>(v(i)) == static_cast<Index>(minimums(j)))
             {
                 frequencies(j)++;
             }
@@ -1561,8 +1562,8 @@ Histogram histogram(const Tensor<bool, 1>& vector)
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-*/
-    Histogram histogram;
+
+//    Histogram histogram;
     return histogram;
 }
 
@@ -1593,8 +1594,7 @@ Histogram histogram(const Tensor<Index, 1>& vector, const Index& bins_number)
     }
 
 #endif
-
-    /*
+/*
     Tensor<Index, 1> centers = vector.get_integer_elements(bins_number);
     const Index centers_number = centers.size();
 
@@ -2940,51 +2940,6 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
     return uniform_distribution_distance;
 }
 
-/*
-/// Performs the Lilliefors normality tests varying the confindence level from 0.05 to 0.5.
-/// It returns a vector containing the results of the tests.
-/// @param vector Vector to be evaluated.
-/// @todo review.
-
-Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.dimension(0);
-
-    type significance_level = static_cast<type>(0.05);
-
-    type A_significance_level;
-    type B_significance_level;
-    Tensor<type, 1> critical_values(9);
-
-    for(Index i = 0; i < 9; i++)
-    {
-        A_significance_level = static_cast<type>(6.32207539843126)
-                               - static_cast<type>(17.1398870006148)*(1 - significance_level)
-                               + static_cast<type>(38.42812675101057)*pow((1 - significance_level),2)
-                               - static_cast<type>(45.93241384693391)*pow((1 - significance_level),3)
-                               + static_cast<type>(7.88697700041829)*pow((1 - significance_level),4)
-                               + static_cast<type>(29.79317711037858)*pow((1 - significance_level),5)
-                               - static_cast<type>(18.48090137098585)*pow((1 - significance_level),6);
-
-        B_significance_level = static_cast<type>(12.940399038404)
-                               - static_cast<type>(53.458334259532)*(1 - significance_level)
-                               + static_cast<type>(186.923866119699)*pow((1 - significance_level),2)
-                               - static_cast<type>(410.582178349305)*pow((1 - significance_level),3)
-                               + static_cast<type>(517.377862566267)*pow((1 - significance_level),4)
-                               - static_cast<type>(343.581476222384)*pow((1 - significance_level),5)
-                               + static_cast<type>(92.123451358715)*pow((1 - significance_level),6);
-
-        critical_values(i) = sqrt(1/(A_significance_level*size+B_significance_level));
-
-        significance_level += static_cast<type>(0.05);
-    }
-
-    //return vector.Lilliefors_normality_test(critical_values);
-    //return perform_Lilliefors_normality_test(vector,critical_values);
-    return Tensor<bool,1> ();
-
-}
-*/
 
 ///@todo
 

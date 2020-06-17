@@ -904,9 +904,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-//        cout << "Error: " << training_back_propagation.error << endl;
-//        system("pause");
-
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);

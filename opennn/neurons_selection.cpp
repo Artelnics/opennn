@@ -579,7 +579,6 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
         }
     }
 
-
     // Save results
 
     final_losses[0] = optimum_training_error;
@@ -592,15 +591,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     selection_error_history = insert_result(final_losses(1), selection_error_history);
 
     parameters_history = insert_result(optimum_parameters, parameters_history);
-    /*
-        neurons_history.push_back(neurons_number);
 
-        training_loss_history.push_back(final_losses[0]);
-
-        selection_error_history.push_back(final_losses[1]);
-
-        parameters_history.push_back(optimum_parameters);
-    */
     return final_losses;
 }
 
@@ -620,7 +611,6 @@ Tensor<Index, 1> NeuronsSelection::insert_index_result(const Index& value, const
 
     return new_tensor;
 }
-
 
 
 Tensor<type, 1> NeuronsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
@@ -656,75 +646,6 @@ Tensor< Tensor<type, 1>, 1> NeuronsSelection::insert_result(const Tensor<type, 1
     return new_tensor;
 }
 
-/// Return final training loss and final selection error depending on the training method.
-/// @param results Results of the perform_training method.
-/*
-Tensor<type, 1> NeuronsSelection::get_final_losses(const OptimizationAlgorithm::Results& results) const
-{
-    Tensor<type, 1> losses(2);
-
-    switch(training_strategy_pointer->get_optimization_method())
-    {
-        case TrainingStrategy::GRADIENT_DESCENT:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-        case TrainingStrategy::CONJUGATE_GRADIENT:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-        case TrainingStrategy::QUASI_NEWTON_METHOD:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-        case TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-        case TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-        case TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION:
-        {
-            losses[0] = results.final_training_error;
-            losses[1] = results.final_selection_error;
-            return losses;
-        }
-//        default:
-//        {
-//            ostringstream buffer;
-
-//            buffer << "OpenNN Exception: NeuronsSelection class.\n"
-//                   << "Tensor<type, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
-//                   << "Unknown main type method.\n";
-
-//            throw logic_error(buffer.str());
-//        }
-    }
-
-    // Default
-
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuronsSelection class.\n"
-           << "Tensor<type, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
-           << "Unknown main type method.\n";
-
-    throw logic_error(buffer.str());
-}
-*/
-
 
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
@@ -739,9 +660,7 @@ string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithm::R
 
 void NeuronsSelection::delete_selection_history()
 {
-
     selection_error_history.resize(0);
-
 }
 
 
@@ -918,88 +837,6 @@ string NeuronsSelection::Results::write_stopping_condition() const
     return string();
 }
 
-
-/// Returns a string representation of the current neurons selection results structure.
-
-string NeuronsSelection::Results::object_to_string() const
-{
-    ostringstream buffer;
-    /*
-       // Neurons history
-
-       if(!neurons_data.empty())
-       {
-         buffer << "% Neurons history:\n"
-                << neurons_data.to_row_matrix() << "\n";
-       }
-
-       // Loss history
-
-       if(!training_loss_data.empty())
-       {
-           buffer << "% Loss history:\n"
-                  << training_loss_data.to_row_matrix() << "\n";
-       }
-
-       // Selection loss history
-
-       if(!selection_error_data.empty())
-       {
-           buffer << "% Selection loss history:\n"
-                  << selection_error_data.to_row_matrix() << "\n";
-       }
-
-       // Minimal parameters
-
-       if(!minimal_parameters.empty())
-       {
-           buffer << "% Minimal parameters:\n"
-                  << minimal_parameters << "\n";
-       }
-    */
-    // Stopping condition
-
-    buffer << "% Stopping condition\n"
-           << write_stopping_condition() << "\n";
-
-    // Optimum selection error
-
-    if(final_selection_error > numeric_limits<type>::epsilon())
-    {
-        buffer << "% Optimum selection error:\n"
-               << final_selection_error << "\n";
-    }
-
-    // Final loss
-
-    if(final_training_error > numeric_limits<type>::epsilon())
-    {
-        buffer << "% Final error:\n"
-               << final_training_error << "\n";
-    }
-
-    // Optimal neurons
-
-    if(optimal_neurons_number != 0)
-    {
-        buffer << "% Optimal neurons:\n"
-               << optimal_neurons_number << "\n";
-    }
-
-    // Iterations number
-
-
-    buffer << "% Number of iterations:\n"
-           << iterations_number << "\n";
-
-
-    // Elapsed time
-/*
-       buffer << "% Elapsed time:\n"
-              << write_elapsed_time(elapsed_time) << "\n";
-*/
-    return buffer.str();
-}
 }
 
 // OpenNN: Open Neural Networks Library.

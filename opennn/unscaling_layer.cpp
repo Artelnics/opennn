@@ -695,32 +695,6 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-/// Returns a string representation of the current unscaling layer object.
-
-string UnscalingLayer::object_to_string() const
-{
-    ostringstream buffer;
-
-    const Index neurons_number = get_neurons_number();
-
-    buffer << "Unscaling layer\n";
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "Descriptives " << i+1 << ":\n"
-               << "Minimum: " << descriptives[i].minimum << "\n"
-               << "Maximum: " << descriptives[i].maximum << "\n"
-               << "Mean: " << descriptives[i].mean << "\n"
-               << "Standard deviation: " << descriptives[i].standard_deviation << "\n";
-    }
-
-    buffer << "Unscaling method: " << write_unscaling_methods() << "\n";
-    //<< "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
 /// Serializes this unscaling layer object into a TinyXML document->
 /// Please read the OpenNN manual for more information about this.
 

@@ -410,7 +410,7 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Regularization
-/*
+
     tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
@@ -421,7 +421,6 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     regularization_document.InsertFirstChild(element_clone);
 
     regularization_from_XML(regularization_document);
-    */
 }
 
 }
