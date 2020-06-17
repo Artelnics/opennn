@@ -1331,6 +1331,223 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
     throw logic_error(buffer.str());
 }
 
+
+string ProbabilisticLayer::write_combinations_c() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << ";" << endl;
+    }
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_activations_c() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        switch(activation_function)
+        {
+        case Binary:
+            buffer << "\tactivations[" << i << "] = combinations[" << i << "] < 0.5 ? 0.0 : 1.0;\n";
+            break;
+
+        case Logistic:
+            buffer << "\tactivations[" << i << "] = 1.0/(1.0 + exp(-combinations[" << i << "]));\n";
+            break;
+
+        case Competitive:
+            ///@todo
+            break;
+
+        case Softmax:
+
+            if(i == 0)
+            {
+                buffer << "\tfloat sum = 0;\n" << endl;
+
+                buffer << "\tsum = ";
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "exp(combinations[" << i << "])";
+
+                    if(i != neurons_number-1) buffer << " + ";
+                }
+
+                buffer << ";\n" << endl;
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
+                }
+
+            }
+            break;
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_combinations_python() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << " " << endl;
+    }
+
+    buffer << "\t" << endl;
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_activations_python() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tactivations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        switch(activation_function)
+        {
+        case Binary:
+            buffer << "\tactivations[" << i << "] = 0.0 if combinations[" << i << "] < 0.5 else 1.0\n";
+            break;
+
+        case Logistic:
+            buffer << "\tactivations[" << i << "] = 1.0/(1.0 + np.exp(-combinations[" << i << "]));\n";
+            break;
+
+        case Competitive:
+
+            if(i == 0)
+            {
+                buffer << "\tfor i, value in enumerate(combinations):"<<endl;
+
+                buffer <<"\t\tif(max(combinations) == value):"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 1"<<endl;
+
+                buffer <<"\t\telse:"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 0"<<endl;
+            }
+
+            break;
+
+        case Softmax:
+
+            if(i == 0)
+            {
+                buffer << "\tsum_ = 0;\n" << endl;
+
+                buffer << "\tsum_ = ";
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "np.exp(combinations[" << i << "])";
+
+                    if(i != neurons_number-1) buffer << " + ";
+                }
+
+                buffer << ";\n" << endl;
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "\tactivations[" << i << "] = np.exp(combinations[" << i << "])/sum_;\n";
+                }
+
+            }
+            break;
+
+
+
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_expression_c() const
+{
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << write_combinations_c();
+
+    buffer << write_activations_c();
+
+    buffer << "\n\treturn activations;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_expression_python() const
+{
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << write_combinations_python();
+
+    buffer << write_activations_python();
+
+    buffer << "\n\treturn activations;\n" << endl;
+
+    return buffer.str();
+}
+
+
+
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

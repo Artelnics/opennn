@@ -6302,7 +6302,6 @@ void DataSet::subtract_inputs_mean()
 
 /// Returns a vector of strings containing the scaling method that best fits each
 /// of the input variables.
-/// @todo Low priority.
 
 Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
 {
@@ -6317,6 +6316,41 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
     for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
     {
         current_distribution = perform_distribution_distance_analysis(data.chip(used_inputs_indices(i),1));
+
+        if(current_distribution == 0) // Normal distribution
+        {
+            scaling_methods(i) = "MeanStandardDeviation";
+        }
+        else if(current_distribution == 1) // Uniform distribution
+        {
+            scaling_methods(i) = "MinimumMaximum";
+        }
+        else // Default
+        {
+            scaling_methods(i) = "MinimumMaximum";
+        }
+    }
+
+    return scaling_methods;
+}
+
+
+/// Returns a vector of strings containing the scaling method that best fits each
+/// of the target variables.
+
+Tensor<string, 1> DataSet::calculate_default_unscaling_methods() const
+{
+    const Tensor<Index, 1> used_targets_indices = get_target_variables_indices();
+    const Index used_targets_number = used_targets_indices.size();
+
+    Index current_distribution;
+    Tensor<string, 1> scaling_methods(used_targets_number);
+
+    #pragma omp parallel for private(current_distribution)
+
+    for(Index i = 0; i < static_cast<Index>(used_targets_number); i++)
+    {
+        current_distribution = perform_distribution_distance_analysis(data.chip(used_targets_indices(i),1));
 
         if(current_distribution == 0) // Normal distribution
         {
@@ -6954,11 +6988,11 @@ void DataSet::scale_target_mean_standard_deviation(const Descriptives& target_st
 }
 
 
-void DataSet::scale_target_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+void DataSet::scale_target_logarithmic(const Descriptives& target_statistics, const Index& target_index)
 {
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = static_cast<type>(2)*(data(i, target_index)) / target_statistics.standard_deviation;
+        data(i, target_index) = static_cast<type>(0.5)*(exp(data(i,target_index)-1))*(target_statistics.maximum-target_statistics.minimum) + target_statistics.minimum;
     }
 }
 
@@ -6986,7 +7020,7 @@ void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, 
             break;
 
         case Logarithmic:
-            scale_target_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            scale_target_logarithmic(targets_descriptives(i), target_variables_indices(i));
             break;
 
         default:

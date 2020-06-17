@@ -828,6 +828,8 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Descriptives
 
+    const Tensor<string, 1> unscaling_methods = write_unscaling_methods();
+
     for(Index i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Descriptives");
@@ -878,17 +880,21 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
+        // Unscaling method
+
+        file_stream.OpenElement("UnscalingMethod");
+
+        buffer.str("");
+        buffer << unscaling_methods(i);
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Unscaling neuron (end tag)
 
         file_stream.CloseElement();
     }
-
-    // Unscaling method
-
-    file_stream.OpenElement("UnscalingMethod");
-
-//    file_stream.PushText(write_unscaling_method().c_str());
-
-    file_stream.CloseElement();
 
     // Unscaling layer (end tag)
 
