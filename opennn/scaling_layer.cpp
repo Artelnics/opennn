@@ -1350,8 +1350,6 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the scaling layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 

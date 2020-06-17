@@ -2160,10 +2160,10 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 
 Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 {
-
     Tensor<type, 1> distances(2);
 
     const Index nans = count_nan(vector);
+
     const Index new_size = vector.size() - nans;
 
     Tensor<type, 1> new_vector(new_size);
@@ -3575,7 +3575,7 @@ Index count_nan(const Tensor<type, 1>& vector)
 {
     Index nan_number = 0;
 
-    for(Index i = 0; vector.size(); i++)
+    for(Index i = 0; i < vector.dimension(0); i++)
     {
         if(isnan(vector(i))) nan_number++;
     }
