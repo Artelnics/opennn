@@ -2350,7 +2350,7 @@ void DataSetTest::test_read_binary_csv()
     assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
 }
 
-/*
+
 void DataSetTest::test_convert_time_series()
 {
     //@todo
@@ -2358,39 +2358,39 @@ void DataSetTest::test_convert_time_series()
 
    DataSet data_set;
 
-   Tensor<type, 2> data;
+   Tensor<type, 1> data(3);
 
    // Test
 
-   data.set(2, 2, 3.1416);
+   data.setValues({2, 2, 3.1416});
 
-   data_set.set_data(data);
+//   data_set.set_data(data);
 
-   data_set.set_variable_name(0, "x");
-   data_set.set_variable_name(1, "y");
+//   data_set.set_variable_name(0, "x");
+//   data_set.set_variable_name(1, "y");
 
-   data_set.set_lags_number(1);
+//   data_set.set_lags_number(1);
 
-   data_set.transform_time_series();
+//   data_set.transform_time_series();
 
-   data = data_set.get_data();
+//   data = data_set.get_data();
 
-   assert_true(data.dimension(0) == 1, LOG);
-   assert_true(data.dimension(1) == 4, LOG);
+//   assert_true(data.dimension(0) == 1, LOG);
+//   assert_true(data.dimension(1) == 4, LOG);
 
-   assert_true(data_set.get_instances_number() == 1, LOG);
-   assert_true(data_set.get_variables_number() == 4, LOG);
+//   assert_true(data_set.get_instances_number() == 1, LOG);
+//   assert_true(data_set.get_variables_number() == 4, LOG);
 
-   assert_true(data_set.get_input_variables_number() == 2, LOG);
-   assert_true(data_set.get_target_variables_number() == 2, LOG);
+//   assert_true(data_set.get_input_variables_number() == 2, LOG);
+//   assert_true(data_set.get_target_variables_number() == 2, LOG);
 
-   assert_true(data_set.get_variable_name(0) == "x", LOG);
-   assert_true(data_set.get_variable_name(1) == "y", LOG);
-   assert_true(data_set.get_variable_name(2) == "lag_1_x", LOG);
-   assert_true(data_set.get_variable_name(3) == "lag_1_y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(2) == "lag_1_x", LOG);
+//   assert_true(data_set.get_variable_name(3) == "lag_1_y", LOG);
 
 }
-*/
+
 
 void DataSetTest::test_convert_autoassociation()
 {
@@ -2407,26 +2407,26 @@ void DataSetTest::test_convert_autoassociation()
 
 //   data_set.set_data(data);
 
-   data_set.set_variable_name(0, "x");
-   data_set.set_variable_name(1, "y");
+//   data_set.set_variable_name(0, "x");
+//   data_set.set_variable_name(1, "y");
 
-   data_set.transform_association();
+//   data_set.transform_association();
 
 //   data = data_set.get_data();
 
-   assert_true(data.dimension(0) == 2, LOG);
-   assert_true(data.dimension(1) == 4, LOG);
+//   assert_true(data.dimension(0) == 2, LOG);
+//   assert_true(data.dimension(1) == 4, LOG);
 
-   assert_true(data_set.get_instances_number() == 2, LOG);
-   assert_true(data_set.get_variables_number() == 4, LOG);
+//   assert_true(data_set.get_instances_number() == 2, LOG);
+//   assert_true(data_set.get_variables_number() == 4, LOG);
 
-   assert_true(data_set.get_input_variables_number() == 2, LOG);
-   assert_true(data_set.get_target_variables_number() == 2, LOG);
+//   assert_true(data_set.get_input_variables_number() == 2, LOG);
+//   assert_true(data_set.get_target_variables_number() == 2, LOG);
 
-   assert_true(data_set.get_variable_name(0) == "x", LOG);
-   assert_true(data_set.get_variable_name(1) == "y", LOG);
-   assert_true(data_set.get_variable_name(2) == "autoassociation_x", LOG);
-   assert_true(data_set.get_variable_name(3) == "autoassociation_y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(2) == "autoassociation_x", LOG);
+//   assert_true(data_set.get_variable_name(3) == "autoassociation_y", LOG);
 }
 
 /*
@@ -3023,12 +3023,12 @@ void DataSetTest::run_test_case()
    test_read_wine_csv();
    test_read_binary_csv();
 
-//   test_convert_time_series();
-   test_convert_autoassociation();
-/*
+   test_convert_time_series();
+//   test_convert_autoassociation();
+
 //   test_calculate_training_negatives();
 //   test_calculate_selection_negatives();
-
+/*
 //   test_scrub_missing_values();
 
    // Principal components mehtod
