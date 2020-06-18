@@ -1259,6 +1259,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 mean_squared_error.from_XML(new_document);*/
             }
 
+            cout << "MSE loaded" << endl;
+
             // Normalized squared error
 
             const tinyxml2::XMLElement* normalized_squared_error_element = element->FirstChildElement("NormalizedSquaredError");
@@ -1279,6 +1281,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 normalized_squared_error.from_XML(new_document);*/
             }
+
+            cout << "NSE loaded" << endl;
 
             // Minkowski error
 
@@ -1305,6 +1309,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 Minkowski_error.set_Minkowski_parameter(1.5);
             }
 
+            cout << "ME loaded" << endl;
+
             // Cross entropy error
 
             const tinyxml2::XMLElement* cross_entropy_element = element->FirstChildElement("CrossEntropyError");
@@ -1325,6 +1331,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 cross_entropy_error.from_XML(new_document);*/
             }
+
+            cout << "CE loaded" << endl;
 
             // Weighted squared error
 
@@ -1352,6 +1360,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 weighted_squared_error.set_negatives_weight(1);
             }
 
+            cout << "WSE loaded" << endl;
+
             // Regularization
 
             const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -1367,6 +1377,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 sum_squared_error.regularization_from_XML(regularization_document);
             }
+
+            cout << "Regularization loaded" << endl;
 
         }
     }
