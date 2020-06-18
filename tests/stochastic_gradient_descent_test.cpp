@@ -18,183 +18,179 @@ StochasticGradientDescentTest::~StochasticGradientDescentTest()
 {
 }
 
-/*
-void StochasticGradientDescentTest::test_constructor()
+
+void StochasticGradientDescentTest::test_constructor() // @todo
 {
    cout << "test_constructor\n"; 
 
-   SumSquaredError sum_squared_error;
+//   SumSquaredError sum_squared_error;
 
-   // Default constructor
+//   // Default constructor
 
-   StochasticGradientDescent sgd1;
-   assert_true(sgd1.has_loss_index() == false, LOG);
+//   StochasticGradientDescent sgd1;
+//   assert_true(sgd1.has_loss_index() == false, LOG);
 
-   // Loss index constructor
+//   // Loss index constructor
 
-   StochasticGradientDescent sgd2(&sum_squared_error);
-   assert_true(sgd2.has_loss_index() == true, LOG);
+//   StochasticGradientDescent sgd2(&sum_squared_error);
+//   assert_true(sgd2.has_loss_index() == true, LOG);
 }
 
 
-void StochasticGradientDescentTest::test_destructor()
+void StochasticGradientDescentTest::test_destructor() // @todo
 {
    cout << "test_destructor\n"; 
 }
 
 
-void StochasticGradientDescentTest::test_set_reserve_all_training_history()
+void StochasticGradientDescentTest::test_set_reserve_all_training_history() // @todo
 {
    cout << "test_set_reserve_all_training_history\n";
 
-   StochasticGradientDescent sgd;
+//   StochasticGradientDescent sgd;
 
-   sgd.set_reserve_all_training_history(true);
+//   sgd.set_reserve_all_training_history(true);
 
-   assert_true(sgd.get_reserve_training_error_history() == true, LOG);
-   assert_true(sgd.get_reserve_selection_error_history() == true, LOG);
+//   assert_true(sgd.get_reserve_training_error_history() == true, LOG);
+//   assert_true(sgd.get_reserve_selection_error_history() == true, LOG);
 }
 
 
-/// @todo
-
-void StochasticGradientDescentTest::test_perform_training()
+void StochasticGradientDescentTest::test_perform_training() // @todo
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set(1, 1, 2);
-   data_set.set_data_random();
+//   DataSet data_set(1, 1, 2);
+//   data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
-   neural_network.set_parameters_random();
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
+//   neural_network.set_parameters_random();
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   StochasticGradientDescent sgd(&sum_squared_error);
+//   StochasticGradientDescent sgd(&sum_squared_error);
 
-   // Test
+//   // Test
 
-   //type old_loss = sum_squared_error.calculate_error({0});
+//   //type old_loss = sum_squared_error.calculate_error({0});
 
-   sgd.set_display(false);
-   sgd.set_maximum_epochs_number(1);
+//   sgd.set_display(false);
+//   sgd.set_maximum_epochs_number(1);
 
-   sgd.perform_training();
+//   sgd.perform_training();
 
-   //type loss = sum_squared_error.calculate_error({0});
+//   //type loss = sum_squared_error.calculate_error({0});
 
-   //assert_true(loss < old_loss, LOG);
+//   //assert_true(loss < old_loss, LOG);
 
-   // Minimum parameters increment norm
+//   // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type minimum_parameters_increment_norm = 0.1;
+//   type minimum_parameters_increment_norm = 0.1;
 
-   sgd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   sgd.set_loss_goal(0.0);
-//   sgd.set_learning_rate(0.01);
-   sgd.set_gradient_norm_goal(0.0);
-   sgd.set_maximum_epochs_number(1000);
-   sgd.set_maximum_time(1000.0);
+//   sgd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+//   sgd.set_loss_goal(0.0);
+////   sgd.set_learning_rate(0.01);
+//   sgd.set_gradient_norm_goal(0.0);
+//   sgd.set_maximum_epochs_number(1000);
+//   sgd.set_maximum_time(1000.0);
 
-   sgd.perform_training();
+//   sgd.perform_training();
 
-   // Loss goal
+//   // Loss goal
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type training_loss_goal = 0.1;
+//   type training_loss_goal = 0.1;
 
-   sgd.set_minimum_parameters_increment_norm(0.0);
-   sgd.set_loss_goal(training_loss_goal);
-   sgd.set_gradient_norm_goal(0.0);
-   sgd.set_maximum_epochs_number(1000);
-   sgd.set_maximum_time(1000.0);
+//   sgd.set_minimum_parameters_increment_norm(0.0);
+//   sgd.set_loss_goal(training_loss_goal);
+//   sgd.set_gradient_norm_goal(0.0);
+//   sgd.set_maximum_epochs_number(1000);
+//   sgd.set_maximum_time(1000.0);
 
-   sgd.perform_training();
+//   sgd.perform_training();
 
-   //loss = sum_squared_error.calculate_error({0});
+//   //loss = sum_squared_error.calculate_error({0});
 
-   // Minimum loss increase
+//   // Minimum loss increase
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   sgd.set_minimum_parameters_increment_norm(0.0);
-   sgd.set_loss_goal(0.0);
-   sgd.set_gradient_norm_goal(0.0);
-   sgd.set_maximum_epochs_number(1000);
-   sgd.set_maximum_time(1000.0);
+//   sgd.set_minimum_parameters_increment_norm(0.0);
+//   sgd.set_loss_goal(0.0);
+//   sgd.set_gradient_norm_goal(0.0);
+//   sgd.set_maximum_epochs_number(1000);
+//   sgd.set_maximum_time(1000.0);
 
-   sgd.perform_training();
+//   sgd.perform_training();
 
-   // Gradient norm goal 
+//   // Gradient norm goal
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type gradient_norm_goal = 0.1;
+//   type gradient_norm_goal = 0.1;
 
-   sgd.set_minimum_parameters_increment_norm(0.0);
-   sgd.set_loss_goal(0.0);
-   sgd.set_gradient_norm_goal(gradient_norm_goal);
-   sgd.set_maximum_epochs_number(1000);
-   sgd.set_maximum_time(1000.0);
+//   sgd.set_minimum_parameters_increment_norm(0.0);
+//   sgd.set_loss_goal(0.0);
+//   sgd.set_gradient_norm_goal(gradient_norm_goal);
+//   sgd.set_maximum_epochs_number(1000);
+//   sgd.set_maximum_time(1000.0);
 
-   sgd.perform_training();
+//   sgd.perform_training();
 
-//   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
-//   assert_true(gradient_norm < gradient_norm_goal, LOG);
+////   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
+////   assert_true(gradient_norm < gradient_norm_goal, LOG);
 
 }
 
 
-void StochasticGradientDescentTest::test_resize_training_history()
+void StochasticGradientDescentTest::test_resize_training_history() // @todo
 {
    cout << "test_resize_training_history\n";
 
-   StochasticGradientDescent sgd;
+//   StochasticGradientDescent sgd;
 
-   sgd.set_reserve_all_training_history(true);
+//   sgd.set_reserve_all_training_history(true);
 
-   OptimizationAlgorithm::Results sgdtr;//(&sgd);
+//   OptimizationAlgorithm::Results sgdtr;//(&sgd);
 
-   sgdtr.resize_training_history(1);
+//   sgdtr.resize_training_history(1);
 
-   assert_true(sgdtr.training_error_history.size() == 1, LOG);
-   assert_true(sgdtr.selection_error_history.size() == 1, LOG);
+//   assert_true(sgdtr.training_error_history.size() == 1, LOG);
+//   assert_true(sgdtr.selection_error_history.size() == 1, LOG);
 }
 
 
-/// @todo
-
-void StochasticGradientDescentTest::test_to_XML()
+void StochasticGradientDescentTest::test_to_XML() // @todo
 {
    cout << "test_to_XML\n";
 
-   StochasticGradientDescent sgd;
+//   StochasticGradientDescent sgd;
 
-   tinyxml2::XMLDocument* document;
+//   tinyxml2::XMLDocument* document;
 
-   // Test
+//   // Test
 
-   document = sgd.to_XML();
-   assert_true(document != nullptr, LOG);
+//   document = sgd.to_XML();
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
+//   delete document;
 
 }
 
 
-void StochasticGradientDescentTest::test_from_XML()
+void StochasticGradientDescentTest::test_from_XML() // @todo
 {
    cout << "test_from_XML\n";
 }
-*/
+
 
 void StochasticGradientDescentTest::run_test_case()
 {
    cout << "Running stochastic gradient descent test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -216,7 +212,7 @@ void StochasticGradientDescentTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of stochastic gradient descent test case.\n";
 }
 
