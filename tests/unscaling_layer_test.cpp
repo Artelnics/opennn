@@ -254,83 +254,81 @@ void UnscalingLayerTest::test_get_maximums()
    assert_true(abs(ul.get_maximums()(1) + 1) < static_cast<type>(1e-3), LOG);
 }
 
-void UnscalingLayerTest::test_get_unscaling_method()
+void UnscalingLayerTest::test_get_unscaling_method() // @todo
 {
    cout << "test_get_unscaling_method\n";
-/*
-   UnscalingLayer ul(1);
 
-   // Test
+//   UnscalingLayer ul(1);
 
-   UnscalingLayer::UnscalingMethod no_unscaling = UnscalingLayer::UnscalingMethod::NoUnscaling;
+//   // Test
 
-   UnscalingLayer::UnscalingMethod minimum_maximum = UnscalingLayer::UnscalingMethod::MinimumMaximum;
+//   UnscalingLayer::UnscalingMethod no_unscaling = UnscalingLayer::UnscalingMethod::NoUnscaling;
 
-   UnscalingLayer::UnscalingMethod mean_standard_deviation = UnscalingLayer::UnscalingMethod::MeanStandardDeviation;
+//   UnscalingLayer::UnscalingMethod minimum_maximum = UnscalingLayer::UnscalingMethod::MinimumMaximum;
 
-   UnscalingLayer::UnscalingMethod logarithmic = UnscalingLayer::UnscalingMethod::Logarithmic;
+//   UnscalingLayer::UnscalingMethod mean_standard_deviation = UnscalingLayer::UnscalingMethod::MeanStandardDeviation;
+
+//   UnscalingLayer::UnscalingMethod logarithmic = UnscalingLayer::UnscalingMethod::Logarithmic;
 
 
-   ul.set_unscaling_method(no_unscaling);
+//   ul.set_unscaling_method(no_unscaling);
 
-   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::NoUnscaling, LOG);
-   assert_true(ul.get_unscaling_method() == 0, LOG);
+//   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::NoUnscaling, LOG);
+//   assert_true(ul.get_unscaling_method() == 0, LOG);
 
-   ul.set_unscaling_method(minimum_maximum);
+//   ul.set_unscaling_method(minimum_maximum);
 
-   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::MinimumMaximum, LOG);
-   assert_true(ul.get_unscaling_method() == 1, LOG);
+//   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::MinimumMaximum, LOG);
+//   assert_true(ul.get_unscaling_method() == 1, LOG);
 
-   ul.set_unscaling_method(mean_standard_deviation);
+//   ul.set_unscaling_method(mean_standard_deviation);
 
-   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::MeanStandardDeviation, LOG);
-   assert_true(ul.get_unscaling_method() == 2, LOG);
+//   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::MeanStandardDeviation, LOG);
+//   assert_true(ul.get_unscaling_method() == 2, LOG);
 
-   ul.set_unscaling_method(logarithmic);
+//   ul.set_unscaling_method(logarithmic);
 
-   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::Logarithmic, LOG);
-   assert_true(ul.get_unscaling_method() == 3, LOG);
-   */
+//   assert_true(ul.get_unscaling_method() == UnscalingLayer::UnscalingMethod::Logarithmic, LOG);
+//   assert_true(ul.get_unscaling_method() == 3, LOG);
 }
 
-void UnscalingLayerTest::test_get_unscaling_method_name()
+void UnscalingLayerTest::test_get_unscaling_method_name() // @todo
 {
    cout << "test_get_unscaling_method\n";
-/*
-   UnscalingLayer ul(1);
 
-   // Test
+//   UnscalingLayer ul(1);
 
-   UnscalingLayer::UnscalingMethod no_unscaling = UnscalingLayer::UnscalingMethod::NoUnscaling;
+//   // Test
 
-   UnscalingLayer::UnscalingMethod minimum_maximum = UnscalingLayer::UnscalingMethod::MinimumMaximum;
+//   UnscalingLayer::UnscalingMethod no_unscaling = UnscalingLayer::UnscalingMethod::NoUnscaling;
 
-   UnscalingLayer::UnscalingMethod mean_standard_deviation = UnscalingLayer::UnscalingMethod::MeanStandardDeviation;
+//   UnscalingLayer::UnscalingMethod minimum_maximum = UnscalingLayer::UnscalingMethod::MinimumMaximum;
 
-   UnscalingLayer::UnscalingMethod logarithmic = UnscalingLayer::UnscalingMethod::Logarithmic;
+//   UnscalingLayer::UnscalingMethod mean_standard_deviation = UnscalingLayer::UnscalingMethod::MeanStandardDeviation;
 
-
-   ul.set_unscaling_method(no_unscaling);
-
-   assert_true(ul.write_unscaling_method() == "NoUnscaling", LOG);
-   assert_true(ul.write_unscaling_method_text() == "no unscaling", LOG);
-
-   ul.set_unscaling_method(minimum_maximum);
-
-   assert_true(ul.write_unscaling_method() == "MinimumMaximum", LOG);
-   assert_true(ul.write_unscaling_method_text() == "minimum and maximum", LOG);
-
-   ul.set_unscaling_method(mean_standard_deviation);
-
-   assert_true(ul.write_unscaling_method() == "MeanStandardDeviation", LOG);
-   assert_true(ul.write_unscaling_method_text() == "mean and standard deviation", LOG);
+//   UnscalingLayer::UnscalingMethod logarithmic = UnscalingLayer::UnscalingMethod::Logarithmic;
 
 
-   ul.set_unscaling_method(logarithmic);
+//   ul.set_unscaling_method(no_unscaling);
 
-   assert_true(ul.write_unscaling_method() == "Logarithmic", LOG);
-   assert_true(ul.write_unscaling_method_text() == "logarithmic", LOG);
-*/
+//   assert_true(ul.write_unscaling_method() == "NoUnscaling", LOG);
+//   assert_true(ul.write_unscaling_method_text() == "no unscaling", LOG);
+
+//   ul.set_unscaling_method(minimum_maximum);
+
+//   assert_true(ul.write_unscaling_method() == "MinimumMaximum", LOG);
+//   assert_true(ul.write_unscaling_method_text() == "minimum and maximum", LOG);
+
+//   ul.set_unscaling_method(mean_standard_deviation);
+
+//   assert_true(ul.write_unscaling_method() == "MeanStandardDeviation", LOG);
+//   assert_true(ul.write_unscaling_method_text() == "mean and standard deviation", LOG);
+
+
+//   ul.set_unscaling_method(logarithmic);
+
+//   assert_true(ul.write_unscaling_method() == "Logarithmic", LOG);
+//   assert_true(ul.write_unscaling_method_text() == "logarithmic", LOG);
 }
 
 void UnscalingLayerTest::test_get_display()

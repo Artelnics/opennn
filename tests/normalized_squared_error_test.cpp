@@ -664,45 +664,45 @@ void NormalizedSquaredErrorTest::test_from_XML(void) // @todo
 }
 
 
-void NormalizedSquaredErrorTest::run_test_case(void)
+void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 {
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-/*
-   test_constructor();
-   test_destructor();
 
-   test_calculate_normalization_coefficient();
+//   test_constructor();
+//   test_destructor();
+
+//   test_calculate_normalization_coefficient();
 
 
-   // Get methods
+//   // Get methods
 
-   // Set methods
+//   // Set methods
 
-   // Error methods
+//   // Error methods
 
-   test_calculate_error();
-*/
-   test_calculate_error_gradient();
-/*
-   // Error terms methods
+//   test_calculate_error();
 
-   test_calculate_error_terms();
+//   test_calculate_error_gradient();
 
-   test_calculate_error_terms_Jacobian();
+//   // Error terms methods
 
-   // Squared errors methods
+//   test_calculate_error_terms();
 
-   test_calculate_squared_errors();
+//   test_calculate_error_terms_Jacobian();
 
-   test_calculate_maximal_errors();
+//   // Squared errors methods
 
-   // Serialization methods
+//   test_calculate_squared_errors();
 
-   test_to_XML();
-   test_from_XML();
-*/
+//   test_calculate_maximal_errors();
+
+//   // Serialization methods
+
+//   test_to_XML();
+//   test_from_XML();
+
    cout << "End of normalized squared error test case.\n";
 }
 
