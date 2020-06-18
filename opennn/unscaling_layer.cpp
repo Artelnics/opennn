@@ -467,9 +467,9 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<UnscalingLayer::Unscalin
 
 void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_string)
 {
-    const Index neurons_number = get_neurons_number();
-
 #ifdef __OPENNN_DEBUG__
+
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 0)
     {
@@ -510,6 +510,65 @@ void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_str
         throw logic_error(buffer.str());
     }
 
+}
+
+
+/// Sets the methods to be used for unscaling each variable.
+/// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "Logarithmic").
+/// @param new_unscaling_methods_string New unscaling methods for the variables.
+
+void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscaling_methods_string)
+{
+    const Index neurons_number = get_neurons_number();
+
+#ifdef __OPENNN_DEBUG__
+
+    if(neurons_number == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ScalingLayer class.\n"
+               << "void set_unscaling_methods(const Tensor<string, 1>&) method.\n"
+               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    Tensor<UnscalingMethod, 1> new_unscaling_methods(neurons_number);
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        if(new_unscaling_methods_string(i) == "NoUnscaling")
+        {
+            new_unscaling_methods(i) = NoUnscaling;
+        }
+        else if(new_unscaling_methods_string(i) == "MeanStandardDeviation")
+        {
+            new_unscaling_methods(i) = MeanStandardDeviation;
+        }
+        else if(new_unscaling_methods_string(i) == "MinimumMaximum")
+        {
+            new_unscaling_methods(i) = MinimumMaximum;
+        }
+        else if(new_unscaling_methods_string(i) == "StandardDeviation")
+        {
+            new_unscaling_methods(i) = Logarithmic;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void set_unscaling_methods(const Tensor<string, 1>&) method.\n"
+                   << "Unknown scaling method: " << new_unscaling_methods_string(i) << ".\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    set_unscaling_methods(new_unscaling_methods);
 }
 
 
