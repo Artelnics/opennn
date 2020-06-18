@@ -2193,7 +2193,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     const type minimum = sorted_vector(0);
     const type maximum = sorted_vector(n-1);
 
-//    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
 
     for(Index i = 0; i < n; i++)
     {
@@ -2233,7 +2233,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
             empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
         }
 
-//        #pragma omp critical
+        #pragma omp critical
         {
             distances(0) += abs(normal_distribution - empirical_distribution);
             distances(1) += abs(uniform_distribution - empirical_distribution);

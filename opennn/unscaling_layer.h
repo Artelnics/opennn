@@ -110,7 +110,7 @@ public:
 
    void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
    void set_unscaling_methods(const string&);
-
+   void set_unscaling_methods(const Tensor<string, 1>&);
    void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
 
    // Display messages
