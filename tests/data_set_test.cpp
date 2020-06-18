@@ -3056,7 +3056,7 @@ void DataSetTest::run_test_case()
 
    test_calculate_training_negatives();
    test_calculate_selection_negatives();
-/*
+
 //   test_scrub_missing_values();
 
    // Principal components mehtod
@@ -3072,7 +3072,7 @@ void DataSetTest::run_test_case()
 //   test_get_tokens();
 
 //   test_is_numeric();
-*/
+
    cout << "End of data set test case.\n";
 }
 
