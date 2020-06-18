@@ -429,80 +429,80 @@ void ScalingLayerTest::test_get_display()
    assert_true(sl.get_display(), LOG);
 }
 
-void ScalingLayerTest::test_set()
+void ScalingLayerTest::test_set() // @todo
 {
    cout << "test_set\n";
-/*
-   ScalingLayer sl;
 
-   // Test 1
+//   ScalingLayer sl;
 
-   sl.set();
+//   // Test 1
 
-   assert_true(sl.get_descriptives().size() == 0, LOG);
+//   sl.set();
 
-   Tensor<Descriptives, 1> descriptives(4);
-   sl.set_descriptives(descriptives);
-   sl.set();
+//   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-   assert_true(sl.get_descriptives().size() == 0, LOG);
+//   Tensor<Descriptives, 1> descriptives(4);
+//   sl.set_descriptives(descriptives);
+//   sl.set();
 
-   // Test 2
+//   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-   sl.set();
+//   // Test 2
 
-   Index new_inputs_number;
-   sl.set(new_inputs_number);
+//   sl.set();
 
-   assert_true(sl.get_descriptives().size()== 0, LOG);
-   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+//   Index new_inputs_number;
+//   sl.set(new_inputs_number);
 
-   Index new_inputs_number_ = 4;
-   sl.set(new_inputs_number_);
+//   assert_true(sl.get_descriptives().size()== 0, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
 
-   assert_true(sl.get_descriptives().size()== 4, LOG);
-   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+//   Index new_inputs_number_ = 4;
+//   sl.set(new_inputs_number_);
 
-   // Test 3
+//   assert_true(sl.get_descriptives().size()== 4, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-   sl.set();
+//   // Test 3
 
-   Tensor<Index, 1> new_inputs_dimensions(1);
-   new_inputs_dimensions.setConstant(3);
-   sl.set(new_inputs_dimensions);
+//   sl.set();
 
-   assert_true(sl.get_descriptives().size()== 3, LOG);
-   assert_true(sl.get_scaling_methods().size()== 3, LOG);
-   assert_true(sl.get_input_variables_dimensions()(0) == 3, LOG);
+//   Tensor<Index, 1> new_inputs_dimensions(1);
+//   new_inputs_dimensions.setConstant(3);
+//   sl.set(new_inputs_dimensions);
 
-   // Test 4
+//   assert_true(sl.get_descriptives().size()== 3, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 3, LOG);
+//   assert_true(sl.get_input_variables_dimensions()(0) == 3, LOG);
 
-   sl.set();
+//   // Test 4
 
-   Tensor<Descriptives, 1> descriptives_4;
-   sl.set(descriptives_4);
+//   sl.set();
 
-   assert_true(sl.get_descriptives().size()== 0, LOG);
-   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+//   Tensor<Descriptives, 1> descriptives_4;
+//   sl.set(descriptives_4);
 
-   Tensor<Descriptives, 1> descriptives_4_(4);
-   sl.set(descriptives_4_);
+//   assert_true(sl.get_descriptives().size()== 0, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
 
-   assert_true(sl.get_descriptives().size()== 4, LOG);
-   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+//   Tensor<Descriptives, 1> descriptives_4_(4);
+//   sl.set(descriptives_4_);
 
-   // Test 5
+//   assert_true(sl.get_descriptives().size()== 4, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-   sl.set();
+//   // Test 5
 
-   ScalingLayer sl5;
-   sl5.set(7);
+//   sl.set();
 
-   sl.set(sl5);
+//   ScalingLayer sl5;
+//   sl5.set(7);
 
-   assert_true(sl.get_descriptives().size() == 7, LOG);
-   assert_true(sl.get_scaling_methods().size() == 7, LOG);
-*/
+//   sl.set(sl5);
+
+//   assert_true(sl.get_descriptives().size() == 7, LOG);
+//   assert_true(sl.get_scaling_methods().size() == 7, LOG);
+
 }
 
 void ScalingLayerTest::test_set_inputs_number()
@@ -607,12 +607,12 @@ void ScalingLayerTest::test_set_descriptives_eigen()
    Tensor<type, 2> descriptives_eigen(1,4);
 
    sl.set_descriptives_eigen(descriptives_eigen);
-/*
-   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
-*/
+
+//   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
+
    // Test 1
 
    ScalingLayer sl_(2);
