@@ -331,25 +331,25 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
    assert_true(abs(d_4(0) - 6) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d_4(1) - 12) < static_cast<type>(1e-2), LOG);
 
-/*
-   // Test 5_0
 
-   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
+   // Test 5_0 // @todo
 
-   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
 
-   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
-   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
+//   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
-   // Test 5_1
+//   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
+//   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
 
-   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+//   // Test 5_1
 
-   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
-   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
-   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
-*/
+//   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+
+//   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
+//   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
+
 }
 
 
@@ -1513,18 +1513,18 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient_m
 
     Tensor<type,2>x_2d(2,2);
     x_2d.setValues({{1,2},{-1,-2}});
-/*
-    Tensor<type, 2> d1 = nd.calculate_central_differences_gradient_matrix(*this, &NumericalDifferentiationTest::f2_2,-1, x_2d);
 
-    cout << "central_differences_gradient_matrix" << endl;
-    cout << d1 << endl;
+//    Tensor<type, 2> d1 = nd.calculate_central_differences_gradient_matrix(*this, &NumericalDifferentiationTest::f2_2,-1, x_2d);
 
-    assert_true(abs(d1(0,0) - 1) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d1(0,1) - 1) < static_cast<type>(1e-2), LOG);
-*/
+//    cout << "central_differences_gradient_matrix" << endl;
+//    cout << d1 << endl;
+
+//    assert_true(abs(d1(0,0) - 1) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d1(0,1) - 1) < static_cast<type>(1e-2), LOG);
+
 }
 
-void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices()
+void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices() // @todo
 {
     cout << "test_calculate_central_differences_hessian_matrices\n";
 
@@ -1535,15 +1535,15 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_ma
 
     Tensor<type,1> x_1d(2);
     x_1d.setValues({3,4});
-/*
-    Tensor<type, 1> H = nd.calculate_central_differences_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);
 
-    cout << "H" << endl;
-    cout << H << endl;
+//    Tensor<type, 1> H = nd.calculate_central_differences_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);
 
-    assert_true(abs(H(0) - 1) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(H(1) - 1) < static_cast<type>(1e-2), LOG);
-*/
+//    cout << "H" << endl;
+//    cout << H << endl;
+
+//    assert_true(abs(H(0) - 1) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(H(1) - 1) < static_cast<type>(1e-2), LOG);
+
 }
 
 void NumericalDifferentiationTest::run_test_case()
