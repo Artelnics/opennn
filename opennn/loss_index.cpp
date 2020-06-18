@@ -833,7 +833,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     set_regularization_method(new_regularization_method);
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
+    const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralParametersNormWeight");
 
     if(element)
     {
@@ -882,7 +882,7 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Regularization weight
 
-    file_stream.OpenElement("RegularizationWeight");
+    file_stream.OpenElement("NeuralParametersNormWeight");
 
     buffer.str("");
     buffer << regularization_weight;

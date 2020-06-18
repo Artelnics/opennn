@@ -6311,7 +6311,7 @@ Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
     Index current_distribution;
     Tensor<string, 1> scaling_methods(used_inputs_number);
 
-    #pragma omp parallel for private(current_distribution)
+//    #pragma omp parallel for private(current_distribution)
 
     for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
     {
