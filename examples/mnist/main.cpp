@@ -64,7 +64,7 @@ int main(void)
 
         // Preprocess data
 
-        bool reload = false;
+        bool reload = true;
 
         ifstream training_file("../data/mnist_train.csv");
 
@@ -195,6 +195,8 @@ int main(void)
         data_set.set_input();
         data_set.set_column_use(0, DataSet::VariableUse::Target);
 
+        const Tensor<string, 1> unused_variables = data_set.unuse_constant_columns();
+
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -203,6 +205,8 @@ int main(void)
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
         data_set.scale_inputs(scaling_methods, inputs_descriptives);
+
+        data_set.unuse_constant_columns();
 
         if(display_data_set)
         {
@@ -215,6 +219,7 @@ int main(void)
 
                 if(columns(i).column_use == OpenNN::DataSet::Input) cout << "   Use: input" << endl;
                 else if(columns(i).column_use == OpenNN::DataSet::Target) cout << "   Use: target" << endl;
+                else if(columns(i).column_use == OpenNN::DataSet::UnusedVariable) cout << "   Use: unused" << endl;
 
 
                 if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
@@ -227,6 +232,8 @@ int main(void)
         }
 
 
+
+/*
         // Neural network
 
         bool display_neural_network = false;
@@ -285,7 +292,7 @@ int main(void)
         cout << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
         cout << "Error: " << multiple_classification_tests(1)*100 << endl;
 
-
+*/
 
 
         return 0;

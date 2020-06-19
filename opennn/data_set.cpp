@@ -4546,8 +4546,6 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
             {
                 const type column_standard_deviation = standard_deviation(data.chip(variable_index,1), used_instances_indices);
 
-                cout << "column " << i << ": " << column_standard_deviation << endl;
-
                 if((column_standard_deviation - 0) < numeric_limits<type>::min())
                 {
                     columns(i).set_use(UnusedVariable);
@@ -10122,6 +10120,7 @@ void DataSet::read_csv_3_complete()
 
     unsigned instance_index = 0;
     unsigned variable_index = 0;
+    unsigned column_index = 0;
 
     // Skip header
 
@@ -10156,16 +10155,18 @@ void DataSet::read_csv_3_complete()
         tokens = get_tokens(line, separator_char);
 
         variable_index = 0;
+        column_index = 0;
 
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < raw_columns_number; j++)
         {
             trim(tokens(j));
 
             if(has_rows_labels && j ==0)
             {
                 rows_labels(instance_index) = tokens(j);
+                continue;
             }
-            else if(columns(j).type == Numeric)
+            else if(columns(column_index).type == Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10191,7 +10192,7 @@ void DataSet::read_csv_3_complete()
                     }
                 }
             }
-            else if(columns(j).type == DateTime)
+            else if(columns(column_index).type == DateTime)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10204,15 +10205,15 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(j).type == Categorical)
+            else if(columns(column_index).type == Categorical)
             {
-                for(Index k = 0; k < columns(j).get_categories_number(); k++)
+                for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
                 {
                     if(tokens(j) == missing_values_label)
                     {
                         data(instance_index, variable_index) = static_cast<type>(NAN);
                     }
-                    else if(tokens(j) == columns(j).categories(k))
+                    else if(tokens(j) == columns(column_index).categories(k))
                     {
                         data(instance_index, variable_index) = 1.0;
                     }
@@ -10220,23 +10221,25 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(j).type == Binary)
+            else if(columns(column_index).type == Binary)
             {
                 if(tokens(j) == missing_values_label)
                 {
                     data(instance_index, variable_index) = static_cast<type>(NAN);
                 }
-                else if(columns(j).categories.size() > 0 && tokens(j) == columns(j).categories(0))
+                else if(columns(column_index).categories.size() > 0 && tokens(j) == columns(column_index).categories(0))
                 {
                     data(instance_index, variable_index) = 1.0;
                 }
-                else if(tokens(j) == columns(j).name)
+                else if(tokens(j) == columns(column_index).name)
                 {
                     data(instance_index, variable_index) = 1.0;
                 }
 
                 variable_index++;
             }
+
+            column_index++;
         }
 
         instance_index++;
