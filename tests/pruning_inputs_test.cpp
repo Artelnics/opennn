@@ -58,69 +58,68 @@ void PruningInputsTest::test_set_default()
 void PruningInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
-/*
-    DataSet data_set;
 
-    Tensor<type, 2> data;
+//    DataSet data_set;
 
-    NeuralNetwork neural_network;
+//    Tensor<type, 2> data;
 
-    Tensor<Index, 1> architecture;
+//    NeuralNetwork neural_network;
 
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
+//    Tensor<Index, 1> architecture;
 
-    PruningInputs::PruningInputsResults* pir;
+//    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    // Test
+//    PruningInputs::PruningInputsResults* pir;
 
-    data_set.generate_inputs_selection_data(40,3);
+//    // Test
 
-    data_set.split_instances_random();
+//    data_set.generate_inputs_selection_data(40,3);
 
-    architecture.setValues({2,6,1});
+//    data_set.split_instances_random();
 
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    architecture.setValues({2,6,1});
 
-    TrainingStrategy ts(&neural_network, &data_set);
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    PruningInputs pi(&ts);
+//    TrainingStrategy ts(&neural_network, &data_set);
 
-    ts.set_display(false);
+//    PruningInputs pi(&ts);
 
-    pi.set_display(false);
+//    ts.set_display(false);
 
-    pi.set_approximation(true);
+//    pi.set_display(false);
 
-    pir = pi.perform_inputs_selection();
+//    pi.set_approximation(true);
 
-    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
+//    pir = pi.perform_inputs_selection();
 
-    pi.delete_selection_history();
-    pi.delete_parameters_history();
-    pi.delete_loss_history();
+//    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
 
-    // Test
+//    pi.delete_selection_history();
+//    pi.delete_parameters_history();
+//    pi.delete_loss_history();
 
-    data_set.generate_sum_data(40,3);
+//    // Test
 
-    architecture.setValues({2,6,1});
+//    data_set.generate_sum_data(40,3);
 
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    architecture.setValues({2,6,1});
 
-    ts.set_display(false);
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    pi.set_display(false);
+//    ts.set_display(false);
 
-    pi.set_approximation(false);
+//    pi.set_display(false);
 
-    pir = pi.perform_inputs_selection();
+//    pi.set_approximation(false);
 
-    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
+//    pir = pi.perform_inputs_selection();
 
-    pi.delete_selection_history();
-    pi.delete_parameters_history();
-    pi.delete_loss_history();
-*/
+//    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
+
+//    pi.delete_selection_history();
+//    pi.delete_parameters_history();
+//    pi.delete_loss_history();
 }
 
 // Serialization methods
