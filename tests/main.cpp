@@ -21,52 +21,52 @@ using namespace OpenNN;
 int main()
 {
    cout <<
-   "Open Neural Networks Library. Test Suite Application.\n"
-   "bounding_layer\n"
-   "conjugate_gradient\n"
-   "correlations\n"
-   "cross_entropy_error\n"
-   "descriptives\n"
+   "Open Neural Networks Library. Test Suite Application.\n\n"
+   
+   "suite - run all tests\n\n"
+   
+   "Individual Tests:\n\n:
+   
+   "bounding_layer | bl\n"
+   "conjugate_gradient | cg\n"
+   "convolutional_layer | cl\n"
+   "correlations | cr\n"
+   "cross_entropy_error | cee\n"
+   "descriptives | dsc\n"
+   "data_set | ds\n"
    "evolutionary_algorithm\n"
-   "genetic_algorithm\n"
+   "genetic_algorithm | ga\n"
    "golden_section_order\n"
-   "gradient_descent\n"
-   "growing_inputs\n"
-   "incremental_order\n"
-   "instances\n"
-   "inputs\n"
-   "inputs_selection_algorithm\n"
-   "learning_rate_algorithm\n"
-   "levenberg_marquardt_algorithm\n"
-   "linear_algebra\n"
-   "long_short_term_memory_layer\n"
-   "loss_index\n"
-   "mean_squared_error\n"
-   "minkowski_error\n"
-   "missing_values\n"
-   "model_selection\n"
-   "neural_network\n"
-   "newton_method\n"
-   "normalized_squared_error\n"
-   "numerical_differentiation\n"
-   "optimization_algorithm\n"
-   "neurons_selection_algorithm\n"
-   "outputs\n"
-   "perceptron_layer\n"
-   "probabilistic_layer\n"
-   "pruning_inputs\n"
-   "quasi_newton_method\n"
-   "recurrent_layer\n"
-   "scaling_layer\n"
+   "gradient_descent | gd\n"
+   "growing_inputs | gi\n"
+   "incremental_neurons | in\n"
+   "inputs_selection | is\n"
+   "learning_rate_algorithm | lra\n"
+   "levenberg_marquardt_algorithm | lma\n"
+   "long_short_term_memory_layer | lstm\n"
+   "mean_squared_error | mse\n"
+   "minkowski_error | me\n"
+   "model_selection | ms\n"
+   "neural_network | nn\n"
+   'neurons_selection | ns\n"
+   "normalized_squared_error | nse\n"
+   "numerical_differentiation | ndf\n"
+   "perceptron_layer | pl\n"
+   "pooling_layer | pll\n"
+   "probabilistic_layer | pbl\n"
+   "pruning_inputs | pi\n"
+   "quasi_newton_method | qnm\n"
+   "recurrent_layer | rl\n"
+   "scaling_layer | sl\n"
    "simulated_annealing_order\n"
-   "suite\n"
-   "sum_squared_error\n"
-   "testing_analysis\n"
-   "training_strategy\n"
-   "unscaling_layer\n"
-   "variables\n"
-   "weighted_squared_error\n"
-   "Write test:\n"<< endl;
+   "statistics | st\n"
+   "stochastic_gradient_descent | sgd\n"
+   "sum_squared_error | sse\n"
+   "testing_analysis | ta\n"
+   "training_strategy | ts\n"
+   "unscaling_layer | ul\n"
+   "weighted_squared_error | wse\n"
+   "\n" << endl;
 
    string test;
 
@@ -211,7 +211,7 @@ int main()
         tests_passed_count += neural_network_test.get_tests_passed_count();
         tests_failed_count += neural_network_test.get_tests_failed_count();
       }
-      else if(test == "sum_squared_error" || test == "sse" || test == "SSE")
+      else if(test == "sum_squared_error" || test == "sse")
       {
         SumSquaredErrorTest sum_squared_error_test;
         sum_squared_error_test.run_test_case();
