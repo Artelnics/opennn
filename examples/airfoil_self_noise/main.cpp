@@ -51,8 +51,6 @@ int main(void)
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-//        data_set.set_batch_instances_number(100);
-
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
@@ -80,9 +78,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(5);
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
         training_strategy.set_thread_pool_device(thread_pool_device);
 
@@ -102,7 +98,6 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
 
