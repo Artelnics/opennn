@@ -89,7 +89,6 @@ public:
    void test_add_instance();
    void test_append_variable();
    void test_remove_variable();
-   void test_subtract_instance(); 
    void test_unuse_constant_columns();
    void test_unuse_repeated_instances();
    void test_unuse_non_significant_inputs();
@@ -129,8 +128,8 @@ public:
    void test_calculate_data_histograms();
 
    // Filtering methods
+   void test_filter_column();
    void test_filter_data();
-   void test_filter_variable();
 
    // Data scaling
    void test_scale_data_mean_standard_deviation();  
