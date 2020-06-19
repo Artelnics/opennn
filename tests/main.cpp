@@ -25,7 +25,7 @@ int main()
    
    "suite - run all tests\n\n"
    
-   "Individual Tests:\n\n:
+   "Individual Tests:\n\n"
    
    "bounding_layer | bl\n"
    "conjugate_gradient | cg\n"
@@ -48,7 +48,7 @@ int main()
    "minkowski_error | me\n"
    "model_selection | ms\n"
    "neural_network | nn\n"
-   'neurons_selection | ns\n"
+   "neurons_selection | ns\n"
    "normalized_squared_error | nse\n"
    "numerical_differentiation | ndf\n"
    "perceptron_layer | pl\n"
