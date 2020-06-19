@@ -3006,7 +3006,6 @@ void DataSetTest::run_test_case()
 
    // Input-target variables unscaling
    //test_unscale_variables_mean_standard_deviation();
-   //test_unscale_variables_minimum_maximum();
 
    // Pattern recognition methods
    //test_calculate_target_columns_distribution();
@@ -3018,12 +3017,6 @@ void DataSetTest::run_test_case()
    // Outlier detection
 
    test_clean_Tukey_outliers();
-   //test_calculate_instances_distances();      // @todo not defined
-   //test_calculate_k_distances();
-   //test_calculate_reachability_distances();   // @todo not defined
-   //test_calculate_reachability_density();     // @todo not defined
-   //test_calculate_local_outlier_factor();     // @todo not defined
-   //test_clean_local_outlier_factor();         // @todo not defined
 
    // Data generation
    test_generate_data_binary_classification();

@@ -96,9 +96,11 @@ public:
    void test_unuse_columns_missing_values();
 
    // Initialization methods
+
    void test_initialize_data();
 
    // Statistics methods
+
    void test_calculate_data_descriptives();
    void test_calculate_data_descriptives_missing_values();
    void test_calculate_training_instances_descriptives();
@@ -111,6 +113,7 @@ public:
    void test_calculate_testing_targets_mean();
 
    // Correlation methods
+
    void test_calculate_linear_correlations();
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
@@ -118,9 +121,11 @@ public:
    void test_calculate_total_input_correlations();
 
    // Trending methods
+
    void test_calculate_trends();
 
    // Histrogram methods
+
    void test_calculate_data_histograms();
 
    // Filtering methods
@@ -155,10 +160,6 @@ public:
    void test_unscale_targets_mean_standard_deviation();
    void test_unscale_targets_minimum_maximum();
 
-   // Input-target variables unscaling
-
- //  void test_unscale_variables_minimum_maximum();
-
    // Pattern recognition methods
 
    void test_calculate_target_columns_distribution();
@@ -167,15 +168,6 @@ public:
    void test_balance_multiple_targets_distribution();
    void test_balance_function_regression_targets_distribution();
 
-   // Outlier detection
-
-   void test_calculate_instances_distances();
-   //void test_calculate_k_distances();
-   //void test_calculate_reachability_distances();
-   //void test_calculate_reachability_density();
-   //void test_calculate_local_outlier_factor();
-
-   //void test_clean_local_outlier_factor();
    void test_clean_Tukey_outliers();
 
    // Data generation

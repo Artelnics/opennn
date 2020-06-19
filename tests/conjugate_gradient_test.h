@@ -24,17 +24,9 @@ class ConjugateGradientTest : public UnitTesting
 
 public:
 
-   
-
-   explicit ConjugateGradientTest(); 
-
-
-   
+   explicit ConjugateGradientTest();    
 
    virtual ~ConjugateGradientTest();
-
-
-   
 
    // Constructor and destructor methods
 
