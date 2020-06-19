@@ -2508,7 +2508,7 @@ void DataSetTest::test_empty()
 }
 
 
-void DataSetTest::test_filter_variable() // @todo
+void DataSetTest::test_filter_column() // @todo
 {
     cout << "test_filter_variable";
 
@@ -2546,7 +2546,6 @@ void DataSetTest::test_calculate_variables_means() // @todo
 
 //    assert_true(means == solution, LOG);
 }
-
 
 
 void DataSetTest::test_calculate_training_targets_mean() // @todo
@@ -2885,24 +2884,26 @@ void DataSetTest::run_test_case()
    cout << "Running data set test case...\n";
 
    // Constructor and destructor methods
+
    test_constructor();
    test_destructor();
 
-
    // Assignment operators methods
+
    test_assignment_operator();
+
    // Get methods
+
    test_get_instances_number();
    test_get_variables_number();
    test_get_variables();
    test_get_display();
-   //test_is_binary_variable();         // @todo not defined
+
    test_is_binary_classification();
    test_is_multiple_classification();
 
-
-
    // Data methods
+
    test_empty();
 
    test_get_data();
@@ -2911,8 +2912,6 @@ void DataSetTest::run_test_case()
    test_get_inputs();
    test_get_targets();
    test_get_testing_data();
-   //test_get_selection_data_set();     // @todo not defined
-   //test_get_testing_data_set();       // @todo not defined
 
    // Instance methods
    test_get_instance();
@@ -2930,7 +2929,7 @@ void DataSetTest::run_test_case()
    test_set_instance();
 
    // Data resizing methods
-   // test_subtract_instance();    @todo fail test not defined
+
    test_unuse_constant_columns();
    test_unuse_repeated_instances();
    test_unuse_non_significant_inputs();
@@ -2947,7 +2946,8 @@ void DataSetTest::run_test_case()
    test_calculate_testing_instances_descriptives();
    test_calculate_inputs_descriptives();
    test_calculate_training_targets_mean();
-//   test_calculate_selection_targets_mean();
+   test_calculate_selection_targets_mean();
+
    //test_calculate_testing_targets_mean();
 
    // Histrogram methods
@@ -3005,10 +3005,9 @@ void DataSetTest::run_test_case()
    test_clean_Tukey_outliers();
 
    // Data generation
+
    test_generate_data_binary_classification();
    test_generate_data_multiple_classification();
-   //test_generate_constant_data();             //not defined
-
 
    // Serialization methods
 
@@ -3036,21 +3035,11 @@ void DataSetTest::run_test_case()
    test_calculate_training_negatives();
    test_calculate_selection_negatives();
 
-//   test_scrub_missing_values();
+   test_scrub_missing_values();
 
    // Principal components mehtod
 
-//   test_perform_principal_components_analysis();
-
-   // String utilities
-
-//   test_trim();
-//   test_get_trimmed();
-
-//   test_count_tokens();
-//   test_get_tokens();
-
-//   test_is_numeric();
+   test_perform_principal_components_analysis();
 
    cout << "End of data set test case.\n";
 }
