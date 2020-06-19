@@ -38,146 +38,146 @@ void GrowingInputsTest::test_constructor()
 
 }
 
-/*
-void GrowingInputsTest::test_destructor()
+
+void GrowingInputsTest::test_destructor() // @todo
 {
     cout << "test_destructor\n";
 
-    GrowingInputs* gi = new GrowingInputs;
+//    GrowingInputs* gi = new GrowingInputs;
 
-    delete gi;
+//    delete gi;
 }
 
 // Set methods
 
-void GrowingInputsTest::test_set_default()
+void GrowingInputsTest::test_set_default() // @todo
 {
     cout << "test_set_default\n";
 }
 
 
-void GrowingInputsTest::test_perform_inputs_selection()
+void GrowingInputsTest::test_perform_inputs_selection() // @todo
 {
     cout << "test_perform_inputs_selection\n";
 
-    DataSet ds;
+//    DataSet ds;
 
-    Tensor<type, 2> data;
+//    Tensor<type, 2> data;
 
-    NeuralNetwork neural_network;
+//    NeuralNetwork neural_network;
 
-    SumSquaredError sum_squared_error(&neural_network ,&ds);
+//    SumSquaredError sum_squared_error(&neural_network ,&ds);
 
-    GrowingInputs::GrowingInputsResults* gir;
+//    GrowingInputs::GrowingInputsResults* gir;
 
-    // Test
+//    // Test
 
-    ds.generate_inputs_selection_data(30,3);
+//    ds.generate_inputs_selection_data(30,3);
 
-    ds.set_columns_uses({"Input","Input","Target"});
+//    ds.set_columns_uses({"Input","Input","Target"});
 
-    ds.split_instances_random();
+//    ds.split_instances_random();
 
-    neural_network.set(NeuralNetwork::Approximation,{2,1,1});
+//    neural_network.set(NeuralNetwork::Approximation,{2,1,1});
 
-    TrainingStrategy ts(&neural_network, &ds);
+//    TrainingStrategy ts(&neural_network, &ds);
 
-    ModelSelection ms(&ts);
+//    ModelSelection ms(&ts);
 
-    GrowingInputs gi(&ts);
+//    GrowingInputs gi(&ts);
 
-    ts.set_display(false);
+//    ts.set_display(false);
 
-    gi.set_display(false);
+//    gi.set_display(false);
 
-    gi.set_approximation(true);
+//    gi.set_approximation(true);
 
-    gir = gi.perform_inputs_selection();
+//    gir = gi.perform_inputs_selection();
 
-    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
+//    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
-    gi.delete_selection_history();
-    gi.delete_parameters_history();
-    gi.delete_loss_history();
+//    gi.delete_selection_history();
+//    gi.delete_parameters_history();
+//    gi.delete_loss_history();
 
-    // Test
+//    // Test
 
-    ds.generate_sum_data(20,3);
+//    ds.generate_sum_data(20,3);
 
-    neural_network.set();
+//    neural_network.set();
 
-    neural_network.set(NeuralNetwork::Approximation,{2,6,1});
+//    neural_network.set(NeuralNetwork::Approximation,{2,6,1});
 
-    TrainingStrategy ts1(&neural_network, &ds);
+//    TrainingStrategy ts1(&neural_network, &ds);
 
-    ModelSelection ms1(&ts);
+//    ModelSelection ms1(&ts);
 
-    GrowingInputs gi1(&ts);
+//    GrowingInputs gi1(&ts);
 
-    ts1.set_display(false);
+//    ts1.set_display(false);
 
-    gi1.set_display(false);
+//    gi1.set_display(false);
 
-    gi1.set_approximation(false);
+//    gi1.set_approximation(false);
 
-    gir = gi1.perform_inputs_selection();
+//    gir = gi1.perform_inputs_selection();
 
-    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
+//    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
-    gi1.delete_selection_history();
-    gi1.delete_parameters_history();
-    gi1.delete_loss_history();
+//    gi1.delete_selection_history();
+//    gi1.delete_parameters_history();
+//    gi1.delete_loss_history();
 }
 
 // Serialization methods
 
-void GrowingInputsTest::test_to_XML()
+void GrowingInputsTest::test_to_XML() // @todo
 {
     cout << "test_to_XML\n";
 
-    GrowingInputs growing_inputs;
+//    GrowingInputs growing_inputs;
 
-    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
-    assert_true(document != nullptr, LOG);
+//    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
+//    assert_true(document != nullptr, LOG);
 
-    delete document;
+//    delete document;
 }
 
-void GrowingInputsTest::test_from_XML()
+void GrowingInputsTest::test_from_XML() // @todo
 {
     cout << "test_from_XML\n";
 
-    GrowingInputs growing_inputs;
+//    GrowingInputs growing_inputs;
 
-    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
-    growing_inputs.from_XML(*document);
+//    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
+//    growing_inputs.from_XML(*document);
 
-    delete document;
+//    delete document;
 }
-*/
 
-void GrowingInputsTest::run_test_case()
+
+void GrowingInputsTest::run_test_case() // @todo
 {
     cout << "Running growing inputs test case...\n";
-/*
-    // Constructor and destructor methods
 
-    test_constructor();
-    test_destructor();
+//    // Constructor and destructor methods
 
-    // Set methods
+//    test_constructor();
+//    test_destructor();
 
-    test_set_default();
+//    // Set methods
 
-    // Input selection methods
+//    test_set_default();
 
-    test_perform_inputs_selection();
+//    // Input selection methods
 
-    // Serialization methods
+//    test_perform_inputs_selection();
 
-    test_to_XML();
+//    // Serialization methods
 
-    test_from_XML();
-*/
+//    test_to_XML();
+
+//    test_from_XML();
+
     cout << "End of growing input test case.\n";
 }

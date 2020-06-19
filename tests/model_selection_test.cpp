@@ -79,43 +79,42 @@ void ModelSelectionTest::test_set_default()
 }
 
 
-void ModelSelectionTest::test_perform_neurons_selection()
+void ModelSelectionTest::test_perform_neurons_selection() // @todo
 {
     cout << "test_perform_neurons_selection\n";
-/*
-    DataSet ds;
 
-    ds.generate_sum_data(20,2);
+//    DataSet ds;
 
-    Tensor<Index, 1> architecture;
-    architecture.setValues({1, 2, 1});
+//    ds.generate_sum_data(20,2);
 
-    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
+//    Tensor<Index, 1> architecture;
+//    architecture.setValues({1, 2, 1});
 
-    TrainingStrategy ts(&nn, &ds);
+//    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
 
-    ts.set_display(false);
+//    TrainingStrategy ts(&nn, &ds);
 
-    ModelSelection model_selection(&ts);
+//    ts.set_display(false);
 
-    model_selection.set_display(false);
+//    ModelSelection model_selection(&ts);
 
-    IncrementalNeurons* incremental_neurons_pointer = model_selection.get_incremental_neurons_pointer();
+//    model_selection.set_display(false);
 
-    incremental_neurons_pointer->set_maximum_selection_failures(2);
+//    IncrementalNeurons* incremental_neurons_pointer = model_selection.get_incremental_neurons_pointer();
 
-    incremental_neurons_pointer->set_display(false);
+//    incremental_neurons_pointer->set_maximum_selection_failures(2);
 
-    ModelSelection::Results results;
+//    incremental_neurons_pointer->set_display(false);
 
-    results = model_selection.perform_neurons_selection();
+//    ModelSelection::Results results;
 
-    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
-    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
+//    results = model_selection.perform_neurons_selection();
+
+//    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
+//    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
 //    assert_true(results.incremental_neurons_results_pointer->final_training_loss != 0.0, LOG);
 //    assert_true(results.incremental_neurons_results_pointer->final_selection_error != 0.0, LOG);
 //    assert_true(results.incremental_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
-*/
 }
 
 
