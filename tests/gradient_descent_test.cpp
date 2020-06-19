@@ -18,134 +18,132 @@ GradientDescentTest::~GradientDescentTest()
 {
 }
 
-/*
-void GradientDescentTest::test_constructor()
+
+void GradientDescentTest::test_constructor() // @todo
 {
    cout << "test_constructor\n"; 
 
-   SumSquaredError sum_squared_error;
+//   SumSquaredError sum_squared_error;
 
-   // Default constructor
+//   // Default constructor
 
-   GradientDescent gd1; 
-   assert_true(gd1.has_loss_index() == false, LOG);
+//   GradientDescent gd1;
+//   assert_true(gd1.has_loss_index() == false, LOG);
 
-   // Loss index constructor
+//   // Loss index constructor
 
-   GradientDescent gd2(&sum_squared_error);
-   assert_true(gd2.has_loss_index() == true, LOG);
+//   GradientDescent gd2(&sum_squared_error);
+//   assert_true(gd2.has_loss_index() == true, LOG);
 }
 
 
-void GradientDescentTest::test_destructor()
+void GradientDescentTest::test_destructor() // @todo
 {
    cout << "test_destructor\n"; 
 }
 
 
-void GradientDescentTest::test_set_reserve_all_training_history()
+void GradientDescentTest::test_set_reserve_all_training_history() // @todo
 {
    cout << "test_set_reserve_all_training_history\n";
 
-   GradientDescent gd;
+//   GradientDescent gd;
 
-   gd.set_reserve_all_training_history(true);
+//   gd.set_reserve_all_training_history(true);
 
-   assert_true(gd.get_reserve_training_error_history() == true, LOG);
-   assert_true(gd.get_reserve_selection_error_history() == true, LOG);
+//   assert_true(gd.get_reserve_training_error_history() == true, LOG);
+//   assert_true(gd.get_reserve_selection_error_history() == true, LOG);
 }
 
 
-/// @todo
-
-void GradientDescentTest::test_perform_training()
+void GradientDescentTest::test_perform_training() // @todo
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set(1, 1, 2);
-   data_set.set_data_random();
+//   DataSet data_set(1, 1, 2);
+//   data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
-   neural_network.set_parameters_random();
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
+//   neural_network.set_parameters_random();
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   GradientDescent gd(&sum_squared_error);
+//   GradientDescent gd(&sum_squared_error);
 
-   // Test
+//   // Test
 
-   //type old_loss = sum_squared_error.calculate_error({0});
+//   //type old_loss = sum_squared_error.calculate_error({0});
 
-   gd.set_display(false);
-   gd.set_maximum_epochs_number(1);
+//   gd.set_display(false);
+//   gd.set_maximum_epochs_number(1);
 
-   gd.perform_training();
+//   gd.perform_training();
 
-   //type loss = sum_squared_error.calculate_error({0});
+//   //type loss = sum_squared_error.calculate_error({0});
 
-   //assert_true(loss < old_loss, LOG);
+//   //assert_true(loss < old_loss, LOG);
 
-   // Minimum parameters increment norm
+//   // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type minimum_parameters_increment_norm = 0.1;
+//   type minimum_parameters_increment_norm = 0.1;
 
-   gd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   gd.set_loss_goal(0.0);
-   gd.set_minimum_loss_decrease(0.0);
-   gd.set_gradient_norm_goal(0.0);
-   gd.set_maximum_epochs_number(1000);
-   gd.set_maximum_time(1000.0);
+//   gd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+//   gd.set_loss_goal(0.0);
+//   gd.set_minimum_loss_decrease(0.0);
+//   gd.set_gradient_norm_goal(0.0);
+//   gd.set_maximum_epochs_number(1000);
+//   gd.set_maximum_time(1000.0);
 
-   gd.perform_training();
+//   gd.perform_training();
 
-   // Performance goal
+//   // Performance goal
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type training_loss_goal = 0.1;
+//   type training_loss_goal = 0.1;
 
-   gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_loss_goal(training_loss_goal);
-   gd.set_minimum_loss_decrease(0.0);
-   gd.set_gradient_norm_goal(0.0);
-   gd.set_maximum_epochs_number(1000);
-   gd.set_maximum_time(1000.0);
+//   gd.set_minimum_parameters_increment_norm(0.0);
+//   gd.set_loss_goal(training_loss_goal);
+//   gd.set_minimum_loss_decrease(0.0);
+//   gd.set_gradient_norm_goal(0.0);
+//   gd.set_maximum_epochs_number(1000);
+//   gd.set_maximum_time(1000.0);
 
-   gd.perform_training();
+//   gd.perform_training();
 
-   //loss = sum_squared_error.calculate_error({0});
+//   //loss = sum_squared_error.calculate_error({0});
 
-   // Minimum loss increase
+//   // Minimum loss increase
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type minimum_loss_decrease = 0.1;
+//   type minimum_loss_decrease = 0.1;
 
-   gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_loss_goal(0.0);
-   gd.set_minimum_loss_decrease(minimum_loss_decrease);
-   gd.set_gradient_norm_goal(0.0);
-   gd.set_maximum_epochs_number(1000);
-   gd.set_maximum_time(1000.0);
+//   gd.set_minimum_parameters_increment_norm(0.0);
+//   gd.set_loss_goal(0.0);
+//   gd.set_minimum_loss_decrease(minimum_loss_decrease);
+//   gd.set_gradient_norm_goal(0.0);
+//   gd.set_maximum_epochs_number(1000);
+//   gd.set_maximum_time(1000.0);
 
-   gd.perform_training();
+//   gd.perform_training();
 
-   // Gradient norm goal 
+//   // Gradient norm goal
 
-   neural_network.set_parameters_constant(-1.0);
+//   neural_network.set_parameters_constant(-1.0);
 
-   type gradient_norm_goal = 0.1;
+//   type gradient_norm_goal = 0.1;
 
-   gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_loss_goal(0.0);
-   gd.set_minimum_loss_decrease(0.0);
-   gd.set_gradient_norm_goal(gradient_norm_goal);
-   gd.set_maximum_epochs_number(1000);
-   gd.set_maximum_time(1000.0);
+//   gd.set_minimum_parameters_increment_norm(0.0);
+//   gd.set_loss_goal(0.0);
+//   gd.set_minimum_loss_decrease(0.0);
+//   gd.set_gradient_norm_goal(gradient_norm_goal);
+//   gd.set_maximum_epochs_number(1000);
+//   gd.set_maximum_time(1000.0);
 
-   gd.perform_training();
+//   gd.perform_training();
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
@@ -153,75 +151,74 @@ void GradientDescentTest::test_perform_training()
 }
 
 
-void GradientDescentTest::test_resize_training_history()
+void GradientDescentTest::test_resize_training_history() // @todo
 {
    cout << "test_resize_training_history\n";
 
-   GradientDescent gd;
+//   GradientDescent gd;
 
-   gd.set_reserve_all_training_history(true);
+//   gd.set_reserve_all_training_history(true);
 
-   OptimizationAlgorithm::Results gdtr;//(&gd);
+//   OptimizationAlgorithm::Results gdtr;//(&gd);
 
-   gdtr.resize_training_history(1);
+//   gdtr.resize_training_history(1);
 
-   assert_true(gdtr.training_error_history.size() == 1, LOG);
-   assert_true(gdtr.selection_error_history.size() == 1, LOG);
+//   assert_true(gdtr.training_error_history.size() == 1, LOG);
+//   assert_true(gdtr.selection_error_history.size() == 1, LOG);
 }
 
 
 /// @todo
 
-void GradientDescentTest::test_to_XML()
+void GradientDescentTest::test_to_XML() // @todo
 {
    cout << "test_to_XML\n";
 
-   GradientDescent gd;
+//   GradientDescent gd;
 
-   tinyxml2::XMLDocument* document;
+//   tinyxml2::XMLDocument* document;
 
-   // Test
+//   // Test
 
-   document = gd.to_XML();
-   assert_true(document != nullptr, LOG);
+//   document = gd.to_XML();
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
+//   delete document;
 
 }
 
 
-void GradientDescentTest::test_from_XML()
+void GradientDescentTest::test_from_XML() // @todo
 {
    cout << "test_from_XML\n";
 }
-*/
 
-void GradientDescentTest::run_test_case()
+
+void GradientDescentTest::run_test_case() // @todo
 {
    cout << "Running gradient descent test case...\n";
-/*
-   // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+//   // Constructor and destructor methods
 
-   // Set methods
+//   test_constructor();
+//   test_destructor();
 
-   test_set_reserve_all_training_history();
+//   // Set methods
 
-   // Training methods
+//   test_set_reserve_all_training_history();
 
-   test_perform_training();
+//   // Training methods
 
-   // Training history methods
+//   test_perform_training();
 
-   test_resize_training_history();
+//   // Training history methods
 
-   // Serialization methods
+//   test_resize_training_history();
 
-   test_to_XML();
-   test_from_XML();
-*/
+//   // Serialization methods
+
+//   test_to_XML();
+//   test_from_XML();
    cout << "End of gradient descent test case.\n";
 }
 
