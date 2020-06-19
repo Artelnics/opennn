@@ -18,126 +18,125 @@ InputsSelectionTest::~InputsSelectionTest()
 {
 }
 
-/*
-void InputsSelectionTest::test_constructor()
+
+void InputsSelectionTest::test_constructor() // @todo
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+//    NeuralNetwork nn;
+//    DataSet ds;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+//    TrainingStrategy training_strategy(&nn, &ds);
 
-    GrowingInputs gi1(&training_strategy);
+//    GrowingInputs gi1(&training_strategy);
 
-    assert_true(gi1.has_training_strategy() == true, LOG);
+//    assert_true(gi1.has_training_strategy() == true, LOG);
 
-    GrowingInputs gi2;
+//    GrowingInputs gi2;
 
-    assert_true(gi2.has_training_strategy() == false, LOG);
+//    assert_true(gi2.has_training_strategy() == false, LOG);
 
 }
 
-void InputsSelectionTest::test_destructor()
+void InputsSelectionTest::test_destructor() // @todo
 {
     cout << "tes_destructor\n";
 
-    GrowingInputs* gi = new GrowingInputs;
+//    GrowingInputs* gi = new GrowingInputs;
 
-    delete gi;
+//    delete gi;
 }
 
 
-void InputsSelectionTest::test_get_training_strategy_pointer()
+void InputsSelectionTest::test_get_training_strategy_pointer() // @todo
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+//    NeuralNetwork nn;
+//    DataSet ds;
 
-    TrainingStrategy training_strategy(&nn,&ds);
+//    TrainingStrategy training_strategy(&nn,&ds);
 
-    GrowingInputs gi(&training_strategy);
+//    GrowingInputs gi(&training_strategy);
 
-    assert_true(gi.get_training_strategy_pointer() != nullptr, LOG);
+//    assert_true(gi.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
-void InputsSelectionTest::test_set_training_strategy_pointer()
+void InputsSelectionTest::test_set_training_strategy_pointer() // @todo
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+//    NeuralNetwork nn;
+//    DataSet ds;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+//    TrainingStrategy training_strategy(&nn, &ds);
 
-    GrowingInputs growing_inputs;
+//    GrowingInputs growing_inputs;
 
-    growing_inputs.set_training_strategy_pointer(&training_strategy);
+//    growing_inputs.set_training_strategy_pointer(&training_strategy);
 
-    assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
+//    assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
 
-void InputsSelectionTest::test_set_default()
+void InputsSelectionTest::test_set_default() // @todo
 {
     cout << "test_set_default\n";
 
 }
 
-void InputsSelectionTest::test_set_loss_calculation_method()
+void InputsSelectionTest::test_set_loss_calculation_method() // @todo
 {
     cout << "test_set_loss_calculation_method\n";
 
 }
 
 
-void InputsSelectionTest::test_get_final_loss()
+void InputsSelectionTest::test_get_final_loss() // @todo
 {
     cout << "test_get_final_loss\n";
 
 }
 
-void InputsSelectionTest::test_calculate_losses()
+void InputsSelectionTest::test_calculate_losses() // @todo
 {
     cout << "test_calculate_losses\n";
 
 }
 
-void InputsSelectionTest::test_get_parameters_order()
+void InputsSelectionTest::test_get_parameters_order() // @todo
 {
     cout << "test_get_parameters_order\n";
 
 }
-*/
+
 
 // Unit testing methods
 
-void InputsSelectionTest::run_test_case()
+void InputsSelectionTest::run_test_case() // @todo
 {
     cout << "Running inputs selection algorithm test case...\n";
-/*
-    // Constructor and destructor methods
 
-    test_constructor();
-    test_destructor();
 
-    // Get methods
+//    // Constructor and destructor methods
 
-    test_get_training_strategy_pointer();
+//    test_constructor();
+//    test_destructor();
 
-    // Set methods
+//    // Get methods
 
-    test_set_training_strategy_pointer();
+//    test_get_training_strategy_pointer();
 
-    test_set_default();
+//    // Set methods
 
-    test_get_final_loss();
+//    test_set_training_strategy_pointer();
 
-    test_calculate_losses();
+//    test_set_default();
 
-    test_get_parameters_order();
-*/
+//    test_get_final_loss();
+//    test_calculate_losses();
+
+//    test_get_parameters_order();
     cout << "End of inputs selection algorithm test case.\n";
 }
 
