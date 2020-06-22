@@ -118,25 +118,23 @@ void InputsSelectionTest::run_test_case() // @todo
     cout << "Running inputs selection algorithm test case...\n";
 
 
-//    // Constructor and destructor methods
+    // Constructor and destructor methods
 
-//    test_constructor();
-//    test_destructor();
+    test_constructor();
+    test_destructor();
 
-//    // Get methods
+    // Get methods
 
-//    test_get_training_strategy_pointer();
+    test_get_training_strategy_pointer();
 
-//    // Set methods
+    // Set methods
 
-//    test_set_training_strategy_pointer();
+    test_set_training_strategy_pointer();
+    test_set_default();
+    test_get_final_loss();
+    test_calculate_losses();
+    test_get_parameters_order();
 
-//    test_set_default();
-
-//    test_get_final_loss();
-//    test_calculate_losses();
-
-//    test_get_parameters_order();
     cout << "End of inputs selection algorithm test case.\n";
 }
 
