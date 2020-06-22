@@ -640,18 +640,15 @@ public:
 
    // Data unscaling
 
-   void unscale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_input_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_input_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_input_standard_deviation(const Descriptives&, const Index&);
+   void unscale_inputs(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
-   // Input variables unscaling
-
-   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-
-   // Target variables unscaling
-
-   void unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_target_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_target_logarithmic(const Descriptives&, const Index&);
+   void unscale_targets(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    // Classification methods
 
