@@ -164,6 +164,8 @@ public:
    void set_maximum_epochs_number(const int&);
    void set_display_period(const int&);
 
+   void set_maximum_time(const type&);
+
    // Training methods
 
    // This method trains a neural network which has a loss index associated.
