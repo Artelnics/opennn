@@ -109,9 +109,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-//   Tensor<Index, 1> architecture;
-
-//   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
 
 //   neural_network.set(NeuralNetwork::Classification, architecture);
 
