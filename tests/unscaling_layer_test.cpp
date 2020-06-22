@@ -1028,32 +1028,39 @@ void UnscalingLayerTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Assignment operators methods
 
    test_assignment_operator();
 
+
    // Get methods
 
    test_get_dimensions();
+
 
    // Unscaling layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
 
+
    // Output variables descriptives
 
    test_get_minimums();
    test_get_maximums();
+
 
    // Variables descriptives
 
    test_get_descriptives();
    test_get_descriptives_matrix();
 
+
    // Display messages
 
    test_get_display();
+
 
    // Set methods
 
@@ -1062,18 +1069,17 @@ void UnscalingLayerTest::run_test_case()
    test_set_neurons_number();
    test_set_default();
 
+
    // Output variables descriptives
 
    test_set_descriptives();
    test_set_descriptives_eigen();
    test_set_item_descriptives();
-
-
    test_set_minimum();
    test_set_maximum();
-
    test_set_mean();
    test_set_standard_deviation();
+
 
    // Variables descriptives
 
@@ -1083,25 +1089,29 @@ void UnscalingLayerTest::run_test_case()
 
    test_get_unscaling_method_name();
 
+
    // Display messages
 
    test_set_display();
+
 
    // Check methods
 
    test_is_empty();
 
+
    // Output methods
 
    test_calculate_outputs();
-
    test_calculate_minimum_maximum_outputs();
    test_calculate_mean_standard_deviation_outputs();
    test_calculate_logarithmic_outputs();
 
+
    // Expression methods
 
    test_write_expression();
+
 
    // Serialization methods
 

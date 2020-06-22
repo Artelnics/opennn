@@ -1568,19 +1568,21 @@ void TestingAnalysisTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Get methods
    
    test_get_neural_network_pointer();
    test_get_data_set_pointer();
-   
+
    test_get_display();
+
 
    // Set methods
 
    test_set_neural_network_pointer();
    test_set_data_set_pointer();
-
    test_set_display();
+
 
    // Error data methods
 
@@ -1589,24 +1591,20 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_statistics();
    test_calculate_absolute_errors_statistics();
    test_calculate_percentage_errors_statistics();
-//   test_calculate_error_data_statistics_matrices();
+   test_calculate_error_data_statistics_matrices();
    test_print_error_data_statistics();
-
    test_calculate_error_data_histograms();
-
    test_calculate_maximal_errors();
 
-   // Linear regression analysis methodsta
 
+   // Linear regression analysis methodsta
 
    test_linear_regression();
    test_print_linear_regression_correlation();
    test_get_linear_regression_correlations_std();
    test_save_linear_regression();
-
    test_print_linear_regression_analysis();
    test_save_linear_regression_analysis();
-
    test_perform_linear_regression();
 
 
@@ -1614,26 +1612,30 @@ void TestingAnalysisTest::run_test_case()
 
    test_calculate_binary_classification_test();
 
+
    // Confusion matrix methods
 
    test_calculate_confusion();
 
+
    // ROC curve methods
 
    test_calculate_Wilcoxon_parameter();
-
    test_calculate_roc_curve();
    test_calculate_area_under_curve();
    test_calculate_optimal_threshold();
+
 
    // Lift chart methods
 
    test_calculate_cumulative_gain();
    test_calculate_lift_chart();
 
+
    // Calibration plot
 
    test_calculate_calibration_plot();
+
 
    // Binary classification rates
 
@@ -1641,6 +1643,7 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_false_positive_instances();
    test_calculate_false_negative_instances();
    test_calculate_true_negative_instances();
+
 
    // Multiple classification rates
 
