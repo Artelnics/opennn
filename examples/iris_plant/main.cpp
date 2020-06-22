@@ -41,39 +41,40 @@ int main(void)
         // Data set
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
-        data_set.set_thread_pool_device(thread_pool_device);
 
-        Tensor<string, 1> uses(5);
-        uses.setValues({"Input","Input","Input","Input","Target"});
-        data_set.set_columns_uses(uses);
+        data_set.set_thread_pool_device(thread_pool_device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<string, 1> input_columns_names = data_set.get_input_columns_names();
-        const Tensor<string, 1> target_columns_names = data_set.get_target_columns_names();
-
         data_set.split_instances_random();
 
-        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
+        scaling_inputs_methods.setConstant("MinimumMaximum");
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
+        data_set.scale_inputs(scaling_inputs_methods, inputs_descriptives);
 
         // Neural network
 
+        const Index hidden_neurons_number = 5;
+
         Tensor<Index, 1> architecture(3);
-        architecture.setValues({4, 6, 3});
+        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
-
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         // Training strategy
 
@@ -83,25 +84,28 @@ int main(void)
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-//        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+        StochasticGradientDescent* stochastic_gradient_descent = training_strategy.get_stochastic_gradient_descent_pointer();
 
-//        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
-
-//        quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(0.0);
+        stochastic_gradient_descent->set_loss_goal(1.0e-3);
+        stochastic_gradient_descent->set_maximum_epochs_number(10000);
+        stochastic_gradient_descent->set_display_period(100);
 
         training_strategy.perform_training();
 
-        training_strategy.set_display(false);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Testing analysis
 
-//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        testing_analysis.set_thread_pool_device(thread_pool_device);
+
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         cout << "Confusion: " << endl;
         cout << confusion << endl;
@@ -111,11 +115,8 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-//        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
-
-//        confusion.save_csv("../data/confusion.csv");
 
         cout << "Bye" << endl;
 
