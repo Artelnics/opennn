@@ -160,24 +160,24 @@ void GrowingInputsTest::run_test_case() // @todo
 {
     cout << "Running growing inputs test case...\n";
 
-//    // Constructor and destructor methods
+    // Constructor and destructor methods
 
-//    test_constructor();
-//    test_destructor();
+    test_constructor();
+    test_destructor();
 
-//    // Set methods
+    // Set methods
 
-//    test_set_default();
+    test_set_default();
 
-//    // Input selection methods
+    // Input selection methods
 
-//    test_perform_inputs_selection();
+    test_perform_inputs_selection();
 
-//    // Serialization methods
+    // Serialization methods
 
-//    test_to_XML();
+    test_to_XML();
 
-//    test_from_XML();
+    test_from_XML();
 
     cout << "End of growing input test case.\n";
 }
