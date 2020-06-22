@@ -45,7 +45,7 @@ public:
    // Error methods
 
    void test_calculate_error();
-
+   void test_calculate_selection_error();
    void test_calculate_error_gradient();
 
    // Serialization methods
