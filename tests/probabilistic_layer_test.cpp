@@ -940,12 +940,13 @@ void ProbabilisticLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
    test_destructor();
+
 
    // Assignment operators methods
 
    test_assignment_operator();
+
 
    // Get methods
 
@@ -954,31 +955,32 @@ void ProbabilisticLayerTest::run_test_case()
    test_get_parameters();
    test_get_decision_threshold();
 
+
    // Layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
 
+
    // Display messages
 
    test_get_display();
 
+
    // Set methods
 
    test_set();
-
    test_set_default();
-
    test_set_biases();
    test_set_synaptic_weights();
    test_set_parameters();
    test_set_decision_threshold();
 
+
    //Activation function
 
    test_write_activation_function();
    test_write_activation_function_text();
-
    test_set_activation_function();
 
 
@@ -986,32 +988,30 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_set_display();
 
+
    // Probabilistic post-processing
 
    test_calculate_combinations();
    test_calculate_activations();
    test_calculate_activations_derivatives();
-
    test_calculate_outputs();
 
-   // Serialization methods
-
-//   test_to_XML();
-
-//   test_from_XML();
 
    // Forward propagate
 
    test_forward_propagate();
+
 
    // Hidden delta
 
    test_calculate_output_delta();
    test_calculate_hidden_delta();
 
+
    // Gradient
 
    test_calculate_error_gradient();
+
 
    //Write expression
 
