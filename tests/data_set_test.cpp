@@ -2594,12 +2594,12 @@ void DataSetTest::test_calculate_selection_targets_mean() // @todo
 {
     cout << "test_calculate_selection_targets_mean\n";
 
-    Tensor<type, 2> matrix(4, 3);
-    matrix.setValues({{1, static_cast<type>(NAN), 6, 9},{1, 2, 5, 2},{3, 2, static_cast<type>(NAN), 4}});
-    Tensor<Index, 1> indexes_targets(1);
-    indexes_targets.setValues({2});
-    Tensor<Index, 1> selection_indexes(2);
-    selection_indexes.setValues({0, 1});
+//    Tensor<type, 2> matrix(4, 3);
+//    matrix.setValues({{1, static_cast<type>(NAN), 6, 9},{1, 2, 5, 2},{3, 2, static_cast<type>(NAN), 4}});
+//    Tensor<Index, 1> indexes_targets(1);
+//    indexes_targets.setValues({2});
+//    Tensor<Index, 1> selection_indexes(2);
+//    selection_indexes.setValues({0, 1});
 //    DataSet data_set;
 //    data_set.set_data(matrix);
 
@@ -2611,8 +2611,8 @@ void DataSetTest::test_calculate_selection_targets_mean() // @todo
 //    data_set.set_target_variables_indices(indexes_targets);
 
 //    Tensor<type, 1> means = data_set.calculate_selection_targets_mean();
-    Tensor<type, 1> solutions(2);
-    solutions.setValues({2.0, 3.0});
+//    Tensor<type, 1> solutions(2);
+//    solutions.setValues({2.0, 3.0});
 
 //    cout << "means: " << means << endl;
 
@@ -2689,30 +2689,30 @@ void DataSetTest::test_unuse_repeated_instances()
 {
     cout << "test_unuse_repeated_instances\n";
 
-    Tensor<type, 2> matrix(3, 3);
-    matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
+//    Tensor<type, 2> matrix(3, 3);
+//    matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
 //    DataSet data_set;
 //    data_set.set_data(matrix);
-    Tensor<Index, 1> indices(1);
-    indices.setValues({2});
+//    Tensor<Index, 1> indices(1);
+//    indices.setValues({2});
 
 //    assert_true(data_set.unuse_repeated_instances() == indices, LOG);
 
-    Tensor<type, 2> matrix_1(4, 3);
-    matrix_1.setValues({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
+//    Tensor<type, 2> matrix_1(4, 3);
+//    matrix_1.setValues({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
 //    DataSet ds_1;
 //    ds_1.set_data(matrix_1);
-    Tensor<Index, 1> indices_1(2);
-    indices_1.setValues({2, 3});
+//    Tensor<Index, 1> indices_1(2);
+//    indices_1.setValues({2, 3});
 
 //    assert_true(ds_1.unuse_repeated_instances() == indices_1, LOG);
 
-    Tensor<type, 2> matrix_2(5, 3);
-    matrix_2.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
+//    Tensor<type, 2> matrix_2(5, 3);
+//    matrix_2.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
 //    DataSet ds_2;
 //    ds_2.set_data(matrix_2);
-    Tensor<Index, 1> indices_2(2);
-    indices_2.setValues({2,4});
+//    Tensor<Index, 1> indices_2(2);
+//    indices_2.setValues({2,4});
 
 //    assert_true(ds_2.unuse_repeated_instances() == indices_2, LOG);
 
@@ -2735,10 +2735,10 @@ void DataSetTest::test_unuse_non_significant_inputs()
 
 void DataSetTest::test_unuse_columns_missing_values()
 {
-    cout << "test_unuse_variables_missing_values\n";
+    cout << "test_unuse_columns_missing_values\n";
 
-    Tensor<type, 2> matrix(5, 3);
-    matrix.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
+//    Tensor<type, 2> matrix(5, 3);
+//    matrix.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
 //    matrix.set_header(Tensor<string, 1>({"var1","var2","var3","var4"}));
 
 //    DataSet data_set;
@@ -2947,8 +2947,7 @@ void DataSetTest::run_test_case()
    test_calculate_inputs_descriptives();
    test_calculate_training_targets_mean();
    test_calculate_selection_targets_mean();
-
-   //test_calculate_testing_targets_mean();
+   test_calculate_testing_targets_mean();
 
    // Histrogram methods
    test_calculate_data_histograms();
@@ -2982,23 +2981,17 @@ void DataSetTest::run_test_case()
    test_unscale_targets_minimum_maximum();
 
    // Classificatios methods
-   //test_get_binary_inputs_indices();
    test_balance_binary_targets_distribution();
 
    // Correlations
-   //test_calculate_input_target_correlations();
-   //test_calculate_total_input_correlations();
-   //test_calculate_multiple_linear_correlations();
-
-   // Input-target variables unscaling
-   //test_unscale_variables_mean_standard_deviation();
+   test_calculate_input_target_correlations();
+   test_calculate_total_input_correlations();
 
    // Pattern recognition methods
-   //test_calculate_target_columns_distribution();
+   test_calculate_target_columns_distribution();
    test_unuse_most_populated_target();
    test_balance_multiple_targets_distribution();
-
-  // test_balance_function_regression_targets_distribution();
+   test_balance_function_regression_targets_distribution();
 
    // Outlier detection
 
