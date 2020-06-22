@@ -609,23 +609,15 @@ public:
 
    // Input variables scaling
 
-   void scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation();
-
    void scale_input_mean_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_mean_standard_deviation(const Index&);
 
    void scale_input_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_standard_deviation(const Index&);
 
-   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_minimum_maximum();
-
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   Tensor<Descriptives, 1> scale_inputs(const string&);
-   void scale_inputs(const string&, const Tensor<Descriptives, 1>&);
    void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Target variables scaling

@@ -44,12 +44,17 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_mean_standard_deviation();
+        Tensor<string, 1> scaling_methods;
+        scaling_methods.setConstant("MeanStandardDeviation");
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
+
+        data_set.scale_inputs(scaling_methods, inputs_descriptives);
 
         // Neural network
 
         Tensor<Index, 1> neural_netowrk_architecture(3);
-        neural_netowrk_architecture.setValues({9, 1, 1});
+        neural_netowrk_architecture.setValues({9, 3, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
@@ -70,6 +75,8 @@ int main(void)
         training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
         training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+
+//        training_strategy.get_weighted_squared_error_pointer()->set_/
 
         training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
         training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
