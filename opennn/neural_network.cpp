@@ -2512,8 +2512,6 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "using namespace std;\n" << endl;
 
-    cout<<"layers_number"<<layers_number<<endl;
-
     for(Index i = 0; i < layers_number; i++)
     {
 
@@ -2573,8 +2571,6 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
-
-    cout<<"layers_number"<<layers_number<<endl;
 
     for(Index i = 0; i < layers_number; i++)
     {

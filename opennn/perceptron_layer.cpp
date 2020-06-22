@@ -1387,7 +1387,7 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case Logistic:
-            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]))\n";
+            buffer << "1.0/(1.0 + np.exp(-combinations[" << i << "]))\n";
             break;
 
         case Threshold:
