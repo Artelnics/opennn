@@ -184,12 +184,12 @@ void ConvolutionalLayerTest::test_set() // @todo
 //                convolutional_layer.get_filters_channels_number() == 3 &&
 //                convolutional_layer.get_filters_rows_number() == 5 &&
 //                convolutional_layer.get_filters_columns_number() == 5, LOG);
-//}
+}
 
 
-//void ConvolutionalLayerTest::test_set_parameters()
-//{
-//    cout << "test_set_parameters\n";
+void ConvolutionalLayerTest::test_set_parameters()
+{
+    cout << "test_set_parameters\n";
 
 //    ConvolutionalLayer convolutional_layer;
 //    Tensor<type, 2> new_synaptic_weights;
@@ -1595,34 +1595,34 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
 //   // Constructor and destructor
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
 
-//   // Get methods
+   // Get methods
 
-//   test_get_parameters();
-//   test_get_outputs_dimensions();
-//   test_get_parameters_number();
+   test_get_parameters();
+   test_get_outputs_dimensions();
+   test_get_parameters_number();
 
 //   // Set methods
 
-//   test_set();
-//   test_set_parameters();
+   test_set();
+   test_set_parameters();
 
 //   // Combinations
 
-//   test_calculate_image_convolution();
-//   test_calculate_convolutions();
+   test_calculate_image_convolution();
+   test_calculate_convolutions();
 
 //   // Activation
 
-//   test_calculate_activations();
-//   test_calculate_activations_derivatives();
+   test_calculate_activations();
+   test_calculate_activations_derivatives();
 
 //   // Outputs
 
-//   test_calculate_outputs();
-//   test_insert_padding();
+   test_calculate_outputs();
+   test_insert_padding();
    cout << "End of convolutional layer test case.\n";
 }
 
