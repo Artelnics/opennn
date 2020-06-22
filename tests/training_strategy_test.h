@@ -26,17 +26,9 @@ class TrainingStrategyTest : public UnitTesting
 
 public:
 
-   
-
    explicit TrainingStrategyTest(); 
 
-
-   
-
    virtual ~TrainingStrategyTest();
-
-
-   
 
    // Constructor and destructor methods
 
@@ -55,7 +47,6 @@ public:
 
    void test_set();
    void test_set_default();
-
    void test_set_loss_index_pointer();
 
     // Utilities

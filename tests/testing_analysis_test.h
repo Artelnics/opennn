@@ -38,14 +38,12 @@ public:
 
    void test_get_neural_network_pointer();
    void test_get_data_set_pointer();
-   
    void test_get_display();
 
    // Set methods
 
    void test_set_neural_network_pointer();
    void test_set_data_set_pointer();
-
    void test_set_display();
 
    // Error data methods
@@ -53,17 +51,12 @@ public:
    void test_calculate_error_data();
    void test_calculate_percentage_error_data();
    void test_calculate_forecasting_error_data();
-
    void test_calculate_absolute_errors_statistics();
-
    void test_calculate_percentage_errors_statistics();
-
    void test_calculate_error_data_statistics();
    void test_print_error_data_statistics();
    void test_calculate_error_data_statistics_matrices();
-
    void test_calculate_error_data_histograms();
-
    void test_calculate_maximal_errors();
 
    // Linear regression parameters methods
@@ -72,9 +65,7 @@ public:
    void test_print_linear_regression_correlation();
    void test_get_linear_regression_correlations_std();
    void test_save_linear_regression();
-
    void test_perform_linear_regression();
-
    void test_print_linear_regression_analysis();
    void test_save_linear_regression_analysis();
 
@@ -91,7 +82,6 @@ public:
    // ROC curve methods
 
    void test_calculate_Wilcoxon_parameter();
-
    void test_calculate_roc_curve();
    void test_calculate_area_under_curve();
    void test_calculate_optimal_threshold ();

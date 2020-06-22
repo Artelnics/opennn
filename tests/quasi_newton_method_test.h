@@ -25,17 +25,9 @@ class QuasiNewtonMethodTest : public UnitTesting
 
 public:
 
-   
-
    explicit QuasiNewtonMethodTest();
 
-
-   
-
    virtual ~QuasiNewtonMethodTest();
-
-
-   
 
    // Constructor and destructor methods
 

@@ -53,20 +53,10 @@ public:
    void test_get_biases();
    void test_get_weights();
    void test_get_recurrent_initializer();
-
    void test_get_parameters_number();
-
    void test_get_parameters();
-
-   //void test_calculate_parameters_norm();
-
-   //void test_get_perceptrons_parameters();
-
-
    void test_calculate_activations_derivatives();
-
    void test_calculate_combinations();
-
    void test_calculate_outputs();
 
    // Unit testing methods

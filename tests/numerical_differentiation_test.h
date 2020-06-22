@@ -25,16 +25,9 @@ class NumericalDifferentiationTest : public UnitTesting
 
 public:
 
-   
-
    explicit NumericalDifferentiationTest();
 
-
-   
-
    virtual ~NumericalDifferentiationTest();
-
-   
 
    // Constructor and destructor methods
 

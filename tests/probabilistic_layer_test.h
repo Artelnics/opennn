@@ -60,9 +60,7 @@ public:
    // Set methods
 
    void test_set();
-
    void test_set_default();
-
    void test_set_biases();
    void test_set_synaptic_weights();
    void test_set_parameters();
@@ -73,7 +71,6 @@ public:
 
    void test_write_activation_function();
    void test_write_activation_function_text();
-
    void test_set_activation_function();
 
 
@@ -86,7 +83,6 @@ public:
    void test_calculate_combinations();
    void test_calculate_activations();
    void test_calculate_activations_derivatives();
-
    void test_calculate_outputs();
 
    // Expression methods
@@ -96,7 +92,6 @@ public:
    // Serialization methods
 
    void test_to_XML();
-
    void test_from_XML();
 
    // Forward propagate
