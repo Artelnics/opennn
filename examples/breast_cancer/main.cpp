@@ -45,7 +45,9 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        Tensor<string, 1> scaling_methods;
+        const Index input_variables_number = data_set.get_input_variables_number();
+
+        Tensor<string, 1> scaling_methods(input_variables_number);
         scaling_methods.setConstant("MeanStandardDeviation");
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
@@ -65,8 +67,6 @@ int main(void)
 
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         // Training strategy
@@ -100,8 +100,10 @@ int main(void)
 
         training_strategy.perform_training();
 
-//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-//        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
+
 
 
 
@@ -119,9 +121,9 @@ int main(void)
 
 //        data_set.unscale_inputs_mean_standard_deviation(inputs_descriptives);
 
-
-
         data_set.unscale_inputs(scaling_methods, inputs_descriptives);
+
+//        cout << "Unscaled data: " << data_set.get_data() << endl;
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
