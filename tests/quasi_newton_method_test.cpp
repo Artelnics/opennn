@@ -437,37 +437,37 @@ void QuasiNewtonMethodTest::run_test_case() // @todo
 
    // Constructor and destructor methods
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
 
-//   // Get methods
+   // Get methods
 
-//   test_get_inverse_hessian_approximation_method();
-//   test_get_inverse_hessian_approximation_method_name();
+   test_get_inverse_hessian_approximation_method();
+   test_get_inverse_hessian_approximation_method_name();
 
-//   // Set methods
+   // Set methods
 
-//   test_set_inverse_hessian_approximation_method();
+   test_set_inverse_hessian_approximation_method();
 
-//   // Training methods
+   // Training methods
 
-//   test_calculate_DFP_inverse_hessian_approximation();
-//   test_calculate_BFGS_inverse_hessian_approximation();
+   test_calculate_DFP_inverse_hessian_approximation();
+   test_calculate_BFGS_inverse_hessian_approximation();
 
-//   test_calculate_inverse_hessian_approximation();
-//   test_calculate_training_direction();
+   test_calculate_inverse_hessian_approximation();
+   test_calculate_training_direction();
 
-//   test_perform_training();
+   test_perform_training();
 
-//   // Training history methods
+   // Training history methods
 
-//   test_resize_training_history();
-//   test_set_reserve_all_training_history();
+   test_resize_training_history();
+   test_set_reserve_all_training_history();
 
-//   // Serialization methods
+   // Serialization methods
 
-//   test_to_XML();
-//   test_load();
+   test_to_XML();
+   test_load();
 
    cout << "End of quasi-Newton method test case.\n";
 }
