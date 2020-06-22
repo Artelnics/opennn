@@ -46,7 +46,7 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 

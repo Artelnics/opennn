@@ -57,7 +57,7 @@ int main(void)
 
         data_set.set_training();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
 //        cout << data_set.get_input_data() << endl;
