@@ -51,7 +51,6 @@ int main(void)
         scaling_methods.setConstant("MeanStandardDeviation");
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
-
         data_set.scale_inputs(scaling_methods, inputs_descriptives);
 
         // Neural network
@@ -64,7 +63,6 @@ int main(void)
 
         dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::HyperbolicTangent);
         dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
-
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
@@ -80,15 +78,8 @@ int main(void)
 
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-//        training_strategy.get_weighted_squared_error_pointer()
-
-//        training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
-//        training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
-
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
-
-//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
         ConjugateGradient* cg = training_strategy.get_conjugate_gradient_pointer();
 
@@ -103,27 +94,15 @@ int main(void)
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
 
-
-
-
-
-        neural_network.save_expression_python("breast.py");
-
         // Model selection
 
-//         ModelSelection model_selection(&training_strategy);
+         ModelSelection model_selection(&training_strategy);
 
-//        model_selection.perform_neurons_selection();
+        model_selection.perform_neurons_selection();
 
         // Testing analysis
 
-//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
-
-//        data_set.unscale_inputs_mean_standard_deviation(inputs_descriptives);
-
         data_set.unscale_inputs(scaling_methods, inputs_descriptives);
-
-//        cout << "Unscaled data: " << data_set.get_data() << endl;
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
