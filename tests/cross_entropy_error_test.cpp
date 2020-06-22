@@ -292,7 +292,6 @@ void CrossEntropyErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
-
    test_calculate_error_gradient();
 
    // Serialization methods

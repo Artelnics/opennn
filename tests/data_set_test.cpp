@@ -2888,9 +2888,11 @@ void DataSetTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Assignment operators methods
 
    test_assignment_operator();
+
 
    // Get methods
 
@@ -2898,14 +2900,13 @@ void DataSetTest::run_test_case()
    test_get_variables_number();
    test_get_variables();
    test_get_display();
-
    test_is_binary_classification();
    test_is_multiple_classification();
+
 
    // Data methods
 
    test_empty();
-
    test_get_data();
    test_get_training_data();
    test_get_selection_data();
@@ -2913,20 +2914,29 @@ void DataSetTest::run_test_case()
    test_get_targets();
    test_get_testing_data();
 
+
    // Instance methods
+
    test_get_instance();
 
+
    // Set methods
+
    test_set();
    test_set_display();
 
+
    // Data methods
+
    test_set_data();
    test_set_instances_number();
    test_set_variables_number();
 
+
    // Instance methods
+
    test_set_instance();
+
 
    // Data resizing methods
 
@@ -2935,10 +2945,14 @@ void DataSetTest::run_test_case()
    test_unuse_non_significant_inputs();
    test_unuse_columns_missing_values();
 
+
    // Initialization methods
+
    test_initialize_data();
 
+
    // Statistics methods
+
    test_calculate_data_descriptives();
    test_calculate_data_descriptives_missing_values();
    test_calculate_training_instances_descriptives();
@@ -2949,66 +2963,89 @@ void DataSetTest::run_test_case()
    test_calculate_selection_targets_mean();
    test_calculate_testing_targets_mean();
 
+
    // Histrogram methods
+
    test_calculate_data_histograms();
 
+
    // Filtering methods
+
    test_filter_data();
-   //test_filter_variable();
+   test_filter_column();
+
 
    // Data scaling
+
    test_scale_data_mean_standard_deviation();
    test_scale_data_minimum_maximum();
 
+
    // Input variables scaling
-    test_scale_inputs_mean_standard_deviation();
-    test_scale_inputs_minimum_maximum();
+
+   test_scale_inputs_mean_standard_deviation();
+   test_scale_inputs_minimum_maximum();
+
 
    // Target variables scaling
-    test_scale_targets_mean_standard_deviation();
-    test_scale_targets_minimum_maximum();
+
+   test_scale_targets_mean_standard_deviation();
+   test_scale_targets_minimum_maximum();
+
 
    // Data unscaling
+
    test_unscale_data_mean_standard_deviation();
    test_unscale_data_minimum_maximum();
 
+
    // Input variables unscaling
-    test_unscale_inputs_mean_standard_deviation();
-    test_unscale_inputs_minimum_maximum();
+
+   test_unscale_inputs_mean_standard_deviation();
+   test_unscale_inputs_minimum_maximum();
+
 
    // Target variables unscaling
+
    test_unscale_targets_mean_standard_deviation();
    test_unscale_targets_minimum_maximum();
 
+
    // Classificatios methods
+
    test_balance_binary_targets_distribution();
 
+
    // Correlations
+
    test_calculate_input_target_correlations();
    test_calculate_total_input_correlations();
 
+
    // Pattern recognition methods
+
    test_calculate_target_columns_distribution();
    test_unuse_most_populated_target();
    test_balance_multiple_targets_distribution();
    test_balance_function_regression_targets_distribution();
 
+
    // Outlier detection
 
    test_clean_Tukey_outliers();
+
 
    // Data generation
 
    test_generate_data_binary_classification();
    test_generate_data_multiple_classification();
 
+
    // Serialization methods
 
-    test_to_XML();
-    test_from_XML();
-
-    test_read_csv();
-
+   test_to_XML();
+   test_from_XML();
+   test_read_csv();
    test_read_adult_csv();
    test_read_airline_passengers_csv();
    test_read_car_csv();
@@ -3021,14 +3058,12 @@ void DataSetTest::run_test_case()
    test_read_urinary_inflammations_csv();
    test_read_wine_csv();
    test_read_binary_csv();
-
    test_convert_time_series();
    test_convert_autoassociation();
-
    test_calculate_training_negatives();
    test_calculate_selection_negatives();
-
    test_scrub_missing_values();
+
 
    // Principal components mehtod
 
