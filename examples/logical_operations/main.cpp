@@ -47,7 +47,6 @@ int main(void)
 
         Tensor<string, 1> uses(8);
         uses.setValues({"Input","Input","Target","Target","Target","Target","Target","Target"});
-
         data_set.set_columns_uses(uses);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
@@ -62,13 +61,15 @@ int main(void)
         neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
-
         neural_network.set_outputs_names(targets_names);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_thread_pool_device(thread_pool_device);
+
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
         training_strategy.perform_training();
 
