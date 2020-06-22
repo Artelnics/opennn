@@ -269,13 +269,13 @@ void PoolingLayerTest::run_test_case() // @todo
 
 //   // Constructor and destructor
 
-//    test_constructor();
-//    test_destructor();
+    test_constructor();
+    test_destructor();
 
 //    // Outputs
 
-//    test_calculate_average_pooling_outputs();
-//    test_calculate_max_pooling_outputs();
+    test_calculate_average_pooling_outputs();
+    test_calculate_max_pooling_outputs();
 
    cout << "End of pooling layer test case.\n";
 }

@@ -1508,7 +1508,6 @@ void PerceptronLayerTest::run_test_case()
    // Constructor and destructor
 
    test_constructor();
-
    test_destructor();
 
 
@@ -1520,25 +1519,20 @@ void PerceptronLayerTest::run_test_case()
    // Inputs and perceptrons
 
    test_get_inputs_number();
-
    test_get_neurons_number();
 
 
    // Parameters
 
    test_get_parameters_number();
-
    test_get_biases();
-
    test_get_synaptic_weights();
-
    test_get_parameters();
 
 
    // Activation functions
 
    test_get_activation_function();
-
    test_write_activation_function();
 
 
@@ -1550,16 +1544,13 @@ void PerceptronLayerTest::run_test_case()
    // Set methods
 
    test_set();
-
    test_set_default();
 
 
    // Perceptron layer parameters
 
    test_set_biases();
-
    test_set_synaptic_weights();
-
    test_set_perceptrons_number();
 
 
@@ -1586,9 +1577,7 @@ void PerceptronLayerTest::run_test_case()
    // Parameters initialization methods
 
    test_set_parameters_constant();
-
    test_set_synaptic_weights_constant();
-
    test_set_parameters_random();
 
 
@@ -1596,10 +1585,10 @@ void PerceptronLayerTest::run_test_case()
 
    test_calculate_combinations();
 
+
    // Activation
 
    test_calculate_activations();
-
    test_calculate_activations_derivatives();
 
 
@@ -1616,7 +1605,6 @@ void PerceptronLayerTest::run_test_case()
    // Delta methods
 
    test_calculate_output_delta();
-
    test_calculate_hidden_delta();
 
 
@@ -1628,6 +1616,7 @@ void PerceptronLayerTest::run_test_case()
    // Expression methods
 
    test_write_expression();
+
 
    cout << "End of perceptron layer test case.\n";
 }
