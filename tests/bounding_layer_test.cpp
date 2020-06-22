@@ -251,9 +251,11 @@ void BoundingLayerTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Assignment operators methods
 
    test_assignment_operator();
+
 
    // Get methods
 
@@ -261,48 +263,51 @@ void BoundingLayerTest::run_test_case()
 
    test_get_neurons_number();
 
+
    // Variables bounds
 
    test_get_lower_bounds();
    test_get_lower_bound();
-
    test_get_upper_bounds();
    test_get_upper_bound();
-
    test_get_bounds();
-
    test_get_type();
+
 
    // Display messages
 
    test_get_display();
+
 
    // Set methods
 
    test_set();
    test_set_default();
 
+
    // Variables bounds
 
    test_set_lower_bounds();
    test_set_lower_bound();
-
    test_set_upper_bounds();
    test_set_upper_bound();
-
    test_set_bounds();
+
 
    // Display messages
 
    test_set_display();
 
+
    // Lower and upper bounds
 
    test_calculate_outputs();
 
+
    // Expression methods
 
    test_write_expression();
+
 
    // Serialization methods
 
