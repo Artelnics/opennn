@@ -42,7 +42,6 @@ public:
 
    void test_calculate_error();
 
-
    void test_calculate_error_gradient();
 
    // Error terms methods 

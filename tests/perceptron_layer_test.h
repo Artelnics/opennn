@@ -43,17 +43,14 @@ public:
    // Inputs and perceptrons
 
    void test_is_empty();
-
    void test_get_inputs_number();
    void test_get_neurons_number();
-
    void test_get_perceptrons();
 
    // Parameters
 
    void test_get_biases();
    void test_get_synaptic_weights();
-
    void test_get_parameters_number();
    void test_get_parameters();
 
@@ -96,7 +93,6 @@ public:
    // Parameters initialization methods
 
    void test_set_parameters_constant();
-
    void test_set_synaptic_weights_constant();
    void test_set_parameters_random();
 

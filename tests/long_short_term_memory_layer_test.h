@@ -51,7 +51,6 @@ public:
    void test_get_recurrent_activation_function();
    void test_write_recurrent_activation_function();
 
-
    void test_get_perceptrons();
    void test_get_perceptron();
 
@@ -87,7 +86,6 @@ public:
 
    void test_set_parameters_constant();
    void test_initialize_biases();
-
    void test_initialize_weights();
    void test_initialize_recurrent_weights();
 

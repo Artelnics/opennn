@@ -33,8 +33,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   
-
    // Get methods
 
    void test_get_damping_parameter();
@@ -74,7 +72,6 @@ public:
    // Linear algebraic equations methods
 
    void test_perform_Householder_QR_decomposition();
-
 
    // Unit testing methods
 

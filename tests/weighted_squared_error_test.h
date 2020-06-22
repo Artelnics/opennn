@@ -23,19 +23,11 @@ class WeightedSquaredErrorTest : public UnitTesting
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
-public:
-
-   
+public: 
 
    explicit WeightedSquaredErrorTest();
 
-
-   
-
    virtual ~WeightedSquaredErrorTest();
-
-
-   
 
    // Constructor and destructor methods
 
@@ -49,14 +41,11 @@ public:
    // Error methods
 
    void test_calculate_error();
-   
-
    void test_calculate_error_gradient();
 
    // Error terms methods 
 
    void test_calculate_error_terms();
-
    void test_calculate_error_terms_Jacobian();
 
    // Serialization methods

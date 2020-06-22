@@ -51,7 +51,6 @@ public:
 
    void test_get_descriptives();
    void test_get_descriptives_matrix();
-
    void test_get_minimums();
    void test_get_maximums();
    void test_get_means();
@@ -81,7 +80,6 @@ public:
    void test_set_descriptives_eigen();
    void test_set_item_descriptives();
 
-
    // Multilayer perceptron architecture
 
    void test_set_layers_neurons_number();
@@ -90,22 +88,17 @@ public:
    // Multilayer perceptron parameters
 
    void test_set_network_parameters();
-
    void test_set_layers_biases();
    void test_set_layer_biases();
-
    void test_set_layers_synaptic_weights();
    void test_set_layer_synaptic_weights();
-
    void test_set_layers_parameters();
    void test_set_layer_parameters();
 
    // Activation functions
 
    void test_set_layers_activation_function();
-
    void test_set_layer_activation_function();
-
    void test_set_output_layer_activation_function();
 
    // Input variables descriptives

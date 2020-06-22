@@ -41,19 +41,15 @@ public:
 
    void test_calculate_error();
    
-
    // Gradient methods
 
    void test_calculate_output_gradient();
-
    void test_calculate_error_gradient();
-
    void test_calculate_Jacobian_gradient();
 
    // Error terms methods
 
    void test_calculate_error_terms();
-
    void test_calculate_error_terms_Jacobian();
 
    // Other methods
