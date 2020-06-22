@@ -11,11 +11,11 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS += rosenbrock
-#SUBDIRS += simple_function_regression
-#SUBDIRS += simple_pattern_recognition
-SUBDIRS += airfoil_self_noise
-SUBDIRS += breast_cancer
-SUBDIRS += iris_plant
+SUBDIRS += simple_function_regression
+SUBDIRS += simple_pattern_recognition
+#SUBDIRS += airfoil_self_noise
+#SUBDIRS += breast_cancer
+#SUBDIRS += iris_plant
 SUBDIRS += logical_operations
 SUBDIRS += pima_indians_diabetes
 SUBDIRS += urinary_inflammations_diagnosis
