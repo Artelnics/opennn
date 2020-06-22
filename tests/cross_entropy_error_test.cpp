@@ -21,7 +21,7 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-
+/*
    DataSet data_set;
 
    NeuralNetwork neural_network;
@@ -39,11 +39,11 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    data_set.generate_sum_data(10,2);
 
-   Tensor<Descriptives, 1> inputs = data_set.scale_inputs_minimum_maximum();
+//   Tensor<Descriptives, 1> inputs = data_set.scale_inputs_minimum_maximum();
 
    scaling_layer.set_neurons_number(1);
    scaling_layer.set_inputs_number(1);
-   scaling_layer.set_descriptives(inputs);
+//   scaling_layer.set_descriptives(inputs);
 
 //   data_set.set(10,1,1);
 
@@ -65,6 +65,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 //   cross_entropy_error = cee.calculate_error();
 
 //   assert_true(abs(cross_entropy_error - cee.calculate_training_error(parameters)) < 1.0e-3, LOG);
+*/
 
 }
 

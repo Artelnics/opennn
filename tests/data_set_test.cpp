@@ -674,7 +674,7 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_inputs_mean_standard_deviation();
+//   data_set.scale_inputs_mean_standard_deviation();
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
 
@@ -716,7 +716,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_inputs_minimum_maximum();
+//   data_set.scale_inputs_minimum_maximum();
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
 

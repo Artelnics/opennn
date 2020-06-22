@@ -772,6 +772,17 @@ void TrainingStrategy::set_display_period(const int & display_period)
 }
 
 
+void TrainingStrategy::set_maximum_time(const type & maximum_time)
+{
+    gradient_descent.set_maximum_time(maximum_time);
+    conjugate_gradient.set_maximum_time(maximum_time);
+    stochastic_gradient_descent.set_maximum_time(maximum_time);
+    adaptive_moment_estimation.set_maximum_time(maximum_time);
+    quasi_Newton_method.set_maximum_time(maximum_time);
+    Levenberg_Marquardt_algorithm.set_maximum_time(maximum_time);
+}
+
+
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.
