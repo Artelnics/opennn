@@ -51,7 +51,7 @@ int main(void)
 
         data_set.split_instances_random();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 

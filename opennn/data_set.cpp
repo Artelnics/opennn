@@ -6411,49 +6411,6 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 }
 
 
-/// Scales the input variables with given mean and standard deviation values.
-/// It updates the input variables of the data matrix.
-/// @param inputs_descriptives vector of descriptives structures for the input variables.
-/// The size of that vector must be equal to the number of inputs.
-/// @todo
-
-void DataSet::scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& inputs_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-//    scale_columns_mean_standard_deviation(data, inputs_descriptives, input_variables_indices);
-}
-
-
-/// Scales the input variables with the calculated mean and standard deviation values from the data matrix.
-/// It updates the input variables of the data matrix.
-/// It also returns a vector of vectors with the variables descriptives.
-
-Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
-
-    scale_inputs_mean_standard_deviation(inputs_descriptives);
-
-    return inputs_descriptives;
-}
-
-
 /// Scales the given input variables with given mean and standard deviation values.
 /// It updates the input variable of the data matrix.
 /// @param input_statistics vector of descriptives structures for the input variables.
@@ -6542,49 +6499,6 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 }
 
 
-/// Scales the input variables with given minimum and maximum values.
-/// It updates the input variables of the data matrix.
-/// @param inputs_descriptives vector of descriptives structures for all the inputs in the data set.
-/// The size of that vector must be equal to the number of input variables.
-/// @todo
-
-void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-//    scale_columns_minimum_maximum(data, inputs_descriptives, input_variables_indices);
-}
-
-
-/// Scales the input variables with the calculated minimum and maximum values from the data matrix.
-/// It updates the input variables of the data matrix.
-/// It also returns a vector of vectors with the minimum and maximum values of the input variables.
-
-Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_inputs_minimum_maximum() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
-
-    scale_inputs_minimum_maximum(inputs_descriptives);
-
-    return inputs_descriptives;
-}
-
-
 /// Scales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the data matrix.
 /// @param input_statistics vector with the descriptives of the input variable.
@@ -6625,81 +6539,6 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
     scale_input_minimum_maximum(input_statistics, input_index);
 
     return input_statistics;
-}
-
-
-/// Calculates the input and target variables descriptives.
-/// Then it scales the input variables with that values.
-/// The method to be used is that in the scaling and unscaling method variable.
-/// Finally, it returns the descriptives.
-
-Tensor<Descriptives, 1> DataSet::scale_inputs(const string& scaling_unscaling_method)
-{
-    switch(get_scaling_unscaling_method(scaling_unscaling_method))
-    {
-    case NoScaling:
-        return calculate_input_variables_descriptives();
-
-    case MinimumMaximum:
-        return scale_inputs_minimum_maximum();
-
-    case MeanStandardDeviation:
-        return scale_inputs_mean_standard_deviation();
-
-    case StandardDeviation:
-        return scale_inputs_mean_standard_deviation();
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class\n"
-               << "Tensor<Descriptives, 1> scale_inputs() method.\n"
-               << "Unknown scaling and unscaling method.\n";
-
-        throw logic_error(buffer.str());
-    }
-    }
-}
-
-
-/// Calculates the input and target variables descriptives.
-/// Then it scales the input variables with that values.
-/// The method to be used is that in the scaling and unscaling method variable.
-
-void DataSet::scale_inputs(const string& scaling_unscaling_method, const Tensor<Descriptives, 1>& inputs_descriptives)
-{
-    switch(get_scaling_unscaling_method(scaling_unscaling_method))
-    {
-    case NoScaling:
-    {
-        // Do nothing
-    }
-    break;
-
-    case MinimumMaximum:
-    {
-        scale_inputs_minimum_maximum(inputs_descriptives);
-    }
-    break;
-
-    case MeanStandardDeviation:
-    {
-        scale_inputs_mean_standard_deviation(inputs_descriptives);
-    }
-    break;
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class\n"
-               << "void scale_inputs(const string&, const Tensor<Descriptives, 1>&) method.\n"
-               << "Unknown scaling and unscaling method.\n";
-
-        throw logic_error(buffer.str());
-    }
-    }
 }
 
 
