@@ -96,9 +96,8 @@ int main(void)
 
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
-
-        data_set.unscale_targets_minimum_maximum(targets_descriptives);
+//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+//        data_set.unscale_targets_minimum_maximum(targets_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
