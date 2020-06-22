@@ -128,34 +128,42 @@ public:
    void test_calculate_data_histograms();
 
    // Filtering methods
+
    void test_filter_column();
    void test_filter_data();
 
    // Data scaling
+
    void test_scale_data_mean_standard_deviation();  
    void test_scale_data_minimum_maximum(); 
 
    // Input variables scaling
+
    void test_scale_inputs_mean_standard_deviation();
    void test_scale_inputs_minimum_maximum();
 
    // Target variables scaling
+
    void test_scale_targets_mean_standard_deviation();
    void test_scale_targets_minimum_maximum();
 
    // Input-target variables scaling
+
    void test_scale_variables_mean_standard_deviation();
    void test_scale_variables_minimum_maximum();
 
    // Data unscaling
+
    void test_unscale_data_mean_standard_deviation();
    void test_unscale_data_minimum_maximum();
 
    // Input variables unscaling
+
    void test_unscale_inputs_mean_standard_deviation();
    void test_unscale_inputs_minimum_maximum();
 
    // Target variables unscaling
+
    void test_unscale_targets_mean_standard_deviation();
    void test_unscale_targets_minimum_maximum();
 
@@ -178,11 +186,8 @@ public:
 
    void test_to_XML();
    void test_from_XML();
-
    void test_print();
-
    void test_read_csv();
-
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
    void test_read_car_csv();
@@ -205,10 +210,8 @@ public:
 
    void test_covariance_matrix();
    void test_perform_principal_components_analysis();
-
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
-
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
