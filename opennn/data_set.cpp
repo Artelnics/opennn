@@ -6875,85 +6875,166 @@ void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, 
 }
 
 
-/// Unscales the data matrix with given mean and standard deviation values.
-/// It updates the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
-{
-//       unscale_mean_standard_deviation(data, data_descriptives);
-}
-
-
-/// Unscales the data matrix with given minimum and maximum values.
-/// It updates the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::unscale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
-{
-
-//      unscale_minimum_maximum(data, data_descriptives);
-}
-
-
-/// Unscales the input variables with given mean and standard deviation values.
+/// Unscales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
+/// @param input_statistics vector with the descriptives of the input variable.
+/// @param input_index Index of the input to be scaled.
 
-void DataSet::unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
+void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = (data(i, input_index)+static_cast<type>(1))/static_cast<type>(2)*(input_statistics.maximum-input_statistics.minimum)+input_statistics.minimum;
+    }
+}
+
+
+/// Uncales the given input variables with given mean and standard deviation values.
+/// It updates the input variable of the data matrix.
+/// @param input_statistics vector of descriptives structures for the input variables.
+/// @param input_index Index of the input to be scaled.
+
+void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = input_statistics.standard_deviation/static_cast<type>(2)*data(i,input_index)+input_statistics.mean;
+    }
+}
+
+
+/// Unscales the given input variables with given standard deviation values.
+/// It updates the input variable of the data matrix.
+/// @param inputs_statistics vector of descriptives structures for the input variables.
+/// @param input_index Index of the input to be scaled.
+
+void DataSet::unscale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = input_statistics.standard_deviation/static_cast<type>(2)*data(i,input_index);
+    }
+}
+
+
+/// It unscales every input variable with the given method.
+/// The method to be used is that in the scaling and unscaling method variable.
+
+void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-//    unscale_columns_mean_standard_deviation(data, data_descriptives, input_variables_indices);
+    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    {
+        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        {
+        case NoScaling:
+        {
+            // Do nothing
+        }
+        break;
+
+        case MinimumMaximum:
+        {
+            unscale_input_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
+
+        case MeanStandardDeviation:
+        {
+            unscale_input_mean_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
+
+        case StandardDeviation:
+        {
+            unscale_input_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
+        }
+        break;
+
+        default:
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void unscale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown unscaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
+
+            throw logic_error(buffer.str());
+        }
+        }
+    }
 }
 
 
-/// Unscales the input variables with given minimum and maximum values.
-/// It updates the input variables of the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the data in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
+void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-//  unscale_columns_minimum_maximum(data, data_descriptives, input_variables_indices);
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = (data(i, target_index)+static_cast<type>(1))/static_cast<type>(2)*(target_statistics.maximum-target_statistics.minimum)+target_statistics.minimum;
+    }
 }
 
 
-/// Unscales the target variables with given mean and standard deviation values.
-/// It updates the target variables of the data matrix.
-/// @param targets_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
+void DataSet::unscale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = target_statistics.standard_deviation/static_cast<type>(2)*data(i,target_index)+target_statistics.mean;
+    }
+}
 
-void DataSet::unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
+
+void DataSet::unscale_target_logarithmic(const Descriptives& target_statistics, const Index& target_index)
+{
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, target_index) = log(static_cast<type>(2)*(data(i,target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum));
+    }
+}
+
+
+/// It unscales the input variables with that values.
+/// The method to be used is that in the scaling and unscaling method variable.
+
+void DataSet::unscale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-//    unscale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
+    for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    {
+        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        {
+        case NoUnscaling:
+            break;
+
+        case MinimumMaximum:
+            unscale_target_minimum_maximum(targets_descriptives(i), target_variables_indices(i));
+            break;
+
+        case MeanStandardDeviation:
+            unscale_target_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            break;
+
+        case Logarithmic:
+            unscale_target_logarithmic(targets_descriptives(i), target_variables_indices(i));
+            break;
+
+        default:
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void unscale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown unscaling and unscaling method.\n";
+
+            throw logic_error(buffer.str());
+        }
+        }
+    }
 }
 
 
-/// Unscales the target variables with given minimum and maximum values.
-/// It updates the target variables of the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
-{
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-//  unscale_columns_minimum_maximum(data, data_descriptives, target_variables_indices);
-}
 
 
 /// Initializes the data matrix with a given value.

@@ -24,6 +24,7 @@ int main(void)
 {
     try
     {
+
         cout << "OpenNN. Breast Cancer Application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
@@ -54,18 +55,19 @@ int main(void)
         // Neural network
 
         Tensor<Index, 1> neural_netowrk_architecture(3);
-        neural_netowrk_architecture.setValues({9, 3, 1});
+        neural_netowrk_architecture.setValues({9, 7, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
 
-        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::Logistic);
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::HyperbolicTangent);
         dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
 
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
+
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         // Training strategy
 
@@ -76,10 +78,12 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
 //        training_strategy.get_weighted_squared_error_pointer()
 
-        training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
-        training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
+//        training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
+//        training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
@@ -96,6 +100,9 @@ int main(void)
 
         training_strategy.perform_training();
 
+//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+//        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
 
 
         neural_network.save_expression_python("breast.py");
@@ -110,7 +117,11 @@ int main(void)
 
 //        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
 
-        data_set.unscale_inputs_mean_standard_deviation(inputs_descriptives);
+//        data_set.unscale_inputs_mean_standard_deviation(inputs_descriptives);
+
+
+
+        data_set.unscale_inputs(scaling_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -137,6 +148,7 @@ int main(void)
         cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
         cout << "Informedness                    : " << binary_classification_tests[13] << endl;
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
+
 
         cout << "End" << endl;
 
