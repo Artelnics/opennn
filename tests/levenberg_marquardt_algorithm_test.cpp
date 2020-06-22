@@ -97,28 +97,28 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 {
     cout << "test_calculate_training_loss\n";
 
-    DataSet data_set;
-    Tensor<Index, 1> architecture;
+//    DataSet data_set;
+//    Tensor<Index, 1> architecture;
 
-    NeuralNetwork neural_network;
+//    NeuralNetwork neural_network;
 
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
+//    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    Tensor<type, 1> terms;
+//    Tensor<type, 1> terms;
 
-    type loss;
+//    type loss;
 
-    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
+//    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
     // Test    
 
-    data_set.set(2, 2, 2);
-    data_set.set_data_random();
+//    data_set.set(2, 2, 2);
+//    data_set.set_data_random();
 
-    architecture.setValues({2,2});
+//    architecture.setValues({2,2});
 
-    neural_network.set(NeuralNetwork::Approximation, architecture);
-    neural_network.set_parameters_random();
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set_parameters_random();
 
 //    terms = sum_squared_error.calculate_training_error_terms();
 
@@ -222,76 +222,76 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 {
    cout << "test_calculate_hessian_approximation\n";
 
-   NumericalDifferentiation nd;
+//   NumericalDifferentiation nd;
 
-   NeuralNetwork neural_network;
+//   NeuralNetwork neural_network;
 
-   Index parameters_number;
+//   Index parameters_number;
 
-   Tensor<Index, 1> architecture;
+//   Tensor<Index, 1> architecture;
 
-   Tensor<type, 1> parameters;
+//   Tensor<type, 1> parameters;
 
-   DataSet data_set;
+//   DataSet data_set;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Tensor<type, 2> terms_Jacobian;
-   Tensor<type, 2> hessian;
-   Tensor<type, 2> numerical_hessian;
-   Tensor<type, 2> hessian_approximation;
+//   Tensor<type, 2> terms_Jacobian;
+//   Tensor<type, 2> hessian;
+//   Tensor<type, 2> numerical_hessian;
+//   Tensor<type, 2> hessian_approximation;
 
-   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
+//   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
    
    // Test
 
 //   neural_network.set(NeuralNetwork::Approximation, {1, 2});
-   neural_network.set_parameters_constant(0.0);
+//   neural_network.set_parameters_constant(0.0);
 
-   parameters_number = neural_network.get_parameters_number();
+//   parameters_number = neural_network.get_parameters_number();
 
-   data_set.set(1,2,2);
-   data_set.initialize_data(0.0);
+//   data_set.set(1,2,2);
+//   data_set.initialize_data(0.0);
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
-   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
-   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
+//   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
+//   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
 //   assert_true(hessian_approximation.is_symmetric(), LOG);
 
    // Test
 
 //   neural_network.set(NeuralNetwork::Approximation, {1,1,2});
-   neural_network.set_parameters_random();
+//   neural_network.set_parameters_random();
 
-   parameters_number = neural_network.get_parameters_number();
+//   parameters_number = neural_network.get_parameters_number();
 
-   data_set.set(1,2,3);
-   data_set.set_data_random();
+//   data_set.set(1,2,3);
+//   data_set.set_data_random();
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
-   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
-   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
+//   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
+//   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
 //   assert_true(hessian_approximation.is_symmetric(), LOG);
 
    // Test
 
-   data_set.set(1, 1, 1);
+//   data_set.set(1, 1, 1);
 
-   data_set.set_data_random();
+//   data_set.set_data_random();
 
-   architecture.setValues({1,1});
+//   architecture.setValues({1,1});
 
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   parameters = neural_network.get_parameters();
+//   parameters = neural_network.get_parameters();
 
-   neural_network.set_parameters_random();
+//   neural_network.set_parameters_random();
 
 //   numerical_hessian = nd.calculate_hessian(pf, &LossIndex::calculate_training_loss, parameters);
 
@@ -547,10 +547,9 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 
    // Training methods
 
-//   test_calculate_training_loss();
+   test_calculate_training_loss();
    test_calculate_training_loss_gradient();
-//   test_calculate_hessian_approximation();
-
+   test_calculate_hessian_approximation();
    test_perform_training();
 
    // Training history methods
