@@ -44,51 +44,66 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_mean_standard_deviation();
 
         // Neural network
 
         Tensor<Index, 1> neural_netowrk_architecture(3);
-        neural_netowrk_architecture.setValues({9, 3, 1});
+        neural_netowrk_architecture.setValues({9, 1, 1});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_netowrk_architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
 
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::Logistic);
+        dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
+
+
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_thread_pool_device(thread_pool_device);
 
+        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
+
         training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+
+        training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
+        training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
+        ConjugateGradient* cg = training_strategy.get_conjugate_gradient_pointer();
 
-        quasi_Newton_method_pointer->set_display(true);
+        cg->set_loss_goal(1.0e-3);
+
+        cg->set_display(true);
 
         training_strategy.set_display(true);
 
         training_strategy.perform_training();
 
+
+
+        neural_network.save_expression_python("breast.py");
+
         // Model selection
 
-        ModelSelection model_selection(&training_strategy);
+//         ModelSelection model_selection(&training_strategy);
 
-        model_selection.perform_neurons_selection();
+//        model_selection.perform_neurons_selection();
 
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+
+        data_set.unscale_inputs_mean_standard_deviation(inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
