@@ -1598,31 +1598,37 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    test_constructor();
    test_destructor();
 
+
    // Get methods
 
    test_get_parameters();
    test_get_outputs_dimensions();
    test_get_parameters_number();
 
-//   // Set methods
+
+   // Set methods
 
    test_set();
    test_set_parameters();
 
-//   // Combinations
+
+   // Combinations
 
    test_calculate_image_convolution();
    test_calculate_convolutions();
 
-//   // Activation
+
+   // Activation
 
    test_calculate_activations();
    test_calculate_activations_derivatives();
 
-//   // Outputs
+
+   // Outputs
 
    test_calculate_outputs();
    test_insert_padding();
+
    cout << "End of convolutional layer test case.\n";
 }
 

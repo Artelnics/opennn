@@ -14,8 +14,8 @@
       <ReserveSelectionErrorHistory>1</ReserveSelectionErrorHistory>
    </InputsSelection>
    <NeuronsSelection Type="INCREMENTAL_NEURONS">
-      <MinimumOrder>1</MinimumOrder>
-      <MaximumOrder>0</MaximumOrder>
+      <MinimumNeurons>1</MinimumNeurons>
+      <MaximumNeurons>0</MaximumNeurons>
       <Step>1</Step>
       <TrialsNumber>1</TrialsNumber>
       <Tolerance>0</Tolerance>

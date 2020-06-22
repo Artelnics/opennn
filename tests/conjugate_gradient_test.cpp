@@ -375,30 +375,32 @@ void ConjugateGradientTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Get methods
 
    test_get_training_direction_method();
    test_get_training_direction_method_name();
 
+
    // Set methods
 
    test_set_training_direction_method();
+
 
    // Training methods
 
    test_calculate_PR_parameter();
    test_calculate_FR_parameter();
-
    test_calculate_FR_training_direction();
    test_calculate_PR_training_direction();
-
    test_calculate_training_direction();
-
    test_perform_training();
+
 
    // Training history methods
 
    test_set_reserve_all_training_history();
+
 
    // Serialization methods
 

@@ -874,6 +874,7 @@ void CorrelationsTest::run_test_case()
    test_rank_linear_correlation();
    test_rank_linear_correlation_missing_values();
 
+
    // Logistic correlation methods
 
    test_logistic_correlation();
@@ -882,36 +883,37 @@ void CorrelationsTest::run_test_case()
    test_logistic_error_gradient();
    test_logistic_correlation_missing_values();
 
+
    // Logarithmic correlation methods
 
    test_logarithmic_correlation();
    test_logarithmic_correlation_missing_values();
+
 
    // Exponential correlation methods
 
    test_exponential_correlation();
    test_exponential_correlation_missing_values();
 
+
    // Regression Methods
 
    test_linear_regression();
    test_linear_regression_missing_values();
-
    test_exponential_regression();
    test_exponential_correlation_missing_values();
-
    test_logarithmic_regression();
    test_logarithmic_regression_missing_values();
-
    test_power_regression();
    test_power_regression_missing_values();
-
    test_logistic_regression();
+
 
    // Time series correlation methods
 
    test_autocorrelation();
    test_cross_correlations();
+
 
    // Covariance
 
@@ -920,9 +922,11 @@ void CorrelationsTest::run_test_case()
    test_covariance_matrix();
    test_less_rank_with_ties();
 
+
    //Remove methods
 
    test_remove_correlations();
+
 
    //Contingency table
 
