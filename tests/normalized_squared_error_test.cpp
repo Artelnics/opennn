@@ -99,49 +99,49 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
 {
    cout << "test_calculate_error\n";
 
-   Tensor<Index, 1> architecture;
-   Tensor<type, 1> parameters;
+//   Tensor<Index, 1> architecture;
+//   Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
-   DataSet data_set(1,1,1);
+//   DataSet data_set(1,1,1);
 
-   Index instances_number;
-   Index inputs_number;
-   Index outputs_number;
-   Index hidden_neurons;
+//   Index instances_number;
+//   Index inputs_number;
+//   Index outputs_number;
+//   Index hidden_neurons;
 
-   Tensor<type, 2> new_data(2, 2);
-   new_data(0,0) = -1.0;
-   new_data(0,1) = -1.0;
-   new_data(1,0) = 1.0;
-   new_data(1,1) = 1.0;
+//   Tensor<type, 2> new_data(2, 2);
+//   new_data(0,0) = -1.0;
+//   new_data(0,1) = -1.0;
+//   new_data(1,0) = 1.0;
+//   new_data(1,1) = 1.0;
 
-   data_set.set_data(new_data);
-   data_set.set_training();
+//   data_set.set_data(new_data);
+//   data_set.set_training();
 
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+//   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
 //   assert_true(normalized_squared_error.calculate_error() == 0.0, LOG);
 
    // Test
 
-   instances_number = 7;
-   inputs_number = 8;
-   outputs_number = 5;
-   hidden_neurons = 3;
+//   instances_number = 7;
+//   inputs_number = 8;
+//   outputs_number = 5;
+//   hidden_neurons = 3;
 
-   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
+//   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
 
-   neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_parameters_random();
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_random();
 
-   parameters = neural_network.get_parameters();
+//   parameters = neural_network.get_parameters();
 
-   data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_data_random();
+//   data_set.set(instances_number, inputs_number, outputs_number);
+//   data_set.set_data_random();
 
-   normalized_squared_error.set_normalization_coefficient();
+//   normalized_squared_error.set_normalization_coefficient();
 
 //   assert_true(abs(normalized_squared_error.calculate_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
 }
@@ -670,38 +670,33 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
+   test_calculate_normalization_coefficient();
 
-//   test_calculate_normalization_coefficient();
+   // Get methods
 
+   // Set methods
 
-//   // Get methods
+   // Error methods
 
-//   // Set methods
+   test_calculate_error();
+   test_calculate_error_gradient();
 
-//   // Error methods
+   // Error terms methods
 
-//   test_calculate_error();
+   test_calculate_error_terms();
+   test_calculate_error_terms_Jacobian();
 
-//   test_calculate_error_gradient();
+   // Squared errors methods
 
-//   // Error terms methods
+   test_calculate_squared_errors();
+   test_calculate_maximal_errors();
 
-//   test_calculate_error_terms();
+   // Serialization methods
 
-//   test_calculate_error_terms_Jacobian();
-
-//   // Squared errors methods
-
-//   test_calculate_squared_errors();
-
-//   test_calculate_maximal_errors();
-
-//   // Serialization methods
-
-//   test_to_XML();
-//   test_from_XML();
+   test_to_XML();
+   test_from_XML();
 
    cout << "End of normalized squared error test case.\n";
 }
