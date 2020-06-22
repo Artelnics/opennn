@@ -74,9 +74,9 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
-        training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-//        training_strategy.get_weighted_squared_error_pointer()->set_/
+//        training_strategy.get_weighted_squared_error_pointer()
 
         training_strategy.get_weighted_squared_error_pointer()->set_positives_weight(1.85774);
         training_strategy.get_weighted_squared_error_pointer()->set_negatives_weight(1);
