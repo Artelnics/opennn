@@ -123,7 +123,6 @@ void BoundingLayerTest::test_get_type()
    BoundingLayer bounding_layer;
 
    assert_true(bounding_layer.get_type() == Layer::Bounding, LOG);
-
 }
 
 
@@ -183,18 +182,17 @@ void BoundingLayerTest::test_calculate_outputs()
    // Test
 
    Tensor<type, 2> outputs(1, 1);
-//   inputs[0] = -2.0;
+   inputs(0) = -2.0;
    outputs = bounding_layer.calculate_outputs(inputs);
    assert_true(outputs.rank() == 2, LOG);
-//   assert_true(outputs == -1.0, LOG);
+   assert_true(outputs(0) == -1.0, LOG);
 
    // Test
 
-//   inputs[0] = 2.0;
+   inputs(0) = 2.0;
    outputs = bounding_layer.calculate_outputs(inputs);
    assert_true(outputs.rank() == 2, LOG);
-//   assert_true(outputs == 1.0, LOG);
-
+   assert_true(outputs(0) == 1.0, LOG);
 }
 
 
