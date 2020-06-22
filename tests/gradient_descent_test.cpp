@@ -198,27 +198,28 @@ void GradientDescentTest::run_test_case() // @todo
 {
    cout << "Running gradient descent test case...\n";
 
-//   // Constructor and destructor methods
+   // Constructor and destructor methods
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
 
 //   // Set methods
 
-//   test_set_reserve_all_training_history();
+   test_set_reserve_all_training_history();
 
-//   // Training methods
+   // Training methods
 
-//   test_perform_training();
+   test_perform_training();
 
-//   // Training history methods
+   // Training history methods
 
-//   test_resize_training_history();
+   test_resize_training_history();
 
-//   // Serialization methods
+   // Serialization methods
 
-//   test_to_XML();
-//   test_from_XML();
+   test_to_XML();
+   test_from_XML();
+
    cout << "End of gradient descent test case.\n";
 }
 
