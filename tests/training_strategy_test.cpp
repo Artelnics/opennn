@@ -238,33 +238,37 @@ void TrainingStrategyTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Get methods
 
    test_get_loss_index_pointer();
+
 
    // Utilities
    
    test_get_display();
 
+
    // Set methods
 
    test_set();
    test_set_default();   
-
    test_set_loss_index_pointer();
+
 
    // Training methods
 
    test_perform_training();
 
+
    // Serialization methods
 
    test_to_XML();
    test_from_XML();
-
    test_print();
    test_save();
    test_load();
+
 
    // Results methods
 

@@ -196,17 +196,21 @@ void StochasticGradientDescentTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Set methods
 
    test_set_reserve_all_training_history();
+
 
    // Training methods
 
    test_perform_training();
 
+
    // Training history methods
 
    test_resize_training_history();
+
 
    // Serialization methods
 
