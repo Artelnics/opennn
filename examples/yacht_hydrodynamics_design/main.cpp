@@ -77,7 +77,7 @@ int main(void)
 
         unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
-        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+//        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
 
 //        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
@@ -109,7 +109,7 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
         training_strategy_results.save("../data/training_strategy_results.dat");
