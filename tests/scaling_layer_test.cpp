@@ -1237,24 +1237,27 @@ void ScalingLayerTest::run_test_case()
    test_constructor();
    test_destructor();
 
+
    // Assignment operators methods
 
    test_assignment_operator();
 
+
    // Get methods
 
    test_get_dimensions();
+
 
    // Scaling layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
 
+
    // Input variables descriptives
 
    test_get_descriptives();
    test_get_descriptives_matrix();
-
    test_get_minimums();
    test_get_maximums();
    test_get_means();
@@ -1266,31 +1269,32 @@ void ScalingLayerTest::run_test_case()
    test_get_scaling_method();
    test_get_scaling_method_name();
 
+
    // Display warning
 
    // Display messages
 
    test_get_display();
 
+
    // Set methods
 
    test_set();
-
    test_set_inputs_number();
    test_set_neurons_number();
-
    test_set_default();
+
 
    // Input variables descriptives
 
    test_set_descriptives();
    test_set_descriptives_eigen();
    test_set_item_descriptives();
-
    test_set_minimum();
    test_set_maximum();
    test_set_mean();
    test_set_standard_deviation();
+
 
    // Variables descriptives
 
@@ -1298,15 +1302,17 @@ void ScalingLayerTest::run_test_case()
 
    test_set_scaling_method();
 
+
    // Display messages
 
    test_set_display();
 
+
    // Input range
 
    test_is_empty();
-
    test_check_range();
+
 
    // Scaling and unscaling
 
@@ -1314,9 +1320,11 @@ void ScalingLayerTest::run_test_case()
    test_calculate_minimum_maximum_output();
    test_calculate_mean_standard_deviation_output();
 
+
    // Expression methods
 
    test_write_expression();
+
 
    // Serialization methods
 

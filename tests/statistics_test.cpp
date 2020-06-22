@@ -1492,57 +1492,66 @@ void StatisticsTest::run_test_case()
 
 
    // Minimum
-    test_set_minimum();
-    test_minimum();
-//    test_maximum_matrix();
+   test_set_minimum();
+   test_minimum();
+
 
    // Maximun
-     test_set_maximum();
-     test_maximum();
-//   test_maximum_matrix();
+   test_set_maximum();
+   test_maximum();
 
 
    // Mean
-     test_set_mean();
-     test_calculate_mean();
-     test_weighted_mean();
-//   test_calculate_mean_missing_values();
+   test_set_mean();
+   test_calculate_mean();
+   test_weighted_mean();
+   test_calculate_mean_missing_values();
+
 
    // Mean binary
    test_calculate_means_binary_column();
    test_means_binary_columns();
-//   test_means_binary_columns_missing_values();
+   test_means_binary_columns_missing_values();
+
 
    // Median
    test_calculate_median();
-//   test_calculate_median_missing_values();
+   test_calculate_median_missing_values();
+
 
    // Variance
    test_variance();
-//   test_calculate_variance_missing_values();
+   test_calculate_variance_missing_values();
+
 
    // Assymetry
    test_calculate_asymmetry();
-//   test_calculate_asymmetry_missing_values();
+   test_calculate_asymmetry_missing_values();
+
 
    // Kurtosis
    test_calculate_kurtosis();
-//   test_calculate_kurtosis_missing_values();
+   test_calculate_kurtosis_missing_values();
+
 
    // Standard deviation
    test_standard_deviation();
-//  test_standard_deviation_missing_values();
+   test_standard_deviation_missing_values();
+
 
    // Quartiles
    test_quartiles();
-//   test_calculate_quartiles_missing_values();
+   test_calculate_quartiles_missing_values();
+
 
    // Box plot
    test_calculate_box_plot();
-//   test_calculate_box_plot_missing_values();
+   test_calculate_box_plot_missing_values();
+
 
    // Descriptives struct
-//   test_descriptives_missing_values();
+   test_descriptives_missing_values();
+
 
    // Histogram
    test_get_bins_number();
@@ -1557,27 +1566,33 @@ void StatisticsTest::run_test_case()
    test_calculate_histogram();
    test_total_frequencies();
    test_calculate_histograms();
-//   test_calculate_histogram_missing_values();
-//   test_histograms_missing_values();
+   test_calculate_histogram_missing_values();
+   test_histograms_missing_values();
+
 
    // Minimal indices
    test_calculate_minimal_index();
    test_calculate_minimal_indices();
 
+
    // Maximal indices
    test_calculate_maximal_index();
    test_calculate_maximal_indices();
 
+
    // Normality
-//   test_calculate_norm();
+   test_calculate_norm();
+
 
    // Percentiles
    test_percentiles();
-//   test_percentiles_missing_values();
+   test_percentiles_missing_values();
+
 
    // Means by categories
    test_means_by_categories();
-//   test_means_by_categories_missing_values();
+   test_means_by_categories_missing_values();
+
 
    cout << "End of descriptives test case.\n";
 }
