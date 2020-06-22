@@ -1889,6 +1889,8 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
+    cout << "AAAAAAAAAAAAAAAAA" << endl;
+
     // Inputs
 
     {
@@ -2374,11 +2376,20 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document;
 
 //    document->SaveFile(file_name.c_str());
 
 //    delete document;
+
+    FILE *pFile;
+    errno_t err;
+
+    err = fopen_s(&pFile, file_name.c_str(), "w");
+
+    tinyxml2::XMLPrinter document(pFile);
+
+    write_XML(document);
 }
 
 
@@ -2420,7 +2431,7 @@ void NeuralNetwork::load(const string& file_name)
 
     tinyxml2::XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
+    if(!document.LoadFile(file_name.c_str()))
     {
         ostringstream buffer;
 
@@ -2501,8 +2512,6 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "using namespace std;\n" << endl;
 
-    cout<<"layers_number"<<layers_number<<endl;
-
     for(Index i = 0; i < layers_number; i++)
     {
 
@@ -2562,8 +2571,6 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
-
-    cout<<"layers_number"<<layers_number<<endl;
 
     for(Index i = 0; i < layers_number; i++)
     {

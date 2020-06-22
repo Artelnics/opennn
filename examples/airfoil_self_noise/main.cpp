@@ -48,17 +48,27 @@ int main(void)
 
         data_set.split_instances_random();
 
-        const Tensor<Descriptives, 1> inputs_descriptives; // = data_set.scale_inputs_minimum_maximum();
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
+        scaling_inputs_methods.setConstant("MeanStandardDeviation");
+
+        Tensor<string, 1> scaling_target_methods(target_variables_number);
+        scaling_target_methods.setConstant("MeanStandardDeviation");
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
+        data_set.scale_inputs(scaling_inputs_methods, inputs_descriptives);
+
+        const Tensor<Descriptives, 1> target_descriptives = data_set.calculate_target_variables_descriptives();
+        data_set.scale_targets(scaling_target_methods, target_descriptives);
 
         // Neural network
 
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = 100;
-        const Index outputs_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 10;
 
         Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+        neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
@@ -67,29 +77,34 @@ int main(void)
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-
-        unscaling_layer_pointer->set_descriptives(targets_descriptives);
+        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::NoUnscaling);
 
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-        training_strategy.set_thread_pool_device(thread_pool_device);
-
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
+
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
+        unscaling_layer_pointer->set_descriptives(target_descriptives);
+        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
+
+        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_targets(scaling_target_methods, target_descriptives);
 
         // Testing analysis
 
-//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
-//        data_set.unscale_targets_minimum_maximum(targets_descriptives);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);        
+        testing_analysis.set_thread_pool_device(thread_pool_device);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 

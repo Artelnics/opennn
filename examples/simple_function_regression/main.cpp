@@ -34,18 +34,12 @@ int main(void)
         // Device
 
         const int n = omp_get_max_threads();
-
         NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-
         ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
         // Data set
 
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
-
-//        DataSet data_set;
-
-//        data_set.generate_Rosenbrock_data(100000,3);
 
         data_set.set_thread_pool_device(thread_pool_device);
 
@@ -55,13 +49,11 @@ int main(void)
 
         Tensor<Index, 1> neural_network_architecture(3);
 
-        neural_network_architecture.setValues({1, 2, 1});
+        neural_network_architecture.setValues({1, 3, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
 
         neural_network.set_thread_pool_device(thread_pool_device);
-
-        neural_network.set_parameters_constant(1);
 
         dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::Linear);
 
@@ -77,12 +69,13 @@ int main(void)
 
         training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-//        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         training_strategy.perform_training();
 
+        neural_network.save_expression_python("simple_function_regresion.py");
+
+        cout<<"bye";
 
         return 0;
     }
