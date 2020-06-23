@@ -43,96 +43,105 @@ int main(void)
         DataSet data_set("../data/urinary_inflammations_diagnosis.csv", ';', true);
         data_set.set_thread_pool_device(thread_pool_device);
 
-        data_set.print_data_preview();
-
         // Variables      
 
         Tensor<string, 1> uses(8);
-        uses.setValues({"Input","Input","Input","Input","Input","Input","UnusedVariable","Target"});
+        uses.setValues({"Input","Input","Input","Input","Input","Input","Unused","Target"});
         data_set.set_columns_uses(uses);
+
+        data_set.split_instances_random();
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        // Instances
-        
-        data_set.split_instances_random();
+        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
+        scaling_inputs_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
+        data_set.scale_inputs(scaling_inputs_methods, inputs_descriptives);
 
         // Neural network
 
+        const Index hidden_neurons_number = 6;
+
         Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({6, 6, 1});
+        neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
-
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_thread_pool_device(thread_pool_device);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
-        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
 
-        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-        training_strategy.set_display(true);
+        ConjugateGradient* conjugate_gradient_pointer = training_strategy.get_conjugate_gradient_pointer();
+        conjugate_gradient_pointer->set_minimum_loss_decrease(1.0e-6);
+        conjugate_gradient_pointer->set_loss_goal(1.0e-3);
 
-        training_strategy.perform_training();
-
-        // Model selection
-
-//        ModelSelection model_selection(&training_strategy);
-
-//        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
-
-//        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
-
-//        genetic_algorithm_pointer->set_approximation(false);
-
-//        genetic_algorithm_pointer->set_inicialization_method(GeneticAlgorithm::Random);
-
-//        genetic_algorithm_pointer->set_display(true);
-
-//        const ModelSelection::Results model_selection_results = model_selection.perform_inputs_selection();
+        const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
 
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        cout << "Confusion: " << endl;
-        cout << confusion << endl;
+        testing_analysis.set_thread_pool_device(thread_pool_device);
+
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+
+        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+
+        cout << "Confusion:"<< endl << confusion << endl;
+
+        cout << "Binary classification tests: " << endl;
+        cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;
+        cout << "Error rate                      : " << binary_classification_tests[1] << endl;
+        cout << "Sensitivity                     : " << binary_classification_tests[2] << endl;
+        cout << "Specificity                     : " << binary_classification_tests[3] << endl;
+        cout << "Precision                       : " << binary_classification_tests[4] << endl;
+        cout << "Positive likelihood             : " << binary_classification_tests[5] << endl;
+        cout << "Negative likelihood             : " << binary_classification_tests[6] << endl;
+        cout << "F1 score                        : " << binary_classification_tests[7] << endl;
+        cout << "False positive rate             : " << binary_classification_tests[8] << endl;
+        cout << "False discovery rate            : " << binary_classification_tests[9] << endl;
+        cout << "False negative rate             : " << binary_classification_tests[10] << endl;
+        cout << "Negative predictive value       : " << binary_classification_tests[11] << endl;
+        cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
+        cout << "Informedness                    : " << binary_classification_tests[13] << endl;
+        cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
         // Save results
 
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-//        neural_network.save_expression("../data/expression.txt");
+
+        neural_network.save_expression_python("neural_network.py");
 
         training_strategy.save("../data/training_strategy.xml");
 
-//        model_selection.save("../data/model_selection.xml");
-//        model_selection_results.save("../data/model_selection_results.dat");
-
-//        confusion.save_csv("../data/confusion.csv");
-
         return 0;
+
     }
     catch(exception& e)
     {

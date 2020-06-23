@@ -26,12 +26,12 @@ void CorrelationsTest::test_linear_correlation()
 
     Tensor<type, 1> vector1(10);
     vector1.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-     Tensor<type, 1> vector2(10);
+    Tensor<type, 1> vector2(10);
     vector2.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
-//    const type solution = 1;
+    const type solution = 1;
 
-//    assert_true(linear_correlation(vector1, vector2) - solution <= static_cast<type>(0.000001), LOG);
+//    assert_true(linear_correlation(thread_pool_device, vector1, vector2) - solution <= 0.000001, LOG);
 
     Tensor<type, 1> vector3(10);
     vector3.setValues({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});

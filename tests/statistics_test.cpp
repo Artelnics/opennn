@@ -258,8 +258,8 @@ void StatisticsTest::test_calculate_minimal_centers()  //<--- Zero
 
     //  Test 0
 
-//    Histogram histogram_1;
-//    assert_true(histogram_1.calculate_minimal_centers()(0) == 0, LOG);
+    Histogram histogram_0;
+//    assert_true(histogram_0.calculate_minimal_centers()(0) == 0, LOG);
 
 
     //Test 1

@@ -64,10 +64,10 @@ void DataSetTest::test_constructor()
 
 //   // Copy constructor
 
-//   DataSet ds6(ds1);
+   DataSet ds6(ds1);
 
-//   assert_true(ds6.get_variables_number() == 0, LOG);
-//   assert_true(ds6.get_instances_number() == 0, LOG);
+   assert_true(ds6.get_variables_number() == 0, LOG);
+   assert_true(ds6.get_instances_number() == 0, LOG);
 }
 
 
@@ -159,21 +159,24 @@ void DataSetTest::test_get_training_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> training_indices(2);
    training_indices.setValues({0,1});
 
-
-   //data_set.set_testing();
-   //data_set.set_training(training_indices);
+   data_set.set_testing();
+   data_set.set_training(training_indices);
 
    Tensor<type, 2> training_data = data_set.get_training_data();
    Tensor<type, 2> solution(2, 3);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(training_data == solution, LOG);
+   assert_true(training_data(0) == solution(0), LOG);
+   assert_true(training_data(1) == solution(1), LOG);
+   assert_true(training_data(2) == solution(2), LOG);
+   assert_true(training_data(3) == solution(3), LOG);
+   assert_true(training_data(4) == solution(4), LOG);
+   assert_true(training_data(5) == solution(5), LOG);
+   assert_true(training_data(6) == solution(6), LOG);
 }
 
 
@@ -184,21 +187,25 @@ void DataSetTest::test_get_selection_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> selection_indices(2);
    selection_indices.setValues({0,1});
 
 
-   //data_set.set_testing();
-   //data_set.set_selection(selection_indices);
+   data_set.set_testing();
+   data_set.set_selection(selection_indices);
 
-   //Tensor<type, 2> selection_data = data_set.get_selection_data();
+   Tensor<type, 2> selection_data = data_set.get_selection_data();
    Tensor<type, 2> solution(3, 2);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(selection_data == solution, LOG);
+   assert_true(selection_data(0) == solution(0), LOG);
+   assert_true(selection_data(1) == solution(1), LOG);
+   assert_true(selection_data(2) == solution(2), LOG);
+   assert_true(selection_data(3) == solution(3), LOG);
+   assert_true(selection_data(4) == solution(4), LOG);
+   assert_true(selection_data(5) == solution(5), LOG);
+   assert_true(selection_data(6) == solution(6), LOG);
 }
 
 
@@ -209,21 +216,24 @@ void DataSetTest::test_get_testing_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> testing_indices(2);
    testing_indices.setValues({0,1});
 
+   data_set.set_training();
+   data_set.set_testing(testing_indices);
 
-   //data_set.set_training();
-   //data_set.set_testing(testing_indices);
-
-   //Tensor<type, 2> testing_data = data_set.get_testing_data();
+   Tensor<type, 2> testing_data = data_set.get_testing_data();
    Tensor<type, 2> solution(3, 2);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(testing_data == solution, LOG);
+   assert_true(testing_data(0) == solution(0), LOG);
+   assert_true(testing_data(1) == solution(1), LOG);
+   assert_true(testing_data(2) == solution(2), LOG);
+   assert_true(testing_data(3) == solution(3), LOG);
+   assert_true(testing_data(4) == solution(4), LOG);
+   assert_true(testing_data(5) == solution(5), LOG);
+   assert_true(testing_data(6) == solution(6), LOG);
 }
 
 
@@ -279,7 +289,7 @@ void DataSetTest::test_get_instance()
    instance = data_set.get_instance_data(0);
 
    assert_true(instance.size() == 2, LOG);
-   //assert_true(instance == 1.0, LOG);
+   assert_true(instance(0) == 1.0, LOG);
 
    // Test several variables
 
@@ -291,7 +301,7 @@ void DataSetTest::test_get_instance()
    Tensor<type, 1> instance_0 = data_set.get_instance_data(0, indices_variables);
    Tensor<type, 1> instance_1 = data_set.get_instance_data(1, indices_variables);
 
-   //assert_true(instance_0 == instance_1, LOG);
+   assert_true(instance_0(0) == instance_1(0) && instance_0(1) == instance_1(1), LOG);
 }
 
 
@@ -329,13 +339,12 @@ void DataSetTest::test_set_instances_number()
 }
 
 
-void DataSetTest::test_set_variables_number() 
+void DataSetTest::test_set_columns_number()
 {
-   cout << "test_set_variables_number\n";
+   cout << "test_set_columns_number\n";
 
    DataSet data_set(1, 1);
-
-//   data_set.set_variables_number(2);
+   data_set.set_columns_number(2);
 
    assert_true(data_set.get_variables_number() == 2, LOG);
 }
@@ -347,7 +356,7 @@ void DataSetTest::test_set_display()
 }
 
 
-void DataSetTest::test_set_data() 
+void DataSetTest::test_set_data() // @todo
 {
    cout << "test_set_data\n";
 
@@ -356,7 +365,7 @@ void DataSetTest::test_set_data()
    Tensor<type, 1> new_data(3);
    new_data.setValues({1, 2, 0.0});
 
-   //data_set.set_data(new_data);
+//   data_set.set_data(new_data);
 
    Tensor<type, 2> data = data_set.get_data();
 
@@ -394,14 +403,14 @@ void DataSetTest::test_calculate_data_descriptives()
 
    data_set.initialize_data(0.0);
 
-   //descriptives = data_set.calculate_columns_descriptives();
+   descriptives = data_set.calculate_variables_descriptives();
 
-   //assert_true(descriptives.size() == 1, LOG);
+   assert_true(descriptives.size() == 1, LOG);
 
-   //(descriptives[0].minimum == 0.0, LOG);
-   //assert_true(descriptives[0].maximum == 0.0, LOG);
-   //assert_true(descriptives[0].mean == 0.0, LOG);
-   //assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum == 0.0, LOG);
+   assert_true(descriptives[0].maximum == 0.0, LOG);
+   assert_true(descriptives[0].mean == 0.0, LOG);
+   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
 
    // Test
 
@@ -409,34 +418,33 @@ void DataSetTest::test_calculate_data_descriptives()
 
    data_set.initialize_data(0.0);
 
-   //descriptives = data_set.calculate_columns_descriptives();
+   descriptives = data_set.calculate_variables_descriptives();
 
-   //assert_true(descriptives.size() == 4, LOG);
+   assert_true(descriptives.size() == 4, LOG);
 
-   //assert_true(descriptives[0].minimum == 0.0, LOG);
-   //assert_true(descriptives[0].maximum == 0.0, LOG);
-   //assert_true(descriptives[0].mean == 0.0, LOG);
-   //assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum == 0.0, LOG);
+   assert_true(descriptives[0].maximum == 0.0, LOG);
+   assert_true(descriptives[0].mean == 0.0, LOG);
+   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[1].minimum == 0.0, LOG);
-   //assert_true(descriptives[1].maximum == 0.0, LOG);
-   //assert_true(descriptives[1].mean == 0.0, LOG);
-   //assert_true(descriptives[1].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[1].minimum == 0.0, LOG);
+   assert_true(descriptives[1].maximum == 0.0, LOG);
+   assert_true(descriptives[1].mean == 0.0, LOG);
+   assert_true(descriptives[1].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[2].minimum == 0.0, LOG);
-   //assert_true(descriptives[2].maximum == 0.0, LOG);
-   //assert_true(descriptives[2].mean == 0.0, LOG);
-   //assert_true(descriptives[2].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[2].minimum == 0.0, LOG);
+   assert_true(descriptives[2].maximum == 0.0, LOG);
+   assert_true(descriptives[2].mean == 0.0, LOG);
+   assert_true(descriptives[2].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[3].minimum == 0.0, LOG);
-   //assert_true(descriptives[3].maximum == 0.0, LOG);
-   //assert_true(descriptives[3].mean == 0.0, LOG);
-   //assert_true(descriptives[3].standard_deviation == 0.0, LOG);
-
+   assert_true(descriptives[3].minimum == 0.0, LOG);
+   assert_true(descriptives[3].maximum == 0.0, LOG);
+   assert_true(descriptives[3].mean == 0.0, LOG);
+   assert_true(descriptives[3].standard_deviation == 0.0, LOG);
 }
 
 
-void DataSetTest::test_calculate_data_descriptives_missing_values()
+void DataSetTest::test_calculate_data_descriptives_missing_values() // @todo
 {
     cout << "test_calculate_data_descriptives_missing_values\n";
 
@@ -457,13 +465,13 @@ void DataSetTest::test_calculate_data_descriptives_missing_values()
 
     data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data = data_set.get_data();
+    data = data_set.get_data();
 
     //assert_true(abs(data_set.calculate_columns_descriptives_matrix()(0, 0) - (-1000)) < 1.0e-4, LOG);
     //assert_true(abs(data_set.calculate_columns_descriptives_matrix()(1, 0) - 4.0) < 1.0e-4, LOG);
@@ -525,7 +533,7 @@ void DataSetTest::test_calculate_testing_instances_descriptives()
    
    data_set.initialize_data(0.0);
 
-   //testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
+//   testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
 }
 
 
@@ -536,25 +544,24 @@ void DataSetTest::test_calculate_inputs_descriptives()
    Tensor<type, 2> matrix(2, 3);
    matrix.setValues({{1.0,2.0,3.0},{1.0,2.0,3.0}});
 
-   DataSet data_set;
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
    Tensor<Index, 1> indices(2);
    indices.setValues({0, 1});
 
-   //Descriptives descriptives;
-   //descriptives = data_set.calculate_inputs_descriptives(indices[0]);
-   //Descriptives descriptives_1;
-   //descriptives_1 = data_set.calculate_inputs_descriptives(indices[1]);
+   Descriptives descriptives;
+   descriptives = data_set.calculate_inputs_descriptives(indices[0]);
+   Descriptives descriptives_1;
+   descriptives_1 = data_set.calculate_inputs_descriptives(indices[1]);
 
-   //assert_true(descriptives.mean == 2.0, LOG);
-   //assert_true(descriptives.standard_deviation == 1.0, LOG);
-   //assert_true(descriptives.minimum == 1.0, LOG);
-   //assert_true(descriptives.maximum == 3.0, LOG);
+   assert_true(descriptives.mean == 2.0, LOG);
+   assert_true(descriptives.standard_deviation == 1.0, LOG);
+   assert_true(descriptives.minimum == 1.0, LOG);
+   assert_true(descriptives.maximum == 3.0, LOG);
 
-   //assert_true(descriptives_1.mean == 2.0, LOG);
-   //assert_true(descriptives_1.standard_deviation == 1.0, LOG);
-   //assert_true(descriptives_1.minimum == 1.0, LOG);
-   //assert_true(descriptives_1.maximum == 3.0, LOG);
+   assert_true(descriptives_1.mean == 2.0, LOG);
+   assert_true(descriptives_1.standard_deviation == 1.0, LOG);
+   assert_true(descriptives_1.minimum == 1.0, LOG);
+   assert_true(descriptives_1.maximum == 3.0, LOG);
 }
 
 
@@ -562,18 +569,18 @@ void DataSetTest::test_calculate_autocorrelations()
 {
     cout << "test_calculate_autocorrelations\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<type, 2> autocorrelations;
+    Tensor<type, 2> autocorrelations;
 
-//    data_set.set(20, 1, 1);
+    data_set.set(20, 1, 1);
 
-//    data_set.set_data_random();
+    data_set.set_data_random();
 
-//    autocorrelations = data_set.calculate_autocorrelations();
+    autocorrelations = data_set.calculate_autocorrelations();
 
-//    assert_true(autocorrelations.dimension(1) == 10, LOG);
-//    assert_true(autocorrelations.dimension(0) == 2, LOG);
+    assert_true(autocorrelations.dimension(1) == 10, LOG);
+    assert_true(autocorrelations.dimension(0) == 2, LOG);
 }
 
 
@@ -581,13 +588,13 @@ void DataSetTest::test_calculate_cross_correlations() // @todo
 {
     cout << "test_calculate_cross_correlations";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Matrix<Tensor<type, 1>> cross_correlations;
+    Tensor<type, 2> cross_correlations;
 
-//    data_set.set(20, 5, 1);
+    data_set.set(20, 5, 1);
 
-//    data_set.set_data_random();
+    data_set.set_data_random();
 
 //    cross_correlations = data_set.calculate_cross_correlations();
 
@@ -596,9 +603,9 @@ void DataSetTest::test_calculate_cross_correlations() // @todo
 }
 
 
-void DataSetTest::test_calculate_data_histograms()
+void DataSetTest::test_calculate_data_distributions()
 {
-   cout << "test_calculate_data_histograms\n";
+   cout << "test_calculate_data_distributions\n";
 
    Tensor<type, 2> matrix(3,3);
    matrix(0,0) = 2.0;
@@ -613,21 +620,21 @@ void DataSetTest::test_calculate_data_histograms()
 
    DataSet data_set(matrix);
    Tensor<Histogram, 1> histograms;
-   //histograms = data_set.calculate_columns_histograms();
+   histograms = data_set.calculate_columns_distribution();
    Tensor<Index, 1> sol(2);
    sol.setValues({1, 1});
    Tensor<Index, 1> sol_2(2);
-   sol.setValues({2, 2});
+   sol_2.setValues({2, 2});
    Tensor<type, 1> centers(2);
    centers.setValues({0,1});
 
    //Test frequencies
-   //assert_true(histograms[0].frequencies == sol, LOG);
+//   assert_true(histograms(0).frequencies == sol_2, LOG);
    //assert_true(histograms[1].frequencies == sol_2, LOG);
    //assert_true(histograms[2].frequencies == sol, LOG);
 
    //Test centers
-   //assert_true(histograms[0].centers == centers, LOG);
+//   assert_true(histograms[0].centers == centers, LOG);
    //assert_true(histograms[1].centers == centers, LOG);
    //assert_true(histograms[2].centers == centers, LOG);
 }
@@ -639,8 +646,8 @@ void DataSetTest::test_filter_data()
 
    DataSet data_set;
 
-   Tensor<type, 1> minimums;
-   Tensor<type, 1> maximums;
+   Tensor<type, 1> minimums(2);
+   Tensor<type, 1> maximums(2);
 
    Tensor<type, 2> data;
 
@@ -649,15 +656,15 @@ void DataSetTest::test_filter_data()
    data_set.set(2, 1, 1);
    data_set.initialize_data(1.0);
 
-   //minimums.set(2, 0.0);
-   //maximums.set(2, 0.5);
+   minimums.setValues({2, 0.0});
+   maximums.setValues({2, 0.5});
 
-   //data_set.filter_data(minimums, maximums);
+   data_set.filter_data(minimums, maximums);
 
-   //data = data_set.get_data();
+   data = data_set.get_data();
 
-   //assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
-   //assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
+   assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
+   assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
 }
 
 
@@ -673,7 +680,6 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
 
    data_set.set(2, 2, 2);
    data_set.set_data_random();
-
 //   data_set.scale_inputs_mean_standard_deviation();
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
@@ -741,7 +747,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
-     //assert_true(targets_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
+   assert_true(targets_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
 
 
@@ -769,7 +775,7 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    scaled_data = data_set.get_data();
 
-   //assert_true(scaled_data == data, LOG);
+//   assert_true(scaled_data == data, LOG);
 }
 
 
@@ -797,7 +803,7 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    scaled_data = data_set.get_data();
 
-   //assert_true(scaled_data == data, LOG);
+//   assert_true(scaled_data == data, LOG);
 }
 
 void DataSetTest::test_unscale_data_mean_standard_deviation()
@@ -809,8 +815,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
    matrix(1,0) = 5.0;
    matrix(2,0) = 77.0;
 
-   DataSet data;
-   //data.set_data(matrix);
+   DataSet data(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
@@ -822,7 +827,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
 
    Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
-   //data.set_data(unescale_matrix);
+   data.set(unescale_matrix);
 
    //data.unscale_data_mean_standard_deviation(descrriptives);
 
@@ -845,7 +850,7 @@ void DataSetTest::test_unscale_data_minimum_maximum()
    matrix(2,0) = 77.0;
 
    DataSet data;
-   //data.set_data(matrix);
+   data.set(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
@@ -857,9 +862,9 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 
    Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
-   //data.set_data(unescale_matrix);
+   data.set_data(unescale_matrix);
 
-   //data.unscale_data_minimum_maximum(descrriptives);
+   //data.unscale_data_minimum_maximum(descriptives);
 
    Tensor<type, 2> matrix_solution (3,1);
    matrix_solution(0,0) = 7.0;
@@ -873,32 +878,32 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 void DataSetTest::test_unscale_inputs_mean_standard_deviation() 
 {
    cout << "test_unscale_inputs_mean_standard_deviation\n";
-/*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
    data_set.set_display(false);
 
-   Tensor<Descriptives, 1> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives(1);
 
    // Test
 
    Tensor<type, 2> inputs = data_set.get_input_data();
 
-   //data_descriptives.set(4);
+//   data_descriptives.setValues({4});
 
-   data_set.unscale_inputs_mean_standard_deviation(data_descriptives);
+//   data_set.unscale_inputs_mean_standard_deviation(data_descriptives);
 
-   Tensor<type, 2> new_inputs = data_set.get_input_data();
+//   Tensor<type, 2> new_inputs = data_set.get_input_data();
 
-   //assert_true(new_inputs == inputs, LOG);*/
+   //assert_true(new_inputs == inputs, LOG);
 }
 
 
 void DataSetTest::test_unscale_targets_mean_standard_deviation() 
 {
    cout << "test_unscale_targets_mean_standard_deviation\n";
-  /*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
@@ -908,11 +913,11 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
-   data_set.unscale_targets_mean_standard_deviation(data_descriptives);
+//   data_set.unscale_targets_mean_standard_deviation(data_descriptives);
 
    Tensor<type, 2> new_targets = data_set.get_target_data();
 
-   //assert_true(new_targets == targets, LOG);*/
+   //assert_true(new_targets == targets, LOG);
 }
 
 
@@ -925,15 +930,14 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    data_set.set_display(false);
 
-   Tensor<Descriptives, 1> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives(4);
 
    // Test
 
    Tensor<type, 2> inputs = data_set.get_input_data();
 
-   //data_descriptives.set(4);
 
-   //data_set.unscale_inputs_minimum_maximum(data_descriptives);
+//   data_set.unscale_inputs_minimum_maximum(data_descriptives);
 
    Tensor<type, 2> new_inputs = data_set.get_input_data();
 
@@ -944,7 +948,7 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 void DataSetTest::test_unscale_targets_minimum_maximum() 
 {
    cout << "test_unscale_targets_minimum_maximum\n";
-/*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
@@ -954,10 +958,10 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
-   data_set.unscale_targets_minimum_maximum(data_descriptives);
+//   data_set.unscale_targets_minimum_maximum(data_descriptives);
 
    Tensor<type, 2> new_targets = data_set.get_target_data();
-*/
+
    //assert_true(new_targets == targets, LOG);
 }
 
@@ -989,14 +993,21 @@ void DataSetTest::test_initialize_data()
 
    DataSet data_set;
 
-   //data_set.set_data(matrix);
+   data_set.set(matrix);
 
-   //data_set.initialize_data(2);
+   data_set.initialize_data(2);
 
    Tensor<type, 2> solution(3, 3);
    solution.setValues({{2,2,2},{2,2,2},{2,2,2}});
 
-   //assert_true(data_set.get_data() == solution, LOG);
+   assert_true(data_set.get_data()(0) == solution(0), LOG);
+   assert_true(data_set.get_data()(1) == solution(1), LOG);
+   assert_true(data_set.get_data()(2) == solution(2), LOG);
+   assert_true(data_set.get_data()(3) == solution(3), LOG);
+   assert_true(data_set.get_data()(4) == solution(4), LOG);
+   assert_true(data_set.get_data()(5) == solution(5), LOG);
+   assert_true(data_set.get_data()(6) == solution(6), LOG);
+
 }
 
 
@@ -1004,40 +1015,42 @@ void DataSetTest::test_calculate_target_columns_distribution() // @todo
 {
     cout << "test_calculate_target_columns_distribution\n";
 
-//    //Test two classes
+    //Test two classes
 
-//    Tensor<type, 2> matrix({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
+    Tensor<type, 2> matrix(5, 4);
+    matrix.setValues({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
 
-//    Tensor<Index, 1> target_indices({3});
+    Tensor<Index, 1> target_indices(1);
+    target_indices.setValues({3});
 
-//    Tensor<Index, 1> input_variables_indices({0, 1, 2});
+    Tensor<Index, 1> input_variables_indices(3);
+    input_variables_indices.setValues({0, 1, 2});
 
-//    DataSet data_set;
+    DataSet data_set(matrix);
 
-//    data_set.set_data(matrix);
+    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-//    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    Tensor<Index, 1> solution(2);
+    solution[0] = 2;
+    solution[1] = 2;
 
-//    Tensor<Index, 1> solution;
-//    solution.set(2);
-//    solution[0] = 2;
-//    solution[1] = 2;
+    assert_true(target_distribution(0) == solution(0), LOG);
+    assert_true(target_distribution(1) == solution(1), LOG);
 
-//    assert_true(target_distribution == solution, LOG);
+    // Test more two classes
 
-//    // Test more two classes
+    Tensor<type, 2> matrix_1(6, 6);
+    matrix_1.setValues({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<type>(NAN),1,0,2,2},{static_cast<type>(NAN),static_cast<type>(NAN),1,0,0,2}});
 
-//    Tensor<type, 2> matrix_1({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<type>(NAN),1,0,2,2},{static_cast<type>(NAN),static_cast<type>(NAN),1,0,0,2}});
+    Tensor<Index, 1> target_indices_1(2);
+    target_indices_1.setValues({2,3});
 
-//    Tensor<Index, 1> target_indices_1({2,3});
+    Tensor<Index, 1> inputs_indices_1(2);
+    inputs_indices_1.setValues({0, 1});
 
-//    Tensor<Index, 1> inputs_indices_1({0, 1});
+    DataSet ds_1(matrix_1);
 
-//    DataSet ds_1;
-
-//    ds_1.set_data(matrix_1);
-
-//    Tensor<Index, 1> calculate_target_distribution_1 = ds_1.calculate_target_distribution();
+    Tensor<Index, 1> calculate_target_distribution_1 = ds_1.calculate_target_distribution();
 
 //    assert_true(calculate_target_distribution_1[0] == 6, LOG);
 //    assert_true(calculate_target_distribution_1[1] == 3, LOG);
@@ -1058,7 +1071,7 @@ void DataSetTest::test_unuse_most_populated_target()
     data_set.set(5,2,5);
     data_set.initialize_data(0.0);
 
-    //unused_instances_indices = data_set.unuse_most_populated_target(7);
+//    unused_instances_indices = data_set.unuse_most_populated_target(7);
 
     //assert_true(unused_instances_indices.size() == 5, LOG);
     //assert_true(data_set.get_used_instances_number() == 0, LOG);
@@ -1084,7 +1097,7 @@ void DataSetTest::test_unuse_most_populated_target()
     ds3.set(1, 10,10);
     ds3.set_data_random();
 
-    //unused_instances_indices = ds3.unuse_most_populated_target(50);
+//    unused_instances_indices = ds3.unuse_most_populated_target(50);
 
     //assert_true(unused_instances_indices.size() == 1, LOG);
     //assert_true(ds3.get_used_instances_number() == 0, LOG);
@@ -1120,11 +1133,11 @@ void DataSetTest::test_balance_binary_targets_distribution()
     instance4[1] = 9.0;
     instance4[2] = 0.0;
 
-    //data_set.set_instance(0, instance0);
-    //data_set.set_instance(1, instance1);
-    //data_set.set_instance(2, instance2);
-    //data_set.set_instance(3, instance3);
-    //data_set.set_instance(4, instance4);
+//    data_set.set_instance(0, instance0);
+//    data_set.set_instance(1, instance1);
+//    data_set.set_instance(2, instance2);
+//    data_set.set_instance(3, instance3);
+//    data_set.set_instance(4, instance4);
 
     //data_set.balance_binary_targets_distribution();
 
@@ -1302,13 +1315,16 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     // Test
     {
-    //DataSet ds2(9, 1, 99);
+    DataSet ds2(9, 1, 99);
 
-    //Tensor<type, 2> data1(9,10);
-    //Tensor<type, 2> data2(90,10);
+    Tensor<type, 1> data1(2);
+    data1.setValues({9, 10});
 
-    //data1.setRandom();
-    //data2.setRandom();
+    Tensor<type, 1> data2(2);
+    data2.setValues({90,10});
+
+    data1.setRandom();
+    data2.setRandom();
 
     //data1.set_column(9, 0.0);
     //data2.set_column(9, 1.0);
@@ -1325,52 +1341,52 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     //Test
     {
-    //DataSet data_set(4,1,1);
+    DataSet data_set(4,1,1);
 
-    //const string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    //data_set.set_data_file_name(data_file_name);
-    //data_set.set_has_columns_names(false);
-    //data_set.set_separator(',');
-    //data_set.set_missing_values_label("NaN");
+    data_set.set_data_file_name(data_file_name);
+    data_set.set_has_columns_names(false);
+    data_set.set_separator(',');
+    data_set.set_missing_values_label("NaN");
 
-    //const string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,NaN\n"
     "7.0,3.2,0.0\n"
     "6.3,3.3,0.0";
 
-    //ofstream file;
+    ofstream file;
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data_set.impute_missing_values_unuse();
+    data_set.impute_missing_values_unuse();
 
-    //data_set.balance_binary_targets_distribution();
+//    data_set.balance_binary_targets_distribution();
 
-    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    //assert_true(target_distribution[0] == target_distribution[1], LOG);
-    //assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
-    //assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
+    assert_true(target_distribution[0] == target_distribution[1], LOG);
+    assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
+    assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
     }
 
     //Test
     {
-    //DataSet data_set(16,1,1);
+    DataSet data_set(16,1,1);
 
-    //const string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    //data_set.set_data_file_name(data_file_name);
-    //data_set.set_has_columns_names(false);
-    //data_set.set_separator(',');
-    //data_set.set_missing_values_label("NaN");
+    data_set.set_data_file_name(data_file_name);
+    data_set.set_has_columns_names(false);
+    data_set.set_separator(',');
+    data_set.set_missing_values_label("NaN");
 
-    //const string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,1.0\n"
     "7.0,3.2,0.0\n"
@@ -1392,21 +1408,21 @@ void DataSetTest::test_balance_binary_targets_distribution()
     "7.0,3.2,NaN\n"
     "6.3,3.3,NaN\n";
 
-    //ofstream file;
+    ofstream file;
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data_set.impute_missing_values_unuse();
+    data_set.impute_missing_values_unuse();
 
-    //data_set.balance_binary_targets_distribution();
+//    data_set.balance_binary_targets_distribution();
 
-    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+//    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    //assert_true(target_distribution[0] == target_distribution[1], LOG);
+//    assert_true(target_distribution[0] == target_distribution[1], LOG);
     }
 
 }
@@ -1746,79 +1762,79 @@ void DataSetTest::test_read_csv()
 
 //   // Test
 
-////   data_set.set();
-////   data_set.set_data_file_name(data_file_name);
+//   data_set.set();
+//   data_set.set_data_file_name(data_file_name);
 
-////   data_set.set_display(false);
+//   data_set.set_display(false);
 
-////   data_set.save_data();
+//   data_set.save_data();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-//   //assert_true(data.empty(), LOG);
+   //assert_true(data.empty(), LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set(2, 2, 2);
 //   data_set.set_data_file_name(data_file_name);
 
 //   data_set.initialize_data(0.0);
 
-////   data_set.set_display(false);
+//   data_set.set_display(false);
 
-////   data_set.save_data();
+//   data_set.save_data();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-//   //assert_true(data == 0.0, LOG);
+   //assert_true(data == 0.0, LOG);
+
+   // Test
+
+//   data_set.set_separator(' ');
+
+//   data_string = "\n\t\n   1 \t 2   \n\n\n   3 \t 4   \n\t\n";
+
+//   file.open(data_file_name.c_str());
+//   file << data_string;
+//   file.close();
+
+//   data_set.read_csv();
+
+//   data = data_set.get_data();
+
+//   assert_true(data.dimension(0) == 2, LOG);
+//   assert_true(data.dimension(1) == 2, LOG);
+
+//   assert_true(abs(data(0,0) - 1) < 1.0e-4, LOG);
+//   assert_true(abs(data(0,1) - 2) < 1.0e-4, LOG);
+//   assert_true(abs(data(1,0) - 3) < 1.0e-4, LOG);
+//   assert_true(abs(data(1,1) - 4) < 1.0e-4, LOG);
+
+//   assert_true(data_set.get_instances_number() == 2, LOG);
+//   assert_true(data_set.get_variables_number() == 2, LOG);
 
 //   // Test
 
-////   data_set.set_separator(' ');
+//   data_set.set_separator('\t');
 
-////   data_string = "\n\t\n   1 \t 2   \n\n\n   3 \t 4   \n\t\n";
+//   data_string = "\n\n\n1 \t 2\n3 \t 4\n\n\n";
 
-////   file.open(data_file_name.c_str());
-////   file << data_string;
-////   file.close();
+//   file.open(data_file_name.c_str());
+//   file << data_string;
+//   file.close();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data.dimension(0) == 2, LOG);
-////   assert_true(data.dimension(1) == 2, LOG);
-
-////   assert_true(abs(data(0,0) - 1) < 1.0e-4, LOG);
-////   assert_true(abs(data(0,1) - 2) < 1.0e-4, LOG);
-////   assert_true(abs(data(1,0) - 3) < 1.0e-4, LOG);
-////   assert_true(abs(data(1,1) - 4) < 1.0e-4, LOG);
-
-////   assert_true(data_set.get_instances_number() == 2, LOG);
-////   assert_true(data_set.get_variables_number() == 2, LOG);
-
-//   // Test
-
-////   data_set.set_separator('\t');
-
-////   data_string = "\n\n\n1 \t 2\n3 \t 4\n\n\n";
-
-////   file.open(data_file_name.c_str());
-////   file << data_string;
-////   file.close();
-
-////   data_set.read_csv();
-
-////   data = data_set.get_data();
-
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1835,21 +1851,21 @@ void DataSetTest::test_read_csv()
 //   file << data_string;
 //   file.close();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data_set.get_header_line() == true, LOG);
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_header_line() == true, LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true(data.dimension(0) == 2, LOG);
-////   assert_true(data.dimension(1) == 2, LOG);
+//   assert_true(data.dimension(0) == 2, LOG);
+//   assert_true(data.dimension(1) == 2, LOG);
 
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1866,15 +1882,15 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1893,13 +1909,13 @@ void DataSetTest::test_read_csv()
 
 //   data = data_set.get_data();
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true((data(0,0) - 1.0 ) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0 ) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0 ) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0 ) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0 ) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0 ) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0 ) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0 ) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1918,8 +1934,8 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_instances_number() == 4, LOG);
-////   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
 
 //   // Test
 
@@ -1938,26 +1954,26 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 4, LOG);
-////   assert_true(data_set.get_target_variables_number() == 3, LOG);
-////   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 4, LOG);
+//   assert_true(data_set.get_target_variables_number() == 3, LOG);
+//   assert_true(data_set.get_instances_number() == 4, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true((data(0,0) - 5.1) < 1.0e-4, LOG);
-////   assert_true((data(0,4) - 1) < 1.0e-4, LOG);
-////   assert_true((data(0,5) - 0) < 1.0e-4, LOG);
-////   assert_true((data(0,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(1,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(1,5) - 1) < 1.0e-4, LOG);
-////   assert_true((data(1,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(2,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(2,5) - 1) < 1.0e-4, LOG);
-////   assert_true((data(2,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 5.1) < 1.0e-4, LOG);
+//   assert_true((data(0,4) - 1) < 1.0e-4, LOG);
+//   assert_true((data(0,5) - 0) < 1.0e-4, LOG);
+//   assert_true((data(0,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(1,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(1,5) - 1) < 1.0e-4, LOG);
+//   assert_true((data(1,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(2,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(2,5) - 1) < 1.0e-4, LOG);
+//   assert_true((data(2,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 
 ////   // Test
 
@@ -1979,33 +1995,33 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 4, LOG);
-////   assert_true(data_set.get_target_variables_number() == 3, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 4, LOG);
+//   assert_true(data_set.get_target_variables_number() == 3, LOG);
 
-////   assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
-////   assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
-////   assert_true(data_set.get_variable_name(2) == "petal length", LOG);
-////   assert_true(data_set.get_variable_name(3) == "petal width", LOG);
-////   assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
-////   assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
-////   assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
+//   assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
+//   assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
+//   assert_true(data_set.get_variable_name(2) == "petal length", LOG);
+//   assert_true(data_set.get_variable_name(3) == "petal width", LOG);
+//   assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
+//   assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
+//   assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
 
-////   assert_true(data_set.get_instances_number() == 5, LOG);
+//   assert_true(data_set.get_instances_number() == 5, LOG);
 
 //   data = data_set.get_data();
 
-////   assert_true(data(0,4) == 1.0, LOG);
-////   assert_true(data(0,5) == 0.0, LOG);
-////   assert_true(data(0,6) == 0.0, LOG);
-////   assert_true(data(1,4) == 0.0, LOG);
-////   assert_true(data(1,5) == 1.0, LOG);
-////   assert_true(data(1,6) == 0.0, LOG);
-////   assert_true(data(2,4) == 0.0, LOG);
-////   assert_true(data(2,5) == 1.0, LOG);
-////   assert_true(data(2,6) == 0.0, LOG);
+//   assert_true(data(0,4) == 1.0, LOG);
+//   assert_true(data(0,5) == 0.0, LOG);
+//   assert_true(data(0,6) == 0.0, LOG);
+//   assert_true(data(1,4) == 0.0, LOG);
+//   assert_true(data(1,5) == 1.0, LOG);
+//   assert_true(data(1,6) == 0.0, LOG);
+//   assert_true(data(2,4) == 0.0, LOG);
+//   assert_true(data(2,5) == 1.0, LOG);
+//   assert_true(data(2,6) == 0.0, LOG);
 
-////   // Test
+//   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(',');
@@ -2022,7 +2038,7 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   // Test
+//   // Test
 
 //   data_set.set_separator(' ');
 
@@ -2034,17 +2050,17 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-//////   data_set_pointer->set_name(0, "x");
-//////   data_set_pointer->set_name(1, "y");
+//   data_set_pointer->set_name(0, "x");
+//   data_set_pointer->set_name(1, "y");
 
 //   data_set.save("../data/data_set.xml");
 
-////   data_set.load("../data/data_set.xml");
+//   data_set.load("../data/data_set.xml");
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   // Test
+//   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(' ');
@@ -2059,17 +2075,17 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 2, LOG);
-////   assert_true(data_set.get_input_variables_number() == 1, LOG);
-////   assert_true(data_set.get_target_variables_number() == 1, LOG);
+//   assert_true(data_set.get_variables_number() == 2, LOG);
+//   assert_true(data_set.get_input_variables_number() == 1, LOG);
+//   assert_true(data_set.get_target_variables_number() == 1, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data(0,1) == 1.0, LOG);
-////   assert_true(data(1,1) == 0.0, LOG);
-////   assert_true(data(2,1) == 1.0, LOG);
+//   assert_true(data(0,1) == 1.0, LOG);
+//   assert_true(data(1,1) == 0.0, LOG);
+//   assert_true(data(2,1) == 1.0, LOG);
 
-////   // Test
+//   //Test
 
 //   data_set.set_separator('\t');
 //   data_set.set_missing_values_label("NaN");
@@ -2092,14 +2108,14 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 6, LOG);
-////   assert_true(data_set.get_target_variables_number() == 1, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 6, LOG);
+//   assert_true(data_set.get_target_variables_number() == 1, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data.dimension(0) == 10, LOG);
-////   assert_true(data.dimension(1) == 7, LOG);
+//   assert_true(data.dimension(0) == 10, LOG);
+//   assert_true(data.dimension(1) == 7, LOG);
 }
 
 
@@ -2930,7 +2946,7 @@ void DataSetTest::run_test_case()
 
    test_set_data();
    test_set_instances_number();
-   test_set_variables_number();
+   test_set_columns_number();
 
 
    // Instance methods
@@ -2966,7 +2982,7 @@ void DataSetTest::run_test_case()
 
    // Histrogram methods
 
-   test_calculate_data_histograms();
+   test_calculate_data_distributions();
 
 
    // Filtering methods
