@@ -58,9 +58,13 @@ int main(void)
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
         data_set.scale_inputs(scaling_inputs_methods, inputs_descriptives);
 
+
+//        cout<<data_set.get_data();
+//        system("pause");
+
         // Neural network
 
-        const Index hidden_neurons_number = 5;
+        const Index hidden_neurons_number = 3;
 
         Tensor<Index, 1> architecture(3);
         architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
@@ -74,7 +78,7 @@ int main(void)
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
 
@@ -82,20 +86,17 @@ int main(void)
         training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-        StochasticGradientDescent* stochastic_gradient_descent = training_strategy.get_stochastic_gradient_descent_pointer();
+        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
-        stochastic_gradient_descent->set_loss_goal(1.0e-3);
-        stochastic_gradient_descent->set_maximum_epochs_number(10000);
-        stochastic_gradient_descent->set_display_period(100);
+        adam->set_loss_goal(1.0e-3);
+        adam->set_maximum_epochs_number(10000);
+        adam->set_display_period(100);
 
         training_strategy.perform_training();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Testing analysis
 
