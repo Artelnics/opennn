@@ -579,7 +579,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_instances_indices,
                                                                                          batch_instances_number,
                                                                                          is_forecasting);
-
         const Index batches_number = training_batches.dimension(0);
 
         parameters_norm = l2_norm(optimization_data.parameters);
