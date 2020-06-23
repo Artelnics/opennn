@@ -125,7 +125,7 @@ public:
 
    // Histrogram methods
 
-   void test_calculate_data_histograms();
+   void test_calculate_data_distributions();
 
    // Filtering methods
 
