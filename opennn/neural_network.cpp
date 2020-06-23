@@ -2024,7 +2024,13 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            inputs_names(i) = input_element->GetText();
+//            inputs_names(i) = input_element->GetText();
+            if(!input_element->GetText()){
+                inputs_names(i) = "";
+            }
+            else{
+                inputs_names(i) = input_element->GetText();
+            }
 
         }
     }
@@ -2343,7 +2349,12 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            outputs_names(i) = output_element->GetText();
+            if(!output_element->GetText()){
+                outputs_names(i) = "";
+            }else{
+                outputs_names(i) = output_element->GetText();
+            }
+
         }
     }
 }
