@@ -543,27 +543,22 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                        BackPropagation& back_propagation,
                                        SecondOrderLoss& second_order_loss) const
 {
+    cout << "----------------------------------------------------------" << endl;
+
     // First Order
-
-//    calculate_error(batch, forward_propagation, back_propagation);
-
-//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-//    const Tensor<type, 2>& targets = batch.targets_2d;
-
-//    Tensor<type, 1> error_terms(outputs.dimension(0));
-//    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
-
-//    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
 
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
+    cout << "Output gradient: " << back_propagation.output_gradient << endl;
+
     calculate_layers_delta(forward_propagation, back_propagation);
+
 
     // Second Order
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+
+    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
 
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
@@ -585,6 +580,8 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
         second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
         second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
     }
+
+    cout << "----------------------------------------------------------" << endl;
 }
 
 
@@ -722,6 +719,8 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                               back_propagation.output_gradient,
                               back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
+     cout << "Output delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+
      // Hidden layers
 
    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
@@ -734,7 +733,10 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                                 forward_propagation.layers(i),
                                 back_propagation.neural_network.layers(i+1).delta,
                                 back_propagation.neural_network.layers(i).delta);
+
+       cout << "Other delta: " << back_propagation.neural_network.layers(i).delta << endl;
    }
+
 }
 
 
