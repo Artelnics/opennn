@@ -356,7 +356,7 @@ void DataSetTest::test_set_display()
 }
 
 
-void DataSetTest::test_set_data() 
+void DataSetTest::test_set_data() // @todo
 {
    cout << "test_set_data\n";
 
@@ -365,7 +365,7 @@ void DataSetTest::test_set_data()
    Tensor<type, 1> new_data(3);
    new_data.setValues({1, 2, 0.0});
 
-   //data_set.set_data(new_data);
+//   data_set.set_data(new_data);
 
    Tensor<type, 2> data = data_set.get_data();
 
@@ -403,14 +403,14 @@ void DataSetTest::test_calculate_data_descriptives()
 
    data_set.initialize_data(0.0);
 
-   //descriptives = data_set.calculate_columns_descriptives();
+   descriptives = data_set.calculate_variables_descriptives();
 
-   //assert_true(descriptives.size() == 1, LOG);
+   assert_true(descriptives.size() == 1, LOG);
 
-   //(descriptives[0].minimum == 0.0, LOG);
-   //assert_true(descriptives[0].maximum == 0.0, LOG);
-   //assert_true(descriptives[0].mean == 0.0, LOG);
-   //assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum == 0.0, LOG);
+   assert_true(descriptives[0].maximum == 0.0, LOG);
+   assert_true(descriptives[0].mean == 0.0, LOG);
+   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
 
    // Test
 
@@ -418,34 +418,33 @@ void DataSetTest::test_calculate_data_descriptives()
 
    data_set.initialize_data(0.0);
 
-   //descriptives = data_set.calculate_columns_descriptives();
+   descriptives = data_set.calculate_variables_descriptives();
 
-   //assert_true(descriptives.size() == 4, LOG);
+   assert_true(descriptives.size() == 4, LOG);
 
-   //assert_true(descriptives[0].minimum == 0.0, LOG);
-   //assert_true(descriptives[0].maximum == 0.0, LOG);
-   //assert_true(descriptives[0].mean == 0.0, LOG);
-   //assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum == 0.0, LOG);
+   assert_true(descriptives[0].maximum == 0.0, LOG);
+   assert_true(descriptives[0].mean == 0.0, LOG);
+   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[1].minimum == 0.0, LOG);
-   //assert_true(descriptives[1].maximum == 0.0, LOG);
-   //assert_true(descriptives[1].mean == 0.0, LOG);
-   //assert_true(descriptives[1].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[1].minimum == 0.0, LOG);
+   assert_true(descriptives[1].maximum == 0.0, LOG);
+   assert_true(descriptives[1].mean == 0.0, LOG);
+   assert_true(descriptives[1].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[2].minimum == 0.0, LOG);
-   //assert_true(descriptives[2].maximum == 0.0, LOG);
-   //assert_true(descriptives[2].mean == 0.0, LOG);
-   //assert_true(descriptives[2].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[2].minimum == 0.0, LOG);
+   assert_true(descriptives[2].maximum == 0.0, LOG);
+   assert_true(descriptives[2].mean == 0.0, LOG);
+   assert_true(descriptives[2].standard_deviation == 0.0, LOG);
 
-   //assert_true(descriptives[3].minimum == 0.0, LOG);
-   //assert_true(descriptives[3].maximum == 0.0, LOG);
-   //assert_true(descriptives[3].mean == 0.0, LOG);
-   //assert_true(descriptives[3].standard_deviation == 0.0, LOG);
-
+   assert_true(descriptives[3].minimum == 0.0, LOG);
+   assert_true(descriptives[3].maximum == 0.0, LOG);
+   assert_true(descriptives[3].mean == 0.0, LOG);
+   assert_true(descriptives[3].standard_deviation == 0.0, LOG);
 }
 
 
-void DataSetTest::test_calculate_data_descriptives_missing_values()
+void DataSetTest::test_calculate_data_descriptives_missing_values() // @todo
 {
     cout << "test_calculate_data_descriptives_missing_values\n";
 
@@ -466,13 +465,13 @@ void DataSetTest::test_calculate_data_descriptives_missing_values()
 
     data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data = data_set.get_data();
+    data = data_set.get_data();
 
     //assert_true(abs(data_set.calculate_columns_descriptives_matrix()(0, 0) - (-1000)) < 1.0e-4, LOG);
     //assert_true(abs(data_set.calculate_columns_descriptives_matrix()(1, 0) - 4.0) < 1.0e-4, LOG);
@@ -534,7 +533,7 @@ void DataSetTest::test_calculate_testing_instances_descriptives()
    
    data_set.initialize_data(0.0);
 
-   //testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
+//   testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
 }
 
 
@@ -545,25 +544,24 @@ void DataSetTest::test_calculate_inputs_descriptives()
    Tensor<type, 2> matrix(2, 3);
    matrix.setValues({{1.0,2.0,3.0},{1.0,2.0,3.0}});
 
-   DataSet data_set;
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
    Tensor<Index, 1> indices(2);
    indices.setValues({0, 1});
 
-   //Descriptives descriptives;
-   //descriptives = data_set.calculate_inputs_descriptives(indices[0]);
-   //Descriptives descriptives_1;
-   //descriptives_1 = data_set.calculate_inputs_descriptives(indices[1]);
+   Descriptives descriptives;
+   descriptives = data_set.calculate_inputs_descriptives(indices[0]);
+   Descriptives descriptives_1;
+   descriptives_1 = data_set.calculate_inputs_descriptives(indices[1]);
 
-   //assert_true(descriptives.mean == 2.0, LOG);
-   //assert_true(descriptives.standard_deviation == 1.0, LOG);
-   //assert_true(descriptives.minimum == 1.0, LOG);
-   //assert_true(descriptives.maximum == 3.0, LOG);
+   assert_true(descriptives.mean == 2.0, LOG);
+   assert_true(descriptives.standard_deviation == 1.0, LOG);
+   assert_true(descriptives.minimum == 1.0, LOG);
+   assert_true(descriptives.maximum == 3.0, LOG);
 
-   //assert_true(descriptives_1.mean == 2.0, LOG);
-   //assert_true(descriptives_1.standard_deviation == 1.0, LOG);
-   //assert_true(descriptives_1.minimum == 1.0, LOG);
-   //assert_true(descriptives_1.maximum == 3.0, LOG);
+   assert_true(descriptives_1.mean == 2.0, LOG);
+   assert_true(descriptives_1.standard_deviation == 1.0, LOG);
+   assert_true(descriptives_1.minimum == 1.0, LOG);
+   assert_true(descriptives_1.maximum == 3.0, LOG);
 }
 
 
