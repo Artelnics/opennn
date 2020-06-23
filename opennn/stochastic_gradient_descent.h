@@ -161,12 +161,6 @@ public:
        batch_instances_number = new_batch_instances_number;
    }
 
-
-   void set_batch_size(const Index& new_batch_instances_number)
-   {
-       batch_instances_number = new_batch_instances_number;
-   }
-
    //Training operators
 
    void set_initial_learning_rate(const type&);
