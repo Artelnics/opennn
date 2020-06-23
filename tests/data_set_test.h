@@ -63,7 +63,7 @@ public:
    // Set methods
    void test_set();
    void test_set_instances_number();
-   void test_set_variables_number();
+   void test_set_columns_number();
    void test_set_display();
 
    // Data methods
@@ -125,7 +125,7 @@ public:
 
    // Histrogram methods
 
-   void test_calculate_data_histograms();
+   void test_calculate_data_distributions();
 
    // Filtering methods
 

@@ -9590,7 +9590,12 @@ void DataSet::read_csv_1()
 
     cout << "Setting rows labels..." << endl;
 
-    if(contains_substring(data_file_preview(0)(0), "id"))
+    string first_name = data_file_preview(0)(0);
+    transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
+
+    cout << "First name: " << first_name << endl;
+
+    if(contains_substring(first_name, "id"))
     {
         has_rows_labels = true;
     }
@@ -9618,7 +9623,6 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-
         has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                         : set_columns_names(data_file_preview(0));
     }
