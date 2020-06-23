@@ -289,7 +289,7 @@ void DataSetTest::test_get_instance()
    instance = data_set.get_instance_data(0);
 
    assert_true(instance.size() == 2, LOG);
-   //assert_true(instance == 1.0, LOG);
+   assert_true(instance(0) == 1.0, LOG);
 
    // Test several variables
 
@@ -301,7 +301,7 @@ void DataSetTest::test_get_instance()
    Tensor<type, 1> instance_0 = data_set.get_instance_data(0, indices_variables);
    Tensor<type, 1> instance_1 = data_set.get_instance_data(1, indices_variables);
 
-   //assert_true(instance_0 == instance_1, LOG);
+   assert_true(instance_0(0) == instance_1(0) && instance_0(1) == instance_1(1), LOG);
 }
 
 
@@ -339,13 +339,12 @@ void DataSetTest::test_set_instances_number()
 }
 
 
-void DataSetTest::test_set_variables_number() 
+void DataSetTest::test_set_columns_number()
 {
-   cout << "test_set_variables_number\n";
+   cout << "test_set_columns_number\n";
 
    DataSet data_set(1, 1);
-
-//   data_set.set_variables_number(2);
+   data_set.set_columns_number(2);
 
    assert_true(data_set.get_variables_number() == 2, LOG);
 }
@@ -2940,7 +2939,7 @@ void DataSetTest::run_test_case()
 
    test_set_data();
    test_set_instances_number();
-   test_set_variables_number();
+   test_set_columns_number();
 
 
    // Instance methods
