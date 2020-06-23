@@ -43,19 +43,27 @@ int main(void)
         // Data set
 
         DataSet data_set("../data/logical_operations.csv", ';', true);
+
         data_set.set_thread_pool_device(thread_pool_device);
 
         Tensor<string, 1> uses(8);
         uses.setValues({"Input","Input","Target","Target","Target","Target","Target","Target"});
+
         data_set.set_columns_uses(uses);
+        data_set.set_training();
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
         // Neural network
 
+        const Index hidden_neurons_number = 6;
+
         Tensor<Index, 1> architecture(3);
-        architecture.setValues({2, 6, 6});
+        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
@@ -63,23 +71,18 @@ int main(void)
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_synaptic_weights_constant_glorot_uniform();
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_thread_pool_device(thread_pool_device);
 
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
-
         training_strategy.perform_training();
-
-        // Save results
-
-        data_set.save("../data/data_set.xml");
-
-        neural_network.save("../data/neural_network.xml");
-
-        training_strategy.save("../data/training_strategy.xml");
 
         // Print results to screen
 
@@ -116,7 +119,18 @@ int main(void)
 
         cout << "X = 0 Y = 0" << endl << inputs << " " << outputs << endl;
 
+        // Save results
+
+        data_set.save("../data/data_set.xml");
+
+        neural_network.save("../data/neural_network.xml");
+
+        training_strategy.save("../data/training_strategy.xml");
+
+        cout<<"bye";
+
         return 0;
+
     }
     catch(exception& e)
     {
