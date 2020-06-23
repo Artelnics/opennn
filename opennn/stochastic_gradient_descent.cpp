@@ -618,14 +618,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    if(training_instances_number < batch_instances_number) batch_instances_number = training_instances_number;
+
     Tensor<Index, 1> batch_instances_indices(batch_instances_number);
     batch_instances_indices.setConstant(1);
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
-    const Index training_batches_number
-            = batch_instances_number > training_instances_number
-            ? 1 : training_instances_number/batch_instances_number;
+    const Index training_batches_number = training_instances_number/batch_instances_number;
 
     Tensor<Index, 2> training_batches(training_batches_number, batch_instances_number);
 
