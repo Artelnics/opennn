@@ -569,18 +569,18 @@ void DataSetTest::test_calculate_autocorrelations()
 {
     cout << "test_calculate_autocorrelations\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<type, 2> autocorrelations;
+    Tensor<type, 2> autocorrelations;
 
-//    data_set.set(20, 1, 1);
+    data_set.set(20, 1, 1);
 
-//    data_set.set_data_random();
+    data_set.set_data_random();
 
-//    autocorrelations = data_set.calculate_autocorrelations();
+    autocorrelations = data_set.calculate_autocorrelations();
 
-//    assert_true(autocorrelations.dimension(1) == 10, LOG);
-//    assert_true(autocorrelations.dimension(0) == 2, LOG);
+    assert_true(autocorrelations.dimension(1) == 10, LOG);
+    assert_true(autocorrelations.dimension(0) == 2, LOG);
 }
 
 
@@ -588,13 +588,13 @@ void DataSetTest::test_calculate_cross_correlations() // @todo
 {
     cout << "test_calculate_cross_correlations";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Matrix<Tensor<type, 1>> cross_correlations;
+    Tensor<type, 2> cross_correlations;
 
-//    data_set.set(20, 5, 1);
+    data_set.set(20, 5, 1);
 
-//    data_set.set_data_random();
+    data_set.set_data_random();
 
 //    cross_correlations = data_set.calculate_cross_correlations();
 
@@ -603,9 +603,9 @@ void DataSetTest::test_calculate_cross_correlations() // @todo
 }
 
 
-void DataSetTest::test_calculate_data_histograms()
+void DataSetTest::test_calculate_data_distributions()
 {
-   cout << "test_calculate_data_histograms\n";
+   cout << "test_calculate_data_distributions\n";
 
    Tensor<type, 2> matrix(3,3);
    matrix(0,0) = 2.0;
@@ -620,7 +620,7 @@ void DataSetTest::test_calculate_data_histograms()
 
    DataSet data_set(matrix);
    Tensor<Histogram, 1> histograms;
-   //histograms = data_set.calculate_columns_histograms();
+   histograms = data_set.calculate_columns_distribution();
    Tensor<Index, 1> sol(2);
    sol.setValues({1, 1});
    Tensor<Index, 1> sol_2(2);
@@ -629,7 +629,7 @@ void DataSetTest::test_calculate_data_histograms()
    centers.setValues({0,1});
 
    //Test frequencies
-   //assert_true(histograms[0].frequencies == sol, LOG);
+//   assert_true(histograms[0].frequencies == sol, LOG);
    //assert_true(histograms[1].frequencies == sol_2, LOG);
    //assert_true(histograms[2].frequencies == sol, LOG);
 
@@ -2973,7 +2973,7 @@ void DataSetTest::run_test_case()
 
    // Histrogram methods
 
-   test_calculate_data_histograms();
+   test_calculate_data_distributions();
 
 
    // Filtering methods
