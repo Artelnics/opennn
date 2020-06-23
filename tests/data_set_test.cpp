@@ -1000,7 +1000,14 @@ void DataSetTest::test_initialize_data()
    Tensor<type, 2> solution(3, 3);
    solution.setValues({{2,2,2},{2,2,2},{2,2,2}});
 
-   //assert_true(data_set.get_data() == solution, LOG);
+   assert_true(data_set.get_data()(0) == solution(0), LOG);
+   assert_true(data_set.get_data()(1) == solution(1), LOG);
+   assert_true(data_set.get_data()(2) == solution(2), LOG);
+   assert_true(data_set.get_data()(3) == solution(3), LOG);
+   assert_true(data_set.get_data()(4) == solution(4), LOG);
+   assert_true(data_set.get_data()(5) == solution(5), LOG);
+   assert_true(data_set.get_data()(6) == solution(6), LOG);
+
 }
 
 
@@ -1008,44 +1015,46 @@ void DataSetTest::test_calculate_target_columns_distribution() // @todo
 {
     cout << "test_calculate_target_columns_distribution\n";
 
-//    //Test two classes
+    //Test two classes
 
-//    Tensor<type, 2> matrix({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
+    Tensor<type, 2> matrix(5, 4);
+    matrix.setValues({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
 
-//    Tensor<Index, 1> target_indices({3});
+    Tensor<Index, 1> target_indices(1);
+    target_indices.setValues({3});
 
-//    Tensor<Index, 1> input_variables_indices({0, 1, 2});
+    Tensor<Index, 1> input_variables_indices(3);
+    input_variables_indices.setValues({0, 1, 2});
 
-//    DataSet data_set;
+    DataSet data_set(matrix);
 
-//    data_set.set_data(matrix);
+    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-//    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    Tensor<Index, 1> solution(2);
+    solution[0] = 2;
+    solution[1] = 2;
 
-//    Tensor<Index, 1> solution;
-//    solution.set(2);
-//    solution[0] = 2;
-//    solution[1] = 2;
+    assert_true(target_distribution(0) == solution(0), LOG);
+    assert_true(target_distribution(1) == solution(1), LOG);
 
-//    assert_true(target_distribution == solution, LOG);
+    // Test more two classes
 
-//    // Test more two classes
+    Tensor<type, 2> matrix_1(6, 6);
+    matrix_1.setValues({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<type>(NAN),1,0,2,2},{static_cast<type>(NAN),static_cast<type>(NAN),1,0,0,2}});
 
-//    Tensor<type, 2> matrix_1({{2,5,6,9,8,7},{2,9,1,9,4,5},{6,5,6,7,3,2},{0,static_cast<type>(NAN),1,0,2,2},{static_cast<type>(NAN),static_cast<type>(NAN),1,0,0,2}});
+    Tensor<Index, 1> target_indices_1(2);
+    target_indices_1.setValues({2,3});
 
-//    Tensor<Index, 1> target_indices_1({2,3});
+    Tensor<Index, 1> inputs_indices_1(2);
+    inputs_indices_1.setValues({0, 1});
 
-//    Tensor<Index, 1> inputs_indices_1({0, 1});
+    DataSet ds_1(matrix_1);
 
-//    DataSet ds_1;
+    Tensor<Index, 1> calculate_target_distribution_1 = ds_1.calculate_target_distribution();
 
-//    ds_1.set_data(matrix_1);
-
-//    Tensor<Index, 1> calculate_target_distribution_1 = ds_1.calculate_target_distribution();
-
-//    assert_true(calculate_target_distribution_1[0] == 6, LOG);
-//    assert_true(calculate_target_distribution_1[1] == 3, LOG);
-//    assert_true(calculate_target_distribution_1[2] == 2, LOG);
+    assert_true(calculate_target_distribution_1[0] == 6, LOG);
+    assert_true(calculate_target_distribution_1[1] == 3, LOG);
+    assert_true(calculate_target_distribution_1[2] == 2, LOG);
 }
 
 
