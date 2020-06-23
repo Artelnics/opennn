@@ -624,17 +624,17 @@ void DataSetTest::test_calculate_data_distributions()
    Tensor<Index, 1> sol(2);
    sol.setValues({1, 1});
    Tensor<Index, 1> sol_2(2);
-   sol.setValues({2, 2});
+   sol_2.setValues({2, 2});
    Tensor<type, 1> centers(2);
    centers.setValues({0,1});
 
    //Test frequencies
-//   assert_true(histograms[0].frequencies == sol, LOG);
+//   assert_true(histograms(0).frequencies == sol_2, LOG);
    //assert_true(histograms[1].frequencies == sol_2, LOG);
    //assert_true(histograms[2].frequencies == sol, LOG);
 
    //Test centers
-   //assert_true(histograms[0].centers == centers, LOG);
+//   assert_true(histograms[0].centers == centers, LOG);
    //assert_true(histograms[1].centers == centers, LOG);
    //assert_true(histograms[2].centers == centers, LOG);
 }
@@ -646,8 +646,8 @@ void DataSetTest::test_filter_data()
 
    DataSet data_set;
 
-   Tensor<type, 1> minimums;
-   Tensor<type, 1> maximums;
+   Tensor<type, 1> minimums(2);
+   Tensor<type, 1> maximums(2);
 
    Tensor<type, 2> data;
 
@@ -656,15 +656,15 @@ void DataSetTest::test_filter_data()
    data_set.set(2, 1, 1);
    data_set.initialize_data(1.0);
 
-   //minimums.set(2, 0.0);
-   //maximums.set(2, 0.5);
+   minimums.setValues({2, 0.0});
+   maximums.setValues({2, 0.5});
 
-   //data_set.filter_data(minimums, maximums);
+   data_set.filter_data(minimums, maximums);
 
-   //data = data_set.get_data();
+   data = data_set.get_data();
 
-   //assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
-   //assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
+   assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
+   assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
 }
 
 
@@ -680,7 +680,6 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
 
    data_set.set(2, 2, 2);
    data_set.set_data_random();
-
 //   data_set.scale_inputs_mean_standard_deviation();
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
@@ -748,7 +747,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
-     //assert_true(targets_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
+   assert_true(targets_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
 
 
@@ -776,7 +775,7 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    scaled_data = data_set.get_data();
 
-   //assert_true(scaled_data == data, LOG);
+//   assert_true(scaled_data == data, LOG);
 }
 
 
@@ -804,7 +803,7 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    scaled_data = data_set.get_data();
 
-   //assert_true(scaled_data == data, LOG);
+//   assert_true(scaled_data == data, LOG);
 }
 
 void DataSetTest::test_unscale_data_mean_standard_deviation()
@@ -816,8 +815,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
    matrix(1,0) = 5.0;
    matrix(2,0) = 77.0;
 
-   DataSet data;
-   //data.set_data(matrix);
+   DataSet data(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
@@ -829,7 +827,7 @@ void DataSetTest::test_unscale_data_mean_standard_deviation()
 
    Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
-   //data.set_data(unescale_matrix);
+   data.set(unescale_matrix);
 
    //data.unscale_data_mean_standard_deviation(descrriptives);
 
@@ -852,7 +850,7 @@ void DataSetTest::test_unscale_data_minimum_maximum()
    matrix(2,0) = 77.0;
 
    DataSet data;
-   //data.set_data(matrix);
+   data.set(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
@@ -864,9 +862,9 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 
    Tensor<type, 2> unescale_matrix(3,1);
    DataSet data_unscaled;
-   //data.set_data(unescale_matrix);
+   data.set_data(unescale_matrix);
 
-   //data.unscale_data_minimum_maximum(descrriptives);
+   //data.unscale_data_minimum_maximum(descriptives);
 
    Tensor<type, 2> matrix_solution (3,1);
    matrix_solution(0,0) = 7.0;
@@ -880,32 +878,32 @@ void DataSetTest::test_unscale_data_minimum_maximum()
 void DataSetTest::test_unscale_inputs_mean_standard_deviation() 
 {
    cout << "test_unscale_inputs_mean_standard_deviation\n";
-/*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
    data_set.set_display(false);
 
-   Tensor<Descriptives, 1> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives(1);
 
    // Test
 
    Tensor<type, 2> inputs = data_set.get_input_data();
 
-   //data_descriptives.set(4);
+//   data_descriptives.setValues({4});
 
-   data_set.unscale_inputs_mean_standard_deviation(data_descriptives);
+//   data_set.unscale_inputs_mean_standard_deviation(data_descriptives);
 
-   Tensor<type, 2> new_inputs = data_set.get_input_data();
+//   Tensor<type, 2> new_inputs = data_set.get_input_data();
 
-   //assert_true(new_inputs == inputs, LOG);*/
+   //assert_true(new_inputs == inputs, LOG);
 }
 
 
 void DataSetTest::test_unscale_targets_mean_standard_deviation() 
 {
    cout << "test_unscale_targets_mean_standard_deviation\n";
-  /*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
@@ -915,11 +913,11 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
-   data_set.unscale_targets_mean_standard_deviation(data_descriptives);
+//   data_set.unscale_targets_mean_standard_deviation(data_descriptives);
 
    Tensor<type, 2> new_targets = data_set.get_target_data();
 
-   //assert_true(new_targets == targets, LOG);*/
+   //assert_true(new_targets == targets, LOG);
 }
 
 
@@ -932,15 +930,14 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    data_set.set_display(false);
 
-   Tensor<Descriptives, 1> data_descriptives;
+   Tensor<Descriptives, 1> data_descriptives(4);
 
    // Test
 
    Tensor<type, 2> inputs = data_set.get_input_data();
 
-   //data_descriptives.set(4);
 
-   //data_set.unscale_inputs_minimum_maximum(data_descriptives);
+//   data_set.unscale_inputs_minimum_maximum(data_descriptives);
 
    Tensor<type, 2> new_inputs = data_set.get_input_data();
 
@@ -951,7 +948,7 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 void DataSetTest::test_unscale_targets_minimum_maximum() 
 {
    cout << "test_unscale_targets_minimum_maximum\n";
-/*
+
    DataSet data_set(2, 2, 2);
    data_set.initialize_data(0.0);
 
@@ -961,10 +958,10 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    Tensor<Descriptives, 1> data_descriptives(4);
 
-   data_set.unscale_targets_minimum_maximum(data_descriptives);
+//   data_set.unscale_targets_minimum_maximum(data_descriptives);
 
    Tensor<type, 2> new_targets = data_set.get_target_data();
-*/
+
    //assert_true(new_targets == targets, LOG);
 }
 
@@ -996,9 +993,9 @@ void DataSetTest::test_initialize_data()
 
    DataSet data_set;
 
-   //data_set.set_data(matrix);
+   data_set.set(matrix);
 
-   //data_set.initialize_data(2);
+   data_set.initialize_data(2);
 
    Tensor<type, 2> solution(3, 3);
    solution.setValues({{2,2,2},{2,2,2},{2,2,2}});
