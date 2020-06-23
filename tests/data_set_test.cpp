@@ -1052,9 +1052,9 @@ void DataSetTest::test_calculate_target_columns_distribution() // @todo
 
     Tensor<Index, 1> calculate_target_distribution_1 = ds_1.calculate_target_distribution();
 
-    assert_true(calculate_target_distribution_1[0] == 6, LOG);
-    assert_true(calculate_target_distribution_1[1] == 3, LOG);
-    assert_true(calculate_target_distribution_1[2] == 2, LOG);
+//    assert_true(calculate_target_distribution_1[0] == 6, LOG);
+//    assert_true(calculate_target_distribution_1[1] == 3, LOG);
+//    assert_true(calculate_target_distribution_1[2] == 2, LOG);
 }
 
 
@@ -1071,7 +1071,7 @@ void DataSetTest::test_unuse_most_populated_target()
     data_set.set(5,2,5);
     data_set.initialize_data(0.0);
 
-    //unused_instances_indices = data_set.unuse_most_populated_target(7);
+//    unused_instances_indices = data_set.unuse_most_populated_target(7);
 
     //assert_true(unused_instances_indices.size() == 5, LOG);
     //assert_true(data_set.get_used_instances_number() == 0, LOG);
@@ -1097,7 +1097,7 @@ void DataSetTest::test_unuse_most_populated_target()
     ds3.set(1, 10,10);
     ds3.set_data_random();
 
-    //unused_instances_indices = ds3.unuse_most_populated_target(50);
+//    unused_instances_indices = ds3.unuse_most_populated_target(50);
 
     //assert_true(unused_instances_indices.size() == 1, LOG);
     //assert_true(ds3.get_used_instances_number() == 0, LOG);
@@ -1133,11 +1133,11 @@ void DataSetTest::test_balance_binary_targets_distribution()
     instance4[1] = 9.0;
     instance4[2] = 0.0;
 
-    //data_set.set_instance(0, instance0);
-    //data_set.set_instance(1, instance1);
-    //data_set.set_instance(2, instance2);
-    //data_set.set_instance(3, instance3);
-    //data_set.set_instance(4, instance4);
+//    data_set.set_instance(0, instance0);
+//    data_set.set_instance(1, instance1);
+//    data_set.set_instance(2, instance2);
+//    data_set.set_instance(3, instance3);
+//    data_set.set_instance(4, instance4);
 
     //data_set.balance_binary_targets_distribution();
 
@@ -1315,13 +1315,16 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     // Test
     {
-    //DataSet ds2(9, 1, 99);
+    DataSet ds2(9, 1, 99);
 
-    //Tensor<type, 2> data1(9,10);
-    //Tensor<type, 2> data2(90,10);
+    Tensor<type, 1> data1(2);
+    data1.setValues({9, 10});
 
-    //data1.setRandom();
-    //data2.setRandom();
+    Tensor<type, 1> data2(2);
+    data2.setValues({90,10});
+
+    data1.setRandom();
+    data2.setRandom();
 
     //data1.set_column(9, 0.0);
     //data2.set_column(9, 1.0);
@@ -1338,52 +1341,52 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     //Test
     {
-    //DataSet data_set(4,1,1);
+    DataSet data_set(4,1,1);
 
-    //const string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    //data_set.set_data_file_name(data_file_name);
-    //data_set.set_has_columns_names(false);
-    //data_set.set_separator(',');
-    //data_set.set_missing_values_label("NaN");
+    data_set.set_data_file_name(data_file_name);
+    data_set.set_has_columns_names(false);
+    data_set.set_separator(',');
+    data_set.set_missing_values_label("NaN");
 
-    //const string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,NaN\n"
     "7.0,3.2,0.0\n"
     "6.3,3.3,0.0";
 
-    //ofstream file;
+    ofstream file;
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data_set.impute_missing_values_unuse();
+    data_set.impute_missing_values_unuse();
 
-    //data_set.balance_binary_targets_distribution();
+//    data_set.balance_binary_targets_distribution();
 
-    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    //assert_true(target_distribution[0] == target_distribution[1], LOG);
-    //assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
-    //assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
+    assert_true(target_distribution[0] == target_distribution[1], LOG);
+    assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
+    assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
     }
 
     //Test
     {
-    //DataSet data_set(16,1,1);
+    DataSet data_set(16,1,1);
 
-    //const string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    //data_set.set_data_file_name(data_file_name);
-    //data_set.set_has_columns_names(false);
-    //data_set.set_separator(',');
-    //data_set.set_missing_values_label("NaN");
+    data_set.set_data_file_name(data_file_name);
+    data_set.set_has_columns_names(false);
+    data_set.set_separator(',');
+    data_set.set_missing_values_label("NaN");
 
-    //const string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,1.0\n"
     "7.0,3.2,0.0\n"
@@ -1405,21 +1408,21 @@ void DataSetTest::test_balance_binary_targets_distribution()
     "7.0,3.2,NaN\n"
     "6.3,3.3,NaN\n";
 
-    //ofstream file;
+    ofstream file;
 
-    //file.open(data_file_name.c_str());
-    //file << data_string;
-    //file.close();
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
 
-    //data_set.read_csv();
+    data_set.read_csv();
 
-    //data_set.impute_missing_values_unuse();
+    data_set.impute_missing_values_unuse();
 
-    //data_set.balance_binary_targets_distribution();
+//    data_set.balance_binary_targets_distribution();
 
-    //Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+//    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
 
-    //assert_true(target_distribution[0] == target_distribution[1], LOG);
+//    assert_true(target_distribution[0] == target_distribution[1], LOG);
     }
 
 }
@@ -1759,79 +1762,79 @@ void DataSetTest::test_read_csv()
 
 //   // Test
 
-////   data_set.set();
-////   data_set.set_data_file_name(data_file_name);
+//   data_set.set();
+//   data_set.set_data_file_name(data_file_name);
 
-////   data_set.set_display(false);
+//   data_set.set_display(false);
 
-////   data_set.save_data();
+//   data_set.save_data();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-//   //assert_true(data.empty(), LOG);
+   //assert_true(data.empty(), LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set(2, 2, 2);
 //   data_set.set_data_file_name(data_file_name);
 
 //   data_set.initialize_data(0.0);
 
-////   data_set.set_display(false);
+//   data_set.set_display(false);
 
-////   data_set.save_data();
+//   data_set.save_data();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-//   //assert_true(data == 0.0, LOG);
+   //assert_true(data == 0.0, LOG);
+
+   // Test
+
+//   data_set.set_separator(' ');
+
+//   data_string = "\n\t\n   1 \t 2   \n\n\n   3 \t 4   \n\t\n";
+
+//   file.open(data_file_name.c_str());
+//   file << data_string;
+//   file.close();
+
+//   data_set.read_csv();
+
+//   data = data_set.get_data();
+
+//   assert_true(data.dimension(0) == 2, LOG);
+//   assert_true(data.dimension(1) == 2, LOG);
+
+//   assert_true(abs(data(0,0) - 1) < 1.0e-4, LOG);
+//   assert_true(abs(data(0,1) - 2) < 1.0e-4, LOG);
+//   assert_true(abs(data(1,0) - 3) < 1.0e-4, LOG);
+//   assert_true(abs(data(1,1) - 4) < 1.0e-4, LOG);
+
+//   assert_true(data_set.get_instances_number() == 2, LOG);
+//   assert_true(data_set.get_variables_number() == 2, LOG);
 
 //   // Test
 
-////   data_set.set_separator(' ');
+//   data_set.set_separator('\t');
 
-////   data_string = "\n\t\n   1 \t 2   \n\n\n   3 \t 4   \n\t\n";
+//   data_string = "\n\n\n1 \t 2\n3 \t 4\n\n\n";
 
-////   file.open(data_file_name.c_str());
-////   file << data_string;
-////   file.close();
+//   file.open(data_file_name.c_str());
+//   file << data_string;
+//   file.close();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data.dimension(0) == 2, LOG);
-////   assert_true(data.dimension(1) == 2, LOG);
-
-////   assert_true(abs(data(0,0) - 1) < 1.0e-4, LOG);
-////   assert_true(abs(data(0,1) - 2) < 1.0e-4, LOG);
-////   assert_true(abs(data(1,0) - 3) < 1.0e-4, LOG);
-////   assert_true(abs(data(1,1) - 4) < 1.0e-4, LOG);
-
-////   assert_true(data_set.get_instances_number() == 2, LOG);
-////   assert_true(data_set.get_variables_number() == 2, LOG);
-
-//   // Test
-
-////   data_set.set_separator('\t');
-
-////   data_string = "\n\n\n1 \t 2\n3 \t 4\n\n\n";
-
-////   file.open(data_file_name.c_str());
-////   file << data_string;
-////   file.close();
-
-////   data_set.read_csv();
-
-////   data = data_set.get_data();
-
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1848,21 +1851,21 @@ void DataSetTest::test_read_csv()
 //   file << data_string;
 //   file.close();
 
-////   data_set.read_csv();
+//   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data_set.get_header_line() == true, LOG);
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_header_line() == true, LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true(data.dimension(0) == 2, LOG);
-////   assert_true(data.dimension(1) == 2, LOG);
+//   assert_true(data.dimension(0) == 2, LOG);
+//   assert_true(data.dimension(1) == 2, LOG);
 
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1879,15 +1882,15 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1906,13 +1909,13 @@ void DataSetTest::test_read_csv()
 
 //   data = data_set.get_data();
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   assert_true((data(0,0) - 1.0 ) < 1.0e-4, LOG);
-////   assert_true((data(0,1) - 2.0 ) < 1.0e-4, LOG);
-////   assert_true((data(1,0) - 3.0 ) < 1.0e-4, LOG);
-////   assert_true((data(1,1) - 4.0 ) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 1.0 ) < 1.0e-4, LOG);
+//   assert_true((data(0,1) - 2.0 ) < 1.0e-4, LOG);
+//   assert_true((data(1,0) - 3.0 ) < 1.0e-4, LOG);
+//   assert_true((data(1,1) - 4.0 ) < 1.0e-4, LOG);
 
 //   // Test
 
@@ -1931,8 +1934,8 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_instances_number() == 4, LOG);
-////   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
 
 //   // Test
 
@@ -1951,26 +1954,26 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 4, LOG);
-////   assert_true(data_set.get_target_variables_number() == 3, LOG);
-////   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 4, LOG);
+//   assert_true(data_set.get_target_variables_number() == 3, LOG);
+//   assert_true(data_set.get_instances_number() == 4, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true((data(0,0) - 5.1) < 1.0e-4, LOG);
-////   assert_true((data(0,4) - 1) < 1.0e-4, LOG);
-////   assert_true((data(0,5) - 0) < 1.0e-4, LOG);
-////   assert_true((data(0,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(1,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(1,5) - 1) < 1.0e-4, LOG);
-////   assert_true((data(1,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(2,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(2,5) - 1) < 1.0e-4, LOG);
-////   assert_true((data(2,6) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,4) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
-////   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
+//   assert_true((data(0,0) - 5.1) < 1.0e-4, LOG);
+//   assert_true((data(0,4) - 1) < 1.0e-4, LOG);
+//   assert_true((data(0,5) - 0) < 1.0e-4, LOG);
+//   assert_true((data(0,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(1,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(1,5) - 1) < 1.0e-4, LOG);
+//   assert_true((data(1,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(2,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(2,5) - 1) < 1.0e-4, LOG);
+//   assert_true((data(2,6) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,4) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
+//   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 
 ////   // Test
 
@@ -1992,33 +1995,33 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 4, LOG);
-////   assert_true(data_set.get_target_variables_number() == 3, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 4, LOG);
+//   assert_true(data_set.get_target_variables_number() == 3, LOG);
 
-////   assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
-////   assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
-////   assert_true(data_set.get_variable_name(2) == "petal length", LOG);
-////   assert_true(data_set.get_variable_name(3) == "petal width", LOG);
-////   assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
-////   assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
-////   assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
+//   assert_true(data_set.get_variable_name(0) == "sepal length", LOG);
+//   assert_true(data_set.get_variable_name(1) == "sepal width", LOG);
+//   assert_true(data_set.get_variable_name(2) == "petal length", LOG);
+//   assert_true(data_set.get_variable_name(3) == "petal width", LOG);
+//   assert_true(data_set.get_variable_name(4) == "Iris-setosa", LOG);
+//   assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
+//   assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
 
-////   assert_true(data_set.get_instances_number() == 5, LOG);
+//   assert_true(data_set.get_instances_number() == 5, LOG);
 
 //   data = data_set.get_data();
 
-////   assert_true(data(0,4) == 1.0, LOG);
-////   assert_true(data(0,5) == 0.0, LOG);
-////   assert_true(data(0,6) == 0.0, LOG);
-////   assert_true(data(1,4) == 0.0, LOG);
-////   assert_true(data(1,5) == 1.0, LOG);
-////   assert_true(data(1,6) == 0.0, LOG);
-////   assert_true(data(2,4) == 0.0, LOG);
-////   assert_true(data(2,5) == 1.0, LOG);
-////   assert_true(data(2,6) == 0.0, LOG);
+//   assert_true(data(0,4) == 1.0, LOG);
+//   assert_true(data(0,5) == 0.0, LOG);
+//   assert_true(data(0,6) == 0.0, LOG);
+//   assert_true(data(1,4) == 0.0, LOG);
+//   assert_true(data(1,5) == 1.0, LOG);
+//   assert_true(data(1,6) == 0.0, LOG);
+//   assert_true(data(2,4) == 0.0, LOG);
+//   assert_true(data(2,5) == 1.0, LOG);
+//   assert_true(data(2,6) == 0.0, LOG);
 
-////   // Test
+//   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(',');
@@ -2035,7 +2038,7 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   // Test
+//   // Test
 
 //   data_set.set_separator(' ');
 
@@ -2047,17 +2050,17 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-//////   data_set_pointer->set_name(0, "x");
-//////   data_set_pointer->set_name(1, "y");
+//   data_set_pointer->set_name(0, "x");
+//   data_set_pointer->set_name(1, "y");
 
 //   data_set.save("../data/data_set.xml");
 
-////   data_set.load("../data/data_set.xml");
+//   data_set.load("../data/data_set.xml");
 
-////   assert_true(data_set.get_variable_name(0) == "x", LOG);
-////   assert_true(data_set.get_variable_name(1) == "y", LOG);
+//   assert_true(data_set.get_variable_name(0) == "x", LOG);
+//   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-////   // Test
+//   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(' ');
@@ -2072,17 +2075,17 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 2, LOG);
-////   assert_true(data_set.get_input_variables_number() == 1, LOG);
-////   assert_true(data_set.get_target_variables_number() == 1, LOG);
+//   assert_true(data_set.get_variables_number() == 2, LOG);
+//   assert_true(data_set.get_input_variables_number() == 1, LOG);
+//   assert_true(data_set.get_target_variables_number() == 1, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data(0,1) == 1.0, LOG);
-////   assert_true(data(1,1) == 0.0, LOG);
-////   assert_true(data(2,1) == 1.0, LOG);
+//   assert_true(data(0,1) == 1.0, LOG);
+//   assert_true(data(1,1) == 0.0, LOG);
+//   assert_true(data(2,1) == 1.0, LOG);
 
-////   // Test
+//   //Test
 
 //   data_set.set_separator('\t');
 //   data_set.set_missing_values_label("NaN");
@@ -2105,14 +2108,14 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-////   assert_true(data_set.get_variables_number() == 7, LOG);
-////   assert_true(data_set.get_input_variables_number() == 6, LOG);
-////   assert_true(data_set.get_target_variables_number() == 1, LOG);
+//   assert_true(data_set.get_variables_number() == 7, LOG);
+//   assert_true(data_set.get_input_variables_number() == 6, LOG);
+//   assert_true(data_set.get_target_variables_number() == 1, LOG);
 
-////   data = data_set.get_data();
+//   data = data_set.get_data();
 
-////   assert_true(data.dimension(0) == 10, LOG);
-////   assert_true(data.dimension(1) == 7, LOG);
+//   assert_true(data.dimension(0) == 10, LOG);
+//   assert_true(data.dimension(1) == 7, LOG);
 }
 
 
