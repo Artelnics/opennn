@@ -64,10 +64,10 @@ void DataSetTest::test_constructor()
 
 //   // Copy constructor
 
-//   DataSet ds6(ds1);
+   DataSet ds6(ds1);
 
-//   assert_true(ds6.get_variables_number() == 0, LOG);
-//   assert_true(ds6.get_instances_number() == 0, LOG);
+   assert_true(ds6.get_variables_number() == 0, LOG);
+   assert_true(ds6.get_instances_number() == 0, LOG);
 }
 
 
@@ -159,21 +159,24 @@ void DataSetTest::test_get_training_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> training_indices(2);
    training_indices.setValues({0,1});
 
-
-   //data_set.set_testing();
-   //data_set.set_training(training_indices);
+   data_set.set_testing();
+   data_set.set_training(training_indices);
 
    Tensor<type, 2> training_data = data_set.get_training_data();
    Tensor<type, 2> solution(2, 3);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(training_data == solution, LOG);
+   assert_true(training_data(0) == solution(0), LOG);
+   assert_true(training_data(1) == solution(1), LOG);
+   assert_true(training_data(2) == solution(2), LOG);
+   assert_true(training_data(3) == solution(3), LOG);
+   assert_true(training_data(4) == solution(4), LOG);
+   assert_true(training_data(5) == solution(5), LOG);
+   assert_true(training_data(6) == solution(6), LOG);
 }
 
 
@@ -184,21 +187,25 @@ void DataSetTest::test_get_selection_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> selection_indices(2);
    selection_indices.setValues({0,1});
 
 
-   //data_set.set_testing();
-   //data_set.set_selection(selection_indices);
+   data_set.set_testing();
+   data_set.set_selection(selection_indices);
 
-   //Tensor<type, 2> selection_data = data_set.get_selection_data();
+   Tensor<type, 2> selection_data = data_set.get_selection_data();
    Tensor<type, 2> solution(3, 2);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(selection_data == solution, LOG);
+   assert_true(selection_data(0) == solution(0), LOG);
+   assert_true(selection_data(1) == solution(1), LOG);
+   assert_true(selection_data(2) == solution(2), LOG);
+   assert_true(selection_data(3) == solution(3), LOG);
+   assert_true(selection_data(4) == solution(4), LOG);
+   assert_true(selection_data(5) == solution(5), LOG);
+   assert_true(selection_data(6) == solution(6), LOG);
 }
 
 
@@ -209,21 +216,24 @@ void DataSetTest::test_get_testing_data()
    Tensor<type, 2> matrix(3, 3);
    matrix.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
-   DataSet data_set;
-
-   //data_set.set_data(matrix);
+   DataSet data_set(matrix);
 
    Tensor<Index, 1> testing_indices(2);
    testing_indices.setValues({0,1});
 
+   data_set.set_training();
+   data_set.set_testing(testing_indices);
 
-   //data_set.set_training();
-   //data_set.set_testing(testing_indices);
-
-   //Tensor<type, 2> testing_data = data_set.get_testing_data();
+   Tensor<type, 2> testing_data = data_set.get_testing_data();
    Tensor<type, 2> solution(3, 2);
    solution.setValues({{1,4},{4,3},{7,8}});
-   //assert_true(testing_data == solution, LOG);
+   assert_true(testing_data(0) == solution(0), LOG);
+   assert_true(testing_data(1) == solution(1), LOG);
+   assert_true(testing_data(2) == solution(2), LOG);
+   assert_true(testing_data(3) == solution(3), LOG);
+   assert_true(testing_data(4) == solution(4), LOG);
+   assert_true(testing_data(5) == solution(5), LOG);
+   assert_true(testing_data(6) == solution(6), LOG);
 }
 
 
