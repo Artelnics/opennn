@@ -718,7 +718,13 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(unscaling_methods(j) == MinimumMaximum) // [-1, 1]
                     {
-                        outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
+                        const type slope = (descriptives(j).maximum - descriptives(j).minimum)/static_cast<type>(2);
+
+                        const type intercept = (descriptives(j).minimum + descriptives(j).maximum)/static_cast<type>(2);
+
+                        outputs(i,j) = inputs(i,j)*slope + intercept;
+
+//                        outputs(i,j) = static_cast<type>(0.5)*(inputs(i,j) + 1)*(descriptives(j).maximum-descriptives(j).minimum) + descriptives(j).minimum;
                     }
                     else if(unscaling_methods(j) == MeanStandardDeviation)
                     {
@@ -1163,7 +1169,13 @@ string UnscalingLayer::write_expression_c() const
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*(inputs[" << i << "]+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ");\n";
+            const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
+
+            const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
+
+//            buffer << "\toutputs[" << i << "] = 0.5*(inputs[" << i << "]+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ");\n";
         }
         else if(unscaling_methods(i) == MeanStandardDeviation)
         {
@@ -1205,7 +1217,7 @@ string UnscalingLayer::write_expression_python() const
 
     buffer << "def " << layer_name << "(inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -1215,7 +1227,13 @@ string UnscalingLayer::write_expression_python() const
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*(inputs[" << i << "]+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ")\n";
+            const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
+
+            const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+
+//            buffer << "\toutputs[" << i << "] = 0.5*(inputs[" << i << "]+1)*(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))+(" << descriptives[i].minimum << ")\n";
         }
         else if(unscaling_methods(i) == MeanStandardDeviation)
         {
