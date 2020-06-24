@@ -543,13 +543,13 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                        BackPropagation& back_propagation,
                                        SecondOrderLoss& second_order_loss) const
 {
-    cout << "----------------------------------------------------------" << endl;
+//    cout << "----------------------------------------------------------" << endl;
 
     // First Order
 
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
-    cout << "Output gradient: " << back_propagation.output_gradient << endl;
+//    cout << "Output gradient: " << back_propagation.output_gradient << endl;
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -558,7 +558,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
+//    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
 
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
@@ -719,7 +719,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                               back_propagation.output_gradient,
                               back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-     cout << "Output delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+//     cout << "Output delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
      // Hidden layers
 
@@ -734,7 +734,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                                 back_propagation.neural_network.layers(i+1).delta,
                                 back_propagation.neural_network.layers(i).delta);
 
-       cout << "Other delta: " << back_propagation.neural_network.layers(i).delta << endl;
+//       cout << "Other delta: " << back_propagation.neural_network.layers(i).delta << endl;
    }
 
 }
