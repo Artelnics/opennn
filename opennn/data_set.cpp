@@ -4924,7 +4924,13 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 
 void DataSet::set_variables_descriptives()
 {
-    variables_descriptives = descriptives(data);
+    const Tensor<Index, 1> used_indices = get_used_instances_indices();
+
+    Tensor<Index, 1> variables_indices;
+
+    intialize_sequential_eigen_tensor(variables_indices, 0, 1, get_variables_number());
+
+    variables_descriptives = descriptives(data, used_indices, variables_indices);
 }
 
 
@@ -8338,17 +8344,16 @@ void DataSet::print_summary() const
 
 void DataSet::save(const string& file_name) const
 {
-//   tinyxml2::XMLDocument* document = write_XML();
+    FILE *pFile;
+    errno_t err;
 
-//    tinyxml2::XMLPrinter filestream;
-//    write_XML(filestream);
+    err = fopen_s(&pFile, file_name.c_str(), "w");
 
-//    document.
+    tinyxml2::XMLPrinter document(pFile);
 
+    write_XML(document);
 
-//   document->SaveFile(file_name.c_str());
-
-//   delete document;
+    fclose(pFile);
 }
 
 
@@ -10456,6 +10461,23 @@ Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const 
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
+{
+    const Index new_size = (end-start)/step+1;
+
+    new_tensor.resize(new_size);
+    new_tensor(0) = start;
+
+    for(Index i = 1; i < new_size-1; i++)
+    {
+        new_tensor(i) = new_tensor(i-1)+step;
+    }
+
+    new_tensor(new_size-1) = end;
+}
+
+
+void DataSet::intialize_sequential_eigen_type_tensor(Tensor<type, 1>& new_tensor,
+        const type& start, const type& step, const type& end) const
 {
     const Index new_size = (end-start)/step+1;
 

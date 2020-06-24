@@ -750,6 +750,7 @@ public:
    Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
    void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
+   void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_instances(const Tensor<Index, 1>&, const Index&) const;
 
