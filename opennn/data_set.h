@@ -618,7 +618,7 @@ public:
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
 
    // Target variables scaling
 
@@ -636,7 +636,7 @@ public:
    Tensor<Descriptives, 1> scale_targets_logarithmic();
 
    Tensor<Descriptives, 1> scale_targets(const string&);
-   void scale_targets(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_targets(const Tensor<string, 1>&);
 
    // Data unscaling
 
