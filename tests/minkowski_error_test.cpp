@@ -78,49 +78,49 @@ void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-//   NeuralNetwork neural_network;
+   NeuralNetwork neural_network;
 
-//   Tensor<type, 1> parameters;
+   Tensor<type, 1> parameters;
 
-//   DataSet data_set;
-//   Tensor<type, 2> data;
+   DataSet data_set;
+   Tensor<type, 2> data;
 
-//   Index instances_number;
-//   Index inputs_number;
-//   Index target_number;
+   Index instances_number;
+   Index inputs_number;
+   Index target_number;
 
-//   MinkowskiError minkowski_error(&neural_network, &data_set);
-//   minkowski_error.set_Minkowski_parameter(1.5);
-//   minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-//   minkowski_error.set_thread_pool_device(thread_pool_device);
+   MinkowskiError minkowski_error(&neural_network, &data_set);
+   minkowski_error.set_Minkowski_parameter(1.5);
+   minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+   minkowski_error.set_thread_pool_device(thread_pool_device);
 
 //   // Test
 
-//   instances_number = 10;
-//   inputs_number = 2;
-//   target_number = 2;
+   instances_number = 10;
+   inputs_number = 2;
+   target_number = 2;
 
-//   data_set.set(1, 2, 2);
-//   data_set.set_data_random();
-//   data_set.set_training();
+   data_set.set(1, 2, 2);
+   data_set.set_data_random();
+   data_set.set_training();
 
-//   DataSet::Batch batch(1, &data_set);
+   DataSet::Batch batch(1, &data_set);
 
-//   Tensor<Index,1> training_instances_indices = data_set.get_training_instances_indices();
-//   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
-//   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
+   Tensor<Index,1> training_instances_indices = data_set.get_training_instances_indices();
+   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
+   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
 
-//   batch.fill(training_instances_indices, inputs_indices, targets_indices);
+   batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-//   Tensor<Index, 1>architecture(2);
-//   architecture.setValues({inputs_number,target_number});
+   Tensor<Index, 1>architecture(2);
+   architecture.setValues({inputs_number,target_number});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_thread_pool_device(thread_pool_device);
-//   neural_network.set_parameters_random();
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_thread_pool_device(thread_pool_device);
+   neural_network.set_parameters_random();
 
-//   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
-//   LossIndex::BackPropagation training_back_propagation(data_set.get_training_instances_number(), &minkowski_error);
+   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
+   LossIndex::BackPropagation training_back_propagation(data_set.get_training_instances_number(), &minkowski_error);
 
 //   neural_network.forward_propagate(batch, forward_propagation);
 //   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);

@@ -399,20 +399,20 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
    cout << "test_calculate_Brent_method_directional_point\n";
 
-//   DataSet data_set(1, 1, 1);
-//   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
+   DataSet data_set(1, 1, 1);
+   Tensor<Index, 1> indices(3);
+   indices.setValues({1,1,data_set.get_instances_number()-1});
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture(2);
 
-//   architecture.setValues({1,1});
+   architecture.setValues({1,1});
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//   SumSquaredError sum_squared_error(&neural_network);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   SumSquaredError sum_squared_error(&neural_network);
 
-//   LearningRateAlgorithm tra(&sum_squared_error);
+   LearningRateAlgorithm tra(&sum_squared_error);
 
-//   neural_network.set_parameters_constant(1.0);
-
+   neural_network.set_parameters_constant(1.0);
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
