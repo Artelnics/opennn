@@ -6418,9 +6418,13 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
+    const type slope = static_cast<type>(2)/input_statistics.standard_deviation;
+
+    const type intercept = -static_cast<type>(2)*input_statistics.mean/input_statistics.standard_deviation;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = static_cast<type>(2)*(data(i, input_index) - input_statistics.mean) / input_statistics.standard_deviation;
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6826,9 +6830,13 @@ void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics
 
 void DataSet::scale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = static_cast<type>(2)/target_statistics.standard_deviation;
+
+    const type intercept = -static_cast<type>(2)*target_statistics.mean/target_statistics.standard_deviation;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = static_cast<type>(2)*(data(i, target_index) - target_statistics.mean) / target_statistics.standard_deviation;
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
@@ -6908,9 +6916,13 @@ void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics
 
 void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
+    const type slope = input_statistics.standard_deviation/static_cast<type>(2);
+
+    const type intercept = input_statistics.mean;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = input_statistics.standard_deviation/static_cast<type>(2)*data(i,input_index)+input_statistics.mean;
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6994,9 +7006,13 @@ void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statisti
 
 void DataSet::unscale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = target_statistics.standard_deviation/static_cast<type>(2);
+
+    const type intercept = target_statistics.mean;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = target_statistics.standard_deviation/static_cast<type>(2)*data(i,target_index)+target_statistics.mean;
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
