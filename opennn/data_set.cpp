@@ -6553,9 +6553,11 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
     for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
@@ -6597,6 +6599,8 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
         }
         }
     }
+
+    return inputs_descriptives;
 }
 
 
@@ -6853,9 +6857,10 @@ void DataSet::scale_target_logarithmic(const Descriptives& target_statistics, co
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
     for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
@@ -6888,6 +6893,7 @@ void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, 
         }
         }
     }
+    return targets_descriptives;
 }
 
 
