@@ -6912,7 +6912,7 @@ void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics
 {
     const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
