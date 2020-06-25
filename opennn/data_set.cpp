@@ -4928,7 +4928,7 @@ void DataSet::set_variables_descriptives()
 
     Tensor<Index, 1> variables_indices;
 
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, get_variables_number());
+    intialize_sequential_eigen_tensor(variables_indices, 0, 1, get_variables_number()-1);
 
     variables_descriptives = descriptives(data, used_indices, variables_indices);
 }
@@ -6516,9 +6516,9 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    const type slope = static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
+    const type slope = std::fabsf(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
 
-    const type intercept = -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+    const type intercept = std::fabsf(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6565,7 +6565,7 @@ Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_u
 
     const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
-    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    for(Index i = 0; i < scaling_unscaling_methods.dimension(0); i++)
     {
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
@@ -6910,9 +6910,9 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_
 
 void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    const type slope = (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
+    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
 
-    const type intercept = (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
