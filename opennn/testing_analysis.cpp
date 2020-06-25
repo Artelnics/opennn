@@ -1677,15 +1677,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    cout << "inputs" << endl;
-
     const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    cout << "targets" << endl;
-
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
-
-    cout << "outputs" << endl;
 
     if(outputs_number == 1)
     {
@@ -1704,8 +1698,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     }
     else
     {
-        cout << "multiple confusion" << endl;
-
         return calculate_confusion_multiple_classification(targets, outputs);
     }
 }
