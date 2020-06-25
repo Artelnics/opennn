@@ -730,16 +730,9 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
     Tensor<type, 2> outputs(batch_size, outputs_number);
 
-    cout << "Calculating combinations" << endl;
-
-    cout << "Batch size: " << batch_size << endl;
-    cout << "Outputs_number: " << outputs_number << endl;
-
     calculate_combinations(inputs, biases, synaptic_weights, outputs);
 
-    cout << "Calculating activations" << endl;
     calculate_activations(outputs, outputs);
-    cout << "end" << endl;
 
     return outputs;
 }

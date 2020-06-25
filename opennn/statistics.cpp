@@ -680,6 +680,9 @@ type mean(const Tensor<type, 1>& vector)
         }
     }
 
+    cout << "sum: " << sum << endl;
+    cout << "count: " << count << endl;
+
     const type mean = sum /static_cast<type>(count);
 
     return mean;
