@@ -30,13 +30,12 @@ void CorrelationsTest::test_linear_correlation()
     vector2.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
     const type solution = 1;
-
 //    assert_true(linear_correlation(thread_pool_device, vector1, vector2) - solution <= 0.000001, LOG);
 
     Tensor<type, 1> vector3(10);
     vector3.setValues({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
 
-//    assert_true(linear_correlation(vector1, vector3) + solution <= static_cast<type>(0.000001), LOG);
+//    assert_true(linear_correlation(thread_pool_device, vector1, vector3) + solution <= static_cast<type>(0.000001), LOG);
 
     // General case
 
@@ -77,20 +76,20 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     type correlation;
 
-//    correlation = rank_linear_correlation(x,y);
+    correlation = rank_linear_correlation(thread_pool_device,x,y);
 
-//    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
-//    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
-//    y = -1.0*x;
+    y = -1.0*x;
 
-//    assert_true(abs(rank_linear_correlation(x,y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
-//    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
+    assert_true(abs(rank_linear_correlation(thread_pool_device,x,y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
-//    y.setConstant(static_cast<type>(0.1));
-//    correlation = rank_linear_correlation(x,y);
-//    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
-//    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
+    y.setConstant(static_cast<type>(0.1));
+    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 }
 
 void CorrelationsTest::test_linear_correlation_missing_values()
@@ -115,7 +114,7 @@ void CorrelationsTest::test_linear_correlation_missing_values()
     target[3] = static_cast<type>(NAN);
     target[4] = 5;
 
-//    type linear_correlation = linear_correlation_missing_values(vector, target);
+//    type linear_correlation = linear_correlation_missing_values(thread_pool_device, vector, target);
 
 //    assert_true(abs(linear_correlation - 1.0) < 1.0e-3, LOG );
 }
@@ -132,19 +131,19 @@ void CorrelationsTest::test_rank_linear_correlation()
 
     type correlation;
 
-//    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
+    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
-//    correlation = rank_linear_correlation(x,y);
+    correlation = rank_linear_correlation(thread_pool_device,x,y);
 
-//    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
-//    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
-//    y = -1.0*x;
+    y = -1.0*x;
 
-//    correlation = rank_linear_correlation(x,y);
-//    assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
-//    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 }
 
 
