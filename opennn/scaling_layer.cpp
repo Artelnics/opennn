@@ -830,7 +830,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     if(display)
                     {
                         cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
+                             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                              << "Standard deviation of variable " << i << " is zero.\n"
                              << "Those variables won't be scaled.\n";
                     }
