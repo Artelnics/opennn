@@ -50,8 +50,7 @@ int main(void)
         Tensor<string, 1> scaling_methods(input_variables_number);
         scaling_methods.setConstant("MeanStandardDeviation");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
-        data_set.scale_inputs(scaling_methods, inputs_descriptives);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_methods);
 
         // Neural network
 
