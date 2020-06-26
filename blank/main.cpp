@@ -45,6 +45,8 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
         cout << "Bye Blank Application" << endl;
 
         return 0;
