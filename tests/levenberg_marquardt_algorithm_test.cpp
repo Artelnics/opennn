@@ -166,20 +166,20 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-////   terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
+//   terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
-////   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
-////                                                       neural_network.forward_propagate(inputs),
-////                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
+//   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
+//                                                       neural_network.forward_propagate(inputs),
+//                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
 
-////   gradient = dot(terms_Jacobian.calculate_transpose(), terms);
-////   mse_gradient = mean_squared_error.calculate_error_gradient();
-//// levenberg_marquardt_algorithm
-////   cout << "columns sum: " << terms_Jacobian.calculate_columns_sum()*2.0 << endl;
-////   cout << "gradient: " << gradient << endl;
-////   cout << "mse_gradient: " << mse_gradient*2.0 << endl;
+//   gradient = dot(terms_Jacobian.calculate_transpose(), terms);
+//   mse_gradient = mean_squared_error.calculate_error_gradient();
+// levenberg_marquardt_algorithm
+//   cout << "columns sum: " << terms_Jacobian.calculate_columns_sum()*2.0 << endl;
+//   cout << "gradient: " << gradient << endl;
+//   cout << "mse_gradient: " << mse_gradient*2.0 << endl;
 
-////    assert_true(absolute_value(gradient-mse_gradient) < 1.0e-3, LOG);
+//    assert_true(absolute_value(gradient-mse_gradient) < 1.0e-3, LOG);
 
 //   // Test
 
@@ -191,13 +191,13 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 //   neural_network.set(NeuralNetwork::Approximation, architecture);
 //   neural_network.set_parameters_random();
 
-////   terms = sum_squared_error.calculate_training_error_terms();
+//   terms = sum_squared_error.calculate_training_error_terms();
 
-////   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
-////   gradient = lma.calculate_gradient(terms, terms_Jacobian);
+//   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
-////   assert_true(absolute_value(gradient-sum_squared_error.calculate_gradient()) < 1.0e-3, LOG);
+//   assert_true(absolute_value(gradient-sum_squared_error.calculate_gradient()) < 1.0e-3, LOG);
 
 //   // Test
 
@@ -207,13 +207,13 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   neural_network.set_parameters_random();
 
-////   terms= sum_squared_error.calculate_training_error_terms();
+//   terms= sum_squared_error.calculate_training_error_terms();
 
-////   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
-////   gradient = lma.calculate_gradient(terms, terms_Jacobian);
+//   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
-////   assert_true(gradient == sum_squared_error.calculate_gradient(), LOG);
+//   assert_true(gradient == sum_squared_error.calculate_gradient(), LOG);
 
 }
 
