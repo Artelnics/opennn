@@ -9884,10 +9884,6 @@ void DataSet::read_csv_3_simple()
 
     cout << "Reading data..." << endl;
 
-    cout << "Raw columns number: " << raw_columns_number << endl;
-
-    cout << "Rows label size: " << rows_labels.dimension(0) << endl;
-
     Index instance_index = 0;
     Index column_index = 0;
 
