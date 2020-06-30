@@ -640,7 +640,7 @@ string BoundingLayer::write_expression_python() const
 
     buffer << "def " << layer_name << "(inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {

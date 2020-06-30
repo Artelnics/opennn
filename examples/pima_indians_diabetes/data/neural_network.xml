@@ -1,0 +1,92 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>8</InputsNumber>
+      <Input Index="1">pregnant</Input>
+      <Input Index="2">glucose</Input>
+      <Input Index="3">pressure</Input>
+      <Input Index="4">thickness</Input>
+      <Input Index="5">insulin</Input>
+      <Input Index="6">mass_index</Input>
+      <Input Index="7">pedigree</Input>
+      <Input Index="8">age</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>8</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0</Minimum>
+            <Maximum>17</Maximum>
+            <Mean>3.84505</Mean>
+            <StandardDeviation>3.36958</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0</Minimum>
+            <Maximum>199</Maximum>
+            <Mean>120.895</Mean>
+            <StandardDeviation>31.9726</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>0</Minimum>
+            <Maximum>122</Maximum>
+            <Mean>69.1055</Mean>
+            <StandardDeviation>19.3558</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>0</Minimum>
+            <Maximum>99</Maximum>
+            <Mean>20.5365</Mean>
+            <StandardDeviation>15.9522</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>0</Minimum>
+            <Maximum>846</Maximum>
+            <Mean>79.7995</Mean>
+            <StandardDeviation>115.244</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>0</Minimum>
+            <Maximum>67.1</Maximum>
+            <Mean>31.9926</Mean>
+            <StandardDeviation>7.88416</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="7">
+            <Minimum>0.078</Minimum>
+            <Maximum>2.42</Maximum>
+            <Mean>0.471876</Mean>
+            <StandardDeviation>0.331329</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="8">
+            <Minimum>21</Minimum>
+            <Maximum>81</Maximum>
+            <Mean>33.2409</Mean>
+            <StandardDeviation>11.7602</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <InputsNumber>8</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-4.42706 0.683775 6.22484 -5.6414 -7.5657 1.24186 -6.83523 6.28519 -5.18221 5.18385 -6.12222 0.0406935 -2.05123 -0.491885 0.636462 -0.687992 -3.72965 -1.72846 0.792894 -1.15077 -2.04585 -6.64433 1.50476 -1.43844 -9.75915 -0.655462 6.57394</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>3</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-7.28338 -10.2563 -12.445 8.06734</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">diabetes</Output>
+   </Outputs>
+</NeuralNetwork>

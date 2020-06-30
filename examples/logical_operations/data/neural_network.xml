@@ -1,0 +1,49 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>2</InputsNumber>
+      <Input Index="1">X</Input>
+      <Input Index="2">Y</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <InputsNumber>2</InputsNumber>
+         <NeuronsNumber>6</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.461989 0.461989 0.981275 -0.981275 0.660283 -0.461989 1.24248 1.24248 -1.24248 -1.24248 -0.836399 -0.836399 0.836399 0.836399 0.361764 0.361764 1.24248 1.24248</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>6</NeuronsNumber>
+         <ActivationFunction>Softmax</ActivationFunction>
+         <Parameters>-1.16135 0.293155 1.03984 -0.0426376 -0.09331 -0.0356972 -0.195291 0.195292 -0.545153 0.545153 -0.78926 -0.195292 1.00751 -1.00751 -1.41683 1.41683 0.468785 1.00751 0.207817 -0.207816 0.595989 -0.59599 0.7001 0.207817 -1.0432 1.0432 0.565236 -0.565236 -0.212785 -1.0432 1.06445 -1.06445 0.240934 -0.240934 0.0402851 1.06445 -1.04128 1.04128 0.559824 -0.559824 -0.207125 -1.04128</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>6</OutputsNumber>
+      <Output Index="1">AND</Output>
+      <Output Index="2">OR</Output>
+      <Output Index="3">NAND</Output>
+      <Output Index="4">NOR</Output>
+      <Output Index="5">XNOR</Output>
+      <Output Index="6">XNOR</Output>
+   </Outputs>
+</NeuralNetwork>

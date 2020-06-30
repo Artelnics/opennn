@@ -830,7 +830,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     if(display)
                     {
                         cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
+                             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                              << "Standard deviation of variable " << i << " is zero.\n"
                              << "Those variables won't be scaled.\n";
                     }
@@ -845,11 +845,20 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MinimumMaximum)
                     {
-                        outputs(i,j) = static_cast<type>(2)*(inputs(i,j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
+                        const type slope = static_cast<type>(2)/(descriptives(j).maximum-descriptives(j).minimum);
+
+                        const type intercept = -(descriptives(j).maximum + descriptives(j).minimum)/(descriptives(j).maximum - descriptives(j).minimum);
+
+                        outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
-                        outputs(i,j) = (inputs(i,j) - descriptives(j).mean)/descriptives(j).standard_deviation;
+                        const type slope = static_cast<type>(2)/descriptives(j).standard_deviation;
+
+                        const type intercept = -static_cast<type>(2)*descriptives(j).mean/descriptives(j).standard_deviation;
+
+                        outputs(i,j) = inputs(i,j)*slope + intercept;
+
                     }
                     else if(scaling_methods(j) == StandardDeviation)
                     {
@@ -1178,11 +1187,19 @@ string ScalingLayer::write_expression_c() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = 2*(inputs[" << i << "] -(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+            const type slope = static_cast<type>(2)/(descriptives(i).maximum-descriptives(i).minimum);
+
+            const type intercept = -(descriptives(i).maximum + descriptives(i).minimum)/(descriptives(i).maximum - descriptives(i).minimum);
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
-            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).mean << ")/" << descriptives(i).standard_deviation << " ;" << endl;
+            const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
+
+            const type intercept = -static_cast<type>(2)*descriptives(i).mean/descriptives(i).standard_deviation;
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
         else if(scaling_methods(i) == StandardDeviation)
         {
@@ -1216,7 +1233,7 @@ string ScalingLayer::write_expression_python() const
 
     buffer << "def " << layer_name << "(inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -1226,11 +1243,19 @@ string ScalingLayer::write_expression_python() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << "\toutputs[" << i << "] = 2*(inputs[" << i << "] -(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1\n";
+            const type slope = static_cast<type>(2)/(descriptives(i).maximum-descriptives(i).minimum);
+
+            const type intercept = -(descriptives(i).maximum + descriptives(i).minimum)/(descriptives(i).maximum - descriptives(i).minimum);
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
-            buffer << "\toutputs[" << i << "] = (inputs[" << i << "] -" <<  descriptives(i).mean << ")/" << descriptives(i).standard_deviation << " " << endl;
+            const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
+
+            const type intercept = -static_cast<type>(2)*descriptives(i).mean/descriptives(i).standard_deviation;
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
         else if(scaling_methods(i) == StandardDeviation)
         {
