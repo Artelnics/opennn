@@ -1134,35 +1134,34 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
 {
    cout << "test_calculate_outputs\n";
 
-//   NeuralNetwork neural_network;
+   NeuralNetwork neural_network;
 
-//   Index inputs_number;
-//   Index outputs_number;
+   Index inputs_number;
+   Index outputs_number;
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture;
 
-//   Tensor<type, 2> inputs;
-//   Tensor<type, 2> outputs;
+   Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
 
-//   Index parameters_number;
+   Index parameters_number;
 
-//   Tensor<type, 1> parameters;
+   Tensor<type, 1> parameters;
 
-//   // Test 1
+   // Test 1
 
-//   architecture.resize(2);
+   architecture.resize(2);
 
-//   architecture.setConstant(3);
+   architecture.setConstant(3);
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_thread_pool_device(thread_pool_device);
-//   neural_network.set_parameters_constant(0);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0);
 
-//   inputs.resize(1,3);
+   inputs.resize(1,3);
 
-//   inputs.setConstant(1);
+   inputs.setConstant(1);
 
-//   outputs = neural_network.calculate_outputs(inputs);
+   outputs = neural_network.calculate_outputs(inputs);
 
 //   assert_true(outputs.rank() == 2, LOG);
 //   assert_true(outputs.size() == 3, LOG);
@@ -1586,30 +1585,29 @@ void NeuralNetworkTest::test_calculate_outputs_histograms() // @todo
 {
    cout << "test_calculate_outputs_histograms\n";
 
-//   NeuralNetwork neural_network;
+   NeuralNetwork neural_network;
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture;
 
-//   Tensor<type, 2> inputs;
-//   Tensor<type, 2> outputs;
-//   Tensor<Histogram, 1> outputs_histograms;
+   Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
+   Tensor<Histogram, 1> outputs_histograms;
 
-//   Tensor<type, 1> parameters;
+   Tensor<type, 1> parameters;
 
-//   // Test 1
+   // Test 1
 
-//   architecture.resize(2);
-//   architecture.setValues({1, 1});
+   architecture.resize(2);
+   architecture.setValues({1, 1});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_thread_pool_device(thread_pool_device);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//   parameters.resize(neural_network.get_parameters_number());
-//   parameters.setConstant(1);
-//   neural_network.set_parameters(parameters);
+   parameters.resize(neural_network.get_parameters_number());
+   parameters.setConstant(1);
+   neural_network.set_parameters(parameters);
 
-//   inputs.resize(1,1);
-//   inputs.setConstant(1);
+   inputs.resize(1,1);
+   inputs.setConstant(1);
 
 //   outputs_histograms = neural_network.calculate_outputs_histograms(inputs, 2);
 
@@ -1857,7 +1855,7 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
 
     NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation);
+//    neural_network.forward_propagate(batch, forward_propagation);
 
 //    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
 
