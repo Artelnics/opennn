@@ -45,7 +45,6 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
-        cout << "OpenNN. Vaxtor Example." << endl;
 
     }
     catch(exception& e)
