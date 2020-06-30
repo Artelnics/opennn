@@ -1374,10 +1374,8 @@ void AdaptiveMomentEstimation::OptimizationData::print() const
 
     cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
 
-    cout << "Parmeters:" << endl << parameters << endl;
+    cout << "Parameters:" << endl << parameters << endl;
 }
-
-
 
 }
 
