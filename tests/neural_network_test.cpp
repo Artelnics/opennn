@@ -1815,52 +1815,52 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
 {
     cout << "test_forward_propagate\n";
 
-//    // Test 1
+    // Test 1
 
-//    Index inputs_number = 2;
-//    Index target_number = 1;
+    Index inputs_number = 2;
+    Index target_number = 1;
 
-//    Tensor<Index, 1>architecture(2);
+    Tensor<Index, 1>architecture(2);
 
-//    architecture.setValues({inputs_number,target_number});
+    architecture.setValues({inputs_number,target_number});
 
-//    Tensor<type,2> data(5, 3);
+    Tensor<type,2> data(5, 3);
 
-//    data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
+    data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
 
-//        //DataSet
+    //DataSet
 
-//    DataSet dataset(data);
+    DataSet dataset(data);
 
-//    dataset.set_training();
+    dataset.set_training();
 
-//    DataSet::Batch batch(5, &dataset);
+    DataSet::Batch batch(5, &dataset);
 
-//    Tensor<Index,1> training_instances_indices = dataset.get_training_instances_indices();
-//    Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
-//    Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
+    Tensor<Index,1> training_instances_indices = dataset.get_training_instances_indices();
+    Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
+    Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
 
-//    batch.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch.fill(training_instances_indices, inputs_indices, targets_indices);
 
-//        //NeuralNetwork
+    //NeuralNetwork
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//    neural_network.set_thread_pool_device(thread_pool_device);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set_thread_pool_device(thread_pool_device);
 
-//    PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
-//    const Index neurons_number = perceptron_layer->get_neurons_number();
-//    perceptron_layer->set_activation_function(PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+    const Index neurons_number = perceptron_layer->get_neurons_number();
+    perceptron_layer->set_activation_function(PerceptronLayer::Logistic);
 
-//    Tensor<type,2 > biases_perceptron(neurons_number, 1);
-//    biases_perceptron.setConstant(1);
-//    perceptron_layer->set_biases(biases_perceptron);
-//    Tensor<type,2 > synaptic_weights_perceptron(inputs_number, neurons_number);
-//    synaptic_weights_perceptron.setConstant(1);
-//    perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
+    Tensor<type,2 > biases_perceptron(neurons_number, 1);
+    biases_perceptron.setConstant(1);
+    perceptron_layer->set_biases(biases_perceptron);
+    Tensor<type,2 > synaptic_weights_perceptron(inputs_number, neurons_number);
+    synaptic_weights_perceptron.setConstant(1);
+    perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
-//    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
+    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
 
-//    neural_network.forward_propagate(batch, forward_propagation);
+    neural_network.forward_propagate(batch, forward_propagation);
 
 //    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
 
