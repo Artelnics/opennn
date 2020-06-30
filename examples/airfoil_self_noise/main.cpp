@@ -57,11 +57,8 @@ int main(void)
         Tensor<string, 1> scaling_target_methods(target_variables_number);
         scaling_target_methods.setConstant("MeanStandardDeviation");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
-        data_set.scale_inputs(scaling_inputs_methods, inputs_descriptives);
-
-        const Tensor<Descriptives, 1> target_descriptives = data_set.calculate_target_variables_descriptives();
-        data_set.scale_targets(scaling_target_methods, target_descriptives);
+        const Tensor<Descriptives, 1> inputs_descriptives =  data_set.scale_inputs(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> target_descriptives = data_set.scale_targets(scaling_target_methods);
 
         // Neural network
 
@@ -77,10 +74,12 @@ int main(void)
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::NoUnscaling);
+        unscaling_layer_pointer->set_descriptives(target_descriptives);
+        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
 
         // Training strategy object
 
@@ -91,34 +90,27 @@ int main(void)
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
-
-        unscaling_layer_pointer->set_descriptives(target_descriptives);
-        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
-
         data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
         data_set.unscale_targets(scaling_target_methods, target_descriptives);
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-
         testing_analysis.set_thread_pool_device(thread_pool_device);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
-        neural_network.save("../data/neural_network.xml");
+//        neural_network.save("../data/neural_network.xml");
 
-        training_strategy.save("../data/training_strategy.xml");
+//        training_strategy.save("../data/training_strategy.xml");
 
-        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+//        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
 
-        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
+//        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 
         cout << "End" << endl;
 

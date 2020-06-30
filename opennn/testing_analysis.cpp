@@ -1676,6 +1676,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 #endif
 
     const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+
     const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);

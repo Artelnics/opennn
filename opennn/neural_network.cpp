@@ -1441,6 +1441,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
     }
+
     return outputs;
 }
 

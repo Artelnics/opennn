@@ -202,45 +202,47 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 {
     cout << "test_perform_crossover\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<Index, 1> arquitecture(3);
-//    arquitecture.setValues({2,2,1});
+    Tensor<Index, 1> arquitecture(3);
+    arquitecture.setValues({2,2,1});
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
 
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy ts(&neural_network, &data_set);
 
-//    GeneticAlgorithm ga(&ts);
+    GeneticAlgorithm ga(&ts);
 
-//    Tensor<bool, 2> population(4,4);
-//    Tensor<bool, 1> individual(2);
+    Tensor<bool, 2> population(4,4);
+    Tensor<bool, 1> individual(2);
 
-//    Tensor<bool, 2> crossover_population;
+    Tensor<bool, 2> crossover_population;
 
-//    Tensor<type, 1> fitness(4);
+    Tensor<type, 1> fitness(4);
 
-//    Tensor<type, 2> loss(4,2);
+    Tensor<type, 2> loss(4,2);
 
-//    individual[0] = true; individual[1] = true;
-//    population[0] = individual;
-//    population[1] = individual;
+    individual[0] = true;
+    individual[1] = true;
+//    population[0] = individual[0];
+//    population[1] = individual[1];
 
-//    individual[0] = false; individual[1] = true;
-//    population[2] = individual;
-//    population[3] = individual;
+    individual[0] = false;
+    individual[1] = true;
+//    population[2] = individual[0];
+//    population[3] = individual[1];
 
-//    fitness[0] = 1;
-//    fitness[1] = 2;
-//    fitness[2] = 3;
-//    fitness[3] = 4;
+    fitness[0] = 1;
+    fitness[1] = 2;
+    fitness[2] = 3;
+    fitness[3] = 4;
 
-//    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
-//    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
-//    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
-//    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
+    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
+    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
+    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
+    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
 
 //    ga.set_population_size(4);
 

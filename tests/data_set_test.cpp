@@ -22,7 +22,6 @@ void DataSetTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-
    // Default constructor
 
    DataSet ds1;

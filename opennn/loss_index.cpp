@@ -543,22 +543,26 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                        BackPropagation& back_propagation,
                                        SecondOrderLoss& second_order_loss) const
 {
-    cout << "----------------------------------------------------------" << endl;
+//    cout << "----------------------------------------------------------" << endl;
 
     // First Order
 
+//    calculate_batch_error_terms()
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
-    cout << "Output gradient: " << back_propagation.output_gradient << endl;
+//    cout << "Output gradient: " << back_propagation.output_gradient << endl;
 
     calculate_layers_delta(forward_propagation, back_propagation);
+
+
 
 
     // Second Order
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
+//    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
 
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
@@ -719,6 +723,11 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                               back_propagation.output_gradient,
                               back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
+<<<<<<< HEAD
+=======
+//     cout << "Output delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+
+>>>>>>> cb08995849e2810baf722ed26c57d22482e96258
      // Hidden layers
 
    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
