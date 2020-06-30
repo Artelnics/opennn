@@ -525,6 +525,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    Index instances_number;
    Index inputs_number;
+   Index hidden_neurons_number;
    Index outputs_number;
 
    data_set.set_thread_pool_device(thread_pool_device);
@@ -535,6 +536,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    instances_number = 7;
    inputs_number = 6;
+   hidden_neurons_number = 5;
    outputs_number = 7;
 
    data_set.set(instances_number, inputs_number, outputs_number);
@@ -549,9 +551,10 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    batch.fill(instances_indices, input_indices, target_indices);
 
-   architecture.resize(2);
+   architecture.resize(3);
    architecture[0] = inputs_number;
-   architecture[1] = outputs_number;
+   architecture[1] = hidden_neurons_number;
+   architecture[2] = outputs_number;
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
@@ -574,9 +577,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    nse.calculate_error_terms(batch, forward_propagation, second_order_loss);
 
-   cout << "BP Error: " << back_propagation.error << endl;
-   cout << "SOL Error: " << second_order_loss.error << endl;
-
    assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
 }
 
@@ -584,6 +584,75 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @todo
 {
    cout << "test_calculate_error_terms_Jacobian\n";
+
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+   NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
+
+   DataSet data_set;
+
+   NormalizedSquaredError nse(&neural_network, &data_set);
+
+   Index instances_number;
+   Index inputs_number;
+   Index hidden_neurons_number;
+   Index outputs_number;
+
+   data_set.set_thread_pool_device(thread_pool_device);
+   neural_network.set_thread_pool_device(thread_pool_device);
+   nse.set_thread_pool_device(thread_pool_device);
+
+   // Test
+
+   instances_number = 2;
+   inputs_number = 2;
+   hidden_neurons_number = 1;
+   outputs_number = 1;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set_data_random();
+   data_set.set_training();
+
+   DataSet::Batch batch(instances_number, &data_set);
+
+   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(instances_indices, input_indices, target_indices);
+
+   architecture.resize(2);
+   architecture(0) = inputs_number;
+//   architecture(1) = hidden_neurons_number;
+   architecture(1) = outputs_number;
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
+
+   const Index parameters_number = neural_network.get_parameters_number();
+
+   nse.set_normalization_coefficient();
+
+   data_set.set_thread_pool_device(thread_pool_device);
+   neural_network.set_thread_pool_device(thread_pool_device);
+   nse.set_thread_pool_device(thread_pool_device);
+
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation back_propagation(instances_number, &nse);
+   LossIndex::SecondOrderLoss second_order_loss(parameters_number, instances_number);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+   nse.back_propagate(batch, forward_propagation, back_propagation);
+
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+
+   cout << "Jacobian: " << second_order_loss.error_Jacobian << endl;
+
+   cout << "Num Jacobian: " << nse.calculate_Jacobian_numerical_differentiation(&nse) << endl;
+
 
 //   NumericalDifferentiation nd;
 
@@ -742,11 +811,11 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    test_calculate_error_gradient();
 
    // Error terms methods
-*/
-   test_calculate_error_terms();
-   /*
-   test_calculate_error_terms_Jacobian();
 
+   test_calculate_error_terms();
+*/
+   test_calculate_error_terms_Jacobian();
+/*
    // Squared errors methods
 
    test_calculate_squared_errors();

@@ -10649,8 +10649,38 @@ void DataSet::Batch::print()
 }
 
 
-DataSet DataSet::shuffle() const
+void DataSet::shuffle()
 {
+    const Index data_rows = data.dimension(0);
+    const Index data_columns = data.dimension(1);
+
+    Tensor<Index, 1> indices(data_rows);
+
+    for(Index i = 0; i < data_rows; i++) indices(i) = i;
+
+    random_shuffle(&indices(0), &indices(data_rows-1));
+
+    Tensor<type, 2> new_data(data_rows, data_columns);
+    Tensor<string, 1> new_rows_labels(data_rows);
+
+    Index index = 0;
+
+    for(Index i = 0; i < data_rows; i++)
+    {
+        index = indices(i);
+
+        new_rows_labels(i) = rows_labels(index);
+
+        for(Index j = 0; j < data_columns; j++)
+        {
+            new_data(i,j) = data(index,j);
+        }
+    }
+
+    data = new_data;
+    rows_labels = new_rows_labels;
+
+/*
     const Index instances_number = get_instances_number();
 
     const Index columns_number = get_columns_number();
@@ -10661,8 +10691,8 @@ DataSet DataSet::shuffle() const
 
     Tensor<string, 1> data_labels(this->rows_labels.size());
 
-
     // Generate random permutation
+
     instances_indices.resize(instances_number);
 
     intialize_sequential_eigen_tensor(instances_indices, 0, 1, instances_number - 1);
@@ -10675,11 +10705,11 @@ DataSet DataSet::shuffle() const
     {
         Index row_number = instances_indices(i);
 
-        data_labels(i) = this->get_rows_label_tensor()(row_number);
+        data_labels(i) = rows_labels(row_number);
 
         for(int j = 0; j < columns_number; j++)
         {
-            shuffled_data(i, j) = this->data(row_number, j);
+            shuffled_data(i, j) = data(row_number, j);
         }
     }
 
@@ -10699,8 +10729,9 @@ DataSet DataSet::shuffle() const
 
 
     return shuffled_data_set;
-
+*/
 }
+
 
 bool DataSet::get_has_rows_labels() const
 {

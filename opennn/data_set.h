@@ -754,11 +754,9 @@ public:
 
    Tensor<Index, 2> split_instances(const Tensor<Index, 1>&, const Index&) const;
 
-
-
-
-   DataSet shuffle() const;
    bool get_has_rows_labels() const;
+
+   void shuffle();
 
 private:
 

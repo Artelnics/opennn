@@ -43,16 +43,17 @@ int main(void)
 {
     try
     {
-        cout << "Hello Blank Application" << endl;
+        cout << "OpenNN. Blank Application." << endl;
 
-        cout << "OpenNN. Vaxtor Example." << endl;
-
+        return 0;
     }
     catch(exception& e)
     {
-       cerr << e.what() << endl;
+        cerr << e.what() << endl;
+
+        return 1;
     }
-  }
+}
 
 
 // OpenNN: Open Neural Networks Library.
