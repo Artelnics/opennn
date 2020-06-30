@@ -181,6 +181,7 @@ public:
 
        type error;
        type loss;
+       Tensor<type, 1> error_terms;
        Tensor<type, 1> gradient;
        Tensor<type, 2> error_Jacobian;
        Tensor<type, 2> hessian;
@@ -283,12 +284,15 @@ public:
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
    virtual void calculate_error(const DataSet::Batch&,
                                 const NeuralNetwork::ForwardPropagation&,
                                 BackPropagation&) const = 0;
+
+   virtual void calculate_error_terms(const DataSet::Batch&,
+                                      const NeuralNetwork::ForwardPropagation&,
+                                      SecondOrderLoss&) const {return;}
 
    void back_propagate(const DataSet::Batch& batch,
                        NeuralNetwork::ForwardPropagation& forward_propagation,
