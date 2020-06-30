@@ -271,14 +271,6 @@ void GradientDescent::set_default()
 }
 
 
-void GradientDescent::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    thread_pool_device = new_thread_pool_device;
-
-    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
-}
-
-
 /// Makes the training history of all variables to reseved or not in memory:
 /// <ul>
 /// <li> Parameters.
