@@ -21,13 +21,13 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-/*
+
    DataSet data_set;
 
    NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
    Tensor<Index, 1> architecture(2);
-
+/*
    PerceptronLayer perceptron_layer;
    ScalingLayer scaling_layer;
 
@@ -109,9 +109,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-//   Tensor<Index, 1> architecture;
-
-//   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
 
 //   neural_network.set(NeuralNetwork::Classification, architecture);
 
@@ -207,7 +206,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    const type parameters_minimum = -100.0;
    const type parameters_maximum = 100.0;
-
 
 //   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
 //   Tensor<type, 2> filters_1({2,3,2,2}, 0);

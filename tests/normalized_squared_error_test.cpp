@@ -512,42 +512,72 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 {
    cout << "test_calculate_error_terms\n";
 
-//   NeuralNetwork neural_network;
-//   Tensor<Index, 1> architecture;
-//   Tensor<type, 1> network_parameters;
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
-//   DataSet data_set;
+   NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
 
-//   NormalizedSquaredError nse(&neural_network, &data_set);
+   DataSet data_set;
 
-//   type error;
+   NormalizedSquaredError nse(&neural_network, &data_set);
 
-//   Tensor<type, 1> error_terms;
+   Index instances_number;
+   Index inputs_number;
+   Index outputs_number;
 
-//   Index instances_number;
-//   Index inputs_number;
-//   Index outputs_number;
+   data_set.set_thread_pool_device(thread_pool_device);
+   neural_network.set_thread_pool_device(thread_pool_device);
+   nse.set_thread_pool_device(thread_pool_device);
 
-//   // Test
+   // Test
 
-//   instances_number = 7;
-//   inputs_number = 6;
-//   outputs_number = 7;
+   instances_number = 7;
+   inputs_number = 6;
+   outputs_number = 7;
 
-//   neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
-//   neural_network.set_parameters_random();
+   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set_data_random();
+   data_set.set_training();
 
-//   data_set.set(instances_number, inputs_number, outputs_number);
-//   data_set.set_data_random();
+   DataSet::Batch batch(instances_number, &data_set);
 
-//   nse.set_normalization_coefficient();
+   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-//   error = nse.calculate_error();
+   batch.fill(instances_indices, input_indices, target_indices);
 
-//   error_terms = nse.calculate_training_error_terms();
+   architecture.resize(2);
+   architecture[0] = inputs_number;
+   architecture[1] = outputs_number;
 
-//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
 
+   const Index parameters_number = neural_network.get_parameters_number();
+
+   nse.set_normalization_coefficient();
+
+   data_set.set_thread_pool_device(thread_pool_device);
+   neural_network.set_thread_pool_device(thread_pool_device);
+   nse.set_thread_pool_device(thread_pool_device);
+
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation back_propagation(instances_number, &nse);
+   LossIndex::SecondOrderLoss second_order_loss(parameters_number, instances_number);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+
+   nse.calculate_error(batch, forward_propagation, back_propagation);
+
+   nse.calculate_error_terms(batch, forward_propagation, second_order_loss);
+
+   cout << "BP Error: " << back_propagation.error << endl;
+   cout << "SOL Error: " << second_order_loss.error << endl;
+
+   assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
 }
 
 
@@ -697,7 +727,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
@@ -712,8 +742,9 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    test_calculate_error_gradient();
 
    // Error terms methods
-
+*/
    test_calculate_error_terms();
+   /*
    test_calculate_error_terms_Jacobian();
 
    // Squared errors methods
@@ -725,7 +756,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of normalized squared error test case.\n";
 }
 

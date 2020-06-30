@@ -23,7 +23,6 @@
 
 #include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
 
-
 using namespace OpenNN;
 
 int main(void)

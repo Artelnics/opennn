@@ -83,14 +83,14 @@ void ModelSelectionTest::test_perform_neurons_selection() // @todo
 {
     cout << "test_perform_neurons_selection\n";
 
-//    DataSet ds;
+    DataSet ds;
 
-//    ds.generate_sum_data(20,2);
+    ds.generate_sum_data(20,2);
 
-//    Tensor<Index, 1> architecture;
-//    architecture.setValues({1, 2, 1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 2, 1});
 
-//    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
 
 //    TrainingStrategy ts(&nn, &ds);
 
