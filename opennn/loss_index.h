@@ -282,6 +282,8 @@ public:
 
    Tensor<type, 1> calculate_error_gradient_numerical_differentiation(LossIndex*) const;
 
+   Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
+
    // ERROR TERMS METHODS
 
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
