@@ -416,6 +416,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories uses element is nullptr.\n";
+            cout << "AAAAAAAA" << endl;
 
             throw logic_error(buffer.str());
         }
@@ -8517,6 +8518,10 @@ void DataSet::save_data() const
 
     char separator_char = ',';//get_separator_char();
 
+    if(this->has_rows_labels)
+    {
+        file << "id" << separator_char;
+    }
     for(Index j = 0; j < variables_number; j++)
     {
         file << variables_names[j];
@@ -8531,6 +8536,10 @@ void DataSet::save_data() const
 
     for(Index i = 0; i < instances_number; i++)
     {
+        if(this->has_rows_labels)
+        {
+            file << this->get_rows_label_tensor()(i) << separator_char;
+        }
        for(Index j = 0; j < variables_number; j++)
        {
            file << data(i,j);
@@ -9884,10 +9893,6 @@ void DataSet::read_csv_3_simple()
 
     cout << "Reading data..." << endl;
 
-    cout << "Raw columns number: " << raw_columns_number << endl;
-
-    cout << "Rows label size: " << rows_labels.dimension(0) << endl;
-
     Index instance_index = 0;
     Index column_index = 0;
 
@@ -10641,6 +10646,65 @@ void DataSet::Batch::print()
 
     cout << "Targets:" << endl;
     cout << targets_2d << endl;
+}
+
+
+DataSet DataSet::shuffle() const
+{
+    const Index instances_number = get_instances_number();
+
+    const Index columns_number = get_columns_number();
+
+    Tensor<Index, 1> instances_indices;
+
+    Tensor<type, 2> shuffled_data(instances_number, columns_number);
+
+    Tensor<string, 1> data_labels(this->rows_labels.size());
+
+
+    // Generate random permutation
+    instances_indices.resize(instances_number);
+
+    intialize_sequential_eigen_tensor(instances_indices, 0, 1, instances_number - 1);
+
+    random_shuffle(&instances_indices(0), &instances_indices(instances_number - 1));
+
+//    cout << instances_indices << endl;
+
+    for(int i = 0; i < instances_number; i++)
+    {
+        Index row_number = instances_indices(i);
+
+        data_labels(i) = this->get_rows_label_tensor()(row_number);
+
+        for(int j = 0; j < columns_number; j++)
+        {
+            shuffled_data(i, j) = this->data(row_number, j);
+        }
+    }
+
+    // Generate dataset with shuffled data
+
+    DataSet shuffled_data_set(shuffled_data);
+    shuffled_data_set.set_columns_names(this->get_columns_names());
+    shuffled_data_set.rows_labels = data_labels;
+
+
+//    shuffled_data_set.rows_labels = this->get_rows_label_tensor();
+
+    if(shuffled_data_set.get_rows_label_tensor().size() > 0)
+    {
+        shuffled_data_set.set_has_rows_label(true);
+    }
+
+
+    return shuffled_data_set;
+
+}
+
+bool DataSet::get_has_rows_labels() const
+{
+    return this->has_rows_labels;
 }
 
 

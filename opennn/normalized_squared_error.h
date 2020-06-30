@@ -80,6 +80,10 @@ public:
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
 
+   void calculate_error_terms(const DataSet::Batch&,
+                              const NeuralNetwork::ForwardPropagation&,
+                              SecondOrderLoss&) const;
+
    // Gradient methods
 
    void calculate_output_gradient(const DataSet::Batch& batch,

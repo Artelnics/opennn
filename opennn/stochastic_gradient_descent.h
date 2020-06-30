@@ -278,7 +278,7 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 10;
+   Index batch_instances_number = 1000;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"

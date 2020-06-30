@@ -97,11 +97,11 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 {
    cout << "test_calculate_PR_parameter\n";
 
-//   DataSet data_set(1, 1, 2);
-//   data_set.set_data_random();
+   DataSet data_set(1, 1, 2);
+   data_set.set_data_random();
 
-//   Tensor<Index, 1> architecture;
-//   architecture.setValues({1,1});
+   Tensor<Index, 1> architecture(2);
+   architecture.setValues({1,1});
 
 //   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);
