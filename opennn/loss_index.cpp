@@ -723,11 +723,9 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                               back_propagation.output_gradient,
                               back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-<<<<<<< HEAD
-=======
+
 //     cout << "Output delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
->>>>>>> cb08995849e2810baf722ed26c57d22482e96258
      // Hidden layers
 
    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
