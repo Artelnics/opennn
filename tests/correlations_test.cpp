@@ -69,6 +69,10 @@ void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_calculate_spearman_linear_correlation\n";
 
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     Index size = 100;
     Tensor<type, 1> x(size);
 //    x.initialize_sequential();
@@ -125,6 +129,10 @@ void CorrelationsTest::test_linear_correlation_missing_values()
 void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_calculate_rank_linear_correlation()\n";
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Index size = 10;
     Tensor<type, 1> x(size);
@@ -248,6 +256,10 @@ void CorrelationsTest::test_logistic_error_gradient_missing_values()
 void CorrelationsTest::test_rank_linear_correlation_missing_values()
 {
     cout << "test_calculate_rank_linear_correlation_missing_values\n";
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Index size = 10;
 
@@ -410,6 +422,10 @@ void CorrelationsTest::test_cross_correlations()
 void CorrelationsTest::test_logarithmic_correlation()
 {
     cout << "test_calculate_logarithmic_correlation\n";
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
 //    // Perfect case
 

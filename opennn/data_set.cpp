@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
+#include <omp.h>
 
 using namespace  OpenNN;
 
@@ -4238,6 +4239,10 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     has_columns_names = false;
 
     separator = Comma;

@@ -606,8 +606,6 @@ void NeuralNetworkTest::test_set_pointers()
 
    // Test 1 // Device
 
-   neural_network.set_thread_pool_device(thread_pool_device);
-
    assert_true(neural_network.get_layers_number() == 3, LOG);
 //   assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
    //CCH -> Need get_device_pointer method?
@@ -1845,7 +1843,6 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
     //NeuralNetwork
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-    neural_network.set_thread_pool_device(thread_pool_device);
 
     PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     const Index neurons_number = perceptron_layer->get_neurons_number();

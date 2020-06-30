@@ -257,6 +257,10 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void LossIndex::set_default()
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     regularization_method = L2;
     display = true;
 }
