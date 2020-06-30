@@ -97,28 +97,28 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 {
     cout << "test_calculate_training_loss\n";
 
-//    DataSet data_set;
-//    Tensor<Index, 1> architecture;
+    DataSet data_set;
+    Tensor<Index, 1> architecture;
 
-//    NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    Tensor<type, 1> terms;
+    Tensor<type, 1> terms;
 
-//    type loss;
+    type loss;
 
-//    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
+    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
-    // Test    
+  // Test
 
-//    data_set.set(2, 2, 2);
-//    data_set.set_data_random();
+    data_set.set(2, 2, 2);
+    data_set.set_data_random();
 
-//    architecture.setValues({2,2});
+    architecture.setValues({2,2});
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
-//    neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_random();
 
 //    terms = sum_squared_error.calculate_training_error_terms();
 
