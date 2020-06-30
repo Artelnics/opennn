@@ -143,8 +143,6 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
-   void set_thread_pool_device(ThreadPoolDevice*);
-
    // Training operators
 
    void set_training_direction_method(const TrainingDirectionMethod&);

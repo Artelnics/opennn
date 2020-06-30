@@ -55,14 +55,6 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 }
 
 
-void QuasiNewtonMethod::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    thread_pool_device = new_thread_pool_device;
-
-    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
-}
-
-
 /// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
