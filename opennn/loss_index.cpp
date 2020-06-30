@@ -547,11 +547,15 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     // First Order
 
+//    calculate_batch_error_terms()
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
 //    cout << "Output gradient: " << back_propagation.output_gradient << endl;
 
     calculate_layers_delta(forward_propagation, back_propagation);
+
+
 
 
     // Second Order
