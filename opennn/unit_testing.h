@@ -74,8 +74,6 @@ public:
 
 protected:
 
-   ThreadPoolDevice* thread_pool_device = nullptr;
-
    /// Number of performed tests.
 
    Index tests_count;

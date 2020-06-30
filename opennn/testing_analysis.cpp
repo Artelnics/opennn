@@ -23,7 +23,6 @@ TestingAnalysis::TestingAnalysis()
 }
 
 
-
 /// Neural network constructor.
 /// It creates a testing analysis object associated to a neural network but not to a mathematical model or a data set.
 /// By default, it constructs the function regression testing object.
@@ -174,6 +173,10 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_default()
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     display = true;
 }
 

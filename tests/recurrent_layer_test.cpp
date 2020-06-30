@@ -318,8 +318,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
    // Test
 
-   recurrent_layer.set_thread_pool_device(thread_pool_device);
-
    recurrent_layer.set(1, 1);
    combinations_2d.resize(1,1);
    combinations_2d.setZero();
@@ -467,8 +465,6 @@ void RecurrentLayerTest::test_calculate_outputs()
    Tensor<type, 2> new_biases;
 
    //Test
-
-   recurrent_layer.set_thread_pool_device(thread_pool_device);
 
    recurrent_layer.set(2,2);
 

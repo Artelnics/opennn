@@ -10,10 +10,6 @@
 
 UnitTesting::UnitTesting()
 {
-    const int n = 4;
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     tests_count = 0;
     tests_passed_count = 0;
     tests_failed_count = 0;

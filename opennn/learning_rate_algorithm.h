@@ -19,6 +19,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <omp.h>
 
 // OpenNN includes
 

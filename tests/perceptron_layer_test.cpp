@@ -101,6 +101,7 @@ void PerceptronLayerTest::test_get_neurons_number()
    assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
 }
 
+
 void PerceptronLayerTest::test_get_activation_function()
 {
    cout << "test_get_activation_function\n";
@@ -735,8 +736,6 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
    PerceptronLayer perceptron_layer(1,1);
 
-   perceptron_layer.set_thread_pool_device(thread_pool_device);
-
    perceptron_layer.set_parameters_constant(0.0);
 
    Tensor<type, 2> inputs(1,1);
@@ -750,7 +749,6 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
 
    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weigths, combinations);
-
 
 /*
    PerceptronLayer perceptron_layer;
