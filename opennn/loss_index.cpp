@@ -1002,6 +1002,69 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
 }
 
 
+Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossIndex * loss_index_pointer) const
+{
+    const Index instances_number = data_set_pointer->get_training_instances_number();
+
+    DataSet::Batch batch(instances_number, data_set_pointer);
+
+    Tensor<Index, 1> instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+
+    batch.fill(instances_indices, input_indices, target_indices);
+
+    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+
+    BackPropagation back_propagation(instances_number, loss_index_pointer);
+
+    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+    LossIndex::SecondOrderLoss second_order_loss(parameters_number, instances_number);
+
+    neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
+    loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+
+    type h;
+
+    Index m = second_order_loss.error_terms.size();
+
+    Tensor<type, 1> parameters_forward(parameters);
+    Tensor<type, 1> parameters_backward(parameters);
+
+    Tensor<type, 1> error_terms_forward(parameters_number);
+    Tensor<type, 1> error_terms_backward(parameters_number);
+
+    Tensor<type, 2> J(m,parameters_number);
+
+    for(Index j = 0; j < parameters_number; j++)
+    {
+        h = calculate_h(parameters(j));
+
+        parameters_backward(j) -= h;
+        neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+        loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+        error_terms_forward = second_order_loss.error_terms;
+        parameters_backward(j) += h;
+
+        parameters_forward(j) += h;
+        neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+        loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+        error_terms_backward = second_order_loss.error_terms;
+        parameters_forward(j) -= h;
+
+        for(Index i = 0; i < m; i++)
+        {
+            J(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(static_cast<type>(2.0)*h);
+        }
+    }
+
+    return J;
+}
+
+
 type LossIndex::calculate_eta() const
 {
     const Index precision_digits = 6;
