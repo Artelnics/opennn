@@ -772,18 +772,15 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     }
 
 #endif
-cout << "propagation" << endl;
-
     calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
                            forward_propagation.combinations_2d);
-cout << "Combinations" << endl;
+
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_2d);
 
-    cout << "Activations" << endl;
 }
 
 

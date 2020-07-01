@@ -129,7 +129,6 @@ int main(void)
         cout << "Informedness                    : " << binary_classification_tests[13] << endl;
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
-
         cout << "End" << endl;
 
         return 0;

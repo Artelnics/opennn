@@ -17,6 +17,10 @@ namespace OpenNN
 OptimizationAlgorithm::OptimizationAlgorithm()
     : loss_index_pointer(nullptr)
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     set_default();
 }
 
@@ -27,6 +31,10 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
     : loss_index_pointer(new_loss_index_pointer)
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     set_default();
 }
 
@@ -38,6 +46,12 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
 OptimizationAlgorithm::OptimizationAlgorithm(const tinyxml2::XMLDocument& document)
     : loss_index_pointer(nullptr)
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+    set_default();
+
     from_XML(document);
 }
 
@@ -147,6 +161,8 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 
 void OptimizationAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 

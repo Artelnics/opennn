@@ -92,7 +92,6 @@ void MinkowskiErrorTest::test_calculate_error()
    MinkowskiError minkowski_error(&neural_network, &data_set);
    minkowski_error.set_Minkowski_parameter(1.5);
    minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   minkowski_error.set_thread_pool_device(thread_pool_device);
 
 //   // Test
 
@@ -116,7 +115,6 @@ void MinkowskiErrorTest::test_calculate_error()
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_thread_pool_device(thread_pool_device);
    neural_network.set_parameters_random();
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
@@ -200,13 +198,9 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
-   neural_network.set_thread_pool_device(thread_pool_device);
-
    neural_network.set_parameters_random();
 
    me.set_Minkowski_parameter(1.5);
-
-   me.set_thread_pool_device(thread_pool_device);
 
 //   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
 //   LossIndex::BackPropagation training_back_propagation(instances_number, &me);

@@ -57,14 +57,6 @@ ConjugateGradient::~ConjugateGradient()
 }
 
 
-void ConjugateGradient::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    thread_pool_device = new_thread_pool_device;
-
-    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
-}
-
-
 /// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object.
 
 const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
