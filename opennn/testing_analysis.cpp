@@ -3112,11 +3112,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() cons
 /// The number of columns of the matrix is the number of columns of the target data.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
-                                                                                     const Tensor<type, 2>& outputs,
-                                                                                     const Tensor<Index, 1>& testing_indices) const
+                                                                          const Tensor<type, 2>& outputs,
+                                                                          const Tensor<Index, 1>& testing_indices) const
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = outputs.dimension(1);
+    cout << "Rows number: " << rows_number << endl;
+    cout << "Columns number: " << columns_number << endl;
 
     Tensor<Index, 2> multiple_classification_rates(rows_number, columns_number);
 
@@ -3132,6 +3134,26 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
     }
 
     return multiple_classification_rates;
+}
+
+
+Tensor<type, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
+                                                                    const Tensor<type, 2>& outputs,
+                                                                    const Tensor<string, 1>& labels)
+{
+    const Index instances_number = targets.dimension(0);
+
+    Tensor<type, 2> missclassified_instances(instances_number, 3);
+
+    //id, predicted_class, actual_class
+    for(Index i = 0; i < instances_number; i++)
+    {
+        missclassified_instances(i, 0) = labels(i);
+        missclassified_instances(i,1) = maximal_index(outputs.chip(i, 0));
+        missclassified_instances(i,2) = maximal_index(targets.chip(i, 0));
+    }
+
+    return missclassified_instances;
 }
 
 

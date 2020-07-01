@@ -3243,6 +3243,20 @@ Tensor<string, 1> DataSet::get_rows_label_tensor() const
     return rows_labels;
 }
 
+Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
+{
+    const Index selection_instances_number = get_selection_instances_number();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    Tensor<string, 1> selection_rows_label(selection_instances_number);
+
+    for(Index i = 0; i < selection_instances_number; i++)
+    {
+        selection_rows_label(i) = rows_labels(selection_indices(i));
+    }
+
+    return selection_rows_label;
+}
+
 
 /// Returns the separator to be used in the data file.
 
@@ -8538,7 +8552,7 @@ void DataSet::save_data() const
     {
         if(this->has_rows_labels)
         {
-            file << this->get_rows_label_tensor()(i) << separator_char;
+            file << rows_labels(i) << separator_char;
         }
        for(Index j = 0; j < variables_number; j++)
        {
