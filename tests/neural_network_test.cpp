@@ -467,17 +467,17 @@ void NeuralNetworkTest::test_set()
 
    // Test 2 / Convolutional layer set
 
-//   Tensor<Index, 1> new_inputs_dimensions(1);
-//   new_inputs_dimensions.setConstant(1);
+   Tensor<Index, 1> new_inputs_dimensions(1);
+   new_inputs_dimensions.setConstant(1);
 
-//   Index new_blocks_number = 1;
+   Index new_blocks_number = 1;
 
-//   Tensor<Index, 1> new_filters_dimensions(1);
-//   new_filters_dimensions.setConstant(1);
+   Tensor<Index, 1> new_filters_dimensions(1);
+   new_filters_dimensions.setConstant(1);
 
-//   Index new_outputs_number = 1;
+   Index new_outputs_number = 1;
 
-//   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
 //   neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
@@ -1741,16 +1741,16 @@ void NeuralNetworkTest::test_write_expression() // @todo
 {
    cout << "test_write_expression\n";
 
-//   NeuralNetwork neural_network;
-//   string expression;
+   NeuralNetwork neural_network;
+   string expression;
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture;
 
-//   // Test
+   // Test
 
-////   expression = neural_network.write_expression();
+//   expression = neural_network.write_expression();
 
-//   // Test
+   // Test
 
 //   architecture.resize(3);
 
@@ -1846,108 +1846,107 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
 
     NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
 
-//    neural_network.forward_propagate(batch, forward_propagation);
+    neural_network.forward_propagate(batch, forward_propagation);
 
-//    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
+    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
 
-//    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0].activations_2d;
+    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0].activations_2d;
 
-//    assert_true(perceptron_combinations.dimension(0) == 5, LOG);
-//    assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations(1,0) - 5) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations(2,0) - 7) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations(3,0) - 1) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations(4,0) - 1) < static_cast<type>(1e-3), LOG);
+    assert_true(perceptron_combinations.dimension(0) == 5, LOG);
+    assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations(1,0) - 5) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations(2,0) - 7) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations(3,0) - 1) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations(4,0) - 1) < static_cast<type>(1e-3), LOG);
 
-//    assert_true(perceptron_activations.dimension(0) == 5, LOG);
-//    assert_true(abs(perceptron_activations(0,0) - static_cast<type>(0.952)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations(1,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations(2,0) - static_cast<type>(0.999)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations(3,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations(4,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
+    assert_true(perceptron_activations.dimension(0) == 5, LOG);
+    assert_true(abs(perceptron_activations(0,0) - static_cast<type>(0.952)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations(1,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations(2,0) - static_cast<type>(0.999)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations(3,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations(4,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
 
-//    // Test 2
+    // Test 2
 
-//    inputs_number = 4;
-//    target_number = 1;
+    inputs_number = 4;
+    target_number = 1;
 
-//    data.resize(3, 5);
+    data.resize(3, 5);
 
-//    data.setValues({{-1,1,-1,1,0,0},{-2,2,3,1,0},{-3,3,5,1,0}});
+    data.setValues({{-1,1,-1,1,0},{-2,2,3,1,0},{-3,3,5,1,0}});
 
-//        //DataSet
+    //DataSet
 
-//    dataset.set(data);
+    dataset.set(data);
 
-//    dataset.set_training();
+    dataset.set_training();
 
-//    DataSet::Batch batch_3(3, &dataset);
+    DataSet::Batch batch_3(3, &dataset);
 
-//    training_instances_indices = dataset.get_training_instances_indices();
-//    inputs_indices = dataset.get_input_variables_indices();
-//    targets_indices = dataset.get_target_variables_indices();
+    training_instances_indices = dataset.get_training_instances_indices();
+    inputs_indices = dataset.get_input_variables_indices();
+    targets_indices = dataset.get_target_variables_indices();
 
-//    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
 
-//        //NeuralNetwork
+    //NeuralNetwork
 
-//    neural_network.set();
-//    Tensor<Layer*, 1> layers_tensor(2);
+    neural_network.set();
+    Tensor<Layer*, 1> layers_tensor(2);
 //    layers_tensor.setValues({new PerceptronLayer(inputs_number,7), new ProbabilisticLayer(7,target_number)});
-//    neural_network.set_layers_pointers(layers_tensor);
-//    neural_network.set_thread_pool_device(thread_pool_device);
+    layers_tensor.setValues({new PerceptronLayer, new ProbabilisticLayer});
+    neural_network.set_layers_pointers(layers_tensor);
 
-//    PerceptronLayer* perceptron_layer_3 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(0));
-//    const Index neurons_number_3_0 = perceptron_layer_3->get_neurons_number();
-//    perceptron_layer_3->set_activation_function(PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer_3 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(0));
+    const Index neurons_number_3_0 = perceptron_layer_3->get_neurons_number();
+    perceptron_layer_3->set_activation_function(PerceptronLayer::Logistic);
 
-//    ProbabilisticLayer* probabilistic_layer_3 = dynamic_cast<ProbabilisticLayer*>(neural_network.get_layer_pointer(1));
-//    const Index neurons_number_3_1 = probabilistic_layer_3->get_neurons_number();
-//    probabilistic_layer_3->set_activation_function(ProbabilisticLayer::Softmax);
+    ProbabilisticLayer* probabilistic_layer_3 = dynamic_cast<ProbabilisticLayer*>(neural_network.get_layer_pointer(1));
+    const Index neurons_number_3_1 = probabilistic_layer_3->get_neurons_number();
+    probabilistic_layer_3->set_activation_function(ProbabilisticLayer::Softmax);
 
-//    Tensor<type,2 > biases_pl(neurons_number, 1);
-//    biases_pl.setConstant(5);
-//    perceptron_layer_3->set_biases(biases_pl);
-//    Tensor<type,2 > synaptic_weights_pl(inputs_number, neurons_number_3_0);
-//    synaptic_weights_pl.setConstant(-1);
-//    perceptron_layer_3->set_synaptic_weights(synaptic_weights_pl);
+    Tensor<type,2 > biases_pl(neurons_number, 1);
+    biases_pl.setConstant(5);
+    perceptron_layer_3->set_biases(biases_pl);
+    Tensor<type,2 > synaptic_weights_pl(inputs_number, neurons_number_3_0);
+    synaptic_weights_pl.setConstant(-1);
+    perceptron_layer_3->set_synaptic_weights(synaptic_weights_pl);
 
-//    Tensor<type,2 > biases_pbl(neurons_number, 1);
-//    biases_pbl.setConstant(3);
-//    probabilistic_layer_3->set_biases(biases_pbl);
-//    Tensor<type,2 > synaptic_pbl(neurons_number_3_0, neurons_number_3_1);
-//    synaptic_pbl.setConstant(1);
-//    probabilistic_layer_3->set_synaptic_weights(synaptic_pbl);
+    Tensor<type,2 > biases_pbl(neurons_number, 1);
+    biases_pbl.setConstant(3);
+    probabilistic_layer_3->set_biases(biases_pbl);
+    Tensor<type,2 > synaptic_pbl(neurons_number_3_0, neurons_number_3_1);
+    synaptic_pbl.setConstant(1);
+    probabilistic_layer_3->set_synaptic_weights(synaptic_pbl);
 
+    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_instances_number(), &neural_network);
 
-//    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_instances_number(), &neural_network);
+    neural_network.forward_propagate(batch_3, forward_propagation_3);
 
-//    neural_network.forward_propagate(batch_3, forward_propagation_3);
+    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations_2d;
+    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations_2d;
+    Tensor<type, 2>perceptron_combinations_3_1 = forward_propagation_3.layers[1].combinations_2d;
+    Tensor<type, 2>perceptron_activations_3_1= forward_propagation_3.layers[1].activations_2d;
 
-//    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations_2d;
-//    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations_2d;
-//    Tensor<type, 2>perceptron_combinations_3_1 = forward_propagation_3.layers[1].combinations_2d;
-//    Tensor<type, 2>perceptron_activations_3_1= forward_propagation_3.layers[1].activations_2d;
+    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
+    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
 
-//    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
-//    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
+    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
+    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
 
-//    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
-//    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
+    assert_true(perceptron_combinations_3_1.dimension(0) == 3, LOG);
+    assert_true(abs(perceptron_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
+             && abs(perceptron_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
 
-//    assert_true(perceptron_combinations_3_1.dimension(0) == 3, LOG);
-//    assert_true(abs(perceptron_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
-//             && abs(perceptron_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
-
-//    assert_true(perceptron_activations_3_1.dimension(0) == 3, LOG);
-//    assert_true(abs(perceptron_activations_3_1(0,0) - static_cast<type>(0.443)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations_3_1(1,0) - static_cast<type>(0.341)) < static_cast<type>(1e-3)
-//             && abs(perceptron_activations_3_1(2,0) - static_cast<type>(0.215)) < static_cast<type>(1e-3), LOG);
+    assert_true(perceptron_activations_3_1.dimension(0) == 3, LOG);
+    assert_true(abs(perceptron_activations_3_1(0,0) - static_cast<type>(0.443)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations_3_1(1,0) - static_cast<type>(0.341)) < static_cast<type>(1e-3)
+             && abs(perceptron_activations_3_1(2,0) - static_cast<type>(0.215)) < static_cast<type>(1e-3), LOG);
 }
 
 
