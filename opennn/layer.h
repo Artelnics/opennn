@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <iostream>
 #include <vector>
+#include <omp.h>
 
 // OpenNN includes
 
@@ -123,7 +124,6 @@ public:
                 cout << "Activations derivatives 3d:" << endl;
                 cout << activations_derivatives_3d << endl;
             }
-
         }
 
         Index batch_instances_number = 0;
@@ -192,8 +192,11 @@ public:
 
     // Constructor
 
-    explicit Layer()
+    explicit Layer()   
     {
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
     }
 
     // Destructor

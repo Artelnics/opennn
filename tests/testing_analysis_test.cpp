@@ -204,8 +204,6 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_thread_pool_device(thread_pool_device);
-
     data_set.initialize_data(0.0);
 
     data_set.set_testing();
@@ -217,8 +215,6 @@ void TestingAnalysisTest::test_calculate_absolute_errors_statistics()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
-
-    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -242,8 +238,6 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_thread_pool_device(thread_pool_device);
-
     data_set.initialize_data(0.0);
 
     data_set.set_testing();
@@ -255,8 +249,6 @@ void TestingAnalysisTest::test_calculate_percentage_errors_statistics()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
-
-    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -278,8 +270,6 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_thread_pool_device(thread_pool_device);
-
     data_set.initialize_data(0.0);
 
     data_set.set_testing();
@@ -291,8 +281,6 @@ void TestingAnalysisTest::test_calculate_error_data_statistics()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
-
-    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -323,8 +311,6 @@ void TestingAnalysisTest::test_print_error_data_statistics()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.set_thread_pool_device(thread_pool_device);
-
     data_set.initialize_data(0.0);
 
     data_set.set_testing();
@@ -336,8 +322,6 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
-
-    neural_network.set_thread_pool_device(thread_pool_device);
 
     // Testing Analysis
 
@@ -471,8 +455,6 @@ void TestingAnalysisTest::test_linear_regression()
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.set_thread_pool_device(thread_pool_device);
-
    data_set.initialize_data(0.0);
 
    data_set.set_testing();
@@ -484,8 +466,6 @@ void TestingAnalysisTest::test_linear_regression()
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0.0);
-
-   neural_network.set_thread_pool_device(thread_pool_device);
 
    // Testing Analysis
 
