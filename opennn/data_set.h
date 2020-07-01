@@ -344,6 +344,7 @@ public:
    const bool& get_rows_label() const;
 
    Tensor<string, 1> get_rows_label_tensor() const;
+   Tensor<string, 1> get_selection_rows_label_tensor();
 
    const Separator& get_separator() const;
    char get_separator_char() const;
