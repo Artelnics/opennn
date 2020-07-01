@@ -136,6 +136,32 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 }
 
 
+
+
+void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
+                                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                   SecondOrderLoss& second_order_loss) const
+{
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Index batch_instances_number = batch.get_instances_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    second_order_loss.error_terms.resize(outputs.dimension(0));
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+
+    Tensor<type, 0> error;
+    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
+
+    second_order_loss.error = error()/static_cast<type>(batch_instances_number);
+}
+
+
 // Gradient methods
 
 void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,

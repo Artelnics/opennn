@@ -115,6 +115,12 @@ type WeightedSquaredError::get_negatives_weight() const
 }
 
 
+type WeightedSquaredError::get_normalizaton_coefficient() const
+{
+    return normalization_coefficient;
+}
+
+
 /// Returns the normalization coefficient.
 
 type WeightedSquaredError::get_training_normalization_coefficient() const
@@ -227,7 +233,7 @@ void WeightedSquaredError::set_weights()
 
 /// Calculates of the normalization coefficient with the data of the data set.
 
-void WeightedSquaredError::set_training_normalization_coefficient()
+void WeightedSquaredError::set_normalization_coefficient()
 {
     // Control sentence
 
@@ -240,6 +246,26 @@ void WeightedSquaredError::set_training_normalization_coefficient()
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Index negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
+
+    training_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+}
+
+
+/// Calculates of the normalization coefficient with the data of the data set.
+
+void WeightedSquaredError::set_training_normalization_coefficient()
+{
+    // Control sentence
+
+#ifdef __OPENNN_DEBUG__
+
+    check();
+
+#endif
+
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+    const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
     training_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
 }
