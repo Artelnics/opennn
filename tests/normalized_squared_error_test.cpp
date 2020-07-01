@@ -141,8 +141,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-
-//   normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
+   normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
 //    assert_true(loss_index_pointer->calculate_error() == 0.0, LOG);
 
