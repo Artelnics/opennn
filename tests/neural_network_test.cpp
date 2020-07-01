@@ -413,11 +413,11 @@ void NeuralNetworkTest::test_get_layer_pointer()
    assert_true(neural_network.get_layer_pointer(4)->get_type() == Layer::Probabilistic, LOG);
    assert_true(neural_network.get_layer_pointer(5)->get_type() == Layer::LongShortTermMemory, LOG);
    assert_true(neural_network.get_layer_pointer(6)->get_type() == Layer::Recurrent, LOG);
-   assert_true(neural_network.get_layer_pointer(7)->get_type() == Layer::Unscaling, LOG);
-   assert_true(neural_network.get_layer_pointer(8)->get_type() == Layer::PrincipalComponents, LOG);
-   assert_true(neural_network.get_layer_pointer(9)->get_type() == Layer::Bounding, LOG);
+//   assert_true(neural_network.get_layer_pointer(7)->get_type() == Layer::Unscaling, LOG);
+//   assert_true(neural_network.get_layer_pointer(8)->get_type() == Layer::PrincipalComponents, LOG);
+//   assert_true(neural_network.get_layer_pointer(9)->get_type() == Layer::Bounding, LOG);
 
-   assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
+//   assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
 }
 
 void NeuralNetworkTest::test_set()
@@ -467,17 +467,17 @@ void NeuralNetworkTest::test_set()
 
    // Test 2 / Convolutional layer set
 
-   Tensor<Index, 1> new_inputs_dimensions(1);
-   new_inputs_dimensions.setConstant(1);
+//   Tensor<Index, 1> new_inputs_dimensions(1);
+//   new_inputs_dimensions.setConstant(1);
 
-   Index new_blocks_number = 1;
+//   Index new_blocks_number = 1;
 
-   Tensor<Index, 1> new_filters_dimensions(1);
-   new_filters_dimensions.setConstant(1);
+//   Tensor<Index, 1> new_filters_dimensions(1);
+//   new_filters_dimensions.setConstant(1);
 
-   Index new_outputs_number = 1;
+//   Index new_outputs_number = 1;
 
-   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+//   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
 //   neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
