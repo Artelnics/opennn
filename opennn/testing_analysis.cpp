@@ -3142,23 +3142,43 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
 }
 
 
-Tensor<type, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
+Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
                                                                     const Tensor<type, 2>& outputs,
                                                                     const Tensor<string, 1>& labels)
 {
     const Index instances_number = targets.dimension(0);
 
-    Tensor<type, 2> missclassified_instances(instances_number, 3);
+    Tensor<string, 2> missclassified_instances(instances_number, 3);
 
-//    //id, predicted_class, actual_class
-//    for(Index i = 0; i < instances_number; i++)
-//    {
-//        missclassified_instances(i, 0) = labels(i);
-//        missclassified_instances(i,1) = maximal_index(outputs.chip(i, 0));
-//        missclassified_instances(i,2) = maximal_index(targets.chip(i, 0));
-//    }
+    Index predicted_class, actual_class;
+    Index number_of_missclassified = 0;
 
-    return missclassified_instances;
+    for(Index i = 0; i < instances_number; i++)
+    {
+        predicted_class = maximal_index(outputs.chip(i, 0));
+        actual_class = maximal_index(targets.chip(i, 0));
+
+        if(actual_class == predicted_class)
+        {
+            continue;
+        }
+        else
+        {
+            missclassified_instances(number_of_missclassified, 0) = labels(i);
+            missclassified_instances(number_of_missclassified,1) = to_string(predicted_class);
+            missclassified_instances(number_of_missclassified,2) = to_string(actual_class);
+
+            number_of_missclassified ++;
+        }
+    }
+
+    cout <<"Instances number: " << instances_number << endl;
+    cout <<"Missclassified instances number: " << number_of_missclassified << endl;
+
+    Eigen::array<Index, 2> offsets = {0, 0};
+    Eigen::array<Index, 2> extents = {number_of_missclassified, 3};
+
+    return missclassified_instances.slice(offsets, extents);
 }
 
 

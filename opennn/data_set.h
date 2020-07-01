@@ -344,6 +344,7 @@ public:
    const bool& get_rows_label() const;
 
    Tensor<string, 1> get_rows_label_tensor() const;
+   Tensor<string, 1> get_selection_rows_label_tensor();
 
    const Separator& get_separator() const;
    char get_separator_char() const;
@@ -546,6 +547,7 @@ public:
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
 
+   Index calculate_used_negatives(const Index&) const;
    Index calculate_training_negatives(const Index&) const;
    Index calculate_selection_negatives(const Index&) const;
    Index calculate_testing_negatives(const Index&) const;

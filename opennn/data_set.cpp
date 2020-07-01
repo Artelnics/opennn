@@ -4840,6 +4840,41 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 }
 
 
+/// Counts the number of used negatives of the selected target.
+/// @param target_index Index of the target to evaluate.
+
+Index DataSet::calculate_used_negatives(const Index& target_index) const
+{
+    Index negatives = 0;
+
+    const Tensor<Index, 1> used_indices = get_used_instances_indices();
+
+    const Index used_instances_number = used_indices.size();
+
+    for(Index i = 0; i < used_instances_number; i++)
+    {
+        const Index training_index = used_indices(i);
+
+        if(fabsf(data(training_index, target_index)) < numeric_limits<type>::min())
+        {
+            negatives++;
+        }
+        else if(fabsf(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Index calculate_used_negatives(const Index&) const method.\n"
+                   << "Training instance is neither a positive nor a negative: " << data(training_index, target_index) << endl;
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    return negatives;
+}
+
+
 /// Counts the number of negatives of the selected target in the training data.
 /// @param target_index Index of the target to evaluate.
 

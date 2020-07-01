@@ -286,6 +286,8 @@ public:
 
    Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
+   Tensor<string, 2> calculate_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+
    // Forecasting methods
 
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
