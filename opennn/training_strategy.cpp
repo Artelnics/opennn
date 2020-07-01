@@ -643,8 +643,9 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 
 void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    set_loss_thread_pool_device(new_thread_pool_device);
-    set_optimization_thread_pool_device(new_thread_pool_device);
+    set_loss_index_thread_pool_device(new_thread_pool_device);
+
+    set_optimization_algorithm_thread_pool_device(new_thread_pool_device);
 }
 
 
@@ -664,7 +665,7 @@ void TrainingStrategy::set_neural_network_pointer(NeuralNetwork* new_neural_netw
 }
 
 
-void TrainingStrategy::set_loss_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void TrainingStrategy::set_loss_index_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
     sum_squared_error.set_thread_pool_device(new_thread_pool_device);
     mean_squared_error.set_thread_pool_device(new_thread_pool_device);
@@ -675,14 +676,14 @@ void TrainingStrategy::set_loss_thread_pool_device(ThreadPoolDevice* new_thread_
 }
 
 
-void TrainingStrategy::set_optimization_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void TrainingStrategy::set_optimization_algorithm_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
     gradient_descent.set_thread_pool_device(new_thread_pool_device);
     conjugate_gradient.set_thread_pool_device(new_thread_pool_device);
-    stochastic_gradient_descent.set_thread_pool_device(new_thread_pool_device);
-    adaptive_moment_estimation.set_thread_pool_device(new_thread_pool_device);
     quasi_Newton_method.set_thread_pool_device(new_thread_pool_device);
     Levenberg_Marquardt_algorithm.set_thread_pool_device(new_thread_pool_device);
+    stochastic_gradient_descent.set_thread_pool_device(new_thread_pool_device);
+    adaptive_moment_estimation.set_thread_pool_device(new_thread_pool_device);
 }
 
 

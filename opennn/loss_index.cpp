@@ -90,6 +90,8 @@ LossIndex::LossIndex(const LossIndex& other_error_term)
     : neural_network_pointer(nullptr),
       data_set_pointer(nullptr)
 {
+    set_default();
+
     neural_network_pointer = other_error_term.neural_network_pointer;
 
     data_set_pointer = other_error_term.data_set_pointer;
@@ -232,6 +234,8 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 

@@ -190,8 +190,6 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   void set_thread_pool_device(ThreadPoolDevice*);
-
    // Training parameters
 
    void set_warning_parameters_norm(const type&);
