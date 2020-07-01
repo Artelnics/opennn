@@ -45,6 +45,48 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
+        // Device
+
+        const int n = 4;
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+        DataSet data_set("C:/Users/Usuario/Documents/airfoil_self_noise.csv", ';', true);
+
+        data_set.set_thread_pool_device(thread_pool_device);
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        Tensor<string,1> scaling_methods(input_variables_number);
+        scaling_methods.setConstant("MinimumMaximum");
+
+        Tensor<string,1> unscaling_methods(target_variables_number);
+        unscaling_methods.setConstant("MinimumMaximum");
+
+        const Tensor<Descriptives,1> inputs_descriptives = data_set.scale_inputs(scaling_methods);
+        const Tensor<Descriptives,1> targets_descriptives = data_set.scale_targets(unscaling_methods);
+
+        Tensor<Index, 1> architecture(3);
+        architecture(0) = input_variables_number;
+        architecture(1) = 7;
+        architecture(2) = target_variables_number;
+
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+
+        neural_network.set_thread_pool_device(thread_pool_device);
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_thread_pool_device(thread_pool_device);
+
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+
+        training_strategy.perform_training();
+
         return 0;
     }
     catch(exception& e)

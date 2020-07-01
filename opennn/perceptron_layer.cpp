@@ -416,7 +416,6 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     memcpy(synaptic_weights.data(),
            new_parameters.data() + biases_number + index,
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-
 }
 
 
@@ -772,6 +771,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     }
 
 #endif
+
     calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
@@ -780,7 +780,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_2d);
-
 }
 
 
