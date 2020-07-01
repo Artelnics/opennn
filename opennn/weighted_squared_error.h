@@ -63,6 +63,8 @@ public:
    type get_positives_weight() const;
    type get_negatives_weight() const;
 
+   type get_normalizaton_coefficient() const;
+
    type get_training_normalization_coefficient() const;
    type get_selection_normalization_coefficient() const;
 
@@ -80,6 +82,8 @@ public:
 
    void set_weights();
 
+   void set_normalization_coefficient();
+
    void set_training_normalization_coefficient();
    void set_selection_normalization_coefficient();
 
@@ -90,6 +94,10 @@ public:
    void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
+
+//   void calculate_error_terms(const DataSet::Batch&,
+//                              const NeuralNetwork::ForwardPropagation&,
+//                              SecondOrderLoss&) const;
 
    // Gradient methods
 
@@ -132,6 +140,10 @@ private:
    /// Weight for the negatives for the calculation of the error.
 
    type negatives_weight;
+
+   /// Coefficient of normalization
+
+   type normalization_coefficient;
 
    /// Coefficient of normalization for the calculation of the training error.
 

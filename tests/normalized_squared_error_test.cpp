@@ -630,12 +630,16 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
+<<<<<<< Updated upstream
 //   cout << "Jacobian: " << second_order_loss.error_Jacobian << endl;
 
 //   cout << "Num Jacobian: " << nse.calculate_Jacobian_numerical_differentiation(&nse) << endl;
 
 
    NumericalDifferentiation nd;
+=======
+   Tensor<type, 2> numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation(&nse);
+>>>>>>> Stashed changes
 
    NeuralNetwork neural_network_2;
    Tensor<Index, 1> hidden_layers_size;
