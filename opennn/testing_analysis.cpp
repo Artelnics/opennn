@@ -3150,13 +3150,13 @@ Tensor<type, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor
 
     Tensor<type, 2> missclassified_instances(instances_number, 3);
 
-    //id, predicted_class, actual_class
-    for(Index i = 0; i < instances_number; i++)
-    {
-        missclassified_instances(i, 0) = labels(i);
-        missclassified_instances(i,1) = maximal_index(outputs.chip(i, 0));
-        missclassified_instances(i,2) = maximal_index(targets.chip(i, 0));
-    }
+//    //id, predicted_class, actual_class
+//    for(Index i = 0; i < instances_number; i++)
+//    {
+//        missclassified_instances(i, 0) = labels(i);
+//        missclassified_instances(i,1) = maximal_index(outputs.chip(i, 0));
+//        missclassified_instances(i,2) = maximal_index(targets.chip(i, 0));
+//    }
 
     return missclassified_instances;
 }
