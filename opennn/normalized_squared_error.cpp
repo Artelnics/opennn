@@ -299,11 +299,11 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
 {
-    #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
     check();
 
-    #endif
+#endif
 
     const Index batch_instances_number = batch.get_instances_number();
     const Index total_instances_number = data_set_pointer->get_instances_number();
@@ -316,22 +316,23 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
 }
 
 
-void NormalizedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
+void NormalizedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch,
+                                                             LossIndex::SecondOrderLoss& second_order_loss) const
 {
-     #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-     check();
+    check();
 
-     #endif
+#endif
 
-     const Index batch_instances_number = batch.get_instances_number();
-     const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_instances_number = batch.get_instances_number();
+    const Index total_instances_number = data_set_pointer->get_instances_number();
 
-     const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
 
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+    second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 
-     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+    second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
 
 

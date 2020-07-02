@@ -96,7 +96,8 @@ public:
 
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const;
+   void calculate_hessian_approximation(const DataSet::Batch&,
+                                        LossIndex::SecondOrderLoss&) const;
 
 
    // Serialization methods
