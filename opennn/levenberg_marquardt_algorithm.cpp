@@ -890,8 +890,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           selection_error = selection_back_propagation.loss;
         }
 
-        system("pause");
-
         if(epoch == 0)
         {
             minimum_selection_error = selection_error;
