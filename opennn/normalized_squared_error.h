@@ -92,7 +92,6 @@ public:
 
 
    void calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                       const NeuralNetwork::ForwardPropagation& forward_propagation,
                                        LossIndex::SecondOrderLoss& second_order_loss) const;
 
    // Hessian method

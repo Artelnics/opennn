@@ -481,8 +481,6 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
 
-    const Index synaptic_weights_number = neurons_number*inputs_number;
-
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
     layer_error_Jacobian.setConstant(0);
 
@@ -498,12 +496,12 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 
             for(Index input = 0; input < inputs_number; input++)
             {
-                layer_error_Jacobian(instance, parameter) = layer_delta*layer_inputs(instance, input);
+                layer_error_Jacobian(instance, neurons_number+parameter) = layer_delta*layer_inputs(instance, input);
 
                 parameter++;
             }
 
-            layer_error_Jacobian(instance, synaptic_weights_number+perceptron) = layer_delta;
+            layer_error_Jacobian(instance, perceptron) = layer_delta;
         }
     }
 
@@ -567,7 +565,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-    calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
+    calculate_Jacobian_gradient(batch, second_order_loss);
 
     calculate_hessian_approximation(batch, second_order_loss);
 
