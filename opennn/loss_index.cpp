@@ -551,30 +551,23 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                        BackPropagation& back_propagation,
                                        SecondOrderLoss& second_order_loss) const
 {
-//    cout << "----------------------------------------------------------" << endl;
-
     // First Order
 
-//    calculate_batch_error_terms()
+    calculate_error_terms(batch, forward_propagation, second_order_loss);
 
-    calculate_output_gradient(batch, forward_propagation, back_propagation);
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-//    cout << "Output gradient: " << back_propagation.output_gradient << endl;
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+    back_propagation.output_gradient = (outputs-targets)/second_order_loss.error_terms;
 
     calculate_layers_delta(forward_propagation, back_propagation);
-
-
-
 
     // Second Order
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-//    cout << "error terms Jacobian: " << second_order_loss.error_Jacobian << endl;
-
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-
-    calculate_error_gradient(batch,forward_propagation,back_propagation);
 
     calculate_hessian_approximation(batch, second_order_loss);
 
@@ -592,8 +585,6 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
         second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
         second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
     }
-
-    cout << "----------------------------------------------------------" << endl;
 }
 
 
