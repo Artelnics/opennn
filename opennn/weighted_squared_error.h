@@ -65,9 +65,6 @@ public:
 
    type get_normalizaton_coefficient() const;
 
-   type get_training_normalization_coefficient() const;
-   type get_selection_normalization_coefficient() const;
-
    // Set methods
 
    void set_default();
@@ -75,17 +72,11 @@ public:
    void set_positives_weight(const type&);
    void set_negatives_weight(const type&);
 
-   void set_training_normalization_coefficient(const type&);
-   void set_selection_normalization_coefficient(const type&);
-
    void set_weights(const type&, const type&);
 
    void set_weights();
 
    void set_normalization_coefficient();
-
-   void set_training_normalization_coefficient();
-   void set_selection_normalization_coefficient();
 
    // Error methods
 
@@ -95,9 +86,12 @@ public:
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
 
-//   void calculate_error_terms(const DataSet::Batch&,
-//                              const NeuralNetwork::ForwardPropagation&,
-//                              SecondOrderLoss&) const;
+   void calculate_error_terms(const DataSet::Batch&,
+                              const NeuralNetwork::ForwardPropagation&,
+                              SecondOrderLoss&) const;
+
+   string get_error_type() const;
+   string get_error_type_text() const;
 
    // Gradient methods
 
@@ -113,23 +107,12 @@ public:
 
    void calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const;
 
-   // Error terms methods
-
-   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-//   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
-
-   string get_error_type() const;
-   string get_error_type_text() const;
-
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
-
-   
+   void write_XML(tinyxml2::XMLPrinter&) const;   
 
 private:
 
@@ -144,14 +127,6 @@ private:
    /// Coefficient of normalization
 
    type normalization_coefficient;
-
-   /// Coefficient of normalization for the calculation of the training error.
-
-   type training_normalization_coefficient;
-
-   /// Coefficient of normalization for the calculation of the selection error.
-
-   type selection_normalization_coefficient;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/weighted_squared_error_cuda.h"
