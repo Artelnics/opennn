@@ -150,7 +150,7 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 {
     const Index biases_number = biases.size();
 
-    Tensor<type,1> new_biases(biases_number);  
+    Tensor<type,1> new_biases(biases_number);
 
     new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({biases_number}));
 
@@ -181,7 +181,6 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
     {
         fill_n(parameters.data()+i, 1, biases_vector(i));
     }
-
     for(Index i = 0; i < synaptic_weights_vector.size(); i++)
     {
         fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
@@ -389,21 +388,16 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
 {
     /*
 #ifdef __OPENNN_DEBUG__
-
     const Index new_parameters_size = new_parameters.size();
     const Index parameters_number = get_parameters_number();
-
     if(new_parameters_size != parameters_number)
     {
         ostringstream buffer;
-
         buffer << "OpenNN Exception: PerceptronLayer class.\n"
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
                << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
-
         throw logic_error(buffer.str());
     }
-
 #endif
 */
     const Index biases_number = get_biases_number();
@@ -416,7 +410,6 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     memcpy(synaptic_weights.data(),
            new_parameters.data() + biases_number + index,
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-
 }
 
 
@@ -772,6 +765,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     }
 
 #endif
+
     calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
@@ -780,7 +774,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_2d);
-
 }
 
 
@@ -896,7 +889,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                               const Layer::ForwardPropagation&,
                               Layer::BackPropagation& back_propagation) const
-{   
+{
     back_propagation.biases_derivatives.device(*thread_pool_device)
             = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
