@@ -1151,7 +1151,7 @@ Tensor<type, 1> LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters) c
 
     const type norm = l2_norm(parameters);
 
-    if(static_cast<Index>(norm) ==  0)
+    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         gradient.setZero();
 
@@ -1172,7 +1172,7 @@ Tensor<type, 2> LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters) co
 
     const type norm = l2_norm(parameters);
 
-    if(static_cast<Index>(norm) == 0.0)
+    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         hessian.setZero();
 
