@@ -3244,6 +3244,21 @@ Tensor<string, 1> DataSet::get_rows_label_tensor() const
     return rows_labels;
 }
 
+Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
+{
+    const Index testing_instances_number = get_testing_instances_number();
+    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    Tensor<string, 1> testing_rows_label(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
+    {
+        testing_rows_label(i) = rows_labels(testing_indices(i));
+    }
+
+    return testing_rows_label;
+}
+
+
 Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
 {
     const Index selection_instances_number = get_selection_instances_number();
