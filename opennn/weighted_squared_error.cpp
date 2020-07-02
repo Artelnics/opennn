@@ -87,8 +87,7 @@ WeightedSquaredError::WeightedSquaredError(const WeightedSquaredError& other_wei
     negatives_weight = other_weighted_squared_error.negatives_weight;
     positives_weight = other_weighted_squared_error.positives_weight;
 
-    training_normalization_coefficient = other_weighted_squared_error.training_normalization_coefficient;
-    selection_normalization_coefficient = other_weighted_squared_error.selection_normalization_coefficient;
+    normalization_coefficient = other_weighted_squared_error.normalization_coefficient;
 }
 
 
@@ -115,11 +114,9 @@ type WeightedSquaredError::get_negatives_weight() const
 }
 
 
-/// Returns the normalization coefficient.
-
-type WeightedSquaredError::get_training_normalization_coefficient() const
+type WeightedSquaredError::get_normalizaton_coefficient() const
 {
-    return training_normalization_coefficient;
+    return normalization_coefficient;
 }
 
 
@@ -131,17 +128,14 @@ void WeightedSquaredError::set_default()
     {
         set_weights();
 
-        set_training_normalization_coefficient();
-
-        set_selection_normalization_coefficient();
+        set_normalization_coefficient();
     }
     else
     {
         negatives_weight = 1.0;
         positives_weight = 1.0;
 
-        training_normalization_coefficient = 1.0;
-        selection_normalization_coefficient = 1.0;
+        normalization_coefficient = 1.0;
     }
 }
 
@@ -161,15 +155,6 @@ void WeightedSquaredError::set_positives_weight(const type& new_positives_weight
 void WeightedSquaredError::set_negatives_weight(const type& new_negatives_weight)
 {
     negatives_weight = new_negatives_weight;
-}
-
-
-/// Set a new normalization coefficient.
-/// @param new_training_normalization_coefficient New normalization coefficient.
-
-void WeightedSquaredError::set_training_normalization_coefficient(const type& new_training_normalization_coefficient)
-{
-    training_normalization_coefficient = new_training_normalization_coefficient;
 }
 
 
@@ -227,7 +212,7 @@ void WeightedSquaredError::set_weights()
 
 /// Calculates of the normalization coefficient with the data of the data set.
 
-void WeightedSquaredError::set_training_normalization_coefficient()
+void WeightedSquaredError::set_normalization_coefficient()
 {
     // Control sentence
 
@@ -239,29 +224,9 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Index negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
+    const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
-    training_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
-}
-
-
-/// Calculates of the selection normalization coefficient with the data of the data set.
-
-void WeightedSquaredError::set_selection_normalization_coefficient()
-{
-    // Control sentence
-
-#ifdef __OPENNN_DEBUG__
-
-    check();
-
-#endif
-
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
-
-    const Index negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
-
-    selection_normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+    normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
 }
 
 
@@ -330,11 +295,47 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
     const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
                                                                  batch.targets_2d);
 
-    const Index instances_number = batch.targets_2d.size();
+    const Index batch_instances_number = batch.instances_number;
+    const Index total_instances_number = data_set_pointer->get_instances_number();
 
-    back_propagation.error = error/instances_number;
+    back_propagation.error = error/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
 
     return;
+}
+
+
+void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
+                                                 const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                 SecondOrderLoss& second_order_loss) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Index batch_instances_number = batch.get_instances_number();
+    const Index total_instances_number = data_set_pointer->get_instances_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+
+    Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
+
+    Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
+
+    f_1 = ((outputs - targets))*positives_weight;
+
+    f_2 = ((outputs - targets))*negatives_weight;
+
+    second_order_loss.error_terms = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+
+    Tensor<type, 0> error;
+    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
+
+    const type coefficient = ((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+
+    second_order_loss.error = error()/coefficient;
 }
 
 
@@ -379,77 +380,43 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 
 
 void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
-   {
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    Tensor<type, 1> errors = calculate_training_error_terms(outputs, targets); //@todo, change
-
-    const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
-
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
-
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
-}
-
-// Hessian method
-
-void WeightedSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
 {
-     #ifdef __OPENNN_DEBUG__
-
-     check();
-
-     #endif
-
-     const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
-
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
-
-     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
-}
-
-
-/// Returns loss vector of the error terms function for the weighted squared error.
-/// It uses the error back-propagation method.
-/// @param outputs Output data.
-/// @param targets Target data.
-
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-    // Control sentence
-
 #ifdef __OPENNN_DEBUG__
 
     check();
 
 #endif
 
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+    const Index batch_instances_number = batch.get_instances_number();
+    const Index total_instances_number = data_set_pointer->get_instances_number();
 
-    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
 
-    Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_terms, AT_B);
 
-    Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
+    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+}
 
-    f_1 = ((outputs - targets))*positives_weight;
+// Hessian method
 
-    f_2 = ((outputs - targets))*negatives_weight;
+void WeightedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch,
+                                                           LossIndex::SecondOrderLoss& second_order_loss) const
+{
+#ifdef __OPENNN_DEBUG__
 
-    Tensor<type, 1> weighted_error = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+    check();
 
-    return weighted_error;
+#endif
+
+    const Index batch_instances_number = batch.get_instances_number();
+    const Index total_instances_number = data_set_pointer->get_instances_number();
+
+    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+
+    second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+    second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
 
 
