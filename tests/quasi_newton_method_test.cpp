@@ -24,17 +24,17 @@ void QuasiNewtonMethodTest::test_constructor() // @todo
 {
    cout << "test_constructor\n"; 
 
-//   SumSquaredError sum_squared_error;
+   SumSquaredError sum_squared_error;
 
-//   // Default constructor
+   // Default constructor
 
-//   QuasiNewtonMethod qnm1;
-//   assert_true(qnm1.has_loss_index() == false, LOG);
+   QuasiNewtonMethod qnm1;
+   assert_true(qnm1.has_loss_index() == false, LOG);
 
-//   // Loss index constructor
+   // Loss index constructor
 
-//   QuasiNewtonMethod qnm2(&sum_squared_error);
-//   assert_true(qnm2.has_loss_index() == true, LOG);
+   QuasiNewtonMethod qnm2(&sum_squared_error);
+   assert_true(qnm2.has_loss_index() == true, LOG);
 }
 
 
@@ -47,13 +47,13 @@ void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method() // @
 {
    cout << "test_get_inverse_hessian_approximation_method\n";
 
-//   QuasiNewtonMethod quasi_newton_method;
+   QuasiNewtonMethod quasi_newton_method;
 
-//   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
-//   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::DFP, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::DFP, LOG);
 
-//   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
-//   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
 }
 
 
@@ -67,10 +67,10 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method() // @
 {
    cout << "test_set_training_direction_method\n";
 
-//   QuasiNewtonMethod quasi_newton_method;
+   QuasiNewtonMethod quasi_newton_method;
 
-//   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
-//   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
 }
 
 
@@ -83,6 +83,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 //   DataSet data_set(2, 1, 1);
 //   data_set.set_data_random();
 
+//   Tensor<type, > architecture(2);
 //   architecture.setValues({1,1});
 
 //   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
