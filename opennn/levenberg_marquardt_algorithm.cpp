@@ -766,11 +766,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
     type parameters_norm = 0;
 
     // Loss index
 
-    type training_loss = 0;
     type old_training_loss = 0;
     type training_loss_decrease = 0;
 
@@ -824,8 +825,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                                                               training_back_propagation,
                                                               terms_second_order_loss);
 
-        training_loss = terms_second_order_loss.loss;
-
         // Update epoch
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
@@ -847,9 +846,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-             const type new_loss = training_back_propagation.error/* + loss_index_pointer->calculate_regularization(new_parameters)*/;
+             const type new_loss = training_back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(new_parameters);
 
-             if(new_loss <= training_loss) // succesfull step
+             if(new_loss <= terms_second_order_loss.loss) // succesfull step
              {
                  set_damping_parameter(damping_parameter/damping_parameter_factor);
 
@@ -857,7 +856,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
                  neural_network_pointer->set_parameters(parameters);
 
-                 training_loss = new_loss;
+                 terms_second_order_loss.loss = new_loss;
 
                 break;
              }
@@ -878,7 +877,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         }
         else
         {
-            training_loss_decrease = training_loss - old_training_loss;
+            training_loss_decrease = terms_second_order_loss.loss - old_training_loss;
         }
 
         if(has_selection)
@@ -887,7 +886,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-          selection_error = selection_back_propagation.loss;
+          selection_error = selection_back_propagation.error;
         }
 
         if(epoch == 0)
@@ -916,7 +915,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(reserve_training_error_history)
         {
-            results.training_error_history(epoch) = training_loss;
+            results.training_error_history(epoch) = terms_second_order_loss.loss;
         }
 
         if(reserve_selection_error_history)
@@ -941,7 +940,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss <= training_loss_goal)
+        else if(terms_second_order_loss.loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
 
@@ -1016,7 +1015,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_loss << "\n"
+                     << "Training loss: " << terms_second_order_loss.loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
@@ -1033,7 +1032,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.final_parameters = parameters;
             results.final_parameters_norm = parameters_norm;
 
-            results.final_training_error = training_loss;
+            results.final_training_error = terms_second_order_loss.loss;
             results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
@@ -1048,7 +1047,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << training_loss << "\n"
+                 << "Training loss: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
@@ -1062,7 +1061,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Update stuff
 
-        old_training_loss = training_loss;
+        old_training_loss = terms_second_order_loss.loss;
         old_selection_error = selection_error;
     }
 
@@ -1077,15 +1076,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        training_loss = training_back_propagation.loss;
-
         selection_error = minimum_selection_error;
     }
 
     results.final_parameters = parameters;
     results.final_parameters_norm = parameters_norm;
 
-    results.final_training_error = training_loss;
+    results.final_training_error = terms_second_order_loss.loss;
     results.final_selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
