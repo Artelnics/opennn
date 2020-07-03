@@ -52,17 +52,17 @@ int main(void)
         const Index target_variables_number = data_set.get_target_variables_number();
 
         Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-        scaling_inputs_methods.setConstant("MeanStandardDeviation");
+        scaling_inputs_methods.setConstant("MinimumMaximum");
 
         Tensor<string, 1> scaling_target_methods(target_variables_number);
-        scaling_target_methods.setConstant("MeanStandardDeviation");
+        scaling_target_methods.setConstant("MinimumMaximum");
 
         const Tensor<Descriptives, 1> inputs_descriptives =  data_set.scale_inputs(scaling_inputs_methods);
         const Tensor<Descriptives, 1> target_descriptives = data_set.scale_targets(scaling_target_methods);
 
         // Neural network
 
-        const Index hidden_neurons_number = 10;
+        const Index hidden_neurons_number = 7;
 
         Tensor<Index, 1> neural_network_architecture(3);
         neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
@@ -73,13 +73,15 @@ int main(void)
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
+        neural_network.set_parameters_random();
+
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+        scaling_layer_pointer->set_scaling_methods(scaling_inputs_methods);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_descriptives(target_descriptives);
-        unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
+        unscaling_layer_pointer->set_unscaling_methods(scaling_target_methods);
 
         // Training strategy object
 
@@ -87,6 +89,9 @@ int main(void)
         training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
@@ -99,6 +104,10 @@ int main(void)
         testing_analysis.set_thread_pool_device(thread_pool_device);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
+
+        cout << "Intercept: " << linear_regression_analysis.intercept << endl;
+        cout << "Slope: " << linear_regression_analysis.slope << endl;
+        cout << "Correlation: " << linear_regression_analysis.correlation << endl;
 
         // Save results
 
