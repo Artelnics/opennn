@@ -3117,11 +3117,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() cons
 /// The number of columns of the matrix is the number of columns of the target data.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
-                                                                                     const Tensor<type, 2>& outputs,
-                                                                                     const Tensor<Index, 1>& testing_indices) const
+                                                                          const Tensor<type, 2>& outputs,
+                                                                          const Tensor<Index, 1>& testing_indices) const
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = outputs.dimension(1);
+    cout << "Rows number: " << rows_number << endl;
+    cout << "Columns number: " << columns_number << endl;
 
     Tensor<Index, 2> multiple_classification_rates(rows_number, columns_number);
 
@@ -3137,6 +3139,46 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
     }
 
     return multiple_classification_rates;
+}
+
+
+Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
+                                                                    const Tensor<type, 2>& outputs,
+                                                                    const Tensor<string, 1>& labels)
+{
+    const Index instances_number = targets.dimension(0);
+
+    Tensor<string, 2> missclassified_instances(instances_number, 3);
+
+    Index predicted_class, actual_class;
+    Index number_of_missclassified = 0;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        predicted_class = maximal_index(outputs.chip(i, 0));
+        actual_class = maximal_index(targets.chip(i, 0));
+
+        if(actual_class == predicted_class)
+        {
+            continue;
+        }
+        else
+        {
+            missclassified_instances(number_of_missclassified, 0) = labels(i);
+            missclassified_instances(number_of_missclassified,1) = to_string(predicted_class);
+            missclassified_instances(number_of_missclassified,2) = to_string(actual_class);
+
+            number_of_missclassified ++;
+        }
+    }
+
+    cout <<"Instances number: " << instances_number << endl;
+    cout <<"Missclassified instances number: " << number_of_missclassified << endl;
+
+    Eigen::array<Index, 2> offsets = {0, 0};
+    Eigen::array<Index, 2> extents = {number_of_missclassified, 3};
+
+    return missclassified_instances.slice(offsets, extents);
 }
 
 

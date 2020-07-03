@@ -307,7 +307,7 @@ public:
                                           BackPropagation& back_propagation,
                                           SecondOrderLoss& second_order_loss) const;
 
-   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, SecondOrderLoss&) const {}
+   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, SecondOrderLoss&) const {}
 
    virtual void calculate_hessian_approximation(const DataSet::Batch&, SecondOrderLoss&) const {}
 

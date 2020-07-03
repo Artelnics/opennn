@@ -326,9 +326,11 @@ public:
    void print_summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
+   void save_parameters_binary(const string&) const;
 
    virtual void load(const string&);
    void load_parameters(const string&);
+   void load_parameters_binary(const string&);
 
    void save_data(const string&) const;
 

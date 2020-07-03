@@ -46,6 +46,29 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
+   struct LMOptimizationData : public OptimizationData
+   {
+       /// Default constructor.
+
+       explicit LMOptimizationData()
+       {
+       }
+
+       explicit LMOptimizationData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+           set(new_Levenberg_Marquardt_method_pointer);
+       }
+
+       virtual ~LMOptimizationData() {}
+
+       void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+
+       }
+
+
+   };
+
    // Constructors
 
    explicit LevenbergMarquardtAlgorithm();

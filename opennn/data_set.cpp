@@ -3244,6 +3244,35 @@ Tensor<string, 1> DataSet::get_rows_label_tensor() const
     return rows_labels;
 }
 
+Tensor<string, 1> DataSet::get_testing_rows_label_tensor()
+{
+    const Index testing_instances_number = get_testing_instances_number();
+    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
+    Tensor<string, 1> testing_rows_label(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
+    {
+        testing_rows_label(i) = rows_labels(testing_indices(i));
+    }
+
+    return testing_rows_label;
+}
+
+
+Tensor<string, 1> DataSet::get_selection_rows_label_tensor()
+{
+    const Index selection_instances_number = get_selection_instances_number();
+    const Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    Tensor<string, 1> selection_rows_label(selection_instances_number);
+
+    for(Index i = 0; i < selection_instances_number; i++)
+    {
+        selection_rows_label(i) = rows_labels(selection_indices(i));
+    }
+
+    return selection_rows_label;
+}
+
 
 /// Returns the separator to be used in the data file.
 
@@ -4823,6 +4852,41 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
     }
 
     return box_plots;
+}
+
+
+/// Counts the number of used negatives of the selected target.
+/// @param target_index Index of the target to evaluate.
+
+Index DataSet::calculate_used_negatives(const Index& target_index) const
+{
+    Index negatives = 0;
+
+    const Tensor<Index, 1> used_indices = get_used_instances_indices();
+
+    const Index used_instances_number = used_indices.size();
+
+    for(Index i = 0; i < used_instances_number; i++)
+    {
+        const Index training_index = used_indices(i);
+
+        if(fabsf(data(training_index, target_index)) < numeric_limits<type>::min())
+        {
+            negatives++;
+        }
+        else if(fabsf(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Index calculate_used_negatives(const Index&) const method.\n"
+                   << "Training instance is neither a positive nor a negative: " << data(training_index, target_index) << endl;
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    return negatives;
 }
 
 
@@ -8545,7 +8609,7 @@ void DataSet::save_data() const
     {
         if(this->has_rows_labels)
         {
-            file << this->get_rows_label_tensor()(i) << separator_char;
+            file << rows_labels(i) << separator_char;
         }
        for(Index j = 0; j < variables_number; j++)
        {
