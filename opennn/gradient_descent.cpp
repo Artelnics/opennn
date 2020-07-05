@@ -194,14 +194,6 @@ const bool& GradientDescent::get_choose_best_selection() const
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& GradientDescent::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
-}
-
-
 /// Returns true if the loss history vector is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_training_error_history() const
@@ -257,7 +249,6 @@ void GradientDescent::set_default()
     maximum_time = 1000.0;
 
     choose_best_selection = false;
-    apply_early_stopping = true;
 
     // TRAINING HISTORY
 
@@ -635,16 +626,6 @@ void GradientDescent::set_choose_best_selection(const bool& new_choose_best_sele
 }
 
 
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
-/// false otherwise.
-
-void GradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
@@ -980,7 +961,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(selection_error_increases >= maximum_selection_error_increases && apply_early_stopping)
+        else if(selection_error_increases >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1234,17 +1215,6 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
     // Warning parameters norm
 
 //   element = document->NewElement("WarningParametersNorm");
@@ -1480,17 +1450,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Apply early stopping
-
-    file_stream.OpenElement("ApplyEarlyStopping");
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum parameters increment norm
 
     file_stream.OpenElement("MinimumParametersIncrementNorm");
@@ -1639,24 +1598,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {

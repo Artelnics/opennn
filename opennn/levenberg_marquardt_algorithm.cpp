@@ -157,14 +157,6 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
-}
-
-
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
@@ -253,7 +245,6 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_time = 1000.0;
 
     choose_best_selection = false;
-    apply_early_stopping = true;
 
     // TRAINING HISTORY
 
@@ -605,16 +596,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria
-/// has to be taken in account, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
 }
 
 
@@ -971,7 +952,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_failures >= maximum_selection_error_increases && apply_early_stopping)
+        else if(selection_failures >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1265,17 +1246,6 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
     // Warning parameters norm
 
 //   element = document->NewElement("WarningParametersNorm");
@@ -1499,19 +1469,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
         file_stream.CloseElement();
     }
 
-    // Apply early stopping
-
-    {
-        file_stream.OpenElement("ApplyEarlyStopping");
-
-        buffer.str("");
-        buffer << apply_early_stopping;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
     // Minimum parameters increment norm
 
     file_stream.OpenElement("MinimumParametersIncrementNorm");
@@ -1665,24 +1622,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {
