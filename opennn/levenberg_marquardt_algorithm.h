@@ -46,6 +46,65 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
+   struct LMOptimizationData : public OptimizationData
+   {
+       /// Default constructor.
+
+       explicit LMOptimizationData()
+       {
+       }
+
+       explicit LMOptimizationData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+           set(new_Levenberg_Marquardt_method_pointer);
+       }
+
+       virtual ~LMOptimizationData() {}
+
+       void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+           Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method_pointer;
+
+           LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
+
+           NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+           const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+           // Neural network data
+
+           parameters.resize(parameters_number);
+           parameters = neural_network_pointer->get_parameters();
+
+           old_parameters.resize(parameters_number);
+
+           parameters_difference.resize(parameters_number);
+
+           potential_parameters.resize(parameters_number);
+           parameters_increment.resize(parameters_number);
+       }
+
+
+       LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
+
+       // Neural network data
+
+       Tensor<type, 1> old_parameters;
+       Tensor<type, 1> parameters_difference;
+
+       Tensor<type, 1> parameters_increment;
+
+       type parameters_increment_norm = 0;
+
+       // Loss index data
+
+       type old_training_loss = 0;
+
+       // Optimization algorithm data
+
+       Index epoch = 0;
+   };
+
    // Constructors
 
    explicit LevenbergMarquardtAlgorithm();
@@ -81,7 +140,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -131,7 +189,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -153,6 +210,14 @@ public:
    Results perform_training();
 
    void perform_training_void();
+
+   void update_epoch(
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           LossIndex::BackPropagation& back_propagation,
+           LossIndex::SecondOrderLoss& second_order_loss_terms,
+           LMOptimizationData& optimization_data);
+
 
    string write_optimization_algorithm_type() const;
 
@@ -239,9 +304,6 @@ private:
 
    bool choose_best_selection;
 
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
 
    // TRAINING HISTORY
 

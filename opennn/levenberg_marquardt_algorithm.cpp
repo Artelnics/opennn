@@ -157,14 +157,6 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
-}
-
-
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
@@ -253,7 +245,6 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_time = 1000.0;
 
     choose_best_selection = false;
-    apply_early_stopping = true;
 
     // TRAINING HISTORY
 
@@ -608,16 +599,6 @@ void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choo
 }
 
 
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria
-/// has to be taken in account, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
 
@@ -764,17 +745,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
-    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
     type parameters_norm = 0;
 
     // Loss index
 
-    type training_loss = 0;
     type old_training_loss = 0;
     type training_loss_decrease = 0;
 
-    type selection_error = 0;
     type old_selection_error = 0;
 
     Index selection_failures = 0;
@@ -788,9 +765,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Training strategy stuff
 
-    Tensor<type, 1> parameters_increment(parameters_number);
-    type parameters_increment_norm;
-
     Tensor<type, 1> minimal_selection_parameters;
     type minimum_selection_error = numeric_limits<type>::max();
 
@@ -800,13 +774,17 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
+    LMOptimizationData optimization_data(this);
+
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
+
         // Neural network
 
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
         {
@@ -824,8 +802,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                                                               training_back_propagation,
                                                               terms_second_order_loss);
 
-        training_loss = terms_second_order_loss.loss;
-
         // Update epoch
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
@@ -835,42 +811,15 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << endl;
         }
 
-        do
-        {
-             terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
+        // Optimization data
 
-             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1)*terms_second_order_loss.gradient);
+        update_epoch(training_batch,
+                     training_forward_propagation,
+                     training_back_propagation,
+                     terms_second_order_loss,
+                     optimization_data);
 
-             Tensor<type, 1> new_parameters = parameters + parameters_increment;
-
-             neural_network_pointer->forward_propagate(training_batch, new_parameters, training_forward_propagation);
-
-             loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-
-             const type new_loss = training_back_propagation.error/* + loss_index_pointer->calculate_regularization(new_parameters)*/;
-
-             if(new_loss <= training_loss) // succesfull step
-             {
-                 set_damping_parameter(damping_parameter/damping_parameter_factor);
-
-                 parameters += parameters_increment;
-
-                 neural_network_pointer->set_parameters(parameters);
-
-                 training_loss = new_loss;
-
-                break;
-             }
-             else
-             {
-                 terms_second_order_loss.sum_hessian_diagonal(-damping_parameter);
-
-                 set_damping_parameter(damping_parameter*damping_parameter_factor);
-             }
-        }
-        while(damping_parameter < maximum_damping_parameter);
-
-        parameters_increment_norm = l2_norm(parameters_increment);
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         if(epoch == 0)
         {
@@ -878,7 +827,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         }
         else
         {
-            training_loss_decrease = training_loss - old_training_loss;
+            training_loss_decrease = terms_second_order_loss.loss - old_training_loss;
         }
 
         if(has_selection)
@@ -886,27 +835,23 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-
-          selection_error = selection_back_propagation.loss;
         }
-
-        system("pause");
 
         if(epoch == 0)
         {
-            minimum_selection_error = selection_error;
+            minimum_selection_error = selection_back_propagation.error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
+            minimal_selection_parameters = optimization_data.parameters;
         }
-        else if(epoch != 0 && selection_error > old_selection_error)
+        else if(epoch != 0 && selection_back_propagation.error > old_selection_error)
         {
             selection_failures++;
         }
-        else if(selection_error <= minimum_selection_error)
+        else if(selection_back_propagation.error <= minimum_selection_error)
         {
-            minimum_selection_error = selection_error;
+            minimum_selection_error = selection_back_propagation.error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
+            minimal_selection_parameters = optimization_data.parameters;
         }
 
         // Elapsed time
@@ -918,24 +863,22 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(reserve_training_error_history)
         {
-            results.training_error_history(epoch) = training_loss;
+            results.training_error_history(epoch) = terms_second_order_loss.error;
         }
 
         if(reserve_selection_error_history)
         {
-            results.selection_error_history(epoch) = selection_error;
+            results.selection_error_history(epoch) = selection_back_propagation.error;
         }
 
         // Stopping Criteria
 
-//        parameters_increment_norm = 0;
-
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
                 cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << parameters_increment_norm << endl;
+                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
             stop_training = true;
@@ -943,7 +886,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss <= training_loss_goal)
+        else if(terms_second_order_loss.loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
 
@@ -974,7 +917,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_failures >= maximum_selection_error_increases && apply_early_stopping)
+        else if(selection_failures >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1018,7 +961,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_loss << "\n"
+                     << "Training loss: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
@@ -1026,17 +969,16 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
                 if(has_selection)
                 {
-                    cout << "Selection error: " << selection_error << endl;
+                    cout << "Selection error: " << selection_back_propagation.error << endl;
                 }
             }
 
-            results.resize_training_history(1+epoch);
+            results.resize_training_error_history(1+epoch);
 
-            results.final_parameters = parameters;
+            results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
-
-            results.final_training_error = training_loss;
-            results.final_selection_error = selection_error;
+            results.final_training_error = terms_second_order_loss.error;
+            results.final_selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1050,49 +992,37 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << training_loss << "\n"
+                 << "Training loss: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(abs(selection_error - 0) < numeric_limits<type>::epsilon())
+            if(abs(selection_back_propagation.error - 0) < numeric_limits<type>::epsilon())
             {
-                cout << "Selection error: " << selection_error << endl;
+                cout << "Selection error: " << selection_back_propagation.error << endl;
             }
         }
 
         // Update stuff
 
-        old_training_loss = training_loss;
-        old_selection_error = selection_error;
+        old_training_loss = terms_second_order_loss.loss;
+        old_selection_error = selection_back_propagation.error;
     }
 
     if(choose_best_selection)
     {
-        parameters = minimal_selection_parameters;
-        parameters_norm = l2_norm(parameters);
+//        parameters = minimal_selection_parameters;
+//        parameters_norm = l2_norm(parameters);
 
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(minimal_selection_parameters);
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
-        training_loss = training_back_propagation.loss;
-
-        selection_error = minimum_selection_error;
+//        selection_back_propagation.error = minimum_selection_error;
     }
-
-    results.final_parameters = parameters;
-    results.final_parameters_norm = parameters_norm;
-
-    results.final_training_error = training_loss;
-    results.final_selection_error = selection_error;
-
-    results.final_gradient_norm = gradient_norm;
-
-    results.elapsed_time = elapsed_time;
 
     return results;
 }
@@ -1101,6 +1031,54 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 void LevenbergMarquardtAlgorithm::perform_training_void()
 {
     perform_training();
+}
+
+
+void LevenbergMarquardtAlgorithm::update_epoch(const DataSet::Batch& batch,
+                                               NeuralNetwork::ForwardPropagation& forward_propagation,
+                                               LossIndex::BackPropagation& back_propagation,
+                                               LossIndex::SecondOrderLoss& terms_second_order_loss,
+                                               LMOptimizationData& optimization_data)
+{
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    do
+    {
+         terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
+
+         optimization_data.parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1)*terms_second_order_loss.gradient);
+
+         optimization_data.potential_parameters.device(*thread_pool_device) = optimization_data.parameters + optimization_data.parameters_increment;
+
+         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+
+         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
+
+         const type new_loss = back_propagation.error + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+
+         if(new_loss <= terms_second_order_loss.loss) // succesfull step
+         {
+             set_damping_parameter(damping_parameter/damping_parameter_factor);
+
+             optimization_data.parameters = optimization_data.potential_parameters;
+
+             terms_second_order_loss.error = back_propagation.error;
+             terms_second_order_loss.loss = new_loss;
+
+            break;
+         }
+         else
+         {
+             terms_second_order_loss.sum_hessian_diagonal(-damping_parameter);
+
+             set_damping_parameter(damping_parameter*damping_parameter_factor);
+         }
+    }
+    while(damping_parameter < maximum_damping_parameter);
+
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 }
 
 
@@ -1266,17 +1244,6 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 
     buffer.str("");
     buffer << choose_best_selection;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1504,19 +1471,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
         file_stream.CloseElement();
     }
 
-    // Apply early stopping
-
-    {
-        file_stream.OpenElement("ApplyEarlyStopping");
-
-        buffer.str("");
-        buffer << apply_early_stopping;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
     // Minimum parameters increment norm
 
     file_stream.OpenElement("MinimumParametersIncrementNorm");
@@ -1670,24 +1624,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {

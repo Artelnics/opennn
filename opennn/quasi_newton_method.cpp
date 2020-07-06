@@ -225,14 +225,6 @@ const bool& QuasiNewtonMethod::get_choose_best_selection() const
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& QuasiNewtonMethod::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
-}
-
-
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& QuasiNewtonMethod::get_reserve_training_error_history() const
@@ -354,7 +346,6 @@ void QuasiNewtonMethod::set_default()
     maximum_time = 3600.0;
 
     choose_best_selection = false;
-    apply_early_stopping = false;
 
     // TRAINING HISTORY
 
@@ -671,16 +662,6 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
-/// false otherwise.
-
-void QuasiNewtonMethod::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
@@ -920,8 +901,8 @@ void QuasiNewtonMethod::update_epoch(
         NeuralNetwork::ForwardPropagation& forward_propagation,
         LossIndex::BackPropagation& back_propagation,
         QNMOptimizationData& optimization_data)
-{  
-    const type loss = back_propagation.loss;
+{
+    optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
             = optimization_data.parameters - optimization_data.old_parameters;
@@ -1001,7 +982,6 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     back_propagation.loss = directional_point.second;
-    optimization_data.old_training_loss = loss;
 }
 
 
@@ -1197,7 +1177,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = GradientNormGoal;
         }
-        else if(apply_early_stopping && selection_failures >= maximum_selection_error_increases)
+        else if(selection_failures >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1372,17 +1352,6 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
     buffer.str("");
     buffer << choose_best_selection;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
@@ -1674,17 +1643,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Apply early stopping
-
-    file_stream.OpenElement("ApplyEarlyStopping");
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum parameters increment norm
 
     file_stream.OpenElement("MinimumParametersIncrementNorm");
@@ -1951,24 +1909,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {

@@ -90,7 +90,6 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
-
         }
 
         void print() const
@@ -173,7 +172,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -214,7 +212,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -309,14 +306,6 @@ private:
 
    Index maximum_selection_error_increases;
 
-   /// Initial batch size
-
-   Index training_initial_batch_size;
-
-   /// Maximum training batch size
-
-   Index training_maximum_batch_size;
-
    /// Maximum epochs number
 
    Index maximum_epochs_number;
@@ -328,10 +317,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection;
-
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
 
    // TRAINING HISTORY 
 
