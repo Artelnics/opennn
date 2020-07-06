@@ -2453,15 +2453,26 @@ void NeuralNetwork::save_parameters_binary(const string& binary_file_name) const
 
     const Tensor<type, 1> parameters = get_parameters();
 
-    type value;
+//    type value;
+    float value;
 
-    streamsize size = sizeof(double);
+    streamsize type_size = sizeof(float);
+    streamsize int_size = sizeof(size_t);
+
+    size_t inputs_number = get_inputs_number();
+    size_t perceptrons_number = get_first_perceptron_layer_pointer()->get_neurons_number();
+    size_t outputs_number = get_outputs_number();
+
+    file.write(reinterpret_cast<char*>(&inputs_number), int_size);
+    file.write(reinterpret_cast<char*>(&perceptrons_number), int_size);
+    file.write(reinterpret_cast<char*>(&outputs_number), int_size);
+
 
     for(Index i = 0; i < parameters.size(); i++)
     {
         value = parameters(i);
 
-        file.write(reinterpret_cast<char*>(&value), size);
+        file.write(reinterpret_cast<char*>(&value), type_size);
     }
 
     file.close();
@@ -2584,11 +2595,11 @@ string NeuralNetwork::write_expression_c() const
     buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
     buffer <<"Example:"<<endl;
     buffer <<""<<endl;
-    buffer <<"\tvector<float>sample(n);\t"<<endl;
+    buffer <<"\tvector<float> sample(n);\t"<<endl;
     buffer <<"\tsample[0] = 1;\t"<<endl;
     buffer <<"\tsample[1] = 2;\t"<<endl;
     buffer <<"\tsample[n] = 10;\t"<<endl;
-    buffer <<"\tvector<float>outputs = neural_network(sample);"<<endl;
+    buffer <<"\tvector<float> outputs = neural_network(sample);"<<endl;
     buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
     buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
