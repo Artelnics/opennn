@@ -901,8 +901,8 @@ void QuasiNewtonMethod::update_epoch(
         NeuralNetwork::ForwardPropagation& forward_propagation,
         LossIndex::BackPropagation& back_propagation,
         QNMOptimizationData& optimization_data)
-{  
-    const type loss = back_propagation.loss;
+{
+    optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
             = optimization_data.parameters - optimization_data.old_parameters;
@@ -982,7 +982,6 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     back_propagation.loss = directional_point.second;
-    optimization_data.old_training_loss = loss;
 }
 
 
