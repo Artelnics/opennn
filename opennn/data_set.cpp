@@ -4652,7 +4652,6 @@ Tensor<Index, 1> DataSet::unuse_repeated_instances()
 
 /// Return unused variables without correlation.
 /// @param minimum_correlation Minimum correlation between variables.
-/// @param nominal_variables vector containing the classes of each categorical variable.
 
 Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correlation)
 {
