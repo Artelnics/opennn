@@ -258,8 +258,6 @@ public:
 
    Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
-   
-
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) {}

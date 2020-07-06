@@ -22,119 +22,107 @@
 
 #include "../../opennn/opennn.h"
 
+
+#include <iostream>
+#include <vector>
+#include <numeric>      // std::iota
+#include <algorithm>    // std::sort, std::stable_sort
+
 using namespace OpenNN;
+
+vector<int> get_row_indices_sorted(Tensor<type,1>& x)
+{
+    vector<type> y(x.size());
+
+    vector<int> index;
+
+    size_t n(0);
+
+    generate(begin(y), end(y), [&]{ return n++; });
+
+    sort(begin(y), end(y), [&](int i1, int i2) { return x[i1] < x[i2]; } );
+
+    for (auto v : y) index.push_back(v);
+
+    return index;
+}
+
+
+Tensor<type, 2> get_subtensor_sorted(Tensor<type, 2>& data)
+{
+    Tensor<type, 1> shrink_data_dimension(data.dimension(0));
+
+    memcpy(shrink_data_dimension.data(), data.data(), static_cast<size_t>(shrink_data_dimension.size())*sizeof(type));
+
+    vector<int> indices_sorted = get_row_indices_sorted(shrink_data_dimension);
+
+    Tensor<type, 2> sorted_output(data.dimension(0),data.dimension(1));
+
+    for(Index i =0; i<data.dimension(0); i++)
+    {
+        sorted_output(i,0) = data(indices_sorted[i], 0);
+        sorted_output(i,1) = data(indices_sorted[i], 1);
+    }
+    return sorted_output;
+
+}
 
 int main(void)
 {
     try
     {
-        cout << "OpenNN. Leukemia Example." << endl;
+        cout<<"Hello"<<endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        DataSet data_set("C:/opennn/examples/leukemia/data/leukemia.csv",';',false);
 
-        // Device
+        data_set.set_training();
 
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+        Tensor<type, 2> data = data_set.get_data();
 
-        // Data set
+        const Index rows_number = data.dimension(0);
+        const Index columns_number = data.dimension(1);
 
-        DataSet data_set("../data/leukemia.csv", ';', false);
-        data_set.set_thread_pool_device(thread_pool_device);
+        Tensor<Index, 1> rows_indices(rows_number);
+        rows_indices = data_set.get_training_instances_indices();
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+        Tensor<Index, 1> columns_indices(2);
+        columns_indices[1] = static_cast<Index>(columns_number-1);
 
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index targets_number = data_set.get_target_variables_number();
+        for(Index j =0; j<columns_number-1; j++)
+        {
+            columns_indices[0] = static_cast<Index>(j);
 
-        data_set.split_instances_random();
+            Tensor<type, 2> subtensor = data_set.get_subtensor_data(rows_indices, columns_indices);
 
-        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
+            Tensor<type, 2> sorted_output = get_subtensor_sorted(subtensor);
 
-        // Neural network
+            int counter = 0;
 
-        Tensor<Index, 1> neural_network_architecture(2);
-        neural_network_architecture.setValues({inputs_number, targets_number});
+            for(Index i=0; i<rows_number-1;i++)
+            {
+                if(sorted_output(i,1) != sorted_output(i+1,1))
+                {
+                    counter++;
+                }
+            }
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
+            if (counter == 1)
+            {
+                cout<<"gen: "<<j<<endl;
 
-        neural_network.set_inputs_names(inputs_names);
-
-        neural_network.set_outputs_names(targets_names);
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
-
-        training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
-
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
-
-        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
-
-        training_strategy.set_display(false);
-
-        training_strategy.perform_training_void();
-
-        // Model selection
-
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.set_inputs_selection_method(ModelSelection::GROWING_INPUTS);
-
-        model_selection.perform_inputs_selection();
-
-        GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
-
-        growing_inputs_pointer->set_approximation(false);
-
-        growing_inputs_pointer->set_maximum_selection_failures(3);
-
-//        ModelSelection::Results model_selection_results = model_selection.perform_inputs_selection();
-
-
-        // Testing analysis
-
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-
-        // Save results
-
-        data_set.save("../data/data_set.xml");
-
-        neural_network.save("../data/neural_network.xml");
-
-        training_strategy.save("../data/training_strategy.xml");
-
-//        model_selection.save("../data/model_selection.xml");
-//        model_selection_results.save("../data/model_selection_results.dat");
-
-//        confusion.save_csv("../data/confusion.csv");
-
-        cout << "Bye" << endl;
+            }
+        }
 
         return 0;
     }
     catch(exception& e)
     {
-        cout << e.what() << endl;
+        cerr << e.what() << endl;
 
         return 1;
     }
 }
+
 
 
 // OpenNN: Open Neural Networks Library.

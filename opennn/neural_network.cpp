@@ -2433,6 +2433,41 @@ void NeuralNetwork::save_parameters(const string& file_name) const
 }
 
 
+/// Saves to a data file the parameters of a neural network object in binary format.
+/// @param binary_file_name Name of parameters data file.
+
+void NeuralNetwork::save_parameters_binary(const string& binary_file_name) const
+{
+    ofstream file(binary_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork template." << endl
+               << "void save_parameters_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+    const Tensor<type, 1> parameters = get_parameters();
+
+    type value;
+
+    streamsize size = sizeof(double);
+
+    for(Index i = 0; i < parameters.size(); i++)
+    {
+        value = parameters(i);
+
+        file.write(reinterpret_cast<char*>(&value), size);
+    }
+
+    file.close();
+}
+
+
 /// Loads from a XML file the members for this neural network object.
 /// Please mind about the file format, which is specified in the User's Guide.
 /// @param file_name Name of neural network XML file.
@@ -2487,6 +2522,46 @@ void NeuralNetwork::load_parameters(const string& file_name)
     set_parameters(new_parameters);
 
     file.close();
+}
+
+
+/// Loads the neural network parameters from a data file.
+/// The format of this file is just a sequence of numbers.
+/// @param file_name Name of parameters data file.
+
+void NeuralNetwork::load_parameters_binary(const string& file_name)
+{
+    ifstream file;
+
+    file.open(file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork template.\n"
+               << "void load_parameters_binary(const string&) method.\n"
+               << "Cannot open binary file: " << file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(double);
+
+    const Index parameters_number = get_parameters_number();
+
+    Tensor<type, 1> new_parameters(parameters_number);
+
+    type value;
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        new_parameters(i) = value;
+    }
+
+    set_parameters(new_parameters);
 }
 
 

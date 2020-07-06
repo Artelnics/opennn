@@ -3143,8 +3143,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
 
 
 Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
-                                                                    const Tensor<type, 2>& outputs,
-                                                                    const Tensor<string, 1>& labels)
+                                                                      const Tensor<type, 2>& outputs,
+                                                                      const Tensor<string, 1>& labels)
 {
     const Index instances_number = targets.dimension(0);
 
@@ -3152,6 +3152,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
 
     Index predicted_class, actual_class;
     Index number_of_missclassified = 0;
+    string class_name;
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -3165,8 +3166,10 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         else
         {
             missclassified_instances(number_of_missclassified, 0) = labels(i);
-            missclassified_instances(number_of_missclassified,1) = to_string(predicted_class);
-            missclassified_instances(number_of_missclassified,2) = to_string(actual_class);
+            class_name = data_set_pointer->get_target_variables_names()(predicted_class);
+            missclassified_instances(number_of_missclassified,1) = class_name;
+            class_name = data_set_pointer->get_target_variables_names()(actual_class);
+            missclassified_instances(number_of_missclassified,2) = class_name;
 
             number_of_missclassified ++;
         }
@@ -3853,7 +3856,7 @@ bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value)
 
     type* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return(it != (copy.data()+copy.size()));
+    return it != (copy.data()+copy.size());
 }
 
 Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const Index& row_index) const
