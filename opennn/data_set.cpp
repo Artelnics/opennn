@@ -98,6 +98,7 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
     set_has_columns_names(new_has_columns_names);
 
     read_csv();
+
 }
 
 
@@ -417,7 +418,6 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories uses element is nullptr.\n";
-            cout << "AAAAAAAA" << endl;
 
             throw logic_error(buffer.str());
         }
@@ -652,7 +652,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 /// This method transforms the columns into time series for forecasting problems.
 
-void DataSet::transform_columns_time_series()
+void DataSet::transform_time_series_columns()
 {
     const Index columns_number = get_columns_number();
 
@@ -676,30 +676,30 @@ void DataSet::transform_columns_time_series()
     {
         column_index = i%columns_number;
 
-        if(columns(column_index).type == DateTime)
+        if(time_series_columns(column_index).type == DateTime)
         {
             continue;
         }
 
         if(i < lags_number*columns_number)
         {
-            new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
+            new_columns(new_column_index).name = time_series_columns(column_index).name + "_lag_" + to_string(lag_index);
             new_columns(new_column_index).set_use(Input);
 
-            new_columns(new_column_index).type = columns(column_index).type;
-            new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
+            new_columns(new_column_index).type = time_series_columns(column_index).type;
+            new_columns(new_column_index).categories = time_series_columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = time_series_columns(column_index).categories_uses;
 
             new_column_index++;
         }
         else
         {
-            new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+            new_columns(new_column_index).name = time_series_columns(column_index).name + "_ahead_" + to_string(ahead_index);
             new_columns(new_column_index).set_use(Target);
 
-            new_columns(new_column_index).type = columns(column_index).type;
-            new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
+            new_columns(new_column_index).type = time_series_columns(column_index).type;
+            new_columns(new_column_index).categories = time_series_columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = time_series_columns(column_index).categories_uses;
 
             new_column_index++;
         }
@@ -714,7 +714,7 @@ void DataSet::transform_columns_time_series()
         }
     }
 
-    columns = new_columns;
+    time_series_columns = new_columns;
 }
 
 
@@ -2187,6 +2187,20 @@ Tensor<string, 1> DataSet::get_columns_names() const
 }
 
 
+Tensor<string, 1> DataSet::get_time_series_columns_names() const
+{
+    const Index columns_number = get_time_series_columns_number();
+
+    Tensor<string, 1> columns_names(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns_names(i) = time_series_columns(i).name;
+    }
+
+    return columns_names;
+}
+
 /// Returns a string vector that contains the names of the columns whose uses are Input.
 
 Tensor<string, 1> DataSet::get_input_columns_names() const
@@ -2355,6 +2369,10 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
     return columns;
 }
 
+Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
+{
+    return time_series_columns;
+}
 
 /// Returns the input columns of the data set.
 
@@ -2420,6 +2438,12 @@ Index DataSet::get_columns_number() const
     return columns.size();
 }
 
+/// Returns the number of columns in the time series.
+
+Index DataSet::get_time_series_columns_number() const
+{
+    return time_series_columns.size();
+}
 
 /// Returns the number of variables in the data set.
 
@@ -3802,6 +3826,25 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
     return data.slice(offsets, extents);
 }
 
+/// Returns the data from the time series column with a given index,
+/// @param column_index Index of the column.
+
+Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) const
+{
+    Index columns_number = 1;
+    const Index rows_number = data.dimension(0);
+
+    if(time_series_columns(column_index).type == Categorical)
+    {
+        columns_number = time_series_columns(column_index).get_categories_number();
+    }
+
+    Eigen::array<Index, 2> extents = {rows_number, columns_number};
+    Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
+
+    return time_series_data.slice(offsets, extents);
+}
+
 
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
@@ -4234,7 +4277,6 @@ void DataSet::set(const string& file_name)
     load(file_name);
 }
 
-
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -4283,18 +4325,19 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-    set_instances_number(data.dimension(0));
 
-    set_instances_number(data.dimension(0));
-
-    const Index instances_number = data.dimension(0);
-    const Index variables_number = data.dimension(1);
+    const Index instances_number = new_data.dimension(0);
+    const Index variables_number = new_data.dimension(1);
 
     set(instances_number, variables_number);
 
     data = new_data;
 }
 
+void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
+{
+    time_series_data = new_data;
+}
 
 /// Sets the name of the data file.
 /// It also loads the data from that file.
@@ -8666,38 +8709,65 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 }
 
 
-/// Arranges an input-target matrix from a time series matrix, according to the number of lags.
+/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 /// @todo
 
 void DataSet::transform_time_series()
 {
     if(lags_number == 0) return;
 
-//    time_series_data = data;
+    time_series_data = data;
 
     time_series_columns = columns;
 
-    if(has_time_columns())
+    transform_time_series_columns();
+
+    const Index time_series_instances_number = get_instances_number()-(lags_number-1+steps_ahead);
+    const Index time_series_variables_number = get_time_series_columns_number();
+    const Index variables_number = get_variables_number();
+    const Index instances_number = get_instances_number();
+
+    time_series_data.resize(time_series_instances_number, time_series_variables_number);
+
+    Tensor<type, 2> new_data(time_series_instances_number, time_series_variables_number);
+    Tensor<type, 1> variable_data;
+
+    Index new_data_variable = 0;
+
+    Index time_series_variable= 0;
+
+    for(Index lag = lags_number; lag > 0; lag--)
     {
-//        OpenNN::transform_time_series(data, lags_number, steps_ahead, time_index);
+        for(Index variable = 0; variable < variables_number; variable++)
+            {
+            variable_data = get_variable_data(variable);
+
+            for(Index j = 0; j < time_series_instances_number; j++)
+            {
+                new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
+            }
+
+            time_series_variable++;
+        }
     }
-    else
+
+//    set_time_series_data(Tensor)
+    for(Index ahead = 1; ahead <= steps_ahead; ahead++)
     {
-//        OpenNN::transform_time_series(data, lags_number, steps_ahead);
+        for(Index variable = 0; variable < variables_number; variable++)
+            {
+            variable_data = get_variable_data(variable);
+
+            for(Index j = 0; j < time_series_instances_number; j++)
+            {
+                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
+            }
+
+            time_series_variable++;
+        }
     }
 
-    transform_columns_time_series();
-
-    Tensor<InstanceUse, 1> new_instance_uses(data.dimension(0));
-
-    instances_uses = new_instance_uses;
-
-    const Index inputs_number = get_input_variables_number();
-    const Index targets_number = get_target_variables_number();
-
-//    input_variables_dimensions.resize(Tensor<Index, 1>({inputs_number}));
-
-//    target_variables_dimensions.resize(Tensor<Index, 1>({targets_number}));
+    set_time_series_data(new_data);
 }
 
 
