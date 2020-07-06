@@ -225,6 +225,7 @@ public:
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;
+   Tensor<Column, 1> get_time_series_columns() const;
    Tensor<Column, 1> get_input_columns() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
@@ -298,6 +299,8 @@ public:
    Tensor<type, 2> get_training_data() const;
    Tensor<type, 2> get_selection_data() const;
    Tensor<type, 2> get_testing_data() const;
+   Tensor<string, 1> get_time_series_columns_names() const;
+   Index get_time_series_columns_number() const;
 
    Tensor<type, 2> get_input_data() const;
    Tensor<type, 2> get_target_data() const;
@@ -665,11 +668,14 @@ public:
 
    // Time series methods
 
-   void transform_columns_time_series();
+   void transform_time_series_columns();
+   void transform_time_series_data();
+   void get_time_series_columns_number(const Index&);
+   void set_time_series_data(const Tensor<type, 2>&);
 
+   Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
    Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
-
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
 
