@@ -556,11 +556,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_error_terms(batch, forward_propagation, second_order_loss);
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-    back_propagation.output_gradient = (outputs-targets)/second_order_loss.error_terms;
+    calculate_error_terms_output_gradient(batch, forward_propagation, back_propagation, second_order_loss);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -586,6 +582,20 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
         second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
         second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
     }
+}
+
+
+void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batch,
+                                           NeuralNetwork::ForwardPropagation& forward_propagation,
+                                           BackPropagation& back_propagation,
+                                           SecondOrderLoss& second_order_loss) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+    back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+
 }
 
 

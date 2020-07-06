@@ -2361,8 +2361,39 @@ void DataSetTest::test_read_binary_csv()
 //    assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
 }
 
+void DataSetTest::test_transform_time_series()
+{
+    cout << "test_transform_columns_time_series\n";
 
-void DataSetTest::test_convert_time_series()
+
+    Tensor<type, 2> new_data(9, 2);
+    new_data.setValues({{1,10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}, {6, 60}, {7, 70}, {8, 80}, {9, 90}});
+
+    DataSet data_set;
+
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+//    cout << data_set.get_time_series_data();
+
+    Tensor<type, 2> time_series_data = data_set.get_time_series_data();
+
+    // test time_series_data dimensions
+
+    assert_true(time_series_data.dimension(0) == 6, LOG);
+    assert_true(time_series_data.dimension(1) == 8, LOG);
+
+    // test time_series_columns_number
+
+    assert_true(data_set.get_time_series_columns_number()==8, LOG);
+}
+
+/*
+void DataSetTest::test_transform_time_series()
 {
     //@todo
    cout << "test_convert_time_series\n";
@@ -2401,6 +2432,7 @@ void DataSetTest::test_convert_time_series()
 //   assert_true(data_set.get_variable_name(3) == "lag_1_y", LOG);
 
 }
+*/
 
 
 void DataSetTest::test_convert_autoassociation() // @todo
@@ -3039,7 +3071,7 @@ void DataSetTest::run_test_case()
 
    // Pattern recognition methods
 
-   test_calculate_target_columns_distribution();
+//   test_calculate_target_columns_distribution();
    test_unuse_most_populated_target();
    test_balance_multiple_targets_distribution();
    test_balance_function_regression_targets_distribution();
@@ -3073,12 +3105,15 @@ void DataSetTest::run_test_case()
    test_read_urinary_inflammations_csv();
    test_read_wine_csv();
    test_read_binary_csv();
-   test_convert_time_series();
    test_convert_autoassociation();
    test_calculate_training_negatives();
    test_calculate_selection_negatives();
    test_scrub_missing_values();
 
+   // Time series
+
+   test_transform_time_series();
+//   test_transform_columns_time_series();
 
    // Principal components mehtod
 

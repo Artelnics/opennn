@@ -203,7 +203,8 @@ public:
 
    //Trasform methods
 
-   void test_convert_time_series();
+   void test_transform_columns_time_series();
+   void test_transform_time_series();
    void test_convert_autoassociation();
 
    //Principal components mehtod

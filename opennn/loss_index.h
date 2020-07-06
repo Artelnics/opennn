@@ -307,6 +307,11 @@ public:
                                           BackPropagation& back_propagation,
                                           SecondOrderLoss& second_order_loss) const;
 
+   void calculate_error_terms_output_gradient(const DataSet::Batch& batch,
+                                              NeuralNetwork::ForwardPropagation& forward_propagation,
+                                              BackPropagation& back_propagation,
+                                              SecondOrderLoss& second_order_loss) const;
+
    virtual void calculate_Jacobian_gradient(const DataSet::Batch&, SecondOrderLoss&) const {}
 
    virtual void calculate_hessian_approximation(const DataSet::Batch&, SecondOrderLoss&) const {}
