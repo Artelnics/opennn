@@ -3856,7 +3856,7 @@ bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value)
 
     type* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return(it != (copy.data()+copy.size()));
+    return it != (copy.data()+copy.size());
 }
 
 Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const Index& row_index) const

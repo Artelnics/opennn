@@ -206,7 +206,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -247,7 +246,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -370,7 +368,7 @@ private:
 
    /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
-   bool apply_early_stopping;
+   
 
    // TRAINING HISTORY
 
