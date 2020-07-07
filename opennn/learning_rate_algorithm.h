@@ -275,9 +275,9 @@ public:
 
    void set_learning_rate_tolerance(const type&);
 
-   void set_warning_learning_rate(const type&);
+   
 
-   void set_error_learning_rate(const type&);
+   
 
    // Utilities
 
@@ -329,11 +329,11 @@ protected:
 
    /// Big learning rate value at which the algorithm displays a warning.
 
-   type warning_learning_rate;
+   
 
    /// Big learning rate value at which the algorithm throws an exception.
 
-   type error_learning_rate;
+   
 
    // UTILITIES
 

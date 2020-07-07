@@ -87,42 +87,6 @@ const bool& StochasticGradientDescent::get_nesterov() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is
-/// written to the screen.
-
-const type& StochasticGradientDescent::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
-/// to the screen.
-
-const type& StochasticGradientDescent::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is
-/// written to the screen and the program exits.
-
-const type& StochasticGradientDescent::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& StochasticGradientDescent::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
 /// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
@@ -182,14 +146,6 @@ void StochasticGradientDescent::set_default()
     initial_decay = 0;
     momentum = 0;
     nesterov = false;
-
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
 
     // Stopping criteria
 
@@ -317,118 +273,6 @@ void StochasticGradientDescent::set_reserve_all_training_history(const bool& new
     reserve_training_error_history = new_reserve_all_training_history;
 
     reserve_selection_error_history = new_reserve_all_training_history;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void StochasticGradientDescent::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void StochasticGradientDescent::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void StochasticGradientDescent::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void StochasticGradientDescent::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
 }
 
 
@@ -956,50 +800,6 @@ tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
 
     buffer.str("");
     buffer << choose_best_selection;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning parameters norm
-
-    element = document->NewElement("WarningParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning gradient norm
-
-    element = document->NewElement("WarningGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_gradient_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error parameters norm
-
-    element = document->NewElement("ErrorParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error gradient norm
-
-    element = document->NewElement("ErrorGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_gradient_norm;
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);

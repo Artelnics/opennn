@@ -170,11 +170,11 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
+   
+   
 
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
+   
+   
 
    // Stopping criteria
 
@@ -254,19 +254,19 @@ private:
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   type warning_parameters_norm;
+   
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   type warning_gradient_norm;
+   
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   type error_parameters_norm;
+   
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   type error_gradient_norm;
+   
 
 
    // Stopping criteria
