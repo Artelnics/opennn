@@ -291,7 +291,7 @@ void RecurrentLayerTest::test_get_parameters()
 //   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
-   cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;
+//   cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;
 //   cout<<"norm:  "<< recurrent_layer.calculate_parameters_norm()<<endl;
 
 }

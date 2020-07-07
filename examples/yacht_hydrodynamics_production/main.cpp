@@ -68,22 +68,24 @@ int main(void)
 
         cout << "Enter Froude number (0.125-0.45):" << endl;
         cin >> Froude_number;
-/*
-        Tensor<type, 1> inputs(6);
-        inputs[0] = longitudinal_position_center_buoyancy;
-        inputs[1] = prismatic_coefficient;
-        inputs[2] = length_displacement_ratio;
-        inputs[3] = beam_draught_ratio;
-        inputs[4] = lenght_beam_ratio;
-        inputs[5] = Froude_number;
 
-        Tensor<type, 1> outputs = neural_network.calculate_outputs(inputs);
+        Tensor<type, 2> inputs(1, 6);
+        inputs.setValues({{longitudinal_position_center_buoyancy, prismatic_coefficient,length_displacement_ratio, beam_draught_ratio, lenght_beam_ratio, Froude_number}});
 
-        double residuary_resistance = outputs[0];
+//        inputs[0] = longitudinal_position_center_buoyancy;
+//        inputs[1] = prismatic_coefficient;
+//        inputs[2] = length_displacement_ratio;
+//        inputs[3] = beam_draught_ratio;
+//        inputs[4] = lenght_beam_ratio;
+//        inputs[5] = Froude_number;
+
+        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+        double residuary_resistance = outputs(0, 0);
 
         cout << "Residuary resistance per unit weight of displacement:\n"
                   << residuary_resistance << endl;
-*/
+
         return 0;
     }
     catch(exception& e)
