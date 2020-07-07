@@ -76,9 +76,11 @@ int main(void)
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MinimumMaximum);
+        unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
         // Training strategy object
 
@@ -88,9 +90,6 @@ int main(void)
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
-
-        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
-        data_set.unscale_targets(scaling_target_methods, targets_descriptives);
 
         // Testing analysis
 
@@ -104,7 +103,7 @@ int main(void)
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
 
