@@ -1366,7 +1366,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             // Regularization
 
-            const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+            const tinyxml2::XMLElement* regularization_element = element->FirstChildElement("Regularization");
 
             if(regularization_element)
             {
