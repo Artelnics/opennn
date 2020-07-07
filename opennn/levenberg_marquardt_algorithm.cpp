@@ -55,42 +55,6 @@ LevenbergMarquardtAlgorithm::~LevenbergMarquardtAlgorithm()
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is
-/// written to the screen.
-
-const type& LevenbergMarquardtAlgorithm::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
-/// to the screen.
-
-const type& LevenbergMarquardtAlgorithm::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is
-/// written to the screen and the program exits.
-
-const type& LevenbergMarquardtAlgorithm::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& LevenbergMarquardtAlgorithm::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_parameters_increment_norm() const
@@ -224,14 +188,6 @@ const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 
 void LevenbergMarquardtAlgorithm::set_default()
 {
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
-
     // Stopping criteria
 
     minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
@@ -359,113 +315,10 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 }
 
 
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void LevenbergMarquardtAlgorithm::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
 /// Sets a new value for the minimum parameters increment norm stopping criterion.
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
 
-void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(
-        const type& new_minimum_parameters_increment_norm)
+void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -786,11 +639,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        if(display && parameters_norm >= warning_parameters_norm)
-        {
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << "." << endl;
-        }
-
         // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
@@ -805,11 +653,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Update epoch
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << endl;
-        }
 
         // Optimization data
 

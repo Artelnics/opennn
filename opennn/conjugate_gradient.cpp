@@ -98,56 +98,6 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen.
-
-const type& ConjugateGradient::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen.
-
-const type& ConjugateGradient::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich a warning message is written to the screen during line minimization.
-
-const type& ConjugateGradient::get_warning_learning_rate() const
-{
-    return warning_learning_rate;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is written to the screen and the program exits.
-
-const type& ConjugateGradient::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& ConjugateGradient::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-
-const type& ConjugateGradient::get_error_learning_rate() const
-{
-    return error_learning_rate;
-}
-
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
@@ -343,16 +293,6 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 
 void ConjugateGradient::set_default()
 {
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-    warning_learning_rate = 1.0e6;
-
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
-    error_learning_rate = 1.0e9;
-
     // Stopping criteria
 
     minimum_parameters_increment_norm = 0;
@@ -378,166 +318,6 @@ void ConjugateGradient::set_default()
     display_period = 5;
 
     training_direction_method = FR;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void ConjugateGradient::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void ConjugateGradient::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at which a warning message is written to the screen during line
-/// minimization.
-/// @param new_warning_learning_rate Warning learning rate value.
-
-void ConjugateGradient::set_warning_learning_rate(const type& new_warning_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_learning_rate = new_warning_learning_rate;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void ConjugateGradient::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void ConjugateGradient::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-/// @param new_error_learning_rate Error learning rate value.
-
-void ConjugateGradient::set_error_learning_rate(const type& new_error_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_error_learning_rate(const type&) method.\n"
-               << "Error learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -1231,21 +1011,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        if(parameters_norm >= error_parameters_norm)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ConjugateGradient class.\n"
-                   << "Results perform_training() method.\n"
-                   << "Parameters norm is greater than error parameters norm.\n";
-
-            throw logic_error(buffer.str());
-        }
-        else if(display && parameters_norm >= warning_parameters_norm)
-        {
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
-        }
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
@@ -1253,11 +1018,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-        }
 
         if(has_selection)
         {
@@ -2085,120 +1845,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
         }
     }
-
-      // Warning parameters norm
-      {
-         const tinyxml2::XMLElement* warning_parameters_norm_element = root_element->FirstChildElement("WarningParametersNorm");
-
-         if(warning_parameters_norm_element)
-         {
-            const type new_warning_parameters_norm = static_cast<type>(atof(warning_parameters_norm_element->GetText()));
-
-            try
-            {
-               set_warning_parameters_norm(new_warning_parameters_norm);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
-
-      // Warning gradient norm
-      {
-         const tinyxml2::XMLElement* warning_gradient_norm_element = root_element->FirstChildElement("WarningGradientNorm");
-
-         if(warning_gradient_norm_element)
-         {
-            const type new_warning_gradient_norm = static_cast<type>(atof(warning_gradient_norm_element->GetText()));
-
-            try
-            {
-               set_warning_gradient_norm(new_warning_gradient_norm);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
-
-      // Warning learning rate
-      {
-         const tinyxml2::XMLElement* warning_learning_rate_element = root_element->FirstChildElement("WarningLearningRate");
-
-         if(warning_learning_rate_element)
-         {
-            const type new_warning_learning_rate = static_cast<type>(atof(warning_learning_rate_element->GetText()));
-
-            try
-            {
-               set_warning_learning_rate(new_warning_learning_rate);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
-
-      // Error parameters norm
-      {
-         const tinyxml2::XMLElement* error_parameters_norm_element = root_element->FirstChildElement("ErrorParametersNorm");
-
-         if(error_parameters_norm_element)
-         {
-            const type new_error_parameters_norm = static_cast<type>(atof(error_parameters_norm_element->GetText()));
-
-            try
-            {
-                set_error_parameters_norm(new_error_parameters_norm);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
-
-      // Error gradient norm
-      {
-         const tinyxml2::XMLElement* error_gradient_norm_element = root_element->FirstChildElement("ErrorGradientNorm");
-
-         if(error_gradient_norm_element)
-         {
-            const type new_error_gradient_norm = static_cast<type>(atof(error_gradient_norm_element->GetText()));
-
-            try
-            {
-               set_error_gradient_norm(new_error_gradient_norm);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
-
-      // Error learning rate
-      {
-         const tinyxml2::XMLElement* error_learning_rate_element = root_element->FirstChildElement("ErrorLearningRate");
-
-         if(error_learning_rate_element)
-         {
-            const type new_error_learning_rate = static_cast<type>(atof(error_learning_rate_element->GetText()));
-
-            try
-            {
-               set_error_learning_rate(new_error_learning_rate);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
 
     // Return minimum selection error neural network
 

@@ -102,57 +102,6 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen.
-
-const type& QuasiNewtonMethod::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen.
-
-const type& QuasiNewtonMethod::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich a warning message is written to the screen during line minimization.
-
-const type& QuasiNewtonMethod::get_warning_learning_rate() const
-{
-    return warning_learning_rate;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is written to the screen
-/// and the program exits.
-
-const type& QuasiNewtonMethod::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& QuasiNewtonMethod::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-
-const type& QuasiNewtonMethod::get_error_learning_rate() const
-{
-    return error_learning_rate;
-}
-
-
 const Index& QuasiNewtonMethod::get_epochs_number() const
 {
     return epochs_number;
@@ -323,16 +272,6 @@ void QuasiNewtonMethod::set_default()
 
     learning_rate_algorithm.set_default();
 
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e3;
-    warning_learning_rate = 1.0e3;
-
-    error_parameters_norm = 1.0e6;
-    error_gradient_norm = 1.0e6;
-    error_learning_rate = 1.0e6;
-
     // Stopping criteria
 
     minimum_parameters_increment_norm = 0;
@@ -356,166 +295,6 @@ void QuasiNewtonMethod::set_default()
 
     display = true;
     display_period = 5;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-/// @param new_warning_learning_rate Warning learning rate value.
-
-void QuasiNewtonMethod::set_warning_learning_rate(const type& new_warning_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_learning_rate = new_warning_learning_rate;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-/// @param new_error_learning_rate Error learning rate value.
-
-void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_learning_rate(const type&) method.\n"
-               << "Error learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -1075,11 +854,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        if(display && parameters_norm >= warning_parameters_norm)
-        {
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
-        }
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
@@ -1108,11 +882,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
-        }
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
 
         // Optimization data
