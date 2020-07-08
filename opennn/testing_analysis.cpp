@@ -3205,9 +3205,6 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         }
     }
 
-    cout <<"Instances number: " << instances_number << endl;
-    cout <<"Missclassified instances number: " << number_of_missclassified << endl;
-
     Eigen::array<Index, 2> offsets = {0, 0};
     Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
 
