@@ -3052,6 +3052,21 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
 }
 
 
+void TestingAnalysis::save_multiple_classification_tests(const string& classification_tests_file_name) const
+{
+    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
+
+    const Tensor<Index, 2> confusion = calculate_confusion();
+
+    ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+    multiple_classifiaction_tests_file << "Confusion matrix: " << endl;
+    multiple_classifiaction_tests_file << confusion << endl;
+    multiple_classifiaction_tests_file << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
+    multiple_classifiaction_tests_file << "Error: " << multiple_classification_tests(1)*100 << endl;
+    multiple_classifiaction_tests_file.close();
+}
+
+
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() const
@@ -3167,9 +3182,10 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         {
             missclassified_instances(number_of_missclassified, 0) = labels(i);
             class_name = data_set_pointer->get_target_variables_names()(predicted_class);
-            missclassified_instances(number_of_missclassified,1) = class_name;
+            missclassified_instances(number_of_missclassified, 1) = class_name;
             class_name = data_set_pointer->get_target_variables_names()(actual_class);
-            missclassified_instances(number_of_missclassified,2) = class_name;
+            missclassified_instances(number_of_missclassified, 2) = class_name;
+//            missclassified_instances(number_of_missclassified, 2) = outputs(i, predicted_class);
 
             number_of_missclassified ++;
         }
@@ -3182,6 +3198,27 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     Eigen::array<Index, 2> extents = {number_of_missclassified, 3};
 
     return missclassified_instances.slice(offsets, extents);
+}
+
+
+void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targets,
+                                                    const Tensor<type, 2>& outputs,
+                                                    const Tensor<string, 1>& labels,
+                                                    const string& missclassified_instances_file_name)
+{
+    const Tensor<string,2> missclassified_instances = calculate_missclassified_instances(targets,
+                                                                                         outputs,
+                                                                                         labels);
+
+    ofstream missclassified_instances_file(missclassified_instances_file_name);
+    missclassified_instances_file << "instance_name,predicted_class,actual_class" << endl;
+    for(Index i = 0; i < missclassified_instances.size(); i++)
+    {
+        missclassified_instances_file << missclassified_instances(i, 0) << ",";
+        missclassified_instances_file << missclassified_instances(i, 1) << ",";
+        missclassified_instances_file << missclassified_instances(i, 2) << endl;
+    }
+    missclassified_instances_file.close();
 }
 
 
