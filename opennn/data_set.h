@@ -624,6 +624,9 @@ public:
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
+
+   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+
    Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
 
    // Target variables scaling
