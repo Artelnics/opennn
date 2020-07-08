@@ -3063,9 +3063,15 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            confusion_file << confusion(i,j) << ",";
+            if(j == columns_number - 1)
+            {
+                confusion_file << confusion(i,j) << endl;
+            }
+            else
+            {
+                confusion_file << confusion(i,j) << ",";
+            }
         }
-        confusion_file << endl;
     }
     confusion_file.close();
 }
@@ -3195,9 +3201,9 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         else
         {
             missclassified_instances(number_of_missclassified, 0) = labels(i);
-            class_name = data_set_pointer->get_target_variables_names()(predicted_class);
-            missclassified_instances(number_of_missclassified, 1) = class_name;
             class_name = data_set_pointer->get_target_variables_names()(actual_class);
+            missclassified_instances(number_of_missclassified, 1) = class_name;
+            class_name = data_set_pointer->get_target_variables_names()(predicted_class);
             missclassified_instances(number_of_missclassified, 2) = class_name;
             missclassified_instances(number_of_missclassified, 3) = to_string(outputs(i, predicted_class));
 
@@ -3225,7 +3231,7 @@ void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targe
                                                                                          labels);
 
     ofstream missclassified_instances_file(missclassified_instances_file_name);
-    missclassified_instances_file << "instance_name,predicted_class,actual_class,probability" << endl;
+    missclassified_instances_file << "instance_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < missclassified_instances.size(); i++)
     {
         missclassified_instances_file << missclassified_instances(i, 0) << ",";
