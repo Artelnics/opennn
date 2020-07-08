@@ -3052,20 +3052,34 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
 }
 
 
+void TestingAnalysis::save_confusion(const string& confusion_file_name) const
+{
+    const Tensor<Index, 2> confusion = calculate_confusion();
+
+    const Index columns_number = confusion.dimension(0);
+
+    ofstream confusion_file(confusion_file_name);
+    for(Index i = 0; i < columns_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            confusion_file << confusion(i,j) << ",";
+        }
+        confusion_file << endl;
+    }
+    confusion_file.close();
+}
+
+
 void TestingAnalysis::save_multiple_classification_tests(const string& classification_tests_file_name) const
 {
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
 
-    const Tensor<Index, 2> confusion = calculate_confusion();
-
     ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
-    multiple_classifiaction_tests_file << "Confusion matrix: " << endl;
-    multiple_classifiaction_tests_file << confusion << endl;
-    multiple_classifiaction_tests_file << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
-    multiple_classifiaction_tests_file << "Error: " << multiple_classification_tests(1)*100 << endl;
+    multiple_classifiaction_tests_file << "accuracy,error" << endl;
+    multiple_classifiaction_tests_file << multiple_classification_tests(0)*100 << "," << multiple_classification_tests(1)*100 << endl;
     multiple_classifiaction_tests_file.close();
 }
-
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 

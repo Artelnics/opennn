@@ -279,6 +279,7 @@ public:
    // Multiple classification tests
 
    Tensor<type, 1> calculate_multiple_classification_tests() const;
+   void save_confusion(const string&) const;
    void save_multiple_classification_tests(const string&) const;
 
    // Multiple classification rates
