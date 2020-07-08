@@ -1382,6 +1382,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
+    cout << "Loss index loaded" << endl;
+
     // Optimization algorithm
 
     {
@@ -1414,6 +1416,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 gradient_descent.from_XML(new_document);
             }
 
+            cout << "GD" << endl;
+
             // Conjugate gradient
 
             const tinyxml2::XMLElement* conjugate_gradient_element = element->FirstChildElement("ConjugateGradient");
@@ -1434,6 +1438,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 conjugate_gradient.from_XML(new_document);
             }
+
+            cout << "CG" << endl;
 
             // Quasi-Newton method
 
@@ -1456,6 +1462,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 quasi_Newton_method.from_XML(quasi_Newton_document);
             }
 
+            cout << "QN" << endl;
+
             // Levenberg Marquardt
 
             const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardtAlgorithm");
@@ -1476,6 +1484,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 Levenberg_Marquardt_algorithm.from_XML(new_document);
             }
+
+            cout << "LM" << endl;
 
             // Stochastic gradient
 
@@ -1498,6 +1508,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 stochastic_gradient_descent.from_XML(new_document);
             }
 
+            cout << "SG" << endl;
+
             // Adaptive moment estimation
 
             const tinyxml2::XMLElement* adaptive_moment_estimation_element = element->FirstChildElement("AdaptiveMomentEstimation");
@@ -1518,6 +1530,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 adaptive_moment_estimation.from_XML(new_document);
             }
+
+            cout << "ADAM" << endl;
         }
     }
 

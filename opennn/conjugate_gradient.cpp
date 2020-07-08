@@ -1658,7 +1658,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     learning_rate_algorithm.write_XML(file_stream);
 
-//   // Return minimum selection error neural network
+   // Return minimum selection error neural network
 
     {
         file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
