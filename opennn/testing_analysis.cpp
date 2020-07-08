@@ -3177,7 +3177,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
 {
     const Index instances_number = targets.dimension(0);
 
-    Tensor<string, 2> missclassified_instances(instances_number, 3);
+    Tensor<string, 2> missclassified_instances(instances_number, 4);
 
     Index predicted_class, actual_class;
     Index number_of_missclassified = 0;
@@ -3199,7 +3199,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
             missclassified_instances(number_of_missclassified, 1) = class_name;
             class_name = data_set_pointer->get_target_variables_names()(actual_class);
             missclassified_instances(number_of_missclassified, 2) = class_name;
-//            missclassified_instances(number_of_missclassified, 2) = outputs(i, predicted_class);
+            missclassified_instances(number_of_missclassified, 3) = to_string(outputs(i, predicted_class));
 
             number_of_missclassified ++;
         }
@@ -3209,7 +3209,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     cout <<"Missclassified instances number: " << number_of_missclassified << endl;
 
     Eigen::array<Index, 2> offsets = {0, 0};
-    Eigen::array<Index, 2> extents = {number_of_missclassified, 3};
+    Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
 
     return missclassified_instances.slice(offsets, extents);
 }
@@ -3225,12 +3225,13 @@ void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targe
                                                                                          labels);
 
     ofstream missclassified_instances_file(missclassified_instances_file_name);
-    missclassified_instances_file << "instance_name,predicted_class,actual_class" << endl;
+    missclassified_instances_file << "instance_name,predicted_class,actual_class,probability" << endl;
     for(Index i = 0; i < missclassified_instances.size(); i++)
     {
         missclassified_instances_file << missclassified_instances(i, 0) << ",";
         missclassified_instances_file << missclassified_instances(i, 1) << ",";
-        missclassified_instances_file << missclassified_instances(i, 2) << endl;
+        missclassified_instances_file << missclassified_instances(i, 2) << ",";
+        missclassified_instances_file << missclassified_instances(i, 3) << endl;
     }
     missclassified_instances_file.close();
 }
