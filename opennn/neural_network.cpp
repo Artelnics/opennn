@@ -2433,52 +2433,6 @@ void NeuralNetwork::save_parameters(const string& file_name) const
 }
 
 
-/// Saves to a data file the parameters of a neural network object in binary format.
-/// @param binary_file_name Name of parameters data file.
-
-void NeuralNetwork::save_parameters_binary(const string& binary_file_name) const
-{
-    ofstream file(binary_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork template." << endl
-               << "void save_parameters_binary(const string) method." << endl
-               << "Cannot open data binary file." << endl;
-
-        throw logic_error(buffer.str());
-    }
-
-    const Tensor<type, 1> parameters = get_parameters();
-
-//    type value;
-    float value;
-
-    streamsize type_size = sizeof(float);
-    streamsize int_size = sizeof(size_t);
-
-    size_t inputs_number = get_inputs_number();
-    size_t perceptrons_number = get_first_perceptron_layer_pointer()->get_neurons_number();
-    size_t outputs_number = get_outputs_number();
-
-    file.write(reinterpret_cast<char*>(&inputs_number), int_size);
-    file.write(reinterpret_cast<char*>(&perceptrons_number), int_size);
-    file.write(reinterpret_cast<char*>(&outputs_number), int_size);
-
-
-    for(Index i = 0; i < parameters.size(); i++)
-    {
-        value = parameters(i);
-
-        file.write(reinterpret_cast<char*>(&value), type_size);
-    }
-
-    file.close();
-}
-
-
 /// Loads from a XML file the members for this neural network object.
 /// Please mind about the file format, which is specified in the User's Guide.
 /// @param file_name Name of neural network XML file.
