@@ -698,8 +698,6 @@ public:
 
    // Serialization methods
 
-   
-
    void print() const;
    void print_summary() const;
 
