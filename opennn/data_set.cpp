@@ -4574,7 +4574,7 @@ void DataSet::set_instances_number(const Index& new_instances_number)
 
 Tensor<string, 1> DataSet::unuse_constant_columns()
 {
-    const Index columns_number = data.dimension(1);
+    const Index columns_number = get_columns_number();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -4599,45 +4599,54 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
     for(Index i = 0; i < columns_number; i++)
     {
+
+
         if(columns(i).column_use == Input)
         {
+
             if(columns(i).type == Categorical)
             {
+
                 const Index categories_number = columns(i).categories.size();
 
                 bool is_constant = true;
 
                 for(Index j = 0; j < categories_number; j++)
                 {
-                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_instances_indices);
 
+                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_instances_indices);
                     if((column_standard_deviation - 0) > numeric_limits<type>::min())
                     {
                         is_constant = false;
                         break;
                     }
+
                 }
 
                 if(is_constant) columns(i).set_use(UnusedVariable);
 
                 constant_columns = push_back(constant_columns, columns(i).name);
+
             }
             else
             {
+
                 const type column_standard_deviation = standard_deviation(data.chip(variable_index,1), used_instances_indices);
 
                 if((column_standard_deviation - 0) < numeric_limits<type>::min())
+
                 {
                     columns(i).set_use(UnusedVariable);
 
                     constant_columns = push_back(constant_columns, columns(i).name);
+
                 }
             }
         }
 
         columns(i).type == Categorical ? variable_index += columns(i).categories.size() : variable_index++;
-    }
 
+    }
     return constant_columns;
 }
 
