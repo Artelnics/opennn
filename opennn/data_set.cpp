@@ -5036,110 +5036,6 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 }
 
 
-/// Set the variables descriptives member with the descriptives of the variables.
-/// The size of this vector is four. The subvectors are:
-/// <ul>
-/// <li> Minimum.
-/// <li> Maximum.
-/// <li> Mean.
-/// <li> Standard deviation.
-/// </ul>
-
-void DataSet::set_variables_descriptives()
-{
-    const Tensor<Index, 1> used_indices = get_used_instances_indices();
-
-    Tensor<Index, 1> variables_indices;
-
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, get_variables_number()-1);
-
-    variables_descriptives = descriptives(data, used_indices, variables_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::get_input_variables_descriptives() const
-{
-    const Index input_variables_number = get_input_variables_number();
-
-    Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
-
-    Index variable_index = 0;
-    Index input_index = 0;
-
-    for(Index i = 0; i < columns.size(); i++)
-    {
-        if(columns(i).column_use == Input)
-        {
-            if(columns(i).type != Categorical)
-            {
-                input_variables_descriptives(input_index) = variables_descriptives(variable_index);
-
-                variable_index++;
-                input_index++;
-            }
-            else
-            {
-                for(Index j = 0; j < columns(i).get_categories_number(); j++)
-                {
-                    input_variables_descriptives(input_index) = variables_descriptives(variable_index);
-
-                    variable_index++;
-                    input_index++;
-                }
-            }
-        }
-        else
-        {
-            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
-        }
-    }
-
-    return input_variables_descriptives;
-}
-
-
-Tensor<Descriptives, 1> DataSet::get_target_variables_descriptives() const
-{
-    const Index target_variables_number = get_target_variables_number();
-
-    Tensor<Descriptives, 1> target_variables_descriptives(target_variables_number);
-
-    Index variable_index = 0;
-    Index target_index = 0;
-
-    for(Index i = 0; i < columns.size(); i++)
-    {
-        if(columns(i).column_use == Target)
-        {
-            if(columns(i).type != Categorical)
-            {
-                target_variables_descriptives(target_index) = variables_descriptives(variable_index);
-
-                variable_index++;
-                target_index++;
-            }
-            else
-            {
-                for(Index j = 0; j < columns(i).get_categories_number(); j++)
-                {
-                    target_variables_descriptives(target_index) = variables_descriptives(variable_index);
-
-                    variable_index++;
-                    target_index++;
-                }
-            }
-        }
-        else
-        {
-            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
-        }
-    }
-
-    return target_variables_descriptives;
-
-}
-
-
 /// Returns a vector of vectors containing some basic descriptives of all the variables in the data set.
 /// The size of this vector is four. The subvectors are:
 /// <ul>
@@ -5484,7 +5380,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 /// </ul>
 /// @todo
 
-Descriptives DataSet::calculate_inputs_descriptives(const Index& input_index) const
+Descriptives DataSet::calculate_input_descriptives(const Index& input_index) const
 {
 //    return descriptives_missing_values(data.chip(input_index,1));
 
@@ -6580,7 +6476,7 @@ Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_ind
 
 #endif
 
-    const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
+    const Descriptives input_statistics = calculate_input_descriptives(input_index);
 
     scale_input_mean_standard_deviation(input_statistics, input_index);
 
@@ -6624,7 +6520,7 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 
 #endif
 
-    const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
+    const Descriptives input_statistics = calculate_input_descriptives(input_index);
 
     scale_input_standard_deviation(input_statistics, input_index);
 
@@ -6671,7 +6567,7 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 
 #endif
 
-    const Descriptives input_statistics = calculate_inputs_descriptives(input_index);
+    const Descriptives input_statistics = calculate_input_descriptives(input_index);
 
     scale_input_minimum_maximum(input_statistics, input_index);
 
@@ -7561,83 +7457,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Descriptives
-
-    file_stream.OpenElement("Descriptives");
-
-    const Index variables_number = get_variables_number();
-
-    // Variables number
-    {
-        file_stream.OpenElement("VariablesNumber");
-
-        buffer.str("");
-        buffer << variables_number;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        file_stream.OpenElement("Descriptive");
-
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-        // Minimum
-
-        file_stream.OpenElement("Minimum");
-
-        buffer.str("");
-        buffer << variables_descriptives(i).minimum;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Minimum
-
-        file_stream.OpenElement("Maximum");
-
-        buffer.str("");
-        buffer << variables_descriptives(i).maximum;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Mean
-
-        file_stream.OpenElement("Mean");
-
-        buffer.str("");
-        buffer << variables_descriptives(i).mean;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Standard deviation
-
-        file_stream.OpenElement("StandardDeviation");
-
-        buffer.str("");
-        buffer << variables_descriptives(i).standard_deviation;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Close descriptive element
-
-        file_stream.CloseElement();
-    }
-
-    // Close descriptives
-
-    file_stream.CloseElement();
-
     // Rows labels
 
     if(has_rows_labels)
@@ -8208,110 +8027,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(variables_number_element->GetText())
     {
         new_variables_number = static_cast<Index>(atoi(variables_number_element->GetText()));
-    }
-
-    // Descriptives
-
-    variables_descriptives.resize(new_variables_number);
-
-    start_element = variables_number_element;
-
-    if(new_variables_number > 0)
-    {
-        for(Index i = 0; i < new_variables_number; i++)
-        {
-            const tinyxml2::XMLElement* descriptive_element = start_element->NextSiblingElement("Descriptive");
-            start_element = descriptive_element;
-
-            if(descriptive_element->Attribute("Item") != std::to_string(i+1))
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Descriptive item number (" << i+1 << ") does not match (" << descriptive_element->Attribute("Item") << ").\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            // Minimum
-
-            const tinyxml2::XMLElement* minimum_element = descriptive_element->FirstChildElement("Minimum");
-
-            if(!minimum_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Minium element is nullptr.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            if(minimum_element->GetText())
-            {
-                const type new_minimum = static_cast<type>(atof(minimum_element->GetText()));
-
-                variables_descriptives(i).minimum = new_minimum;
-            }
-
-            // Maximum
-
-            const tinyxml2::XMLElement* maximum_element = descriptive_element->FirstChildElement("Maximum");
-
-            if(!maximum_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Maximum element is nullptr.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            if(maximum_element->GetText())
-            {
-                const type new_maximum = static_cast<type>(atof(maximum_element->GetText()));
-
-                variables_descriptives(i).maximum = new_maximum;
-            }
-
-            // Mean
-
-            const tinyxml2::XMLElement* mean_element = descriptive_element->FirstChildElement("Mean");
-
-            if(!mean_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Mean element is nullptr.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            if(mean_element->GetText())
-            {
-                const type new_mean = static_cast<type>(atof(mean_element->GetText()));
-
-                variables_descriptives(i).mean = new_mean;
-            }
-
-            // Standard deviation
-
-            const tinyxml2::XMLElement* standard_deviation_element = descriptive_element->FirstChildElement("StandardDeviation");
-
-            if(!standard_deviation_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Standard deviation element is nullptr.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            if(standard_deviation_element->GetText())
-            {
-                const type new_standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
-
-                variables_descriptives(i).standard_deviation = new_standard_deviation;
-            }
-        }
     }
 
     if(has_rows_labels)
