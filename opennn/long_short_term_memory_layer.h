@@ -249,10 +249,6 @@ public:
    void update_hidden_states(const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&,const Tensor<type, 1>&);
-
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&,
-                                     const Tensor<type, 3>&, const Tensor<type, 3>&);
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
