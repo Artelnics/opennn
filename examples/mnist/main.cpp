@@ -198,6 +198,7 @@ int main(void)
         const Tensor<string, 1> unused_variables = data_set.unuse_constant_columns();
 
         const Index input_variables_number = data_set.get_input_variables_number();
+
         const Index target_variables_number = data_set.get_target_variables_number();
 
         Tensor<string, 1> scaling_methods(input_variables_number);
