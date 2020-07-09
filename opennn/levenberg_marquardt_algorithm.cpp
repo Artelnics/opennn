@@ -1091,50 +1091,6 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Warning parameters norm
-
-//   element = document->NewElement("WarningParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Warning gradient norm
-
-//   element = document->NewElement("WarningGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Error parameters norm
-
-//   element = document->NewElement("ErrorParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Error gradient norm
-
-//   element = document->NewElement("ErrorGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
     // Minimum parameters increment norm
 
     element = document->NewElement("MinimumParametersIncrementNorm");
