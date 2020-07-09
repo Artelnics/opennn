@@ -1199,11 +1199,22 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         }
     }
 
-    if (counter == 1)
+    if(counter == 1 && new_y(sorted_index[0]) == 0)
     {
         CorrelationResults logistic_correlations;
 
         logistic_correlations.correlation = 1;
+
+        logistic_correlations.correlation_type = Logistic_correlation;
+
+        return logistic_correlations;
+    }
+
+    if(counter == 1 && new_y(sorted_index[0]) == 1)
+    {
+        CorrelationResults logistic_correlations;
+
+        logistic_correlations.correlation = -1;
 
         logistic_correlations.correlation_type = Logistic_correlation;
 
@@ -1289,25 +1300,6 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
     return index;
 }
 
-
-//Tensor<type, 2> get_subtensor_sorted(Tensor<type, 2>& data)
-//{
-//    Tensor<type, 1> shrink_data_dimension(data.dimension(0));
-
-//    memcpy(shrink_data_dimension.data(), data.data(), static_cast<size_t>(shrink_data_dimension.size())*sizeof(type));
-
-//    vector<int> indices_sorted = get_row_indices_sorted(shrink_data_dimension);
-
-//    Tensor<type, 2> sorted_output(data.dimension(0),data.dimension(1));
-
-//    for(Index i =0; i<data.dimension(0); i++)
-//    {
-//        sorted_output(i,0) = data(indices_sorted[i], 0);
-//        sorted_output(i,1) = data(indices_sorted[i], 1);
-//    }
-//    return sorted_output;
-
-//}
 
 CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
