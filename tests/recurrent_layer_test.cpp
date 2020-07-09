@@ -489,18 +489,6 @@ void RecurrentLayerTest::test_calculate_outputs()
    parameters = recurrent_layer.get_parameters();
 
    Tensor<type, 2> outputs = recurrent_layer.calculate_outputs(inputs);
-
-   Tensor<type, 2> outputs_parameters = recurrent_layer.calculate_outputs(inputs, parameters);
-
-   Tensor<type, 2> outputs_2 = recurrent_layer.calculate_outputs(inputs,new_biases, new_weights, new_recurrent_weights);
-
-   assert_true(outputs(0) == outputs_parameters(0), LOG);
-
-   assert_true(outputs_2(0) == outputs_parameters(0), LOG);
-
-   assert_true(outputs(0) == outputs_2(0), LOG);
-
-   cout<<"outputs:"<<recurrent_layer.calculate_outputs(inputs) <<endl;
 }
 
 

@@ -181,16 +181,6 @@ public:
    const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
    string write_inverse_hessian_approximation_method() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
-
    const Index& get_epochs_number() const;
 
    // Stopping criteria

@@ -23,7 +23,6 @@
 #include "config.h"
 #include "layer.h"
 
-
 #include "perceptron_layer.h"
 
 namespace OpenNN
@@ -49,17 +48,17 @@ public:
 
         virtual ~RecurrentLayerForwardPropagation() {}
 
+        /// @todo
+
         void allocate()
         {
-/*
-           const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
+//           const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
 
-           const Index neurons_number = recurrent_layer->get_neurons_number();
+//           const Index neurons_number = recurrent_layer->get_neurons_number();
 
-           layers[i].combinations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
-*/
+//           layers[i].combinations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
+//           layers[i].activations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
+//           layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
         }
     };
 
@@ -167,14 +166,6 @@ public:
 
    // neuron layer combinations_2d
 
-//   Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&) const;
-
-//   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&);
-
-//   Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-
-//   Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    void calculate_combinations(const Tensor<type, 2>& inputs,
                                const Tensor<type, 2>& input_weights,
                                const Tensor<type, 2>& biases,
@@ -206,7 +197,6 @@ public:
    void update_hidden_states(const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
