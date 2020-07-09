@@ -77,7 +77,7 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method_name()
 
 void LearningRateAlgorithmTest::test_get_display()
 {
-   cout << "test_get_warning_gradient_norm\n"; 
+   cout << "test_get_display\n";
 
    LearningRateAlgorithm tra;
 
@@ -126,18 +126,6 @@ void LearningRateAlgorithmTest::test_set_learning_rate_method()
 void LearningRateAlgorithmTest::test_set_loss_tolerance()
 {
    cout << "test_set_loss_tolerance\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_warning_learning_rate()
-{
-   cout << "test_set_warning_learning_rate\n";
-}
-
-
-void LearningRateAlgorithmTest::test_set_error_learning_rate()
-{
-   cout << "test_set_error_learning_rate\n";
 }
 
 
@@ -459,8 +447,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training parameters
 
    test_set_loss_tolerance();
-   test_set_warning_learning_rate();
-   test_set_error_learning_rate();
 
    // Utilities
 

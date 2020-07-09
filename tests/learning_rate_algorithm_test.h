@@ -65,10 +65,6 @@ public:
 
    void test_set_loss_tolerance();
 
-   void test_set_warning_learning_rate();
-
-   void test_set_error_learning_rate();
-
     // Utilities
 
    void test_set_display();
