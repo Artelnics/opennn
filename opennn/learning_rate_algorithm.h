@@ -250,10 +250,6 @@ public:
 
    const type& get_learning_rate_tolerance() const;
 
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_learning_rate() const;
-  
    // Utilities
    
    const bool& get_display() const;
@@ -274,10 +270,6 @@ public:
    // Training parameters
 
    void set_learning_rate_tolerance(const type&);
-
-   
-
-   
 
    // Utilities
 
@@ -326,14 +318,6 @@ protected:
    type learning_rate_tolerance = static_cast<type>(1.0e-3);
 
    type loss_tolerance = static_cast<type>(1.0e-3);
-
-   /// Big learning rate value at which the algorithm displays a warning.
-
-   
-
-   /// Big learning rate value at which the algorithm throws an exception.
-
-   
 
    // UTILITIES
 

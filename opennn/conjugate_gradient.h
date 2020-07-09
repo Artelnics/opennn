@@ -107,16 +107,6 @@ public:
    const TrainingDirectionMethod& get_training_direction_method() const;
    string write_training_direction_method() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;

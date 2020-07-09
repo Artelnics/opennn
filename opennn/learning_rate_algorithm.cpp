@@ -843,30 +843,6 @@ tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
         element->LinkEndChild(text);
     }
 
-    // Warning learning rate
-//   {
-//   element = document->NewElement("WarningLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Error learning rate
-//   {
-//   element = document->NewElement("ErrorLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
     // Display warnings
 //   {
 //   element = document->NewElement("Display");

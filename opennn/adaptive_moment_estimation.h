@@ -100,13 +100,6 @@ public:
    const type& get_beta_2() const;
    const type& get_epsilon() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_loss_goal() const;

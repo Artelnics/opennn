@@ -1360,10 +1360,6 @@ void PerceptronLayerTest::test_calculate_outputs() // @todo
    parameters.resize(2);
    parameters.setConstant(1.0);
 
-   Tensor<type,2>potential_outputs = perceptron_layer.calculate_outputs(inputs, parameters);
-
-   assert_true(abs(outputs(0,0) - potential_outputs(0,0)) > static_cast<type>(1e-3), LOG);
-
    // Test
 
    perceptron_layer.set(1, 1);
@@ -1372,8 +1368,6 @@ void PerceptronLayerTest::test_calculate_outputs() // @todo
    inputs.setRandom();
 
    parameters = perceptron_layer.get_parameters();
-
-   assert_true(abs(perceptron_layer.calculate_outputs(inputs)(0,0) - perceptron_layer.calculate_outputs(inputs, parameters)(0,0)) < static_cast<type>(1e-3), LOG);
 
 }
 

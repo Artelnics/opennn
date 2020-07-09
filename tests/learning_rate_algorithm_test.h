@@ -46,10 +46,6 @@ public:
 
    void test_get_loss_tolerance();
 
-   void test_get_warning_learning_rate();
-
-   void test_get_error_learning_rate();
-
    // Utilities
 
    void test_get_display();

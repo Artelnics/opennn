@@ -149,16 +149,6 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;

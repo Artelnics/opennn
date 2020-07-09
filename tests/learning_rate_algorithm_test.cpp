@@ -75,30 +75,6 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method_name()
 }
 
 
-void LearningRateAlgorithmTest::test_get_warning_learning_rate()
-{
-   cout << "test_get_warning_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_warning_learning_rate(0.0);
-
-   assert_true(tra.get_warning_learning_rate() == 0.0, LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_get_error_learning_rate()
-{
-   cout << "test_get_error_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_error_learning_rate(0.0);
-
-   assert_true(tra.get_error_learning_rate() == 0.0, LOG);
-}
-
-
 void LearningRateAlgorithmTest::test_get_display()
 {
    cout << "test_get_warning_gradient_norm\n"; 
@@ -465,9 +441,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training parameters
 
    test_get_loss_tolerance();
-
-   test_get_warning_learning_rate();
-   test_get_error_learning_rate();
 
    // Utilities
    

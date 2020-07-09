@@ -119,14 +119,6 @@ public:
 
    // Get methods
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
