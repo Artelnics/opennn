@@ -7556,7 +7556,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-
+cout<<"Here"<<endl;
     // Close columns
 
     file_stream.CloseElement();
