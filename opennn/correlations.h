@@ -221,7 +221,7 @@ struct CorrelationResults
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
     Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
 
-    vector<int> get_indices_sorted(Tensor<type,1>& );
+    vector<int> get_indices_sorted(Tensor<type, 1>&);
 }
 
 
