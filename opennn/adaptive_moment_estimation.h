@@ -137,10 +137,6 @@ public:
 
    // Training parameters
 
-   
-   
-   
-   
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -153,10 +149,6 @@ public:
 
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   // Utilities
-
-   void set_display_period(const Index&);
 
    // Training methods
 
@@ -207,25 +199,7 @@ private:
 
    type epsilon;
 
-   // TRAINING PARAMETERS
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
-
-   // Stopping criteria
+    // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 

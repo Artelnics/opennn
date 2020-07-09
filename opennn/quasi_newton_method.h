@@ -366,7 +366,7 @@ private:
 
    bool choose_best_selection;
 
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+   
 
    
 

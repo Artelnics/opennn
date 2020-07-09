@@ -317,31 +317,6 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void AdaptiveMomentEstimation::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
-
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -565,16 +540,18 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
+        else if(epoch == 0 || (epoch+1)%display_period == 0)
         {
-            cout << "Epoch " << epoch+1 << ";\n"
-                 << "Training error: " << training_error << "\n"
-                 << "Batch size: " << batch_instances_number << "\n"
-                 << loss_index_pointer->write_information()
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+            if(display)
+            {
+                cout << "Epoch " << epoch+1 << ";\n"
+                     << "Training error: " << training_error << "\n"
+                     << "Batch size: " << batch_instances_number << "\n"
+                     << loss_index_pointer->write_information()
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
-
+                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
+            }
         }
 
         // Update stuff

@@ -88,35 +88,11 @@ MeanSquaredError::~MeanSquaredError()
 }
 
 
-/// calculate_error
-
-float MeanSquaredError::calculate_error(const DataSet& data_set,
-                                        const NeuralNetwork& neural_network) const
-{
-    Tensor<type, 0> sum_squared_error;
-
-    const Tensor<type, 2>& targets = data_set.get_target_data();
-    const Tensor<type, 2>& outputs = neural_network.calculate_trainable_outputs(data_set.get_input_data());
-
-    Tensor<type, 2> errors(data_set.get_instances_number(), outputs.dimension(1));
-
-    errors = outputs - targets;
-
-    sum_squared_error = errors.contract(errors, SSE);
-
-    float mean_squared_error = sum_squared_error(0) / static_cast<type>(data_set.get_instances_number());
-
-    return mean_squared_error;
-}
-
-
-///
 
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
 {
-
     Tensor<type, 0> sum_squared_error;
 
     const Index batch_instances_number = batch.inputs_2d.dimension(0);
@@ -134,8 +110,6 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 
     back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 }
-
-
 
 
 void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
@@ -161,8 +135,6 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     second_order_loss.error = error()/static_cast<type>(batch_instances_number);
 }
 
-
-// Gradient methods
 
 void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -210,7 +182,6 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 }
 
 
-// Hessian approximation
 
 void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
 {

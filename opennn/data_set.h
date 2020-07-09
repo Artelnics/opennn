@@ -626,6 +626,7 @@ public:
 
 
    void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
 
    Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
 
