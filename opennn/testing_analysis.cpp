@@ -3059,8 +3059,27 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
     const Index columns_number = confusion.dimension(0);
 
     ofstream confusion_file(confusion_file_name);
+
+    Tensor<string, 1> target_variable_names = data_set_pointer->get_target_variables_names();
+
+    confusion_file << ",";
+
+    for(Index i = 0; i < confusion.dimension(0); i++)
+    {
+        confusion_file << target_variable_names(i);
+
+        if(i != target_variable_names.dimension(0) -1)
+        {
+            confusion_file << ",";
+        }
+    }
+
+    confusion_file << endl;
+
     for(Index i = 0; i < columns_number; i++)
     {
+        confusion_file << target_variable_names(i) << ",";
+
         for(Index j = 0; j < columns_number; j++)
         {
             if(j == columns_number - 1)
@@ -3229,7 +3248,7 @@ void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targe
 
     ofstream missclassified_instances_file(missclassified_instances_file_name);
     missclassified_instances_file << "instance_name,actual_class,predicted_class,probability" << endl;
-    for(Index i = 0; i < missclassified_instances.size(); i++)
+    for(Index i = 0; i < missclassified_instances.dimension(0); i++)
     {
         missclassified_instances_file << missclassified_instances(i, 0) << ",";
         missclassified_instances_file << missclassified_instances(i, 1) << ",";
