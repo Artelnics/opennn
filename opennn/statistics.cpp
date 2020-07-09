@@ -3555,24 +3555,6 @@ type weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weights
     return mean;
 }
 
-
-Tensor<type, 1> rows_sums(const Tensor<type,2>& matrix)
-{
-    const Index rows_number = matrix.dimension(0);
-
-    Tensor<type,1> rows_sums(rows_number);
-    rows_sums.setZero();
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        Tensor<type,0> current_sum = matrix.chip(i,0).sum();
-        rows_sums(i) = current_sum();
-    }
-
-    return rows_sums;
-}
-
-
 /// Returns the number of nans in the vector.
 /// @param vector Vector to count the NANs
 
