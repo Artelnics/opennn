@@ -65,9 +65,6 @@ public:
 
    // Error methods
 
-   float calculate_error(const DataSet& data_set_pointer,
-                        const NeuralNetwork& neural_network_pointer) const;
-
    void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;

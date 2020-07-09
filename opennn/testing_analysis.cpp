@@ -3082,10 +3082,13 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
 
     ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+
     multiple_classifiaction_tests_file << "accuracy,error" << endl;
     multiple_classifiaction_tests_file << multiple_classification_tests(0)*100 << "," << multiple_classification_tests(1)*100 << endl;
+
     multiple_classifiaction_tests_file.close();
 }
+
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 

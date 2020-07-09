@@ -230,10 +230,8 @@ public:
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
-    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}

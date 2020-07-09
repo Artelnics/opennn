@@ -730,21 +730,6 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
-{
-    const Index batch_size = inputs.dimension(0);
-    const Index outputs_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(batch_size, outputs_number);
-    Tensor<type, 2> combinations(batch_size, outputs_number);
-
-    calculate_combinations(inputs, get_biases(parameters), get_synaptic_weights(parameters), combinations);
-    calculate_activations(combinations, outputs);
-
-    return outputs;
-}
-
-
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                    ForwardPropagation& forward_propagation) const
  {

@@ -289,10 +289,6 @@ private:
 
    bool choose_best_selection;
 
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   
-
    // TRAINING HISTORY
 
    /// True if the training error history vector is to be reserved, false otherwise.
@@ -302,7 +298,6 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
-
 };
 
 }

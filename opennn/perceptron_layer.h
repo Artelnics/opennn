@@ -147,7 +147,7 @@ public:
    // Perceptron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation) const;

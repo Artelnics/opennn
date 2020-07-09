@@ -759,42 +759,13 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-/// This method processes the input to the probabilistic layer for a given set of parameters in order to obtain a set of outputs which
-/// can be interpreted as probabilities.
-/// This posprocessing is performed according to the probabilistic method to be used.
-/// @param inputs Set of inputs to the probabilistic layer
-/// @param parameters Set of parameters of the probabilistic layer
-
-Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
-{
-//    const Tensor<type, 2> biases = get_biases(parameters);
-
-//    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
-
-//    return calculate_outputs(inputs, biases, synaptic_weights);
-
-    return Tensor<type, 2>();
-}
-
-
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
 {
-//    cout << "Probabilistic forward propagate ------------------------------" << endl;
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_3d);
-
-
-//    cout << "Inputs: " << inputs << endl;
-
-//    cout << "Combinations : " << forward_propagation.combinations_2d << endl;
-//    cout << "activations_2d : " << forward_propagation.activations_2d << endl;
-//    cout << "activations_derivatives_3d : " << forward_propagation.activations_derivatives_3d << endl;
-
-//    cout << "--------------------------------------------------------------" << endl;
-
 }
 
 

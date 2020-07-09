@@ -6672,21 +6672,6 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 
 void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
-#ifdef __OPENNN_DEBUG__
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_targets_minimum_maximum() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     const Index input_variables_number = input_variables_indices.size();
@@ -6694,6 +6679,19 @@ void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs
     for(Index i = 0; i < input_variables_number; i++)
     {
         scale_input_minimum_maximum(inputs_descriptives[i], input_variables_indices[i]);
+    }
+}
+
+
+void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
+{
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    const Index input_variables_number = input_variables_indices.size();
+
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        unscale_input_minimum_maximum(inputs_descriptives[i], input_variables_indices[i]);
     }
 }
 

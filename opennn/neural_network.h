@@ -295,10 +295,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
@@ -308,8 +304,6 @@ public:
 
    // Serialization methods
 
-   
- 
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
