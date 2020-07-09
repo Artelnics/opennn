@@ -867,11 +867,20 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     // Activations
 
-    const Tensor<type, 1> sums = rows_sums(x.exp());
-
     y.device(*thread_pool_device) = x.exp();
 
-    for(Index i = 0; i < rows_number; i++)
+    Tensor<type, 1> sums(rows_number);
+    sums.setZero();
+
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            sums[i] +=  y(i,j);
+        }
+    }
+
+    for(Index i = 0; i< rows_number; i++)
     {
         for(Index j = 0; j < columns_number; j++)
         {
@@ -1168,15 +1177,25 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
      //Activations
 
-     Tensor<type, 1> sums = rows_sums(combinations.exp());
-
      activations.device(*thread_pool_device) = combinations.exp();
 
-     for(Index row = 0; row < rows_number; row++)
+     Tensor<type, 1> sums(rows_number);
+
+     sums.setZero();
+
+     for(Index i = 0; i< rows_number; i++)
      {
-         for(Index i = 0; i < dim; i++)
+         for(Index j = 0; j < dim; j++)
          {
-             activations(row, i) = activations(row, i) / sums(row);
+             sums[i] +=  activations(i,j);
+         }
+     }
+
+     for(Index i = 0; i< rows_number; i++)
+     {
+         for(Index j = 0; j < dim; j++)
+         {
+             activations(i, j) = activations(i, j) / sums(i);
          }
      }
 
