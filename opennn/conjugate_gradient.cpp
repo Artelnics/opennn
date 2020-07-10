@@ -295,11 +295,11 @@ void ConjugateGradient::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = 0;
+    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);;
 
-    minimum_loss_decrease = 0;
-    training_loss_goal = numeric_limits<type>::max()*(static_cast<type>(-1.0));
-    gradient_norm_goal = 0;
+    minimum_loss_decrease = static_cast<type>(1.0e-9);;
+    training_loss_goal = static_cast<type>(1.0e-3);
+    gradient_norm_goal = static_cast<type>(1.0e-3);;
     maximum_selection_error_increases = 1000000;
 
     maximum_epochs_number = 1000;
