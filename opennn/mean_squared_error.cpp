@@ -217,37 +217,6 @@ string MeanSquaredError::get_error_type_text() const
 }
 
 
-/// Serializes the mean squared error object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document->
-
-tinyxml2::XMLDocument* MeanSquaredError::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Mean squared error
-
-    tinyxml2::XMLElement* mean_squared_error_element = document->NewElement("MeanSquaredError");
-
-    document->InsertFirstChild(mean_squared_error_element);
-
-    // Display
-//   {
-//      tinyxml2::XMLElement* element = document->NewElement("Display");
-//      mean_squared_error_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-    return document;
-}
-
-
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 

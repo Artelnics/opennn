@@ -206,12 +206,11 @@ void BoundingLayerTest::test_to_XML()
 
    // Test
 
-   document = bounding_layer.to_XML();
+//   document = bounding_layer.to_XML();
 
-   assert_true(document != nullptr, LOG);
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
-
+//   delete document;
 }
 
 
@@ -225,18 +224,15 @@ void BoundingLayerTest::test_from_XML()
 
    // Test
 
-   blep = bounding_layer.to_XML();
+//   blep = bounding_layer.to_XML();
 
-   bounding_layer.from_XML(*blep);
-
+//   bounding_layer.from_XML(*blep);
 }
 
 
 void BoundingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
-
-
 }
 
 
