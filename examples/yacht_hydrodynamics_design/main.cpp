@@ -103,7 +103,7 @@ int main(void)
 
         // Save results
 
-//        data_set.save("../data/data_set.xml");
+        data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
 
