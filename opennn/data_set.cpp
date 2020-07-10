@@ -7452,7 +7452,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-cout<<"Here"<<endl;
+
     // Close columns
 
     file_stream.CloseElement();
@@ -7996,38 +7996,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Descriptives
-
-    const tinyxml2::XMLElement* descriptives_element = data_set_element->FirstChildElement("Descriptives");
-
-    if(!columns_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Descriptives element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    // Variables number
-
-    const tinyxml2::XMLElement* variables_number_element = descriptives_element->FirstChildElement("VariablesNumber");
-
-    if(!columns_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Variables number element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    Index new_variables_number = 0;
-
-    if(variables_number_element->GetText())
-    {
-        new_variables_number = static_cast<Index>(atoi(variables_number_element->GetText()));
-    }
+    // Rows label
 
     if(has_rows_labels)
     {
