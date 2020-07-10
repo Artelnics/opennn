@@ -207,39 +207,6 @@ string SumSquaredError::get_error_type_text() const
 }
 
 
-/// Returns a representation of the sum squared error object, in XML format.
-
-tinyxml2::XMLDocument* SumSquaredError::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Sum squared error
-
-    tinyxml2::XMLElement* root_element = document->NewElement("SumSquaredError");
-
-    document->InsertFirstChild(root_element);
-
-    // Display
-
-//   {
-//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-//      root_element->LinkEndChild(display_element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-//      display_element->LinkEndChild(display_text);
-//   }
-
-    return document;
-}
-
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 

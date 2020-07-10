@@ -352,37 +352,6 @@ string NormalizedSquaredError::get_error_type_text() const
 }
 
 
-/// Serializes the normalized squared error object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* NormalizedSquaredError::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Normalized squared error
-
-    tinyxml2::XMLElement* normalized_squared_error_element = document->NewElement("NormalizedSquaredError");
-
-    document->InsertFirstChild(normalized_squared_error_element);
-
-    // Display
-//   {
-//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-//      normalized_squared_error_element->LinkEndChild(display_element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-//      display_element->LinkEndChild(display_text);
-//   }
-
-    return document;
-}
-
-
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 

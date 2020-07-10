@@ -240,7 +240,7 @@ public:
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
+   virtual 
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

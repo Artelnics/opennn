@@ -400,11 +400,11 @@ void LearningRateAlgorithmTest::test_to_XML()
 
    LearningRateAlgorithm  tra;
 
-   tinyxml2::XMLDocument* document = tra.to_XML();
+//   tinyxml2::XMLDocument* document = tra.to_XML();
 
-   assert_true(document != nullptr, LOG);
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
+//   delete document;
 }
 
 
