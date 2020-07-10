@@ -292,6 +292,18 @@ public:
 
    void save_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
+   void save_missclassified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_missclassified_instances_statistics_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+
+
+//   Tensor<string, 2> calculate_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+
+
+
+
+
    // Forecasting methods
 
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;

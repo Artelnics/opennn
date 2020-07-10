@@ -564,6 +564,17 @@ Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
     return (1 + combination.exp().inverse()).inverse();
 }
 
+/// Calculate the gaussian function with specific parameters 'a' and 'b'.
+/// @param a Parameter a.
+/// @param b Parameter b.
+///
+Tensor<type, 1> gaussian (const type& a, const type& b, const Tensor<type, 1>& x)
+{
+    const Tensor<type, 1> combination =(-0.5*((x-a)/b)*((x-a)/b)).exp();
+
+    return combination;
+}
+
 
 /// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
@@ -1549,6 +1560,114 @@ CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tens
 
     return karl_pearson;
 }
+
+CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+{
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(y.size() != x.size())
+    {
+        buffer << "OpenNN Exception: Correlations.\n"
+               << "static type gauss_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    // Filter missing values
+
+    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+
+    const Tensor<type, 1>& new_x = filter_vectors.first;
+    const Tensor<type, 1>& new_y = filter_vectors.second;
+
+    const Index new_size = new_x.size();
+
+    // Scale data
+
+    Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
+
+    // Calculate coefficients
+
+    Tensor<type, 1> coefficients(2);
+    Tensor<type, 1> last_coefficients(2);
+    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    last_coefficients.setConstant(0.0);
+
+    const Index epochs_number = 10000;
+    const type step_size = static_cast<type>(-0.01);
+
+    const type error_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+
+    Tensor<type, 0> mean_squared_error;
+    Tensor<type, 0> gradient_norm;
+
+    Tensor<type, 1> gradient(2);
+
+    Tensor<type, 1> combination(new_size);
+    Tensor<type, 1> error(new_size);
+
+    for(Index i = 0; i < epochs_number; i++)
+    {
+
+        combination.device(*thread_pool_device) = static_cast<type>(-0.5)*
+                                                  ((scaled_x - coefficients(0))/ coefficients(1))*
+                                                  ((scaled_x - coefficients(0))/ coefficients(1));
+
+        combination.device(*thread_pool_device) = combination.exp();
+
+        error.device(*thread_pool_device) = combination - new_y;
+
+        mean_squared_error.device(*thread_pool_device) = error.square().sum();
+
+        if(mean_squared_error() < error_goal) break;
+
+        Tensor<type, 0> sum_a;
+        sum_a.device(*thread_pool_device) = ((2*error*combination*(scaled_x-coefficients(0)))/
+                (coefficients(1)*coefficients(1))).sum();
+
+        Tensor<type, 0> sum_b;
+        sum_b.device(*thread_pool_device) = ((2*error*combination*(scaled_x-coefficients(0))*(scaled_x-coefficients(0)))/
+                (coefficients(1)*coefficients(1)*coefficients(1))).sum();
+
+
+        gradient(0) = sum_a();
+        gradient(1) = sum_b();
+
+        gradient_norm = gradient.square().sum().sqrt();
+
+        if(gradient_norm() < gradient_norm_goal) break;
+
+        coefficients += gradient*step_size;
+        /*
+        coefficients = gradient*step_size;
+
+        coefficients += 0.9*last_coefficients;
+
+        last_coefficients = coefficients;
+       */
+    }
+
+    // Gaussian correlation
+
+    CorrelationResults gaussian_correlations;
+
+    const Tensor<type, 1> gaussian_y = gaussian(coefficients(0), coefficients(1), scaled_x);
+
+    gaussian_correlations.correlation = linear_correlation(thread_pool_device, gaussian_y, new_y);
+
+//    if(coefficients(1) < 0) gaussian_correlations.correlation *= (-1);
+
+    gaussian_correlations.correlation_type = Logistic_correlation;
+
+    return gaussian_correlations;
+}
+
 
 
 /// Returns the covariance of this vector and other vector
