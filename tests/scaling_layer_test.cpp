@@ -1203,12 +1203,13 @@ void ScalingLayerTest::test_to_XML()
 
    // Test
 
-   sld = sl.to_XML();
+//   sld = sl.to_XML();
 
-   assert_true(sld != nullptr, LOG);
+//   assert_true(sld != nullptr, LOG);
 
-   delete sld;
+//   delete sld;
 }
+
 
 void ScalingLayerTest::test_from_XML()
 {
@@ -1220,11 +1221,11 @@ void ScalingLayerTest::test_from_XML()
 
    // Test
 
-   sld = sl.to_XML();
+//   sld = sl.to_XML();
 
-   sl.from_XML(*sld);
+//   sl.from_XML(*sld);
 
-   delete sld;
+//   delete sld;
 }
 
 

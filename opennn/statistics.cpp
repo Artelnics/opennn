@@ -209,6 +209,41 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
 }
 
 
+// Data constructor
+/// @param data Numerical data.
+/// @param number_of_bins Number of bins.
+
+Histogram::Histogram(const Tensor<type, 1>& data,
+                     const Index& number_of_bins)
+{
+    const double data_maximum = maximum(data);
+    const double data_minimum = minimum(data);
+    const double step = (data_maximum - data_minimum) / number_of_bins;
+
+    Tensor<type, 1> new_centers(number_of_bins);
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        new_centers(i) = data_minimum + 0.5 * step * i;
+    }
+
+    Tensor<Index, 1> new_frequencies(number_of_bins);
+    new_frequencies.setZero();
+
+    type value;
+    Index corresponding_bin;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        value = data(i);
+        corresponding_bin = int(value / step) - 1;
+
+        new_frequencies(corresponding_bin)++;
+    }
+
+    centers = new_centers;
+    frequencies = new_frequencies;
+}
+
 /// Returns the number of bins in the histogram.
 
 Index Histogram::get_bins_number() const
@@ -393,6 +428,24 @@ Index Histogram::calculate_frequency(const type&value) const
     const Index frequency = frequencies[bin_number];
 
     return frequency;
+}
+
+
+void Histogram::save(const string& histogram_file_name) const
+{
+    const Index number_of_bins = centers.dimension(0);
+    ofstream histogram_file(histogram_file_name);
+
+
+    histogram_file << "centers,frequencies" << endl;
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        histogram_file << centers(i) << ",";
+        histogram_file << frequencies(i) << endl;
+    }
+
+    histogram_file.close();
+
 }
 
 

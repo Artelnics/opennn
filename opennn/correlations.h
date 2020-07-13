@@ -145,6 +145,11 @@ struct CorrelationResults
 
     type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
 
+    //Gauss
+
+//    type logistic(const type&, const type&, const type&);
+
+
     // Time series correlation methods
 
     Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
@@ -188,6 +193,8 @@ struct CorrelationResults
     CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    CorrelationResults gauss_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Covariance
 

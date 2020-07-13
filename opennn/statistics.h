@@ -156,6 +156,9 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
+
+  explicit Histogram(const Tensor<type, 1>&, const Index&);
+
   /// Destructor.
 
   virtual ~Histogram();
@@ -179,6 +182,8 @@ struct Histogram
   Index calculate_bin(const type&) const;
 
   Index calculate_frequency(const type&) const;
+
+  void save(const string&) const;
 
   /// Positions of the bins in the histogram.
 

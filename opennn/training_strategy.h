@@ -160,6 +160,8 @@ public:
 
    void set_display(const bool&);
 
+   void set_loss_goal(const type&);
+   void set_maximum_selection_error_increases(const Index&);
    void set_reserve_selection_error_history(const bool&);
    void set_maximum_epochs_number(const int&);
    void set_display_period(const int&);
@@ -183,7 +185,7 @@ public:
 
    void print() const;
 
-   tinyxml2::XMLDocument* to_XML() const;   
+      
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
