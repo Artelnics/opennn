@@ -3284,7 +3284,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     return missclassified_instances.slice(offsets, extents);
 }
 
-
+/*
 void TestingAnalysis::save_well_classified_instances(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
                                                     const Tensor<string, 1>& labels,
@@ -3417,7 +3417,7 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
     Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
     missclassified_instances_histogram.save(histogram_file_name);
 }
-
+*/
 
 
 /// Calculates error autocorrelation across varying lags.
