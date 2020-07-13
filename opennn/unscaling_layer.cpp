@@ -1172,11 +1172,18 @@ string UnscalingLayer::write_expression_c() const
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
+            if(abs(descriptives(i).minimum - descriptives(i).maximum) < numeric_limits<type>::min())
+            {
+                buffer << "\toutputs[" << i << "] = " << descriptives(i).minimum <<";\n";
+            }
+            else
+            {
+                const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
 
-            const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
+                const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
+                buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
+            }
         }
         else if(unscaling_methods(i) == MeanStandardDeviation)
         {
