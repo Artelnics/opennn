@@ -984,6 +984,7 @@ void UnscalingLayerTest::test_write_expression()
    assert_true(expression == "y = 0.5*exp(x-1)*(1-(-1))+(-1);\n", LOG);
 }
 
+
 void UnscalingLayerTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -994,12 +995,13 @@ void UnscalingLayerTest::test_to_XML()
    
    // Test
 
-   uld = ul.to_XML();
+//   uld = ul.to_XML();
 
-   assert_true(uld != nullptr, LOG);
+//   assert_true(uld != nullptr, LOG);
 
-   delete uld;
+//   delete uld;
 }
+
 
 void UnscalingLayerTest::test_from_XML()
 {

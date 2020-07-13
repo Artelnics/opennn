@@ -3849,36 +3849,6 @@ void TestingAnalysis::print() const
 }
 
 
-/// Serializes the testing analysis object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* TestingAnalysis::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    ostringstream buffer;
-
-    // Root element
-
-    tinyxml2::XMLElement* testing_analysis_element = document->NewElement("TestingAnalysis");
-
-    document->InsertFirstChild(testing_analysis_element);
-
-    // Display
-
-    tinyxml2::XMLElement* display_element = document->NewElement("Display");
-    testing_analysis_element->LinkEndChild(display_element);
-
-    buffer.str("");
-    buffer << display;
-
-    tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-    display_element->LinkEndChild(display_text);
-
-    return document;
-}
-
-
 /// Serializes the testing analysis object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -3946,11 +3916,11 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 
 void TestingAnalysis::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 

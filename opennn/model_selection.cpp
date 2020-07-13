@@ -667,137 +667,6 @@ ModelSelection::Results ModelSelection::perform_model_selection() const
 }
 
 
-/// Serializes the model selection object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document.
-
-tinyxml2::XMLDocument* ModelSelection::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Training strategy
-
-    tinyxml2::XMLElement* model_selection_element = document->NewElement("ModelSelection");
-
-    document->InsertFirstChild(model_selection_element);
-
-    // Inputs Selection
-
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
-        model_selection_element->LinkEndChild(inputs_selection_element);
-
-        inputs_selection_element->SetAttribute("Type", "NO_INPUTS_SELECTION");
-    }
-    break;
-
-    case GROWING_INPUTS:
-    {
-        tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
-        model_selection_element->LinkEndChild(inputs_selection_element);
-
-        inputs_selection_element->SetAttribute("Type", "GROWING_INPUTS");
-
-        const tinyxml2::XMLDocument* growing_inputs_document = growing_inputs_pointer->to_XML();
-
-        const tinyxml2::XMLElement* growing_inputs_element = growing_inputs_document->FirstChildElement("GrowingInputs");
-
-        for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            inputs_selection_element->InsertEndChild(copy );
-        }
-
-        delete growing_inputs_document;
-    }
-    break;
-
-    case PRUNING_INPUTS:
-    {
-        tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
-        model_selection_element->LinkEndChild(inputs_selection_element);
-
-        inputs_selection_element->SetAttribute("Type", "PRUNING_INPUTS");
-
-        const tinyxml2::XMLDocument* pruning_inputs_document = pruning_inputs_pointer->to_XML();
-
-        const tinyxml2::XMLElement* pruning_inputs_element = pruning_inputs_document->FirstChildElement("PruningInputs");
-
-        for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            inputs_selection_element->InsertEndChild(copy );
-        }
-
-        delete pruning_inputs_document;
-    }
-    break;
-
-    case GENETIC_ALGORITHM:
-    {
-        tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
-        model_selection_element->LinkEndChild(inputs_selection_element);
-
-        inputs_selection_element->SetAttribute("Type", "GENETIC_ALGORITHM");
-
-        const tinyxml2::XMLDocument* genetic_algorithm_document = genetic_algorithm_pointer->to_XML();
-
-        const tinyxml2::XMLElement* genetic_algorithm_element = genetic_algorithm_document->FirstChildElement("GeneticAlgorithm");
-
-        for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            inputs_selection_element->InsertEndChild(copy );
-        }
-
-        delete genetic_algorithm_document;
-    }
-    break;
-    }
-
-    // Order Selection
-
-    switch(neurons_selection_method)
-    {
-    case NO_NEURONS_SELECTION:
-    {
-        tinyxml2::XMLElement* neurons_selection_element = document->NewElement("NeuronsSelection");
-        model_selection_element->LinkEndChild(neurons_selection_element);
-
-        neurons_selection_element->SetAttribute("Type", "NO_NEURONS_SELECTION");
-    }
-    break;
-
-    case INCREMENTAL_NEURONS:
-    {
-        tinyxml2::XMLElement* neurons_selection_element = document->NewElement("NeuronsSelection");
-        model_selection_element->LinkEndChild(neurons_selection_element);
-
-        neurons_selection_element->SetAttribute("Type", "INCREMENTAL_NEURONS");
-
-        const tinyxml2::XMLDocument* incremental_neurons_document = incremental_neurons_pointer->to_XML();
-
-        const tinyxml2::XMLElement* incremental_neurons_element = incremental_neurons_document->FirstChildElement("IncrementalNeurons");
-
-        for(const tinyxml2::XMLNode* nodeFor=incremental_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            neurons_selection_element->InsertEndChild(copy );
-        }
-
-        delete incremental_neurons_document;
-    }
-    break;
-    }
-
-    return document;
-}
-
-
 /// Serializes the model selection object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1021,7 +890,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
 void ModelSelection::print() const
 {
-    cout << to_XML();
 }
 
 
@@ -1030,11 +898,11 @@ void ModelSelection::print() const
 
 void ModelSelection::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 

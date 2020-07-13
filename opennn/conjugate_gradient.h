@@ -196,7 +196,6 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -218,31 +217,6 @@ private:
    /// Learning rate algorithm object for one-dimensional minimization. 
 
    LearningRateAlgorithm learning_rate_algorithm;
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Learning rate value at wich a warning message is written to the screen.
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
-
-   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
-
-   
-
 
    // Stopping criteria
 

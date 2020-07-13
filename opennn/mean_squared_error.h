@@ -88,7 +88,7 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;   
+      
 
    void write_XML(tinyxml2::XMLPrinter &) const;
 
