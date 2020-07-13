@@ -740,6 +740,24 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
+void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
+{
+    gradient_descent.set_loss_goal(new_loss_goal);
+    conjugate_gradient.set_loss_goal(new_loss_goal);
+    quasi_Newton_method.set_loss_goal(new_loss_goal);
+    Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
+}
+
+
+void TrainingStrategy::set_maximum_selection_error_increases(const Index & maximum_selection_error_increases)
+{
+    gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    quasi_Newton_method.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    Levenberg_Marquardt_algorithm.set_maximum_selection_error_increases(maximum_selection_error_increases);
+}
+
+
 void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
 {
     gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
