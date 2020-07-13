@@ -915,58 +915,6 @@ void ProbabilisticLayer::insert_gradient(const BackPropagation& back_propagation
 }
 
 
-/// Serializes the probabilistic layer object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* ProbabilisticLayer::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    tinyxml2::XMLElement* root_element = document->NewElement("ProbabilisticLayer");
-
-    document->InsertFirstChild(root_element);
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    // Activation function
-    {
-        element = document->NewElement("ActivationFunction");
-        root_element->LinkEndChild(element);
-
-        text = document->NewText(write_activation_function().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Probabilistic neurons number
-    {
-        element = document->NewElement("DecisionThreshold");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << decision_threshold;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Display
-    //   {
-    //      element = document->NewElement("Display");
-    //      root_element->LinkEndChild(element);
-
-    //      buffer.str("");
-    //      buffer << display;
-
-    //      text = document->NewText(buffer.str().c_str());
-    //      element->LinkEndChild(text);
-    //   }
-
-    return document;
-}
-
 
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.

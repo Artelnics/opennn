@@ -129,7 +129,7 @@ public:
 
    
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
