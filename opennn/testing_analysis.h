@@ -310,11 +310,6 @@ public:
 
 
 
-//   Tensor<string, 2> calculate_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
-
-
-
-
 
    // Forecasting methods
 
@@ -328,7 +323,7 @@ public:
 
    void print() const;
 
-   virtual 
+//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

@@ -831,6 +831,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
     {
         if(!check_forecasting())
         {
+
             ostringstream buffer;
 
             buffer << "OpenNN Exception: TrainingStrategy class.\n"
@@ -840,7 +841,6 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
             throw logic_error(buffer.str());
         }
     }
-
     OptimizationAlgorithm::Results results;
 
     // Main
@@ -973,18 +973,19 @@ void TrainingStrategy::perform_training_void()
 
 bool TrainingStrategy::check_forecasting() const
 {
+
+    Index timesteps = 0;
+
+    if(neural_network_pointer->has_recurrent_layer())
+    {
+        timesteps = neural_network_pointer->get_recurrent_layer_pointer()->get_timesteps();
+    }
+    else if(neural_network_pointer->has_long_short_term_memory_layer())
+    {
+        timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
+    }
+
 //    const Index batch_instances_number = data_set.get_batch_instances_number();
-
-//    Index timesteps = 0;
-
-//    if(neural_network.has_recurrent_layer())
-//    {
-//        timesteps = neural_network.get_recurrent_layer_pointer()->get_timesteps();
-//    }
-//    else if(neural_network.has_long_short_term_memory_layer())
-//    {
-//        timesteps = neural_network.get_long_short_term_memory_layer_pointer()->get_timesteps();
-//    }
 
 //    if(batch_instances_number%timesteps == 0)
 //    {
