@@ -697,7 +697,7 @@ public:
    void print() const;
    void print_summary() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
 
    void from_XML(const tinyxml2::XMLDocument&);
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -854,8 +854,6 @@ private:
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
-//   Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"

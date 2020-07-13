@@ -45,7 +45,7 @@ void DataSetTest::test_constructor()
 
    // XML constructor
 
-   tinyxml2::XMLDocument* document = ds3.to_XML();
+//   tinyxml2::XMLDocument* document = ds3.to_XML();
 
 //   DataSet ds4(*document);
 
@@ -1683,9 +1683,9 @@ void DataSetTest::test_to_XML()
 
    // Test
 
-   document = data_set.to_XML();
+//   document = data_set.to_XML();
 
-   assert_true(document != nullptr, LOG);
+//   assert_true(document != nullptr, LOG);
 }
 
 

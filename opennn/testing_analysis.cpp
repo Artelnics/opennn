@@ -3199,6 +3199,49 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
 }
 
 
+Tensor<string, 2> TestingAnalysis::calculate_well_classified_instances(const Tensor<type, 2>& targets,
+                                                                      const Tensor<type, 2>& outputs,
+                                                                      const Tensor<string, 1>& labels)
+{
+    const Index instances_number = targets.dimension(0);
+
+    Tensor<string, 2> well_lassified_instances(instances_number, 4);
+
+    Index predicted_class, actual_class;
+    Index number_of_well_classified = 0;
+    string class_name;
+
+    const Tensor<string, 1> target_variables_names = data_set_pointer->get_target_variables_names();
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        predicted_class = maximal_index(outputs.chip(i, 0));
+        actual_class = maximal_index(targets.chip(i, 0));
+
+        if(actual_class != predicted_class)
+        {
+            continue;
+        }
+        else
+        {
+            well_lassified_instances(number_of_well_classified, 0) = labels(i);
+            class_name = target_variables_names(actual_class);
+            well_lassified_instances(number_of_well_classified, 1) = class_name;
+            class_name = target_variables_names(predicted_class);
+            well_lassified_instances(number_of_well_classified, 2) = class_name;
+            well_lassified_instances(number_of_well_classified, 3) = to_string(outputs(i, predicted_class));
+
+            number_of_well_classified ++;
+        }
+    }
+
+    Eigen::array<Index, 2> offsets = {0, 0};
+    Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
+
+    return well_lassified_instances.slice(offsets, extents);
+}
+
+
 Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
                                                                       const Tensor<string, 1>& labels)
@@ -3210,6 +3253,8 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     Index predicted_class, actual_class;
     Index number_of_missclassified = 0;
     string class_name;
+
+    const Tensor<string, 1> target_variables_names = data_set_pointer->get_target_variables_names();
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -3223,9 +3268,9 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         else
         {
             missclassified_instances(number_of_missclassified, 0) = labels(i);
-            class_name = data_set_pointer->get_target_variables_names()(actual_class);
+            class_name = target_variables_names(actual_class);
             missclassified_instances(number_of_missclassified, 1) = class_name;
-            class_name = data_set_pointer->get_target_variables_names()(predicted_class);
+            class_name = target_variables_names(predicted_class);
             missclassified_instances(number_of_missclassified, 2) = class_name;
             missclassified_instances(number_of_missclassified, 3) = to_string(outputs(i, predicted_class));
 
@@ -3237,6 +3282,28 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
 
     return missclassified_instances.slice(offsets, extents);
+}
+
+
+void TestingAnalysis::save_well_classified_instances(const Tensor<type, 2>& targets,
+                                                    const Tensor<type, 2>& outputs,
+                                                    const Tensor<string, 1>& labels,
+                                                    const string& well_classified_instances_file_name)
+{
+    const Tensor<string,2> well_classified_instances = calculate_well_classified_instances(targets,
+                                                                                           outputs,
+                                                                                           labels);
+
+    ofstream well_classified_instances_file(well_classified_instances_file_name);
+    well_classified_instances_file << "instance_name,actual_class,predicted_class,probability" << endl;
+    for(Index i = 0; i < well_classified_instances.dimension(0); i++)
+    {
+        well_classified_instances_file << well_classified_instances(i, 0) << ",";
+        well_classified_instances_file << well_classified_instances(i, 1) << ",";
+        well_classified_instances_file << well_classified_instances(i, 2) << ",";
+        well_classified_instances_file << well_classified_instances(i, 3) << endl;
+    }
+    well_classified_instances_file.close();
 }
 
 
@@ -3260,6 +3327,97 @@ void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targe
     }
     missclassified_instances_file.close();
 }
+
+
+void TestingAnalysis::save_well_classified_instances_statistics(const Tensor<type, 2>& targets,
+                                                                const Tensor<type, 2>& outputs,
+                                                                const Tensor<string, 1>& labels,
+                                                                const string& statistics_file_name)
+{
+    const Tensor<string, 2> well_classified_instances = calculate_well_classified_instances(targets,
+                                                                                            outputs,
+                                                                                            labels);
+
+    Tensor<double, 1> well_classified_numerical_probabilities(well_classified_instances.dimension(0));
+
+    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
+    {
+        well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
+    }
+    ofstream classification_statistics_file(statistics_file_name);
+    classification_statistics_file << "minimum,maximum,mean,std" << endl;
+    classification_statistics_file << well_classified_numerical_probabilities.minimum() << ",";
+    classification_statistics_file << well_classified_numerical_probabilities.maximum() << ",";
+    classification_statistics_file << well_classified_numerical_probabilities.mean() << ",";
+    classification_statistics_file << standard_deviation(well_classified_numerical_probabilities);
+}
+
+
+void TestingAnalysis::save_missclassified_instances_statistics(const Tensor<type, 2>& targets,
+                                                               const Tensor<type, 2>& outputs,
+                                                               const Tensor<string, 1>& labels,
+                                                               const string& statistics_file_name)
+{
+    const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
+                                                                                        outputs,
+                                                                                        labels);
+
+    Tensor<double, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
+
+    for(Index i = 0; i < missclassified_numerical_probabilities.size(); i++)
+    {
+        missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
+    }
+    ofstream classification_statistics_file(statistics_file_name);
+    classification_statistics_file << "minimum,maximum,mean,std" << endl;
+    classification_statistics_file << missclassified_numerical_probabilities.minimum() << ",";
+    classification_statistics_file << missclassified_numerical_probabilities.maximum() << ",";
+    classification_statistics_file << missclassified_numerical_probabilities.mean() << ",";
+    classification_statistics_file << standard_deviation(missclassified_numerical_probabilities);
+}
+
+
+void TestingAnalysis::save_well_classified_instances_statistics_histogram(const Tensor<type, 2>& targets,
+                                                                          const Tensor<type, 2>& outputs,
+                                                                          const Tensor<string, 1>& labels,
+                                                                          const string& histogram_file_name)
+{
+    const Tensor<string, 2> well_classified_instances = calculate_well_classified_instances(targets,
+                                                                                            outputs,
+                                                                                            labels);
+
+    Tensor<double, 1> well_classified_numerical_probabilities(well_classified_instances.dimension(0));
+
+    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
+    {
+        well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
+    }
+
+    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+    missclassified_instances_histogram.save(histogram_file_name);
+}
+
+
+void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<type, 2>& targets,
+                                                                         const Tensor<type, 2>& outputs,
+                                                                         const Tensor<string, 1>& labels,
+                                                                         const string& histogram_file_name)
+{
+    const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
+                                                                                        outputs,
+                                                                                        labels);
+
+    Tensor<double, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
+
+    for(Index i = 0; i < missclassified_numerical_probabilities.size(); i++)
+    {
+        missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
+    }
+
+    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+    missclassified_instances_histogram.save(histogram_file_name);
+}
+
 
 
 /// Calculates error autocorrelation across varying lags.
@@ -3799,36 +3957,6 @@ void TestingAnalysis::print() const
 }
 
 
-/// Serializes the testing analysis object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* TestingAnalysis::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    ostringstream buffer;
-
-    // Root element
-
-    tinyxml2::XMLElement* testing_analysis_element = document->NewElement("TestingAnalysis");
-
-    document->InsertFirstChild(testing_analysis_element);
-
-    // Display
-
-    tinyxml2::XMLElement* display_element = document->NewElement("Display");
-    testing_analysis_element->LinkEndChild(display_element);
-
-    buffer.str("");
-    buffer << display;
-
-    tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-    display_element->LinkEndChild(display_text);
-
-    return document;
-}
-
-
 /// Serializes the testing analysis object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -3896,11 +4024,11 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 
 void TestingAnalysis::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 

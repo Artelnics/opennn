@@ -279,57 +279,6 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 }
 
 
-/// Serializes this numerical differentiation object into a XML document->
-
-tinyxml2::XMLDocument* NumericalDifferentiation::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    ostringstream buffer;
-
-    // Numerical differentiation
-
-    tinyxml2::XMLElement* root_element = document->NewElement("NumericalDifferentiation");
-
-    document->InsertFirstChild(root_element);
-
-    // Numerical differentiation method
-
-    element = document->NewElement("NumericalDifferentiationMethod");
-    root_element->LinkEndChild(element);
-
-    text = document->NewText(write_numerical_differentiation_method().c_str());
-    element->LinkEndChild(text);
-
-    // Precision digits
-
-    element = document->NewElement("PrecisionDigits");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << precision_digits;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Display
-
-    element = document->NewElement("Display");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    return document;
-}
-
-
 /// Serializes the numerical differentiation object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 

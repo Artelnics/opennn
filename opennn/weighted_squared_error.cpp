@@ -436,61 +436,6 @@ string WeightedSquaredError::get_error_type_text() const
 }
 
 
-/// Serializes the weighted squared error object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document->
-
-tinyxml2::XMLDocument* WeightedSquaredError::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Weighted squared error
-
-    tinyxml2::XMLElement* weighted_squared_error_element = document->NewElement("WeightedSquaredError");
-
-    document->InsertFirstChild(weighted_squared_error_element);
-
-    // Positives weight
-    {
-        tinyxml2::XMLElement* element = document->NewElement("PositivesWeight");
-        weighted_squared_error_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << positives_weight;
-
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Negatives weight
-    {
-        tinyxml2::XMLElement* element = document->NewElement("NegativesWeight");
-        weighted_squared_error_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << negatives_weight;
-
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Display
-    //   {
-    //      tinyxml2::XMLElement* element = document->NewElement("Display");
-    //      weighted_squared_error_element->LinkEndChild(element);
-
-    //      buffer.str("");
-    //      buffer << display;
-
-    //      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-    //      element->LinkEndChild(text);
-    //   }
-
-    return document;
-}
-
-
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 /// @param file_stream
