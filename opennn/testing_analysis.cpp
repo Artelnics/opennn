@@ -3304,8 +3304,8 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
         missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
     }
 
-//    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
-//    missclassified_instances_histogram.save(histogram_file_name);
+    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+    missclassified_instances_histogram.save(histogram_file_name);
 
 
 }
