@@ -213,35 +213,36 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
 /// @param data Numerical data.
 /// @param number_of_bins Number of bins.
 
-//Histogram::Histogram(const Tensor<type, 1>& data,
-//                     const Index& number_of_bins)
-//{
-//    const double data_maximum = maximum(data);
-//    const double data_minimum = minimum(data);
-//    const double step = (data_maximum - data_minimum) / number_of_bins;
+Histogram::Histogram(const Tensor<type, 1>& data,
+                     const Index& number_of_bins)
+{
+    const double data_maximum = maximum(data);
+    const double data_minimum = minimum(data);
+    const double step = (data_maximum - data_minimum) / number_of_bins;
 
-//    Tensor<type, 1> new_centers(number_of_bins);
-//    for(Index i = 0; i < number_of_bins; i++)
-//    {
-//        new_centers(i) = data_minimum + 0.5 * step * i;
-//    }
-//    Tensor<type, 1> new_frequencies(number_of_bins);
-//    new_frequencies.setZero();
+    Tensor<type, 1> new_centers(number_of_bins);
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        new_centers(i) = data_minimum + 0.5 * step * i;
+    }
 
-//    type value;
-//    Index corresponding_bin;
+    Tensor<Index, 1> new_frequencies(number_of_bins);
+    new_frequencies.setZero();
 
-//    for(Index i = 0; i < data.dimension(0); i++)
-//    {
-//        value = data(i);
-//        corresponding_bin = int(value / step) - 1;
+    type value;
+    Index corresponding_bin;
 
-//        new_frequencies(corresponding_bin)++;
-//    }
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        value = data(i);
+        corresponding_bin = int(value / step) - 1;
 
-//    centers = new_centers;
-//    frequencies = new_frequencies;
-//}
+        new_frequencies(corresponding_bin)++;
+    }
+
+    centers = new_centers;
+    frequencies = new_frequencies;
+}
 
 /// Returns the number of bins in the histogram.
 

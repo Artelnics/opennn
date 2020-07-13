@@ -157,7 +157,7 @@ struct Histogram
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
 
-//  explicit Histogram(const Tensor<type, 1>&, const Index&);
+  explicit Histogram(const Tensor<type, 1>&, const Index&);
 
   /// Destructor.
 
