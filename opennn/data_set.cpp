@@ -683,23 +683,23 @@ void DataSet::transform_time_series_columns()
 
         if(i < lags_number*columns_number)
         {
-            new_columns(new_column_index).name = time_series_columns(column_index).name + "_lag_" + to_string(lag_index);
+            new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
             new_columns(new_column_index).set_use(Input);
 
-            new_columns(new_column_index).type = time_series_columns(column_index).type;
-            new_columns(new_column_index).categories = time_series_columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = time_series_columns(column_index).categories_uses;
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
         else
         {
-            new_columns(new_column_index).name = time_series_columns(column_index).name + "_ahead_" + to_string(ahead_index);
+            new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
             new_columns(new_column_index).set_use(Target);
 
-            new_columns(new_column_index).type = time_series_columns(column_index).type;
-            new_columns(new_column_index).categories = time_series_columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = time_series_columns(column_index).categories_uses;
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
@@ -714,7 +714,7 @@ void DataSet::transform_time_series_columns()
         }
     }
 
-    time_series_columns = new_columns;
+    columns = new_columns;
 }
 
 
@@ -7284,7 +7284,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
     // Close DataFile
 
     file_stream.CloseElement();
@@ -8325,11 +8324,11 @@ void DataSet::transform_time_series()
     transform_time_series_columns();
 
     const Index time_series_instances_number = get_instances_number()-(lags_number-1+steps_ahead);
-    const Index time_series_variables_number = get_time_series_columns_number();
+    const Index time_series_variables_number = get_columns_number();
     const Index variables_number = get_variables_number();
     const Index instances_number = get_instances_number();
 
-    time_series_data.resize(time_series_instances_number, time_series_variables_number);
+    data.resize(time_series_instances_number, time_series_variables_number);
 
     Tensor<type, 2> new_data(time_series_instances_number, time_series_variables_number);
     Tensor<type, 1> variable_data;
@@ -8338,22 +8337,23 @@ void DataSet::transform_time_series()
 
     Index time_series_variable= 0;
 
+// lags
+
     for(Index lag = lags_number; lag > 0; lag--)
     {
-        for(Index variable = 0; variable < variables_number; variable++)
+
+        for(Index variable = 0; variable <- variables_number; variable++)
             {
             variable_data = get_variable_data(variable);
-
             for(Index j = 0; j < time_series_instances_number; j++)
             {
                 new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
             }
-
             time_series_variable++;
         }
     }
 
-//    set_time_series_data(Tensor)
+// steps ahead
     for(Index ahead = 1; ahead <= steps_ahead; ahead++)
     {
         for(Index variable = 0; variable < variables_number; variable++)
@@ -8369,7 +8369,7 @@ void DataSet::transform_time_series()
         }
     }
 
-    set_time_series_data(new_data);
+    set_data(new_data);
 }
 
 
