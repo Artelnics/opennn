@@ -3248,13 +3248,24 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
 {
     const Index instances_number = targets.dimension(0);
 
-    Tensor<string, 2> missclassified_instances(instances_number, 4);
-
     Index predicted_class, actual_class;
-    Index number_of_missclassified = 0;
     string class_name;
 
-    const Tensor<string, 1> target_variables_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> target_variables_names = neural_network_pointer->get_outputs_names();
+
+    Index count_missclassified = 0;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        predicted_class = maximal_index(outputs.chip(i, 0));
+        actual_class = maximal_index(targets.chip(i, 0));
+
+        if(actual_class != predicted_class) count_missclassified++;
+    }
+
+    Tensor<string, 2> missclassified_instances(count_missclassified, 4);
+
+    Index j = 0;
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -3267,21 +3278,21 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
         }
         else
         {
-            missclassified_instances(number_of_missclassified, 0) = labels(i);
+            missclassified_instances(j, 0) = labels(i);
             class_name = target_variables_names(actual_class);
-            missclassified_instances(number_of_missclassified, 1) = class_name;
+            missclassified_instances(j, 1) = class_name;
             class_name = target_variables_names(predicted_class);
-            missclassified_instances(number_of_missclassified, 2) = class_name;
-            missclassified_instances(number_of_missclassified, 3) = to_string(outputs(i, predicted_class));
-
-            number_of_missclassified ++;
+            missclassified_instances(j, 2) = class_name;
+            missclassified_instances(j, 3) = to_string(outputs(i, predicted_class));
+            j++;
         }
     }
 
-    Eigen::array<Index, 2> offsets = {0, 0};
-    Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
+//    Eigen::array<Index, 2> offsets = {0, 0};
+//    Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
 
-    return missclassified_instances.slice(offsets, extents);
+//    return missclassified_instances.slice(offsets, extents);
+    return missclassified_instances;
 }
 
 
@@ -3398,14 +3409,33 @@ void TestingAnalysis::save_well_classified_instances_statistics_histogram(const 
 }
 
 
+void TestingAnalysis::save_well_classified_instances_statistics_histogram(const Tensor<string, 2>& well_classified_instances,
+                                                                          const string& histogram_file_name)
+{
+//    const Tensor<string, 2> well_classified_instances = calculate_well_classified_instances(targets,
+//                                                                                            outputs,
+//                                                                                            labels);
+
+    Tensor<double, 1> well_classified_numerical_probabilities(well_classified_instances.dimension(0));
+
+    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
+    {
+        well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
+    }
+
+    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+    missclassified_instances_histogram.save(histogram_file_name);
+}
+
+
 void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<type, 2>& targets,
                                                                          const Tensor<type, 2>& outputs,
                                                                          const Tensor<string, 1>& labels,
                                                                          const string& histogram_file_name)
 {
     const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
-                                                                                        outputs,
-                                                                                        labels);
+                                                                                          outputs,
+                                                                                          labels);
 
     Tensor<double, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
 
@@ -3418,6 +3448,25 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
     missclassified_instances_histogram.save(histogram_file_name);
 }
 
+
+
+void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<string, 2>& missclassified_instances,
+                                                                         const string& histogram_file_name)
+{
+//    const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
+//                                                                                          outputs,
+//                                                                                          labels);
+
+    Tensor<double, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
+
+    for(Index i = 0; i < missclassified_numerical_probabilities.size(); i++)
+    {
+        missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
+    }
+
+    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+    missclassified_instances_histogram.save(histogram_file_name);
+}
 
 
 /// Calculates error autocorrelation across varying lags.

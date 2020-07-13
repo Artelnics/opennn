@@ -302,7 +302,11 @@ public:
 
    void save_well_classified_instances_statistics_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
+   void save_well_classified_instances_statistics_histogram(const Tensor<string, 2>&, const string&);
+
    void save_missclassified_instances_statistics_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_missclassified_instances_statistics_histogram(const Tensor<string, 2>&, const string&);
 
 
 
