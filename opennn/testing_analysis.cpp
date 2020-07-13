@@ -3295,7 +3295,7 @@ Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tens
     return missclassified_instances;
 }
 
-/*
+
 void TestingAnalysis::save_well_classified_instances(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
                                                     const Tensor<string, 1>& labels,
@@ -3360,7 +3360,7 @@ void TestingAnalysis::save_well_classified_instances_statistics(const Tensor<typ
     classification_statistics_file << well_classified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << well_classified_numerical_probabilities.maximum() << ",";
     classification_statistics_file << well_classified_numerical_probabilities.mean() << ",";
-    classification_statistics_file << standard_deviation(well_classified_numerical_probabilities);
+//    classification_statistics_file << standard_deviation(well_classified_numerical_probabilities);
 }
 
 
@@ -3384,7 +3384,7 @@ void TestingAnalysis::save_missclassified_instances_statistics(const Tensor<type
     classification_statistics_file << missclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << missclassified_numerical_probabilities.maximum() << ",";
     classification_statistics_file << missclassified_numerical_probabilities.mean() << ",";
-    classification_statistics_file << standard_deviation(missclassified_numerical_probabilities);
+//    classification_statistics_file << standard_deviation(missclassified_numerical_probabilities);
 }
 
 
@@ -3404,17 +3404,14 @@ void TestingAnalysis::save_well_classified_instances_statistics_histogram(const 
         well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
-    missclassified_instances_histogram.save(histogram_file_name);
+//    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+//    missclassified_instances_histogram.save(histogram_file_name);
 }
 
 
 void TestingAnalysis::save_well_classified_instances_statistics_histogram(const Tensor<string, 2>& well_classified_instances,
                                                                           const string& histogram_file_name)
 {
-//    const Tensor<string, 2> well_classified_instances = calculate_well_classified_instances(targets,
-//                                                                                            outputs,
-//                                                                                            labels);
 
     Tensor<double, 1> well_classified_numerical_probabilities(well_classified_instances.dimension(0));
 
@@ -3423,8 +3420,8 @@ void TestingAnalysis::save_well_classified_instances_statistics_histogram(const 
         well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
-    missclassified_instances_histogram.save(histogram_file_name);
+//    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+//    missclassified_instances_histogram.save(histogram_file_name);
 }
 
 
@@ -3444,18 +3441,14 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
         missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
-    missclassified_instances_histogram.save(histogram_file_name);
+//    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+//    missclassified_instances_histogram.save(histogram_file_name);
 }
-*/
 
 
 void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<string, 2>& missclassified_instances,
                                                                          const string& histogram_file_name)
 {
-//    const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
-//                                                                                          outputs,
-//                                                                                          labels);
 
     Tensor<double, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
 
@@ -3464,8 +3457,8 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
         missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
-    missclassified_instances_histogram.save(histogram_file_name);
+//    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+//    missclassified_instances_histogram.save(histogram_file_name);
 }
 
 
