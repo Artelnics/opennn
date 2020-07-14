@@ -310,7 +310,6 @@ public:
 
 
 
-
    // Forecasting methods
 
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
