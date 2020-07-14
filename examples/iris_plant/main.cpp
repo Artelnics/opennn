@@ -57,9 +57,6 @@ int main(void)
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_inputs_methods);
 
-//        cout<<data_set.get_data();
-//        system("pause");
-
         // Neural network
 
         const Index hidden_neurons_number = 3;
@@ -78,6 +75,9 @@ int main(void)
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
+//        neural_network.set_parameters_constant(1);
+
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -92,12 +92,23 @@ int main(void)
 
         adam->set_loss_goal(1.0e-3);
         adam->set_maximum_epochs_number(10000);
-        adam->set_display_period(100);
+        adam->set_display_period(1000);
 
         training_strategy.perform_training();
 
         // Testing analysis
 
+        Tensor<type, 2> inputs(3,4);
+
+        inputs.setValues({{5.1,3.5,1.4,0.2},
+                          {6.4,3.2,4.5,1.5},
+                          {6.3,2.7,4.9,1.8}});
+
+
+        cout<<neural_network.calculate_outputs(inputs);
+
+        system("pause");
+/*
         data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -111,14 +122,16 @@ int main(void)
 
         // Save results
 
+
         data_set.save("../data/data_set.xml");
+        cout << "1" << endl;
 
         neural_network.save("../data/neural_network.xml");
-
+cout << "2" << endl;
         training_strategy.save("../data/training_strategy.xml");
-
+cout << "3" << endl;
         cout << "Bye" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)
