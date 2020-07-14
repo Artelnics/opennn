@@ -3388,10 +3388,10 @@ void TestingAnalysis::save_missclassified_instances_statistics(const Tensor<type
 }
 
 
-void TestingAnalysis::save_well_classified_instances_statistics_histogram(const Tensor<type, 2>& targets,
-                                                                          const Tensor<type, 2>& outputs,
-                                                                          const Tensor<string, 1>& labels,
-                                                                          const string& histogram_file_name)
+void TestingAnalysis::save_well_classified_instances_probability_histogram(const Tensor<type, 2>& targets,
+                                                                           const Tensor<type, 2>& outputs,
+                                                                           const Tensor<string, 1>& labels,
+                                                                           const string& histogram_file_name)
 {
     const Tensor<string, 2> well_classified_instances = calculate_well_classified_instances(targets,
                                                                                             outputs,
@@ -3409,8 +3409,8 @@ void TestingAnalysis::save_well_classified_instances_statistics_histogram(const 
 }
 
 
-void TestingAnalysis::save_well_classified_instances_statistics_histogram(const Tensor<string, 2>& well_classified_instances,
-                                                                          const string& histogram_file_name)
+void TestingAnalysis::save_well_classified_instances_probability_histogram(const Tensor<string, 2>& well_classified_instances,
+                                                                           const string& histogram_file_name)
 {
 
     Tensor<float, 1> well_classified_numerical_probabilities(well_classified_instances.dimension(0));
@@ -3425,10 +3425,10 @@ void TestingAnalysis::save_well_classified_instances_statistics_histogram(const 
 }
 
 
-void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<type, 2>& targets,
-                                                                         const Tensor<type, 2>& outputs,
-                                                                         const Tensor<string, 1>& labels,
-                                                                         const string& histogram_file_name)
+void TestingAnalysis::save_missclassified_instances_probability_histogram(const Tensor<type, 2>& targets,
+                                                                          const Tensor<type, 2>& outputs,
+                                                                          const Tensor<string, 1>& labels,
+                                                                          const string& histogram_file_name)
 {
     const Tensor<string, 2> missclassified_instances = calculate_missclassified_instances(targets,
                                                                                           outputs,
@@ -3446,8 +3446,8 @@ void TestingAnalysis::save_missclassified_instances_statistics_histogram(const T
 }
 
 
-void TestingAnalysis::save_missclassified_instances_statistics_histogram(const Tensor<string, 2>& missclassified_instances,
-                                                                         const string& histogram_file_name)
+void TestingAnalysis::save_missclassified_instances_probability_histogram(const Tensor<string, 2>& missclassified_instances,
+                                                                          const string& histogram_file_name)
 {
 
     Tensor<float, 1> missclassified_numerical_probabilities(missclassified_instances.dimension(0));
