@@ -160,6 +160,10 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Index&);
 
+  /// Probabillities constructor
+
+  explicit Histogram(const Tensor<type, 1>&);
+
   /// Destructor.
 
   virtual ~Histogram();
