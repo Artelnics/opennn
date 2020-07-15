@@ -245,6 +245,52 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     frequencies = new_frequencies;
 }
 
+
+// Probabilities constructor
+/// @param data Numerical probabilities data.
+
+Histogram::Histogram(const Tensor<type, 1>& probability_data)
+{
+    const size_t number_of_bins = 10;
+    float data_maximum = maximum(probability_data);
+    const float data_minimum = 0.0;
+
+    if(data_maximum > 1)
+    {
+        data_maximum = 100.0;
+    }
+    else
+    {
+        data_maximum = 1.0;
+    }
+
+    const float step = (data_maximum - data_minimum) / number_of_bins;
+
+
+    Tensor<type, 1> new_centers(number_of_bins);
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        new_centers(i) = data_minimum + (0.5 * step) + (step * i);
+    }
+
+    Tensor<Index, 1> new_frequencies(number_of_bins);
+    new_frequencies.setZero();
+
+    type value;
+    Index corresponding_bin;
+
+    for(Index i = 0; i < probability_data.dimension(0); i++)
+    {
+        value = probability_data(i);
+        corresponding_bin = int((value - data_minimum) / step);
+
+        new_frequencies(corresponding_bin)++;
+    }
+
+    centers = new_centers;
+    frequencies = new_frequencies;
+}
+
 /// Returns the number of bins in the histogram.
 
 Index Histogram::get_bins_number() const

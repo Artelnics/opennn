@@ -3404,7 +3404,7 @@ void TestingAnalysis::save_well_classified_instances_probability_histogram(const
         well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities);
     missclassified_instances_histogram.save(histogram_file_name);
 }
 
@@ -3420,7 +3420,7 @@ void TestingAnalysis::save_well_classified_instances_probability_histogram(const
         well_classified_numerical_probabilities(i) = ::atof(well_classified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities, 10);
+    Histogram missclassified_instances_histogram(well_classified_numerical_probabilities);
     missclassified_instances_histogram.save(histogram_file_name);
 }
 
@@ -3441,7 +3441,7 @@ void TestingAnalysis::save_missclassified_instances_probability_histogram(const 
         missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities);
     missclassified_instances_histogram.save(histogram_file_name);
 }
 
@@ -3457,7 +3457,7 @@ void TestingAnalysis::save_missclassified_instances_probability_histogram(const 
         missclassified_numerical_probabilities(i) = ::atof(missclassified_instances(i, 3).c_str());
     }
 
-    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities, 10);
+    Histogram missclassified_instances_histogram(missclassified_numerical_probabilities);
     missclassified_instances_histogram.save(histogram_file_name);
 }
 
