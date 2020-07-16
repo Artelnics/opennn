@@ -69,23 +69,6 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     assert_true(output_3.dimension(2) == 1, LOG);
     assert_true(output_3.dimension(3) == 10, LOG);
 
-
-    Tensor<float, 4> input_4(5, 5, 3, 10);
-    Tensor<float, 4> kernel_4(2, 2, 3, 7);
-    Tensor<float, 4> output_4;
-    input_4.setRandom();
-    kernel_4.setRandom();
-
-    Eigen::array<ptrdiff_t, 3> dims_4 = {0, 1, 2};
-
-
-    output_4 = input_4.convolve(kernel_4, dims_4);
-
-    assert_true(output_4.dimension(0) == 4, LOG);
-    assert_true(output_4.dimension(1) == 4, LOG);
-    assert_true(output_4.dimension(2) == 1, LOG);
-    assert_true(output_4.dimension(3) == 7, LOG);
-
 }
 
 
@@ -525,9 +508,9 @@ void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<type, 4> inputs(5, 5, 3, 20);
-    Tensor<type, 4> outputs(4, 4, 1, 10);
-    Tensor<type, 4> kernel(2, 2, 3, 10);
+    Tensor<type, 4> inputs(5, 5, 3, 1);
+    Tensor<type, 4> outputs(4, 4, 2, 1);
+    Tensor<type, 4> kernel(2, 2, 3, 2);
 
     inputs.setRandom();
     kernel.setRandom();
@@ -535,15 +518,10 @@ void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
     convolutional_layer.set_synaptic_weights(kernel);
     convolutional_layer.calculate_convolutions(inputs, outputs);
 
-    cout << outputs.dimension(0) << endl;
-    cout << outputs.dimension(1) << endl;
-    cout << outputs.dimension(2) << endl;
-    cout << outputs.dimension(3) << endl;
-
-//    assert_true(outputs.dimension(0) == 4, LOG);
-//    assert_true(outputs.dimension(1) == 4, LOG);
-//    assert_true(outputs.dimension(2) == 1, LOG);
-//    assert_true(outputs.dimension(3) == 10, LOG);
+    assert_true(outputs.dimension(0) == 4, LOG);
+    assert_true(outputs.dimension(1) == 4, LOG);
+    assert_true(outputs.dimension(2) == 2, LOG);
+    assert_true(outputs.dimension(3) == 1, LOG);
 
 
 //    Tensor<type, 2> images;
