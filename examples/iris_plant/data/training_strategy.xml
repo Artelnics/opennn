@@ -1,10 +1,6 @@
 <TrainingStrategy>
-   <Main Type="STOCHASTIC_GRADIENT_DESCENT">
+   <Main Type="ADAPTIVE_MOMENT_ESTIMATION">
       <ReturnMinimumSelectionErrorNN>0</ReturnMinimumSelectionErrorNN>
-      <WarningParametersNorm>1e+06</WarningParametersNorm>
-      <WarningGradientNorm>1e+06</WarningGradientNorm>
-      <ErrorParametersNorm>1e+09</ErrorParametersNorm>
-      <ErrorGradientNorm>1e+09</ErrorGradientNorm>
       <LossGoal>0.001</LossGoal>
       <MaximumEpochsNumber>10000</MaximumEpochsNumber>
       <MaximumTime>1000</MaximumTime>

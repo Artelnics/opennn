@@ -2274,16 +2274,12 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document;
-
-//    document->SaveFile(file_name.c_str());
-
-//    delete document;
 
     FILE *pFile;
-    errno_t err;
+//    errno_t err;
 
-    err = fopen_s(&pFile, file_name.c_str(), "w");
+//    err = fopen_s(&pFile, file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);
 

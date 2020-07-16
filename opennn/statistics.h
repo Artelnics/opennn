@@ -156,8 +156,13 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
+  /// Data constructor
 
   explicit Histogram(const Tensor<type, 1>&, const Index&);
+
+  /// Probabillities constructor
+
+  explicit Histogram(const Tensor<type, 1>&);
 
   /// Destructor.
 
