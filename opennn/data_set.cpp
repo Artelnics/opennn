@@ -8317,6 +8317,9 @@ void DataSet::transform_time_series()
 {
     if(lags_number == 0) return;
 
+    const Index variables_number = get_variables_number();
+    const Index instances_number = get_instances_number();
+
     time_series_data = data;
 
     time_series_columns = columns;
@@ -8325,8 +8328,6 @@ void DataSet::transform_time_series()
 
     const Index time_series_instances_number = get_instances_number()-(lags_number-1+steps_ahead);
     const Index time_series_variables_number = get_columns_number();
-    const Index variables_number = get_variables_number();
-    const Index instances_number = get_instances_number();
 
     data.resize(time_series_instances_number, time_series_variables_number);
 
@@ -8337,30 +8338,35 @@ void DataSet::transform_time_series()
 
     Index time_series_variable= 0;
 
+
 // lags
 
     for(Index lag = lags_number; lag > 0; lag--)
     {
 
-        for(Index variable = 0; variable <- variables_number; variable++)
+        for(Index variable = 0; variable < variables_number; variable++)
             {
-            variable_data = get_variable_data(variable);
-            for(Index j = 0; j < time_series_instances_number; j++)
+
+            variable_data = time_series_data.chip(variable, 1);
+
+            for(Index j = 0; j <= time_series_instances_number; j++)
             {
+
                 new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
             }
             time_series_variable++;
         }
     }
 
+
 // steps ahead
     for(Index ahead = 1; ahead <= steps_ahead; ahead++)
     {
         for(Index variable = 0; variable < variables_number; variable++)
             {
-            variable_data = get_variable_data(variable);
+            variable_data = time_series_data.chip(variable, 1);
 
-            for(Index j = 0; j < time_series_instances_number; j++)
+            for(Index j = 0; j <= time_series_instances_number; j++)
             {
                 new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
             }
