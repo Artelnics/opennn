@@ -81,7 +81,7 @@ struct RegressionResults
 
 /// The enum CorrelationType represents the different correlations methods provided by OpenNN.
 
-enum CorrelationType{Linear_correlation, Logistic_correlation, Logarithmic_correlation, Exponential_correlation, Power_correlation, KarlPearson_correlation, OneWayAnova_correlation};
+enum CorrelationType{Linear_correlation, Logistic_correlation, Logarithmic_correlation, Exponential_correlation, Power_correlation, KarlPearson_correlation, OneWayAnova_correlation, Gauss_correlation};
 
 
 /// This structure provides the results obtained from the correlations.
