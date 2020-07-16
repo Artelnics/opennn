@@ -78,7 +78,7 @@ public:
 
     bool is_empty() const;
 
-    Tensor<type, 1> get_biases() const;
+    const Tensor<type, 1>& get_biases() const;
 
     Tensor<type, 4> get_synaptic_weights() const;
 
