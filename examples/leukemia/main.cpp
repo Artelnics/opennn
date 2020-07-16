@@ -22,94 +22,60 @@
 
 #include "../../opennn/opennn.h"
 
-
-#include <iostream>
-#include <vector>
-#include <numeric>      // std::iota
-#include <algorithm>    // std::sort, std::stable_sort
-
 using namespace OpenNN;
-
-vector<int> get_row_indices_sorted(Tensor<type,1>& x)
-{
-    vector<type> y(x.size());
-
-    vector<int> index;
-
-    size_t n(0);
-
-    generate(begin(y), end(y), [&]{ return n++; });
-
-    sort(begin(y), end(y), [&](int i1, int i2) { return x[i1] < x[i2]; } );
-
-    for (auto v : y) index.push_back(v);
-
-    return index;
-}
-
-
-Tensor<type, 2> get_subtensor_sorted(Tensor<type, 2>& data)
-{
-    Tensor<type, 1> shrink_data_dimension(data.dimension(0));
-
-    memcpy(shrink_data_dimension.data(), data.data(), static_cast<size_t>(shrink_data_dimension.size())*sizeof(type));
-
-    vector<int> indices_sorted = get_row_indices_sorted(shrink_data_dimension);
-
-    Tensor<type, 2> sorted_output(data.dimension(0),data.dimension(1));
-
-    for(Index i =0; i<data.dimension(0); i++)
-    {
-        sorted_output(i,0) = data(indices_sorted[i], 0);
-        sorted_output(i,1) = data(indices_sorted[i], 1);
-    }
-    return sorted_output;
-
-}
 
 int main(void)
 {
     try
     {
-        cout<<"Hello"<<endl;
+        cout << "OpenNN. Leukemia Example." << endl;
 
-        DataSet data_set("C:/opennn/examples/leukemia/data/leukemia.csv",';',false);
+        // Device
 
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+        DataSet data_set("../data/leukemia.csv",';',false);
+
+        data_set.set_thread_pool_device(thread_pool_device);
         data_set.set_training();
 
-        Tensor<type, 2> data = data_set.get_data();
+        Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+        Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-        const Index rows_number = data.dimension(0);
-        const Index columns_number = data.dimension(1);
+        #pragma omp parallel for
 
-        Tensor<Index, 1> rows_indices(rows_number);
-        rows_indices = data_set.get_training_instances_indices();
-
-        Tensor<Index, 1> columns_indices(2);
-        columns_indices[1] = static_cast<Index>(columns_number-1);
-
-        for(Index j =0; j<columns_number-1; j++)
+        for(int i=0; i<input_variables_indices.dimension(0); i++)
         {
-            columns_indices[0] = static_cast<Index>(j);
 
-            Tensor<type, 2> subtensor = data_set.get_subtensor_data(rows_indices, columns_indices);
+            CorrelationResults logistic_correlation = logistic_correlations(thread_pool_device,
+                                                      data_set.get_data().chip(input_variables_indices(i),1),
+                                                      data_set.get_data().chip(target_variables_indices(0),1));
 
-            Tensor<type, 2> sorted_output = get_subtensor_sorted(subtensor);
+            CorrelationResults gauss_correlation = gauss_correlations(thread_pool_device,
+                                                   data_set.get_data().chip(input_variables_indices(i),1),
+                                                   data_set.get_data().chip(target_variables_indices(0),1));
 
-            int counter = 0;
 
-            for(Index i=0; i<rows_number-1;i++)
+            if(abs(logistic_correlation.correlation) > abs(gauss_correlation.correlation) &&
+                    abs(logistic_correlation.correlation) > 0.9)
             {
-                if(sorted_output(i,1) != sorted_output(i+1,1))
-                {
-                    counter++;
-                }
+                cout << "Gen: " << i << endl;
+                cout << "Logistic correlation: " << logistic_correlation.correlation << endl;
             }
 
-            if (counter == 1)
+            if(abs(gauss_correlation.correlation) > abs(logistic_correlation.correlation) &&
+                    abs(gauss_correlation.correlation) > 0.9)
             {
-                cout<<"gen: "<<j<<endl;
+                cout<<"Gen: "<<i<<endl;
+                cout<<"Gauss correlation: "<<gauss_correlation.correlation<<endl;
+            }
 
+            if(i%250 == 0)
+            {
+                cout<<static_cast<float>(i)/static_cast<float>(input_variables_indices.dimension(0))*100
+                   <<"% dataset evaluated"<<endl;
             }
         }
 
