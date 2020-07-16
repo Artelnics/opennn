@@ -22,49 +22,7 @@
 
 #include "../../opennn/opennn.h"
 
-//#include <iostream>
-//#include <vector>
-//#include <numeric>      // std::iota
-//#include <algorithm>    // std::sort, std::stable_sort
-
 using namespace OpenNN;
-
-//vector<int> get_row_indices_sorted(Tensor<type,1>& x)
-//{
-//    vector<type> y(x.size());
-
-//    vector<int> index;
-
-//    size_t n(0);
-
-//    generate(begin(y), end(y), [&]{ return n++; });
-
-//    sort(begin(y), end(y), [&](int i1, int i2) { return x[i1] < x[i2]; } );
-
-//    for (auto v : y) index.push_back(v);
-
-//    return index;
-//}
-
-
-//Tensor<type, 2> get_subtensor_sorted(Tensor<type, 2>& data)
-//{
-//    Tensor<type, 1> shrink_data_dimension(data.dimension(0));
-
-//    memcpy(shrink_data_dimension.data(), data.data(), static_cast<size_t>(shrink_data_dimension.size())*sizeof(type));
-
-//    vector<int> indices_sorted = get_row_indices_sorted(shrink_data_dimension);
-
-//    Tensor<type, 2> sorted_output(data.dimension(0),data.dimension(1));
-
-//    for(Index i =0; i<data.dimension(0); i++)
-//    {
-//        sorted_output(i,0) = data(indices_sorted[i], 0);
-//        sorted_output(i,1) = data(indices_sorted[i], 1);
-//    }
-//    return sorted_output;
-
-//}
 
 int main(void)
 {
