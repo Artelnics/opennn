@@ -51,6 +51,26 @@ bool ConvolutionalLayer::is_empty() const
     return false;
 }
 
+/// Calculate combinations
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs) const
+{
+    const Index number_of_kernels = synaptic_weights.dimension(3);
+    cout << "Number of filters: " << number_of_kernels << endl;
+
+//    const Dimensions output_dimensions = calculate_output_dimensions(); // TODO
+
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+
+    Tensor<type, 3> kernel;
+
+    for(Index i = 0; i < number_of_kernels; i++)
+    {
+        kernel = synaptic_weights.chip(i, 3);
+        outputs.chip(i, 3) = inputs.convolve(kernel, dims);
+    }
+    cout << "AAAAAAAAA" << endl;
+}
+
 
 /// Returns the output of the convolutional layer applied to a batch of images.
 /// @param inputs The batch of images.
@@ -122,7 +142,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
         const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
         const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-        const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+        const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
         // Hidden delta calculation
 
@@ -834,7 +854,7 @@ void ConvolutionalLayer::set_biases(const Tensor<type, 1>& new_biases)
 /// Sets the layer's synaptic weights.
 /// @param new_synaptic_weights The desired synaptic weights.
 
-void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
+void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synaptic_weights)
 {
     synaptic_weights = new_synaptic_weights;
 }
@@ -909,7 +929,7 @@ Tensor<type, 1> ConvolutionalLayer::get_biases() const
 
 /// Returns the layer's synaptic weights.
 
-Tensor<type, 2> ConvolutionalLayer::get_synaptic_weights() const
+Tensor<type, 4> ConvolutionalLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
 }

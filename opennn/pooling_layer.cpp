@@ -346,7 +346,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
     const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
     const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-    const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
     /*
