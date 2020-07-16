@@ -78,9 +78,9 @@ public:
 
     bool is_empty() const;
 
-    Tensor<type, 1> get_biases() const;
+    const Tensor<type, 1>& get_biases() const;
 
-    Tensor<type, 2> get_synaptic_weights() const;
+    Tensor<type, 4> get_synaptic_weights() const;
 
     ActivationFunction get_activation_function() const;
 
@@ -125,7 +125,7 @@ public:
 
     void set_biases(const Tensor<type, 1>&);
 
-    void set_synaptic_weights(const Tensor<type, 2>&);
+    void set_synaptic_weights(const Tensor<type, 4>&);
 
     void set_padding_option(const PaddingOption&);
 
@@ -145,9 +145,7 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const
-    {
-    }
+    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Activation
 
@@ -191,7 +189,7 @@ protected:
 
    /// This tensor containing conection strengths from a layer's inputs to its neurons.
 
-   Tensor<type, 2> synaptic_weights;
+   Tensor<type, 4> synaptic_weights;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.

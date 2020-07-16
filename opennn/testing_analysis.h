@@ -300,17 +300,13 @@ public:
 
    void save_missclassified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_well_classified_instances_statistics_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_missclassified_instances_statistics_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
 
+   void save_missclassified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-
-//   Tensor<string, 2> calculate_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
-
-
-
-
+   void save_missclassified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
 
    // Forecasting methods
 
@@ -324,7 +320,7 @@ public:
 
    void print() const;
 
-   virtual 
+//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

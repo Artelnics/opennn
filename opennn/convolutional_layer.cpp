@@ -51,6 +51,25 @@ bool ConvolutionalLayer::is_empty() const
     return false;
 }
 
+/// Calculate combinations
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs) const
+{
+    const Index number_of_kernels = synaptic_weights.dimension(3);
+//    cout << "Number of filters: " << number_of_kernels << endl;
+
+//    const Dimensions output_dimensions = calculate_output_dimensions(); // TODO
+
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+
+    Tensor<type, 3> kernel;
+
+    for(Index i = 0; i < number_of_kernels; i++)
+    {
+        kernel = synaptic_weights.chip(i, 3);
+        outputs.chip(i, 3) = inputs.chip(i, 3).convolve(kernel, dims);
+    }
+}
+
 
 /// Returns the output of the convolutional layer applied to a batch of images.
 /// @param inputs The batch of images.
@@ -122,7 +141,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
         const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
         const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-        const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+        const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
         // Hidden delta calculation
 
@@ -586,9 +605,11 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions[0] = get_filters_number();
-    outputs_dimensions[1] = get_outputs_rows_number();
-    outputs_dimensions[2] = get_outputs_columns_number();
+    outputs_dimensions[0] = get_outputs_rows_number();
+    outputs_dimensions[1] = get_outputs_columns_number();
+    outputs_dimensions[3] = get_filters_number();
+    outputs_dimensions[4] = input_variables_dimensions[3];
+
 
     return outputs_dimensions;
 }
@@ -770,15 +791,15 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
 //        input_variables_dimensions.set(new_inputs_dimensions);
 
-        const Index filters_number = new_filters_dimensions[0];
-        const Index filters_channels_number = new_inputs_dimensions[0];
-        const Index filters_rows_number = new_filters_dimensions[1];
-        const Index filters_columns_number = new_filters_dimensions[2];
+        const Index filters_number = new_filters_dimensions[3];
+        const Index filters_channels_number = new_inputs_dimensions[2];
+        const Index filters_rows_number = new_filters_dimensions[0];
+        const Index filters_columns_number = new_filters_dimensions[1];
 
         biases.resize(filters_number);
         biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-//        synaptic_weights.resize(filters_number, filters_channels_number, filters_rows_number, filters_columns_number);
+        synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
         synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
 }
@@ -834,7 +855,7 @@ void ConvolutionalLayer::set_biases(const Tensor<type, 1>& new_biases)
 /// Sets the layer's synaptic weights.
 /// @param new_synaptic_weights The desired synaptic weights.
 
-void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
+void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synaptic_weights)
 {
     synaptic_weights = new_synaptic_weights;
 }
@@ -899,8 +920,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 
 /// Returns the layer's biases.
-
-Tensor<type, 1> ConvolutionalLayer::get_biases() const
+const Tensor<type, 1>& ConvolutionalLayer::get_biases() const
 {
     return biases;
 }
@@ -909,17 +929,9 @@ Tensor<type, 1> ConvolutionalLayer::get_biases() const
 
 /// Returns the layer's synaptic weights.
 
-Tensor<type, 2> ConvolutionalLayer::get_synaptic_weights() const
+Tensor<type, 4> ConvolutionalLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
-}
-
-
-/// Returns the number of channels of the input.
-
-Index ConvolutionalLayer::get_inputs_channels_number() const
-{
-    return input_variables_dimensions[0];
 }
 
 
@@ -927,13 +939,21 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[1];
+    return input_variables_dimensions[0];
 }
 
 
 /// Returns the number of columns of the input.
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
+{
+    return input_variables_dimensions[1];
+}
+
+
+/// Returns the number of channels of the input.
+
+Index ConvolutionalLayer::get_inputs_channels_number() const
 {
     return input_variables_dimensions[2];
 }

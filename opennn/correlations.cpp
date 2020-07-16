@@ -1237,7 +1237,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    const Index epochs_number = 10000;
+    const Index epochs_number = 100000;
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
@@ -1644,13 +1644,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients += gradient*step_size;
-        /*
-        coefficients = gradient*step_size;
 
-        coefficients += 0.9*last_coefficients;
-
-        last_coefficients = coefficients;
-       */
     }
 
     // Gaussian correlation
@@ -1659,11 +1653,9 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> gaussian_y = gaussian(coefficients(0), coefficients(1), scaled_x);
 
-    gaussian_correlations.correlation = linear_correlation(thread_pool_device, gaussian_y, new_y);
+    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y));
 
-//    if(coefficients(1) < 0) gaussian_correlations.correlation *= (-1);
-
-    gaussian_correlations.correlation_type = Logistic_correlation;
+    gaussian_correlations.correlation_type = Gauss_correlation;
 
     return gaussian_correlations;
 }
