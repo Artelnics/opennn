@@ -55,19 +55,21 @@ bool ConvolutionalLayer::is_empty() const
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs) const
 {
     const Index number_of_kernels = synaptic_weights.dimension(3);
-//    cout << "Number of filters: " << number_of_kernels << endl;
-
-//    const Dimensions output_dimensions = calculate_output_dimensions(); // TODO
+    const Index number_of_images = inputs.dimension(3);
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 3> kernel;
 
-    for(Index i = 0; i < number_of_kernels; i++)
+    for(Index i = 0; i < number_of_images; i++)
     {
-        kernel = synaptic_weights.chip(i, 3);
-        outputs.chip(i, 3) = inputs.chip(i, 3).convolve(kernel, dims);
+        for(Index j = 0; j < number_of_kernels; j++)
+        {
+            kernel = synaptic_weights.chip(j, 3);
+            outputs.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
+        }
     }
+
 }
 
 
@@ -603,7 +605,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(3);
+    Tensor<Index, 1> outputs_dimensions(4);
 
     outputs_dimensions[0] = get_outputs_rows_number();
     outputs_dimensions[1] = get_outputs_columns_number();
@@ -651,7 +653,7 @@ Index ConvolutionalLayer::get_filters_number() const
 
 Index ConvolutionalLayer::get_filters_channels_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(2);
 }
 
 
@@ -659,7 +661,7 @@ Index ConvolutionalLayer::get_filters_channels_number() const
 
 Index  ConvolutionalLayer::get_filters_rows_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -667,7 +669,7 @@ Index  ConvolutionalLayer::get_filters_rows_number() const
 
 Index ConvolutionalLayer::get_filters_columns_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -791,17 +793,18 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
 //        input_variables_dimensions.set(new_inputs_dimensions);
 
-        const Index filters_number = new_filters_dimensions[3];
-        const Index filters_channels_number = new_inputs_dimensions[2];
-        const Index filters_rows_number = new_filters_dimensions[0];
-        const Index filters_columns_number = new_filters_dimensions[1];
+    const Index filters_rows_number = new_filters_dimensions[0];
+    const Index filters_columns_number = new_filters_dimensions[1];
+    const Index filters_channels_number = new_inputs_dimensions[2];
+    const Index filters_number = new_filters_dimensions[3];
 
-        biases.resize(filters_number);
-        biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    biases.resize(filters_number);
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-        synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
-        synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
+    input_variables_dimensions = new_inputs_dimensions;
 }
 
 
