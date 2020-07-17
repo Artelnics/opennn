@@ -147,6 +147,8 @@ public:
 
     void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
+    void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+
     // Activation
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;

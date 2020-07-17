@@ -1260,7 +1260,6 @@ void ConvolutionalLayerTest::test_calculate_activations() // @todo
     result(1,1,1,0) = 2.324008f;
     result(1,1,1,1) = 2.324910f;
 
-cout << "AAAAAAAAAAAAAAA" << endl;
     assert_true(abs(activations_4d(0,0,0,0) - result(0,0,0,0)) <= 1e-6 &&
                 abs(activations_4d(0,0,0,1) - result(0,0,0,1)) <= 1e-6 &&
                 abs(activations_4d(0,0,1,0) - result(0,0,1,0)) <= 1e-6 &&
