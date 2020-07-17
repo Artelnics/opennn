@@ -44,20 +44,20 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct SGDOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit SGDOptimizationData()
         {
         }
 
-        explicit OptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        explicit SGDOptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
             set(new_stochastic_gradient_descent_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~SGDOptimizationData() {}
 
         void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
@@ -161,12 +161,7 @@ public:
    void set_momentum(const type&);
    void set_nesterov(const bool&);
 
-   // Training parameters
 
-   
-   
-   
-   
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -187,7 +182,7 @@ public:
    // Training methods
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                         OptimizationData& optimization_data);
+                         SGDOptimizationData& optimization_data);
 
    Results perform_training();
 
