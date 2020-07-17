@@ -25,6 +25,8 @@ void ConvolutionalLayerTest::test_eigen_convolution()
 
     cout << "test_eigen_convolution\n";
 
+
+    // Convolution 2D, 1 channel
     Tensor<float, 2> input(3, 3);
     Tensor<float, 2> kernel(2, 2);
     Tensor<float, 2> output;
@@ -39,6 +41,7 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     assert_true(output.dimension(0) == 2, LOG);
     assert_true(output.dimension(1) == 2, LOG);
 
+    // Convolution 2D, 3 channels
     Tensor<float, 3> input_2(5, 5, 3);
     Tensor<float, 3> kernel_2(2, 2, 3);
     Tensor<float, 3> output_2;
@@ -54,6 +57,7 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     assert_true(output_2.dimension(2) == 1, LOG);
 
 
+    // Convolution 2D, 3 channels, multiple images, 1 kernel
     Tensor<float, 4> input_3(5, 5, 3, 10);
     Tensor<float, 3> kernel_3(2, 2, 3);
     Tensor<float, 4> output_3;
@@ -221,20 +225,25 @@ void ConvolutionalLayerTest::test_set() // @todo
 {
     cout << "test_set\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    // Test
+    // Test
 
-//    convolutional_layer.set({3,256,300}, {10,5,5});
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({256, 128, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 2});
 
-//    assert_true(convolutional_layer.is_empty() == false &&
-//                convolutional_layer.get_inputs_channels_number() == 3 &&
-//                convolutional_layer.get_inputs_rows_number() == 256 &&
-//                convolutional_layer.get_inputs_columns_number() == 300 &&
-//                convolutional_layer.get_filters_number() == 10 &&
-//                convolutional_layer.get_filters_channels_number() == 3 &&
-//                convolutional_layer.get_filters_rows_number() == 5 &&
-//                convolutional_layer.get_filters_columns_number() == 5, LOG);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    assert_true(convolutional_layer.is_empty() == false &&
+                convolutional_layer.get_inputs_channels_number() == 3 &&
+                convolutional_layer.get_inputs_rows_number() == 256 &&
+                convolutional_layer.get_inputs_columns_number() == 128 &&
+                convolutional_layer.get_filters_number() == 2 &&
+                convolutional_layer.get_filters_channels_number() == 3 &&
+                convolutional_layer.get_filters_rows_number() == 2 &&
+                convolutional_layer.get_filters_columns_number() == 2, LOG);
 }
 
 
@@ -522,6 +531,93 @@ void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
     assert_true(outputs.dimension(1) == 4, LOG);
     assert_true(outputs.dimension(2) == 2, LOG);
     assert_true(outputs.dimension(3) == 1, LOG);
+
+    kernel.setConstant(1.0);
+    inputs.setConstant(2.0);
+
+    convolutional_layer.set_synaptic_weights(kernel);
+    convolutional_layer.calculate_convolutions(inputs, outputs);
+
+    assert_true(outputs(0, 0, 0, 0) == 24.f &&
+                outputs(0, 1, 0, 0) == 24.f &&
+                outputs(0, 2, 0, 0) == 24.f &&
+                outputs(0, 3, 0, 0) == 24.f &&
+                outputs(1, 0, 0, 0) == 24.f &&
+                outputs(1, 1, 0, 0) == 24.f &&
+                outputs(1, 2, 0, 0) == 24.f &&
+                outputs(1, 3, 0, 0) == 24.f &&
+                outputs(2, 0, 0, 0) == 24.f &&
+                outputs(2, 1, 0, 0) == 24.f &&
+                outputs(2, 2, 0, 0) == 24.f &&
+                outputs(2, 3, 0, 0) == 24.f &&
+                outputs(3, 0, 0, 0) == 24.f &&
+                outputs(3, 1, 0, 0) == 24.f &&
+                outputs(3, 2, 0, 0) == 24.f &&
+                outputs(3, 3, 0, 0) == 24.f &&
+                outputs(0, 0, 1, 0) == 24.f &&
+                outputs(0, 1, 1, 0) == 24.f &&
+                outputs(0, 2, 1, 0) == 24.f &&
+                outputs(0, 3, 1, 0) == 24.f &&
+                outputs(1, 0, 1, 0) == 24.f &&
+                outputs(1, 1, 1, 0) == 24.f &&
+                outputs(1, 2, 1, 0) == 24.f &&
+                outputs(1, 3, 1, 0) == 24.f &&
+                outputs(2, 0, 1, 0) == 24.f &&
+                outputs(2, 1, 1, 0) == 24.f &&
+                outputs(2, 2, 1, 0) == 24.f &&
+                outputs(2, 3, 1, 0) == 24.f &&
+                outputs(3, 0, 1, 0) == 24.f &&
+                outputs(3, 1, 1, 0) == 24.f &&
+                outputs(3, 2, 1, 0) == 24.f &&
+                outputs(3, 3, 1, 0) == 24.f, LOG);
+
+
+    kernel.chip(1, 3).setConstant(0.5);
+
+    convolutional_layer.set_synaptic_weights(kernel);
+    convolutional_layer.calculate_convolutions(inputs, outputs);
+
+
+
+    assert_true(outputs(0, 0, 0, 0) == 24.f &&
+                outputs(0, 1, 0, 0) == 24.f &&
+                outputs(0, 2, 0, 0) == 24.f &&
+                outputs(0, 3, 0, 0) == 24.f &&
+                outputs(1, 0, 0, 0) == 24.f &&
+                outputs(1, 1, 0, 0) == 24.f &&
+                outputs(1, 2, 0, 0) == 24.f &&
+                outputs(1, 3, 0, 0) == 24.f &&
+                outputs(2, 0, 0, 0) == 24.f &&
+                outputs(2, 1, 0, 0) == 24.f &&
+                outputs(2, 2, 0, 0) == 24.f &&
+                outputs(2, 3, 0, 0) == 24.f &&
+                outputs(3, 0, 0, 0) == 24.f &&
+                outputs(3, 1, 0, 0) == 24.f &&
+                outputs(3, 2, 0, 0) == 24.f &&
+                outputs(3, 3, 0, 0) == 24.f &&
+                outputs(0, 0, 1, 0) == 12.f &&
+                outputs(0, 1, 1, 0) == 12.f &&
+                outputs(0, 2, 1, 0) == 12.f &&
+                outputs(0, 3, 1, 0) == 12.f &&
+                outputs(1, 0, 1, 0) == 12.f &&
+                outputs(1, 1, 1, 0) == 12.f &&
+                outputs(1, 2, 1, 0) == 12.f &&
+                outputs(1, 3, 1, 0) == 12.f &&
+                outputs(2, 0, 1, 0) == 12.f &&
+                outputs(2, 1, 1, 0) == 12.f &&
+                outputs(2, 2, 1, 0) == 12.f &&
+                outputs(2, 3, 1, 0) == 12.f &&
+                outputs(3, 0, 1, 0) == 12.f &&
+                outputs(3, 1, 1, 0) == 12.f &&
+                outputs(3, 2, 1, 0) == 12.f &&
+                outputs(3, 3, 1, 0) == 12.f, LOG);
+
+
+
+
+//    cout << kernel << endl;
+//    cout << inputs << endl;
+//    cout << outputs << endl;
 
 
 //    Tensor<type, 2> images;
@@ -1676,13 +1772,13 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    test_get_parameters();
    test_get_outputs_dimensions();
    test_get_parameters_number();
-
+*/
 
    // Set methods
 
    test_set();
-   test_set_parameters();
-
+//   test_set_parameters();
+/*
 
    // Combinations
 
