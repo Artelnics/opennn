@@ -52,7 +52,7 @@ bool ConvolutionalLayer::is_empty() const
 }
 
 /// Calculate combinations
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs) const
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
 {
     const Index number_of_kernels = synaptic_weights.dimension(3);
     const Index number_of_images = inputs.dimension(3);
@@ -67,9 +67,15 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
         for(Index j = 0; j < number_of_kernels; j++)
         {
             kernel = synaptic_weights.chip(j, 3);
-            outputs.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
+            convolutions.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
         }
     }
+}
+
+
+void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& convolutions, Tensor<type, 4> & combinations) const
+{
+
 }
 
 /// Calculates activations
