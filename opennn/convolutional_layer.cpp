@@ -61,6 +61,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
     Tensor<type, 3> kernel;
 
+    #pragma omp parallel for
     for(Index i = 0; i < number_of_images; i++)
     {
         for(Index j = 0; j < number_of_kernels; j++)
@@ -69,8 +70,37 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
             outputs.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
         }
     }
-
 }
+
+/// Calculates activations
+void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Tensor<type, 4>& activations) const
+{
+    switch(activation_function)
+    {
+        case Linear: linear(inputs, activations); return;
+
+        case Logistic: logistic(inputs, activations); return;
+
+        case HyperbolicTangent: hyperbolic_tangent(inputs, activations); return;
+
+        case Threshold: threshold(inputs, activations); return;
+
+        case SymmetricThreshold: symmetric_threshold(inputs, activations); return;
+
+        case RectifiedLinear: rectified_linear(inputs, activations); return;
+
+        case ScaledExponentialLinear: scaled_exponential_linear(inputs, activations); return;
+
+        case SoftPlus: soft_plus(inputs, activations); return;
+
+        case SoftSign: soft_sign(inputs, activations); return;
+
+        case HardSigmoid: hard_sigmoid(inputs, activations); return;
+
+        case ExponentialLinear: exponential_linear(inputs, activations); return;
+    }
+}
+
 
 
 /// Returns the output of the convolutional layer applied to a batch of images.
@@ -78,9 +108,13 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
 Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-//    return calculate_activations(calculate_combinations(inputs));
+    Tensor<type, 4> outputs;
+    Tensor<type, 4> convolutions;
 
-    return Tensor<type, 4>();
+    calculate_convolutions(inputs, convolutions);
+    calculate_activations(convolutions, outputs);
+
+    return outputs;
 }
 
 
@@ -610,7 +644,7 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
     outputs_dimensions[0] = get_outputs_rows_number();
     outputs_dimensions[1] = get_outputs_columns_number();
     outputs_dimensions[3] = get_filters_number();
-    outputs_dimensions[4] = input_variables_dimensions[3];
+    outputs_dimensions[4] = input_variables_dimensions[3]; // Number of images
 
 
     return outputs_dimensions;

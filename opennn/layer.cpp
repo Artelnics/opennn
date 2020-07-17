@@ -1222,6 +1222,174 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 }
 
 
+// Activations 4d
+
+void Layer::linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+    y = x;
+}
+
+
+void Layer::logistic(const Tensor<type, 4>& x, Tensor<type, 4>& y)const
+{
+    y.device(*thread_pool_device) = (1 + x.exp().inverse()).inverse();
+}
+
+
+void Layer::hyperbolic_tangent(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+    y.device(*thread_pool_device) = x.tanh();
+}
+
+
+void Layer::threshold(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+    const Tensor<bool, 4> if_sentence = (x >= x.constant(0));
+
+    Tensor<type, 4> ones(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+    ones.setConstant(1);
+
+    Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+    zeros.setConstant(0);
+
+    y.device(*thread_pool_device) = if_sentence.select(ones, zeros);
+}
+
+
+void Layer::symmetric_threshold(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+
+    const Tensor<bool, 4> if_sentence = x > x.constant(0);
+
+    Tensor<type, 4> ones(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    ones.setConstant(1);
+
+    y.device(*thread_pool_device) = if_sentence.select(ones, -ones);
+}
+
+
+void Layer::rectified_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+    const Tensor<bool, 4> if_sentence = x < x.constant(0);
+
+    Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    zeros.setConstant(0);
+
+    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+}
+
+
+void Layer::scaled_exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+
+    const type lambda = static_cast<type>(1.0507);
+
+    const type alpha = static_cast<type>(1.67326);
+
+    const Tensor<bool, 4> if_sentence = x < x.constant(0);
+
+    Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    Tensor<type, 4> f_2(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    f_1 = lambda*alpha*(x.exp() - static_cast<type>(1.0));
+
+    f_2 = lambda*x;
+
+    y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+}
+
+
+void Layer::soft_plus(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+    y.device(*thread_pool_device) = (x.constant(1) + x.exp()).log();
+}
+
+
+void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+
+    const Tensor<bool, 4> if_sentence = x < x.constant(0);
+
+    Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    Tensor<type, 4> f_2(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    f_1 = x / (static_cast<type>(1) - x);
+
+    f_2 = x / (static_cast<type>(1) + x);
+
+    y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+}
+
+
+void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const // TODO review
+{
+    const Tensor<bool, 4> if_lower = x < x.constant(-2.5);
+    const Tensor<bool, 4> if_greater = x > x.constant(2.5);
+    const Tensor<bool, 4> if_middle = x < x.constant(-2.5) && x > x.constant(2.5);
+
+    Tensor<type, 4> f_lower(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+    Tensor<type, 4> f_greater(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+    Tensor<type, 4> f_middle(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+    Tensor<type, 4> f_equal(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    f_lower = x.constant(0);
+    f_greater = x.constant(1);
+    f_middle = static_cast<type>(0.2) * x + static_cast<type>(0.5);
+    f_equal = x;
+
+
+    y.device(*thread_pool_device) = if_lower.select(f_lower, f_equal);
+    y.device(*thread_pool_device) = if_greater.select(f_greater, f_equal);
+    y.device(*thread_pool_device) = if_middle.select(f_middle, f_equal);
+
+
+    /*
+    const Index n = x.size();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        if(x(i) < static_cast<type>(-2.5))
+        {
+            y(i) = 0;
+        }
+        else if(x(i) > static_cast<type>(2.5))
+        {
+            y(i) = 1;
+        }
+        else
+        {
+            y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
+        }
+    }
+    */
+}
+
+
+void Layer::exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+{
+
+    const Tensor<bool, 4> if_sentence = x < x.constant(0);
+
+    const type alpha = static_cast<type>(1.0);
+
+    Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    Tensor<type, 4> f_2(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+
+    f_1 = alpha*(x.exp() - static_cast<type>(1));
+
+    f_2 = x;
+
+    y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+}
+
+
 
 
 }

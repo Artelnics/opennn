@@ -149,10 +149,7 @@ public:
 
     // Activation
 
-    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
-    {
-
-    }
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const
     {

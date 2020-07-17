@@ -359,6 +359,21 @@ protected:
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
 
+    // activations 4d
+
+    void linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void logistic(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hyperbolic_tangent(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void symmetric_threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void rectified_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void scaled_exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_plus(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_sign(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hard_sigmoid(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+
+
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
