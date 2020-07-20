@@ -383,7 +383,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/layer_mkl.h"
+    #include "../../opennn_mkl/opennn/layer.h"
 #endif
 
 };
