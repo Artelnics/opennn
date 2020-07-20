@@ -75,7 +75,12 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
 void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& convolutions, Tensor<type, 4> & combinations) const
 {
+    const Index number_of_kernels = convolutions.dimension(2);
 
+    for(Index i = 0; i < number_of_kernels; i++)
+    {
+        combinations.chip(i, 2) = convolutions.chip(i, 2) + biases(i);
+    }
 }
 
 /// Calculates activations
@@ -108,6 +113,11 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Te
 }
 
 
+void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4> &, Tensor<type, 4> &) const
+{
+
+}
+
 
 /// Returns the output of the convolutional layer applied to a batch of images.
 /// @param inputs The batch of images.
@@ -116,9 +126,11 @@ Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inp
 {
     Tensor<type, 4> outputs;
     Tensor<type, 4> convolutions;
+    Tensor<type, 4> combinations; // @todo see if these Tensors can be removed
 
     calculate_convolutions(inputs, convolutions);
-    calculate_activations(convolutions, outputs);
+    calculate_combinations(convolutions, combinations);
+    calculate_activations(combinations, outputs);
 
     return outputs;
 }

@@ -55,6 +55,8 @@ public:
 
    void test_calculate_convolutions();
 
+   void test_calculate_combinations();
+
    // Activation
 
    void test_calculate_activations();
