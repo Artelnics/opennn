@@ -988,7 +988,71 @@ void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
 }
 
 
-void ConvolutionalLayerTest::test_calculate_activations() // @todo
+void ConvolutionalLayerTest::test_calculate_combinations()
+{
+    Tensor<type, 4> inputs;
+    Tensor<type, 1> biases;
+    Tensor<type, 4> combinations;
+
+    ConvolutionalLayer convolutional_layer;
+
+    inputs.resize(2, 2, 3, 1);
+    biases.resize(3);
+    combinations.resize(2, 2, 3, 1);
+
+    inputs.setConstant(1.0);
+
+    biases(0) = 0;
+    biases(1) = 1;
+    biases(2) = 2;
+
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.calculate_combinations(inputs, combinations);
+
+    assert_true(combinations(0, 0, 0, 0) == 1.f &&
+                combinations(0, 1, 0, 0) == 1.f &&
+                combinations(1, 0, 0, 0) == 1.f &&
+                combinations(1, 1, 0, 0) == 1.f &&
+                combinations(0, 0, 1, 0) == 2.f &&
+                combinations(0, 1, 1, 0) == 2.f &&
+                combinations(1, 0, 1, 0) == 2.f &&
+                combinations(1, 1, 1, 0) == 2.f &&
+                combinations(0, 0, 2, 0) == 3.f &&
+                combinations(0, 1, 2, 0) == 3.f &&
+                combinations(1, 0, 2, 0) == 3.f &&
+                combinations(1, 1, 2, 0) == 3.f, LOG);
+
+    inputs.resize(2, 2, 2, 2);
+    combinations.resize(2, 2, 2, 2);
+    inputs.setConstant(1.0);
+    biases.resize(2);
+    biases(0) = 1.0;
+    biases(1) = 2.0;
+
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.calculate_combinations(inputs, combinations);
+
+
+    assert_true(combinations(0, 0, 0, 0) == 2.f &&
+                combinations(0, 1, 0, 0) == 2.f &&
+                combinations(1, 0, 0, 0) == 2.f &&
+                combinations(1, 1, 0, 0) == 2.f &&
+                combinations(0, 0, 0, 1) == 2.f &&
+                combinations(0, 1, 0, 1) == 2.f &&
+                combinations(1, 0, 0, 1) == 2.f &&
+                combinations(1, 1, 0, 1) == 2.f &&
+                combinations(0, 0, 1, 0) == 3.f &&
+                combinations(0, 1, 1, 0) == 3.f &&
+                combinations(1, 0, 1, 0) == 3.f &&
+                combinations(1, 1, 1, 1) == 3.f &&
+                combinations(0, 0, 1, 1) == 3.f &&
+                combinations(0, 1, 1, 1) == 3.f &&
+                combinations(1, 0, 1, 1) == 3.f &&
+                combinations(1, 1, 1, 1) == 3.f,LOG);
+
+}
+
+void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
 
@@ -1277,22 +1341,6 @@ void ConvolutionalLayerTest::test_calculate_activations() // @todo
                 abs(activations_4d(1,1,1,0) - result(1,1,1,0)) <= 1e-6 &&
                 abs(activations_4d(1,1,1,1) - result(1,1,1,1)) <= 1e-6, LOG);
 
-//    assert_true(abs(activations_2d(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
 }
 
 
@@ -1890,6 +1938,8 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    test_eigen_convolution();
    test_calculate_convolutions();
+
+   test_calculate_combinations();
 
    // Activation
 
