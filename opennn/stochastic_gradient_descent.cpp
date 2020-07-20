@@ -394,7 +394,7 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 
 
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
-                      OptimizationData& optimization_data)
+                      SGDOptimizationData& optimization_data)
 {
 
 
@@ -498,7 +498,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Optimization algorithm
 
-    OptimizationData optimization_data(this);
+    SGDOptimizationData optimization_data(this);
 
     Tensor<type, 1> minimal_selection_parameters;
     type minimum_selection_error = numeric_limits<type>::max();
@@ -538,8 +538,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
 
-//            forward_propagation.print();
-
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
@@ -552,8 +550,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             update_iteration(back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
-
-
         }
 
         // Loss

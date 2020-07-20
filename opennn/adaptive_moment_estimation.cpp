@@ -436,6 +436,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             // Gradient
 
+            cout<<optimization_data.gradient_exponential_decay;
+
+            system("pause");
+
             update_iteration(training_back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
@@ -947,6 +951,11 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.last_gradient_exponential_decay*beta_1
             + back_propagation.gradient*(1 - beta_1);
+
+    cout<<"optimization_data.gradient_exponential_decay"<<endl;
+    cout<<optimization_data.gradient_exponential_decay<<endl;
+
+    system("pause");
 
     optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
 
