@@ -104,7 +104,8 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/sum_squared_error_mkl.h"
+//    #include "../opennn_mkl/sum_squared_error_mkl.h"
+    #include "../../opennn_mkl/opennn/sum_squared_error.h"
 #endif
 };
 

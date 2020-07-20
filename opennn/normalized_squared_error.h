@@ -124,7 +124,8 @@ private:
 
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+//    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+    #include "../../opennn_mkl/opennn/normalized_squared_error.h"
 #endif
 };
 
