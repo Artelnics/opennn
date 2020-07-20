@@ -27,7 +27,6 @@
 #include "tinyxml2.h"
 #pragma warning(pop)
 
-
 #pragma warning(push, 0)
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
