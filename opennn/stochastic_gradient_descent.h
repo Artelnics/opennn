@@ -273,7 +273,8 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+//    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+    #include "../../opennn_mkl/opennn/stochastic_gradient_descent.h"
 #endif
 };
 
