@@ -268,7 +268,8 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/training_strategy_mkl.h"
+//    #include "../opennn_mkl/training_strategy_mkl.h"
+    #include "../../opennn_mkl/opennn/training_strategy.h"
 #endif
 
 };
