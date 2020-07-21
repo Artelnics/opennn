@@ -1280,30 +1280,6 @@ type NeuralNetwork::calculate_parameters_norm() const
 }
 
 
-/// Returns a descriptives structure of the parameters vector.
-/// That contains the minimum, maximum, mean and standard deviation values of the parameters.
-
-Descriptives NeuralNetwork::calculate_parameters_descriptives() const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return descriptives(parameters);
-}
-
-
-/// Returns a histogram structure of the parameters vector.
-/// That will be used for looking at the distribution of the parameters.
-/// @param bins_number Number of bins in the histogram(10 by default).
-
-Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return histogram(parameters, bins_number);
-
-}
-
-
 /// Perturbate parameters of the neural network.
 /// @param perturbation Maximum distance of perturbation.
 
@@ -1349,7 +1325,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
-
     }
 }
 
@@ -1467,78 +1442,6 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     }
 
     return directional_inputs;
-}
-
-
-/// Calculates the histogram of the outputs with random inputs.
-/// @param points_number Number of random instances to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-/// @todo
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
-{
-    const Index inputs_number = get_inputs_number();
-
-    Tensor<type, 2> inputs(points_number, inputs_number);
-    /*
-        if(scaling_layer_pointer == nullptr)
-        {
-        }
-        else
-        {
-            const Tensor<ScalingLayer::ScalingMethod, 1> scaling_methods = scaling_layer_pointer->get_scaling_methods();
-
-            for(Index i = 0; i < scaling_methods.size(); i++)
-            {
-                Tensor<type, 1> input_column(points_number, 0.0);
-
-                if(scaling_methods[i] == ScalingLayer::NoScaling)
-                {
-                    input_column.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-                }
-                else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
-                {
-                    type minimum = scaling_layer_pointer->get_descriptives(i).minimum;
-                    type maximum = scaling_layer_pointer->get_descriptives(i).maximum;
-
-                    input_column.setRandom(minimum, maximum);
-                }
-                else if(scaling_methods[i] == ScalingLayer::MeanStandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-                else if(scaling_methods[i] == ScalingLayer::StandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-
-                inputs.set_column(i, input_column, "");
-            }
-        }
-
-        const Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-        return histograms(outputs.to_matrix(), bins_number);
-    */
-    return Tensor<Histogram, 1>();
-}
-
-
-/// Calculates the histogram of the outputs with a matrix of given inputs.
-/// @param inputs Matrix of the data to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
-{
-    Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-    return histograms(outputs, bins_number);
 }
 
 
