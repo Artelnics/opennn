@@ -95,7 +95,7 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/minkowski_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/minkowski_error_mkl.h"
 #endif
 };
 

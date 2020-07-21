@@ -52,22 +52,71 @@ bool ConvolutionalLayer::is_empty() const
 }
 
 /// Calculate combinations
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs) const
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
 {
     const Index number_of_kernels = synaptic_weights.dimension(3);
-//    cout << "Number of filters: " << number_of_kernels << endl;
-
-//    const Dimensions output_dimensions = calculate_output_dimensions(); // TODO
+    const Index number_of_images = inputs.dimension(3);
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 3> kernel;
 
+    #pragma omp parallel for
+    for(Index i = 0; i < number_of_images; i++)
+    {
+        for(Index j = 0; j < number_of_kernels; j++)
+        {
+            kernel = synaptic_weights.chip(j, 3);
+            convolutions.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
+        }
+    }
+}
+
+
+void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& convolutions, Tensor<type, 4> & combinations) const
+{
+    const Index number_of_kernels = convolutions.dimension(2);
+
+    #pragma omp parallel for
     for(Index i = 0; i < number_of_kernels; i++)
     {
-        kernel = synaptic_weights.chip(i, 3);
-        outputs.chip(i, 3) = inputs.chip(i, 3).convolve(kernel, dims);
+        combinations.chip(i, 2) = convolutions.chip(i, 2) + biases(i);
     }
+}
+
+/// Calculates activations
+void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Tensor<type, 4>& activations) const
+{
+    switch(activation_function)
+    {
+        case Linear: linear(inputs, activations); return;
+
+        case Logistic: logistic(inputs, activations); return;
+
+        case HyperbolicTangent: hyperbolic_tangent(inputs, activations); return;
+
+        case Threshold: threshold(inputs, activations); return;
+
+        case SymmetricThreshold: symmetric_threshold(inputs, activations); return;
+
+        case RectifiedLinear: rectified_linear(inputs, activations); return;
+
+        case ScaledExponentialLinear: scaled_exponential_linear(inputs, activations); return;
+
+        case SoftPlus: soft_plus(inputs, activations); return;
+
+        case SoftSign: soft_sign(inputs, activations); return;
+
+        case HardSigmoid: hard_sigmoid(inputs, activations); return;
+
+        case ExponentialLinear: exponential_linear(inputs, activations); return;
+    }
+}
+
+
+void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4> &, Tensor<type, 4> &) const
+{
+
 }
 
 
@@ -76,9 +125,33 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
 Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-//    return calculate_activations(calculate_combinations(inputs));
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    return Tensor<type, 4>();
+    Tensor<type, 4> outputs(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    calculate_convolutions(inputs, convolutions);
+    calculate_combinations(convolutions, convolutions);
+    calculate_activations(convolutions, outputs);
+
+    return outputs;
+}
+
+
+/// Returns the output of the convolutional layer applied to a batch of images.
+/// @param inputs The batch of images.
+
+void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs)
+{
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+
+    outputs.resize(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    calculate_convolutions(inputs, convolutions);
+    calculate_combinations(convolutions, convolutions);
+    calculate_activations(convolutions, outputs);
 }
 
 
@@ -583,7 +656,7 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
     const Index padding_height = get_padding_height();
 
-    return (input_variables_dimensions[1] - filters_rows_number + padding_height)/row_stride + 1;
+    return (input_variables_dimensions(1) - filters_rows_number + padding_height)/row_stride + 1;
 }
 
 
@@ -595,7 +668,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
     const Index padding_width = get_padding_width();
 
-    return (input_variables_dimensions[2] - filters_columns_number + padding_width)/column_stride + 1;
+    return (input_variables_dimensions(2) - filters_columns_number + padding_width)/column_stride + 1;
 }
 
 
@@ -603,13 +676,12 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(3);
+    Tensor<Index, 1> outputs_dimensions(4);
 
-    outputs_dimensions[0] = get_outputs_rows_number();
-    outputs_dimensions[1] = get_outputs_columns_number();
-    outputs_dimensions[3] = get_filters_number();
-    outputs_dimensions[4] = input_variables_dimensions[3];
-
+    outputs_dimensions(0) = get_outputs_rows_number();
+    outputs_dimensions(1) = get_outputs_columns_number();
+    outputs_dimensions(2) = get_filters_number();
+    outputs_dimensions(3) = input_variables_dimensions(3); // Number of images
 
     return outputs_dimensions;
 }
@@ -651,7 +723,7 @@ Index ConvolutionalLayer::get_filters_number() const
 
 Index ConvolutionalLayer::get_filters_channels_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(2);
 }
 
 
@@ -659,7 +731,7 @@ Index ConvolutionalLayer::get_filters_channels_number() const
 
 Index  ConvolutionalLayer::get_filters_rows_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -667,7 +739,7 @@ Index  ConvolutionalLayer::get_filters_rows_number() const
 
 Index ConvolutionalLayer::get_filters_columns_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -791,17 +863,18 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
 //        input_variables_dimensions.set(new_inputs_dimensions);
 
-        const Index filters_number = new_filters_dimensions[3];
-        const Index filters_channels_number = new_inputs_dimensions[2];
-        const Index filters_rows_number = new_filters_dimensions[0];
-        const Index filters_columns_number = new_filters_dimensions[1];
+    const Index filters_rows_number = new_filters_dimensions[0];
+    const Index filters_columns_number = new_filters_dimensions[1];
+    const Index filters_channels_number = new_inputs_dimensions[2];
+    const Index filters_number = new_filters_dimensions[3];
 
-        biases.resize(filters_number);
-        biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    biases.resize(filters_number);
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-        synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
-        synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
+    input_variables_dimensions = new_inputs_dimensions;
 }
 
 
