@@ -1577,11 +1577,51 @@ void ConvolutionalLayerTest::test_calculate_outputs() // @todo
 {
     cout << "test_calculate_outputs\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    Tensor<type, 2> images;
-//    Tensor<type, 2> filters;
-//    Tensor<type, 2> outputs;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
+    Tensor<type, 4> outputs;
+    Tensor<type, 1> biases;
+
+    // One image, One filter
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 1);
+    biases.resize(1);
+
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases.setConstant(0.f);
+
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 1});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
+
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f, LOG);
+
 
 //    // Test
 
@@ -1939,12 +1979,18 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    test_eigen_convolution();
    test_calculate_convolutions();
 
+   // Combinations
+
    test_calculate_combinations();
 
    // Activation
 
    test_calculate_activations();
 //   test_calculate_activations_derivatives();
+
+   // Outputs
+
+   test_calculate_outputs();
 
 /*
    // Get methods
@@ -1957,10 +2003,6 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    test_calculate_image_convolution();
 
-
-   // Outputs
-
-   test_calculate_outputs();
    test_insert_padding();
 */
    cout << "End of convolutional layer test case.\n";

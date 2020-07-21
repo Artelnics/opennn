@@ -159,6 +159,8 @@ public:
 
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
+   void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
+
    void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
    {
        calculate_convolutions(inputs, forward_propagation.combinations_4d);
