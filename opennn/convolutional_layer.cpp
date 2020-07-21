@@ -77,6 +77,7 @@ void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& convoluti
 {
     const Index number_of_kernels = convolutions.dimension(2);
 
+    #pragma omp parallel for
     for(Index i = 0; i < number_of_kernels; i++)
     {
         combinations.chip(i, 2) = convolutions.chip(i, 2) + biases(i);
@@ -124,15 +125,33 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 
 Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-    Tensor<type, 4> outputs;
-    Tensor<type, 4> convolutions;
-    Tensor<type, 4> combinations; // @todo see if these Tensors can be removed
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+
+    Tensor<type, 4> outputs(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
     calculate_convolutions(inputs, convolutions);
-    calculate_combinations(convolutions, combinations);
-    calculate_activations(combinations, outputs);
+    calculate_combinations(convolutions, convolutions);
+    calculate_activations(convolutions, outputs);
 
     return outputs;
+}
+
+
+/// Returns the output of the convolutional layer applied to a batch of images.
+/// @param inputs The batch of images.
+
+void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs)
+{
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+
+    outputs.resize(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    calculate_convolutions(inputs, convolutions);
+    calculate_combinations(convolutions, convolutions);
+    calculate_activations(convolutions, outputs);
 }
 
 
@@ -637,7 +656,7 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
     const Index padding_height = get_padding_height();
 
-    return (input_variables_dimensions[1] - filters_rows_number + padding_height)/row_stride + 1;
+    return (input_variables_dimensions(1) - filters_rows_number + padding_height)/row_stride + 1;
 }
 
 
@@ -649,7 +668,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
     const Index padding_width = get_padding_width();
 
-    return (input_variables_dimensions[2] - filters_columns_number + padding_width)/column_stride + 1;
+    return (input_variables_dimensions(2) - filters_columns_number + padding_width)/column_stride + 1;
 }
 
 
@@ -659,11 +678,10 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(4);
 
-    outputs_dimensions[0] = get_outputs_rows_number();
-    outputs_dimensions[1] = get_outputs_columns_number();
-    outputs_dimensions[3] = get_filters_number();
-    outputs_dimensions[4] = input_variables_dimensions[3]; // Number of images
-
+    outputs_dimensions(0) = get_outputs_rows_number();
+    outputs_dimensions(1) = get_outputs_columns_number();
+    outputs_dimensions(2) = get_filters_number();
+    outputs_dimensions(3) = input_variables_dimensions(3); // Number of images
 
     return outputs_dimensions;
 }
