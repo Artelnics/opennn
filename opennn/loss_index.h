@@ -257,7 +257,7 @@ public:
 
    void set_neural_network_pointer(NeuralNetwork*);
 
-   void set_data_set_pointer(DataSet*);
+   virtual void set_data_set_pointer(DataSet*);
 
    void set_default();
 

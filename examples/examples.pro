@@ -14,6 +14,7 @@ CONFIG += ordered
 #SUBDIRS += simple_function_regression
 #SUBDIRS += simple_pattern_recognition
 SUBDIRS += airfoil_self_noise
+SUBDIRS += airline_passengers
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += logical_operations
