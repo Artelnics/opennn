@@ -342,6 +342,11 @@ WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
     return &weighted_squared_error;
 }
 
+//DataSet* TrainingStrategy::get_data_set_pointer()
+//{
+//    return &;
+//}
+
 /// Returns the type of the main loss algorithm composing this training strategy object.
 
 const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
@@ -829,6 +834,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
+
         if(!check_forecasting())
         {
 
@@ -842,7 +848,6 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
         }
     }
     OptimizationAlgorithm::Results results;
-
     // Main
 
     switch(optimization_method)
@@ -985,6 +990,7 @@ bool TrainingStrategy::check_forecasting() const
         timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
     }
 
+
 //    const Index batch_instances_number = data_set.get_batch_instances_number();
 
 //    if(batch_instances_number%timesteps == 0)
@@ -996,7 +1002,7 @@ bool TrainingStrategy::check_forecasting() const
 //        return false;
 //    }
 
-    return false;
+    return true;
 }
 
 

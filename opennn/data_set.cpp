@@ -8359,7 +8359,6 @@ void DataSet::transform_time_series()
         }
     }
 
-
 // steps ahead
     for(Index ahead = 1; ahead <= steps_ahead; ahead++)
     {
@@ -8369,7 +8368,7 @@ void DataSet::transform_time_series()
 
             for(Index j = 0; j <= time_series_instances_number; j++)
             {
-                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
+//                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
             }
 
             time_series_variable++;

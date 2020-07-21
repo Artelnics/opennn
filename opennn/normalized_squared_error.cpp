@@ -97,6 +97,17 @@ type NormalizedSquaredError::get_selection_normalization_coefficient() const
 }
 
 
+///
+/// \brief set_data_set_pointer
+/// \param new_data_set_pointer
+
+void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    data_set_pointer = new_data_set_pointer;
+
+    set_normalization_coefficient();
+}
+
 /// Sets the normalization coefficient from training instances.
 /// This method calculates the normalization coefficient of the dataset.
 
