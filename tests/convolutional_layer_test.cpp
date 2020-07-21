@@ -1622,6 +1622,146 @@ void ConvolutionalLayerTest::test_calculate_outputs() // @todo
                 outputs(3, 2, 0, 0) == 3.f &&
                 outputs(3, 3, 0, 0) == 3.f, LOG);
 
+    // One image, multiple filters
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
+
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases.setConstant(0.f);
+
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    kernels_dimensions.setValues({2, 2, 3, 2});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
+
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f &&
+                outputs(0, 0, 1, 0) == 3.f &&
+                outputs(0, 1, 1, 0) == 3.f &&
+                outputs(0, 2, 1, 0) == 3.f &&
+                outputs(0, 3, 1, 0) == 3.f &&
+                outputs(1, 0, 1, 0) == 3.f &&
+                outputs(1, 1, 1, 0) == 3.f &&
+                outputs(1, 2, 1, 0) == 3.f &&
+                outputs(1, 3, 1, 0) == 3.f &&
+                outputs(2, 0, 1, 0) == 3.f &&
+                outputs(2, 1, 1, 0) == 3.f &&
+                outputs(2, 2, 1, 0) == 3.f &&
+                outputs(2, 3, 1, 0) == 3.f &&
+                outputs(3, 0, 1, 0) == 3.f &&
+                outputs(3, 1, 1, 0) == 3.f &&
+                outputs(3, 2, 1, 0) == 3.f &&
+                outputs(3, 3, 1, 0) == 3.f , LOG);
+
+
+    // Multiple images, multiple filters
+    inputs.resize(5, 5, 3, 2);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
+
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases(0) = 0;
+    biases(1) = 1;
+
+    inputs.chip(1, 3).setConstant(2.0);
+
+    inputs_dimensions.setValues({5, 5, 3, 2});
+    kernels_dimensions.setValues({2, 2, 3, 2});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
+
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f &&
+                outputs(0, 0, 1, 0) == 4.f &&
+                outputs(0, 1, 1, 0) == 4.f &&
+                outputs(0, 2, 1, 0) == 4.f &&
+                outputs(0, 3, 1, 0) == 4.f &&
+                outputs(1, 0, 1, 0) == 4.f &&
+                outputs(1, 1, 1, 0) == 4.f &&
+                outputs(1, 2, 1, 0) == 4.f &&
+                outputs(1, 3, 1, 0) == 4.f &&
+                outputs(2, 0, 1, 0) == 4.f &&
+                outputs(2, 1, 1, 0) == 4.f &&
+                outputs(2, 2, 1, 0) == 4.f &&
+                outputs(2, 3, 1, 0) == 4.f &&
+                outputs(3, 0, 1, 0) == 4.f &&
+                outputs(3, 1, 1, 0) == 4.f &&
+                outputs(3, 2, 1, 0) == 4.f &&
+                outputs(3, 3, 1, 0) == 4.f &&
+                outputs(0, 0, 0, 1) == 6.f &&
+                outputs(0, 1, 0, 1) == 6.f &&
+                outputs(0, 2, 0, 1) == 6.f &&
+                outputs(0, 3, 0, 1) == 6.f &&
+                outputs(1, 0, 0, 1) == 6.f &&
+                outputs(1, 1, 0, 1) == 6.f &&
+                outputs(1, 2, 0, 1) == 6.f &&
+                outputs(1, 3, 0, 1) == 6.f &&
+                outputs(2, 0, 0, 1) == 6.f &&
+                outputs(2, 1, 0, 1) == 6.f &&
+                outputs(2, 2, 0, 1) == 6.f &&
+                outputs(2, 3, 0, 1) == 6.f &&
+                outputs(3, 0, 0, 1) == 6.f &&
+                outputs(3, 1, 0, 1) == 6.f &&
+                outputs(3, 2, 0, 1) == 6.f &&
+                outputs(3, 3, 0, 1) == 6.f &&
+                outputs(0, 0, 1, 1) == 7.f &&
+                outputs(0, 1, 1, 1) == 7.f &&
+                outputs(0, 2, 1, 1) == 7.f &&
+                outputs(0, 3, 1, 1) == 7.f &&
+                outputs(1, 0, 1, 1) == 7.f &&
+                outputs(1, 1, 1, 1) == 7.f &&
+                outputs(1, 2, 1, 1) == 7.f &&
+                outputs(1, 3, 1, 1) == 7.f &&
+                outputs(2, 0, 1, 1) == 7.f &&
+                outputs(2, 1, 1, 1) == 7.f &&
+                outputs(2, 2, 1, 1) == 7.f &&
+                outputs(2, 3, 1, 1) == 7.f &&
+                outputs(3, 0, 1, 1) == 7.f &&
+                outputs(3, 1, 1, 1) == 7.f &&
+                outputs(3, 2, 1, 1) == 7.f &&
+                outputs(3, 3, 1, 1) == 7.f, LOG);
+
 
 //    // Test
 

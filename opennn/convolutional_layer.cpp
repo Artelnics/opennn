@@ -148,7 +148,6 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
     outputs.resize(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
     Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-
     calculate_convolutions(inputs, convolutions);
     calculate_combinations(convolutions, convolutions);
     calculate_activations(convolutions, outputs);
@@ -656,7 +655,7 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
     const Index padding_height = get_padding_height();
 
-    return (input_variables_dimensions(1) - filters_rows_number + padding_height)/row_stride + 1;
+    return (input_variables_dimensions(0) - filters_rows_number + padding_height)/row_stride + 1;
 }
 
 
@@ -668,7 +667,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
     const Index padding_width = get_padding_width();
 
-    return (input_variables_dimensions(2) - filters_columns_number + padding_width)/column_stride + 1;
+    return (input_variables_dimensions(1) - filters_columns_number + padding_width)/column_stride + 1;
 }
 
 
@@ -715,7 +714,7 @@ Index ConvolutionalLayer::get_row_stride() const
 
 Index ConvolutionalLayer::get_filters_number() const
 {
-    return synaptic_weights.dimension(0);
+    return synaptic_weights.dimension(3);
 }
 
 
