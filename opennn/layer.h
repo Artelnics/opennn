@@ -373,7 +373,6 @@ protected:
     void hard_sigmoid(const Tensor<type, 4>&, Tensor<type, 4>&) const;
     void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
@@ -383,7 +382,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../../../opennn_mkl/opennn_mkl/layer_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/layer_mkl.h"
 #endif
 
 };
