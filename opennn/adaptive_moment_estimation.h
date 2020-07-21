@@ -226,8 +226,7 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-//    #include "../opennn_mkl/adaptive_moment_estimation_mkl.h"
-    #include "../../opennn_mkl/opennn/adaptive_moment_estimation.h"
+    #include "../../../opennn_mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
 #endif
 
 };

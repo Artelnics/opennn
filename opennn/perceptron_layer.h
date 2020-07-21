@@ -241,8 +241,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-//    #include "../../opennn_mkl/opennn/perceptron_layer_mkl.h"
-    #include "../../opennn_mkl/opennn/perceptron_layer.h"
+    #include"../../../opennn_mkl/opennn_mkl/perceptron_layer_mkl.h"
 #endif
 };
 
