@@ -100,7 +100,8 @@ public:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/mean_squared_error_mkl.h"
+//    #include "../opennn_mkl/mean_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/mean_squared_error_mkl.h"
 #endif
 };
 

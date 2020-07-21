@@ -408,7 +408,7 @@ protected:
 
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/loss_index_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"
 #endif
 
 };

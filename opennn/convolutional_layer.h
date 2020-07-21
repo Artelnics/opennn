@@ -147,21 +147,19 @@ public:
 
     void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
+    void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+
     // Activation
 
-    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
-    {
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    }
-
-    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const
-    {
-
-    }
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
    // Outputs
 
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
+
+   void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
 
    void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
    {
