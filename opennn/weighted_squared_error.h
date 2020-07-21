@@ -133,8 +133,7 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-//    #include "../opennn_mkl/weighted_squared_error_mkl.h"
-    #include "../../opennn_mkl/opennn/weighted_squared_error.h"
+    #include "../../../opennn_mkl/opennn_mkl/weighted_squared_error_mkl.h"
 #endif
 };
 
