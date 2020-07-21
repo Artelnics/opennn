@@ -194,7 +194,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
 #ifdef __OPENNN_DEBUG__
 
-    check();
+//    check();
 
     const Index means_number = targets_mean.dimension(0);
     const Index targets_number = targets.dimension(1);
