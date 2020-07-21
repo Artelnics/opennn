@@ -53,6 +53,7 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_loss_index_pointer(loss_index_pointer);
 
     set_default();
+
 }
 
 
