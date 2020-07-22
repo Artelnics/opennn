@@ -991,64 +991,129 @@ void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
 void ConvolutionalLayerTest::test_calculate_combinations()
 {
     Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
     Tensor<type, 1> biases;
     Tensor<type, 4> combinations;
 
     ConvolutionalLayer convolutional_layer;
 
-    inputs.resize(2, 2, 3, 1);
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 3);
     biases.resize(3);
-    combinations.resize(2, 2, 3, 1);
+    combinations.resize(4, 4, 3, 1);
 
-    inputs.setConstant(1.0);
+    inputs.setConstant(1.f);
+    kernels.setConstant(1.f/12);
 
-    biases(0) = 0;
-    biases(1) = 1;
-    biases(2) = 2;
+    biases(0) = 0.f;
+    biases(1) = 1.f;
+    biases(2) = 2.f;
 
     convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
     convolutional_layer.calculate_combinations(inputs, combinations);
 
-    assert_true(combinations(0, 0, 0, 0) == 1.f &&
-                combinations(0, 1, 0, 0) == 1.f &&
-                combinations(1, 0, 0, 0) == 1.f &&
-                combinations(1, 1, 0, 0) == 1.f &&
-                combinations(0, 0, 1, 0) == 2.f &&
-                combinations(0, 1, 1, 0) == 2.f &&
-                combinations(1, 0, 1, 0) == 2.f &&
-                combinations(1, 1, 1, 0) == 2.f &&
-                combinations(0, 0, 2, 0) == 3.f &&
-                combinations(0, 1, 2, 0) == 3.f &&
-                combinations(1, 0, 2, 0) == 3.f &&
-                combinations(1, 1, 2, 0) == 3.f, LOG);
+//    cout << combinations << endl;
+//    cout << combinations(0, 0, 0, 0) << endl;
+//    cout << combinations(0, 0, 1, 0) << endl;
+//    cout << combinations(0, 0, 2, 0) << endl;
 
-    inputs.resize(2, 2, 2, 2);
-    combinations.resize(2, 2, 2, 2);
-    inputs.setConstant(1.0);
+    assert_true(combinations(0, 0, 0, 0) == 1.f, LOG); // @todo
+    assert_true(combinations(0, 0, 1, 0) == 2.f, LOG);
+    assert_true(combinations(0, 0, 2, 0) == 3.f, LOG);
+
+//    assert_true(combinations(0, 0, 0, 0) == 1.f &&
+//                combinations(0, 1, 0, 0) == 1.f &&
+//                combinations(1, 0, 0, 0) == 1.f &&
+//                combinations(1, 1, 0, 0) == 1.f &&
+//                combinations(0, 0, 1, 0) == 2.f &&
+//                combinations(0, 1, 1, 0) == 2.f &&
+//                combinations(1, 0, 1, 0) == 2.f &&
+//                combinations(1, 1, 1, 0) == 2.f &&
+//                combinations(0, 0, 2, 0) == 3.f &&
+//                combinations(0, 1, 2, 0) == 3.f &&
+//                combinations(1, 0, 2, 0) == 3.f &&
+//                combinations(1, 1, 2, 0) == 3.f, LOG);
+
+    inputs.resize(5, 5, 2, 2);
+    kernels.resize(2, 2, 2, 2);
+    combinations.resize(4, 4, 2, 2);
     biases.resize(2);
+
+    inputs.chip(0, 3).setConstant(1.f);
+    inputs.chip(1, 3).setConstant(2.f);
+    kernels.setConstant(1.f/8);
     biases(0) = 1.0;
     biases(1) = 2.0;
 
     convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
     convolutional_layer.calculate_combinations(inputs, combinations);
-
 
     assert_true(combinations(0, 0, 0, 0) == 2.f &&
                 combinations(0, 1, 0, 0) == 2.f &&
+                combinations(0, 2, 0, 0) == 2.f &&
+                combinations(0, 3, 0, 0) == 2.f &&
                 combinations(1, 0, 0, 0) == 2.f &&
                 combinations(1, 1, 0, 0) == 2.f &&
-                combinations(0, 0, 0, 1) == 2.f &&
-                combinations(0, 1, 0, 1) == 2.f &&
-                combinations(1, 0, 0, 1) == 2.f &&
-                combinations(1, 1, 0, 1) == 2.f &&
+                combinations(1, 2, 0, 0) == 2.f &&
+                combinations(1, 3, 0, 0) == 2.f &&
+                combinations(2, 0, 0, 0) == 2.f &&
+                combinations(2, 1, 0, 0) == 2.f &&
+                combinations(2, 2, 0, 0) == 2.f &&
+                combinations(2, 3, 0, 0) == 2.f &&
+                combinations(3, 0, 0, 0) == 2.f &&
+                combinations(3, 1, 0, 0) == 2.f &&
+                combinations(3, 2, 0, 0) == 2.f &&
+                combinations(3, 3, 0, 0) == 2.f &&
                 combinations(0, 0, 1, 0) == 3.f &&
                 combinations(0, 1, 1, 0) == 3.f &&
+                combinations(0, 2, 1, 0) == 3.f &&
+                combinations(0, 3, 1, 0) == 3.f &&
                 combinations(1, 0, 1, 0) == 3.f &&
-                combinations(1, 1, 1, 1) == 3.f &&
-                combinations(0, 0, 1, 1) == 3.f &&
-                combinations(0, 1, 1, 1) == 3.f &&
-                combinations(1, 0, 1, 1) == 3.f &&
-                combinations(1, 1, 1, 1) == 3.f,LOG);
+                combinations(1, 1, 1, 0) == 3.f &&
+                combinations(1, 2, 1, 0) == 3.f &&
+                combinations(1, 3, 1, 0) == 3.f &&
+                combinations(2, 0, 1, 0) == 3.f &&
+                combinations(2, 1, 1, 0) == 3.f &&
+                combinations(2, 2, 1, 0) == 3.f &&
+                combinations(2, 3, 1, 0) == 3.f &&
+                combinations(3, 0, 1, 0) == 3.f &&
+                combinations(3, 1, 1, 0) == 3.f &&
+                combinations(3, 2, 1, 0) == 3.f &&
+                combinations(3, 3, 1, 0) == 3.f &&
+                combinations(0, 0, 0, 1) == 3.f &&
+                combinations(0, 1, 0, 1) == 3.f &&
+                combinations(0, 2, 0, 1) == 3.f &&
+                combinations(0, 3, 0, 1) == 3.f &&
+                combinations(1, 0, 0, 1) == 3.f &&
+                combinations(1, 1, 0, 1) == 3.f &&
+                combinations(1, 2, 0, 1) == 3.f &&
+                combinations(1, 3, 0, 1) == 3.f &&
+                combinations(2, 0, 0, 1) == 3.f &&
+                combinations(2, 1, 0, 1) == 3.f &&
+                combinations(2, 2, 0, 1) == 3.f &&
+                combinations(2, 3, 0, 1) == 3.f &&
+                combinations(3, 0, 0, 1) == 3.f &&
+                combinations(3, 1, 0, 1) == 3.f &&
+                combinations(3, 2, 0, 1) == 3.f &&
+                combinations(3, 3, 0, 1) == 3.f &&
+                combinations(0, 0, 1, 1) == 4.f &&
+                combinations(0, 1, 1, 1) == 4.f &&
+                combinations(0, 2, 1, 1) == 4.f &&
+                combinations(0, 3, 1, 1) == 4.f &&
+                combinations(1, 0, 1, 1) == 4.f &&
+                combinations(1, 1, 1, 1) == 4.f &&
+                combinations(1, 2, 1, 1) == 4.f &&
+                combinations(1, 3, 1, 1) == 4.f &&
+                combinations(2, 0, 1, 1) == 4.f &&
+                combinations(2, 1, 1, 1) == 4.f &&
+                combinations(2, 2, 1, 1) == 4.f &&
+                combinations(2, 3, 1, 1) == 4.f &&
+                combinations(3, 0, 1, 1) == 4.f &&
+                combinations(3, 1, 1, 1) == 4.f &&
+                combinations(3, 2, 1, 1) == 4.f &&
+                combinations(3, 3, 1, 1) == 4.f, LOG);
 
 }
 
