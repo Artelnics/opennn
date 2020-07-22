@@ -51,6 +51,7 @@ bool ConvolutionalLayer::is_empty() const
     return false;
 }
 
+
 /// Calculate combinations
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
 {
@@ -73,14 +74,23 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 }
 
 
-void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& convolutions, Tensor<type, 4> & combinations) const
+void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
-    const Index number_of_kernels = convolutions.dimension(2);
+    const Index number_of_kernels = synaptic_weights.dimension(3);
+    const Index number_of_images = inputs.dimension(3);
+
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+
+    Tensor<type, 3> kernel;
 
     #pragma omp parallel for
-    for(Index i = 0; i < number_of_kernels; i++)
+    for(Index i = 0; i < number_of_images; i++)
     {
-        combinations.chip(i, 2) = convolutions.chip(i, 2) + biases(i);
+        for(Index j = 0; j < number_of_kernels; j++)
+        {
+            kernel = synaptic_weights.chip(j, 3);
+            combinations.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims) + biases(j);
+        }
     }
 }
 
@@ -114,9 +124,34 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Te
 }
 
 
-void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4> &, Tensor<type, 4> &) const
+void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>& combinations_4d,
+                                                           Tensor<type, 4>& activations,
+                                                           Tensor<type, 4>& activations_derivatives) const
 {
+    switch(activation_function)
+    {
+        case Linear: linear_derivatives(combinations_4d, activations, activations_derivatives); return;
 
+        case Logistic: logistic_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case Threshold: threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case RectifiedLinear: rectified_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case SoftPlus: soft_plus_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case SoftSign: soft_sign_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case HardSigmoid: hard_sigmoid_derivatives(combinations_4d, activations, activations_derivatives); return;
+
+        case ExponentialLinear: exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+    }
 }
 
 
@@ -128,11 +163,10 @@ Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inp
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
     Tensor<type, 4> outputs(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+    Tensor<type, 4> combinations(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
-    calculate_convolutions(inputs, convolutions);
-    calculate_combinations(convolutions, convolutions);
-    calculate_activations(convolutions, outputs);
+    calculate_combinations(inputs, combinations);
+    calculate_activations(combinations, outputs);
 
     return outputs;
 }
@@ -147,10 +181,10 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
 
     outputs.resize(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
-    Tensor<type, 4> convolutions(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-    calculate_convolutions(inputs, convolutions);
-    calculate_combinations(convolutions, convolutions);
-    calculate_activations(convolutions, outputs);
+    Tensor<type, 4> combinations(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+
+    calculate_combinations(inputs, combinations);
+    calculate_activations(combinations, outputs);
 }
 
 
