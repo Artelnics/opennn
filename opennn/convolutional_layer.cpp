@@ -187,6 +187,22 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
     calculate_activations(combinations, outputs);
 }
 
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, ForwardPropagation &forward_propagation) const
+{
+//       calculate_convolutions(inputs, forward_propagation.combinations_4d);
+
+//       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
+
+//       calculate_activations_derivatives(forward_propagation.combinations_4d,forward_propagation.activations_derivatives_4d);
+
+    calculate_combinations(inputs,
+                           forward_propagation.combinations_4d);
+
+    calculate_activations_derivatives(forward_propagation.combinations_4d,
+                                      forward_propagation.activations_4d,
+                                      forward_propagation.activations_derivatives_4d);
+}
+
 
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         const Tensor<type, 2>& activations_2d,
