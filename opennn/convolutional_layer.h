@@ -153,7 +153,7 @@ public:
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
 
    // Outputs
 
@@ -161,14 +161,8 @@ public:
 
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
 
-   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
-   {
-       calculate_convolutions(inputs, forward_propagation.combinations_4d);
+   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
 
-       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
-
-       calculate_activations_derivatives(forward_propagation.combinations_4d, forward_propagation.activations_derivatives_4d);
-   }
 
    // Delta methods
 
