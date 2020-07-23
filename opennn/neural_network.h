@@ -286,8 +286,6 @@ public:
    // Parameters
 
    type calculate_parameters_norm() const;
-   Descriptives calculate_parameters_descriptives() const;
-   Histogram calculate_parameters_histogram(const Index& = 10) const;
 
    void perturbate_parameters(const type&);
 
@@ -296,9 +294,6 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
-
-   Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
-   Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
