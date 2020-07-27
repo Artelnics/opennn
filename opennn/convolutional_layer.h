@@ -37,34 +37,11 @@ class ConvolutionalLayer : public Layer
 
 public:
 
-    struct ConvolutionalLayerForwardPropagation : ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ConvolutionalLayerForwardPropagation() : ForwardPropagation(){}
-
-        virtual ~ConvolutionalLayerForwardPropagation() {}
-
-        void allocate()
-        {
-//            const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
-
-//            const Index outputs_channels_number = convolutional_layer->get_filters_number();
-//            const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-//            const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
-
-//            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-//            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-//            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-        }
-
-    };
-
     /// Enumeration of available activation functions for the convolutional layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-    enum PaddingOption{NoPadding, Same};
+    enum ConvolutionType{Valid, Same};
 
     // Constructors
 
@@ -80,7 +57,7 @@ public:
 
     const Tensor<type, 1>& get_biases() const;
 
-    Tensor<type, 4> get_synaptic_weights() const;
+    const Tensor<type, 4>& get_synaptic_weights() const;
 
     ActivationFunction get_activation_function() const;
 
@@ -90,7 +67,7 @@ public:
 
     Index get_outputs_columns_number() const;
 
-    PaddingOption get_padding_option() const;
+    ConvolutionType get_convolution_type() const;
 
     Index get_column_stride() const;
 
@@ -127,7 +104,7 @@ public:
 
     void set_synaptic_weights(const Tensor<type, 4>&);
 
-    void set_padding_option(const PaddingOption&);
+    void set_convolution_type(const ConvolutionType&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index);
 
@@ -142,6 +119,10 @@ public:
     void set_synaptic_weights_constant(const type&);
 
     void set_parameters_constant(const type&);
+
+    // Padding
+
+    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&);
 
     // Combinations
 
@@ -175,7 +156,7 @@ public:
 
    // Gradient methods
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
 protected:
 
@@ -194,7 +175,7 @@ protected:
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   PaddingOption padding_option = NoPadding;
+   ConvolutionType convolution_type = Valid;
 
    ActivationFunction activation_function = RectifiedLinear;
 

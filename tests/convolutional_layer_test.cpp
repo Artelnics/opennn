@@ -105,6 +105,7 @@ void ConvolutionalLayerTest::test_destructor()
    cout << "test_destructor\n";
 }
 
+
 void ConvolutionalLayerTest::test_get_parameters() // @todo
 {
     cout << "test_get_parameters\n";
@@ -1018,22 +1019,57 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 //    cout << combinations(0, 0, 1, 0) << endl;
 //    cout << combinations(0, 0, 2, 0) << endl;
 
-    assert_true(abs(combinations(0, 0, 0, 0) - 1.f) < 1e-6f, LOG); // @todo
-    assert_true(abs(combinations(0, 0, 1, 0) - 2.f) < 1e-6f, LOG);
-    assert_true(combinations(0, 0, 2, 0) == 3.f, LOG);
+    assert_true(abs(combinations(0, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 3, 0, 0) - 1.f) < 1e-6f, LOG);
 
-//    assert_true(combinations(0, 0, 0, 0) == 1.f &&
-//                combinations(0, 1, 0, 0) == 1.f &&
-//                combinations(1, 0, 0, 0) == 1.f &&
-//                combinations(1, 1, 0, 0) == 1.f &&
-//                combinations(0, 0, 1, 0) == 2.f &&
-//                combinations(0, 1, 1, 0) == 2.f &&
-//                combinations(1, 0, 1, 0) == 2.f &&
-//                combinations(1, 1, 1, 0) == 2.f &&
-//                combinations(0, 0, 2, 0) == 3.f &&
-//                combinations(0, 1, 2, 0) == 3.f &&
-//                combinations(1, 0, 2, 0) == 3.f &&
-//                combinations(1, 1, 2, 0) == 3.f, LOG);
+    assert_true(abs(combinations(0, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 3, 1, 0) - 2.f) < 1e-6f, LOG);
+
+    assert_true(abs(combinations(0, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 3, 2, 0) - 3.f) < 1e-6f, LOG);
+
 
     inputs.resize(5, 5, 2, 2);
     kernels.resize(2, 2, 2, 2);
@@ -1116,6 +1152,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
                 combinations(3, 3, 1, 1) == 4.f, LOG);
 
 }
+
 
 void ConvolutionalLayerTest::test_calculate_activations()
 {
@@ -1880,64 +1917,138 @@ void ConvolutionalLayerTest::test_insert_padding() // @todo
 {
     cout << "test_insert_padding\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    Tensor<type, 2> image;
-//    Tensor<type, 2> padded_image;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
+    Tensor<type, 4> padded;
 
-//    // Test
+    // Test
 
-//    image.set({1,4,4}, 1);
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(3, 3, 3, 1);
 
-//    convolutional_layer.set_row_stride(1);
-//    convolutional_layer.set_column_stride(1);
-//    convolutional_layer.set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//    convolutional_layer.set({1,4,4}, {1,3,3});
+    inputs.setConstant(1.0);
 
-//    padded_image = convolutional_layer.insert_padding(image);
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({3, 3, 3, 1});
 
-//    assert_true(padded_image(0,0,0) == 0.0 &&
-//                padded_image(0,0,1) == 0.0 &&
-//                padded_image(0,0,2) == 0.0 &&
-//                padded_image(0,0,3) == 0.0 &&
-//                padded_image(0,0,4) == 0.0 &&
-//                padded_image(0,0,5) == 0.0 &&
-//                padded_image(0,1,0) == 0.0 &&
-//                padded_image(0,1,1) == 1.0 &&
-//                padded_image(0,1,2) == 1.0 &&
-//                padded_image(0,1,3) == 1.0 &&
-//                padded_image(0,1,4) == 1.0 &&
-//                padded_image(0,1,5) == 0.0 &&
-//                padded_image(0,2,0) == 0.0 &&
-//                padded_image(0,2,1) == 1.0 &&
-//                padded_image(0,2,2) == 1.0 &&
-//                padded_image(0,2,3) == 1.0 &&
-//                padded_image(0,2,4) == 1.0 &&
-//                padded_image(0,2,5) == 0.0 &&
-//                padded_image(0,3,0) == 0.0 &&
-//                padded_image(0,3,1) == 1.0 &&
-//                padded_image(0,3,2) == 1.0 &&
-//                padded_image(0,3,3) == 1.0 &&
-//                padded_image(0,3,4) == 1.0 &&
-//                padded_image(0,3,5) == 0.0 &&
-//                padded_image(0,4,0) == 0.0 &&
-//                padded_image(0,4,1) == 1.0 &&
-//                padded_image(0,4,2) == 1.0 &&
-//                padded_image(0,4,3) == 1.0 &&
-//                padded_image(0,4,4) == 1.0 &&
-//                padded_image(0,4,5) == 0.0 &&
-//                padded_image(0,5,0) == 0.0 &&
-//                padded_image(0,5,1) == 0.0 &&
-//                padded_image(0,5,2) == 0.0 &&
-//                padded_image(0,5,3) == 0.0 &&
-//                padded_image(0,5,4) == 0.0 &&
-//                padded_image(0,5,5) == 0.0, LOG);
+    convolutional_layer.set_row_stride(1);
+    convolutional_layer.set_column_stride(1);
+    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::Same);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.insert_padding(inputs, padded);
+
+    assert_true(padded.dimension(0) == 7 &&
+                padded.dimension(1) == 7,LOG);
+
+    assert_true(padded(0, 0, 0, 0) == 0.f &&
+                padded(0, 1, 0, 0) == 0.f &&
+                padded(0, 2, 0, 0) == 0.f &&
+                padded(0, 3, 0, 0) == 0.f &&
+                padded(0, 4, 0, 0) == 0.f &&
+                padded(0, 5, 0, 0) == 0.f &&
+                padded(0, 6, 0, 0) == 0.f &&
+                padded(1, 0, 0, 0) == 0.f &&
+                padded(1, 1, 0, 0) == 1.f &&
+                padded(1, 2, 0, 0) == 1.f &&
+                padded(1, 3, 0, 0) == 1.f &&
+                padded(1, 4, 0, 0) == 1.f &&
+                padded(1, 5, 0, 0) == 1.f &&
+                padded(1, 6, 0, 0) == 0.f &&
+                padded(2, 0, 0, 0) == 0.f &&
+                padded(2, 1, 0, 0) == 1.f &&
+                padded(2, 2, 0, 0) == 1.f &&
+                padded(2, 3, 0, 0) == 1.f &&
+                padded(2, 4, 0, 0) == 1.f &&
+                padded(2, 5, 0, 0) == 1.f &&
+                padded(2, 6, 0, 0) == 0.f &&
+                padded(3, 0, 0, 0) == 0.f &&
+                padded(3, 1, 0, 0) == 1.f &&
+                padded(3, 2, 0, 0) == 1.f &&
+                padded(3, 3, 0, 0) == 1.f &&
+                padded(3, 4, 0, 0) == 1.f &&
+                padded(3, 5, 0, 0) == 1.f &&
+                padded(3, 6, 0, 0) == 0.f &&
+                padded(4, 0, 0, 0) == 0.f &&
+                padded(4, 1, 0, 0) == 1.f &&
+                padded(4, 2, 0, 0) == 1.f &&
+                padded(4, 3, 0, 0) == 1.f &&
+                padded(4, 4, 0, 0) == 1.f &&
+                padded(4, 5, 0, 0) == 1.f &&
+                padded(4, 6, 0, 0) == 0.f &&
+                padded(5, 0, 0, 0) == 0.f &&
+                padded(5, 1, 0, 0) == 1.f &&
+                padded(5, 2, 0, 0) == 1.f &&
+                padded(5, 3, 0, 0) == 1.f &&
+                padded(5, 4, 0, 0) == 1.f &&
+                padded(5, 5, 0, 0) == 1.f &&
+                padded(5, 6, 0, 0) == 0.f &&
+                padded(6, 0, 0, 0) == 0.f &&
+                padded(6, 1, 0, 0) == 0.f &&
+                padded(6, 2, 0, 0) == 0.f &&
+                padded(6, 3, 0, 0) == 0.f &&
+                padded(6, 4, 0, 0) == 0.f &&
+                padded(6, 5, 0, 0) == 0.f &&
+                padded(6, 6, 0, 0) == 0.f, LOG);
+
+    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::Valid);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.insert_padding(inputs, padded);
+
+    assert_true(padded.dimension(0) == 5 &&
+                padded.dimension(1) == 5,LOG);
+
 }
 
 
 void ConvolutionalLayerTest::test_forward_propagate()
 {
     Tensor<type, 4> inputs;
+    Tensor<type, 4> activations;
+    Tensor<type, 4> activations_derivatives;
+    ConvolutionalLayer::ForwardPropagation forward_propagation;
+
+    Tensor<type, 4> kernels;
+    Tensor<type, 1> biases;
+
+    ConvolutionalLayer convolutional_layer;
+
+    inputs.resize(3, 3, 3, 2);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
+
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({3, 3, 3, 2});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 2});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
+
+    inputs.setConstant(1.f);
+    biases.setConstant(0.f);
+    kernels.setConstant(1.f/12);
+
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
+
+    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                forward_propagation.activations_derivatives_4d(0, 0, 0, 0) == 1.f, LOG);
+
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
+    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 0.761594f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 0) - 0.419974f) < 1.e-6f, LOG);
 }
 
 
@@ -1973,6 +2084,9 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    test_calculate_outputs();
 
+   // Padding
+   test_insert_padding();
+
 /*
    // Get methods
 
@@ -1984,8 +2098,12 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    test_calculate_image_convolution();
 
-   test_insert_padding();
 */
+
+   // Forward propagate
+
+   test_forward_propagate();
+
    cout << "End of convolutional layer test case.\n";
 }
 
