@@ -57,10 +57,6 @@ int main(void)
 
         DataSet data_set("C:/opennn/examples/leukemia/data/leukemia.csv",';',false);
 
-//        cout<<data_set.get_data().chip(data_set.get_data().dimension(1)-1,1)<<endl;
-
-//        system("pause");
-
         for(Index i=0;i<data_set.get_data().dimension(1)-1;i++)
         {
             CorrelationResults gauss = gauss_correlations(thread_pool_device,
