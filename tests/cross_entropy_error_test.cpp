@@ -39,7 +39,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    data_set.generate_sum_data(10,2);
 
-//   Tensor<Descriptives, 1> inputs = data_set.scale_inputs_minimum_maximum();
+//   Tensor<Descriptives, 1> inputs = data_set.scale_input_variables_minimum_maximum();
 
    scaling_layer.set_neurons_number(1);
    scaling_layer.set_inputs_number(1);

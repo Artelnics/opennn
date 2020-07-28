@@ -700,7 +700,7 @@ void DataSetTest::test_scale_targets_mean_standard_deviation()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_targets_mean_standard_deviation();
+   data_set.scale_target_variables_mean_standard_deviation();
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
@@ -721,7 +721,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-//   data_set.scale_inputs_minimum_maximum();
+//   data_set.scale_input_variables_minimum_maximum();
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
 
@@ -742,7 +742,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_targets_minimum_maximum();
+   data_set.scale_target_variables_minimum_maximum();
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
@@ -936,7 +936,7 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
    Tensor<type, 2> inputs = data_set.get_input_data();
 
 
-//   data_set.unscale_inputs_minimum_maximum(data_descriptives);
+//   data_set.unscale_input_variables_minimum_maximum(data_descriptives);
 
    Tensor<type, 2> new_inputs = data_set.get_input_data();
 

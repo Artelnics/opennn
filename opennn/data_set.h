@@ -620,11 +620,12 @@ public:
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
+   void scale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_input_variables_minimum_maximum();
 
-   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
 
-   Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
+   Tensor<Descriptives, 1> scale_input_variables(const Tensor<string, 1>&);
 
    // Target variables scaling
 
@@ -632,24 +633,24 @@ public:
    void scale_target_mean_standard_deviation(const Descriptives&, const Index&);
    void scale_target_logarithmic(const Descriptives&, const Index&);
 
-   void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_minimum_maximum();
+   void scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_minimum_maximum();
 
-   void scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_mean_standard_deviation();
+   void scale_target_variables_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_mean_standard_deviation();
 
-   void scale_targets_logarithmic(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_logarithmic();
+   void scale_target_variables_logarithm(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_logarithm();
 
-   Tensor<Descriptives, 1> scale_targets(const string&);
-   Tensor<Descriptives, 1> scale_targets(const Tensor<string, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables(const string&);
+   Tensor<Descriptives, 1> scale_target_variables(const Tensor<string, 1>&);
 
    // Data unscaling
 
-   void unscale_input_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_input_variable_minimum_maximum(const Descriptives&, const Index&);
    void unscale_input_mean_standard_deviation(const Descriptives&, const Index&);
-   void unscale_input_standard_deviation(const Descriptives&, const Index&);
-   void unscale_inputs(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
+   void unscale_input_variable_standard_deviation(const Descriptives&, const Index&);
+   void unscale_input_variables(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    void unscale_target_minimum_maximum(const Descriptives&, const Index&);
    void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);

@@ -6575,7 +6575,7 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 }
 
 
-void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
+void DataSet::scale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -6588,7 +6588,18 @@ void DataSet::scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs
 }
 
 
-void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_input_variables_minimum_maximum()
+{
+    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
+
+    scale_input_variables_minimum_maximum(inputs_descriptives);
+
+    return inputs_descriptives;
+
+}
+
+
+void DataSet::unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -6596,7 +6607,7 @@ void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inpu
 
     for(Index i = 0; i < input_variables_number; i++)
     {
-        unscale_input_minimum_maximum(inputs_descriptives[i], input_variables_indices[i]);
+        unscale_input_variable_minimum_maximum(inputs_descriptives[i], input_variables_indices[i]);
     }
 }
 
@@ -6604,7 +6615,7 @@ void DataSet::unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>& inpu
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods)
+Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -6643,7 +6654,7 @@ Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_u
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown scaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
 
             throw logic_error(buffer.str());
@@ -6660,7 +6671,7 @@ Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_u
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::scale_target_variables_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Index target_variables_number = target_variables_indices.size();
@@ -6687,7 +6698,7 @@ void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of descriptives structures with the basic descriptives of all the variables.
 
-Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
+Tensor<Descriptives, 1> DataSet::scale_target_variables_mean_standard_deviation()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -6696,7 +6707,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_targets_mean_standard_deviation() method.\n"
+               << "Tensor<Descriptives, 1> scale_target_variables_mean_standard_deviation() method.\n"
                << "Data file is not loaded.\n";
 
         throw logic_error(buffer.str());
@@ -6706,7 +6717,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
 
     const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-    scale_targets_mean_standard_deviation(targets_descriptives);
+    scale_target_variables_mean_standard_deviation(targets_descriptives);
 
     return targets_descriptives;
 }
@@ -6717,7 +6728,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_mean_standard_deviation()
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -6726,7 +6737,7 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_targets_minimum_maximum() method.\n"
+               << "Tensor<Descriptives, 1> scale_target_variables_minimum_maximum() method.\n"
                << "Data file is not loaded.\n";
 
         throw logic_error(buffer.str());
@@ -6759,11 +6770,11 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of vectors with the descriptives of the input target variables.
 
-Tensor<Descriptives, 1> DataSet::scale_targets_minimum_maximum()
+Tensor<Descriptives, 1> DataSet::scale_target_variables_minimum_maximum()
 {
     const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-    scale_targets_minimum_maximum(targets_descriptives);
+    scale_target_variables_minimum_maximum(targets_descriptives);
 
     return targets_descriptives;
 }
@@ -6774,7 +6785,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_minimum_maximum()
 /// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
 /// The size of that vector must be equal to the number of target variables.
 
-void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::scale_target_variables_logarithm(const Tensor<Descriptives, 1>& targets_descriptives)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -6783,7 +6794,7 @@ void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_d
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_targets_logarithmic() method.\n"
+               << "Tensor<Descriptives, 1> scale_target_variables_logarithm() method.\n"
                << "Data file is not loaded.\n";
 
         throw logic_error(buffer.str());
@@ -6817,11 +6828,11 @@ void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_d
 /// It updates the target variables of the data matrix.
 /// It also returns a vector of vectors with the descriptives of the input target variables.
 
-Tensor<Descriptives, 1> DataSet::scale_targets_logarithmic()
+Tensor<Descriptives, 1> DataSet::scale_target_variables_logarithm()
 {
     const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
-    scale_targets_logarithmic(targets_descriptives);
+    scale_target_variables_logarithm(targets_descriptives);
 
     return targets_descriptives;
 }
@@ -6832,7 +6843,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets_logarithmic()
 /// The method to be used is that in the scaling and unscaling method variable.
 /// Finally, it returns the descriptives.
 
-Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_method)
+Tensor<Descriptives, 1> DataSet::scale_target_variables(const string& scaling_unscaling_method)
 {
     switch(get_scaling_unscaling_method(scaling_unscaling_method))
     {
@@ -6843,17 +6854,17 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 
     case MinimumMaximum:
     {
-        return scale_targets_minimum_maximum();
+        return scale_target_variables_minimum_maximum();
     }
 
     case Logarithmic:
     {
-        return scale_targets_logarithmic();
+        return scale_target_variables_logarithm();
     }
 
     case MeanStandardDeviation:
     {
-        return scale_targets_mean_standard_deviation();
+        return scale_target_variables_mean_standard_deviation();
     }
 
     default:
@@ -6861,7 +6872,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class\n"
-               << "Tensor<Descriptives, 1> scale_targets(const string&) method.\n"
+               << "Tensor<Descriptives, 1> scale_target_variables(const string&) method.\n"
                << "Unknown scaling and unscaling method.\n";
 
         throw logic_error(buffer.str());
@@ -6923,7 +6934,7 @@ void DataSet::scale_target_logarithmic(const Descriptives& target_statistics, co
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods)
+Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
@@ -6952,7 +6963,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "void scale_target_variables(const string&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown scaling and unscaling method.\n";
 
             throw logic_error(buffer.str());
@@ -6968,7 +6979,7 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_
 /// @param input_statistics vector with the descriptives of the input variable.
 /// @param input_index Index of the input to be scaled.
 
-void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
+void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
     const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
 
@@ -7004,7 +7015,7 @@ void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_st
 /// @param inputs_statistics vector of descriptives structures for the input variables.
 /// @param input_index Index of the input to be scaled.
 
-void DataSet::unscale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
+void DataSet::unscale_input_variable_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
     const type slope = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? 0 : input_statistics.standard_deviation/static_cast<type>(2);
 
@@ -7020,7 +7031,7 @@ void DataSet::unscale_input_standard_deviation(const Descriptives& input_statist
 /// It unscales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
+void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -7036,7 +7047,7 @@ void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods,
 
         case MinimumMaximum:
         {
-            unscale_input_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
+            unscale_input_variable_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
         }
         break;
 
@@ -7048,7 +7059,7 @@ void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods,
 
         case StandardDeviation:
         {
-            unscale_input_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
+            unscale_input_variable_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
         }
         break;
 
@@ -7057,7 +7068,7 @@ void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods,
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown unscaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
 
             throw logic_error(buffer.str());
