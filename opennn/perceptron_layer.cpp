@@ -633,8 +633,8 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations_
 }
 
 void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                       Tensor<type, 2>& activations,
-                                       Tensor<type, 2>& activations_derivatives) const
+                                                        Tensor<type, 2>& activations,
+                                                        Tensor<type, 2>& activations_derivatives) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -883,7 +883,6 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 }
 
-///
 
 void PerceptronLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
