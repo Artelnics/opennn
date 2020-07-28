@@ -69,6 +69,10 @@ public:
 
   void test_insert_padding();
 
+  // Forward propagate
+
+  void test_forward_propagate();
+
   // Unit testing methods
 
   void run_test_case();

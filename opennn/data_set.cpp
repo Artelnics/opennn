@@ -8366,7 +8366,7 @@ void DataSet::transform_time_series()
             {
             variable_data = time_series_data.chip(variable, 1);
 
-            for(Index j = 0; j <= time_series_instances_number; j++)
+            for(Index j = 0; j < time_series_instances_number; j++)
             {
                 new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
             }
