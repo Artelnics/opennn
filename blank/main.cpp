@@ -52,7 +52,6 @@ int main(void)
         Tensor<type,1> x(7);
         Tensor<type,1> y(7);
 
-
         y.setValues({0,0,0,1,0,0,0});
         x.setValues({1,2,3,4,5,6,7});
 
@@ -64,13 +63,9 @@ int main(void)
 
         for(Index i=0;i<data_set.get_data().dimension(1)-1;i++)
         {
-
-
             CorrelationResults gauss = gauss_correlations(thread_pool_device,
                                                           data_set.get_data().chip(i,1),
                                                           data_set.get_data().chip(data_set.get_data().dimension(1)-1,1));
-
-
 
 
             if(gauss.correlation > 0.9)

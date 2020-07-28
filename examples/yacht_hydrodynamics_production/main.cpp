@@ -31,18 +31,11 @@ int main(void)
 
         cout << "OpenNN. Yacht Resistance Production Example." << endl;
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Neural network
 
         const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
         type longitudinal_position_center_buoyancy;
         type prismatic_coefficient;

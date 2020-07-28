@@ -29,16 +29,9 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Data set
 
         DataSet data_set("../data/breast_cancer.csv",';',true);
-        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.split_instances_random();
 
@@ -50,7 +43,7 @@ int main(void)
         Tensor<string, 1> scaling_methods(input_variables_number);
         scaling_methods.setConstant("MeanStandardDeviation");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_methods);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
 
         // Neural network
 
@@ -58,7 +51,6 @@ int main(void)
         neural_netowrk_architecture.setValues({9, 7, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
         dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::HyperbolicTangent);
         dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
@@ -69,7 +61,6 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
@@ -101,7 +92,7 @@ int main(void)
 
         // Testing analysis
 
-        data_set.unscale_inputs(scaling_methods, inputs_descriptives);
+        data_set.unscale_input_variables(scaling_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 

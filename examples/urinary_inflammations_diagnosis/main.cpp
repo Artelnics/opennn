@@ -32,16 +32,9 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Data set
 
         DataSet data_set("../data/urinary_inflammations_diagnosis.csv", ';', true);
-        data_set.set_thread_pool_device(thread_pool_device);
 
         // Variables      
 
@@ -60,7 +53,7 @@ int main(void)
         Tensor<string, 1> scaling_inputs_methods(input_variables_number);
         scaling_inputs_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         // Neural network
 
@@ -70,7 +63,6 @@ int main(void)
         neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -83,7 +75,6 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
@@ -100,11 +91,9 @@ int main(void)
 
         // Testing analysis
 
-        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        testing_analysis.set_thread_pool_device(thread_pool_device);
 
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
