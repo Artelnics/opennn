@@ -521,5 +521,5 @@ void GeneticAlgorithmTest::run_test_case()
 
     test_from_XML();
 
-    cout << "End of genetic algorithm test case.\n";
+    cout << "End of genetic algorithm test case.\n\n";
 }

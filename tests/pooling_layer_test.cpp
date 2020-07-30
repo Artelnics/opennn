@@ -277,7 +277,7 @@ void PoolingLayerTest::run_test_case() // @todo
     test_calculate_average_pooling_outputs();
     test_calculate_max_pooling_outputs();
 
-   cout << "End of pooling layer test case.\n";
+   cout << "End of pooling layer test case.\n\n";
 }
 
 

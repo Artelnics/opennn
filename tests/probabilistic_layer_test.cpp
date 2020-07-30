@@ -998,7 +998,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_write_expression();
 
-   cout << "End of probabilistic layer test case.\n";
+   cout << "End of probabilistic layer test case.\n\n";
 }
 
 

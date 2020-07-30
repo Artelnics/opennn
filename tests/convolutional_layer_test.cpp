@@ -2104,7 +2104,7 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    test_forward_propagate();
 
-   cout << "End of convolutional layer test case.\n";
+   cout << "End of convolutional layer test case.\n\n";
 }
 
 

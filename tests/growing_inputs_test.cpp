@@ -179,5 +179,5 @@ void GrowingInputsTest::run_test_case() // @todo
 
     test_from_XML();
 
-    cout << "End of growing input test case.\n";
+    cout << "End of growing input test case.\n\n";
 }

@@ -173,5 +173,5 @@ void PruningInputsTest::run_test_case()
 
     test_from_XML();
 
-    cout << "End of pruning input test case.\n";
+    cout << "End of pruning input test case.\n\n";
 }
