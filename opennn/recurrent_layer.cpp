@@ -334,7 +334,6 @@ void RecurrentLayer::set()
 
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
-
     biases.resize(1, new_neurons_number);
 
     input_weights.resize(new_inputs_number, new_neurons_number);
