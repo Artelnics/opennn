@@ -214,5 +214,5 @@ void ModelSelectionTest::run_test_case()
     test_save();
     test_load();
 
-    cout << "End of model selection test case.\n";
+    cout << "End of model selection test case.\n\n";
 }

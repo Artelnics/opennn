@@ -220,7 +220,7 @@ void GradientDescentTest::run_test_case() // @todo
    test_to_XML();
    test_from_XML();
 
-   cout << "End of gradient descent test case.\n";
+   cout << "End of gradient descent test case.\n\n";
 }
 
 

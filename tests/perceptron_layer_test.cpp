@@ -1735,7 +1735,7 @@ void PerceptronLayerTest::run_test_case()
    test_write_expression();
 
 
-   cout << "End of perceptron layer test case.\n";
+   cout << "End of perceptron layer test case.\n\n";
 }
 
 

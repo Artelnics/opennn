@@ -3119,7 +3119,7 @@ void DataSetTest::run_test_case()
 
    test_perform_principal_components_analysis();
 
-   cout << "End of data set test case.\n";
+   cout << "End of data set test case.\n\n";
 }
 
 

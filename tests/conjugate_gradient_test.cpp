@@ -406,7 +406,7 @@ void ConjugateGradientTest::run_test_case()
    test_to_XML();   
    test_from_XML();
 
-   cout << "End of conjugate gradient test case.\n";
+   cout << "End of conjugate gradient test case.\n\n";
 }
 
 

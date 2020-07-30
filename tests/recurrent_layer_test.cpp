@@ -525,7 +525,7 @@ void RecurrentLayerTest::run_test_case()
    test_calculate_combinations();
    test_calculate_outputs();
 
-   cout << "End of recurrent layer test case.\n";
+   cout << "End of recurrent layer test case.\n\n";
 }
 
 

@@ -217,7 +217,7 @@ void StochasticGradientDescentTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of stochastic gradient descent test case.\n";
+   cout << "End of stochastic gradient descent test case.\n\n";
 }
 
 
