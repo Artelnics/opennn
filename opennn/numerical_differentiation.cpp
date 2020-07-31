@@ -228,6 +228,27 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
 }
 
 
+Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) const
+{
+    const type eta = calculate_eta();
+
+    const Index n = x.size();
+
+    const auto& dimensions = x.dimensions();
+
+    Tensor<type, 4> h(dimensions);
+
+    Tensor<type, 4> y = x.abs();
+
+    for(Index i = 0; i < n; i++)
+    {
+        h(i) = sqrt(eta)*(1 + y(i));
+    }
+
+    return h;
+}
+
+
 Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
         const Tensor<type, 1>& y) const
 {
