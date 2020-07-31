@@ -691,7 +691,7 @@ void WeightedSquaredErrorTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of weighted squared error test case.\n";
+   cout << "End of weighted squared error test case.\n\n";
 }
 
 

@@ -485,7 +485,7 @@ void MinkowskiErrorTest::run_test_case() // @todo
    test_to_XML();
    test_from_XML();
 
-   cout << "End of Minkowski error test case.\n";
+   cout << "End of Minkowski error test case.\n\n";
 }
 
 

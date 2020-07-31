@@ -1013,7 +1013,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
    test_calculate_outputs();
 
-   cout << "End of long short term memory layer test case.\n";
+   cout << "End of long short term memory layer test case.\n\n";
 }
 
 

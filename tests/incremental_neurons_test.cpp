@@ -233,5 +233,5 @@ void IncrementalNeuronsTest::run_test_case()
 
     test_from_XML();
 
-    cout << "End of incremental order test case.\n";
+    cout << "End of incremental order test case.\n\n";
 }

@@ -135,6 +135,6 @@ void NeuronsSelectionTest::run_test_case()
 
     test_get_parameters_order();
 
-    cout << "End of neurons selection algorithm test case.\n";
+    cout << "End of neurons selection algorithm test case.\n\n";
 }
 
