@@ -2044,7 +2044,7 @@ void NeuralNetworkTest::run_test_case()
 
    test_load();
 
-   cout << "End of neural network test case.\n";
+   cout << "End of neural network test case.\n\n";
 }
 
 // OpenNN: Open Neural Networks Library.

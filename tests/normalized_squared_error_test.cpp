@@ -839,7 +839,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    test_to_XML();
    test_from_XML();
 */
-   cout << "End of normalized squared error test case.\n";
+   cout << "End of normalized squared error test case.\n\n";
 }
 
 
