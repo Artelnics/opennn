@@ -109,16 +109,6 @@ string BoundingLayer::write_bounding_method() const
 }
 
 
-Tensor<Index, 1> BoundingLayer::get_input_variables_dimensions() const
-{       
-    Tensor<Index, 1> dimensions(1);
-
-    dimensions(0) = lower_bounds.size();
-
-    return dimensions;
-}
-
-
 Index BoundingLayer::get_inputs_number() const
 {
     return lower_bounds.dimension(0);

@@ -63,12 +63,6 @@ ScalingLayer::~ScalingLayer()
 }
 
 
-Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
-{
-    return input_variables_dimensions;
-}
-
-
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;

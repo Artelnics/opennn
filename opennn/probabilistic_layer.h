@@ -61,7 +61,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;

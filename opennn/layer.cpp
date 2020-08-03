@@ -154,18 +154,6 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
 }
 
 
-Tensor<Index, 1> Layer::get_input_variables_dimensions() const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "get_input_variables_dimensions() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-
 Index Layer::get_inputs_number() const
 {
     ostringstream buffer;

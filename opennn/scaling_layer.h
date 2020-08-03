@@ -58,7 +58,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const;

@@ -255,7 +255,7 @@ public:
 
     // Get neurons number
 
-    virtual Tensor<Index, 1> get_input_variables_dimensions() const;
+    virtual 
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;

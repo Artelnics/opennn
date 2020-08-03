@@ -54,14 +54,6 @@ ProbabilisticLayer::~ProbabilisticLayer()
 }
 
 
-Tensor<Index, 1> ProbabilisticLayer::get_input_variables_dimensions() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    return Tensor<Index, 1>(inputs_number);
-}
-
-
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);

@@ -61,14 +61,6 @@ PerceptronLayer::~PerceptronLayer()
 }
 
 
-Tensor<Index, 1> PerceptronLayer::get_input_variables_dimensions() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    return Tensor<Index, 1>(inputs_number);
-}
-
-
 /// Returns the number of inputs to the layer.
 
 Index PerceptronLayer::get_inputs_number() const
@@ -548,11 +540,9 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
-
     biases.setConstant(value);
 
     synaptic_weights.setConstant(value);
-
 }
 
 
