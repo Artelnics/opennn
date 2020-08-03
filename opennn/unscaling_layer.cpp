@@ -58,15 +58,6 @@ UnscalingLayer::~UnscalingLayer()
 }
 
 
-Tensor<Index, 1> UnscalingLayer::get_input_variables_dimensions() const
-{
-    Tensor<Index, 1> input_variables_dimensions(1);
-
-    input_variables_dimensions.setConstant(descriptives.size());
-
-    return input_variables_dimensions;
-}
-
 
 Index UnscalingLayer::get_inputs_number() const
 {

@@ -68,7 +68,7 @@ void ScalingLayerTest::test_assignment_operator()
 void ScalingLayerTest::test_get_dimensions()
 {
    cout << "test_get_dimensions\n";
-
+/*
    Tensor<Index, 1 > new_inputs_dimensions(1);
    new_inputs_dimensions.setConstant(0);
 
@@ -93,6 +93,7 @@ void ScalingLayerTest::test_get_dimensions()
    assert_true(sl1.get_outputs_dimensions().dimension(0) == sl1.get_input_variables_dimensions().dimension(0), LOG);
    assert_true(sl1.get_input_variables_dimensions()(1) == 1, LOG);
    assert_true(sl1.get_outputs_dimensions()(1) == sl1.get_input_variables_dimensions()(1), LOG);
+*/
 }
 
 void ScalingLayerTest::test_get_inputs_number()
