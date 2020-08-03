@@ -801,8 +801,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-// Delta methods
-
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
