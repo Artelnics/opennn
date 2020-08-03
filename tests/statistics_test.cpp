@@ -1594,7 +1594,7 @@ void StatisticsTest::run_test_case()
    test_means_by_categories_missing_values();
 
 
-   cout << "End of descriptives test case.\n";
+   cout << "End of descriptives test case.\n\n";
 }
 
 // OpenNN: Open Neural Networks Library.

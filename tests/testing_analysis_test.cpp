@@ -1629,7 +1629,7 @@ void TestingAnalysisTest::run_test_case()
 
    test_calculate_multiple_classification_rates();
 
-   cout << "End of testing analysis test case.\n";
+   cout << "End of testing analysis test case.\n\n";
 }
 
 

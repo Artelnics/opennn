@@ -1120,7 +1120,7 @@ void UnscalingLayerTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of unscaling layer test case.\n";
+   cout << "End of unscaling layer test case.\n\n";
 }
 
 

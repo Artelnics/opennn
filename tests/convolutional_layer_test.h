@@ -51,10 +51,6 @@ public:
 
    // Combinations
 
-   void test_calculate_image_convolution();
-
-   void test_calculate_convolutions();
-
    void test_calculate_combinations();
 
    // Activation

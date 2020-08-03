@@ -1599,7 +1599,7 @@ void NumericalDifferentiationTest::run_test_case()
 
    test_calculate_central_differences_hessian_matrices();
 
-   cout << "End of numerical differentiation test case.\n";
+   cout << "End of numerical differentiation test case.\n\n";
 }
 
 

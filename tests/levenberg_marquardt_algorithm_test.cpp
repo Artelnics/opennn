@@ -566,7 +566,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 
    test_perform_Householder_QR_decomposition();
 
-   cout << "End of Levenberg-Marquardt algorithm test case.\n";
+   cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
 }
 
 
