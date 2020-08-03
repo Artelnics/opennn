@@ -690,7 +690,7 @@ void RecurrentLayer::calculate_current_activations_derivatives(const Tensor<type
      {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+        buffer << "OpenNN Exception: RecurrentLayer class.\n"
                << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Number of combinations_1d columns (" << combinations_columns_number
                << ") must be equal to number of neurons (" << neurons_number << ").\n";
@@ -807,7 +807,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-void PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
+void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                             const Tensor<type, 2>&,
                             ForwardPropagation& forward_propagation,
                             const Tensor<type, 2>& next_layer_delta,
