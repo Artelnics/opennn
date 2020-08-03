@@ -74,6 +74,7 @@ public:
    type calculate_h(const type&) const;
    Tensor<type, 1> calculate_h(const Tensor<type, 1>&) const;
    Tensor<type, 2> calculate_h(const Tensor<type, 2>&) const;
+   Tensor<type, 4> calculate_h(const Tensor<type, 4>&) const;
 
    Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
@@ -224,6 +225,25 @@ public:
       const Tensor<type, 2> y = (t.*f)(x);
 
       const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+
+      return d;
+   }
+
+
+   template<class T>
+   Tensor<type, 4> calculate_central_differences_derivatives(const T& t, Tensor<type, 4>(T::*f)(const Tensor<type, 4>&) const, const Tensor<type, 4>& x) const
+   {
+      const Tensor<type, 4> h = calculate_h(x);
+
+      const Tensor<type, 4> x_forward = x + h;
+      const Tensor<type, 4> x_backward = x - h;
+
+      const Tensor<type, 4> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 4> y_backward = (t.*f)(x_backward);
+
+      const Tensor<type, 4> y = (t.*f)(x);
+
+      const Tensor<type, 4> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
    }
@@ -392,6 +412,30 @@ public:
       return d;
    }
 
+
+   template<class T>
+   Tensor<type, 4> calculate_central_differences_derivatives(const T& t, void(T::*f)(const Tensor<type, 4>&, Tensor<type, 4>&) const, const Index& dummy, const Tensor<type, 4>& x) const
+   {
+      const Index rn = x.dimension(0);
+      const Index cn = x.dimension(1);
+      const Index kn = x.dimension(2);
+      const Index in = x.dimension(3);
+
+      const Tensor<type, 4> h = calculate_h(x);
+
+      const Tensor<type, 4> x_forward = x + h;
+      const Tensor<type, 4> x_backward = x - h;
+
+      Tensor<type, 4> y_forward(rn,cn, kn, in);
+      (t.*f)(x_forward, y_forward);
+      Tensor<type, 4> y_backward(rn,cn, kn, in);
+      (t.*f)(x_backward, y_backward);
+
+      const Tensor<type, 4> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+
+      return d;
+   }
+
    /// Returns the derivatives of a vector function according to the numerical differentiation method to be used.
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const.
    /// @param t : Object constructor containing the member method to differentiate.
@@ -416,6 +460,28 @@ public:
       }
 
       return Tensor<type, 2>();
+   }
+
+
+   template<class T>
+   Tensor<type, 4> calculate_derivatives(const T& t, void(T::*f)(const Tensor<type, 4>&, Tensor<type, 4>&) const, const Index& dummy, const Tensor<type, 4>& x) const
+   {
+
+      return calculate_central_differences_derivatives(t, f, dummy, x);
+//      switch(numerical_differentiation_method)
+//      {
+//         case ForwardDifferences:
+//         {
+//            return calculate_forward_differences_derivatives(t, f, dummy, x);
+//         }
+
+//         case CentralDifferences:
+//         {
+//           return calculate_central_differences_derivatives(t, f, dummy, x);
+//         }
+//      }
+
+//      return Tensor<type, 2>();
    }
 
 

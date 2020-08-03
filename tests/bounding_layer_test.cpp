@@ -308,7 +308,7 @@ void BoundingLayerTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of bounding layer test case.\n";
+   cout << "End of bounding layer test case.\n\n";
 }
 
 

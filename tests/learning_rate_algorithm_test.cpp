@@ -464,7 +464,7 @@ void LearningRateAlgorithmTest::run_test_case()
 
    test_to_XML();
 
-   cout << "End of training rate algorithm test case.\n";
+   cout << "End of training rate algorithm test case.\n\n";
 }
 
 // OpenNN: Open Neural Networks Library.

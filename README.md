@@ -2,6 +2,7 @@
   <img src="http://www.opennn.net/images/opennn_git_logo.svg">
 </div>
 
+[![Build Status](https://travis-ci.org/{ORG-or-USERNAME}/{REPO-NAME}.png?branch=master)](https://travis-ci.org/Artelnics/opennn)
 
 OpenNN is a software library written in C++ for advanced analytics. It implements neural networks, the most successful machine learning method. 
 

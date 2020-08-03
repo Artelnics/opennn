@@ -135,6 +135,6 @@ void InputsSelectionTest::run_test_case() // @todo
     test_calculate_losses();
     test_get_parameters_order();
 
-    cout << "End of inputs selection algorithm test case.\n";
+    cout << "End of inputs selection algorithm test case.\n\n";
 }
 
