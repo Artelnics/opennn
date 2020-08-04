@@ -128,6 +128,12 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 }
 
 
+const string& AdaptiveMomentEstimation::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -314,6 +320,12 @@ void AdaptiveMomentEstimation::set_reserve_training_error_history(const bool& ne
 void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
     reserve_selection_error_history = new_reserve_selection_error_history;
+}
+
+
+void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -776,6 +788,19 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // End element
+
     file_stream.CloseElement();
 }
 
@@ -920,6 +945,25 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
             }
             catch(const logic_error& e)
             {
