@@ -402,7 +402,12 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
     data_set.set(instances_number, inputs_number, outputs_number);
 
-    data_set.set_data_random();
+//    data_set.set_data_random();
+
+    Tensor<type, 2> inputs(1, 10);
+    inputs.setValues({{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}});
+
+    data_set.set_data(inputs);
 
     data_set.set_training();
 
@@ -414,8 +419,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
     batch.fill(instances_indices, input_indices, target_indices);
 
-    //
-
     recurrent_layer->set(inputs_number, hidden_neurons);
     output_perceptron_layer->set(hidden_neurons, outputs_number);
 
@@ -423,9 +426,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
     neural_network.add_layer(output_perceptron_layer);
 
     neural_network.set_parameters_random();
+    Tensor<type, 1> parameters(neural_network.get_parameters_number());
+
+    parameters.setValues({1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+
+    neural_network.set_parameters(parameters);
 
     nse.set_normalization_coefficient();
-
 
     NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
 
@@ -437,17 +444,17 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
     // Test 1
 
-    assert_true(back_propagation.gradient(1) < 1.0e-3 || back_propagation.gradient(1) > 1.0e-3, LOG);
+//    assert_true(back_propagation.gradient(1) < 1.0e-3 || back_propagation.gradient(1) > 1.0e-3, LOG);
 
-    nse.calculate_error_gradient(batch, forward_propagation, back_propagation);
+//    nse.calculate_error_gradient(batch, forward_propagation, back_propagation);
 
-    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
+//    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
-//    back_propagation.error;
+////    back_propagation.error;
 
-    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
+//    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+//    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 
 
 }
@@ -810,9 +817,9 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-   test_constructor();
-   test_destructor();
-   test_calculate_normalization_coefficient();
+//   test_constructor();
+//   test_destructor();
+//   test_calculate_normalization_coefficient();
 
    // Get methods
 
@@ -820,14 +827,14 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();
+//   test_calculate_error();
    test_calculate_error_gradient();
 
    // Error terms methods
 
-   test_calculate_error_terms();
+//   test_calculate_error_terms();
 
-   test_calculate_error_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 /*
    // Squared errors methods
 
