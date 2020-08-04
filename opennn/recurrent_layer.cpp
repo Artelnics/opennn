@@ -729,6 +729,7 @@ void RecurrentLayer::calculate_current_activations_derivatives(const Tensor<type
 
 void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
 {
+
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index instances_number = inputs.dimension(0);
@@ -756,6 +757,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPro
             forward_propagation.activations_derivatives_2d(i,j) = current_activations_derivatives(j);
         }
     }
+
 }
 
 
