@@ -800,8 +800,7 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
 
 void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
-    const Tensor<bool, 2> if_sentence = x < x.constant(0.5);
+    const Tensor<bool, 2> if_sentence = x < x.constant(0);
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
