@@ -356,10 +356,6 @@ private:
 
    bool choose_best_selection;
 
-   
-
-   
-
    // TRAINING HISTORY
 
    /// True if the training error history vector is to be reserved, false otherwise.
