@@ -847,9 +847,10 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
-                        const type slope = static_cast<type>(2)/descriptives(j).standard_deviation;
 
-                        const type intercept = -static_cast<type>(2)*descriptives(j).mean/descriptives(j).standard_deviation;
+                        const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
+
+                        const type intercept = -static_cast<type>(1)*descriptives(j).mean/descriptives(j).standard_deviation;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
 

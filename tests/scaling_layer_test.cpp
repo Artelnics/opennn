@@ -991,6 +991,7 @@ void ScalingLayerTest::test_calculate_outputs()
 
    assert_true(outputs_2.dimension(0) == 1, LOG);
    assert_true(outputs_2.dimension(1) == 2, LOG);
+
    assert_true(abs(outputs_2(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(outputs_2(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
@@ -1118,7 +1119,7 @@ void ScalingLayerTest::test_write_expression()
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "y = x;\n", LOG);
+   assert_true(expression == "scaled_x = x;\n", LOG);
 
    // Test 0_2
 
@@ -1128,7 +1129,7 @@ void ScalingLayerTest::test_write_expression()
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "y = 2*(x-(-1))/(1-(-1))-1;\n", LOG);
+   assert_true(expression == "scaled_x = 2*(x-(-1))/(1-(-1))-1;\n", LOG);
 
    // Test 0_3
 
@@ -1138,7 +1139,7 @@ void ScalingLayerTest::test_write_expression()
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "y = (x-(0))/1;\n", LOG);
+   assert_true(expression == "scaled_x = (x-(0))/1;\n", LOG);
 
    // Test 0_4
 
@@ -1148,7 +1149,7 @@ void ScalingLayerTest::test_write_expression()
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "y = x/(1);\n", LOG);
+   assert_true(expression == "scaled_x = x/(1);\n", LOG);
 
    // Test 1
 
@@ -1272,8 +1273,6 @@ void ScalingLayerTest::run_test_case()
    test_get_scaling_method_name();
 
 
-   // Display warning
-
    // Display messages
 
    test_get_display();
@@ -1297,8 +1296,6 @@ void ScalingLayerTest::run_test_case()
    test_set_mean();
    test_set_standard_deviation();
 
-
-   // Variables descriptives
 
    // Variables scaling and unscaling
 
