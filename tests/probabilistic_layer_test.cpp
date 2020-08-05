@@ -793,52 +793,6 @@ void ProbabilisticLayerTest::test_calculate_output_delta() // @todo
     assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_hidden_delta() // @todo
-{
-    cout << "test_calculate_hidden_delta\n";
-
-    ProbabilisticLayer probabilistic_layer_0(2,2);
-    ProbabilisticLayer probabilistic_layer_1(2,2);
-
-    probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
-    probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
-
-    Tensor<type,2> output_delta(1,2);
-    Tensor<type,2> hidden_delta(1,2);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs_0(1,2);
-    Tensor<type, 2> inputs_1(1,2);
-
-    // Test 1
-
-    probabilistic_layer_0.set_parameters_constant(1);
-    inputs_0.setConstant(1);
-
-    probabilistic_layer_1.set_parameters_constant(1);
-    inputs_1.setValues({{3,3}});
-
-    Layer::ForwardPropagation forward_propagation_0(1, &probabilistic_layer_0);
-    probabilistic_layer_0.forward_propagate(inputs_0, forward_propagation_0);
-
-    Layer::ForwardPropagation forward_propagation_1(1, &probabilistic_layer_1);
-    probabilistic_layer_1.forward_propagate(inputs_1, forward_propagation_1);
-
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
-
-    probabilistic_layer_1.calculate_output_delta(forward_propagation_1, output_gradient, output_delta);
-
-    probabilistic_layer_0.calculate_hidden_delta(&probabilistic_layer_1, {0,0} ,forward_propagation_0, output_delta, hidden_delta);
-
-    assert_true(hidden_delta.rank() == 2, LOG);
-    assert_true(hidden_delta.dimension(0) == 1, LOG);
-    assert_true(hidden_delta.dimension(1) == 2, LOG);
-
-    assert_true(abs(hidden_delta(0,0) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(hidden_delta(0,1) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
-}
-
 void ProbabilisticLayerTest::test_calculate_error_gradient() // @todo
 {
     cout << "test_calculate_error_gradient\n";
@@ -986,17 +940,15 @@ void ProbabilisticLayerTest::run_test_case()
    // Hidden delta
 
    test_calculate_output_delta();
-   test_calculate_hidden_delta();
+
+   // Gradient
+
+   test_calculate_error_gradient();
 
 
-//   // Gradient
+   //Write expression
 
-//   test_calculate_error_gradient();
-
-
-//   //Write expression
-
-//   test_write_expression();
+   test_write_expression();
 
    cout << "End of probabilistic layer test case.\n\n";
 }
