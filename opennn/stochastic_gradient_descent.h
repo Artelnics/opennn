@@ -140,6 +140,10 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
+   // Hardware use
+
+   const string& get_hardware_use() const;
+
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -175,6 +179,10 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
+   // Hardware use
+
+   void set_hardware_use(const string&);
+
    // Utilities
 
    void set_display_period(const Index&);
@@ -193,8 +201,6 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
-   
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -219,24 +225,6 @@ private:
    /// Boolean. Whether to apply Nesterov momentum.
 
    bool nesterov;
-
-   // Training parameters
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
 
    // Stopping criteria
 
@@ -266,7 +254,13 @@ private:
 
    bool reserve_selection_error_history;
 
+   /// Number of instances per training batch.
+
    Index batch_instances_number = 1000;
+
+   /// Hardware use.
+
+   string hardware_use;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
