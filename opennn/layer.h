@@ -255,8 +255,6 @@ public:
 
     // Get neurons number
 
-    virtual 
-
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
     virtual Index get_synaptic_weights_number() const;
