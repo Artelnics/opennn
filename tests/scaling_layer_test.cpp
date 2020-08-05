@@ -434,75 +434,66 @@ void ScalingLayerTest::test_set() // @todo
 {
    cout << "test_set\n";
 
-//   ScalingLayer sl;
+   ScalingLayer sl;
 
-//   // Test 1
+   // Test 1
 
-//   sl.set();
+   sl.set();
 
-//   assert_true(sl.get_descriptives().size() == 0, LOG);
+   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-//   Tensor<Descriptives, 1> descriptives(4);
-//   sl.set_descriptives(descriptives);
-//   sl.set();
+   Tensor<Descriptives, 1> descriptives(4);
+   sl.set_descriptives(descriptives);
+   sl.set();
 
-//   assert_true(sl.get_descriptives().size() == 0, LOG);
+   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-//   // Test 2
+   // Test 2
 
-//   sl.set();
+   Index new_inputs_number_ = 4;
+   sl.set(new_inputs_number_);
 
-//   Index new_inputs_number;
-//   sl.set(new_inputs_number);
+   assert_true(sl.get_descriptives().size()== 4, LOG);
+   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-//   assert_true(sl.get_descriptives().size()== 0, LOG);
-//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+   // Test 3
 
-//   Index new_inputs_number_ = 4;
-//   sl.set(new_inputs_number_);
+   sl.set();
 
-//   assert_true(sl.get_descriptives().size()== 4, LOG);
-//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+   Tensor<Index, 1> new_inputs_dimensions(1);
+   new_inputs_dimensions.setConstant(3);
+   sl.set(new_inputs_dimensions);
 
-//   // Test 3
+   assert_true(sl.get_descriptives().size()== 3, LOG);
+   assert_true(sl.get_scaling_methods().size()== 3, LOG);
 
-//   sl.set();
+   // Test 4
 
-//   Tensor<Index, 1> new_inputs_dimensions(1);
-//   new_inputs_dimensions.setConstant(3);
-//   sl.set(new_inputs_dimensions);
+   sl.set();
 
-//   assert_true(sl.get_descriptives().size()== 3, LOG);
-//   assert_true(sl.get_scaling_methods().size()== 3, LOG);
-//   assert_true(sl.get_input_variables_dimensions()(0) == 3, LOG);
+   Tensor<Descriptives, 1> descriptives_4;
+   sl.set(descriptives_4);
 
-//   // Test 4
+   assert_true(sl.get_descriptives().size()== 0, LOG);
+   assert_true(sl.get_scaling_methods().size()== 0, LOG);
 
-//   sl.set();
+   Tensor<Descriptives, 1> descriptives_4_(4);
+   sl.set(descriptives_4_);
 
-//   Tensor<Descriptives, 1> descriptives_4;
-//   sl.set(descriptives_4);
+   assert_true(sl.get_descriptives().size()== 4, LOG);
+   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-//   assert_true(sl.get_descriptives().size()== 0, LOG);
-//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+   // Test 5
 
-//   Tensor<Descriptives, 1> descriptives_4_(4);
-//   sl.set(descriptives_4_);
+   sl.set();
 
-//   assert_true(sl.get_descriptives().size()== 4, LOG);
-//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+   ScalingLayer sl5;
+   sl5.set(7);
 
-//   // Test 5
+   sl.set(sl5);
 
-//   sl.set();
-
-//   ScalingLayer sl5;
-//   sl5.set(7);
-
-//   sl.set(sl5);
-
-//   assert_true(sl.get_descriptives().size() == 7, LOG);
-//   assert_true(sl.get_scaling_methods().size() == 7, LOG);
+   assert_true(sl.get_descriptives().size() == 7, LOG);
+   assert_true(sl.get_scaling_methods().size() == 7, LOG);
 
 }
 
