@@ -65,37 +65,6 @@ void ScalingLayerTest::test_assignment_operator()
    assert_true(sl_2.get_neurons_number() == 0, LOG);
 }
 
-void ScalingLayerTest::test_get_dimensions()
-{
-   cout << "test_get_dimensions\n";
-/*
-   Tensor<Index, 1 > new_inputs_dimensions(1);
-   new_inputs_dimensions.setConstant(0);
-
-   ScalingLayer sl1;
-
-   sl1.set(new_inputs_dimensions);
-
-   // Test 0
-
-   assert_true(sl1.get_input_variables_dimensions().dimension(0) == 1, LOG);
-   assert_true(sl1.get_outputs_dimensions().dimension(0) == sl1.get_input_variables_dimensions().dimension(0), LOG);
-   assert_true(sl1.get_input_variables_dimensions()(0) == 0, LOG);
-   assert_true(sl1.get_outputs_dimensions()(0) == sl1.get_input_variables_dimensions()(0), LOG);
-
-   // Test 1
-
-   Tensor<Index, 1 > new_inputs_dimensions_1(3);
-   new_inputs_dimensions_1.setConstant(1);
-   sl1.set(new_inputs_dimensions_1);
-
-   assert_true(sl1.get_input_variables_dimensions().dimension(0) == 3, LOG);
-   assert_true(sl1.get_outputs_dimensions().dimension(0) == sl1.get_input_variables_dimensions().dimension(0), LOG);
-   assert_true(sl1.get_input_variables_dimensions()(1) == 1, LOG);
-   assert_true(sl1.get_outputs_dimensions()(1) == sl1.get_input_variables_dimensions()(1), LOG);
-*/
-}
-
 void ScalingLayerTest::test_get_inputs_number()
 {
    cout << "test_get_neurons_number\n";
@@ -378,7 +347,7 @@ void ScalingLayerTest::test_get_scaling_method()
    assert_true(sl.get_scaling_methods()(0) == 3, LOG);
 }
 
-void ScalingLayerTest::test_get_scaling_method_name()
+void ScalingLayerTest::test_write_scaling_methods()
 {
    cout << "test_get_scaling_method_name\n";
 
@@ -1016,79 +985,6 @@ void ScalingLayerTest::test_calculate_outputs()
    assert_true(abs(outputs_3(1) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ScalingLayerTest::test_calculate_minimum_maximum_output()
-{
-   cout << "test_calculate_minimum_maximum_output\n";
-
-   ScalingLayer scaling_layer;
-
-   Tensor<type, 2> inputs;
-
-   scaling_layer.set_display(false);
-
-   // Test 0
-
-   scaling_layer.set(1);
-   inputs.resize(1,1);
-   Tensor<type, 2> outputs_1 = scaling_layer.calculate_minimum_maximum_outputs(inputs);
-   assert_true(outputs_1.dimension(0) == 1, LOG);
-   assert_true(outputs_1.dimension(1) == 1, LOG);
-   assert_true(abs(outputs_1(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
-
-   // Test 1
-
-   scaling_layer.set(3);
-   Tensor<type, 2> minimums_maximums(3,4);
-   minimums_maximums.setValues({{-1,2,0,0},{-2,4,0,0},{-3,6,0,0}});
-
-   scaling_layer.set_descriptives_eigen(minimums_maximums);
-   inputs.resize(1,3);
-   inputs.setConstant(0);
-   outputs_1 = scaling_layer.calculate_minimum_maximum_outputs(inputs);
-
-   assert_true(outputs_1.dimension(0) == 1, LOG);
-   assert_true(outputs_1.dimension(1) == 3, LOG);
-   assert_true(abs(outputs_1(0) + static_cast<type>(0.333)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs_1(1) + static_cast<type>(0.333)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs_1(2) + static_cast<type>(0.333)) < static_cast<type>(1e-3), LOG);
-}
-
-void ScalingLayerTest::test_calculate_mean_standard_deviation_output()
-{
-   cout << "test_calculate_mean_standard_deviation_output\n";
-
-   ScalingLayer scaling_layer;
-
-   Tensor<type, 2> inputs;
-
-   scaling_layer.set_display(false);
-
-   // Test 0
-
-   scaling_layer.set(1);
-   inputs.resize(1,1);
-   Tensor<type, 2> outputs_1 = scaling_layer.calculate_mean_standard_deviation_outputs(inputs);
-   assert_true(outputs_1.dimension(0) == 1, LOG);
-   assert_true(outputs_1.dimension(1) == 1, LOG);
-   assert_true(abs(outputs_1(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
-
-   // Test 1
-
-   scaling_layer.set(2);
-   Tensor<type, 2> minimums_maximums(2,4);
-   minimums_maximums.setValues({{-1,2,-1,2},{-2,4,1,4}});
-
-   scaling_layer.set_descriptives_eigen(minimums_maximums);
-   inputs.resize(1,2);
-   inputs.setConstant(0);
-   outputs_1 = scaling_layer.calculate_mean_standard_deviation_outputs(inputs);
-
-   assert_true(outputs_1.dimension(0) == 1, LOG);
-   assert_true(outputs_1.dimension(1) == 2, LOG);
-   assert_true(abs(outputs_1(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs_1(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-}
-
 void ScalingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
@@ -1186,42 +1082,6 @@ void ScalingLayerTest::test_write_expression()
 }
 
 
-void ScalingLayerTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-
-   ScalingLayer  sl;
-
-   tinyxml2::XMLDocument* sld;
-
-   // Test
-
-//   sld = sl.to_XML();
-
-//   assert_true(sld != nullptr, LOG);
-
-//   delete sld;
-}
-
-
-void ScalingLayerTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-
-   ScalingLayer  sl;
-
-   tinyxml2::XMLDocument* sld;
-
-   // Test
-
-//   sld = sl.to_XML();
-
-//   sl.from_XML(*sld);
-
-//   delete sld;
-}
-
-
 void ScalingLayerTest::run_test_case()
 {
    cout << "Running scaling layer test case...\n";
@@ -1235,11 +1095,6 @@ void ScalingLayerTest::run_test_case()
    // Assignment operators methods
 
    test_assignment_operator();
-
-
-   // Get methods
-
-   test_get_dimensions();
 
 
    // Scaling layer architecture
@@ -1261,7 +1116,7 @@ void ScalingLayerTest::run_test_case()
    // Variables scaling and unscaling
 
    test_get_scaling_method();
-   test_get_scaling_method_name();
+   test_write_scaling_methods();
 
 
    // Display messages
@@ -1307,19 +1162,12 @@ void ScalingLayerTest::run_test_case()
    // Scaling and unscaling
 
    test_calculate_outputs();
-   test_calculate_minimum_maximum_output();
-   test_calculate_mean_standard_deviation_output();
 
 
    // Expression methods
 
    test_write_expression();
 
-
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
 
    cout << "End of scaling layer test case.\n\n";
 }

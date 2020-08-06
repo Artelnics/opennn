@@ -145,7 +145,7 @@ public:
 //   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 //   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 //   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
