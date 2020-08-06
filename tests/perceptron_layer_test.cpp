@@ -896,7 +896,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
 }
 
-void PerceptronLayerTest::test_calculate_activations() // @todo
+void PerceptronLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
@@ -1067,7 +1067,7 @@ void PerceptronLayerTest::test_calculate_activations() // @todo
    assert_true(abs(activations_2d(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_activations_derivatives() // @todo
+void PerceptronLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activations_derivatives\n";
 
@@ -1254,7 +1254,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives() // @todo
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_outputs() // @todo
+void PerceptronLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
@@ -1374,7 +1374,7 @@ void PerceptronLayerTest::test_calculate_outputs() // @todo
 
 }
 
-void PerceptronLayerTest::test_forward_propagate() // @todo
+void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
@@ -1430,7 +1430,7 @@ void PerceptronLayerTest::test_forward_propagate() // @todo
     assert_true(abs(forward_propagation_2.activations_derivatives_2d(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_output_delta() // @todo
+void PerceptronLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
@@ -1484,7 +1484,7 @@ void PerceptronLayerTest::test_calculate_output_delta() // @todo
 
 }
 
-void PerceptronLayerTest::test_calculate_hidden_delta() // @todo
+void PerceptronLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
@@ -1553,7 +1553,7 @@ void PerceptronLayerTest::test_calculate_hidden_delta() // @todo
     assert_true(abs(hidden_delta(0,1) - static_cast<type>(0.0036)) < static_cast<type>(1e-3), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_error_gradient() // @todo
+void PerceptronLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
