@@ -430,7 +430,7 @@ void ScalingLayerTest::test_get_display()
    assert_true(sl.get_display(), LOG);
 }
 
-void ScalingLayerTest::test_set() // @todo
+void ScalingLayerTest::test_set()
 {
    cout << "test_set\n";
 

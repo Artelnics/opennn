@@ -67,7 +67,7 @@ public:
    // Set methods
 
    void test_set();
-   void test_set_imputs_number();
+   void test_set_inputs_number();
    void test_set_neurons_number();
    void test_set_default();
 

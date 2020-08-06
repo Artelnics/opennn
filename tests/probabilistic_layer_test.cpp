@@ -427,7 +427,7 @@ void ProbabilisticLayerTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-void ProbabilisticLayerTest::test_calculate_combinations() // @todo
+void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 
@@ -455,7 +455,7 @@ void ProbabilisticLayerTest::test_calculate_combinations() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_activations() // @todo
+void ProbabilisticLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
@@ -554,7 +554,7 @@ void ProbabilisticLayerTest::test_calculate_activations() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_activations_derivatives() // @todo
+void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_derivatives_activations\n";
 
@@ -626,7 +626,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_outputs() // @todo
+void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
@@ -733,7 +733,7 @@ void ProbabilisticLayerTest::test_calculate_outputs() // @todo
 }
 
 
-void ProbabilisticLayerTest::test_forward_propagate() // @todo
+void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
@@ -761,7 +761,7 @@ void ProbabilisticLayerTest::test_forward_propagate() // @todo
     assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_output_delta() // @todo
+void ProbabilisticLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
@@ -793,7 +793,7 @@ void ProbabilisticLayerTest::test_calculate_output_delta() // @todo
     assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_error_gradient() // @todo
+void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
