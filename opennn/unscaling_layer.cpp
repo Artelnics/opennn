@@ -263,7 +263,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
         }
         else if(unscaling_methods[i] == MeanStandardDeviation)
         {
-            scaling_methods_strings[i] = "mean and standar deviation";
+            scaling_methods_strings[i] = "mean and standard deviation";
         }
         else if(unscaling_methods[i] == Logarithmic)
         {
