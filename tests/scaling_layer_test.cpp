@@ -569,10 +569,10 @@ void ScalingLayerTest::test_set_descriptives_eigen()
 
    sl.set_descriptives_eigen(descriptives_eigen);
 
-//   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
-//   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
-//   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
-//   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
 
    // Test 1
 
