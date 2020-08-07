@@ -87,42 +87,6 @@ const type& AdaptiveMomentEstimation::get_epsilon() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is
-/// written to the screen.
-
-const type& AdaptiveMomentEstimation::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
-/// to the screen.
-
-const type& AdaptiveMomentEstimation::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is
-/// written to the screen and the program exits.
-
-const type& AdaptiveMomentEstimation::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& AdaptiveMomentEstimation::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
 /// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
@@ -164,6 +128,12 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 }
 
 
+const string& AdaptiveMomentEstimation::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -184,13 +154,6 @@ void AdaptiveMomentEstimation::set_default()
     beta_2 = static_cast<type>(0.999);
 
     epsilon =static_cast<type>(1.e-7);
-
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
 
     // Stopping criteria
 
@@ -266,114 +229,6 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
     epsilon= new_epsilon;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void AdaptiveMomentEstimation::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void AdaptiveMomentEstimation::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
 }
 
 
@@ -468,28 +323,9 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void AdaptiveMomentEstimation::set_display_period(const Index& new_display_period)
+void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
 {
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
+    hardware_use = new_hardware_use;
 }
 
 
@@ -585,9 +421,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         const Index batches_number = training_batches.dimension(0);
 
         parameters_norm = l2_norm(optimization_data.parameters);
-
-        if(display && parameters_norm >= warning_parameters_norm)
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
         training_loss = 0;
         training_error = 0;
@@ -719,16 +552,18 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
+        else if(epoch == 0 || (epoch+1)%display_period == 0)
         {
-            cout << "Epoch " << epoch+1 << ";\n"
-                 << "Training error: " << training_error << "\n"
-                 << "Batch size: " << batch_instances_number << "\n"
-                 << loss_index_pointer->write_information()
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+            if(display)
+            {
+                cout << "Epoch " << epoch+1 << ";\n"
+                     << "Training error: " << training_error << "\n"
+                     << "Batch size: " << batch_instances_number << "\n"
+                     << loss_index_pointer->write_information()
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
-
+                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
+            }
         }
 
         // Update stuff
@@ -867,190 +702,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 }
 
 
-/// Serializes the training parameters, the stopping criteria and other user stuff
-/// concerning the gradient descent object.
-
-tinyxml2::XMLDocument* AdaptiveMomentEstimation::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Optimization algorithm
-
-    tinyxml2::XMLElement* root_element = document->NewElement("AdaptiveMomentEstimation");
-
-    document->InsertFirstChild(root_element);
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    // Return minimum selection error neural network
-
-    element = document->NewElement("ReturnMinimumSelectionErrorNN");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning parameters norm
-
-    element = document->NewElement("WarningParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning gradient norm
-
-    element = document->NewElement("WarningGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_gradient_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error parameters norm
-
-    element = document->NewElement("ErrorParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error gradient norm
-
-    element = document->NewElement("ErrorGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_gradient_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Loss goal
-
-    element = document->NewElement("LossGoal");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Maximum iterations number
-
-    element = document->NewElement("MaximumEpochsNumber");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Maximum time
-
-    element = document->NewElement("MaximumTime");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Reserve training error history
-
-    element = document->NewElement("ReserveTrainingErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Reserve selection error history
-
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    //Reserve selection error history
-
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Display period
-
-    element = document->NewElement("DisplayPeriod");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display_period;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Save period
-
-    element = document->NewElement("SavePeriod");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << save_period;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Neural network file name
-
-    element = document->NewElement("NeuralNetworkFileName");
-    root_element->LinkEndChild(element);
-
-    text = document->NewText(neural_network_file_name.c_str());
-    element->LinkEndChild(text);
-
-    // Display warnings
-
-    element = document->NewElement("Display");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    return document;
-}
-
-
 /// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1136,6 +787,19 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // End element
 
     file_stream.CloseElement();
 }
@@ -1288,6 +952,25 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
 }
 
 
@@ -1321,6 +1004,7 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
 
     optimization_data.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+
 }
 
 

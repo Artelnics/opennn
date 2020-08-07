@@ -629,9 +629,13 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        this->add_layer(long_short_term_memory_layer_pointer);
+
+        RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+
+        this->add_layer(recurrent_layer_pointer);
 
         for(Index i = 1; i < size-1; i++)
         {
@@ -1276,30 +1280,6 @@ type NeuralNetwork::calculate_parameters_norm() const
 }
 
 
-/// Returns a descriptives structure of the parameters vector.
-/// That contains the minimum, maximum, mean and standard deviation values of the parameters.
-
-Descriptives NeuralNetwork::calculate_parameters_descriptives() const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return descriptives(parameters);
-}
-
-
-/// Returns a histogram structure of the parameters vector.
-/// That will be used for looking at the distribution of the parameters.
-/// @param bins_number Number of bins in the histogram(10 by default).
-
-Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return histogram(parameters, bins_number);
-
-}
-
-
 /// Perturbate parameters of the neural network.
 /// @param perturbation Maximum distance of perturbation.
 
@@ -1345,7 +1325,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
-
     }
 }
 
@@ -1414,21 +1393,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
         throw logic_error(buffer.str());
     }
 
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_dimension = inputs.dimension(1);
-
-    //    if(inputs_size != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Dimension of inputs (" <<  << ") must be equal to number of inputs.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
 #endif
 
     const Index layers_number = get_layers_number();
@@ -1440,107 +1404,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
-    }
-
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    ///@todo check for convolutional
-
-    //    const Index inputs_dimensions_number = inputs.rank();
-
-    //    if(inputs_dimensions_number != 2)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_columns_number = inputs.dimension(1);
-
-    //    if(inputs_columns_number != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-#endif
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-    }
-
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
-                                                           const Tensor<type, 1>& parameters) const
-{
-    const Index batch_size = inputs.dimension(0);
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-#ifdef __OPENNN_DEBUG__
-
-    if(trainable_layers_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, cons Tensor<type, 1>&) const method.\n"
-               << "This neural network has not got any layer.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
-
-    Tensor<type, 2> outputs(batch_size, trainable_layers_pointers[0]->get_neurons_number());
-
-    if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
-    {
-        outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-    }
-
-    else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs.resize(batch_size, trainable_layers_pointers[i]->get_neurons_number());
-
-        if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
-        {
-            outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-        }
-        else outputs = trainable_layers_pointers[i]->calculate_outputs(outputs, trainable_layers_parameters[i]);
     }
 
     return outputs;
@@ -1579,78 +1442,6 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     }
 
     return directional_inputs;
-}
-
-
-/// Calculates the histogram of the outputs with random inputs.
-/// @param points_number Number of random instances to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-/// @todo
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
-{
-    const Index inputs_number = get_inputs_number();
-
-    Tensor<type, 2> inputs(points_number, inputs_number);
-    /*
-        if(scaling_layer_pointer == nullptr)
-        {
-        }
-        else
-        {
-            const Tensor<ScalingLayer::ScalingMethod, 1> scaling_methods = scaling_layer_pointer->get_scaling_methods();
-
-            for(Index i = 0; i < scaling_methods.size(); i++)
-            {
-                Tensor<type, 1> input_column(points_number, 0.0);
-
-                if(scaling_methods[i] == ScalingLayer::NoScaling)
-                {
-                    input_column.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-                }
-                else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
-                {
-                    type minimum = scaling_layer_pointer->get_descriptives(i).minimum;
-                    type maximum = scaling_layer_pointer->get_descriptives(i).maximum;
-
-                    input_column.setRandom(minimum, maximum);
-                }
-                else if(scaling_methods[i] == ScalingLayer::MeanStandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-                else if(scaling_methods[i] == ScalingLayer::StandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-
-                inputs.set_column(i, input_column, "");
-            }
-        }
-
-        const Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-        return histograms(outputs.to_matrix(), bins_number);
-    */
-    return Tensor<Histogram, 1>();
-}
-
-
-/// Calculates the histogram of the outputs with a matrix of given inputs.
-/// @param inputs Matrix of the data to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
-{
-    Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-    return histograms(outputs, bins_number);
 }
 
 
@@ -2386,16 +2177,12 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document;
-
-//    document->SaveFile(file_name.c_str());
-
-//    delete document;
 
     FILE *pFile;
-    errno_t err;
+//    errno_t err;
 
-    err = fopen_s(&pFile, file_name.c_str(), "w");
+//    err = fopen_s(&pFile, file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);
 
@@ -2428,52 +2215,6 @@ void NeuralNetwork::save_parameters(const string& file_name) const
     file << parameters << endl;
 
     // Close file
-
-    file.close();
-}
-
-
-/// Saves to a data file the parameters of a neural network object in binary format.
-/// @param binary_file_name Name of parameters data file.
-
-void NeuralNetwork::save_parameters_binary(const string& binary_file_name) const
-{
-    ofstream file(binary_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork template." << endl
-               << "void save_parameters_binary(const string) method." << endl
-               << "Cannot open data binary file." << endl;
-
-        throw logic_error(buffer.str());
-    }
-
-    const Tensor<type, 1> parameters = get_parameters();
-
-//    type value;
-    float value;
-
-    streamsize type_size = sizeof(float);
-    streamsize int_size = sizeof(size_t);
-
-    size_t inputs_number = get_inputs_number();
-    size_t perceptrons_number = get_first_perceptron_layer_pointer()->get_neurons_number();
-    size_t outputs_number = get_outputs_number();
-
-    file.write(reinterpret_cast<char*>(&inputs_number), int_size);
-    file.write(reinterpret_cast<char*>(&perceptrons_number), int_size);
-    file.write(reinterpret_cast<char*>(&outputs_number), int_size);
-
-
-    for(Index i = 0; i < parameters.size(); i++)
-    {
-        value = parameters(i);
-
-        file.write(reinterpret_cast<char*>(&value), type_size);
-    }
 
     file.close();
 }

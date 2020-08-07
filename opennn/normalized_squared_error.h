@@ -70,6 +70,8 @@ public:
 
     void set_default();
 
+    void set_data_set_pointer(DataSet* new_data_set_pointer);
+
    // Normalization coefficients 
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
@@ -105,7 +107,7 @@ public:
    string get_error_type() const;
    string get_error_type_text() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -124,7 +126,7 @@ private:
 
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/normalized_squared_error_mkl.h"
 #endif
 };
 

@@ -58,7 +58,7 @@ public:
    // Variables scaling and unscaling
 
    void test_get_unscaling_method();
-   void test_get_unscaling_method_name();
+   void test_write_scaling_methods();
 
    // Display messages
 
@@ -67,7 +67,7 @@ public:
    // Set methods
 
    void test_set();
-   void test_set_imputs_number();
+   void test_set_inputs_number();
    void test_set_neurons_number();
    void test_set_default();
 

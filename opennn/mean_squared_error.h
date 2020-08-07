@@ -65,9 +65,6 @@ public:
 
    // Error methods
 
-   float calculate_error(const DataSet& data_set_pointer,
-                        const NeuralNetwork& neural_network_pointer) const;
-
    void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
@@ -91,7 +88,7 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;   
+      
 
    void write_XML(tinyxml2::XMLPrinter &) const;
 
@@ -103,7 +100,8 @@ public:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/mean_squared_error_mkl.h"
+//    #include "../opennn_mkl/mean_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/mean_squared_error_mkl.h"
 #endif
 };
 

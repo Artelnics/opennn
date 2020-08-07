@@ -29,7 +29,6 @@ void ProbabilisticLayerTest::test_constructor()
 
    ProbabilisticLayer probabilistic_layer_l1;
 
-//   assert_true(probabilistic_layer_l1.get_input_variables_dimensions()(0) == 0, LOG);
    assert_true(probabilistic_layer_l1.get_inputs_number() == 0, LOG);
    assert_true(probabilistic_layer_l1.get_neurons_number() == 0, LOG);
    assert_true(probabilistic_layer_l1.get_biases_number() == 0, LOG);
@@ -281,7 +280,7 @@ void ProbabilisticLayerTest::test_set_default()
    probabilistic_layer.set_default();
 
    assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Softmax, LOG);
-   assert_true(abs(probabilistic_layer.get_decision_threshold() - 0.5) == static_cast<type>(1e-5), LOG);
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - 0.5) < static_cast<type>(1e-5), LOG);
    assert_true(probabilistic_layer.get_display() == true, LOG);
 
    probabilistic_layer.set_neurons_number(1);
@@ -428,7 +427,7 @@ void ProbabilisticLayerTest::test_set_display()
    cout << "test_set_display\n";
 }
 
-void ProbabilisticLayerTest::test_calculate_combinations() // @todo
+void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 
@@ -456,7 +455,7 @@ void ProbabilisticLayerTest::test_calculate_combinations() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_activations() // @todo
+void ProbabilisticLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
@@ -488,7 +487,7 @@ void ProbabilisticLayerTest::test_calculate_activations() // @todo
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG); // @todo -> should be 1
+   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
@@ -544,7 +543,7 @@ void ProbabilisticLayerTest::test_calculate_activations() // @todo
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 3, LOG);
    assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,1)) == 1, LOG);
+   assert_true(static_cast<Index>(activations_2d(0,1)) == 0, LOG);
    assert_true(static_cast<Index>(activations_2d(0,2)) == 0, LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
@@ -555,7 +554,7 @@ void ProbabilisticLayerTest::test_calculate_activations() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_activations_derivatives() // @todo
+void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_derivatives_activations\n";
 
@@ -627,7 +626,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives() // @todo
 
 }
 
-void ProbabilisticLayerTest::test_calculate_outputs() // @todo
+void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
@@ -734,7 +733,7 @@ void ProbabilisticLayerTest::test_calculate_outputs() // @todo
 }
 
 
-void ProbabilisticLayerTest::test_forward_propagate() // @todo
+void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
@@ -762,7 +761,7 @@ void ProbabilisticLayerTest::test_forward_propagate() // @todo
     assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_output_delta() // @todo
+void ProbabilisticLayerTest::test_calculate_output_delta()
 {
     cout << "test_calculate_output_delta\n";
 
@@ -794,52 +793,7 @@ void ProbabilisticLayerTest::test_calculate_output_delta() // @todo
     assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_hidden_delta() // @todo
-{
-    cout << "test_calculate_hidden_delta\n";
-
-    ProbabilisticLayer probabilistic_layer_0(2,2);
-    ProbabilisticLayer probabilistic_layer_1(2,2);
-
-    probabilistic_layer_0.set_activation_function(ProbabilisticLayer::Softmax);
-    probabilistic_layer_1.set_activation_function(ProbabilisticLayer::Softmax);
-
-    Tensor<type,2> output_delta(1,2);
-    Tensor<type,2> hidden_delta(1,2);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs_0(1,2);
-    Tensor<type, 2> inputs_1(1,2);
-
-    // Test 1
-
-    probabilistic_layer_0.set_parameters_constant(1);
-    inputs_0.setConstant(1);
-
-    probabilistic_layer_1.set_parameters_constant(1);
-    inputs_1.setValues({{3,3}});
-
-    Layer::ForwardPropagation forward_propagation_0(1, &probabilistic_layer_0);
-    probabilistic_layer_0.forward_propagate(inputs_0, forward_propagation_0);
-
-    Layer::ForwardPropagation forward_propagation_1(1, &probabilistic_layer_1);
-    probabilistic_layer_1.forward_propagate(inputs_1, forward_propagation_1);
-
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
-
-    probabilistic_layer_1.calculate_output_delta(forward_propagation_1, output_gradient, output_delta);
-
-    probabilistic_layer_0.calculate_hidden_delta(&probabilistic_layer_1, {0,0} ,forward_propagation_0, output_delta, hidden_delta);
-
-    assert_true(hidden_delta.rank() == 2, LOG);
-    assert_true(hidden_delta.dimension(0) == 1, LOG);
-    assert_true(hidden_delta.dimension(1) == 2, LOG);
-    assert_true(abs(hidden_delta(0,0) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(hidden_delta(0,1) - static_cast<type>(0.0572)) < static_cast<type>(1e-3), LOG);
-}
-
-void ProbabilisticLayerTest::test_calculate_error_gradient() // @todo
+void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
@@ -986,8 +940,6 @@ void ProbabilisticLayerTest::run_test_case()
    // Hidden delta
 
    test_calculate_output_delta();
-   test_calculate_hidden_delta();
-
 
    // Gradient
 
@@ -998,7 +950,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_write_expression();
 
-   cout << "End of probabilistic layer test case.\n";
+   cout << "End of probabilistic layer test case.\n\n";
 }
 
 

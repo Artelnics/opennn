@@ -54,14 +54,6 @@ ProbabilisticLayer::~ProbabilisticLayer()
 }
 
 
-Tensor<Index, 1> ProbabilisticLayer::get_input_variables_dimensions() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    return Tensor<Index, 1>(inputs_number);
-}
-
-
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
@@ -759,42 +751,13 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-/// This method processes the input to the probabilistic layer for a given set of parameters in order to obtain a set of outputs which
-/// can be interpreted as probabilities.
-/// This posprocessing is performed according to the probabilistic method to be used.
-/// @param inputs Set of inputs to the probabilistic layer
-/// @param parameters Set of parameters of the probabilistic layer
-
-Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
-{
-//    const Tensor<type, 2> biases = get_biases(parameters);
-
-//    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
-
-//    return calculate_outputs(inputs, biases, synaptic_weights);
-
-    return Tensor<type, 2>();
-}
-
-
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
 {
-//    cout << "Probabilistic forward propagate ------------------------------" << endl;
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_3d);
-
-
-//    cout << "Inputs: " << inputs << endl;
-
-//    cout << "Combinations : " << forward_propagation.combinations_2d << endl;
-//    cout << "activations_2d : " << forward_propagation.activations_2d << endl;
-//    cout << "activations_derivatives_3d : " << forward_propagation.activations_derivatives_3d << endl;
-
-//    cout << "--------------------------------------------------------------" << endl;
-
 }
 
 
@@ -943,58 +906,6 @@ void ProbabilisticLayer::insert_gradient(const BackPropagation& back_propagation
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
-
-/// Serializes the probabilistic layer object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* ProbabilisticLayer::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    tinyxml2::XMLElement* root_element = document->NewElement("ProbabilisticLayer");
-
-    document->InsertFirstChild(root_element);
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    // Activation function
-    {
-        element = document->NewElement("ActivationFunction");
-        root_element->LinkEndChild(element);
-
-        text = document->NewText(write_activation_function().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Probabilistic neurons number
-    {
-        element = document->NewElement("DecisionThreshold");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << decision_threshold;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Display
-    //   {
-    //      element = document->NewElement("Display");
-    //      root_element->LinkEndChild(element);
-
-    //      buffer.str("");
-    //      buffer << display;
-
-    //      text = document->NewText(buffer.str().c_str());
-    //      element->LinkEndChild(text);
-    //   }
-
-    return document;
-}
 
 
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.

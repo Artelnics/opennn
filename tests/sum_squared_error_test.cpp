@@ -957,7 +957,7 @@ void SumSquaredErrorTest::run_test_case()
 
     test_from_XML();
 
-   cout << "End of sum squared error test case.\n";
+   cout << "End of sum squared error test case.\n\n";
 }
 
 

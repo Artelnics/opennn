@@ -12,7 +12,15 @@
 #define EIGEN_USE_THREADS
 #endif
 
-//#define OPENNN_CUDA
+#pragma warning(push, 0)
+#include "tinyxml2.h"
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
+#pragma warning(pop)
+
+#ifdef OPENNN_MKL
+    #include "mkl.h"
+#endif
 
 #ifdef OPENNN_CUDA
 
@@ -26,44 +34,8 @@
 #endif
 
 
-#pragma warning(push, 0)
-#include "tinyxml2.h"
-#pragma warning(pop)
-
-
-#pragma warning(push, 0)
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
-#pragma warning(pop)
-
-
-// #define OPENNN_MKL
-
-#ifdef OPENNN_MKL
-    #include "mkl.h"
-#endif
-
-
-//#define EIGEN_USE_BLAS
-
-//#define EIGEN_TEST_NO_LONGDOUBLE
-
-//#define EIGEN_TEST_NO_COMPLEX
-
-//#define EIGEN_TEST_FUNC cxx11_tensor_cuda
-
-//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE Index
-
-//#define EIGEN_USE_GPU
-
-//#define EIGEN_MALLOC_ALREADY_ALIGNED 1
-
-//#define EIGEN_UNROLLING_LIMIT 1000
-
 namespace OpenNN
 {
-    typedef double type;
+    typedef float type;
 }
-
-
 

@@ -257,7 +257,7 @@ public:
 
    void set_neural_network_pointer(NeuralNetwork*);
 
-   void set_data_set_pointer(DataSet*);
+   virtual void set_data_set_pointer(DataSet*);
 
    void set_default();
 
@@ -340,7 +340,7 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -408,7 +408,7 @@ protected:
 
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/loss_index_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"
 #endif
 
 };

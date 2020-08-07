@@ -63,7 +63,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -129,7 +129,7 @@ public:
 
    
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -145,7 +145,7 @@ public:
 //   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 //   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 //   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;

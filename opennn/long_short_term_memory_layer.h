@@ -42,30 +42,6 @@ public:
                             Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear,
                             SoftPlus, SoftSign, HardSigmoid};
 
-    struct LongShortTermMemoryLayerForwardPropagation : ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit LongShortTermMemoryLayerForwardPropagation() : ForwardPropagation(){}
-
-        virtual ~LongShortTermMemoryLayerForwardPropagation() {}
-
-        void allocate()
-        {
-/*
-           const LongShortTermMemoryLayer* long_short_term_memory_layer
-                    = dynamic_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers[i]);
-
-           const Index neurons_number = long_short_term_memory_layer->get_neurons_number();
-
-           layers[i].combinations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations_2d = Tensor<type, 2>(batch_instances_number, neurons_number);
-           layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
-*/
-        }
-    };
-
-
    // Constructors
 
    explicit LongShortTermMemoryLayer();
@@ -249,10 +225,6 @@ public:
    void update_hidden_states(const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&,const Tensor<type, 1>&);
-
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&,
-                                     const Tensor<type, 3>&, const Tensor<type, 3>&);
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 

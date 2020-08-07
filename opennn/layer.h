@@ -230,10 +230,8 @@ public:
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
-    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
@@ -256,8 +254,6 @@ public:
                                         Tensor<type, 2>&) const {}
 
     // Get neurons number
-
-    virtual Tensor<Index, 1> get_input_variables_dimensions() const;
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
@@ -361,6 +357,33 @@ protected:
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
 
+    // activations 4d
+
+    void linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void logistic(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hyperbolic_tangent(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void symmetric_threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void rectified_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void scaled_exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_plus(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_sign(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hard_sigmoid(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+
+    void linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void logistic_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hyperbolic_tangent_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void threshold_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void symmetric_threshold_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void rectified_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void scaled_exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_plus_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void soft_sign_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void hard_sigmoid_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+
+
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
@@ -370,7 +393,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/layer_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/layer_mkl.h"
 #endif
 
 };

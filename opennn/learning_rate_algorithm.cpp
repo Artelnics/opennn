@@ -125,24 +125,6 @@ const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
 }
 
 
-/// Returns the learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-
-const type& LearningRateAlgorithm::get_warning_learning_rate() const
-{
-    return warning_learning_rate;
-}
-
-
-/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-
-const type& LearningRateAlgorithm::get_error_learning_rate() const
-{
-    return error_learning_rate;
-}
-
-
 /// Returns true if messages from this class can be displayed on the screen, or false if messages from
 /// this class can't be displayed on the screen.
 
@@ -191,10 +173,6 @@ void LearningRateAlgorithm::set_default()
 
     learning_rate_tolerance = static_cast<type>(1.0e-3);
     loss_tolerance = static_cast<type>(1.0e-3);
-
-    warning_learning_rate = 1.0e6;
-
-    error_learning_rate = 1.0e9;
 
     // UTILITIES
 
@@ -278,58 +256,6 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
     // Set loss tolerance
 
     learning_rate_tolerance = new_learning_rate_tolerance;
-}
-
-
-/// Sets a new learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-/// @param new_warning_learning_rate Warning learning rate value.
-
-void LearningRateAlgorithm::set_warning_learning_rate(const type& new_warning_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_learning_rate = new_warning_learning_rate;
-}
-
-
-/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-/// @param new_error_learning_rate Error learning rate value.
-
-void LearningRateAlgorithm::set_error_learning_rate(const type& new_error_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "void set_error_learning_rate(const type&) method.\n"
-               << "Error learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -866,97 +792,6 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-/// Returns a default string representation in XML-type format of the optimization algorithm object.
-/// This containts the training operators, the training parameters, stopping criteria and other stuff.
-
-tinyxml2::XMLDocument* LearningRateAlgorithm::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Optimization algorithm
-
-    tinyxml2::XMLElement* root_element = document->NewElement("LearningRateAlgorithm");
-
-    document->InsertFirstChild(root_element);
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    // Learning rate method
-    {
-        element = document->NewElement("LearningRateMethod");
-        root_element->LinkEndChild(element);
-
-        text = document->NewText(write_learning_rate_method().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Bracketing factor
-//   {
-//   element = document->NewElement("BracketingFactor");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << bracketing_factor;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Learning rate tolerance
-    {
-        element = document->NewElement("LearningRateTolerance");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << learning_rate_tolerance;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Warning learning rate
-//   {
-//   element = document->NewElement("WarningLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Error learning rate
-//   {
-//   element = document->NewElement("ErrorLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Display warnings
-//   {
-//   element = document->NewElement("Display");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << display;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    return document;
-}
-
-
 /// Serializes the learning rate algorithm object into a XML document of the TinyXML library
 /// without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -1043,44 +878,6 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_learning_rate_tolerance(new_learning_rate_tolerance);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Warning learning rate
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningLearningRate");
-
-        if(element)
-        {
-            const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_warning_learning_rate(new_warning_learning_rate);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Error learning rate
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorLearningRate");
-
-        if(element)
-        {
-            const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_error_learning_rate(new_error_learning_rate);
             }
             catch(const logic_error& e)
             {

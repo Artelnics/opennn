@@ -88,35 +88,11 @@ MeanSquaredError::~MeanSquaredError()
 }
 
 
-/// calculate_error
-
-float MeanSquaredError::calculate_error(const DataSet& data_set,
-                                        const NeuralNetwork& neural_network) const
-{
-    Tensor<type, 0> sum_squared_error;
-
-    const Tensor<type, 2>& targets = data_set.get_target_data();
-    const Tensor<type, 2>& outputs = neural_network.calculate_trainable_outputs(data_set.get_input_data());
-
-    Tensor<type, 2> errors(data_set.get_instances_number(), outputs.dimension(1));
-
-    errors = outputs - targets;
-
-    sum_squared_error = errors.contract(errors, SSE);
-
-    float mean_squared_error = sum_squared_error(0) / static_cast<type>(data_set.get_instances_number());
-
-    return mean_squared_error;
-}
-
-
-///
 
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
 {
-
     Tensor<type, 0> sum_squared_error;
 
     const Index batch_instances_number = batch.inputs_2d.dimension(0);
@@ -134,8 +110,6 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 
     back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_instances_number);
 }
-
-
 
 
 void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
@@ -161,8 +135,6 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     second_order_loss.error = error()/static_cast<type>(batch_instances_number);
 }
 
-
-// Gradient methods
 
 void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -210,7 +182,6 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 }
 
 
-// Hessian approximation
 
 void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
 {
@@ -243,37 +214,6 @@ string MeanSquaredError::get_error_type() const
 string MeanSquaredError::get_error_type_text() const
 {
     return "Mean squared error";
-}
-
-
-/// Serializes the mean squared error object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document->
-
-tinyxml2::XMLDocument* MeanSquaredError::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Mean squared error
-
-    tinyxml2::XMLElement* mean_squared_error_element = document->NewElement("MeanSquaredError");
-
-    document->InsertFirstChild(mean_squared_error_element);
-
-    // Display
-//   {
-//      tinyxml2::XMLElement* element = document->NewElement("Display");
-//      mean_squared_error_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-    return document;
 }
 
 

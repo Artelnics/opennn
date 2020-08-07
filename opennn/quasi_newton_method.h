@@ -181,16 +181,6 @@ public:
    const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
    string write_inverse_hessian_approximation_method() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
-
    const Index& get_epochs_number() const;
 
    // Stopping criteria
@@ -225,13 +215,13 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_warning_learning_rate(const type&);
+   
+   
+   
 
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
-   void set_error_learning_rate(const type&);
+   
+   
+   
 
    // Stopping criteria
 
@@ -286,7 +276,7 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -309,27 +299,27 @@ private:
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   type warning_parameters_norm;
+   
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   type warning_gradient_norm;
+   
 
    /// Learning rate value at wich a warning message is written to the screen.
 
-   type warning_learning_rate;
+   
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   type error_parameters_norm;
+   
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   type error_gradient_norm;
+   
 
    /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
-   type error_learning_rate;
+   
 
    // Stopping criteria
 
@@ -365,10 +355,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection;
-
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   
 
    // TRAINING HISTORY
 

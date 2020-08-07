@@ -156,6 +156,14 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
+  /// Data constructor
+
+  explicit Histogram(const Tensor<type, 1>&, const Index&);
+
+  /// Probabillities constructor
+
+  explicit Histogram(const Tensor<type, 1>&);
+
   /// Destructor.
 
   virtual ~Histogram();
@@ -179,6 +187,8 @@ struct Histogram
   Index calculate_bin(const type&) const;
 
   Index calculate_frequency(const type&) const;
+
+  void save(const string&) const;
 
   /// Positions of the bins in the histogram.
 
@@ -307,10 +317,6 @@ struct Histogram
      type weighted_mean(const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<Index, 1> maximal_indices();
      Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
-
-     // Sum mehtods
-
-     Tensor<type, 1> rows_sums(const Tensor<type,2>&);
 
      // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);

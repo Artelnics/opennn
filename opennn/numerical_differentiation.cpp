@@ -228,6 +228,27 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
 }
 
 
+Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) const
+{
+    const type eta = calculate_eta();
+
+    const Index n = x.size();
+
+    const auto& dimensions = x.dimensions();
+
+    Tensor<type, 4> h(dimensions);
+
+    Tensor<type, 4> y = x.abs();
+
+    for(Index i = 0; i < n; i++)
+    {
+        h(i) = sqrt(eta)*(1 + y(i));
+    }
+
+    return h;
+}
+
+
 Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
         const Tensor<type, 1>& y) const
 {
@@ -276,57 +297,6 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
     }
 
     return derivatives;
-}
-
-
-/// Serializes this numerical differentiation object into a XML document->
-
-tinyxml2::XMLDocument* NumericalDifferentiation::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    ostringstream buffer;
-
-    // Numerical differentiation
-
-    tinyxml2::XMLElement* root_element = document->NewElement("NumericalDifferentiation");
-
-    document->InsertFirstChild(root_element);
-
-    // Numerical differentiation method
-
-    element = document->NewElement("NumericalDifferentiationMethod");
-    root_element->LinkEndChild(element);
-
-    text = document->NewText(write_numerical_differentiation_method().c_str());
-    element->LinkEndChild(text);
-
-    // Precision digits
-
-    element = document->NewElement("PrecisionDigits");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << precision_digits;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Display
-
-    element = document->NewElement("Display");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    return document;
 }
 
 

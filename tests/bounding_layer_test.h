@@ -86,11 +86,6 @@ public:
 
    void test_write_expression();
 
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();

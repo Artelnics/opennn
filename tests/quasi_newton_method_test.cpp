@@ -470,7 +470,7 @@ void QuasiNewtonMethodTest::run_test_case() // @todo
    test_to_XML();
    test_load();
 
-   cout << "End of quasi-Newton method test case.\n";
+   cout << "End of quasi-Newton method test case.\n\n";
 }
 
 
