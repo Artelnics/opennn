@@ -196,40 +196,6 @@ void BoundingLayerTest::test_calculate_outputs()
 }
 
 
-void BoundingLayerTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-
-   BoundingLayer bounding_layer;
-
-   tinyxml2::XMLDocument* document;
-
-   // Test
-
-//   document = bounding_layer.to_XML();
-
-//   assert_true(document != nullptr, LOG);
-
-//   delete document;
-}
-
-
-void BoundingLayerTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-
-   BoundingLayer bounding_layer;
-
-   tinyxml2::XMLDocument* blep;
-
-   // Test
-
-//   blep = bounding_layer.to_XML();
-
-//   bounding_layer.from_XML(*blep);
-}
-
-
 void BoundingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
@@ -302,11 +268,6 @@ void BoundingLayerTest::run_test_case()
 
    test_write_expression();
 
-
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
 
    cout << "End of bounding layer test case.\n\n";
 }
