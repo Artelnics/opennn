@@ -119,14 +119,6 @@ public:
 
    // Get methods
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
@@ -170,11 +162,11 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
+   
+   
 
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
+   
+   
 
    // Stopping criteria
 
@@ -225,7 +217,7 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -254,19 +246,19 @@ private:
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   type warning_parameters_norm;
+   
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   type warning_gradient_norm;
+   
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   type error_parameters_norm;
+   
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   type error_gradient_norm;
+   
 
 
    // Stopping criteria

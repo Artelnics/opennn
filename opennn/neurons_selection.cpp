@@ -244,7 +244,7 @@ void NeuronsSelection::set_default()
 
 
 /// Sets the number of the maximum hidden perceptrons for the neurons selection algorithm.
-/// @param new_maximum_neurons Number of maximum hidden perceptrons.
+/// @param new_maximum_neurons Maximum number of hidden perceptrons.
 
 void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
 {
@@ -279,7 +279,7 @@ void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
 
 
 /// Sets the number of the minimum hidden perceptrons for the neurons selection algorithm.
-/// @param new_minimum_neurons Number of minimum hidden perceptrons.
+/// @param new_minimum_neurons Minimum number of hidden perceptrons.
 
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {

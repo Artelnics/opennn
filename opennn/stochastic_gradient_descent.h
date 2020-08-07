@@ -44,20 +44,20 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct SGDOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit SGDOptimizationData()
         {
         }
 
-        explicit OptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        explicit SGDOptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
             set(new_stochastic_gradient_descent_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~SGDOptimizationData() {}
 
         void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
@@ -129,13 +129,6 @@ public:
    const type& get_momentum() const;
    const bool& get_nesterov() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_loss_goal() const;
@@ -146,6 +139,10 @@ public:
 
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
+
+   // Hardware use
+
+   const string& get_hardware_use() const;
 
    // Set methods
 
@@ -168,12 +165,7 @@ public:
    void set_momentum(const type&);
    void set_nesterov(const bool&);
 
-   // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -187,6 +179,10 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
+   // Hardware use
+
+   void set_hardware_use(const string&);
+
    // Utilities
 
    void set_display_period(const Index&);
@@ -194,7 +190,7 @@ public:
    // Training methods
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                         OptimizationData& optimization_data);
+                         SGDOptimizationData& optimization_data);
 
    Results perform_training();
 
@@ -205,8 +201,6 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
-   tinyxml2::XMLDocument* to_XML() const;
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -231,24 +225,6 @@ private:
    /// Boolean. Whether to apply Nesterov momentum.
 
    bool nesterov;
-
-   // Training parameters
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
 
    // Stopping criteria
 
@@ -278,14 +254,20 @@ private:
 
    bool reserve_selection_error_history;
 
+   /// Number of instances per training batch.
+
    Index batch_instances_number = 1000;
+
+   /// Hardware use.
+
+   string hardware_use;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
 #endif
 };
 

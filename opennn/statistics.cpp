@@ -209,6 +209,88 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
 }
 
 
+// Data constructor
+/// @param data Numerical data.
+/// @param number_of_bins Number of bins.
+
+Histogram::Histogram(const Tensor<type, 1>& data,
+                     const Index& number_of_bins)
+{
+    const float data_maximum = maximum(data);
+    const float data_minimum = minimum(data);
+    const float step = (data_maximum - data_minimum) / number_of_bins;
+
+
+    Tensor<type, 1> new_centers(number_of_bins);
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        new_centers(i) = data_minimum + (0.5 * step) + (step * i);
+    }
+
+    Tensor<Index, 1> new_frequencies(number_of_bins);
+    new_frequencies.setZero();
+
+    type value;
+    Index corresponding_bin;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        value = data(i);
+        corresponding_bin = int((value - data_minimum) / step);
+
+        new_frequencies(corresponding_bin)++;
+    }
+
+    centers = new_centers;
+    frequencies = new_frequencies;
+}
+
+
+// Probabilities constructor
+/// @param data Numerical probabilities data.
+
+Histogram::Histogram(const Tensor<type, 1>& probability_data)
+{
+    const size_t number_of_bins = 10;
+    float data_maximum = maximum(probability_data);
+    const float data_minimum = 0.0;
+
+    if(data_maximum > 1)
+    {
+        data_maximum = 100.0;
+    }
+    else
+    {
+        data_maximum = 1.0;
+    }
+
+    const float step = (data_maximum - data_minimum) / number_of_bins;
+
+
+    Tensor<type, 1> new_centers(number_of_bins);
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        new_centers(i) = data_minimum + (0.5 * step) + (step * i);
+    }
+
+    Tensor<Index, 1> new_frequencies(number_of_bins);
+    new_frequencies.setZero();
+
+    type value;
+    Index corresponding_bin;
+
+    for(Index i = 0; i < probability_data.dimension(0); i++)
+    {
+        value = probability_data(i);
+        corresponding_bin = int((value - data_minimum) / step);
+
+        new_frequencies(corresponding_bin)++;
+    }
+
+    centers = new_centers;
+    frequencies = new_frequencies;
+}
+
 /// Returns the number of bins in the histogram.
 
 Index Histogram::get_bins_number() const
@@ -393,6 +475,24 @@ Index Histogram::calculate_frequency(const type&value) const
     const Index frequency = frequencies[bin_number];
 
     return frequency;
+}
+
+
+void Histogram::save(const string& histogram_file_name) const
+{
+    const Index number_of_bins = centers.dimension(0);
+    ofstream histogram_file(histogram_file_name);
+
+
+    histogram_file << "centers,frequencies" << endl;
+    for(Index i = 0; i < number_of_bins; i++)
+    {
+        histogram_file << centers(i) << ",";
+        histogram_file << frequencies(i) << endl;
+    }
+
+    histogram_file.close();
+
 }
 
 
@@ -3554,24 +3654,6 @@ type weighted_mean(const Tensor<type, 1>& vector, const Tensor<type, 1>& weights
 
     return mean;
 }
-
-
-Tensor<type, 1> rows_sums(const Tensor<type,2>& matrix)
-{
-    const Index rows_number = matrix.dimension(0);
-
-    Tensor<type,1> rows_sums(rows_number);
-    rows_sums.setZero();
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        Tensor<type,0> current_sum = matrix.chip(i,0).sum();
-        rows_sums(i) = current_sum();
-    }
-
-    return rows_sums;
-}
-
 
 /// Returns the number of nans in the vector.
 /// @param vector Vector to count the NANs

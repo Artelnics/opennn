@@ -81,7 +81,7 @@ struct RegressionResults
 
 /// The enum CorrelationType represents the different correlations methods provided by OpenNN.
 
-enum CorrelationType{Linear_correlation, Logistic_correlation, Logarithmic_correlation, Exponential_correlation, Power_correlation, KarlPearson_correlation, OneWayAnova_correlation};
+enum CorrelationType{Linear_correlation, Logistic_correlation, Logarithmic_correlation, Exponential_correlation, Power_correlation, KarlPearson_correlation, OneWayAnova_correlation, Gauss_correlation};
 
 
 /// This structure provides the results obtained from the correlations.
@@ -145,6 +145,11 @@ struct CorrelationResults
 
     type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
 
+    //Gauss
+
+//    type logistic(const type&, const type&, const type&);
+
+
     // Time series correlation methods
 
     Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
@@ -189,6 +194,8 @@ struct CorrelationResults
 
     CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
+    CorrelationResults gauss_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
     // Covariance
 
     type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -221,7 +228,7 @@ struct CorrelationResults
     Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
     Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
 
-    vector<int> get_indices_sorted(Tensor<type,1>& );
+    vector<int> get_indices_sorted(Tensor<type, 1>&);
 }
 
 

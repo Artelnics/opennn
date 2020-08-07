@@ -598,7 +598,7 @@ void MeanSquaredErrorTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of mean squared error test case.\n";
+   cout << "End of mean squared error test case.\n\n";
 }
 
 

@@ -32,17 +32,9 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Data set
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
-
-        data_set.set_thread_pool_device(thread_pool_device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -55,10 +47,7 @@ int main(void)
         Tensor<string, 1> scaling_inputs_methods(input_variables_number);
         scaling_inputs_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_inputs_methods);
-
-//        cout<<data_set.get_data();
-//        system("pause");
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         // Neural network
 
@@ -68,7 +57,6 @@ int main(void)
         architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -81,7 +69,6 @@ int main(void)
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
@@ -92,13 +79,24 @@ int main(void)
 
         adam->set_loss_goal(1.0e-3);
         adam->set_maximum_epochs_number(10000);
-        adam->set_display_period(100);
+        adam->set_display_period(1000);
 
         training_strategy.perform_training();
 
         // Testing analysis
 
-        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
+        Tensor<type, 2> inputs(3,4);
+
+        inputs.setValues({{5.1,3.5,1.4,0.2},
+                          {6.4,3.2,4.5,1.5},
+                          {6.3,2.7,4.9,1.8}});
+
+
+        cout<<neural_network.calculate_outputs(inputs);
+
+        system("pause");
+/*
+        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -111,14 +109,16 @@ int main(void)
 
         // Save results
 
+
         data_set.save("../data/data_set.xml");
+        cout << "1" << endl;
 
         neural_network.save("../data/neural_network.xml");
-
+cout << "2" << endl;
         training_strategy.save("../data/training_strategy.xml");
-
+cout << "3" << endl;
         cout << "Bye" << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

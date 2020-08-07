@@ -87,42 +87,6 @@ const bool& StochasticGradientDescent::get_nesterov() const
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is
-/// written to the screen.
-
-const type& StochasticGradientDescent::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
-/// to the screen.
-
-const type& StochasticGradientDescent::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is
-/// written to the screen and the program exits.
-
-const type& StochasticGradientDescent::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& StochasticGradientDescent::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
 /// Returns the goal value for the loss.
 /// This is used as a stopping criterion when training a neural network
 
@@ -164,6 +128,12 @@ const bool& StochasticGradientDescent::get_reserve_selection_error_history() con
 }
 
 
+const string& StochasticGradientDescent::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -182,14 +152,6 @@ void StochasticGradientDescent::set_default()
     initial_decay = 0;
     momentum = 0;
     nesterov = false;
-
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
 
     // Stopping criteria
 
@@ -320,118 +282,6 @@ void StochasticGradientDescent::set_reserve_all_training_history(const bool& new
 }
 
 
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void StochasticGradientDescent::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void StochasticGradientDescent::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void StochasticGradientDescent::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void StochasticGradientDescent::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
@@ -524,6 +374,12 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 }
 
 
+void StochasticGradientDescent::set_hardware_use(const string& new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
+
+
 /// Sets a new number of iterations between the training showing progress.
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
@@ -550,7 +406,7 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 
 
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
-                      OptimizationData& optimization_data)
+                      SGDOptimizationData& optimization_data)
 {
 
 
@@ -636,8 +492,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
     NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
 
@@ -654,7 +508,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Optimization algorithm
 
-    OptimizationData optimization_data(this);
+    SGDOptimizationData optimization_data(this);
 
     Tensor<type, 1> minimal_selection_parameters;
     type minimum_selection_error = numeric_limits<type>::max();
@@ -694,8 +548,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
 
-//            forward_propagation.print();
-
             // Loss
 
             loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
@@ -708,8 +560,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             update_iteration(back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
-
-
         }
 
         // Loss
@@ -931,190 +781,6 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-/// Serializes the training parameters, the stopping criteria and other user stuff
-/// concerning the gradient descent object.
-
-tinyxml2::XMLDocument* StochasticGradientDescent::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Optimization algorithm
-
-    tinyxml2::XMLElement* root_element = document->NewElement("StochasticGradientDescent");
-
-    document->InsertFirstChild(root_element);
-
-    tinyxml2::XMLElement* element = nullptr;
-    tinyxml2::XMLText* text = nullptr;
-
-    // Return minimum selection error neural network
-
-    element = document->NewElement("ReturnMinimumSelectionErrorNN");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning parameters norm
-
-    element = document->NewElement("WarningParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning gradient norm
-
-    element = document->NewElement("WarningGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << warning_gradient_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error parameters norm
-
-    element = document->NewElement("ErrorParametersNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_parameters_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Error gradient norm
-
-    element = document->NewElement("ErrorGradientNorm");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << error_gradient_norm;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Loss goal
-
-    element = document->NewElement("LossGoal");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << training_loss_goal;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Maximum iterations number
-
-    element = document->NewElement("MaximumEpochsNumber");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Maximum time
-
-    element = document->NewElement("MaximumTime");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Reserve training error history
-
-    element = document->NewElement("ReserveTrainingErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Reserve selection error history
-
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    //Reserve selection error history
-
-    element = document->NewElement("ReserveSelectionErrorHistory");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Display period
-
-    element = document->NewElement("DisplayPeriod");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display_period;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Save period
-
-    element = document->NewElement("SavePeriod");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << save_period;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Neural network file name
-
-    element = document->NewElement("NeuralNetworkFileName");
-    root_element->LinkEndChild(element);
-
-    text = document->NewText(neural_network_file_name.c_str());
-    element->LinkEndChild(text);
-
-    // Display warnings
-
-    element = document->NewElement("Display");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << display;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    return document;
-}
-
-
 /// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1211,6 +877,20 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // End element
+
     file_stream.CloseElement();
 }
 
@@ -1389,6 +1069,25 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
             }
             catch(const logic_error& e)
             {

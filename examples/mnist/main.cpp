@@ -178,19 +178,11 @@ int main(void)
             training_file.close();
         }
 
-        // Device
-
-        const int n = 4;
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-
         // Data set
 
         bool display_data_set = false;
 
         DataSet data_set("../data/mnist_train.csv",',',true);
-        data_set.set_thread_pool_device(thread_pool_device);
 
         data_set.set_input();
         data_set.set_column_use(0, DataSet::VariableUse::Target);
@@ -198,12 +190,13 @@ int main(void)
         const Tensor<string, 1> unused_variables = data_set.unuse_constant_columns();
 
         const Index input_variables_number = data_set.get_input_variables_number();
+
         const Index target_variables_number = data_set.get_target_variables_number();
 
         Tensor<string, 1> scaling_methods(input_variables_number);
         scaling_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_methods);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
 
         data_set.unuse_constant_columns();
 

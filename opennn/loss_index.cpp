@@ -794,24 +794,6 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 }
 
 
-/// Serializes a default error term object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document.
-
-tinyxml2::XMLDocument* LossIndex::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Error term
-
-    tinyxml2::XMLElement* root_element = document->NewElement("LossIndex");
-
-    document->InsertFirstChild(root_element);
-
-    return document;
-}
-
 
 /// Serializes a default error term object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -845,7 +827,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     set_regularization_method(new_regularization_method);
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralParametersNormWeight");
+    const tinyxml2::XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
 
     if(element)
     {
@@ -894,7 +876,7 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     // Regularization weight
 
-    file_stream.OpenElement("NeuralParametersNormWeight");
+    file_stream.OpenElement("RegularizationWeight");
 
     buffer.str("");
     buffer << regularization_weight;

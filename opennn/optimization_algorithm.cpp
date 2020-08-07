@@ -300,37 +300,6 @@ void OptimizationAlgorithm::check() const
 }
 
 
-/// Serializes a default optimization algorithm object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document.
-
-tinyxml2::XMLDocument* OptimizationAlgorithm::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Nueral network outputs integrals
-
-    tinyxml2::XMLElement* optimization_algorithm_element = document->NewElement("OptimizationAlgorithm");
-
-    document->InsertFirstChild(optimization_algorithm_element);
-
-    // Display
-    {
-        tinyxml2::XMLElement* element = document->NewElement("Display");
-        optimization_algorithm_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << display;
-
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    return document;
-}
-
-
 /// Serializes the optimization algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -418,11 +387,11 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 

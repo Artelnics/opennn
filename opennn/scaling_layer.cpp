@@ -63,12 +63,6 @@ ScalingLayer::~ScalingLayer()
 }
 
 
-Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
-{
-    return input_variables_dimensions;
-}
-
-
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;
@@ -853,9 +847,10 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
-                        const type slope = static_cast<type>(2)/descriptives(j).standard_deviation;
 
-                        const type intercept = -static_cast<type>(2)*descriptives(j).mean/descriptives(j).standard_deviation;
+                        const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
+
+                        const type intercept = -static_cast<type>(1)*descriptives(j).mean/descriptives(j).standard_deviation;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
 
@@ -960,76 +955,6 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
             }
         }
         */
-    }
-
-    return outputs;
-}
-
-
-/// Calculates the outputs from the scaling layer with the minimum and maximum method for a set of inputs.
-/// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons.
-
-Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<type, 2>& inputs) const
-{
-    const Index points_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(points_number, neurons_number);
-
-    for(Index j = 0; j < neurons_number; j++)
-    {
-        if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class\n"
-                     << "Tensor<type, 1> calculate_minimum_maximum_outputs(Tensor<type, 1>&) const method.\n"
-                     << "Minimum and maximum values of variable " << j << " are equal.\n"
-                     << "Those inputs won't be scaled.\n";
-            }
-
-            outputs(j) = inputs(j);
-        }
-        else
-        {
-            outputs(j) = static_cast<type>(2.0)*(inputs(j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
-        }
-    }
-
-    return outputs;
-}
-
-
-/// Calculates the outputs from the scaling layer with the mean and standard deviation method for a set of inputs.
-/// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons.
-
-Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<type, 2>& inputs) const
-{
-    const Index points_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(points_number, neurons_number);
-
-    for(Index j = 0; j < neurons_number; j++)
-    {
-//        if(abs(descriptives(j).standard_deviation) < numeric_limits<type>::min())
-
-        if(abs(descriptives[j].standard_deviation) < numeric_limits<type>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class.\n"
-                     << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
-                     << "Standard deviation of variable " << j << " is zero.\n"
-                     << "Those variables won't be scaled.\n";
-            }
-
-            outputs(j) = inputs(j);
-        }
-        else
-        {
-            outputs(j) = (inputs(j) - descriptives(j).mean)/descriptives(j).standard_deviation;
-        }
     }
 
     return outputs;
@@ -1276,102 +1201,6 @@ string ScalingLayer::write_expression_python() const
     buffer << "\n\treturn outputs;\n" << endl;
 
     return buffer.str();
-}
-
-
-
-/// Serializes the scaling layer object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element.
-
-tinyxml2::XMLDocument* ScalingLayer::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    ostringstream buffer;
-
-    tinyxml2::XMLElement* scaling_layer_element = document->NewElement("ScalingLayer");
-
-    document->InsertFirstChild(scaling_layer_element);
-
-    // Scaling neurons number
-
-    tinyxml2::XMLElement* size_element = document->NewElement("ScalingNeuronsNumber");
-    scaling_layer_element->LinkEndChild(size_element);
-
-    const Index neurons_number = get_neurons_number();
-
-    buffer.str("");
-    buffer << neurons_number;
-
-    tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
-    size_element->LinkEndChild(size_text);
-
-    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        tinyxml2::XMLElement* scaling_neuron_element = document->NewElement("ScalingNeuron");
-        scaling_neuron_element->SetAttribute("Index", static_cast<unsigned>(i+1));
-
-        scaling_layer_element->LinkEndChild(scaling_neuron_element);
-
-        // Minimum
-
-        tinyxml2::XMLElement* minimum_element = document->NewElement("Minimum");
-        scaling_neuron_element->LinkEndChild(minimum_element);
-
-        buffer.str("");
-        buffer << descriptives(i).minimum;
-
-        tinyxml2::XMLText* minimum_text = document->NewText(buffer.str().c_str());
-        minimum_element->LinkEndChild(minimum_text);
-
-        // Maximum
-
-        tinyxml2::XMLElement* maximum_element = document->NewElement("Maximum");
-        scaling_neuron_element->LinkEndChild(maximum_element);
-
-        buffer.str("");
-        buffer << descriptives(i).maximum;
-
-        tinyxml2::XMLText* maximum_text = document->NewText(buffer.str().c_str());
-        maximum_element->LinkEndChild(maximum_text);
-
-        // Mean
-
-        tinyxml2::XMLElement* mean_element = document->NewElement("Mean");
-        scaling_neuron_element->LinkEndChild(mean_element);
-
-        buffer.str("");
-        buffer << descriptives(i).mean;
-
-        tinyxml2::XMLText* mean_text = document->NewText(buffer.str().c_str());
-        mean_element->LinkEndChild(mean_text);
-
-        // Standard deviation
-
-        tinyxml2::XMLElement* standard_deviation_element = document->NewElement("StandardDeviation");
-        scaling_neuron_element->LinkEndChild(standard_deviation_element);
-
-        buffer.str("");
-        buffer << descriptives(i).standard_deviation;
-
-        tinyxml2::XMLText* standard_deviation_text = document->NewText(buffer.str().c_str());
-        standard_deviation_element->LinkEndChild(standard_deviation_text);
-
-        // Scaling method
-
-        tinyxml2::XMLElement* scaling_method_element = document->NewElement("ScalingMethod");
-        scaling_neuron_element->LinkEndChild(scaling_method_element);
-
-        buffer.str("");
-        buffer << scaling_methods_string(i);
-
-        tinyxml2::XMLText* scaling_method_text = document->NewText(buffer.str().c_str());
-        scaling_method_element->LinkEndChild(scaling_method_text);
-    }
-
-    return document;
 }
 
 

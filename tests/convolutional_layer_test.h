@@ -28,6 +28,8 @@ public:
 
    virtual ~ConvolutionalLayerTest();
 
+   void test_eigen_convolution();
+
    // Constructor and destructor methods
 
    void test_constructor();
@@ -49,9 +51,7 @@ public:
 
    // Combinations
 
-   void test_calculate_image_convolution();
-
-   void test_calculate_convolutions();
+   void test_calculate_combinations();
 
    // Activation
 
@@ -64,6 +64,10 @@ public:
   void test_calculate_outputs();
 
   void test_insert_padding();
+
+  // Forward propagate
+
+  void test_forward_propagate();
 
   // Unit testing methods
 

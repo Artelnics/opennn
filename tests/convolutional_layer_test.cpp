@@ -20,6 +20,61 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 {
 }
 
+void ConvolutionalLayerTest::test_eigen_convolution()
+{
+
+    cout << "test_eigen_convolution\n";
+
+
+    // Convolution 2D, 1 channel
+    Tensor<float, 2> input(3, 3);
+    Tensor<float, 2> kernel(2, 2);
+    Tensor<float, 2> output;
+    input.setRandom();
+    kernel.setRandom();
+
+
+    Eigen::array<ptrdiff_t, 2> dims = {0, 1};
+
+    output = input.convolve(kernel, dims);
+
+    assert_true(output.dimension(0) == 2, LOG);
+    assert_true(output.dimension(1) == 2, LOG);
+
+    // Convolution 2D, 3 channels
+    Tensor<float, 3> input_2(5, 5, 3);
+    Tensor<float, 3> kernel_2(2, 2, 3);
+    Tensor<float, 3> output_2;
+    input_2.setRandom();
+    kernel_2.setRandom();
+
+    Eigen::array<ptrdiff_t, 3> dims_2 = {0, 1, 2};
+
+    output_2 = input_2.convolve(kernel_2, dims_2);
+
+    assert_true(output_2.dimension(0) == 4, LOG);
+    assert_true(output_2.dimension(1) == 4, LOG);
+    assert_true(output_2.dimension(2) == 1, LOG);
+
+
+    // Convolution 2D, 3 channels, multiple images, 1 kernel
+    Tensor<float, 4> input_3(5, 5, 3, 10);
+    Tensor<float, 3> kernel_3(2, 2, 3);
+    Tensor<float, 4> output_3;
+    input_3.setRandom();
+    kernel_3.setRandom();
+
+    Eigen::array<ptrdiff_t, 3> dims_3 = {0, 1, 2};
+
+    output_3 = input_3.convolve(kernel_3, dims_3);
+
+    assert_true(output_3.dimension(0) == 4, LOG);
+    assert_true(output_3.dimension(1) == 4, LOG);
+    assert_true(output_3.dimension(2) == 1, LOG);
+    assert_true(output_3.dimension(3) == 10, LOG);
+
+}
+
 
 void ConvolutionalLayerTest::test_constructor()
 {
@@ -49,6 +104,7 @@ void ConvolutionalLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
 }
+
 
 void ConvolutionalLayerTest::test_get_parameters() // @todo
 {
@@ -170,20 +226,25 @@ void ConvolutionalLayerTest::test_set() // @todo
 {
     cout << "test_set\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    // Test
+    // Test
 
-//    convolutional_layer.set({3,256,300}, {10,5,5});
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({256, 128, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 2});
 
-//    assert_true(convolutional_layer.is_empty() == false &&
-//                convolutional_layer.get_inputs_channels_number() == 3 &&
-//                convolutional_layer.get_inputs_rows_number() == 256 &&
-//                convolutional_layer.get_inputs_columns_number() == 300 &&
-//                convolutional_layer.get_filters_number() == 10 &&
-//                convolutional_layer.get_filters_channels_number() == 3 &&
-//                convolutional_layer.get_filters_rows_number() == 5 &&
-//                convolutional_layer.get_filters_columns_number() == 5, LOG);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    assert_true(convolutional_layer.is_empty() == false &&
+                convolutional_layer.get_inputs_channels_number() == 3 &&
+                convolutional_layer.get_inputs_rows_number() == 256 &&
+                convolutional_layer.get_inputs_columns_number() == 128 &&
+                convolutional_layer.get_filters_number() == 2 &&
+                convolutional_layer.get_filters_channels_number() == 3 &&
+                convolutional_layer.get_filters_rows_number() == 2 &&
+                convolutional_layer.get_filters_columns_number() == 2, LOG);
 }
 
 
@@ -226,566 +287,207 @@ void ConvolutionalLayerTest::test_set_parameters()
 }
 
 
-void ConvolutionalLayerTest::test_calculate_image_convolution() // @todo
+void ConvolutionalLayerTest::test_calculate_combinations()
 {
-   cout << "test_calculate_image_convolution\n";
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
+    Tensor<type, 1> biases;
+    Tensor<type, 4> combinations;
 
-//   ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//   Tensor<type, 2> image;
-//   Tensor<type, 2> filter;
-//   Tensor<type, 2> convolutions;
-//   Tensor<type, 2> result;
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 3);
+    biases.resize(3);
+    combinations.resize(4, 4, 3, 1);
 
-//   // Test
+    inputs.setConstant(1.f);
+    kernels.setConstant(1.f/12);
 
-//   image.set(Tensor<Index, 1>({1, 2, 2}));
+    biases(0) = 0.f;
+    biases(1) = 1.f;
+    biases(2) = 2.f;
 
-//   filter.set(Tensor<Index, 1>({1, 1, 1}));
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.calculate_combinations(inputs, combinations);
 
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
+//    cout << combinations << endl;
+//    cout << combinations(0, 0, 0, 0) << endl;
+//    cout << combinations(0, 0, 1, 0) << endl;
+//    cout << combinations(0, 0, 2, 0) << endl;
 
-//   result.set(2, 2);
+    assert_true(abs(combinations(0, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(0, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(1, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(2, 3, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 0, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 1, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 2, 0, 0) - 1.f) < 1e-6f &&
+                abs(combinations(3, 3, 0, 0) - 1.f) < 1e-6f, LOG);
 
-//   assert_true(convolutions == result, LOG);
+    assert_true(abs(combinations(0, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(0, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(1, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(2, 3, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 0, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 1, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 2, 1, 0) - 2.f) < 1e-6f &&
+                abs(combinations(3, 3, 1, 0) - 2.f) < 1e-6f, LOG);
 
-//   // Test
+    assert_true(abs(combinations(0, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(0, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(1, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(2, 3, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 0, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 1, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 2, 2, 0) - 3.f) < 1e-6f &&
+                abs(combinations(3, 3, 2, 0) - 3.f) < 1e-6f, LOG);
 
-//   image.set({1, 5, 5}, 1.0);
 
-//   filter.set(Tensor<Index, 1>({1, 2, 2}));
-//   filter(0,0,0) = 1;
-//   filter(0,0,1) = 2;
-//   filter(0,1,0) = 3;
-//   filter(0,1,1) = 4;
+    inputs.resize(5, 5, 2, 2);
+    kernels.resize(2, 2, 2, 2);
+    combinations.resize(4, 4, 2, 2);
+    biases.resize(2);
 
-//   convolutional_layer.set_row_stride(1);
-//   convolutional_layer.set_column_stride(1);
+    inputs.chip(0, 3).setConstant(1.f);
+    inputs.chip(1, 3).setConstant(2.f);
+    kernels.setConstant(1.f/8);
+    biases(0) = 1.0;
+    biases(1) = 2.0;
 
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.calculate_combinations(inputs, combinations);
 
-//   result.set(4, 4, 10);
+    assert_true(combinations(0, 0, 0, 0) == 2.f &&
+                combinations(0, 1, 0, 0) == 2.f &&
+                combinations(0, 2, 0, 0) == 2.f &&
+                combinations(0, 3, 0, 0) == 2.f &&
+                combinations(1, 0, 0, 0) == 2.f &&
+                combinations(1, 1, 0, 0) == 2.f &&
+                combinations(1, 2, 0, 0) == 2.f &&
+                combinations(1, 3, 0, 0) == 2.f &&
+                combinations(2, 0, 0, 0) == 2.f &&
+                combinations(2, 1, 0, 0) == 2.f &&
+                combinations(2, 2, 0, 0) == 2.f &&
+                combinations(2, 3, 0, 0) == 2.f &&
+                combinations(3, 0, 0, 0) == 2.f &&
+                combinations(3, 1, 0, 0) == 2.f &&
+                combinations(3, 2, 0, 0) == 2.f &&
+                combinations(3, 3, 0, 0) == 2.f &&
+                combinations(0, 0, 1, 0) == 3.f &&
+                combinations(0, 1, 1, 0) == 3.f &&
+                combinations(0, 2, 1, 0) == 3.f &&
+                combinations(0, 3, 1, 0) == 3.f &&
+                combinations(1, 0, 1, 0) == 3.f &&
+                combinations(1, 1, 1, 0) == 3.f &&
+                combinations(1, 2, 1, 0) == 3.f &&
+                combinations(1, 3, 1, 0) == 3.f &&
+                combinations(2, 0, 1, 0) == 3.f &&
+                combinations(2, 1, 1, 0) == 3.f &&
+                combinations(2, 2, 1, 0) == 3.f &&
+                combinations(2, 3, 1, 0) == 3.f &&
+                combinations(3, 0, 1, 0) == 3.f &&
+                combinations(3, 1, 1, 0) == 3.f &&
+                combinations(3, 2, 1, 0) == 3.f &&
+                combinations(3, 3, 1, 0) == 3.f &&
+                combinations(0, 0, 0, 1) == 3.f &&
+                combinations(0, 1, 0, 1) == 3.f &&
+                combinations(0, 2, 0, 1) == 3.f &&
+                combinations(0, 3, 0, 1) == 3.f &&
+                combinations(1, 0, 0, 1) == 3.f &&
+                combinations(1, 1, 0, 1) == 3.f &&
+                combinations(1, 2, 0, 1) == 3.f &&
+                combinations(1, 3, 0, 1) == 3.f &&
+                combinations(2, 0, 0, 1) == 3.f &&
+                combinations(2, 1, 0, 1) == 3.f &&
+                combinations(2, 2, 0, 1) == 3.f &&
+                combinations(2, 3, 0, 1) == 3.f &&
+                combinations(3, 0, 0, 1) == 3.f &&
+                combinations(3, 1, 0, 1) == 3.f &&
+                combinations(3, 2, 0, 1) == 3.f &&
+                combinations(3, 3, 0, 1) == 3.f &&
+                combinations(0, 0, 1, 1) == 4.f &&
+                combinations(0, 1, 1, 1) == 4.f &&
+                combinations(0, 2, 1, 1) == 4.f &&
+                combinations(0, 3, 1, 1) == 4.f &&
+                combinations(1, 0, 1, 1) == 4.f &&
+                combinations(1, 1, 1, 1) == 4.f &&
+                combinations(1, 2, 1, 1) == 4.f &&
+                combinations(1, 3, 1, 1) == 4.f &&
+                combinations(2, 0, 1, 1) == 4.f &&
+                combinations(2, 1, 1, 1) == 4.f &&
+                combinations(2, 2, 1, 1) == 4.f &&
+                combinations(2, 3, 1, 1) == 4.f &&
+                combinations(3, 0, 1, 1) == 4.f &&
+                combinations(3, 1, 1, 1) == 4.f &&
+                combinations(3, 2, 1, 1) == 4.f &&
+                combinations(3, 3, 1, 1) == 4.f, LOG);
 
-//   assert_true(convolutions == result, LOG);
-
-//   // Test
-
-//   image.set(Tensor<Index, 1>({1,4,4}));
-//   image(0,0,0) = 3;
-//   image(0,0,1) = 4;
-//   image(0,0,2) = 4;
-//   image(0,0,3) = 4;
-//   image(0,1,0) = 5;
-//   image(0,1,1) = 1;
-//   image(0,1,2) = 4;
-//   image(0,1,3) = 1;
-//   image(0,2,0) = 4;
-//   image(0,2,1) = 5;
-//   image(0,2,2) = 4;
-//   image(0,2,3) = 4;
-//   image(0,3,0) = 5;
-//   image(0,3,1) = 5;
-//   image(0,3,2) = 2;
-//   image(0,3,3) = 1;
-
-//   filter.set(Tensor<Index, 1>({1, 2, 2}));
-//   filter(0,0,0) = 1;
-//   filter(0,0,1) = 2;
-//   filter(0,1,0) = 3;
-//   filter(0,1,1) = 4;
-
-//   convolutional_layer.set_row_stride(1);
-//   convolutional_layer.set_column_stride(1);
-
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
-
-//   result.set(3, 3);
-//   result(0,0) = 30;
-//   result(0,1) = 31;
-//   result(0,2) = 28;
-//   result(1,0) = 39;
-//   result(1,1) = 40;
-//   result(1,2) = 34;
-//   result(2,0) = 49;
-//   result(2,1) = 36;
-//   result(2,2) = 22;
-
-//   assert_true(convolutions == result, LOG);
-
-//   // Test
-
-//   image.set(Tensor<Index, 1>({1,5,4}));
-//   image(0,0,0) = 3;
-//   image(0,0,1) = 4;
-//   image(0,0,2) = 4;
-//   image(0,0,3) = 4;
-//   image(0,1,0) = 5;
-//   image(0,1,1) = 1;
-//   image(0,1,2) = 4;
-//   image(0,1,3) = 1;
-//   image(0,2,0) = 4;
-//   image(0,2,1) = 5;
-//   image(0,2,2) = 4;
-//   image(0,2,3) = 4;
-//   image(0,3,0) = 5;
-//   image(0,3,1) = 5;
-//   image(0,3,2) = 2;
-//   image(0,3,3) = 1;
-//   image(0,4,0) = 1;
-//   image(0,4,1) = 1;
-//   image(0,4,2) = 1;
-//   image(0,4,3) = 1;
-
-//   filter.set(Tensor<Index, 1>({1, 2, 2}));
-//   filter(0,0,0) = 1;
-//   filter(0,0,1) = 0;
-//   filter(0,1,0) = 0;
-//   filter(0,1,1) = 1;
-
-//   convolutional_layer.set_row_stride(3);
-//   convolutional_layer.set_column_stride(1);
-
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
-
-//   result.set(2, 3);
-//   result(0,0) = 4;
-//   result(0,1) = 8;
-//   result(0,2) = 5;
-//   result(1,0) = 6;
-//   result(1,1) = 6;
-//   result(1,2) = 3;
-
-//   assert_true(convolutions == result, LOG);
-
-//   // Test
-
-//   image.set(Tensor<Index, 1>({1,5,4}));
-//   image(0,0,0) = 3;
-//   image(0,0,1) = 4;
-//   image(0,0,2) = 4;
-//   image(0,0,3) = 4;
-//   image(0,1,0) = 5;
-//   image(0,1,1) = 1;
-//   image(0,1,2) = 4;
-//   image(0,1,3) = 1;
-//   image(0,2,0) = 4;
-//   image(0,2,1) = 5;
-//   image(0,2,2) = 4;
-//   image(0,2,3) = 4;
-//   image(0,3,0) = 5;
-//   image(0,3,1) = 5;
-//   image(0,3,2) = 2;
-//   image(0,3,3) = 1;
-//   image(0,4,0) = 1;
-//   image(0,4,1) = 1;
-//   image(0,4,2) = 1;
-//   image(0,4,3) = 1;
-
-//   filter.set(Tensor<Index, 1>({1, 2, 2}));
-//   filter(0,0,0) = 1;
-//   filter(0,0,1) = 0;
-//   filter(0,1,0) = 0;
-//   filter(0,1,1) = 1;
-
-//   convolutional_layer.set_row_stride(1);
-//   convolutional_layer.set_column_stride(2);
-
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
-
-//   result.set(4, 2);
-//   result(0,0) = 4;
-//   result(0,1) = 5;
-//   result(1,0) = 10;
-//   result(1,1) = 8;
-//   result(2,0) = 9;
-//   result(2,1) = 5;
-//   result(3,0) = 6;
-//   result(3,1) = 3;
-
-//   assert_true(convolutions == result, LOG);
-
-//   // Test
-
-//   image.set(Tensor<Index, 1>({2,3,3}));
-//   image(0,0,0) = 1;
-//   image(0,0,1) = 2;
-//   image(0,0,2) = 3;
-//   image(0,1,0) = 1;
-//   image(0,1,1) = 3;
-//   image(0,1,2) = 2;
-//   image(0,2,0) = 3;
-//   image(0,2,1) = 2;
-//   image(0,2,2) = 1;
-//   image(1,0,0) = 1;
-//   image(1,0,1) = 1;
-//   image(1,0,2) = 1;
-//   image(1,1,0) = 2;
-//   image(1,1,1) = 2;
-//   image(1,1,2) = 2;
-//   image(1,2,0) = 3;
-//   image(1,2,1) = 3;
-//   image(1,2,2) = 3;
-
-//   filter.set(Tensor<Index, 1>({2, 2, 2}));
-//   filter(0,0,0) = 1;
-//   filter(0,0,1) = 2;
-//   filter(0,1,0) = 2;
-//   filter(0,1,1) = 1;
-//   filter(1,0,0) = 1;
-//   filter(1,0,1) = 3;
-//   filter(1,1,0) = 3;
-//   filter(1,1,1) = 1;
-
-//   convolutional_layer.set_row_stride(1);
-//   convolutional_layer.set_column_stride(1);
-
-//   convolutions = convolutional_layer.calculate_image_convolution(image, filter);
-
-//   result.set(2, 2);
-//   result(0,0) = 22;
-//   result(0,1) = 28;
-//   result(1,0) = 35;
-//   result(1,1) = 32;
-
-//   assert_true(convolutions == result, LOG);
 }
 
 
-void ConvolutionalLayerTest::test_calculate_convolutions() // @todo
-{
-    cout << "test_calculate_convolutions\n";
-
-//    ConvolutionalLayer convolutional_layer;
-
-//    Tensor<type, 2> images;
-//    Tensor<type, 2> filters;
-//    Tensor<type, 2> convolutions;
-//    Tensor<type, 2> alt_convolutions;
-//    Tensor<type, 2> result;
-
-//    // Test
-
-//    images.set(Tensor<Index, 1>({2,2,3,3}));
-//    images(0,0,0,0) = 1.1;
-//    images(0,0,0,1) = 1.1;
-//    images(0,0,0,2) = 1.1;
-//    images(0,0,1,0) = 1.1;
-//    images(0,0,1,1) = 1.1;
-//    images(0,0,1,2) = 1.1;
-//    images(0,0,2,0) = 1.1;
-//    images(0,0,2,1) = 1.1;
-//    images(0,0,2,2) = 1.1;
-//    images(0,1,0,0) = 1.2;
-//    images(0,1,0,1) = 1.2;
-//    images(0,1,0,2) = 1.2;
-//    images(0,1,1,0) = 1.2;
-//    images(0,1,1,1) = 1.2;
-//    images(0,1,1,2) = 1.2;
-//    images(0,1,2,0) = 1.2;
-//    images(0,1,2,1) = 1.2;
-//    images(0,1,2,2) = 1.2;
-//    images(1,0,0,0) = 2.1;
-//    images(1,0,0,1) = 2.1;
-//    images(1,0,0,2) = 2.1;
-//    images(1,0,1,0) = 2.1;
-//    images(1,0,1,1) = 2.1;
-//    images(1,0,1,2) = 2.1;
-//    images(1,0,2,0) = 2.1;
-//    images(1,0,2,1) = 2.1;
-//    images(1,0,2,2) = 2.1;
-//    images(1,1,0,0) = 2.2;
-//    images(1,1,0,1) = 2.2;
-//    images(1,1,0,2) = 2.2;
-//    images(1,1,1,0) = 2.2;
-//    images(1,1,1,1) = 2.2;
-//    images(1,1,1,2) = 2.2;
-//    images(1,1,2,0) = 2.2;
-//    images(1,1,2,1) = 2.2;
-//    images(1,1,2,2) = 2.2;
-
-//    filters.set({2,2,2,2}, 0);
-
-//    convolutional_layer.set({2,3,3}, {2,2,2});
-//    convolutional_layer.set_synaptic_weights(filters);
-//    convolutional_layer.set_biases({-1,1});
-
-//    convolutions = convolutional_layer.calculate_combinations(images);
-
-//    alt_convolutions.set(Tensor<Index, 1>({2,2,2,2}));
-//    convolutional_layer.calculate_combinations(images, alt_convolutions);
-
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = -1;
-//    result(0,0,0,1) = -1;
-//    result(0,0,1,0) = -1;
-//    result(0,0,1,1) = -1;
-//    result(0,1,0,0) = 1;
-//    result(0,1,0,1) = 1;
-//    result(0,1,1,0) = 1;
-//    result(0,1,1,1) = 1;
-//    result(1,0,0,0) = -1;
-//    result(1,0,0,1) = -1;
-//    result(1,0,1,0) = -1;
-//    result(1,0,1,1) = -1;
-//    result(1,1,0,0) = 1;
-//    result(1,1,0,1) = 1;
-//    result(1,1,1,0) = 1;
-//    result(1,1,1,1) = 1;
-
-//    assert_true(convolutions == result, LOG);
-//    assert_true(alt_convolutions == result, LOG);
-
-//    // Test
-
-//    images.set(Tensor<Index, 1>({2,1,6,6}));
-//    images(0,0,0,0) = 1;
-//    images(0,0,0,1) = 2;
-//    images(0,0,0,2) = 3;
-//    images(0,0,0,3) = 4;
-//    images(0,0,0,4) = 5;
-//    images(0,0,0,5) = 6;
-//    images(0,0,1,0) = 7;
-//    images(0,0,1,1) = 8;
-//    images(0,0,1,2) = 9;
-//    images(0,0,1,3) = 10;
-//    images(0,0,1,4) = 11;
-//    images(0,0,1,5) = 12;
-//    images(0,0,2,0) = 13;
-//    images(0,0,2,1) = 14;
-//    images(0,0,2,2) = 15;
-//    images(0,0,2,3) = 16;
-//    images(0,0,2,4) = 17;
-//    images(0,0,2,5) = 18;
-//    images(0,0,3,0) = 19;
-//    images(0,0,3,1) = 20;
-//    images(0,0,3,2) = 21;
-//    images(0,0,3,3) = 22;
-//    images(0,0,3,4) = 23;
-//    images(0,0,3,5) = 24;
-//    images(0,0,4,0) = 25;
-//    images(0,0,4,1) = 26;
-//    images(0,0,4,2) = 27;
-//    images(0,0,4,3) = 28;
-//    images(0,0,4,4) = 29;
-//    images(0,0,4,5) = 30;
-//    images(0,0,5,0) = 31;
-//    images(0,0,5,1) = 32;
-//    images(0,0,5,2) = 33;
-//    images(0,0,5,3) = 34;
-//    images(0,0,5,4) = 35;
-//    images(0,0,5,5) = 36;
-//    images(1,0,0,0) = -1;
-//    images(1,0,0,1) = -2;
-//    images(1,0,0,2) = -3;
-//    images(1,0,0,3) = -4;
-//    images(1,0,0,4) = -5;
-//    images(1,0,0,5) = -6;
-//    images(1,0,1,0) = -7;
-//    images(1,0,1,1) = -8;
-//    images(1,0,1,2) = -9;
-//    images(1,0,1,3) = -10;
-//    images(1,0,1,4) = -11;
-//    images(1,0,1,5) = -12;
-//    images(1,0,2,0) = -13;
-//    images(1,0,2,1) = -14;
-//    images(1,0,2,2) = -15;
-//    images(1,0,2,3) = -16;
-//    images(1,0,2,4) = -17;
-//    images(1,0,2,5) = -18;
-//    images(1,0,3,0) = -19;
-//    images(1,0,3,1) = -20;
-//    images(1,0,3,2) = -21;
-//    images(1,0,3,3) = -22;
-//    images(1,0,3,4) = -23;
-//    images(1,0,3,5) = -24;
-//    images(1,0,4,0) = -25;
-//    images(1,0,4,1) = -26;
-//    images(1,0,4,2) = -27;
-//    images(1,0,4,3) = -28;
-//    images(1,0,4,4) = -29;
-//    images(1,0,4,5) = -30;
-//    images(1,0,5,0) = -31;
-//    images(1,0,5,1) = -32;
-//    images(1,0,5,2) = -33;
-//    images(1,0,5,3) = -34;
-//    images(1,0,5,4) = -35;
-//    images(1,0,5,5) = -36;
-
-//    filters.set(Tensor<Index, 1>({3,1,3,3}));
-//    filters(0,0,0,0) = 1;
-//    filters(0,0,0,1) = 1;
-//    filters(0,0,0,2) = 1;
-//    filters(0,0,1,0) = 1;
-//    filters(0,0,1,1) = 1;
-//    filters(0,0,1,2) = 1;
-//    filters(0,0,2,0) = 1;
-//    filters(0,0,2,1) = 1;
-//    filters(0,0,2,2) = 1;
-//    filters(1,0,0,0) = 2;
-//    filters(1,0,0,1) = 2;
-//    filters(1,0,0,2) = 2;
-//    filters(1,0,1,0) = 2;
-//    filters(1,0,1,1) = 2;
-//    filters(1,0,1,2) = 2;
-//    filters(1,0,2,0) = 2;
-//    filters(1,0,2,1) = 2;
-//    filters(1,0,2,2) = 2;
-//    filters(2,0,0,0) = 3;
-//    filters(2,0,0,1) = 3;
-//    filters(2,0,0,2) = 3;
-//    filters(2,0,1,0) = 3;
-//    filters(2,0,1,1) = 3;
-//    filters(2,0,1,2) = 3;
-//    filters(2,0,2,0) = 3;
-//    filters(2,0,2,1) = 3;
-//    filters(2,0,2,2) = 3;
-
-//    convolutional_layer.set({1,6,6}, {3,3,3});
-//    convolutional_layer.set_synaptic_weights(filters);
-//    convolutional_layer.set_biases({-1,0,1});
-
-//    convolutions = convolutional_layer.calculate_combinations(images);
-
-//    alt_convolutions.set(Tensor<Index, 1>({2,3,4,4}));
-//    convolutional_layer.calculate_combinations(images, alt_convolutions);
-
-//    result.set(Tensor<Index, 1>({2,3,4,4}));
-//    result(0,0,0,0) = 71;
-//    result(0,0,0,1) = 80;
-//    result(0,0,0,2) = 89;
-//    result(0,0,0,3) = 98;
-//    result(0,0,1,0) = 125;
-//    result(0,0,1,1) = 134;
-//    result(0,0,1,2) = 143;
-//    result(0,0,1,3) = 152;
-//    result(0,0,2,0) = 179;
-//    result(0,0,2,1) = 188;
-//    result(0,0,2,2) = 197;
-//    result(0,0,2,3) = 206;
-//    result(0,0,3,0) = 233;
-//    result(0,0,3,1) = 242;
-//    result(0,0,3,2) = 251;
-//    result(0,0,3,3) = 260;
-//    result(0,1,0,0) = 144;
-//    result(0,1,0,1) = 162;
-//    result(0,1,0,2) = 180;
-//    result(0,1,0,3) = 198;
-//    result(0,1,1,0) = 252;
-//    result(0,1,1,1) = 270;
-//    result(0,1,1,2) = 288;
-//    result(0,1,1,3) = 306;
-//    result(0,1,2,0) = 360;
-//    result(0,1,2,1) = 378;
-//    result(0,1,2,2) = 396;
-//    result(0,1,2,3) = 414;
-//    result(0,1,3,0) = 468;
-//    result(0,1,3,1) = 486;
-//    result(0,1,3,2) = 504;
-//    result(0,1,3,3) = 522;
-//    result(0,2,0,0) = 217;
-//    result(0,2,0,1) = 244;
-//    result(0,2,0,2) = 271;
-//    result(0,2,0,3) = 298;
-//    result(0,2,1,0) = 379;
-//    result(0,2,1,1) = 406;
-//    result(0,2,1,2) = 433;
-//    result(0,2,1,3) = 460;
-//    result(0,2,2,0) = 541;
-//    result(0,2,2,1) = 568;
-//    result(0,2,2,2) = 595;
-//    result(0,2,2,3) = 622;
-//    result(0,2,3,0) = 703;
-//    result(0,2,3,1) = 730;
-//    result(0,2,3,2) = 757;
-//    result(0,2,3,3) = 784;
-//    result(1,0,0,0) = -73;
-//    result(1,0,0,1) = -82;
-//    result(1,0,0,2) = -91;
-//    result(1,0,0,3) = -100;
-//    result(1,0,1,0) = -127;
-//    result(1,0,1,1) = -136;
-//    result(1,0,1,2) = -145;
-//    result(1,0,1,3) = -154;
-//    result(1,0,2,0) = -181;
-//    result(1,0,2,1) = -190;
-//    result(1,0,2,2) = -199;
-//    result(1,0,2,3) = -208;
-//    result(1,0,3,0) = -235;
-//    result(1,0,3,1) = -244;
-//    result(1,0,3,2) = -253;
-//    result(1,0,3,3) = -262;
-//    result(1,1,0,0) = -144;
-//    result(1,1,0,1) = -162;
-//    result(1,1,0,2) = -180;
-//    result(1,1,0,3) = -198;
-//    result(1,1,1,0) = -252;
-//    result(1,1,1,1) = -270;
-//    result(1,1,1,2) = -288;
-//    result(1,1,1,3) = -306;
-//    result(1,1,2,0) = -360;
-//    result(1,1,2,1) = -378;
-//    result(1,1,2,2) = -396;
-//    result(1,1,2,3) = -414;
-//    result(1,1,3,0) = -468;
-//    result(1,1,3,1) = -486;
-//    result(1,1,3,2) = -504;
-//    result(1,1,3,3) = -522;
-//    result(1,2,0,0) = -215;
-//    result(1,2,0,1) = -242;
-//    result(1,2,0,2) = -269;
-//    result(1,2,0,3) = -296;
-//    result(1,2,1,0) = -377;
-//    result(1,2,1,1) = -404;
-//    result(1,2,1,2) = -431;
-//    result(1,2,1,3) = -458;
-//    result(1,2,2,0) = -539;
-//    result(1,2,2,1) = -566;
-//    result(1,2,2,2) = -593;
-//    result(1,2,2,3) = -620;
-//    result(1,2,3,0) = -701;
-//    result(1,2,3,1) = -728;
-//    result(1,2,3,2) = -755;
-//    result(1,2,3,3) = -782;
-
-//    assert_true(convolutions == result, LOG);
-//    assert_true(alt_convolutions == result, LOG);
-}
-
-
-void ConvolutionalLayerTest::test_calculate_activations() // @todo
+void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
 
-//    ConvolutionalLayer convolutional_layer;
-//    Tensor<type, 2> inputs;
-//    Tensor<type, 2> activations_2d;
-//    Tensor<type, 2> result;
+    ConvolutionalLayer convolutional_layer;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> activations_4d;
+    Tensor<type, 4> result;
 
-//    // Test
+    result.resize(2, 2, 2, 2);
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    // Test
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Threshold);
+    inputs.resize(2,2,2,2);
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    activations_2d = convolutional_layer.calculate_activations(inputs);
+    activations_4d.resize(2,2,2,2);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Threshold);
+    convolutional_layer.calculate_activations(inputs, activations_4d);
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
+//    result.resize(2,2,2,2);
 //    result(0,0,0,0) = 0;
 //    result(0,0,0,1) = 0;
 //    result(0,0,1,0) = 0;
@@ -803,75 +505,108 @@ void ConvolutionalLayerTest::test_calculate_activations() // @todo
 //    result(1,1,1,0) = 1;
 //    result(1,1,1,1) = 1;
 
-//    assert_true(activations_2d == result, LOG);
+
+    assert_true(activations_4d(0,0,0,0) == 0.f &&
+                activations_4d(0,0,0,1) == 0.f &&
+                activations_4d(0,0,1,0) == 0.f &&
+                activations_4d(0,0,1,1) == 0.f &&
+                activations_4d(0,1,0,0) == 1.f &&
+                activations_4d(0,1,0,1) == 1.f &&
+                activations_4d(0,1,1,0) == 1.f &&
+                activations_4d(0,1,1,1) == 1.f &&
+                activations_4d(1,0,0,0) == 0.f &&
+                activations_4d(1,0,0,1) == 0.f &&
+                activations_4d(1,0,1,0) == 0.f &&
+                activations_4d(1,0,1,1) == 0.f &&
+                activations_4d(1,1,0,0) == 1.f &&
+                activations_4d(1,1,0,1) == 1.f &&
+                activations_4d(1,1,1,0) == 1.f &&
+                activations_4d(1,1,1,1) == 1.f, LOG);
+
+//    assert_true(activations_4d == result, LOG);
+
+    // Test
+
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
+
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SymmetricThreshold);
+
+    convolutional_layer.calculate_activations(inputs, activations_4d);
+
+    //    result.set(Tensor<Index, 1>({2,2,2,2}));
+    //    result(0,0,0,0) = -1;
+    //    result(0,0,0,1) = -1;
+    //    result(0,0,1,0) = -1;
+    //    result(0,0,1,1) = -1;
+    //    result(0,1,0,0) = 1;
+    //    result(0,1,0,1) = 1;
+    //    result(0,1,1,0) = 1;
+    //    result(0,1,1,1) = 1;
+    //    result(1,0,0,0) = -1;
+    //    result(1,0,0,1) = -1;
+    //    result(1,0,1,0) = -1;
+    //    result(1,0,1,1) = -1;
+    //    result(1,1,0,0) = 1;
+    //    result(1,1,0,1) = 1;
+    //    result(1,1,1,0) = 1;
+    //    result(1,1,1,1) = 1;
+
+    //    assert_true(activations_2d == result, LOG);
+
+    assert_true(activations_4d(0,0,0,0) == -1 &&
+                activations_4d(0,0,0,1) == -1 &&
+                activations_4d(0,0,1,0) == -1 &&
+                activations_4d(0,0,1,1) == -1 &&
+                activations_4d(0,1,0,0) == 1.f &&
+                activations_4d(0,1,0,1) == 1.f &&
+                activations_4d(0,1,1,0) == 1.f &&
+                activations_4d(0,1,1,1) == 1.f &&
+                activations_4d(1,0,0,0) == -1 &&
+                activations_4d(1,0,0,1) == -1 &&
+                activations_4d(1,0,1,0) == -1 &&
+                activations_4d(1,0,1,1) == -1 &&
+                activations_4d(1,1,0,0) == 1.f &&
+                activations_4d(1,1,0,1) == 1.f &&
+                activations_4d(1,1,1,0) == 1.f &&
+                activations_4d(1,1,1,1) == 1.f, LOG);
 
 //    // Test
 
 //    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SymmetricThreshold);
-
-//    activations_2d = convolutional_layer.calculate_activations(inputs);
-
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = -1;
-//    result(0,0,0,1) = -1;
-//    result(0,0,1,0) = -1;
-//    result(0,0,1,1) = -1;
-//    result(0,1,0,0) = 1;
-//    result(0,1,0,1) = 1;
-//    result(0,1,1,0) = 1;
-//    result(0,1,1,1) = 1;
-//    result(1,0,0,0) = -1;
-//    result(1,0,0,1) = -1;
-//    result(1,0,1,0) = -1;
-//    result(1,0,1,1) = -1;
-//    result(1,1,0,0) = 1;
-//    result(1,1,0,1) = 1;
-//    result(1,1,1,0) = 1;
-//    result(1,1,1,1) = 1;
-
-//    assert_true(activations_2d == result, LOG);
-
-//    // Test
-
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
-
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
-
-//    activations_2d = convolutional_layer.calculate_activations(inputs);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
+    convolutional_layer.calculate_activations(inputs, activations_4d);
 
 //    result.set(Tensor<Index, 1>({2,2,2,2}));
 //    result(0,0,0,0) = -0.804416;
@@ -891,125 +626,121 @@ void ConvolutionalLayerTest::test_calculate_activations() // @todo
 //    result(1,1,1,0) = 0.976729;
 //    result(1,1,1,1) = 0.976775;
 
-//    assert_true(abs(activations_2d(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+    assert_true(abs(activations_4d(0,0,0,0) - (-0.804416f)) < 1e-6f &&
+                abs(activations_4d(0,0,0,1) - (-0.804768f)) < 1e-6f &&
+                abs(activations_4d(0,0,1,0) - (-0.807916f)) < 1e-6f &&
+                abs(activations_4d(0,0,1,1) - (-0.808263f)) < 1e-6f &&
+                abs(activations_4d(0,1,0,0) - 0.836979f) < 1e-6f &&
+                abs(activations_4d(0,1,0,1) - 0.837278f) < 1e-6f &&
+                abs(activations_4d(0,1,1,0) - 0.839949f) < 1e-6f &&
+                abs(activations_4d(0,1,1,1) - 0.840243f) < 1e-6f &&
+                abs(activations_4d(1,0,0,0) - (-0.971086f)) < 1e-6f &&
+                abs(activations_4d(1,0,0,1) - (-0.971143f)) < 1e-6f &&
+                abs(activations_4d(1,0,1,0) - (-0.971650f)) < 1e-6f &&
+                abs(activations_4d(1,0,1,1) - (-0.971706f)) < 1e-6f &&
+                abs(activations_4d(1,1,0,0) - 0.976265f) < 1e-6f &&
+                abs(activations_4d(1,1,0,1) - 0.976312f) < 1e-6f &&
+                abs(activations_4d(1,1,1,0) - 0.976729f) < 1e-6f &&
+                abs(activations_4d(1,1,1,1) - 0.976775f) < 1e-6f, LOG);
 
 //    // Test
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
+    inputs(0,0,0,0) = -1 * 1.111f;
+    inputs(0,0,0,1) = -1 * 1.112f;
+    inputs(0,0,1,0) = -1 * 1.121f;
+    inputs(0,0,1,1) = -1 * 1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -1 * 2.111f;
+    inputs(1,0,0,1) = -1 * 2.112f;
+    inputs(1,0,1,0) = -1 * 2.121f;
+    inputs(1,0,1,1) = -1 * 2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    activations_2d = convolutional_layer.calculate_activations(inputs);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
+    convolutional_layer.calculate_activations(inputs, activations_4d);
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = 0;
-//    result(0,0,0,1) = 0;
-//    result(0,0,1,0) = 0;
-//    result(0,0,1,1) = 0;
-//    result(0,1,0,0) = 1.211;
-//    result(0,1,0,1) = 1.212;
-//    result(0,1,1,0) = 1.221;
-//    result(0,1,1,1) = 1.222;
-//    result(1,0,0,0) = 0;
-//    result(1,0,0,1) = 0;
-//    result(1,0,1,0) = 0;
-//    result(1,0,1,1) = 0;
-//    result(1,1,0,0) = 2.211;
-//    result(1,1,0,1) = 2.212;
-//    result(1,1,1,0) = 2.221;
-//    result(1,1,1,1) = 2.222;
+    assert_true(activations_4d(0,0,0,0) == 0.f &&
+                activations_4d(0,0,0,1) == 0.f &&
+                activations_4d(0,0,1,0) == 0.f &&
+                activations_4d(0,0,1,1) == 0.f &&
+                activations_4d(0,1,0,0) == 1.211f &&
+                activations_4d(0,1,0,1) == 1.212f &&
+                activations_4d(0,1,1,0) == 1.221f &&
+                activations_4d(0,1,1,1) == 1.222f &&
+                activations_4d(1,0,0,0) == 0.f &&
+                activations_4d(1,0,0,1) == 0.f &&
+                activations_4d(1,0,1,0) == 0.f &&
+                activations_4d(1,0,1,1) == 0.f &&
+                activations_4d(1,1,0,0) == 2.211f &&
+                activations_4d(1,1,0,1) == 2.212f &&
+                activations_4d(1,1,1,0) == 2.221f &&
+                activations_4d(1,1,1,1) == 2.222f, LOG);
 
-//    assert_true(activations_2d == result, LOG);
+    // Test
 
-//    // Test
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SoftPlus);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SoftPlus);
 
-//    activations_2d = convolutional_layer.calculate_activations(inputs);
+    convolutional_layer.calculate_activations(inputs, activations_4d);
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = 0.284600;
-//    result(0,0,0,1) = 0.284352;
-//    result(0,0,1,0) = 0.282132;
-//    result(0,0,1,1) = 0.281886;
-//    result(0,1,0,0) = 1.471747;
-//    result(0,1,0,1) = 1.472518;
-//    result(0,1,1,0) = 1.479461;
-//    result(0,1,1,1) = 1.480233;
-//    result(1,0,0,0) = 0.114325;
-//    result(1,0,0,1) = 0.114217;
-//    result(1,0,1,0) = 0.113250;
-//    result(1,0,1,1) = 0.113143;
-//    result(1,1,0,0) = 2.314991;
-//    result(1,1,0,1) = 2.315893;
-//    result(1,1,1,0) = 2.324008;
-//    result(1,1,1,1) = 2.324910;
+    result(0,0,0,0) = 0.284600f;
+    result(0,0,0,1) = 0.284352f;
+    result(0,0,1,0) = 0.282132f;
+    result(0,0,1,1) = 0.281886f;
+    result(0,1,0,0) = 1.471747f;
+    result(0,1,0,1) = 1.472518f;
+    result(0,1,1,0) = 1.479461f;
+    result(0,1,1,1) = 1.480233f;
+    result(1,0,0,0) = 0.114325f;
+    result(1,0,0,1) = 0.114217f;
+    result(1,0,1,0) = 0.113250f;
+    result(1,0,1,1) = 0.113143f;
+    result(1,1,0,0) = 2.314991f;
+    result(1,1,0,1) = 2.315893f;
+    result(1,1,1,0) = 2.324008f;
+    result(1,1,1,1) = 2.324910f;
 
-//    assert_true(abs(activations_2d(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-//                abs(activations_2d(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+    assert_true(abs(activations_4d(0,0,0,0) - result(0,0,0,0)) <= 1e-6f &&
+                abs(activations_4d(0,0,0,1) - result(0,0,0,1)) <= 1e-6f &&
+                abs(activations_4d(0,0,1,0) - result(0,0,1,0)) <= 1e-6f &&
+                abs(activations_4d(0,0,1,1) - result(0,0,1,1)) <= 1e-6f &&
+                abs(activations_4d(0,1,0,0) - result(0,1,0,0)) <= 1e-6f &&
+                abs(activations_4d(0,1,0,1) - result(0,1,0,1)) <= 1e-6f &&
+                abs(activations_4d(0,1,1,0) - result(0,1,1,0)) <= 1e-6f &&
+                abs(activations_4d(0,1,1,1) - result(0,1,1,1)) <= 1e-6f &&
+                abs(activations_4d(1,0,0,0) - result(1,0,0,0)) <= 1e-6f &&
+                abs(activations_4d(1,0,0,1) - result(1,0,0,1)) <= 1e-6f &&
+                abs(activations_4d(1,0,1,0) - result(1,0,1,0)) <= 1e-6f &&
+                abs(activations_4d(1,0,1,1) - result(1,0,1,1)) <= 1e-6f &&
+                abs(activations_4d(1,1,0,0) - result(1,1,0,0)) <= 1e-6f &&
+                abs(activations_4d(1,1,0,1) - result(1,1,0,1)) <= 1e-6f &&
+                abs(activations_4d(1,1,1,0) - result(1,1,1,0)) <= 1e-6f &&
+                abs(activations_4d(1,1,1,1) - result(1,1,1,1)) <= 1e-6f, LOG);
+
 }
 
 
@@ -1017,516 +748,476 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives() // @todo
 {
     cout << "test_calculate_activations_derivatives\n";
 
-//    ConvolutionalLayer convolutional_layer;
-//    Tensor<type, 2> inputs;
-//    Tensor<type, 2> activations_derivatives;
-//    Tensor<type, 2> result;
+    NumericalDifferentiation numerical_differentiation;
+    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+
+    Tensor<type, 4> numerical_activation_derivatives;
+
+    ConvolutionalLayer convolutional_layer;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> activations_derivatives;
+    Tensor<type, 4> activations;
+    Tensor<type, 4> result;
+
+    activations.resize(2, 2, 2, 2);
+    activations_derivatives.resize(2, 2, 2, 2);
 
 //    // Test
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs.resize(2, 2, 2, 2);
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Threshold);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Threshold);
 
-//    activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
+    convolutional_layer.calculate_activations_derivatives(inputs,
+                                                          activations,
+                                                          activations_derivatives);
 
-//    result.set({2,2,2,2}, 0);
+    result = activations.constant(0.f);
 
-//    assert_true(activations_derivatives == result, LOG);
+    assert_true(activations_derivatives(0, 0, 0, 0) == result(0, 0, 0, 0) &&
+                activations_derivatives(0, 1, 0, 0) == result(0, 1, 0, 0) &&
+                activations_derivatives(1, 0, 0, 0) == result(1, 0, 0, 0) &&
+                activations_derivatives(1, 1, 0, 0) == result(1, 1, 0, 0) &&
+                activations_derivatives(0, 0, 1, 0) == result(0, 0, 1, 0) &&
+                activations_derivatives(0, 1, 1, 0) == result(0, 1, 1, 0) &&
+                activations_derivatives(1, 0, 1, 0) == result(1, 0, 1, 0) &&
+                activations_derivatives(1, 1, 1, 0) == result(1, 1, 1, 0) &&
+                activations_derivatives(0, 0, 0, 1) == result(0, 0, 0, 1) &&
+                activations_derivatives(0, 1, 0, 1) == result(0, 1, 0, 1) &&
+                activations_derivatives(1, 0, 0, 1) == result(1, 0, 0, 1) &&
+                activations_derivatives(1, 1, 0, 1) == result(1, 1, 0, 1) &&
+                activations_derivatives(0, 0, 1, 1) == result(0, 0, 1, 1) &&
+                activations_derivatives(0, 1, 1, 1) == result(0, 1, 1, 1) &&
+                activations_derivatives(1, 0, 1, 1) == result(1, 0, 1, 1) &&
+                activations_derivatives(1, 1, 1, 1) == result(1, 1, 1, 1), LOG);
 
-//    // Test
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SymmetricThreshold);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SymmetricThreshold);
 
-//    activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
+    convolutional_layer.calculate_activations_derivatives(inputs,
+                                                          activations,
+                                                          activations_derivatives);
 
-//    result.set({2,2,2,2}, 0);
+    result = activations.constant(0.f);
 
-//    assert_true(activations_derivatives == result, LOG);
+    assert_true(activations_derivatives(0, 0, 0, 0) == result(0, 0, 0, 0) &&
+                activations_derivatives(0, 1, 0, 0) == result(0, 1, 0, 0) &&
+                activations_derivatives(1, 0, 0, 0) == result(1, 0, 0, 0) &&
+                activations_derivatives(1, 1, 0, 0) == result(1, 1, 0, 0) &&
+                activations_derivatives(0, 0, 1, 0) == result(0, 0, 1, 0) &&
+                activations_derivatives(0, 1, 1, 0) == result(0, 1, 1, 0) &&
+                activations_derivatives(1, 0, 1, 0) == result(1, 0, 1, 0) &&
+                activations_derivatives(1, 1, 1, 0) == result(1, 1, 1, 0) &&
+                activations_derivatives(0, 0, 0, 1) == result(0, 0, 0, 1) &&
+                activations_derivatives(0, 1, 0, 1) == result(0, 1, 0, 1) &&
+                activations_derivatives(1, 0, 0, 1) == result(1, 0, 0, 1) &&
+                activations_derivatives(1, 1, 0, 1) == result(1, 1, 0, 1) &&
+                activations_derivatives(0, 0, 1, 1) == result(0, 0, 1, 1) &&
+                activations_derivatives(0, 1, 1, 1) == result(0, 1, 1, 1) &&
+                activations_derivatives(1, 0, 1, 1) == result(1, 0, 1, 1) &&
+                activations_derivatives(1, 1, 1, 1) == result(1, 1, 1, 1), LOG);
 
-//    // Test
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
+    convolutional_layer.calculate_activations_derivatives(inputs,
+                                                          activations,
+                                                          activations_derivatives);
 
-//    activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
+    result(0,0,0,0) = 0.352916f;
+    result(0,0,0,1) = 0.352348f;
+    result(0,0,1,0) = 0.347271f;
+    result(0,0,1,1) = 0.346710f;
+    result(0,1,0,0) = 0.299466f;
+    result(0,1,0,1) = 0.298965f;
+    result(0,1,1,0) = 0.294486f;
+    result(0,1,1,1) = 0.293991f;
+    result(1,0,0,0) = 0.056993f;
+    result(1,0,0,1) = 0.056882f;
+    result(1,0,1,0) = 0.055896f;
+    result(1,0,1,1) = 0.055788f;
+    result(1,1,0,0) = 0.046907f;
+    result(1,1,0,1) = 0.046816f;
+    result(1,1,1,0) = 0.046000f;
+    result(1,1,1,1) = 0.045910f;
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = 0.352916;
-//    result(0,0,0,1) = 0.352348;
-//    result(0,0,1,0) = 0.347271;
-//    result(0,0,1,1) = 0.346710;
-//    result(0,1,0,0) = 0.299466;
-//    result(0,1,0,1) = 0.298965;
-//    result(0,1,1,0) = 0.294486;
-//    result(0,1,1,1) = 0.293991;
-//    result(1,0,0,0) = 0.056993;
-//    result(1,0,0,1) = 0.056882;
-//    result(1,0,1,0) = 0.055896;
-//    result(1,0,1,1) = 0.055788;
-//    result(1,1,0,0) = 0.046907;
-//    result(1,1,0,1) = 0.046816;
-//    result(1,1,1,0) = 0.046000;
-//    result(1,1,1,1) = 0.045910;
+//    numerical_activation_derivatives = numerical_differentiation.calculate_derivatives(convolutional_layer, &ConvolutionalLayer::calculate_activations, 0, inputs);
+//    cout << endl << "Numerical differentiation derivatives:" << endl << numerical_activation_derivatives << endl << endl;
 
-//    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+//    cout << endl << "Result:" << endl << result << endl << endl;
 
-//    // Test
+    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < 1e-6f &&
+                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < 1e-6f &&
+                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < 1e-6f &&
+                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < 1e-6f &&
+                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < 1e-6f &&
+                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < 1e-6f &&
+                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < 1e-6f &&
+                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < 1e-6f &&
+                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < 1e-6f &&
+                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < 1e-6f &&
+                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < 1e-6f &&
+                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < 1e-6f &&
+                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < 1e-6f &&
+                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < 1e-6f &&
+                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < 1e-6f &&
+                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < 1e-6f, LOG);
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
 
-//    activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
+    convolutional_layer.calculate_activations_derivatives(inputs,
+                                                          activations,
+                                                          activations_derivatives);
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = 0;
-//    result(0,0,0,1) = 0;
-//    result(0,0,1,0) = 0;
-//    result(0,0,1,1) = 0;
-//    result(0,1,0,0) = 1;
-//    result(0,1,0,1) = 1;
-//    result(0,1,1,0) = 1;
-//    result(0,1,1,1) = 1;
-//    result(1,0,0,0) = 0;
-//    result(1,0,0,1) = 0;
-//    result(1,0,1,0) = 0;
-//    result(1,0,1,1) = 0;
-//    result(1,1,0,0) = 1;
-//    result(1,1,0,1) = 1;
-//    result(1,1,1,0) = 1;
-//    result(1,1,1,1) = 1;
+    result(0,0,0,0) = 0;
+    result(0,0,0,1) = 0;
+    result(0,0,1,0) = 0;
+    result(0,0,1,1) = 0;
+    result(0,1,0,0) = 1;
+    result(0,1,0,1) = 1;
+    result(0,1,1,0) = 1;
+    result(0,1,1,1) = 1;
+    result(1,0,0,0) = 0;
+    result(1,0,0,1) = 0;
+    result(1,0,1,0) = 0;
+    result(1,0,1,1) = 0;
+    result(1,1,0,0) = 1;
+    result(1,1,0,1) = 1;
+    result(1,1,1,0) = 1;
+    result(1,1,1,1) = 1;
 
-//    assert_true(activations_derivatives == result, LOG);
+    assert_true(activations_derivatives(0, 0, 0, 0) == result(0, 0, 0, 0) &&
+                activations_derivatives(0, 1, 0, 0) == result(0, 1, 0, 0) &&
+                activations_derivatives(1, 0, 0, 0) == result(1, 0, 0, 0) &&
+                activations_derivatives(1, 1, 0, 0) == result(1, 1, 0, 0) &&
+                activations_derivatives(0, 0, 1, 0) == result(0, 0, 1, 0) &&
+                activations_derivatives(0, 1, 1, 0) == result(0, 1, 1, 0) &&
+                activations_derivatives(1, 0, 1, 0) == result(1, 0, 1, 0) &&
+                activations_derivatives(1, 1, 1, 0) == result(1, 1, 1, 0) &&
+                activations_derivatives(0, 0, 0, 1) == result(0, 0, 0, 1) &&
+                activations_derivatives(0, 1, 0, 1) == result(0, 1, 0, 1) &&
+                activations_derivatives(1, 0, 0, 1) == result(1, 0, 0, 1) &&
+                activations_derivatives(1, 1, 0, 1) == result(1, 1, 0, 1) &&
+                activations_derivatives(0, 0, 1, 1) == result(0, 0, 1, 1) &&
+                activations_derivatives(0, 1, 1, 1) == result(0, 1, 1, 1) &&
+                activations_derivatives(1, 0, 1, 1) == result(1, 0, 1, 1) &&
+                activations_derivatives(1, 1, 1, 1) == result(1, 1, 1, 1), LOG);
 
-//    // Test
 
-//    inputs.resize(({2,2,2,2}));
-//    inputs(0,0,0,0) = -1.111;
-//    inputs(0,0,0,1) = -1.112;
-//    inputs(0,0,1,0) = -1.121;
-//    inputs(0,0,1,1) = -1.122;
-//    inputs(0,1,0,0) = 1.211;
-//    inputs(0,1,0,1) = 1.212;
-//    inputs(0,1,1,0) = 1.221;
-//    inputs(0,1,1,1) = 1.222;
-//    inputs(1,0,0,0) = -2.111;
-//    inputs(1,0,0,1) = -2.112;
-//    inputs(1,0,1,0) = -2.121;
-//    inputs(1,0,1,1) = -2.122;
-//    inputs(1,1,0,0) = 2.211;
-//    inputs(1,1,0,1) = 2.212;
-//    inputs(1,1,1,0) = 2.221;
-//    inputs(1,1,1,1) = 2.222;
+    inputs(0,0,0,0) = -1.111f;
+    inputs(0,0,0,1) = -1.112f;
+    inputs(0,0,1,0) = -1.121f;
+    inputs(0,0,1,1) = -1.122f;
+    inputs(0,1,0,0) = 1.211f;
+    inputs(0,1,0,1) = 1.212f;
+    inputs(0,1,1,0) = 1.221f;
+    inputs(0,1,1,1) = 1.222f;
+    inputs(1,0,0,0) = -2.111f;
+    inputs(1,0,0,1) = -2.112f;
+    inputs(1,0,1,0) = -2.121f;
+    inputs(1,0,1,1) = -2.122f;
+    inputs(1,1,0,0) = 2.211f;
+    inputs(1,1,0,1) = 2.212f;
+    inputs(1,1,1,0) = 2.221f;
+    inputs(1,1,1,1) = 2.222f;
 
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SoftPlus);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::SoftPlus);
 
-//    activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
+    convolutional_layer.calculate_activations_derivatives(inputs,
+                                                          activations,
+                                                          activations_derivatives);
 
-//    result.set(Tensor<Index, 1>({2,2,2,2}));
-//    result(0,0,0,0) = 0.247685;
-//    result(0,0,0,1) = 0.247498;
-//    result(0,0,1,0) = 0.245826;
-//    result(0,0,1,1) = 0.245640;
-//    result(0,1,0,0) = 0.770476;
-//    result(0,1,0,1) = 0.770653;
-//    result(0,1,1,0) = 0.772239;
-//    result(0,1,1,1) = 0.772415;
-//    result(1,0,0,0) = 0.108032;
-//    result(1,0,0,1) = 0.107936;
-//    result(1,0,1,0) = 0.107072;
-//    result(1,0,1,1) = 0.106977;
-//    result(1,1,0,0) = 0.901233;
-//    result(1,1,0,1) = 0.901322;
-//    result(1,1,1,0) = 0.902120;
-//    result(1,1,1,1) = 0.902208;
+    result(0,0,0,0) = 0.247685f;
+    result(0,0,0,1) = 0.247498f;
+    result(0,0,1,0) = 0.245826f;
+    result(0,0,1,1) = 0.245640f;
+    result(0,1,0,0) = 0.770476f;
+    result(0,1,0,1) = 0.770653f;
+    result(0,1,1,0) = 0.772239f;
+    result(0,1,1,1) = 0.772415f;
+    result(1,0,0,0) = 0.108032f;
+    result(1,0,0,1) = 0.107936f;
+    result(1,0,1,0) = 0.107072f;
+    result(1,0,1,1) = 0.106977f;
+    result(1,1,0,0) = 0.901233f;
+    result(1,1,0,1) = 0.901322f;
+    result(1,1,1,0) = 0.902120f;
+    result(1,1,1,1) = 0.902208f;
 
-//    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < 1e-6 &&
-//                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < 1e-6, LOG);
+    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < 1e-6f &&
+                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < 1e-6f &&
+                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < 1e-6f &&
+                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < 1e-6f &&
+                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < 1e-6f &&
+                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < 1e-6f &&
+                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < 1e-6f &&
+                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < 1e-6f &&
+                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < 1e-6f &&
+                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < 1e-6f &&
+                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < 1e-6f &&
+                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < 1e-6f &&
+                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < 1e-6f &&
+                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < 1e-6f &&
+                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < 1e-6f &&
+                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < 1e-6f, LOG);
 }
 
 
-void ConvolutionalLayerTest::test_calculate_outputs() // @todo
+void ConvolutionalLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    Tensor<type, 2> images;
-//    Tensor<type, 2> filters;
-//    Tensor<type, 2> outputs;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
+    Tensor<type, 4> outputs;
+    Tensor<type, 1> biases;
 
-//    // Test
+    // One image, One filter
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 1);
+    biases.resize(1);
 
-//    images.set(Tensor<Index, 1>({2,2,3,3}));
-//    images(0,0,0,0) = 1.1;
-//    images(0,0,0,1) = 1.1;
-//    images(0,0,0,2) = 1.1;
-//    images(0,0,1,0) = 1.1;
-//    images(0,0,1,1) = 1.1;
-//    images(0,0,1,2) = 1.1;
-//    images(0,0,2,0) = 1.1;
-//    images(0,0,2,1) = 1.1;
-//    images(0,0,2,2) = 1.1;
-//    images(0,1,0,0) = 1.2;
-//    images(0,1,0,1) = 1.2;
-//    images(0,1,0,2) = 1.2;
-//    images(0,1,1,0) = 1.2;
-//    images(0,1,1,1) = 1.2;
-//    images(0,1,1,2) = 1.2;
-//    images(0,1,2,0) = 1.2;
-//    images(0,1,2,1) = 1.2;
-//    images(0,1,2,2) = 1.2;
-//    images(1,0,0,0) = 2.1;
-//    images(1,0,0,1) = 2.1;
-//    images(1,0,0,2) = 2.1;
-//    images(1,0,1,0) = 2.1;
-//    images(1,0,1,1) = 2.1;
-//    images(1,0,1,2) = 2.1;
-//    images(1,0,2,0) = 2.1;
-//    images(1,0,2,1) = 2.1;
-//    images(1,0,2,2) = 2.1;
-//    images(1,1,0,0) = 2.2;
-//    images(1,1,0,1) = 2.2;
-//    images(1,1,0,2) = 2.2;
-//    images(1,1,1,0) = 2.2;
-//    images(1,1,1,1) = 2.2;
-//    images(1,1,1,2) = 2.2;
-//    images(1,1,2,0) = 2.2;
-//    images(1,1,2,1) = 2.2;
-//    images(1,1,2,2) = 2.2;
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases.setConstant(0.f);
 
-//    filters.set({2,2,2,2}, 0);
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 1});
 
-//    convolutional_layer.set({2,3,3}, {2,2,2});
-//    convolutional_layer.set_synaptic_weights(filters);
-//    convolutional_layer.set_biases({-1,1});
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::Logistic);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
-//    outputs = convolutional_layer.calculate_outputs(images);
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
 
-//    assert_true(abs(outputs(0,0,0,0) - 0.268941) < 1e-6 &&
-//                abs(outputs(0,0,0,1) - 0.268941) < 1e-6 &&
-//                abs(outputs(0,0,1,0) - 0.268941) < 1e-6 &&
-//                abs(outputs(0,0,1,1) - 0.268941) < 1e-6 &&
-//                abs(outputs(0,1,0,0) - 0.731059) < 1e-6 &&
-//                abs(outputs(0,1,0,1) - 0.731059) < 1e-6 &&
-//                abs(outputs(0,1,1,0) - 0.731059) < 1e-6 &&
-//                abs(outputs(0,1,1,1) - 0.731059) < 1e-6 &&
-//                abs(outputs(1,0,0,0) - 0.268941) < 1e-6 &&
-//                abs(outputs(1,0,0,1) - 0.268941) < 1e-6 &&
-//                abs(outputs(1,0,1,0) - 0.268941) < 1e-6 &&
-//                abs(outputs(1,0,1,1) - 0.268941) < 1e-6 &&
-//                abs(outputs(1,1,0,0) - 0.731059) < 1e-6 &&
-//                abs(outputs(1,1,0,1) - 0.731059) < 1e-6 &&
-//                abs(outputs(1,1,1,0) - 0.731059) < 1e-6 &&
-//                abs(outputs(1,1,1,1) - 0.731059) < 1e-6, LOG);
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f, LOG);
 
-//    // Test
+    // One image, multiple filters
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
 
-//    images.set(Tensor<Index, 1>({2,1,6,6}));
-//    images(0,0,0,0) = 1;
-//    images(0,0,0,1) = 2;
-//    images(0,0,0,2) = 3;
-//    images(0,0,0,3) = 4;
-//    images(0,0,0,4) = 5;
-//    images(0,0,0,5) = 6;
-//    images(0,0,1,0) = 7;
-//    images(0,0,1,1) = 8;
-//    images(0,0,1,2) = 9;
-//    images(0,0,1,3) = 10;
-//    images(0,0,1,4) = 11;
-//    images(0,0,1,5) = 12;
-//    images(0,0,2,0) = 13;
-//    images(0,0,2,1) = 14;
-//    images(0,0,2,2) = 15;
-//    images(0,0,2,3) = 16;
-//    images(0,0,2,4) = 17;
-//    images(0,0,2,5) = 18;
-//    images(0,0,3,0) = 19;
-//    images(0,0,3,1) = 20;
-//    images(0,0,3,2) = 21;
-//    images(0,0,3,3) = 22;
-//    images(0,0,3,4) = 23;
-//    images(0,0,3,5) = 24;
-//    images(0,0,4,0) = 25;
-//    images(0,0,4,1) = 26;
-//    images(0,0,4,2) = 27;
-//    images(0,0,4,3) = 28;
-//    images(0,0,4,4) = 29;
-//    images(0,0,4,5) = 30;
-//    images(0,0,5,0) = 31;
-//    images(0,0,5,1) = 32;
-//    images(0,0,5,2) = 33;
-//    images(0,0,5,3) = 34;
-//    images(0,0,5,4) = 35;
-//    images(0,0,5,5) = 36;
-//    images(1,0,0,0) = -1;
-//    images(1,0,0,1) = -2;
-//    images(1,0,0,2) = -3;
-//    images(1,0,0,3) = -4;
-//    images(1,0,0,4) = -5;
-//    images(1,0,0,5) = -6;
-//    images(1,0,1,0) = -7;
-//    images(1,0,1,1) = -8;
-//    images(1,0,1,2) = -9;
-//    images(1,0,1,3) = -10;
-//    images(1,0,1,4) = -11;
-//    images(1,0,1,5) = -12;
-//    images(1,0,2,0) = -13;
-//    images(1,0,2,1) = -14;
-//    images(1,0,2,2) = -15;
-//    images(1,0,2,3) = -16;
-//    images(1,0,2,4) = -17;
-//    images(1,0,2,5) = -18;
-//    images(1,0,3,0) = -19;
-//    images(1,0,3,1) = -20;
-//    images(1,0,3,2) = -21;
-//    images(1,0,3,3) = -22;
-//    images(1,0,3,4) = -23;
-//    images(1,0,3,5) = -24;
-//    images(1,0,4,0) = -25;
-//    images(1,0,4,1) = -26;
-//    images(1,0,4,2) = -27;
-//    images(1,0,4,3) = -28;
-//    images(1,0,4,4) = -29;
-//    images(1,0,4,5) = -30;
-//    images(1,0,5,0) = -31;
-//    images(1,0,5,1) = -32;
-//    images(1,0,5,2) = -33;
-//    images(1,0,5,3) = -34;
-//    images(1,0,5,4) = -35;
-//    images(1,0,5,5) = -36;
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases.setConstant(0.f);
 
-//    filters.set(Tensor<Index, 1>({3,1,3,3}));
-//    filters(0,0,0,0) = 1;
-//    filters(0,0,0,1) = 1;
-//    filters(0,0,0,2) = 1;
-//    filters(0,0,1,0) = 1;
-//    filters(0,0,1,1) = 1;
-//    filters(0,0,1,2) = 1;
-//    filters(0,0,2,0) = 1;
-//    filters(0,0,2,1) = 1;
-//    filters(0,0,2,2) = 1;
-//    filters(1,0,0,0) = 2;
-//    filters(1,0,0,1) = 2;
-//    filters(1,0,0,2) = 2;
-//    filters(1,0,1,0) = 2;
-//    filters(1,0,1,1) = 2;
-//    filters(1,0,1,2) = 2;
-//    filters(1,0,2,0) = 2;
-//    filters(1,0,2,1) = 2;
-//    filters(1,0,2,2) = 2;
-//    filters(2,0,0,0) = 3;
-//    filters(2,0,0,1) = 3;
-//    filters(2,0,0,2) = 3;
-//    filters(2,0,1,0) = 3;
-//    filters(2,0,1,1) = 3;
-//    filters(2,0,1,2) = 3;
-//    filters(2,0,2,0) = 3;
-//    filters(2,0,2,1) = 3;
-//    filters(2,0,2,2) = 3;
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    kernels_dimensions.setValues({2, 2, 3, 2});
 
-//    convolutional_layer.set({1,6,6}, {3,3,3});
-//    convolutional_layer.set_synaptic_weights(filters);
-//    convolutional_layer.set_biases({-1,0,1});
-//    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HardSigmoid);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
-//    outputs = convolutional_layer.calculate_outputs(images);
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
 
-//    assert_true(outputs(0,0,0,0) == 1.0 &&
-//                outputs(0,0,0,0) == 1.0 &&
-//                outputs(0,0,0,1) == 1.0 &&
-//                outputs(0,0,0,2) == 1.0 &&
-//                outputs(0,0,0,3) == 1.0 &&
-//                outputs(0,0,1,0) == 1.0 &&
-//                outputs(0,0,1,1) == 1.0 &&
-//                outputs(0,0,1,2) == 1.0 &&
-//                outputs(0,0,1,3) == 1.0 &&
-//                outputs(0,0,2,0) == 1.0 &&
-//                outputs(0,0,2,1) == 1.0 &&
-//                outputs(0,0,2,2) == 1.0 &&
-//                outputs(0,0,2,3) == 1.0 &&
-//                outputs(0,0,3,0) == 1.0 &&
-//                outputs(0,0,3,1) == 1.0 &&
-//                outputs(0,0,3,2) == 1.0 &&
-//                outputs(0,0,3,3) == 1.0 &&
-//                outputs(0,1,0,0) == 1.0 &&
-//                outputs(0,1,0,1) == 1.0 &&
-//                outputs(0,1,0,2) == 1.0 &&
-//                outputs(0,1,0,3) == 1.0 &&
-//                outputs(0,1,1,0) == 1.0 &&
-//                outputs(0,1,1,1) == 1.0 &&
-//                outputs(0,1,1,2) == 1.0 &&
-//                outputs(0,1,1,3) == 1.0 &&
-//                outputs(0,1,2,0) == 1.0 &&
-//                outputs(0,1,2,1) == 1.0 &&
-//                outputs(0,1,2,2) == 1.0 &&
-//                outputs(0,1,2,3) == 1.0 &&
-//                outputs(0,1,3,0) == 1.0 &&
-//                outputs(0,1,3,1) == 1.0 &&
-//                outputs(0,1,3,2) == 1.0 &&
-//                outputs(0,1,3,3) == 1.0 &&
-//                outputs(0,2,0,0) == 1.0 &&
-//                outputs(0,2,0,1) == 1.0 &&
-//                outputs(0,2,0,2) == 1.0 &&
-//                outputs(0,2,0,3) == 1.0 &&
-//                outputs(0,2,1,0) == 1.0 &&
-//                outputs(0,2,1,1) == 1.0 &&
-//                outputs(0,2,1,2) == 1.0 &&
-//                outputs(0,2,1,3) == 1.0 &&
-//                outputs(0,2,2,0) == 1.0 &&
-//                outputs(0,2,2,1) == 1.0 &&
-//                outputs(0,2,2,2) == 1.0 &&
-//                outputs(0,2,2,3) == 1.0 &&
-//                outputs(0,2,3,0) == 1.0 &&
-//                outputs(0,2,3,1) == 1.0 &&
-//                outputs(0,2,3,2) == 1.0 &&
-//                outputs(0,2,3,3) == 1.0 &&
-//                outputs(1,0,0,0) == 0.0 &&
-//                outputs(1,0,0,1) == 0.0 &&
-//                outputs(1,0,0,2) == 0.0 &&
-//                outputs(1,0,0,3) == 0.0 &&
-//                outputs(1,0,1,0) == 0.0 &&
-//                outputs(1,0,1,1) == 0.0 &&
-//                outputs(1,0,1,2) == 0.0 &&
-//                outputs(1,0,1,3) == 0.0 &&
-//                outputs(1,0,2,0) == 0.0 &&
-//                outputs(1,0,2,1) == 0.0 &&
-//                outputs(1,0,2,2) == 0.0 &&
-//                outputs(1,0,2,3) == 0.0 &&
-//                outputs(1,0,3,0) == 0.0 &&
-//                outputs(1,0,3,1) == 0.0 &&
-//                outputs(1,0,3,2) == 0.0 &&
-//                outputs(1,0,3,3) == 0.0 &&
-//                outputs(1,1,0,0) == 0.0 &&
-//                outputs(1,1,0,1) == 0.0 &&
-//                outputs(1,1,0,2) == 0.0 &&
-//                outputs(1,1,0,3) == 0.0 &&
-//                outputs(1,1,1,0) == 0.0 &&
-//                outputs(1,1,1,1) == 0.0 &&
-//                outputs(1,1,1,2) == 0.0 &&
-//                outputs(1,1,1,3) == 0.0 &&
-//                outputs(1,1,2,0) == 0.0 &&
-//                outputs(1,1,2,1) == 0.0 &&
-//                outputs(1,1,2,2) == 0.0 &&
-//                outputs(1,1,2,3) == 0.0 &&
-//                outputs(1,1,3,0) == 0.0 &&
-//                outputs(1,1,3,1) == 0.0 &&
-//                outputs(1,1,3,2) == 0.0 &&
-//                outputs(1,1,3,3) == 0.0 &&
-//                outputs(1,2,0,0) == 0.0 &&
-//                outputs(1,2,0,1) == 0.0 &&
-//                outputs(1,2,0,2) == 0.0 &&
-//                outputs(1,2,0,3) == 0.0 &&
-//                outputs(1,2,1,0) == 0.0 &&
-//                outputs(1,2,1,1) == 0.0 &&
-//                outputs(1,2,1,2) == 0.0 &&
-//                outputs(1,2,1,3) == 0.0 &&
-//                outputs(1,2,2,0) == 0.0 &&
-//                outputs(1,2,2,1) == 0.0 &&
-//                outputs(1,2,2,2) == 0.0 &&
-//                outputs(1,2,3,0) == 0.0 &&
-//                outputs(1,2,2,3) == 0.0 &&
-//                outputs(1,2,3,1) == 0.0 &&
-//                outputs(1,2,3,2) == 0.0 &&
-//                outputs(1,2,3,3) == 0.0, LOG);
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f &&
+                outputs(0, 0, 1, 0) == 3.f &&
+                outputs(0, 1, 1, 0) == 3.f &&
+                outputs(0, 2, 1, 0) == 3.f &&
+                outputs(0, 3, 1, 0) == 3.f &&
+                outputs(1, 0, 1, 0) == 3.f &&
+                outputs(1, 1, 1, 0) == 3.f &&
+                outputs(1, 2, 1, 0) == 3.f &&
+                outputs(1, 3, 1, 0) == 3.f &&
+                outputs(2, 0, 1, 0) == 3.f &&
+                outputs(2, 1, 1, 0) == 3.f &&
+                outputs(2, 2, 1, 0) == 3.f &&
+                outputs(2, 3, 1, 0) == 3.f &&
+                outputs(3, 0, 1, 0) == 3.f &&
+                outputs(3, 1, 1, 0) == 3.f &&
+                outputs(3, 2, 1, 0) == 3.f &&
+                outputs(3, 3, 1, 0) == 3.f , LOG);
+
+
+    // Multiple images, multiple filters
+    inputs.resize(5, 5, 3, 2);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
+
+    inputs.setConstant(1.0);
+    kernels.setConstant(0.25);
+    biases(0) = 0;
+    biases(1) = 1;
+
+    inputs.chip(1, 3).setConstant(2.0);
+
+    inputs_dimensions.setValues({5, 5, 3, 2});
+    kernels_dimensions.setValues({2, 2, 3, 2});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.set_synaptic_weights(kernels);
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.calculate_outputs(inputs, outputs);
+
+    assert_true(outputs(0, 0, 0, 0) == 3.f &&
+                outputs(0, 1, 0, 0) == 3.f &&
+                outputs(0, 2, 0, 0) == 3.f &&
+                outputs(0, 3, 0, 0) == 3.f &&
+                outputs(1, 0, 0, 0) == 3.f &&
+                outputs(1, 1, 0, 0) == 3.f &&
+                outputs(1, 2, 0, 0) == 3.f &&
+                outputs(1, 3, 0, 0) == 3.f &&
+                outputs(2, 0, 0, 0) == 3.f &&
+                outputs(2, 1, 0, 0) == 3.f &&
+                outputs(2, 2, 0, 0) == 3.f &&
+                outputs(2, 3, 0, 0) == 3.f &&
+                outputs(3, 0, 0, 0) == 3.f &&
+                outputs(3, 1, 0, 0) == 3.f &&
+                outputs(3, 2, 0, 0) == 3.f &&
+                outputs(3, 3, 0, 0) == 3.f &&
+                outputs(0, 0, 1, 0) == 4.f &&
+                outputs(0, 1, 1, 0) == 4.f &&
+                outputs(0, 2, 1, 0) == 4.f &&
+                outputs(0, 3, 1, 0) == 4.f &&
+                outputs(1, 0, 1, 0) == 4.f &&
+                outputs(1, 1, 1, 0) == 4.f &&
+                outputs(1, 2, 1, 0) == 4.f &&
+                outputs(1, 3, 1, 0) == 4.f &&
+                outputs(2, 0, 1, 0) == 4.f &&
+                outputs(2, 1, 1, 0) == 4.f &&
+                outputs(2, 2, 1, 0) == 4.f &&
+                outputs(2, 3, 1, 0) == 4.f &&
+                outputs(3, 0, 1, 0) == 4.f &&
+                outputs(3, 1, 1, 0) == 4.f &&
+                outputs(3, 2, 1, 0) == 4.f &&
+                outputs(3, 3, 1, 0) == 4.f &&
+                outputs(0, 0, 0, 1) == 6.f &&
+                outputs(0, 1, 0, 1) == 6.f &&
+                outputs(0, 2, 0, 1) == 6.f &&
+                outputs(0, 3, 0, 1) == 6.f &&
+                outputs(1, 0, 0, 1) == 6.f &&
+                outputs(1, 1, 0, 1) == 6.f &&
+                outputs(1, 2, 0, 1) == 6.f &&
+                outputs(1, 3, 0, 1) == 6.f &&
+                outputs(2, 0, 0, 1) == 6.f &&
+                outputs(2, 1, 0, 1) == 6.f &&
+                outputs(2, 2, 0, 1) == 6.f &&
+                outputs(2, 3, 0, 1) == 6.f &&
+                outputs(3, 0, 0, 1) == 6.f &&
+                outputs(3, 1, 0, 1) == 6.f &&
+                outputs(3, 2, 0, 1) == 6.f &&
+                outputs(3, 3, 0, 1) == 6.f &&
+                outputs(0, 0, 1, 1) == 7.f &&
+                outputs(0, 1, 1, 1) == 7.f &&
+                outputs(0, 2, 1, 1) == 7.f &&
+                outputs(0, 3, 1, 1) == 7.f &&
+                outputs(1, 0, 1, 1) == 7.f &&
+                outputs(1, 1, 1, 1) == 7.f &&
+                outputs(1, 2, 1, 1) == 7.f &&
+                outputs(1, 3, 1, 1) == 7.f &&
+                outputs(2, 0, 1, 1) == 7.f &&
+                outputs(2, 1, 1, 1) == 7.f &&
+                outputs(2, 2, 1, 1) == 7.f &&
+                outputs(2, 3, 1, 1) == 7.f &&
+                outputs(3, 0, 1, 1) == 7.f &&
+                outputs(3, 1, 1, 1) == 7.f &&
+                outputs(3, 2, 1, 1) == 7.f &&
+                outputs(3, 3, 1, 1) == 7.f, LOG);
+
 }
 
 
@@ -1534,58 +1225,138 @@ void ConvolutionalLayerTest::test_insert_padding() // @todo
 {
     cout << "test_insert_padding\n";
 
-//    ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-//    Tensor<type, 2> image;
-//    Tensor<type, 2> padded_image;
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> kernels;
+    Tensor<type, 4> padded;
 
-//    // Test
+    // Test
 
-//    image.set({1,4,4}, 1);
+    inputs.resize(5, 5, 3, 1);
+    kernels.resize(3, 3, 3, 1);
 
-//    convolutional_layer.set_row_stride(1);
-//    convolutional_layer.set_column_stride(1);
-//    convolutional_layer.set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//    convolutional_layer.set({1,4,4}, {1,3,3});
+    inputs.setConstant(1.0);
 
-//    padded_image = convolutional_layer.insert_padding(image);
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({5, 5, 3, 1});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({3, 3, 3, 1});
 
-//    assert_true(padded_image(0,0,0) == 0.0 &&
-//                padded_image(0,0,1) == 0.0 &&
-//                padded_image(0,0,2) == 0.0 &&
-//                padded_image(0,0,3) == 0.0 &&
-//                padded_image(0,0,4) == 0.0 &&
-//                padded_image(0,0,5) == 0.0 &&
-//                padded_image(0,1,0) == 0.0 &&
-//                padded_image(0,1,1) == 1.0 &&
-//                padded_image(0,1,2) == 1.0 &&
-//                padded_image(0,1,3) == 1.0 &&
-//                padded_image(0,1,4) == 1.0 &&
-//                padded_image(0,1,5) == 0.0 &&
-//                padded_image(0,2,0) == 0.0 &&
-//                padded_image(0,2,1) == 1.0 &&
-//                padded_image(0,2,2) == 1.0 &&
-//                padded_image(0,2,3) == 1.0 &&
-//                padded_image(0,2,4) == 1.0 &&
-//                padded_image(0,2,5) == 0.0 &&
-//                padded_image(0,3,0) == 0.0 &&
-//                padded_image(0,3,1) == 1.0 &&
-//                padded_image(0,3,2) == 1.0 &&
-//                padded_image(0,3,3) == 1.0 &&
-//                padded_image(0,3,4) == 1.0 &&
-//                padded_image(0,3,5) == 0.0 &&
-//                padded_image(0,4,0) == 0.0 &&
-//                padded_image(0,4,1) == 1.0 &&
-//                padded_image(0,4,2) == 1.0 &&
-//                padded_image(0,4,3) == 1.0 &&
-//                padded_image(0,4,4) == 1.0 &&
-//                padded_image(0,4,5) == 0.0 &&
-//                padded_image(0,5,0) == 0.0 &&
-//                padded_image(0,5,1) == 0.0 &&
-//                padded_image(0,5,2) == 0.0 &&
-//                padded_image(0,5,3) == 0.0 &&
-//                padded_image(0,5,4) == 0.0 &&
-//                padded_image(0,5,5) == 0.0, LOG);
+    convolutional_layer.set_row_stride(1);
+    convolutional_layer.set_column_stride(1);
+    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::Same);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.insert_padding(inputs, padded);
+
+    assert_true(padded.dimension(0) == 7 &&
+                padded.dimension(1) == 7,LOG);
+
+    assert_true(padded(0, 0, 0, 0) == 0.f &&
+                padded(0, 1, 0, 0) == 0.f &&
+                padded(0, 2, 0, 0) == 0.f &&
+                padded(0, 3, 0, 0) == 0.f &&
+                padded(0, 4, 0, 0) == 0.f &&
+                padded(0, 5, 0, 0) == 0.f &&
+                padded(0, 6, 0, 0) == 0.f &&
+                padded(1, 0, 0, 0) == 0.f &&
+                padded(1, 1, 0, 0) == 1.f &&
+                padded(1, 2, 0, 0) == 1.f &&
+                padded(1, 3, 0, 0) == 1.f &&
+                padded(1, 4, 0, 0) == 1.f &&
+                padded(1, 5, 0, 0) == 1.f &&
+                padded(1, 6, 0, 0) == 0.f &&
+                padded(2, 0, 0, 0) == 0.f &&
+                padded(2, 1, 0, 0) == 1.f &&
+                padded(2, 2, 0, 0) == 1.f &&
+                padded(2, 3, 0, 0) == 1.f &&
+                padded(2, 4, 0, 0) == 1.f &&
+                padded(2, 5, 0, 0) == 1.f &&
+                padded(2, 6, 0, 0) == 0.f &&
+                padded(3, 0, 0, 0) == 0.f &&
+                padded(3, 1, 0, 0) == 1.f &&
+                padded(3, 2, 0, 0) == 1.f &&
+                padded(3, 3, 0, 0) == 1.f &&
+                padded(3, 4, 0, 0) == 1.f &&
+                padded(3, 5, 0, 0) == 1.f &&
+                padded(3, 6, 0, 0) == 0.f &&
+                padded(4, 0, 0, 0) == 0.f &&
+                padded(4, 1, 0, 0) == 1.f &&
+                padded(4, 2, 0, 0) == 1.f &&
+                padded(4, 3, 0, 0) == 1.f &&
+                padded(4, 4, 0, 0) == 1.f &&
+                padded(4, 5, 0, 0) == 1.f &&
+                padded(4, 6, 0, 0) == 0.f &&
+                padded(5, 0, 0, 0) == 0.f &&
+                padded(5, 1, 0, 0) == 1.f &&
+                padded(5, 2, 0, 0) == 1.f &&
+                padded(5, 3, 0, 0) == 1.f &&
+                padded(5, 4, 0, 0) == 1.f &&
+                padded(5, 5, 0, 0) == 1.f &&
+                padded(5, 6, 0, 0) == 0.f &&
+                padded(6, 0, 0, 0) == 0.f &&
+                padded(6, 1, 0, 0) == 0.f &&
+                padded(6, 2, 0, 0) == 0.f &&
+                padded(6, 3, 0, 0) == 0.f &&
+                padded(6, 4, 0, 0) == 0.f &&
+                padded(6, 5, 0, 0) == 0.f &&
+                padded(6, 6, 0, 0) == 0.f, LOG);
+
+    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::Valid);
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+
+    convolutional_layer.insert_padding(inputs, padded);
+
+    assert_true(padded.dimension(0) == 5 &&
+                padded.dimension(1) == 5,LOG);
+
+}
+
+
+void ConvolutionalLayerTest::test_forward_propagate()
+{
+    Tensor<type, 4> inputs;
+    Tensor<type, 4> activations;
+    Tensor<type, 4> activations_derivatives;
+    ConvolutionalLayer::ForwardPropagation forward_propagation;
+
+    Tensor<type, 4> kernels;
+    Tensor<type, 1> biases;
+
+    ConvolutionalLayer convolutional_layer;
+
+    inputs.resize(3, 3, 3, 2);
+    kernels.resize(2, 2, 3, 2);
+    biases.resize(2);
+
+    Tensor<Index, 1> inputs_dimensions(4);
+    inputs_dimensions.setValues({3, 3, 3, 2});
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({2, 2, 3, 2});
+
+    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
+
+    inputs.setConstant(1.f);
+    biases.setConstant(0.f);
+    kernels.setConstant(1.f/12);
+
+    convolutional_layer.set_biases(biases);
+    convolutional_layer.set_synaptic_weights(kernels);
+
+    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                forward_propagation.activations_derivatives_4d(0, 0, 0, 0) == 1.f, LOG);
+
+    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
+    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 0.761594f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 0) - 0.419974f) < 1.e-6f, LOG);
 }
 
 
@@ -1598,38 +1369,49 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    test_constructor();
    test_destructor();
 
-
-   // Get methods
-
-   test_get_parameters();
-   test_get_outputs_dimensions();
-   test_get_parameters_number();
-
-
    // Set methods
 
    test_set();
-   test_set_parameters();
+//   test_set_parameters();
 
+   // Convolutions
+
+   test_eigen_convolution();
 
    // Combinations
 
-   test_calculate_image_convolution();
-   test_calculate_convolutions();
-
+   test_calculate_combinations();
 
    // Activation
 
    test_calculate_activations();
    test_calculate_activations_derivatives();
 
-
    // Outputs
 
    test_calculate_outputs();
+
+   // Padding
    test_insert_padding();
 
-   cout << "End of convolutional layer test case.\n";
+/*
+   // Get methods
+
+   test_get_parameters();
+   test_get_outputs_dimensions();
+   test_get_parameters_number();
+
+   // Combinations
+
+   test_calculate_image_convolution();
+
+*/
+
+   // Forward propagate
+
+   test_forward_propagate();
+
+   cout << "End of convolutional layer test case.\n\n";
 }
 
 

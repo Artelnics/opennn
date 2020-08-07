@@ -61,14 +61,6 @@ PerceptronLayer::~PerceptronLayer()
 }
 
 
-Tensor<Index, 1> PerceptronLayer::get_input_variables_dimensions() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    return Tensor<Index, 1>(inputs_number);
-}
-
-
 /// Returns the number of inputs to the layer.
 
 Index PerceptronLayer::get_inputs_number() const
@@ -548,11 +540,9 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
-
     biases.setConstant(value);
 
     synaptic_weights.setConstant(value);
-
 }
 
 
@@ -633,8 +623,8 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations_
 }
 
 void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                       Tensor<type, 2>& activations,
-                                       Tensor<type, 2>& activations_derivatives) const
+                                                        Tensor<type, 2>& activations,
+                                                        Tensor<type, 2>& activations_derivatives) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -730,21 +720,6 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
-{
-    const Index batch_size = inputs.dimension(0);
-    const Index outputs_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(batch_size, outputs_number);
-    Tensor<type, 2> combinations(batch_size, outputs_number);
-
-    calculate_combinations(inputs, get_biases(parameters), get_synaptic_weights(parameters), combinations);
-    calculate_activations(combinations, outputs);
-
-    return outputs;
-}
-
-
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                    ForwardPropagation& forward_propagation) const
  {
@@ -815,8 +790,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                       forward_propagation.activations_derivatives_2d);
 }
 
-
-// Delta methods
 
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
@@ -898,7 +871,6 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 }
 
-///
 
 void PerceptronLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {

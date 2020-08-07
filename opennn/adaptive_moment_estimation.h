@@ -100,13 +100,6 @@ public:
    const type& get_beta_2() const;
    const type& get_epsilon() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_loss_goal() const;
@@ -117,6 +110,10 @@ public:
 
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
+
+   // Hardware use
+
+   const string& get_hardware_use() const;
 
    // Set methods
 
@@ -137,10 +134,6 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -154,9 +147,9 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
-   // Utilities
+   // Hardware use
 
-   void set_display_period(const Index&);
+   void set_hardware_use(const string&);
 
    // Training methods
 
@@ -173,8 +166,6 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
-   tinyxml2::XMLDocument* to_XML() const;
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -207,25 +198,7 @@ private:
 
    type epsilon;
 
-   // TRAINING PARAMETERS
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
-   // Stopping criteria
+    // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
@@ -255,13 +228,16 @@ private:
 
    Index batch_instances_number = 1000;
 
+   /// Hardware use.
+
+   string hardware_use;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/adaptive_moment_estimation_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
 #endif
 
 };

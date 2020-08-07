@@ -32,16 +32,9 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool  = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Data set
 
         DataSet data_set("../data/yachtresistance.csv", ';', true);
-        data_set.set_thread_pool_device(thread_pool_device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -57,9 +50,9 @@ int main(void)
         Tensor<string, 1> scaling_target_methods(target_variables_number);
         scaling_target_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets(scaling_target_methods);
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_target_methods);
 
         // Neural network
 
@@ -69,34 +62,29 @@ int main(void)
         neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MinimumMaximum);
+        unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
-        data_set.unscale_inputs(scaling_inputs_methods, inputs_descriptives);
-        data_set.unscale_targets(scaling_target_methods, targets_descriptives);
-
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        testing_analysis.set_thread_pool_device(thread_pool_device);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 

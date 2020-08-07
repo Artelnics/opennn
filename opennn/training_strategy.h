@@ -160,6 +160,8 @@ public:
 
    void set_display(const bool&);
 
+   void set_loss_goal(const type&);
+   void set_maximum_selection_error_increases(const Index&);
    void set_reserve_selection_error_history(const bool&);
    void set_maximum_epochs_number(const int&);
    void set_display_period(const int&);
@@ -179,12 +181,9 @@ public:
 
    // Serialization methods
 
-   
-
    void print() const;
 
-   tinyxml2::XMLDocument* to_XML() const;   
-   void from_XML(const tinyxml2::XMLDocument&);   
+   void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    
@@ -197,76 +196,76 @@ private:
 
    NeuralNetwork* neural_network_pointer = nullptr;
 
-    // Loss index
+   // Loss index
 
-    /// Pointer to the sum squared error object wich can be used as the error term.
+   /// Pointer to the sum squared error object wich can be used as the error term.
 
-    SumSquaredError sum_squared_error;
+   SumSquaredError sum_squared_error;
 
-    /// Pointer to the mean squared error object wich can be used as the error term.
+   /// Pointer to the mean squared error object wich can be used as the error term.
 
-    MeanSquaredError mean_squared_error;
+   MeanSquaredError mean_squared_error;
 
-    /// Pointer to the normalized squared error object wich can be used as the error term.
+   /// Pointer to the normalized squared error object wich can be used as the error term.
 
-    NormalizedSquaredError normalized_squared_error;
+   NormalizedSquaredError normalized_squared_error;
 
-    /// Pointer to the Mikowski error object wich can be used as the error term.
+   /// Pointer to the Mikowski error object wich can be used as the error term.
 
-    MinkowskiError Minkowski_error;
+   MinkowskiError Minkowski_error;
 
-    /// Pointer to the cross entropy error object wich can be used as the error term.
+   /// Pointer to the cross entropy error object wich can be used as the error term.
 
-    CrossEntropyError cross_entropy_error;
+   CrossEntropyError cross_entropy_error;
 
-    /// Pointer to the weighted squared error object wich can be used as the error term.
+   /// Pointer to the weighted squared error object wich can be used as the error term.
 
-    WeightedSquaredError weighted_squared_error;
+   WeightedSquaredError weighted_squared_error;
 
-    /// Type of loss method.
+   /// Type of loss method.
 
-    LossMethod loss_method;
+   LossMethod loss_method;
 
-    // Optimization algorithm
+   // Optimization algorithm
 
-    /// Pointer to a gradient descent object to be used as a main optimization algorithm.
+   /// Pointer to a gradient descent object to be used as a main optimization algorithm.
 
-    GradientDescent gradient_descent;
+   GradientDescent gradient_descent;
 
-    /// Pointer to a conjugate gradient object to be used as a main optimization algorithm.
+   /// Pointer to a conjugate gradient object to be used as a main optimization algorithm.
 
-    ConjugateGradient conjugate_gradient;
+   ConjugateGradient conjugate_gradient;
 
-    /// Pointer to a quasi-Newton method object to be used as a main optimization algorithm.
+   /// Pointer to a quasi-Newton method object to be used as a main optimization algorithm.
 
-    QuasiNewtonMethod quasi_Newton_method;
+   QuasiNewtonMethod quasi_Newton_method;
 
-    /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
+   /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
 
-    LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
+   LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
 
-    /// Pointer to a stochastic gradient descent algorithm object to be used as a main optimization algorithm.
+   /// Pointer to a stochastic gradient descent algorithm object to be used as a main optimization algorithm.
 
-    StochasticGradientDescent stochastic_gradient_descent;
+   StochasticGradientDescent stochastic_gradient_descent;
 
-    /// Pointer to a adaptive moment estimation algorithm object to be used as a main optimization algorithm.
+   /// Pointer to a adaptive moment estimation algorithm object to be used as a main optimization algorithm.
 
-    AdaptiveMomentEstimation adaptive_moment_estimation;
+   AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    /// Type of main optimization algorithm.
+   /// Type of main optimization algorithm.
 
-    OptimizationMethod optimization_method;
+   OptimizationMethod optimization_method;
 
-    /// Display messages to screen.
+   /// Display messages to screen.
 
-    bool display;
+   bool display;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/training_strategy_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/training_strategy_mkl.h"
 #endif
 
 };

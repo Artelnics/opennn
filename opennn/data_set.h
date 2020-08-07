@@ -521,10 +521,6 @@ public:
 
    // Descriptives methods
 
-   void set_variables_descriptives();
-   Tensor<Descriptives, 1> get_input_variables_descriptives() const;
-   Tensor<Descriptives, 1> get_target_variables_descriptives() const;
-
    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
@@ -546,7 +542,7 @@ public:
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
    Tensor<type, 1> calculate_used_variables_minimums() const;
 
-   Descriptives calculate_inputs_descriptives(const Index&) const;
+   Descriptives calculate_input_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
@@ -624,7 +620,12 @@ public:
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
+   void scale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_input_variables_minimum_maximum();
+
+   void unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
+
+   Tensor<Descriptives, 1> scale_input_variables(const Tensor<string, 1>&);
 
    // Target variables scaling
 
@@ -632,24 +633,24 @@ public:
    void scale_target_mean_standard_deviation(const Descriptives&, const Index&);
    void scale_target_logarithmic(const Descriptives&, const Index&);
 
-   void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_minimum_maximum();
+   void scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_minimum_maximum();
 
-   void scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_mean_standard_deviation();
+   void scale_target_variables_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_mean_standard_deviation();
 
-   void scale_targets_logarithmic(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_targets_logarithmic();
+   void scale_target_variables_logarithm(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables_logarithm();
 
-   Tensor<Descriptives, 1> scale_targets(const string&);
-   Tensor<Descriptives, 1> scale_targets(const Tensor<string, 1>&);
+   Tensor<Descriptives, 1> scale_target_variables(const string&);
+   Tensor<Descriptives, 1> scale_target_variables(const Tensor<string, 1>&);
 
    // Data unscaling
 
-   void unscale_input_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_input_variable_minimum_maximum(const Descriptives&, const Index&);
    void unscale_input_mean_standard_deviation(const Descriptives&, const Index&);
-   void unscale_input_standard_deviation(const Descriptives&, const Index&);
-   void unscale_inputs(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
+   void unscale_input_variable_standard_deviation(const Descriptives&, const Index&);
+   void unscale_input_variables(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    void unscale_target_minimum_maximum(const Descriptives&, const Index&);
    void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);
@@ -694,12 +695,10 @@ public:
 
    // Serialization methods
 
-   
-
    void print() const;
    void print_summary() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
 
    void from_XML(const tinyxml2::XMLDocument&);
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -856,8 +855,6 @@ private:
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
-   Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"

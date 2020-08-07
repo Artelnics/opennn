@@ -53,6 +53,7 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_loss_index_pointer(loss_index_pointer);
 
     set_default();
+
 }
 
 
@@ -341,6 +342,11 @@ WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
 {
     return &weighted_squared_error;
 }
+
+//DataSet* TrainingStrategy::get_data_set_pointer()
+//{
+//    return &;
+//}
 
 /// Returns the type of the main loss algorithm composing this training strategy object.
 
@@ -740,6 +746,24 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
+void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
+{
+    gradient_descent.set_loss_goal(new_loss_goal);
+    conjugate_gradient.set_loss_goal(new_loss_goal);
+    quasi_Newton_method.set_loss_goal(new_loss_goal);
+    Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
+}
+
+
+void TrainingStrategy::set_maximum_selection_error_increases(const Index & maximum_selection_error_increases)
+{
+    gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    quasi_Newton_method.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    Levenberg_Marquardt_algorithm.set_maximum_selection_error_increases(maximum_selection_error_increases);
+}
+
+
 void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
 {
     gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
@@ -811,8 +835,10 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
+
         if(!check_forecasting())
         {
+
             ostringstream buffer;
 
             buffer << "OpenNN Exception: TrainingStrategy class.\n"
@@ -822,9 +848,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
             throw logic_error(buffer.str());
         }
     }
-
     OptimizationAlgorithm::Results results;
-
     // Main
 
     switch(optimization_method)
@@ -955,18 +979,20 @@ void TrainingStrategy::perform_training_void()
 
 bool TrainingStrategy::check_forecasting() const
 {
+
+    Index timesteps = 0;
+
+    if(neural_network_pointer->has_recurrent_layer())
+    {
+        timesteps = neural_network_pointer->get_recurrent_layer_pointer()->get_timesteps();
+    }
+    else if(neural_network_pointer->has_long_short_term_memory_layer())
+    {
+        timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
+    }
+
+
 //    const Index batch_instances_number = data_set.get_batch_instances_number();
-
-//    Index timesteps = 0;
-
-//    if(neural_network.has_recurrent_layer())
-//    {
-//        timesteps = neural_network.get_recurrent_layer_pointer()->get_timesteps();
-//    }
-//    else if(neural_network.has_long_short_term_memory_layer())
-//    {
-//        timesteps = neural_network.get_long_short_term_memory_layer_pointer()->get_timesteps();
-//    }
 
 //    if(batch_instances_number%timesteps == 0)
 //    {
@@ -977,7 +1003,7 @@ bool TrainingStrategy::check_forecasting() const
 //        return false;
 //    }
 
-    return false;
+    return true;
 }
 
 
@@ -985,169 +1011,6 @@ bool TrainingStrategy::check_forecasting() const
 
 void TrainingStrategy::print() const
 {
-}
-
-
-/// Returns a default string representation in XML-type format of the optimization algorithm object.
-/// This containts the training operators, the training parameters, stopping criteria and other stuff.
-
-tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Training strategy
-
-    tinyxml2::XMLElement* training_strategy_element = document->NewElement("TrainingStrategy");
-
-    document->InsertFirstChild(training_strategy_element);
-
-    // Main
-
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "GRADIENT_DESCENT");
-
-        const tinyxml2::XMLDocument* gradient_descent_document = gradient_descent.to_XML();
-
-        const tinyxml2::XMLElement* gradient_descent_element = gradient_descent_document->FirstChildElement("GradientDescent");
-
-        for(const tinyxml2::XMLNode* nodeFor=gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete gradient_descent_document;
-    }
-    break;
-
-    case CONJUGATE_GRADIENT:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "CONJUGATE_GRADIENT");
-
-        const tinyxml2::XMLDocument* conjugate_gradient_document = conjugate_gradient.to_XML();
-
-        const tinyxml2::XMLElement* conjugate_gradient_element = conjugate_gradient_document->FirstChildElement("ConjugateGradient");
-
-        for(const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete conjugate_gradient_document;
-    }
-    break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "QUASI_NEWTON_METHOD");
-
-        const tinyxml2::XMLDocument* quasi_Newton_method_document = quasi_Newton_method.to_XML();
-
-        const tinyxml2::XMLElement* quasi_Newton_method_element = quasi_Newton_method_document->FirstChildElement("QuasiNewtonMethod");
-
-        for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete quasi_Newton_method_document;
-    }
-    break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "LEVENBERG_MARQUARDT_ALGORITHM");
-
-        const tinyxml2::XMLDocument* Levenberg_Marquardt_algorithm_document = Levenberg_Marquardt_algorithm.to_XML();
-
-        const tinyxml2::XMLElement* Levenberg_Marquardt_algorithm_element = Levenberg_Marquardt_algorithm_document->FirstChildElement("LevenbergMarquardtAlgorithm");
-
-        for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete Levenberg_Marquardt_algorithm_document;
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "STOCHASTIC_GRADIENT_DESCENT");
-
-        const tinyxml2::XMLDocument* stochastic_gradient_descent_document = stochastic_gradient_descent.to_XML();
-
-        const tinyxml2::XMLElement* stochastic_gradient_descent_element = stochastic_gradient_descent_document->FirstChildElement("StochasticGradientDescent");
-
-        for(const tinyxml2::XMLNode* nodeFor = stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete stochastic_gradient_descent_document;
-    }
-    break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        tinyxml2::XMLElement* main_element = document->NewElement("Main");
-        training_strategy_element->LinkEndChild(main_element);
-
-        main_element->SetAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
-
-        const tinyxml2::XMLDocument* adaptive_moment_estimation_document = adaptive_moment_estimation.to_XML();
-
-        const tinyxml2::XMLElement* adaptive_moment_estimation_element = adaptive_moment_estimation_document->FirstChildElement("AdaptiveMomentEstimation");
-
-        for(const tinyxml2::XMLNode* nodeFor = adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-        {
-            tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
-            main_element->InsertEndChild(copy );
-        }
-
-        delete adaptive_moment_estimation_document;
-    }
-
-    break;
-    }
-
-    // Display
-//   {
-//      element = document->NewElement("Display");
-//      training_strategy_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-    return document;
 }
 
 
@@ -1382,6 +1245,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
+    cout << "Loss index loaded" << endl;
+
     // Optimization algorithm
 
     {
@@ -1414,6 +1279,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 gradient_descent.from_XML(new_document);
             }
 
+            cout << "GD" << endl;
+
             // Conjugate gradient
 
             const tinyxml2::XMLElement* conjugate_gradient_element = element->FirstChildElement("ConjugateGradient");
@@ -1434,6 +1301,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 conjugate_gradient.from_XML(new_document);
             }
+
+            cout << "CG" << endl;
 
             // Quasi-Newton method
 
@@ -1456,6 +1325,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 quasi_Newton_method.from_XML(quasi_Newton_document);
             }
 
+            cout << "QN" << endl;
+
             // Levenberg Marquardt
 
             const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardtAlgorithm");
@@ -1476,6 +1347,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 Levenberg_Marquardt_algorithm.from_XML(new_document);
             }
+
+            cout << "LM" << endl;
 
             // Stochastic gradient
 
@@ -1498,6 +1371,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                 stochastic_gradient_descent.from_XML(new_document);
             }
 
+            cout << "SG" << endl;
+
             // Adaptive moment estimation
 
             const tinyxml2::XMLElement* adaptive_moment_estimation_element = element->FirstChildElement("AdaptiveMomentEstimation");
@@ -1518,6 +1393,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 adaptive_moment_estimation.from_XML(new_document);
             }
+
+            cout << "ADAM" << endl;
         }
     }
 
@@ -1548,11 +1425,11 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
 void TrainingStrategy::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 

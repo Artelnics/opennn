@@ -25,8 +25,6 @@ PoolingLayer::PoolingLayer() : Layer()
 
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
-    input_variables_dimensions = new_input_variables_dimensions;
-
     set_default();
 }
 
@@ -38,8 +36,6 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
 {
-    input_variables_dimensions = new_input_variables_dimensions;
-
     pool_rows_number = pool_dimensions[0];
 
     pool_columns_number = pool_dimensions[1];
@@ -346,7 +342,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
     const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
     const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-    const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
     /*
@@ -711,32 +707,15 @@ Tensor<Index, 1> PoolingLayer::get_inputs_indices(const Index& neuron) const
 }
 
 
-/// Returns the layer's input's dimensions.
-
-Tensor<Index, 1> PoolingLayer::get_input_variables_dimensions() const
-{
-    /*
-        const Index batch_instances_number = 0;
-        const Index filters_number = 0;
-        const Index outputs_rows_number = get_outputs_rows_number();
-        const Index outputs_columns_number = get_outputs_columns_number();
-
-        return Tensor<Index, 1>({batch_instances_number, filters_number, outputs_rows_number, outputs_columns_number});
-    */
-
-    return Tensor<Index, 1>();
-}
-
-
 /// Returns the layer's outputs dimensions.
 
 Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions[0] = input_variables_dimensions[0];
-    outputs_dimensions[1] = get_outputs_rows_number();
-    outputs_dimensions[2] = get_outputs_columns_number();
+//    outputs_dimensions[0] = input_variables_dimensions[0];
+//    outputs_dimensions[1] = get_outputs_rows_number();
+//    outputs_dimensions[2] = get_outputs_columns_number();
 
     return outputs_dimensions;
 }
@@ -756,7 +735,9 @@ Index PoolingLayer::get_inputs_number() const
 
 Index PoolingLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions[0];
+//    return input_variables_dimensions[0];
+
+    return 0;
 }
 
 
@@ -764,7 +745,9 @@ Index PoolingLayer::get_inputs_channels_number() const
 
 Index PoolingLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[1];
+//    return input_variables_dimensions[1];
+
+    return 0;
 }
 
 
@@ -772,7 +755,9 @@ Index PoolingLayer::get_inputs_rows_number() const
 
 Index PoolingLayer::get_inputs_columns_number() const
 {
-    return input_variables_dimensions[2];
+//    return input_variables_dimensions[2];
+
+    return 0;
 }
 
 
@@ -780,7 +765,9 @@ Index PoolingLayer::get_inputs_columns_number() const
 
 Index PoolingLayer::get_outputs_rows_number() const
 {
-    return (input_variables_dimensions[1] - pool_rows_number)/row_stride + 1;
+//    return (input_variables_dimensions[1] - pool_rows_number)/row_stride + 1;
+
+    return 0;
 }
 
 
@@ -788,7 +775,9 @@ Index PoolingLayer::get_outputs_rows_number() const
 
 Index PoolingLayer::get_outputs_columns_number() const
 {
-    return (input_variables_dimensions[2] - pool_columns_number)/column_stride + 1;
+//    return (input_variables_dimensions[2] - pool_columns_number)/column_stride + 1;
+
+    return 0;
 }
 
 

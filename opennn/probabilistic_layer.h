@@ -61,7 +61,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -143,7 +143,7 @@ public:
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
 
    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const;
 
@@ -186,7 +186,7 @@ public:
 
    
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
+   virtual 
 
    void from_XML(const tinyxml2::XMLDocument&);
 

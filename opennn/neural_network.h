@@ -286,8 +286,6 @@ public:
    // Parameters
 
    type calculate_parameters_norm() const;
-   Descriptives calculate_parameters_descriptives() const;
-   Histogram calculate_parameters_histogram(const Index& = 10) const;
 
    void perturbate_parameters(const type&);
 
@@ -295,21 +293,12 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
-
-   Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
-   Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
    // Serialization methods
 
-   
- 
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
@@ -326,7 +315,6 @@ public:
    void print_summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
-   void save_parameters_binary(const string&) const;
 
    virtual void load(const string&);
    void load_parameters(const string&);
@@ -490,7 +478,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/neural_network_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/neural_network_mkl.h"
 #endif
 };
 

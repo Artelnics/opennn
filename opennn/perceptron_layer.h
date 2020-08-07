@@ -63,7 +63,7 @@ public:
 
    bool is_empty() const;
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -147,7 +147,7 @@ public:
    // Perceptron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
 
    void forward_propagate(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation) const;
@@ -241,7 +241,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/perceptron_layer_mkl.h"
+    #include"../../opennn-mkl/opennn_mkl/perceptron_layer_mkl.h"
 #endif
 };
 

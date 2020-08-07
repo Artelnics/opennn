@@ -275,7 +275,7 @@ void TrainingStrategyTest::run_test_case()
    test_results_constructor();
    test_results_destructor();
 
-   cout << "End of training strategy test case.\n";
+   cout << "End of training strategy test case.\n\n";
 }
 
 

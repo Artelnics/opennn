@@ -75,33 +75,9 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method_name()
 }
 
 
-void LearningRateAlgorithmTest::test_get_warning_learning_rate()
-{
-   cout << "test_get_warning_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_warning_learning_rate(0.0);
-
-   assert_true(tra.get_warning_learning_rate() == 0.0, LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_get_error_learning_rate()
-{
-   cout << "test_get_error_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_error_learning_rate(0.0);
-
-   assert_true(tra.get_error_learning_rate() == 0.0, LOG);
-}
-
-
 void LearningRateAlgorithmTest::test_get_display()
 {
-   cout << "test_get_warning_gradient_norm\n"; 
+   cout << "test_get_display\n";
 
    LearningRateAlgorithm tra;
 
@@ -150,18 +126,6 @@ void LearningRateAlgorithmTest::test_set_learning_rate_method()
 void LearningRateAlgorithmTest::test_set_loss_tolerance()
 {
    cout << "test_set_loss_tolerance\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_warning_learning_rate()
-{
-   cout << "test_set_warning_learning_rate\n";
-}
-
-
-void LearningRateAlgorithmTest::test_set_error_learning_rate()
-{
-   cout << "test_set_error_learning_rate\n";
 }
 
 
@@ -436,11 +400,11 @@ void LearningRateAlgorithmTest::test_to_XML()
 
    LearningRateAlgorithm  tra;
 
-   tinyxml2::XMLDocument* document = tra.to_XML();
+//   tinyxml2::XMLDocument* document = tra.to_XML();
 
-   assert_true(document != nullptr, LOG);
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
+//   delete document;
 }
 
 
@@ -466,9 +430,6 @@ void LearningRateAlgorithmTest::run_test_case()
 
    test_get_loss_tolerance();
 
-   test_get_warning_learning_rate();
-   test_get_error_learning_rate();
-
    // Utilities
    
    test_get_display();
@@ -486,8 +447,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training parameters
 
    test_set_loss_tolerance();
-   test_set_warning_learning_rate();
-   test_set_error_learning_rate();
 
    // Utilities
 
@@ -505,7 +464,7 @@ void LearningRateAlgorithmTest::run_test_case()
 
    test_to_XML();
 
-   cout << "End of training rate algorithm test case.\n";
+   cout << "End of training rate algorithm test case.\n\n";
 }
 
 // OpenNN: Open Neural Networks Library.

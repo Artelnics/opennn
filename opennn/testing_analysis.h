@@ -279,6 +279,8 @@ public:
    // Multiple classification tests
 
    Tensor<type, 1> calculate_multiple_classification_tests() const;
+   void save_confusion(const string&) const;
+   void save_multiple_classification_tests(const string&) const;
 
    // Multiple classification rates
 
@@ -286,7 +288,25 @@ public:
 
    Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
-   Tensor<string, 2> calculate_missclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+   Tensor<string, 2> calculate_well_classified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+
+   Tensor<string, 2> calculate_misclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+
+   void save_well_classified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_misclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_well_classified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_misclassified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_well_classified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_well_classified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
+
+   void save_misclassified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+
+   void save_misclassified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
 
    // Forecasting methods
 
@@ -300,7 +320,7 @@ public:
 
    void print() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
+//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

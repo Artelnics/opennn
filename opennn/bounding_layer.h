@@ -62,7 +62,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -113,11 +113,9 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML();
 
 protected:
 
