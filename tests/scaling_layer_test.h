@@ -59,7 +59,7 @@ public:
    // Variables scaling and unscaling
 
    void test_get_scaling_method();
-   void test_get_scaling_method_name();
+   void test_write_scaling_methods();
 
    // Display messages
 

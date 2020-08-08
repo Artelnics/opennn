@@ -847,9 +847,10 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
-                        const type slope = static_cast<type>(2)/descriptives(j).standard_deviation;
 
-                        const type intercept = -static_cast<type>(2)*descriptives(j).mean/descriptives(j).standard_deviation;
+                        const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
+
+                        const type intercept = -static_cast<type>(1)*descriptives(j).mean/descriptives(j).standard_deviation;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
 
@@ -954,76 +955,6 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
             }
         }
         */
-    }
-
-    return outputs;
-}
-
-
-/// Calculates the outputs from the scaling layer with the minimum and maximum method for a set of inputs.
-/// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons.
-
-Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<type, 2>& inputs) const
-{
-    const Index points_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(points_number, neurons_number);
-
-    for(Index j = 0; j < neurons_number; j++)
-    {
-        if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<type>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class\n"
-                     << "Tensor<type, 1> calculate_minimum_maximum_outputs(Tensor<type, 1>&) const method.\n"
-                     << "Minimum and maximum values of variable " << j << " are equal.\n"
-                     << "Those inputs won't be scaled.\n";
-            }
-
-            outputs(j) = inputs(j);
-        }
-        else
-        {
-            outputs(j) = static_cast<type>(2.0)*(inputs(j) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1.0);
-        }
-    }
-
-    return outputs;
-}
-
-
-/// Calculates the outputs from the scaling layer with the mean and standard deviation method for a set of inputs.
-/// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons.
-
-Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<type, 2>& inputs) const
-{
-    const Index points_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> outputs(points_number, neurons_number);
-
-    for(Index j = 0; j < neurons_number; j++)
-    {
-//        if(abs(descriptives(j).standard_deviation) < numeric_limits<type>::min())
-
-        if(abs(descriptives[j].standard_deviation) < numeric_limits<type>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class.\n"
-                     << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
-                     << "Standard deviation of variable " << j << " is zero.\n"
-                     << "Those variables won't be scaled.\n";
-            }
-
-            outputs(j) = inputs(j);
-        }
-        else
-        {
-            outputs(j) = (inputs(j) - descriptives(j).mean)/descriptives(j).standard_deviation;
-        }
     }
 
     return outputs;
