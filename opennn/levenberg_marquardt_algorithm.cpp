@@ -34,19 +34,6 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_ind
 }
 
 
-/// XML Constructor.
-/// Creates a Levenberg-Marquardt algorithm object, and loads its members from a XML document.
-/// @param document TinyXML document containing the Levenberg-Marquardt algorithm data.
-
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument& document)
-    : OptimizationAlgorithm(document)
-{
-    set_default();
-
-    from_XML(document);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any object.
 

@@ -42,10 +42,6 @@ public:
 
    explicit BoundingLayer(const Index&);
 
-   explicit BoundingLayer(const tinyxml2::XMLDocument&);
-
-   BoundingLayer(const BoundingLayer&);
-
    // Destructor
    
    virtual ~BoundingLayer();

@@ -30,26 +30,6 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_point
 }
 
 
-/// File constructor.
-/// @param file_name Name of XML order selection file.
-
-GeneticAlgorithm::GeneticAlgorithm(const string& file_name)
-    : InputsSelection(file_name)
-{
-    load(file_name);
-}
-
-
-/// XML constructor.
-/// @param genetic_algorithm_document Pointer to a TinyXML document containing the genetic algorithm data.
-
-GeneticAlgorithm::GeneticAlgorithm(const tinyxml2::XMLDocument& genetic_algorithm_document)
-    : InputsSelection(genetic_algorithm_document)
-{
-    from_XML(genetic_algorithm_document);
-}
-
-
 /// Destructor.
 
 GeneticAlgorithm::~GeneticAlgorithm()

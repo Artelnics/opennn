@@ -85,10 +85,6 @@ public:
             }
             else if(layer_pointer->get_type() == Recurrent ) // Recurrent
             {
-//                combinations_1d.resize(neurons_number);
-
-//                activations_1d.resize(neurons_number);
-
                 activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
             else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM

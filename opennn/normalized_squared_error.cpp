@@ -22,31 +22,6 @@ NormalizedSquaredError::NormalizedSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a normalized squared error term associated to a neural network object but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a normalized squared error term not associated to any
-/// neural network but to be measured on a data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-NormalizedSquaredError::NormalizedSquaredError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a normalized squared error term associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -57,20 +32,6 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a normalized squared error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from a TinyXML document->
-/// @param normalized_squared_error_document XML document with the class members.
-
-NormalizedSquaredError::NormalizedSquaredError(const tinyxml2::XMLDocument& normalized_squared_error_document)
-    : LossIndex(normalized_squared_error_document)
-{
-    set_default();
-
-    from_XML(normalized_squared_error_document);
 }
 
 

@@ -34,20 +34,6 @@ StochasticGradientDescent::StochasticGradientDescent(LossIndex* new_loss_index_p
 }
 
 
-/// XML constructor.
-/// It creates a gradient descent optimization algorithm not associated to any loss index object.
-/// It also loads the class members from a XML document.
-/// @param document TinyXML document with the members of a gradient descent object.
-
-StochasticGradientDescent::StochasticGradientDescent(const tinyxml2::XMLDocument& document)
-    : OptimizationAlgorithm(document)
-{
-    set_default();
-
-    from_XML(document);
-}
-
-
 /// Destructor.
 
 StochasticGradientDescent::~StochasticGradientDescent()

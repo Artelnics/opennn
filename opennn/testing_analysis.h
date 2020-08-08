@@ -47,15 +47,7 @@ public:
 
    explicit TestingAnalysis();
 
-   explicit TestingAnalysis(NeuralNetwork*);
-
-   explicit TestingAnalysis(DataSet*);
-
    explicit TestingAnalysis(NeuralNetwork*, DataSet*);
-
-   explicit TestingAnalysis(const tinyxml2::XMLDocument&);
-
-   explicit TestingAnalysis(const string&);
 
     // Destructor
 
@@ -76,7 +68,10 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void save(const string&) const;
+       void save(const string&) const
+       {
+        /// @todo
+       }
     };
 
 

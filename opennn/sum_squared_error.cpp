@@ -20,28 +20,6 @@ SumSquaredError::SumSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a sum squared error term associated to a neural network but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-}
-
-
-/// Data set constructor.
-/// It creates a sum squared error not associated to any neural network but to be measured on a data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-SumSquaredError::SumSquaredError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a sum squared error associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -54,38 +32,12 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, Data
 }
 
 
-/// XML constructor.
-/// It creates a sum squared error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from a TinyXML document.
-/// @param sum_squared_error_document XML document with the class members.
-
-SumSquaredError::SumSquaredError(const tinyxml2::XMLDocument& sum_squared_error_document)
-    : LossIndex(sum_squared_error_document)
-{
-    from_XML(sum_squared_error_document);
-}
-
-
-/// Copy constructor.
-/// It creates a sum squared error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from another sum squared error object.
-/// @param new_sum_squared_error Object to be copied.
-
-SumSquaredError::SumSquaredError(const SumSquaredError& new_sum_squared_error)
-    : LossIndex(new_sum_squared_error)
-{
-
-}
-
-
 /// Destructor.
 
 SumSquaredError::~SumSquaredError()
 {
 }
 
-
-// Error methods
 
 void SumSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,

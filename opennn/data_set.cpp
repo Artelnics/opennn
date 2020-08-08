@@ -68,17 +68,6 @@ DataSet::DataSet(const Index& new_instances_number, const Index& new_inputs_numb
 }
 
 
-/// Sets the data set members from a XML document.
-/// @param data_set_document TinyXML document containing the member data.
-
-DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
-{
-//   set_default();
-
-    from_XML(data_set_document);
-}
-
-
 /// File and separator constructor. It creates a data set object by loading the object members from a data file.
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
@@ -99,18 +88,6 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
 
     read_csv();
 
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing inputs targets data set object.
-/// @param other_data_set Data set object to be copied.
-
-DataSet::DataSet(const DataSet& other_data_set)
-{
-    set_default();
-
-    set(other_data_set);
 }
 
 

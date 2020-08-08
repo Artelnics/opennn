@@ -48,8 +48,6 @@ public:
 
    explicit LongShortTermMemoryLayer(const Index&, const Index&);
 
-   LongShortTermMemoryLayer(const LongShortTermMemoryLayer&);
-
    // Destructor
    
    virtual ~LongShortTermMemoryLayer();

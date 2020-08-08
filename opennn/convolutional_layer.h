@@ -51,6 +51,8 @@ public:
 
     // Destructor
 
+    virtual ~ConvolutionalLayer() {}
+
     // Get methods
 
     bool is_empty() const;

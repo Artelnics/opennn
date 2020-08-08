@@ -38,16 +38,6 @@ RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neuron layer object.
-/// @param other_neuron_layer neuron layer object to be copied.
-
-RecurrentLayer::RecurrentLayer(const RecurrentLayer& other_neuron_layer) : Layer()
-{
-    set(other_neuron_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 

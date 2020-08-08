@@ -23,32 +23,6 @@ TestingAnalysis::TestingAnalysis()
 }
 
 
-/// Neural network constructor.
-/// It creates a testing analysis object associated to a neural network but not to a mathematical model or a data set.
-/// By default, it constructs the function regression testing object.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer)
-    : neural_network_pointer(new_neural_network_pointer),
-      data_set_pointer(nullptr)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a testing analysis object not associated to a neural network, associated to a data set and not associated to a mathematical model.
-/// By default, it constructs the function regression testing object.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-TestingAnalysis::TestingAnalysis(DataSet* new_data_set_pointer)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a testing analysis object associated to a neural network and to a data set.
 /// By default, it constructs the function regression testing object.
@@ -65,49 +39,11 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, Data
 }
 
 
-/// XML constructor.
-/// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set.
-/// It also loads the members of this object from a TinyXML document.
-/// @param testing_analysis_document XML document containing the member data.
-
-TestingAnalysis::TestingAnalysis(const tinyxml2::XMLDocument& testing_analysis_document)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
-{
-    set_default();
-
-    from_XML(testing_analysis_document);
-}
-
-
-/// File constructor.
-/// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set.
-/// It also loads the members of this object from XML file.
-/// @param file_name Name of testing analysis XML file.
-
-TestingAnalysis::TestingAnalysis(const string& file_name)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
-{
-    set_default();
-
-    load(file_name);
-}
-
-
 /// Destructor.
 /// It deletes the function regression testing, classification testing, time series prediction testing and inverse problem testing objects.
 
 TestingAnalysis::~TestingAnalysis()
 {
-}
-
-
-/// @todo
-
-void TestingAnalysis::LinearRegressionAnalysis::save(const string&) const
-{
-
 }
 
 

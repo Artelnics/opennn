@@ -46,8 +46,6 @@ public:
 
    explicit RecurrentLayer(const Index&, const Index&);
 
-   RecurrentLayer(const RecurrentLayer&);
-
    // Destructor
    
    virtual ~RecurrentLayer();

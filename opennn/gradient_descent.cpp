@@ -36,21 +36,6 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 }
 
 
-
-
-/// XML constructor.
-/// It creates a gradient descent optimization algorithm not associated to any loss index object.
-/// It also loads the class members from a XML document.
-/// @param document TinyXML document with the members of a gradient descent object.
-
-GradientDescent::GradientDescent(const tinyxml2::XMLDocument& document) : OptimizationAlgorithm(document)
-{
-    set_default();
-
-    from_XML(document);
-}
-
-
 /// Destructor.
 
 GradientDescent::~GradientDescent()

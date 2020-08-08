@@ -65,11 +65,7 @@ public:
 
    explicit DataSet(const Index&, const Index&, const Index&);
 
-   explicit DataSet(const tinyxml2::XMLDocument&);
-
    explicit DataSet(const string&, const char&, const bool&);
-
-   DataSet(const DataSet&);
 
    // Destructor
 

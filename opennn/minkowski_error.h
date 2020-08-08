@@ -42,13 +42,7 @@ public:
 
    explicit MinkowskiError();
 
-   explicit MinkowskiError(NeuralNetwork*);
-
-   explicit MinkowskiError(DataSet*);
-
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
-
-   explicit MinkowskiError(const tinyxml2::XMLDocument&);
 
    // Destructor
 

@@ -30,14 +30,6 @@ void MeanSquaredErrorTest::test_constructor()
    assert_true(mse1.has_neural_network() == false, LOG);
    assert_true(mse1.has_data_set() == false, LOG);
 
-   // Neural network
-
-   NeuralNetwork nn2;
-   MeanSquaredError mse2(&nn2);
-
-   assert_true(mse2.has_neural_network() == true, LOG);
-   assert_true(mse2.has_data_set() == false, LOG);
-
    // Neural network and data set
 
    NeuralNetwork nn3;

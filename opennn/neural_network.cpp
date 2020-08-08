@@ -81,16 +81,6 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
-{
-    set(other_neural_network);
-}
-
-
 /// Destructor.
 
 NeuralNetwork::~NeuralNetwork()

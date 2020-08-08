@@ -36,20 +36,6 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
 }
 
 
-/// XML constructor.
-/// It creates a conjugate gradient optimization algorithm not associated to any loss index object.
-/// It also loads the class members from a XML document.
-/// @param conjugate_gradient_document TinyXML document with the members of a conjugate gradient object.
-
-ConjugateGradient::ConjugateGradient(const tinyxml2::XMLDocument& conjugate_gradient_document)
-    : OptimizationAlgorithm(conjugate_gradient_document)
-{
-    set_default();
-
-    from_XML(conjugate_gradient_document);
-}
-
-
 /// Destructor.
 
 ConjugateGradient::~ConjugateGradient()

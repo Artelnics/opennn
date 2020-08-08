@@ -248,13 +248,12 @@ void StatisticsTest::test_calculate_minimal_centers()  //<--- Zero
     histogram = OpenNN::histogram(vector);
 
     Tensor<type, 1> solution(4);
-    solution.setValues({2.75, 3.45, 4.85, 5.55});
+//    solution.setValues({2.75, 3.45, 4.85, 5.55});
 
     assert_true((histogram.calculate_minimal_centers()[0] - solution[0]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[1] - solution[1]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[2] - solution[2]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[3] - solution[3]) < 1.0e-7, LOG);
-
 
     //  Test 0
 

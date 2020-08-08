@@ -35,22 +35,6 @@ UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-/// XML constructor.
-
-UnscalingLayer::UnscalingLayer(const tinyxml2::XMLDocument& unscaling_layer_document) : Layer()
-{
-    set(unscaling_layer_document);
-}
-
-
-/// Copy constructor.
-
-UnscalingLayer::UnscalingLayer(const UnscalingLayer& other_unscaling_layer) : Layer()
-{
-    set(other_unscaling_layer);
-}
-
-
 /// Destructor.
 
 UnscalingLayer::~UnscalingLayer()
