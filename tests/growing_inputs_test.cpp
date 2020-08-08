@@ -76,7 +76,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
 //    ds.set_columns_uses({"Input","Input","Target"});
 
-//    ds.split_instances_random();
+//    ds.split_samples_random();
 
 //    neural_network.set(NeuralNetwork::Approximation,{2,1,1});
 

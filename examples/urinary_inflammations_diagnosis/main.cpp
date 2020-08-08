@@ -42,7 +42,7 @@ int main(void)
         uses.setValues({"Input","Input","Input","Input","Input","Input","Unused","Target"});
         data_set.set_columns_uses(uses);
 
-        data_set.split_instances_random();
+        data_set.split_samples_random();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();

@@ -962,9 +962,9 @@ bool TrainingStrategy::check_forecasting() const
     }
 
 
-//    const Index batch_instances_number = data_set.get_batch_instances_number();
+//    const Index batch_samples_number = data_set.get_batch_samples_number();
 
-//    if(batch_instances_number%timesteps == 0)
+//    if(batch_samples_number%timesteps == 0)
 //    {
 //        return true;
 //    }

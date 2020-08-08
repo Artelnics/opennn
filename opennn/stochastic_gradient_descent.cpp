@@ -454,37 +454,37 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(training_instances_number < batch_instances_number) batch_instances_number = training_instances_number;
+    if(training_samples_number < batch_samples_number) batch_samples_number = training_samples_number;
 
-    Tensor<Index, 1> batch_instances_indices(batch_instances_number);
-    batch_instances_indices.setConstant(1);
+    Tensor<Index, 1> batch_samples_indices(batch_samples_number);
+    batch_samples_indices.setConstant(1);
 
-    DataSet::Batch batch(batch_instances_number, data_set_pointer);
+    DataSet::Batch batch(batch_samples_number, data_set_pointer);
 
-    const Index training_batches_number = training_instances_number/batch_instances_number;
+    const Index training_batches_number = training_samples_number/batch_samples_number;
 
-    Tensor<Index, 2> training_batches(training_batches_number, batch_instances_number);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_samples_number);
 
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
-    selection_batch.fill(selection_instances_indices, input_variables_indices, target_variables_indices);
+    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation back_propagation(batch_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     type training_error = numeric_limits<type>::max();
     type training_loss = numeric_limits<type>::max();
@@ -514,8 +514,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= epochs_number; epoch++)
     {
-        training_batches = data_set_pointer->get_batches(training_instances_indices,
-                                                         batch_instances_number,
+        training_batches = data_set_pointer->get_batches(training_samples_indices,
+                                                         batch_samples_number,
                                                          shuffle);
 
         training_error = 0;
@@ -623,7 +623,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             if(display)
             {
                 cout << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_instances_number << "\n"
+                     << "Batch size: " << batch_samples_number << "\n"
                      << loss_index_pointer->write_information()
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -645,7 +645,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training error: " << training_error << "\n"
-                 << "Batch size: " << batch_instances_number << "\n"
+                 << "Batch size: " << batch_samples_number << "\n"
                  << loss_index_pointer->write_information()
                  << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -731,11 +731,11 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(5,1) = std::to_string(maximum_time);
 
-    // Batch instances number
+    // Batch samples number
 
-    labels_values(6,0) = "Batch instances number";
+    labels_values(6,0) = "Batch samples number";
 
-    labels_values(6,1) = std::to_string(batch_instances_number);
+    labels_values(6,1) = std::to_string(batch_samples_number);
 
     // Reserve training error history
 
@@ -781,7 +781,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("BatchSize");
 
     buffer.str("");
-    buffer << batch_instances_number;
+    buffer << batch_samples_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -906,17 +906,17 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            set_batch_instances_number(new_batch_size);
+            set_batch_samples_number(new_batch_size);
 
-//            const Index training_instances_number = loss_index_pointer->get_data_set_pointer()->get_training_instances_number();
+//            const Index training_samples_number = loss_index_pointer->get_data_set_pointer()->get_training_samples_number();
 
-//            if(new_batch_size > training_instances_number || new_batch_size == 0)
+//            if(new_batch_size > training_samples_number || new_batch_size == 0)
 //            {
-//                set_batch_instances_number(training_instances_number);
+//                set_batch_samples_number(training_samples_number);
 //            }
 //            else
 //            {
-//                set_batch_instances_number(new_batch_size);
+//                set_batch_samples_number(new_batch_size);
 //            }
         }
         catch(const logic_error& e)

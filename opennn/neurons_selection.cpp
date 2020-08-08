@@ -727,13 +727,13 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(selection_instances_number == 0)
+    if(selection_samples_number == 0)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
-               << "Number of selection instances is zero.\n";
+               << "Number of selection samples is zero.\n";
 
         throw logic_error(buffer.str());
     }

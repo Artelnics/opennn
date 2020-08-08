@@ -230,20 +230,20 @@ public:
 
    void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
    {/*
-       const Index instances_number = inputs.dimension(0);
+       const Index samples_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
 
-//       Tensor<type, 2> activations_2d(instances_number,neurons_number);
+//       Tensor<type, 2> activations_2d(samples_number,neurons_number);
 
        // forget, input, state, output and tanh(cell_states) derivatives
-//       Tensor<type, 3> activations_derivatives(instances_number,neurons_number, 5);
+//       Tensor<type, 3> activations_derivatives(samples_number,neurons_number, 5);
 //       activations_derivatives.setZero();
 
        Index forget_activations_index = 0;
-       Index input_activations_index = instances_number*neurons_number;
-       Index state_activations_index = 2*instances_number*neurons_number;
-       Index output_activations_index = 3*instances_number*neurons_number;
-       Index hidden_states_index = 4*instances_number*neurons_number;
+       Index input_activations_index = samples_number*neurons_number;
+       Index state_activations_index = 2*samples_number*neurons_number;
+       Index output_activations_index = 3*samples_number*neurons_number;
+       Index hidden_states_index = 4*samples_number*neurons_number;
 
        Tensor<type, 1> forget_combinations(neurons_number);
        Tensor<type, 1> forget_activations(neurons_number);
@@ -263,7 +263,7 @@ public:
 
        Tensor<type, 1> hidden_states_derivatives(neurons_number);
 
-       for(Index i = 0; i < instances_number; i++)
+       for(Index i = 0; i < samples_number; i++)
        {
            if(i%timesteps == 0)
            {

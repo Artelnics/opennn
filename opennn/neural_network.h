@@ -74,11 +74,11 @@ public:
 
        ForwardPropagation() {}
 
-       ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           if(new_batch_instances_number == 0) return;
+           if(new_batch_samples_number == 0) return;
 
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -90,7 +90,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(new_batch_instances_number, trainable_layers_pointers(i));
+               layers(i).set(new_batch_samples_number, trainable_layers_pointers(i));
            }
        }
 
@@ -112,7 +112,7 @@ public:
            }
        }
 
-       Index batch_instances_number = 0;
+       Index batch_samples_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
@@ -124,17 +124,17 @@ public:
    {
        BackPropagation() {}
 
-       BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       BackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
        }
 
 
-       void set(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -146,7 +146,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(batch_instances_number, trainable_layers_pointers(i));
+               layers(i).set(batch_samples_number, trainable_layers_pointers(i));
            }
        }
 
@@ -164,7 +164,7 @@ public:
            }
        }
 
-       Index batch_instances_number = 0;
+       Index batch_samples_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 

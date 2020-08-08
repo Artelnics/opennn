@@ -59,33 +59,33 @@ public:
         {
         }
 
-        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        explicit ForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
-            set(new_batch_instances_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer_pointer);
         }
 
 
         virtual ~ForwardPropagation() {}
 
-        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
-            batch_instances_number = new_batch_instances_number;
+            batch_samples_number = new_batch_samples_number;
 
             layer_pointer = new_layer_pointer;
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            combinations_2d.resize(batch_instances_number, neurons_number);
+            combinations_2d.resize(batch_samples_number, neurons_number);
 
-            activations_2d.resize(batch_instances_number, neurons_number);
+            activations_2d.resize(batch_samples_number, neurons_number);
 
             if(layer_pointer->get_type() == Perceptron) // Perceptron
             {
-                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
             }
             else if(layer_pointer->get_type() == Recurrent ) // Recurrent
             {
-                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
             }
             else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
             {
@@ -93,11 +93,11 @@ public:
 
                 activations_1d.resize(neurons_number);
 
-                activations_derivatives_3d.resize(batch_instances_number, neurons_number, 5);
+                activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
             }
             else // Probabilistic
             {
-                activations_derivatives_3d.resize(batch_instances_number, neurons_number, neurons_number);
+                activations_derivatives_3d.resize(batch_samples_number, neurons_number, neurons_number);
             }
         }
 
@@ -122,7 +122,7 @@ public:
             }
         }
 
-        Index batch_instances_number = 0;
+        Index batch_samples_number = 0;
 
         Layer* layer_pointer;
 
@@ -147,18 +147,18 @@ public:
 
         explicit BackPropagation() {}
 
-        explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        explicit BackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
-            set(new_batch_instances_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer_pointer);
         }
 
 
         virtual ~BackPropagation() {}
 
 
-        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
-            batch_instances_number = new_batch_instances_number;
+            batch_samples_number = new_batch_samples_number;
 
             layer_pointer = new_layer_pointer;
 
@@ -169,12 +169,12 @@ public:
 
             synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-            delta.resize(batch_instances_number, neurons_number);
+            delta.resize(batch_samples_number, neurons_number);
         }
 
         virtual void print() const {}
 
-        Index batch_instances_number = 0;
+        Index batch_samples_number = 0;
 
         Layer* layer_pointer = nullptr;
 

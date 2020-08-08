@@ -1824,11 +1824,11 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
 
     DataSet::Batch batch(5, &dataset);
 
-    Tensor<Index,1> training_instances_indices = dataset.get_training_instances_indices();
+    Tensor<Index,1> training_samples_indices = dataset.get_training_samples_indices();
     Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
     Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
 
-    batch.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
     //NeuralNetwork
 
@@ -1845,7 +1845,7 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
     synaptic_weights_perceptron.setConstant(1);
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
+    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
 
@@ -1884,11 +1884,11 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
 
     DataSet::Batch batch_3(3, &dataset);
 
-    training_instances_indices = dataset.get_training_instances_indices();
+    training_samples_indices = dataset.get_training_samples_indices();
     inputs_indices = dataset.get_input_variables_indices();
     targets_indices = dataset.get_target_variables_indices();
 
-    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch_3.fill(training_samples_indices, inputs_indices, targets_indices);
 
     //NeuralNetwork
 
@@ -1920,7 +1920,7 @@ void NeuralNetworkTest::test_forward_propagate() // @todo
     synaptic_pbl.setConstant(1);
     probabilistic_layer_3->set_synaptic_weights(synaptic_pbl);
 
-    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_instances_number(), &neural_network);
+    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch_3, forward_propagation_3);
 

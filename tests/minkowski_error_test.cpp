@@ -85,7 +85,7 @@ void MinkowskiErrorTest::test_calculate_error()
    DataSet data_set;
    Tensor<type, 2> data;
 
-   Index instances_number;
+   Index samples_number;
    Index inputs_number;
    Index target_number;
 
@@ -95,7 +95,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
 //   // Test
 
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 2;
    target_number = 2;
 
@@ -105,11 +105,11 @@ void MinkowskiErrorTest::test_calculate_error()
 
    DataSet::Batch batch(1, &data_set);
 
-   Tensor<Index,1> training_instances_indices = data_set.get_training_instances_indices();
+   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
    Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
 
-   batch.fill(training_instances_indices, inputs_indices, targets_indices);
+   batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
    Tensor<Index, 1>architecture(2);
    architecture.setValues({inputs_number,target_number});
@@ -117,8 +117,8 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
-   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_instances_number(), &neural_network);
-   LossIndex::BackPropagation training_back_propagation(data_set.get_training_instances_number(), &minkowski_error);
+   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+   LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
 
 //   neural_network.forward_propagate(batch, forward_propagation);
 //   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -150,7 +150,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   Index instances_number;
+   Index samples_number;
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
@@ -169,12 +169,12 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //    Test perceptron and probabilistic
 {
 
-   instances_number = 2;
+   samples_number = 2;
    inputs_number = 1;
    hidden_neurons = 1;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -182,13 +182,13 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(instances_number, &data_set);
+   DataSet::Batch batch(samples_number, &data_set);
 
-   Tensor<Index, 1> instances_indices = data_set.get_training_instances_indices();
+   Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
    const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-   batch.fill(instances_indices, input_indices, target_indices);
+   batch.fill(samples_indices, input_indices, target_indices);
 
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
@@ -202,8 +202,8 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    me.set_Minkowski_parameter(1.5);
 
-//   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
-//   LossIndex::BackPropagation training_back_propagation(instances_number, &me);
+//   NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
+//   LossIndex::BackPropagation training_back_propagation(samples_number, &me);
 
 //   neural_network.forward_propagate(batch, forward_propagation);
 
@@ -227,11 +227,11 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    // Test trivial
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 1;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.initialize_data(0.0);
 
@@ -252,12 +252,12 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    // Test perceptron and probabilistic
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -284,12 +284,12 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    // Test lstm
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -313,12 +313,12 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   // Test recurrent
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -341,11 +341,11 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   // Test convolutional
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 147;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();

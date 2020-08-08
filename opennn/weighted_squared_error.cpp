@@ -240,10 +240,10 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
     const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
                                                                  batch.targets_2d);
 
-    const Index batch_instances_number = batch.instances_number;
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.samples_number;
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    back_propagation.error = error/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    back_propagation.error = error/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     return;
 }
@@ -255,8 +255,8 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
@@ -278,7 +278,7 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     Tensor<type, 0> error;
     error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
 
-    const type coefficient = ((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.error = error()/coefficient;
 }
@@ -301,9 +301,9 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
      const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
      const Tensor<type, 2>& targets = batch.targets_2d;
 
-     const Index batch_instances_number = batch.targets_2d.size();
+     const Index batch_samples_number = batch.targets_2d.size();
 
-     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_instances_number);
+     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
      const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
      const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
@@ -333,10 +333,10 @@ void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& bat
 
 #endif
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_terms, AT_B);
 
@@ -354,10 +354,10 @@ void WeightedSquaredError::calculate_hessian_approximation(const DataSet::Batch&
 
 #endif
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 

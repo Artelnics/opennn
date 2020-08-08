@@ -337,20 +337,20 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(training_instances_number < batch_instances_number) batch_instances_number = training_instances_number;
+    if(training_samples_number < batch_samples_number) batch_samples_number = training_samples_number;
 
     const bool has_selection = data_set_pointer->has_selection();
 
-    DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(batch_samples_number, data_set_pointer);
 
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
-    selection_batch.fill(selection_instances_indices, input_variables_indices, target_variables_indices);
+    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Neural network
 
@@ -359,13 +359,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     type parameters_norm = 0;
     Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_instances_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(batch_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -401,8 +401,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_instances_indices,
-                                                                                         batch_instances_number,
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices,
+                                                                                         batch_samples_number,
                                                                                          is_forecasting);
         const Index batches_number = training_batches.dimension(0);
 
@@ -544,7 +544,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 cout << "Epoch " << epoch+1 << ";\n"
                      << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_instances_number << "\n"
+                     << "Batch size: " << batch_samples_number << "\n"
                      << loss_index_pointer->write_information()
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -649,10 +649,10 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
     row_index++;
 
-    // Batch instances number
+    // Batch samples number
 
-    labels_values(row_index,0) = "Batch instances number";
-    labels_values(row_index,1) = std::to_string(batch_instances_number);
+    labels_values(row_index,0) = "Batch samples number";
+    labels_values(row_index,1) = std::to_string(batch_samples_number);
 
     row_index++;
 
@@ -702,7 +702,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("BatchSize");
 
     buffer.str("");
-    buffer << batch_instances_number;
+    buffer << batch_samples_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -816,7 +816,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            set_batch_instances_number(new_batch_size);
+            set_batch_samples_number(new_batch_size);
         }
         catch(const logic_error& e)
         {
@@ -960,9 +960,9 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void AdaptiveMomentEstimation::set_batch_instances_number(const Index& new_batch_instances_number)
+void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
-    batch_instances_number = new_batch_instances_number;
+    batch_samples_number = new_batch_samples_number;
 }
 
 
