@@ -134,10 +134,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
-
    // Expression methods
 
    string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
