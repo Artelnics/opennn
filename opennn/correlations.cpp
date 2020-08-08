@@ -1312,9 +1312,10 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
 }
 
 
-CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device,
+                                                  const Tensor<type, 2>& x,
+                                                  const Tensor<type, 1>& y)
 {
-
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
