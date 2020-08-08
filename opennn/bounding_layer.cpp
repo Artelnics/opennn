@@ -546,33 +546,6 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 }
 
 
-/// Returns a string with the expression of the lower and upper bounds functions.
-
-string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    if(bounding_method == Bounding)
-    {
-        const Index neurons_number = get_neurons_number();
-
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ");\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ");\n";
-        }
-    }
-    else
-    {
-        buffer << "";
-    }
-
-    return buffer.str();
-}
-
-
 ///
 /// \brief BoundingLayer::write_expression_c
 /// \return
