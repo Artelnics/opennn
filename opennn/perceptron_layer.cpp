@@ -41,18 +41,6 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing perceptron layer object.
-/// @param other_perceptron_layer Perceptron layer object to be copied.
-
-PerceptronLayer::PerceptronLayer(const PerceptronLayer& other_perceptron_layer) : Layer()
-{
-    set(other_perceptron_layer);
-
-    layer_type = Perceptron;
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 

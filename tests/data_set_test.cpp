@@ -2446,7 +2446,7 @@ void DataSetTest::test_convert_autoassociation() // @todo
 
    // Test
 
-   data.setValues({2, 2, 3.1416});
+//   data.setValues({2, 2, 3.1416});
 
 //   data_set.set_data(data);
 

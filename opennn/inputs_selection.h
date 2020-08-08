@@ -45,10 +45,6 @@ public:
 
     explicit InputsSelection(TrainingStrategy*);
 
-    explicit InputsSelection(const string&);
-
-    explicit InputsSelection(const tinyxml2::XMLDocument&);
-
     // Destructor
 
     virtual ~InputsSelection();

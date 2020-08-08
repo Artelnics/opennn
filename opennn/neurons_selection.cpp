@@ -32,28 +32,6 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_point
 }
 
 
-/// File constructor.
-/// @param file_name Name of XML neurons selection file.
-/// @todo
-
-NeuronsSelection::NeuronsSelection(const string& file_name)
-{
-    training_strategy_pointer = nullptr;
-
-//    from_XML(file_name);
-}
-
-
-/// XML constructor.
-/// @param neurons_selection_document Pointer to a TinyXML document containing the neurons selection algorithm data.
-
-NeuronsSelection::NeuronsSelection(const tinyxml2::XMLDocument&)
-{
-    training_strategy_pointer = nullptr;
-//    from_XML(neurons_selection_document);
-}
-
-
 /// Destructor.
 
 NeuronsSelection::~NeuronsSelection()

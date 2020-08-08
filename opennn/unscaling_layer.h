@@ -47,10 +47,6 @@ public:
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
-   explicit UnscalingLayer(const tinyxml2::XMLDocument&);
-
-   UnscalingLayer(const UnscalingLayer&);
-
    // Destructor
 
    virtual ~UnscalingLayer();

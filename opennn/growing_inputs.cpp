@@ -30,26 +30,6 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// File constructor.
-/// @param file_name Name of XML genetic algorithm file.
-
-GrowingInputs::GrowingInputs(const string& file_name)
-    : InputsSelection(file_name)
-{
-    load(file_name);
-}
-
-
-/// XML constructor.
-/// @param genetic_algorithm_document Pointer to a TinyXML document containing the genetic algorithm data.
-
-GrowingInputs::GrowingInputs(const tinyxml2::XMLDocument& genetic_algorithm_document)
-    : InputsSelection(genetic_algorithm_document)
-{
-    from_XML(genetic_algorithm_document);
-}
-
-
 /// Destructor.
 
 GrowingInputs::~GrowingInputs()

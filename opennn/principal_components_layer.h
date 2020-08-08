@@ -46,12 +46,6 @@ public:
 
    explicit PrincipalComponentsLayer(const Index&, const Index&);
 
-   // COPY CONSTRUCTOR
-
-   PrincipalComponentsLayer(const PrincipalComponentsLayer&);
-
-   
-
    virtual ~PrincipalComponentsLayer();
 
    // Enumerations

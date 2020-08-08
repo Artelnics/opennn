@@ -23,21 +23,6 @@ void TestingAnalysisTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-
-   // Neural network constructor
-
-   NeuralNetwork nn2;
-   TestingAnalysis ta2(&nn2);
-
-   assert_true(ta2.get_neural_network_pointer() != nullptr, LOG);
-
-   // Data set constructor
-
-   DataSet ds3;
-   TestingAnalysis ta3(&ds3);
-
-   assert_true(ta3.get_data_set_pointer() != nullptr, LOG);
-
    // Neural network and data set constructor
 
    NeuralNetwork nn4;

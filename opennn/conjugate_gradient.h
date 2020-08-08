@@ -61,14 +61,10 @@ public:
 
         ConjugateGradient* conjugate_gradient_pointer = nullptr;
 
-//        Tensor<type, 1> parameters;
-//        Tensor<type, 1> potential_parameters;
-
         Tensor<type, 1> parameters_increment;
 
         Tensor<type, 1> old_gradient;
 
-//        Tensor<type, 1> training_direction;
         Tensor<type, 1> old_training_direction;
 
         Index epoch = 0;
@@ -92,8 +88,6 @@ public:
    explicit ConjugateGradient(); 
 
    explicit ConjugateGradient(LossIndex*);   
-
-   explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
 
    virtual ~ConjugateGradient();
 

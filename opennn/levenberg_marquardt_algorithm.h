@@ -111,8 +111,6 @@ public:
 
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
-   explicit LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument&);
-
    // Destructor
 
    virtual ~LevenbergMarquardtAlgorithm();

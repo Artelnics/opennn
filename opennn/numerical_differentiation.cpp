@@ -20,14 +20,6 @@ NumericalDifferentiation::NumericalDifferentiation()
 }
 
 
-/// Copy constructor.
-
-NumericalDifferentiation::NumericalDifferentiation(const NumericalDifferentiation& other_numerical_differentiation)
-{
-    set(other_numerical_differentiation);
-}
-
-
 /// Destructor.
 
 NumericalDifferentiation::~NumericalDifferentiation()

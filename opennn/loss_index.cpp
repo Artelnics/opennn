@@ -24,34 +24,6 @@ LossIndex::LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a error term object associated to a neural network object.
-/// The rest of pointers are initialized to nullptr.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer)
-    : neural_network_pointer(new_neural_network_pointer),
-      data_set_pointer(nullptr)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a error term object associated to a given data set object.
-/// The rest of pointers are initialized to nullptr.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-LossIndex::LossIndex(DataSet* new_data_set_pointer)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a error term object associated to a neural network and to be measured on a data set.
 /// The rest of pointers are initialized to nullptr.
@@ -67,39 +39,6 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
 }
 
 
-/// XML constructor.
-/// It creates a default error term object, with all pointers initialized to nullptr.
-/// It also loads all the rest of class members from a XML document.
-/// @param error_term_document Pointer to a TinyXML document with the object data.
-
-LossIndex::LossIndex(const tinyxml2::XMLDocument& error_term_document)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
-{
-    set_default();
-
-    from_XML(error_term_document);
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing error term object.
-/// @param other_error_term Error term object to be copied.
-
-LossIndex::LossIndex(const LossIndex& other_error_term)
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
-{
-    set_default();
-
-    neural_network_pointer = other_error_term.neural_network_pointer;
-
-    data_set_pointer = other_error_term.data_set_pointer;
-
-    display = other_error_term.display;
-}
-
-
 /// Destructor.
 
 LossIndex::~LossIndex()
@@ -107,7 +46,7 @@ LossIndex::~LossIndex()
 }
 
 
-/// Returns regularization weights.
+/// Returns regularization weight.
 
 const type& LossIndex::get_regularization_weight() const
 {

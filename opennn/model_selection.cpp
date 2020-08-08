@@ -39,33 +39,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
     set_default();
 }
 
-/// File constructor.
-/// @param file_name Name of XML model selection file.
-
-ModelSelection::ModelSelection(const string& file_name)
-{
-    training_strategy_pointer = nullptr;
-    incremental_neurons_pointer = nullptr;
-    growing_inputs_pointer = nullptr;
-    pruning_inputs_pointer = nullptr;
-    genetic_algorithm_pointer = nullptr;
-
-    load(file_name);
-}
-
-/// XML constructor.
-/// @param model_selection_document Pointer to a TinyXML document containing the model selection data.
-
-ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_document)
-{
-    training_strategy_pointer = nullptr;
-    incremental_neurons_pointer = nullptr;
-    growing_inputs_pointer = nullptr;
-    pruning_inputs_pointer = nullptr;
-    genetic_algorithm_pointer = nullptr;
-
-    from_XML(model_selection_document);
-}
 
 /// Destructor.
 

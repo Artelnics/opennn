@@ -31,22 +31,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
 }
 
 
-/// File constructor.
-
-InputsSelection::InputsSelection(const string&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
-/// XML constructor.
-
-InputsSelection::InputsSelection(const tinyxml2::XMLDocument&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
 /// Destructor.
 
 InputsSelection::~InputsSelection()

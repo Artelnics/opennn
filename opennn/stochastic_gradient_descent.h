@@ -116,8 +116,6 @@ public:
 
    explicit StochasticGradientDescent(LossIndex*);
 
-   explicit StochasticGradientDescent(const tinyxml2::XMLDocument&); 
-
    // Destructor
 
    virtual ~StochasticGradientDescent();

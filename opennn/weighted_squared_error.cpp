@@ -22,32 +22,6 @@ WeightedSquaredError::WeightedSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a weighted squared error term object associated to a
-/// neural network object but not measured on any data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a weighted squared error term not associated to any
-/// neural network but to be measured on a given data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-WeightedSquaredError::WeightedSquaredError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a weighted squared error term object associated to a
 /// neural network and measured on a data set.
@@ -59,35 +33,6 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a weighted squared error object with all pointers set to nullptr.
-/// The object members are loaded by means of a XML document.
-/// Please be careful with the format of that file, which is specified in the OpenNN manual.
-/// @param weighted_squared_error_document TinyXML document with the weighted squared error elements.
-
-WeightedSquaredError::WeightedSquaredError(const tinyxml2::XMLDocument& weighted_squared_error_document)
-    : LossIndex(weighted_squared_error_document)
-{
-    set_default();
-
-    from_XML(weighted_squared_error_document);
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing weighted squared error object.
-/// @param other_weighted_squared_error Weighted squared error object to be copied.
-
-WeightedSquaredError::WeightedSquaredError(const WeightedSquaredError& other_weighted_squared_error)
-    : LossIndex(other_weighted_squared_error)
-{
-    negatives_weight = other_weighted_squared_error.negatives_weight;
-    positives_weight = other_weighted_squared_error.positives_weight;
-
-    normalization_coefficient = other_weighted_squared_error.normalization_coefficient;
 }
 
 

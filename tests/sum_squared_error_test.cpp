@@ -30,21 +30,12 @@ void SumSquaredErrorTest::test_constructor()
    assert_true(sum_squared_error_1.has_neural_network() == false, LOG);
    assert_true(sum_squared_error_1.has_data_set() == false, LOG);
 
-   // Neural network
-
-   NeuralNetwork neural_network_1;
-   SumSquaredError sum_squared_error_2(&neural_network_1);
-
-   assert_true(sum_squared_error_2.has_neural_network() == true, LOG);
-   assert_true(sum_squared_error_2.has_data_set() == false, LOG);
-
    // Neural network and data set
 
    NeuralNetwork neural_network_2;
    DataSet data_set;
-   SumSquaredError sum_squared_error_3(&data_set);
 
-   assert_true(sum_squared_error_3.has_data_set() == true, LOG);
+//   assert_true(sum_squared_error_3.has_data_set() == true, LOG);
 
    NeuralNetwork neural_network_3;
    SumSquaredError sum_squared_error_4(&neural_network_2, &data_set);
@@ -52,13 +43,6 @@ void SumSquaredErrorTest::test_constructor()
    assert_true(sum_squared_error_4.has_neural_network() == true, LOG);
    assert_true(sum_squared_error_4.has_data_set() == true, LOG);
 
-   // Copy
-
-   NeuralNetwork neural_network_4;
-   SumSquaredError sum_squared_error_5(&neural_network_3);
-
-   assert_true(sum_squared_error_5.has_neural_network() == true, LOG);
-   assert_true(sum_squared_error_5.has_data_set() == true, LOG);
 }
 
 

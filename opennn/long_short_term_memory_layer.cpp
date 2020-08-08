@@ -40,16 +40,6 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neuron layer object.
-/// @param other_neuron_layer neuron layer object to be copied.
-
-LongShortTermMemoryLayer::LongShortTermMemoryLayer(const LongShortTermMemoryLayer& other_neuron_layer) : Layer()
-{
-    set(other_neuron_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 

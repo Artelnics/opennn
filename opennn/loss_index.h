@@ -51,15 +51,7 @@ public:
 
    explicit LossIndex();
 
-   explicit LossIndex(NeuralNetwork*);
-
-   explicit LossIndex(DataSet*);
-
    explicit LossIndex(NeuralNetwork*, DataSet*);
-
-   explicit LossIndex(const tinyxml2::XMLDocument&);
-
-   LossIndex(const LossIndex&);
 
    // Destructor
 

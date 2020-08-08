@@ -36,17 +36,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
 }
 
 
-/// XML constructor.
-/// It creates a quasi-Newton method optimization algorithm not associated to any loss index.
-/// It also initializes the class members to their default values.
-
-QuasiNewtonMethod::QuasiNewtonMethod(const tinyxml2::XMLDocument& document)
-    : OptimizationAlgorithm(document)
-{
-    set_default();
-}
-
-
 /// Destructor.
 /// It does not delete any object.
 

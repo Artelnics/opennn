@@ -86,12 +86,11 @@ int main(void)
         // Testing analysis
 
         Tensor<type, 2> inputs(3,4);
-
+/*
         inputs.setValues({{5.1,3.5,1.4,0.2},
                           {6.4,3.2,4.5,1.5},
                           {6.3,2.7,4.9,1.8}});
-
-
+*/
         cout<<neural_network.calculate_outputs(inputs);
 
         system("pause");

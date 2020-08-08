@@ -34,18 +34,6 @@ LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index_pointer)
 }
 
 
-/// XML constructor.
-/// It creates a learning rate algorithm object not associated to any loss index object.
-/// It also loads the class members from a XML document.
-/// @param document Pointer to a TinyXML document->
-
-LearningRateAlgorithm::LearningRateAlgorithm(const tinyxml2::XMLDocument& document)
-    : loss_index_pointer(nullptr)
-{
-    from_XML(document);
-}
-
-
 /// Destructor.
 
 LearningRateAlgorithm::~LearningRateAlgorithm()

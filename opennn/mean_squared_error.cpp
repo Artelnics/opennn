@@ -21,30 +21,6 @@ MeanSquaredError::MeanSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a mean squared error term object associated to a
-/// neural network object but not measured on any data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-}
-
-
-/// Data set constructor.
-/// It creates a mean squared error term not associated to any
-/// neural network but to be measured on a given data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-MeanSquaredError::MeanSquaredError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a mean squared error term object associated to a
 /// neural network and measured on a data set.
@@ -58,35 +34,11 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 }
 
 
-/// XML constructor.
-/// It creates a mean squared error object with all pointers set to nullptr.
-/// The object members are loaded by means of a XML document.
-/// Please be careful with the format of that file, which is specified in the OpenNN manual.
-/// @param mean_squared_error_document TinyXML document with the mean squared error elements.
-
-MeanSquaredError::MeanSquaredError(const tinyxml2::XMLDocument& mean_squared_error_document)
-    : LossIndex(mean_squared_error_document)
-{
-    from_XML(mean_squared_error_document);
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing mean squared error object.
-/// @param other_mean_squared_error Mean squared error object to be copied.
-
-MeanSquaredError::MeanSquaredError(const MeanSquaredError& other_mean_squared_error)
-    : LossIndex(other_mean_squared_error)
-{
-}
-
-
 /// Destructor.
 
 MeanSquaredError::~MeanSquaredError()
 {
 }
-
 
 
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,

@@ -21,30 +21,6 @@ MinkowskiError::MinkowskiError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a Minkowski error term associated to a neural network but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a Minkowski error term not associated to any neural network but to be measured on a data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a Minkowski error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -55,20 +31,6 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a Minkowski error object neither associated to a neural network nor to a data set.
-/// The object members are loaded by means of a XML document.
-/// @param mean_squared_error_document TinyXML document with the Minkowski error elements.
-
-MinkowskiError::MinkowskiError(const tinyxml2::XMLDocument& mean_squared_error_document)
-    : LossIndex(mean_squared_error_document)
-{
-    set_default();
-
-    from_XML(mean_squared_error_document);
 }
 
 

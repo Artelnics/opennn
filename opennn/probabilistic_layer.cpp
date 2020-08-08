@@ -36,16 +36,6 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing probabilistic layer object.
-/// @param other_probabilistic_layer Probabilistic layer to be copied.
-
-ProbabilisticLayer::ProbabilisticLayer(const ProbabilisticLayer& other_probabilistic_layer)
-{
-    set(other_probabilistic_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 

@@ -64,8 +64,6 @@ public:
 
    explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
-   NeuralNetwork(const NeuralNetwork&);
-
    // Destructor
 
    virtual ~NeuralNetwork();

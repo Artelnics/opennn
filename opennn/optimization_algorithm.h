@@ -33,8 +33,6 @@ namespace OpenNN
 {
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
-
-///
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -45,8 +43,6 @@ public:
    explicit OptimizationAlgorithm();
 
    explicit OptimizationAlgorithm(LossIndex*);
-
-   explicit OptimizationAlgorithm(const tinyxml2::XMLDocument&);
 
    virtual ~OptimizationAlgorithm();
 

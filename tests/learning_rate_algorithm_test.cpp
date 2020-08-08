@@ -372,9 +372,6 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    architecture.setValues({1,1});
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-   SumSquaredError sum_squared_error(&neural_network);
-
-   LearningRateAlgorithm tra(&sum_squared_error);
 
    neural_network.set_parameters_constant(1.0);
 //   type loss = sum_squared_error.calculate_training_loss();
