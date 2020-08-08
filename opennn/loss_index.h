@@ -76,18 +76,18 @@ public:
 
        explicit BackPropagation() {}
 
-       explicit BackPropagation(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
+       explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
        {
-           if(new_batch_instances_number == 0) return;
+           if(new_batch_samples_number == 0) return;
 
-           set(new_batch_instances_number, new_loss_index_pointer);
+           set(new_batch_samples_number, new_loss_index_pointer);
        }
 
        virtual ~BackPropagation();
 
-       void set(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
+       void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
        {                      
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            loss_index_pointer = new_loss_index_pointer;
 
@@ -101,13 +101,13 @@ public:
 
            // First order loss
 
-           neural_network.set(batch_instances_number, neural_network_pointer);
+           neural_network.set(batch_samples_number, neural_network_pointer);
 
            error = 0;
 
            loss = 0;
 
-           output_gradient.resize(batch_instances_number, outputs_number);
+           output_gradient.resize(batch_samples_number, outputs_number);
 
            gradient.resize(parameters_number);
        }
@@ -130,7 +130,7 @@ public:
 
        LossIndex* loss_index_pointer = nullptr;
 
-       Index batch_instances_number = 0;
+       Index batch_samples_number = 0;
 
        NeuralNetwork::BackPropagation neural_network;
 
@@ -155,11 +155,11 @@ public:
 
        SecondOrderLoss() {}
 
-       SecondOrderLoss(const Index& parameters_number, const Index& instances_number)
+       SecondOrderLoss(const Index& parameters_number, const Index& samples_number)
        {
            loss = 0;           
            gradient = Tensor<type, 1>(parameters_number);
-           error_Jacobian = Tensor<type, 2>(instances_number, parameters_number);
+           error_Jacobian = Tensor<type, 2>(samples_number, parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 

@@ -75,7 +75,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    data_set.generate_inputs_selection_data(40,3);
 
-//    data_set.split_instances_random();
+//    data_set.split_samples_random();
 
 //    architecture.setValues({2,6,1});
 

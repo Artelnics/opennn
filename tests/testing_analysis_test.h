@@ -97,10 +97,10 @@ public:
 
    // Binary classificaton rates
 
-   void test_calculate_true_positive_instances();
-   void test_calculate_false_positive_instances();
-   void test_calculate_false_negative_instances();
-   void test_calculate_true_negative_instances();
+   void test_calculate_true_positive_samples();
+   void test_calculate_false_positive_samples();
+   void test_calculate_false_negative_samples();
+   void test_calculate_true_negative_samples();
 
    // Multiple classification rates
 

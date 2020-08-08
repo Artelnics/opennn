@@ -924,23 +924,23 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
+    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
 
-    training_batch.fill(training_instances_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
+    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
-    training_instances_indices.resize(0);
-    selection_instances_indices.resize(0);
+    training_samples_indices.resize(0);
+    selection_samples_indices.resize(0);
     inputs_indices.resize(0);
     target_indices.resize(0);
 
@@ -950,15 +950,15 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
     string information;
 
-    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 

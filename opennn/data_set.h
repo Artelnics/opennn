@@ -48,7 +48,7 @@ namespace OpenNN
 /// These columns can take different categories depending on the data hosted in them.
 ///
 /// With OpenNN DataSet class you can edit the data to prepare your model, such as eliminating missing values,
-/// calculating correlations between variables (inputs and targets), not using certain variables or instances, etc \dots.
+/// calculating correlations between variables (inputs and targets), not using certain variables or samples, etc \dots.
 
 class DataSet
 {
@@ -89,10 +89,10 @@ public:
 
    enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
 
-   /// This enumeration represents the possible uses of an instance
+   /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
 
-   enum InstanceUse{Training, Selection, Testing, UnusedInstance};
+   enum SampleUse{Training, Selection, Testing, UnusedSample};
 
    /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
@@ -173,19 +173,19 @@ public:
 
        Batch() {}
 
-       Batch(const Index& new_instances_number, DataSet* new_data_set_pointer);
+       Batch(const Index& new_samples_number, DataSet* new_data_set_pointer);
 
        /// Destructor.
 
        virtual ~Batch() {}
 
-       Index get_instances_number() const;
+       Index get_samples_number() const;
 
        void print();
 
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+       void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
-       Index instances_number = 0;
+       Index samples_number = 0;
 
        DataSet* data_set_pointer = nullptr;
 
@@ -194,29 +194,29 @@ public:
    };
 
 
-   // Instances get methods
+   // Samples get methods
 
-   inline Index get_instances_number() const {return instances_uses.size();}
+   inline Index get_samples_number() const {return samples_uses.size();}
 
-   Index get_training_instances_number() const;
-   Index get_selection_instances_number() const;
-   Index get_testing_instances_number() const;
+   Index get_training_samples_number() const;
+   Index get_selection_samples_number() const;
+   Index get_testing_samples_number() const;
 
-   Index get_used_instances_number() const;
-   Index get_unused_instances_number() const;
+   Index get_used_samples_number() const;
+   Index get_unused_samples_number() const;
 
-   Tensor<Index, 1> get_training_instances_indices() const;
-   Tensor<Index, 1> get_selection_instances_indices() const;
-   Tensor<Index, 1> get_testing_instances_indices() const;
+   Tensor<Index, 1> get_training_samples_indices() const;
+   Tensor<Index, 1> get_selection_samples_indices() const;
+   Tensor<Index, 1> get_testing_samples_indices() const;
 
-   Tensor<Index, 1> get_used_instances_indices() const;
-   Tensor<Index, 1> get_unused_instances_indices() const;
+   Tensor<Index, 1> get_used_samples_indices() const;
+   Tensor<Index, 1> get_unused_samples_indices() const;
 
-   InstanceUse get_instance_use(const Index&) const;
-   const Tensor<InstanceUse, 1>& get_instances_uses() const;
+   SampleUse get_sample_use(const Index&) const;
+   const Tensor<SampleUse, 1>& get_samples_uses() const;
 
-   Tensor<Index, 1> get_instances_uses_numbers() const;
-   Tensor<type, 1> get_instances_uses_percentages() const;
+   Tensor<Index, 1> get_samples_uses_numbers() const;
+   Tensor<type, 1> get_samples_uses_percentages() const;
 
    // Columns get methods
 
@@ -313,10 +313,10 @@ public:
    Tensor<type, 2> get_testing_input_data() const;
    Tensor<type, 2> get_testing_target_data() const;
 
-   Tensor<type, 1> get_instance_data(const Index&) const;
-   Tensor<type, 1> get_instance_data(const Index&, const Tensor<Index, 1>&) const;
-   Tensor<type, 2> get_instance_input_data(const Index&) const;
-   Tensor<type, 2> get_instance_target_data(const Index&) const;
+   Tensor<type, 1> get_sample_data(const Index&) const;
+   Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
+   Tensor<type, 2> get_sample_input_data(const Index&) const;
+   Tensor<type, 2> get_sample_target_data(const Index&) const;
 
    Tensor<type, 2> get_column_data(const Index&) const;
    Tensor<type, 2> get_column_data(const Index&, Tensor<Index, 1>&) const;
@@ -378,9 +378,9 @@ public:
 
    void set_thread_pool_device(ThreadPoolDevice*);
 
-   // Instances set methods
+   // Samples set methods
 
-   void set_instances_number(const Index&);
+   void set_samples_number(const Index&);
 
    void set_training();
    void set_selection();
@@ -390,19 +390,19 @@ public:
    void set_selection(const Tensor<Index, 1>&);
    void set_testing(const Tensor<Index, 1>&);
 
-   void set_instances_unused();
-   void set_instances_unused(const Tensor<Index, 1>&);
+   void set_samples_unused();
+   void set_samples_unused(const Tensor<Index, 1>&);
 
-   void set_instance_use(const Index&, const InstanceUse&);
-   void set_instance_use(const Index&, const string&);
+   void set_sample_use(const Index&, const SampleUse&);
+   void set_sample_use(const Index&, const string&);
 
-   void set_instances_uses(const Tensor<InstanceUse, 1>&);
-   void set_instances_uses(const Tensor<string, 1>&);
+   void set_samples_uses(const Tensor<SampleUse, 1>&);
+   void set_samples_uses(const Tensor<string, 1>&);
 
-   void set_testing_to_selection_instances();
-   void set_selection_to_testing_instances();
+   void set_testing_to_selection_samples();
+   void set_selection_to_testing_samples();
 
-   void set_k_fold_cross_validation_instances_uses(const Index&, const Index&);
+   void set_k_fold_cross_validation_samples_uses(const Index&, const Index&);
 
    // Columns set methods
 
@@ -480,8 +480,8 @@ public:
 
    bool is_less_than(const Tensor<type, 1>&, const type&) const;
 
-   bool is_instance_used(const Index&) const;
-   bool is_instance_unused(const Index&) const;
+   bool is_sample_used(const Index&) const;
+   bool is_sample_unused(const Index&) const;
 
    bool has_data() const;
 
@@ -493,11 +493,11 @@ public:
 
    // Splitting methods
 
-   void split_instances_sequential(const type& training_ratio = static_cast<type>(0.6),
+   void split_samples_sequential(const type& training_ratio = static_cast<type>(0.6),
                                    const type& selection_ratio = static_cast<type>(0.2),
                                    const type& testing_ratio = static_cast<type>(0.2));
 
-   void split_instances_random(const type& training_ratio = static_cast<type>(0.6),
+   void split_samples_random(const type& training_ratio = static_cast<type>(0.6),
                                const type& selection_ratio = static_cast<type>(0.2),
                                const type& testing_ratio = static_cast<type>(0.2));
 
@@ -505,7 +505,7 @@ public:
 
    Tensor<string, 1> unuse_constant_columns();
 
-   Tensor<Index, 1> unuse_repeated_instances();
+   Tensor<Index, 1> unuse_repeated_samples();
 
    Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
 
@@ -520,12 +520,12 @@ public:
    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
-   Tensor<Descriptives, 1> calculate_columns_descriptives_positive_instances() const;
-   Tensor<Descriptives, 1> calculate_columns_descriptives_negative_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_positive_samples() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_negative_samples() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_categories(const Index&) const;
 
-   Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
-   Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_training_samples() const;
+   Tensor<Descriptives, 1> calculate_columns_descriptives_selection_samples() const;
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
@@ -756,7 +756,7 @@ public:
    void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
-   Tensor<Index, 2> split_instances(const Tensor<Index, 1>&, const Index&) const;
+   Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
    bool get_has_rows_labels() const;
 
@@ -787,13 +787,13 @@ private:
    Index steps_ahead;
 
    /// Data Matrix.
-   /// The number of rows is the number of instances.
+   /// The number of rows is the number of samples.
    /// The number of columns is the number of variables.
 
    Tensor<type, 2> data;
 
    /// Time series data matrix.
-   /// The number of rows is the number of instances before time series transfomration.
+   /// The number of rows is the number of samples before time series transfomration.
    /// The number of columns is the number of variables before time series transformation.
 
    Tensor<type, 2> time_series_data;
@@ -812,9 +812,9 @@ private:
 
    MissingValuesMethod missing_values_method = Unuse;
 
-   // Instances
+   // Samples
 
-   Tensor<InstanceUse, 1> instances_uses;
+   Tensor<SampleUse, 1> samples_uses;
 
    // Variables
 

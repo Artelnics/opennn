@@ -211,7 +211,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    data_set.set_data_random();
 
-//    Tensor<Index, 1> instances_indices(0, 1, data_set.get_instances_number()-1);
+//    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
 //    Tensor<Index, 1> architecture;
 
@@ -277,7 +277,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    data_set.set(1, 1, 1);
 //    data_set.set_data_random();
 
-////    instances_indices.set(0, 1, data_set.get_instances_number()-1);
+////    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
 ////    Tensor<Index, 1> architecture;
 
@@ -302,7 +302,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    data_set.set(3, 1, 1);
 //    data_set.set_data_random();
 
-////    instances_indices.set(0, 1, data_set.get_instances_number()-1);
+////    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
 //    architecture.setValues({1,1});
 
@@ -328,7 +328,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
    cout << "test_calculate_golden_section_directional_point\n";
 
 //   DataSet data_set(1, 1, 1);
-//   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
+//   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
 //   Tensor<Index, 1> architecture;
 
@@ -365,7 +365,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
    DataSet data_set(1, 1, 1);
    Tensor<Index, 1> indices(3);
-   indices.setValues({1,1,data_set.get_instances_number()-1});
+   indices.setValues({1,1,data_set.get_samples_number()-1});
 
    Tensor<Index, 1> architecture(2);
 

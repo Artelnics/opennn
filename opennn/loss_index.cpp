@@ -268,11 +268,11 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-/// Returns true if there are selection instances and false otherwise.
+/// Returns true if there are selection samples and false otherwise.
 
 bool LossIndex::has_selection() const
 {
-    if(data_set_pointer->get_selection_instances_number() != 0)
+    if(data_set_pointer->get_selection_samples_number() != 0)
     {
         return true;
     }
@@ -376,13 +376,13 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-    const Index instances_number = data_set_pointer->get_training_instances_number();
+    const Index samples_number = data_set_pointer->get_training_samples_number();
 
     const Tensor<Index, 1> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
-    Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
+    Tensor<type, 2> error_Jacobian(samples_number, parameters_number);
     error_Jacobian.setZero();
 
     Index index = 0;
@@ -391,7 +391,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     memcpy(error_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
-    index += layers_parameters_number[0]*instances_number;
+    index += layers_parameters_number[0]*samples_number;
 
     for(Index i = 1; i < layers_number; i++)
     {
@@ -400,7 +400,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
         memcpy(error_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
-        index += layers_parameters_number[i]*instances_number;
+        index += layers_parameters_number[i]*samples_number;
     }
 
     second_order_loss.error_Jacobian = error_Jacobian;
@@ -417,33 +417,33 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas, const Tensor<type, 2>& layer_inputs) const
 {
-    const Index instances_number = layer_inputs.dimension(0);
+    const Index samples_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
 
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
-    Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
+    Tensor<type, 2> layer_error_Jacobian(samples_number, neurons_number*(1+inputs_number));
     layer_error_Jacobian.setConstant(0);
 
     Index parameter;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
         parameter = 0;
 
         for(Index perceptron = 0; perceptron < neurons_number; perceptron++)
         {
-            const type layer_delta = layer_deltas(instance, perceptron);
+            const type layer_delta = layer_deltas(sample, perceptron);
 
             for(Index input = 0; input < inputs_number; input++)
             {
-                layer_error_Jacobian(instance, neurons_number+parameter) = layer_delta*layer_inputs(instance, input);
+                layer_error_Jacobian(sample, neurons_number+parameter) = layer_delta*layer_inputs(sample, input);
 
                 parameter++;
             }
 
-            layer_error_Jacobian(instance, /*synaptic_weights_number+*/perceptron) = layer_delta;
+            layer_error_Jacobian(sample, /*synaptic_weights_number+*/perceptron) = layer_delta;
         }
     }
 
@@ -874,19 +874,19 @@ LossIndex::BackPropagation::~BackPropagation()
 
 Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
 {
-    const Index instances_number = data_set_pointer->get_training_instances_number();
+    const Index samples_number = data_set_pointer->get_training_samples_number();
 
-    DataSet::Batch batch(instances_number, data_set_pointer);
+    DataSet::Batch batch(samples_number, data_set_pointer);
 
-    Tensor<Index, 1> instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    batch.fill(instances_indices, input_indices, target_indices);
+    batch.fill(samples_indices, input_indices, target_indices);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
-    BackPropagation back_propagation(instances_number, loss_index_pointer);
+    BackPropagation back_propagation(samples_number, loss_index_pointer);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -930,25 +930,25 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
 
 Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossIndex * loss_index_pointer) const
 {
-    const Index instances_number = data_set_pointer->get_training_instances_number();
+    const Index samples_number = data_set_pointer->get_training_samples_number();
 
-    DataSet::Batch batch(instances_number, data_set_pointer);
+    DataSet::Batch batch(samples_number, data_set_pointer);
 
-    Tensor<Index, 1> instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    batch.fill(instances_indices, input_indices, target_indices);
+    batch.fill(samples_indices, input_indices, target_indices);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
-    BackPropagation back_propagation(instances_number, loss_index_pointer);
+    BackPropagation back_propagation(samples_number, loss_index_pointer);
 
     Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     const Index parameters_number = parameters.size();
 
-    LossIndex::SecondOrderLoss second_order_loss(parameters_number, instances_number);
+    LossIndex::SecondOrderLoss second_order_loss(parameters_number, samples_number);
 
     neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
     loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
@@ -963,7 +963,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
     Tensor<type, 1> error_terms_forward(parameters_number);
     Tensor<type, 1> error_terms_backward(parameters_number);
 
-    Tensor<type, 2> J(instances_number,parameters_number);
+    Tensor<type, 2> J(samples_number,parameters_number);
 
     for(Index j = 0; j < parameters_number; j++)
     {
@@ -981,7 +981,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
         error_terms_forward = second_order_loss.error_terms;
         parameters_forward(j) -= h;
 
-        for(Index i = 0; i < instances_number; i++)
+        for(Index i = 0; i < samples_number; i++)
         {
             J(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(static_cast<type>(2.0)*h);
         }
