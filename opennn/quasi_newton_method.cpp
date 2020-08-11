@@ -430,6 +430,12 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
+void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
+
+
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
@@ -1192,6 +1198,17 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1611,7 +1628,26 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
               cerr << e.what() << endl;
            }
         }
-    }    
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
 }
 
 }

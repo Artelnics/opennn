@@ -225,6 +225,8 @@ public:
 
    void set_choose_best_selection(const bool&);
 
+   void set_hardware_use(const string&);
+
    // Reserve training history
 
    void set_reserve_training_error_history(const bool&);
@@ -285,30 +287,6 @@ private:
 
    type first_learning_rate = static_cast<type>(0.01);
 
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Learning rate value at wich a warning message is written to the screen.
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
-
-   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
-
-   
-
    // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
@@ -353,6 +331,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history = false;
+
+   /// Hardware use.
+
+   string hardware_use;
 
 };
 
