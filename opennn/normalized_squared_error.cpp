@@ -22,31 +22,6 @@ NormalizedSquaredError::NormalizedSquaredError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a normalized squared error term associated to a neural network object but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a normalized squared error term not associated to any
-/// neural network but to be measured on a data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-NormalizedSquaredError::NormalizedSquaredError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a normalized squared error term associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -57,20 +32,6 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a normalized squared error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from a TinyXML document->
-/// @param normalized_squared_error_document XML document with the class members.
-
-NormalizedSquaredError::NormalizedSquaredError(const tinyxml2::XMLDocument& normalized_squared_error_document)
-    : LossIndex(normalized_squared_error_document)
-{
-    set_default();
-
-    from_XML(normalized_squared_error_document);
 }
 
 
@@ -108,7 +69,7 @@ void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
     set_normalization_coefficient();
 }
 
-/// Sets the normalization coefficient from training instances.
+/// Sets the normalization coefficient from training samples.
 /// This method calculates the normalization coefficient of the dataset.
 
 void NormalizedSquaredError::set_normalization_coefficient()
@@ -136,18 +97,18 @@ void NormalizedSquaredError::set_normalization_coefficient(const type& new_norma
 }
 
 
-/// Sets the normalization coefficient from selection instances.
+/// Sets the normalization coefficient from selection samples.
 /// This method calculates the normalization coefficient of the dataset.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Index selection_instances_number = selection_indices.size();
+    const Index selection_samples_number = selection_indices.size();
 
-    if(selection_instances_number == 0) return;
+    if(selection_samples_number == 0) return;
 
     const Tensor<type, 1> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
 
@@ -159,7 +120,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-/// Sets the normalization coefficient from selection instances.
+/// Sets the normalization coefficient from selection samples.
 /// @param new_normalization_coefficient New normalization coefficient to be set.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
@@ -185,7 +146,7 @@ void NormalizedSquaredError::set_default()
 }
 
 /// Returns the normalization coefficient to be used for the loss of the error.
-/// This is measured on the training instances of the data set.
+/// This is measured on the training samples of the data set.
 /// @param targets Matrix with the targets values from dataset.
 /// @param targets_mean Vector with the means of the given targets.
 
@@ -244,10 +205,10 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
     sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     return;
 }
@@ -259,8 +220,8 @@ void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
@@ -273,7 +234,7 @@ void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     Tensor<type, 0> error;
     error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
 
-    const type coefficient = ((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.error = error()/coefficient;
 }
@@ -289,8 +250,8 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 
      #endif
 
-     const Index batch_instances_number = batch.get_instances_number();
-     const Index total_instances_number = data_set_pointer->get_instances_number();
+     const Index batch_samples_number = batch.get_samples_number();
+     const Index total_samples_number = data_set_pointer->get_samples_number();
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -299,7 +260,7 @@ void NormalizedSquaredError::calculate_output_gradient(const DataSet::Batch& bat
 
      Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
-     const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
+     const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
      errors.device(*thread_pool_device) = outputs - targets;
 
@@ -316,10 +277,10 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
 
 #endif
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_terms, AT_B);
 
@@ -336,10 +297,10 @@ void NormalizedSquaredError::calculate_hessian_approximation(const DataSet::Batc
 
 #endif
 
-    const Index batch_instances_number = batch.get_instances_number();
-    const Index total_instances_number = data_set_pointer->get_instances_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 

@@ -47,10 +47,6 @@ public:
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
-   explicit UnscalingLayer(const tinyxml2::XMLDocument&);
-
-   UnscalingLayer(const UnscalingLayer&);
-
    // Destructor
 
    virtual ~UnscalingLayer();
@@ -136,17 +132,7 @@ public:
 
    // Expression methods
 
-//   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-//   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
    string write_expression_python() const;

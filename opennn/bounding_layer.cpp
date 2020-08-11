@@ -34,26 +34,6 @@ BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
 }
 
 
-/// XML constructor.
-/// It creates a bounding layer and loads its members from a XML document.
-/// @param bounding_layer_document TinyXML document with the member data.
-
-BoundingLayer::BoundingLayer(const tinyxml2::XMLDocument& bounding_layer_document) : Layer()
-{
-    set(bounding_layer_document);
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing bounding layer object.
-/// @param other_bounding_layer Bounding layer to be copied.
-
-BoundingLayer::BoundingLayer(const BoundingLayer& other_bounding_layer) : Layer()
-{
-    set(other_bounding_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
@@ -555,33 +535,6 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
         {
             buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
             buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ")\n";
-        }
-    }
-    else
-    {
-        buffer << "";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the lower and upper bounds functions.
-
-string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    if(bounding_method == Bounding)
-    {
-        const Index neurons_number = get_neurons_number();
-
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ");\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ");\n";
         }
     }
     else

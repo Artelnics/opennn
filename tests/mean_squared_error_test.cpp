@@ -30,14 +30,6 @@ void MeanSquaredErrorTest::test_constructor()
    assert_true(mse1.has_neural_network() == false, LOG);
    assert_true(mse1.has_data_set() == false, LOG);
 
-   // Neural network
-
-   NeuralNetwork nn2;
-   MeanSquaredError mse2(&nn2);
-
-   assert_true(mse2.has_neural_network() == true, LOG);
-   assert_true(mse2.has_data_set() == false, LOG);
-
    // Neural network and data set
 
    NeuralNetwork nn3;
@@ -130,7 +122,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   Index instances_number;
+   Index samples_number;
    Index inputs_number;
    Index hidden_neurons;
    Index outputs_number;
@@ -140,7 +132,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    // Test trivial
 {
-//   instances_number = 100;
+//   samples_number = 100;
 //   inputs_number = 1;
 //   outputs_number = 1;
 
@@ -167,12 +159,12 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -201,12 +193,12 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
 
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 4;
    outputs_number = 2;
    hidden_neurons = 3;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -231,12 +223,12 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    // Test recurrent
 {
-   instances_number = 92;
+   samples_number = 92;
    inputs_number = 3;
    outputs_number = 1;
    hidden_neurons = 4;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -261,11 +253,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    // Test convolutional
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 147;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
 //   data_set.set_data_random();
@@ -428,7 +420,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
@@ -453,7 +445,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
@@ -483,7 +475,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 

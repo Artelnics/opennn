@@ -116,8 +116,6 @@ public:
 
    explicit StochasticGradientDescent(LossIndex*);
 
-   explicit StochasticGradientDescent(const tinyxml2::XMLDocument&); 
-
    // Destructor
 
    virtual ~StochasticGradientDescent();
@@ -153,9 +151,9 @@ public:
    void set_reserve_all_training_history(const bool&);
 
 
-   void set_batch_instances_number(const Index& new_batch_instances_number)
+   void set_batch_samples_number(const Index& new_batch_samples_number)
    {
-       batch_instances_number = new_batch_instances_number;
+       batch_samples_number = new_batch_samples_number;
    }
 
    //Training operators
@@ -254,9 +252,9 @@ private:
 
    bool reserve_selection_error_history;
 
-   /// Number of instances per training batch.
+   /// Number of samples per training batch.
 
-   Index batch_instances_number = 1000;
+   Index batch_samples_number = 1000;
 
    /// Hardware use.
 

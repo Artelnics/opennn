@@ -44,10 +44,6 @@ public:
 
     explicit IncrementalNeurons(TrainingStrategy*);
 
-    explicit IncrementalNeurons(const tinyxml2::XMLDocument&);
-
-    explicit IncrementalNeurons(const string&);
-
     // Destructor
 
     virtual ~IncrementalNeurons();

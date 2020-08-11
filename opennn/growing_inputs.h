@@ -44,10 +44,6 @@ public:
 
     explicit GrowingInputs(TrainingStrategy*);
 
-    explicit GrowingInputs(const tinyxml2::XMLDocument&);
-
-    explicit GrowingInputs(const string&);
-
     // Destructor
 
     virtual ~GrowingInputs();

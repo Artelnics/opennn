@@ -64,8 +64,6 @@ public:
 
    explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
-   NeuralNetwork(const NeuralNetwork&);
-
    // Destructor
 
    virtual ~NeuralNetwork();
@@ -76,11 +74,11 @@ public:
 
        ForwardPropagation() {}
 
-       ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           if(new_batch_instances_number == 0) return;
+           if(new_batch_samples_number == 0) return;
 
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -92,7 +90,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(new_batch_instances_number, trainable_layers_pointers(i));
+               layers(i).set(new_batch_samples_number, trainable_layers_pointers(i));
            }
        }
 
@@ -114,7 +112,7 @@ public:
            }
        }
 
-       Index batch_instances_number = 0;
+       Index batch_samples_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
@@ -126,17 +124,17 @@ public:
    {
        BackPropagation() {}
 
-       BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       BackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
        }
 
 
-       void set(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
+       void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_instances_number = new_batch_instances_number;
+           batch_samples_number = new_batch_samples_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -148,7 +146,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(batch_instances_number, trainable_layers_pointers(i));
+               layers(i).set(batch_samples_number, trainable_layers_pointers(i));
            }
        }
 
@@ -166,7 +164,7 @@ public:
            }
        }
 
-       Index batch_instances_number = 0;
+       Index batch_samples_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
@@ -192,11 +190,11 @@ public:
 
    bool is_empty() const;  
 
-   Tensor<string, 1> get_inputs_names() const;
+   const Tensor<string, 1>& get_inputs_names() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
-   Tensor<string, 1> get_outputs_names() const;
+   const Tensor<string, 1>& get_outputs_names() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
@@ -340,113 +338,11 @@ public:
    // Expression methods
 
    string write_expression() const;
-   string write_expression_php() const;
    string write_expression_python() const;
-   string write_expression_R() const;
    string write_expression_c() const;
 
    void save_expression_c(const string&);
    void save_expression_python(const string&);
-   void save_expression_R(const string&);
-
-   // PHP methods
-
-   string write_threshold_php() const
-   {
-       ostringstream buffer;
-
-       buffer << "function Threshold($x)\n"
-                 "{\n"
-                 "   if($x < 0)\n"
-                 "   {\n"
-                 "       return 0;\n"
-                 "   }\n"
-                 "   else\n"
-                 "   {\n"
-                 "       return 1;\n"
-                 "   }\n"
-                 "}\n\n";
-
-        return buffer.str();
-   }
-
-   string write_symmetric_threshold_php() const
-   {
-       ostringstream buffer;
-
-       buffer << "function SymmetricThreshold(&x)\n"
-                 "{\n"
-                 "   if($x < 0)\n"
-                 "   {\n"
-                 "       return -1;\n"
-                 "   }\n"
-                 "   else\n"
-                 "   {\n"
-                 "       return 1;\n"
-                 "   }\n"
-                 "}\n\n";
-
-        return buffer.str();
-   }
-
-   string write_logistic_php() const
-   {
-       ostringstream buffer;
-
-       buffer << "function Logistic($x)\n"
-                 "{\n"
-                 "   return 1/(1+exp(-$x));"
-                 "}\n\n";
-
-        return buffer.str();
-   }
-
-   /// @todo
-
-   string write_softmax_php() const
-   {
-       ostringstream buffer;
-
-       return buffer.str();
-   }
-
-
-   string write_threshold_r() const
-   {
-       ostringstream buffer;
-
-       buffer << "Threshold <- function(x) { \n"
-                 "   if(x < 0)  0 \n"
-                 "   else 1 \n"
-                 "}\n\n";
-
-       return buffer.str();
-   }
-
-
-   string write_symmetric_threshold_r() const
-   {
-       ostringstream buffer;
-
-       buffer << "SymmetricThreshold <- function(x) { \n"
-                 "   if(x < 0)  -1 \n"
-                 "   else 1 \n"
-                 "}\n\n";
-
-       return buffer.str();
-   }
-
-
-   string write_logistic_r() const
-   {
-       ostringstream buffer;
-
-       buffer << "Logistic <- function(x) { \n"
-                 "   1/(1+exp(-x))\n"
-                 "}\n\n";
-
-       return buffer.str();
-   }
 
    /// Calculate de forward propagation in the neural network
 

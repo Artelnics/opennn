@@ -90,7 +90,7 @@ void NeuralNetworkTest::test_constructor()
 //  assert_true(neural_network_2.get_layers_number() == 0, LOG);
 
 
-  // Test 3_1 / Layers constructor //CCH -> Test other type of layers
+  // Test 3_1 / Layers constructor // Test other type of layers
 
   Tensor<Layer*, 1> layers_2;
 
@@ -534,10 +534,10 @@ void NeuralNetworkTest::test_set_number()
 
    // Test 1_0
 
-//   Tensor<bool, 1> inputs_names_1;
-//   neural_network.set_inputs_number(inputs_names_1);
+   Tensor<bool, 1> inputs_names_1;
+   neural_network.set_inputs_number(inputs_names_1);
 
-//   assert_true(neural_network.get_inputs_number() == 0, LOG);
+   assert_true(neural_network.get_inputs_number() == 0, LOG);
 
 
    // Test 1_1
@@ -573,7 +573,7 @@ void NeuralNetworkTest::test_set_pointers()
 
    assert_true(neural_network.get_layers_number() == 3, LOG);
 //   assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
-   //CCH -> Need get_device_pointer method?
+   // Need get_device_pointer method?
 
    // Test 2 // Layers
 
@@ -632,7 +632,7 @@ void NeuralNetworkTest::test_get_layers_number()
 
    assert_true(neural_network_1.get_layers_number() == 9, LOG);
    assert_true(neural_network_1.get_trainable_layers_number() == 6, LOG);
-   assert_true(neural_network_1.get_perceptron_layers_number() == 1, LOG); //CCH
+   assert_true(neural_network_1.get_perceptron_layers_number() == 1, LOG);
    assert_true(neural_network_1.get_probabilistic_layers_number() == 1, LOG);
 //   assert_true(neural_network.get_layers_neurons_numbers()(0) == 0, LOG);
 }
@@ -1442,11 +1442,11 @@ void NeuralNetworkTest::test_forward_propagate()
 
     DataSet::Batch batch(5, &dataset);
 
-    Tensor<Index,1> training_instances_indices = dataset.get_training_instances_indices();
+    Tensor<Index,1> training_samples_indices = dataset.get_training_samples_indices();
     Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
     Tensor<Index,1> targets_indices = dataset.get_target_variables_indices();
 
-    batch.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
     //NeuralNetwork
 
@@ -1463,7 +1463,7 @@ void NeuralNetworkTest::test_forward_propagate()
     synaptic_weights_perceptron.setConstant(1);
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_instances_number(), &neural_network);
+    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
 
@@ -1502,11 +1502,11 @@ void NeuralNetworkTest::test_forward_propagate()
 
     DataSet::Batch batch_3(3, &dataset);
 
-    training_instances_indices = dataset.get_training_instances_indices();
+    training_samples_indices = dataset.get_training_samples_indices();
     inputs_indices = dataset.get_input_variables_indices();
     targets_indices = dataset.get_target_variables_indices();
 
-    batch_3.fill(training_instances_indices, inputs_indices, targets_indices);
+    batch_3.fill(training_samples_indices, inputs_indices, targets_indices);
 
     //NeuralNetwork
     NeuralNetwork neural_network_2;
@@ -1540,8 +1540,8 @@ void NeuralNetworkTest::test_forward_propagate()
 
     layers_tensor.setValues({perceptron_layer_3, probabilistic_layer_3});
     neural_network_2.set_layers_pointers(layers_tensor);
+    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
 
-    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_instances_number(), &neural_network_2);
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
 
     Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations_2d;

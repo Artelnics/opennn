@@ -32,14 +32,6 @@ PrincipalComponentsLayer::PrincipalComponentsLayer(const Index& new_inputs_numbe
 }
 
 
-/// Copy constructor.
-
-PrincipalComponentsLayer::PrincipalComponentsLayer(const PrincipalComponentsLayer& new_principal_components_layer) : Layer()
-{
-    set(new_principal_components_layer);
-}
-
-
 /// Destructor.
 
 PrincipalComponentsLayer::~PrincipalComponentsLayer()

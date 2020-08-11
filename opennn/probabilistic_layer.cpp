@@ -36,16 +36,6 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing probabilistic layer object.
-/// @param other_probabilistic_layer Probabilistic layer to be copied.
-
-ProbabilisticLayer::ProbabilisticLayer(const ProbabilisticLayer& other_probabilistic_layer)
-{
-    set(other_probabilistic_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
@@ -628,12 +618,12 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             const Tensor<type, 2>& synaptic_weights,
                             Tensor<type, 2>& combinations_2d) const
 {
-    const Index batch_instances_number = inputs.dimension(0);
+    const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_neurons_number();
 
     for(Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
+        fill_n(combinations_2d.data()+i*batch_samples_number, batch_samples_number, biases(i));
     }
 
     combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
@@ -804,11 +794,11 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
                             Tensor<type, 2>& output_delta) const
 {
     const Index neurons_number = get_neurons_number();
-    const Index batch_instances_number = forward_propagation.activations_derivatives_3d.dimension(0);
+    const Index batch_samples_number = forward_propagation.activations_derivatives_3d.dimension(0);
 
     if(neurons_number == 1)
     {
-        TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
+        TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_samples_number, neurons_number);
 
         output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
@@ -857,7 +847,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
         Index index = 0;
         Index step = neurons_number*neurons_number;
 
-        for(Index i = 0; i < batch_instances_number; i++)
+        for(Index i = 0; i < batch_samples_number; i++)
         {
             output_gradient_row = output_gradient.chip(i,0);
 

@@ -30,14 +30,6 @@ void WeightedSquaredErrorTest::test_constructor()
    assert_true(wse1.has_neural_network() == false, LOG);
    assert_true(wse1.has_data_set() == false, LOG);
 
-   // Neural network
-
-   NeuralNetwork nn2;
-   WeightedSquaredError wse2(&nn2);
-
-   assert_true(wse2.has_neural_network() == true, LOG);
-   assert_true(wse2.has_data_set() == false, LOG);
-
    // Neural network and data set
 
    NeuralNetwork nn3;
@@ -75,13 +67,13 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    // Test
 
-   Index instances_number = 1000;
+   Index samples_number = 1000;
    Index inputs_number = 90;
    Index outputs_number = 1;
    Index hidden_neurons_number = 180;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.generate_data_binary_classification(instances_number, inputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.generate_data_binary_classification(samples_number, inputs_number);
    data_set.set_training();
 
    architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
@@ -175,7 +167,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   Index instances_number;
+   Index samples_number;
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
@@ -193,11 +185,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test trivial
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 1;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.initialize_data(0.0);
 
@@ -218,23 +210,23 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 1;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(samples_number,inputs_number);
 
    inputs.setRandom();
 
 
-//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
-   for(Index i = 2; i < instances_number; i++)
+   for(Index i = 2; i < samples_number; i++)
    {
 //        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
 //        {
@@ -273,22 +265,22 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test lstm
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 1;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(samples_number,inputs_number);
 
    inputs.setRandom();
 
-//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
-   for(Index i = 2; i < instances_number; i++)
+   for(Index i = 2; i < samples_number; i++)
    {
 //        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
 //        {
@@ -325,22 +317,22 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test recurrent
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 1;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(samples_number,inputs_number);
 
    inputs.setRandom();
 
-//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
-   for(Index i = 2; i < instances_number; i++)
+   for(Index i = 2; i < samples_number; i++)
    {
 //        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
 //        {
@@ -375,20 +367,20 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test convolutional
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 147;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(instances_number,inputs_number);
+   Tensor<type, 2> inputs(samples_number,inputs_number);
    inputs.setRandom();
 
-//   Tensor<type, 1> outputs(instances_number, outputs_number);
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
-   for(Index i = 2; i < instances_number; i++)
+   for(Index i = 2; i < samples_number; i++)
    {
 //        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
 //        {
@@ -554,7 +546,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
@@ -571,7 +563,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
@@ -591,7 +583,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 

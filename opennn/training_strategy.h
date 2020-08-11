@@ -63,10 +63,6 @@ public:
 
     explicit TrainingStrategy(NeuralNetwork*, DataSet*);
 
-    explicit TrainingStrategy(const tinyxml2::XMLDocument&);
-
-    explicit TrainingStrategy(const string&);
-
    // Destructor
 
    virtual ~TrainingStrategy();

@@ -41,18 +41,6 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing perceptron layer object.
-/// @param other_perceptron_layer Perceptron layer object to be copied.
-
-PerceptronLayer::PerceptronLayer(const PerceptronLayer& other_perceptron_layer) : Layer()
-{
-    set(other_perceptron_layer);
-
-    layer_type = Perceptron;
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
@@ -562,12 +550,12 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             const Tensor<type, 2>& synaptic_weights,
                             Tensor<type, 2>& combinations_2d) const
 {
-    const Index batch_instances_number = inputs.dimension(0);
+    const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_biases_number();
 
     for(Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations_2d.data() + i*batch_instances_number, batch_instances_number, biases(i));
+        fill_n(combinations_2d.data() + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
     combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);

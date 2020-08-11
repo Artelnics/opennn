@@ -49,10 +49,6 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
-    explicit GeneticAlgorithm(const tinyxml2::XMLDocument&);
-
-    explicit GeneticAlgorithm(const string&);
-
     // Destructor
 
     virtual ~GeneticAlgorithm();

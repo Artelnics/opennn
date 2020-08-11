@@ -39,7 +39,7 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        data_set.split_instances_random();
+        data_set.split_samples_random();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
@@ -86,12 +86,11 @@ int main(void)
         // Testing analysis
 
         Tensor<type, 2> inputs(3,4);
-
+/*
         inputs.setValues({{5.1,3.5,1.4,0.2},
                           {6.4,3.2,4.5,1.5},
                           {6.3,2.7,4.9,1.8}});
-
-
+*/
         cout<<neural_network.calculate_outputs(inputs);
 
         system("pause");

@@ -47,8 +47,6 @@ public:
 
    explicit ProbabilisticLayer(const Index&, const Index&);
 
-   ProbabilisticLayer(const ProbabilisticLayer&);
-
    // Destructor
 
    virtual ~ProbabilisticLayer();

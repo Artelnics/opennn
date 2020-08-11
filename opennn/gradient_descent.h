@@ -139,8 +139,6 @@ public:
 
    explicit GradientDescent(LossIndex*);
 
-   explicit GradientDescent(const tinyxml2::XMLDocument&); 
-
    // Destructor
 
    virtual ~GradientDescent();   

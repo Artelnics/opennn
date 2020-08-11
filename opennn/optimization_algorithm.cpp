@@ -39,23 +39,6 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
 }
 
 
-/// XML constructor.
-/// It creates a optimization algorithm object not associated to any loss index object.
-/// It also loads the other members from a XML document.
-
-OptimizationAlgorithm::OptimizationAlgorithm(const tinyxml2::XMLDocument& document)
-    : loss_index_pointer(nullptr)
-{
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    set_default();
-
-    from_XML(document);
-}
-
-
 /// Destructor.
 
 OptimizationAlgorithm::~OptimizationAlgorithm()

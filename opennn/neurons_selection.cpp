@@ -32,28 +32,6 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_point
 }
 
 
-/// File constructor.
-/// @param file_name Name of XML neurons selection file.
-/// @todo
-
-NeuronsSelection::NeuronsSelection(const string& file_name)
-{
-    training_strategy_pointer = nullptr;
-
-//    from_XML(file_name);
-}
-
-
-/// XML constructor.
-/// @param neurons_selection_document Pointer to a TinyXML document containing the neurons selection algorithm data.
-
-NeuronsSelection::NeuronsSelection(const tinyxml2::XMLDocument&)
-{
-    training_strategy_pointer = nullptr;
-//    from_XML(neurons_selection_document);
-}
-
-
 /// Destructor.
 
 NeuronsSelection::~NeuronsSelection()
@@ -749,13 +727,13 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(selection_instances_number == 0)
+    if(selection_samples_number == 0)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
-               << "Number of selection instances is zero.\n";
+               << "Number of selection samples is zero.\n";
 
         throw logic_error(buffer.str());
     }

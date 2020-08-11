@@ -43,21 +43,7 @@ public:
 
    explicit SumSquaredError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
-   explicit SumSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit SumSquaredError(DataSet*);
-
    explicit SumSquaredError(NeuralNetwork*, DataSet*);   
-
-   explicit SumSquaredError(const tinyxml2::XMLDocument&);
-
-   // COPY CONSTRUCTOR
-
-   SumSquaredError(const SumSquaredError&);
 
    virtual ~SumSquaredError();
 

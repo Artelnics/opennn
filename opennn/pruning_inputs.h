@@ -42,17 +42,7 @@ public:
 
     // TRAINING STRATEGY CONSTRUCTOR
 
-    explicit PruningInputs(TrainingStrategy*);
-
-    
-
-    explicit PruningInputs(const tinyxml2::XMLDocument&);
-
-    // FILE CONSTRUCTOR
-
-    explicit PruningInputs(const string&);
-
-    
+    explicit PruningInputs(TrainingStrategy*); 
 
     virtual ~PruningInputs();
 
