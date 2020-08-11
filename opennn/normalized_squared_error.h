@@ -43,13 +43,7 @@ public:
 
    explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
 
-   explicit NormalizedSquaredError(NeuralNetwork*);
-
-   explicit NormalizedSquaredError(DataSet*);
-
    explicit NormalizedSquaredError();   
-
-   explicit NormalizedSquaredError(const tinyxml2::XMLDocument&);
 
     // Destructor
 

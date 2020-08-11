@@ -30,26 +30,6 @@ IncrementalNeurons::IncrementalNeurons(TrainingStrategy* new_training_strategy_p
 }
 
 
-/// XML constructor.
-/// @param incremental_neurons_document Pointer to a TinyXML document containing the incremental order data.
-
-IncrementalNeurons::IncrementalNeurons(const tinyxml2::XMLDocument& incremental_neurons_document)
-    : NeuronsSelection(incremental_neurons_document)
-{
-    from_XML(incremental_neurons_document);
-}
-
-
-/// File constructor.
-/// @param file_name Name of XML incremental order file.
-
-IncrementalNeurons::IncrementalNeurons(const string& file_name)
-    : NeuronsSelection(file_name)
-{
-    load(file_name);
-}
-
-
 /// Destructor.
 
 IncrementalNeurons::~IncrementalNeurons()
@@ -57,7 +37,7 @@ IncrementalNeurons::~IncrementalNeurons()
 }
 
 
-/// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
+/// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental neurons algorithm.
 
 const Index& IncrementalNeurons::get_step() const
 {

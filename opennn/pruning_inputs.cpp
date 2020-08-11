@@ -30,26 +30,6 @@ PruningInputs::PruningInputs(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// File constructor.
-/// @param file_name Name of XML pruning inputs file.
-
-PruningInputs::PruningInputs(const string& file_name)
-    : InputsSelection(file_name)
-{
-    load(file_name);
-}
-
-
-/// XML constructor.
-/// @param pruning_inputs_document Pointer to a TinyXML document containing the pruning inputs data.
-
-PruningInputs::PruningInputs(const tinyxml2::XMLDocument& pruning_inputs_document)
-    : InputsSelection(pruning_inputs_document)
-{
-    from_XML(pruning_inputs_document);
-}
-
-
 /// Destructor.
 
 PruningInputs::~PruningInputs()

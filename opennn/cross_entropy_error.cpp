@@ -21,28 +21,6 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a cross entropy error term associated to a neural network but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-}
-
-
-/// Data set constructor.
-/// It creates a cross entropy error not associated to any neural network but to be measured on a data set object.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-CrossEntropyError::CrossEntropyError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a cross entropy error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values:
@@ -52,30 +30,6 @@ CrossEntropyError::CrossEntropyError(DataSet* new_data_set_pointer)
 CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
-}
-
-
-/// XML constructor.
-/// It creates a cross entropy error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from a TinyXML document->
-/// @param cross_entropy_error_document XML document with the class members.
-
-CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& cross_entropy_error_document)
-    : LossIndex(cross_entropy_error_document)
-{
-    from_XML(cross_entropy_error_document);
-}
-
-
-/// Copy constructor.
-/// It creates a cross entropy error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from another cross-entropy error object.
-/// @param new_cross_entropy_error Object to be copied.
-
-CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_error)
-    : LossIndex(new_cross_entropy_error)
-{
-
 }
 
 

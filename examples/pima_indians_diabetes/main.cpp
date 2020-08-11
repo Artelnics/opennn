@@ -32,7 +32,7 @@ int main(void)
 
         DataSet data_set("../data/pima_indians_diabetes.csv", ';', true);
 
-        data_set.split_instances_random();
+        data_set.split_samples_random();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();

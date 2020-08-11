@@ -48,10 +48,6 @@ public:
 
     explicit ModelSelection(TrainingStrategy*);
 
-    explicit ModelSelection(const string&);
-
-    explicit ModelSelection(const tinyxml2::XMLDocument&);
-
     // Destructor
 
     virtual ~ModelSelection();

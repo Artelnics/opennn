@@ -23,21 +23,6 @@ void TestingAnalysisTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-
-   // Neural network constructor
-
-   NeuralNetwork nn2;
-   TestingAnalysis ta2(&nn2);
-
-   assert_true(ta2.get_neural_network_pointer() != nullptr, LOG);
-
-   // Data set constructor
-
-   DataSet ds3;
-   TestingAnalysis ta3(&ds3);
-
-   assert_true(ta3.get_data_set_pointer() != nullptr, LOG);
-
    // Neural network and data set constructor
 
    NeuralNetwork nn4;
@@ -629,7 +614,7 @@ void TestingAnalysisTest::test_calculate_confusion()
 
    TestingAnalysis ta(&neural_network, &data_set);
 
-  // Instances* i;
+  // Samples* i;
 
    Tensor<type, 2> actual;
    Tensor<type, 2> predicted;
@@ -1116,9 +1101,9 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 }
 
 
-void TestingAnalysisTest::test_calculate_true_positive_instances()
+void TestingAnalysisTest::test_calculate_true_positive_samples()
 {
-    cout << "test_calculate_true_positive_instances\n";
+    cout << "test_calculate_true_positive_samples\n";
 
     NeuralNetwork neural_network;
     DataSet data_set;
@@ -1151,7 +1136,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 
     const type threshold = 0.5;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 1, LOG);
     assert_true(true_positives_indices[0] == 1, LOG);
@@ -1172,7 +1157,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = true_positives_indices.any();
 
@@ -1194,7 +1179,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
+    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 4, LOG);
     assert_true(true_positives_indices[0] == 0, LOG);
@@ -1204,7 +1189,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 }
 
 
-void TestingAnalysisTest::test_calculate_false_positive_instances()
+void TestingAnalysisTest::test_calculate_false_positive_samples()
 {
     cout << "test_calculate_false_positive_instaces\n";
 
@@ -1238,7 +1223,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 1, LOG);
     assert_true(false_positives_indices[0] == 2, LOG);
@@ -1259,7 +1244,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs, testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 4, LOG);
     assert_true(false_positives_indices[0] == 0, LOG);
@@ -1283,7 +1268,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
+    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = false_positives_indices.any();
 
@@ -1293,9 +1278,9 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 }
 
 
-void TestingAnalysisTest::test_calculate_false_negative_instances()
+void TestingAnalysisTest::test_calculate_false_negative_samples()
 {
-    cout << "test_calculate_false_negative_instances\n";
+    cout << "test_calculate_false_negative_samples\n";
 
     NeuralNetwork neural_network;
     DataSet data_set;
@@ -1327,7 +1312,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 1, LOG);
     assert_true(false_negatives_indices[0] == 3, LOG);
@@ -1348,7 +1333,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
 //    assert_true(false_negatives_indices.empty(), LOG);
 
@@ -1372,7 +1357,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 4, LOG);
     assert_true(false_negatives_indices[0] == 0, LOG);
@@ -1382,9 +1367,9 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
 }
 
 
-void TestingAnalysisTest::test_calculate_true_negative_instances()
+void TestingAnalysisTest::test_calculate_true_negative_samples()
 {
-    cout << "test_calculate_true_negative_instances\n";
+    cout << "test_calculate_true_negative_samples\n";
 
     NeuralNetwork neural_network;
     DataSet data_set;
@@ -1416,7 +1401,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 4, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1440,7 +1425,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = true_negatives_indices.any();
 
@@ -1462,7 +1447,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 1, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1619,10 +1604,10 @@ void TestingAnalysisTest::run_test_case()
 
    // Binary classification rates
 
-   test_calculate_true_positive_instances();
-   test_calculate_false_positive_instances();
-   test_calculate_false_negative_instances();
-   test_calculate_true_negative_instances();
+   test_calculate_true_positive_samples();
+   test_calculate_false_positive_samples();
+   test_calculate_false_negative_samples();
+   test_calculate_true_negative_samples();
 
 
    // Multiple classification rates

@@ -44,15 +44,7 @@ public:
 
    explicit WeightedSquaredError();
 
-   explicit WeightedSquaredError(NeuralNetwork*);
-
-   explicit WeightedSquaredError(DataSet*);
-
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
-
-   explicit WeightedSquaredError(const tinyxml2::XMLDocument&);
-
-   WeightedSquaredError(const WeightedSquaredError&);
 
    // Destructor
 

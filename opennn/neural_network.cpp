@@ -81,16 +81,6 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
-{
-    set(other_neural_network);
-}
-
-
 /// Destructor.
 
 NeuralNetwork::~NeuralNetwork()
@@ -292,7 +282,7 @@ bool NeuralNetwork::is_empty() const
 
 /// Returns a string vector with the names of the variables used as inputs.
 
-Tensor<string, 1> NeuralNetwork::get_inputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_inputs_names() const
 {
     return inputs_names;
 }
@@ -312,22 +302,18 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-
     for(Index i = 0; i < inputs_names.size(); i++)
     {
-        if(inputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(inputs_names(i) == name) return i;
     }
+
     return 0;
 }
 
 
 /// Returns a string vector with the names of the variables used as outputs.
 
-Tensor<string, 1> NeuralNetwork::get_outputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
 {
     return outputs_names;
 }
@@ -347,14 +333,9 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-
     for(Index i = 0; i < outputs_names.size(); i++)
     {
-        if(outputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(outputs_names(i) == name) return i;
     }
 
     return 0;
@@ -2381,6 +2362,14 @@ string NeuralNetwork::write_expression_c() const
     replace(expression, "--", "+");
 
     return expression;
+}
+
+
+/// @todo
+
+string NeuralNetwork::write_expression() const
+{
+    return string();
 }
 
 

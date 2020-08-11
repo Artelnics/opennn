@@ -40,16 +40,6 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neuron layer object.
-/// @param other_neuron_layer neuron layer object to be copied.
-
-LongShortTermMemoryLayer::LongShortTermMemoryLayer(const LongShortTermMemoryLayer& other_neuron_layer) : Layer()
-{
-    set(other_neuron_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
@@ -1221,19 +1211,19 @@ void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 
 
 Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Tensor<type, 2>& inputs)
 {  
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
     // forget activations_2d, input activations_2d, state activations_2d, output activations_2d, state, hidden state
 
-    Tensor<type, 3> activations_states(instances_number, neurons_number,6);
+    Tensor<type, 3> activations_states(samples_number, neurons_number,6);
 
     Index forget_activations_index = 0;
-    Index input_activations_index = instances_number*neurons_number;
-    Index state_activations_index = 2*instances_number*neurons_number;
-    Index output_activations_index = 3*instances_number*neurons_number;
-    Index states_index = 4*instances_number*neurons_number;
-    Index hidden_states_index = 5*instances_number*neurons_number;
+    Index input_activations_index = samples_number*neurons_number;
+    Index state_activations_index = 2*samples_number*neurons_number;
+    Index output_activations_index = 3*samples_number*neurons_number;
+    Index states_index = 4*samples_number*neurons_number;
+    Index hidden_states_index = 5*samples_number*neurons_number;
 
     Tensor<type, 1> forget_combinations(neurons_number);
     Tensor<type, 1> forget_activations(neurons_number);
@@ -1247,7 +1237,7 @@ Tensor<type, 3> LongShortTermMemoryLayer::calculate_activations_states(const Ten
     Tensor<type, 1> output_combinations(neurons_number);
     Tensor<type, 1> output_activations(neurons_number);
 
-    for(Index i = 0; i < instances_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -1790,11 +1780,11 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     }
     #endif
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
 
     const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 2> outputs(instances_number, neurons_number);
+    Tensor<type, 2> outputs(samples_number, neurons_number);
 
     Tensor<type, 1> forget_combinations(neurons_number);
     Tensor<type, 1> forget_activations(neurons_number);
@@ -1808,7 +1798,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     Tensor<type, 1> output_combinations(neurons_number);
     Tensor<type, 1> output_activations(neurons_number);
 
-    for(Index i = 0; i < instances_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -1849,20 +1839,20 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 /*
 Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs)
 {
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 2> activations_2d(instances_number,neurons_number);
+    Tensor<type, 2> activations_2d(samples_number,neurons_number);
 
     // forget, input, state, output and tanh(cell_states) derivatives
-    Tensor<type, 2> activations_derivatives(instances_number,neurons_number, 5);
+    Tensor<type, 2> activations_derivatives(samples_number,neurons_number, 5);
     activations_derivatives.setZero();
 
     Index forget_activations_index = 0;
-    Index input_activations_index = instances_number*neurons_number;
-    Index state_activations_index = 2*instances_number*neurons_number;
-    Index output_activations_index = 3*instances_number*neurons_number;
-    Index hidden_states_index = 4*instances_number*neurons_number;
+    Index input_activations_index = samples_number*neurons_number;
+    Index state_activations_index = 2*samples_number*neurons_number;
+    Index output_activations_index = 3*samples_number*neurons_number;
+    Index hidden_states_index = 4*samples_number*neurons_number;
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -1880,7 +1870,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::forward_propagate(const Tens
     Tensor<type, 1> output_activations;
     Tensor<type, 1> output_activations_derivatives;
 
-    for(Index i = 0; i < instances_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -2092,7 +2082,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number*neurons_number;
@@ -2108,43 +2098,43 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
      Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number);
      Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number);
 
-     const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-     const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+     const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+     const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-     const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-     const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+     const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+     const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
      Index column_index = 0;
      Index input_index = 0;
 
-     for(Index instance = 0; instance < instances_number; instance++)
+     for(Index sample = 0; sample < samples_number; sample++)
      {
-         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
+         const Tensor<type, 1> current_inputs = inputs.chip(sample, 0);
 
-         const Tensor<type, 1> current_layer_deltas = deltas.chip(instance,0);
+         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample,0);
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number);
          previous_cell_state_activations.setZero();
 
-         if(instance%timesteps == 0)
+         if(sample%timesteps == 0)
          {
              forget_combinations_weights_derivatives.setZero();
              input_combinations_weights_derivatives.setZero();
@@ -2155,7 +2145,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
          }
          else
          {
-             previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+             previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
              forget_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B);
              input_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2201,7 +2191,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number*neurons_number;
@@ -2217,43 +2207,43 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
     Index column_index = 0;
     Index input_index = 0;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
+        const Tensor<type, 1> current_inputs = inputs.chip(sample, 0);
 
-        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number);
         previous_cell_state_activations.setZero();
 
-        if(instance%timesteps == 0)
+        if(sample%timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -2264,7 +2254,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
         }
         else
         {
-            previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+            previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
             forget_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
             input_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(input_recurrent_weights, A_B);
@@ -2309,7 +2299,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = inputs_number*neurons_number;
@@ -2325,43 +2315,43 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
     Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
     Index column_index = 0;
     Index input_index = 0;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
+        const Tensor<type, 1> current_inputs = inputs.chip(sample, 0);
 
-        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number);
         previous_cell_state_activations.setZero();
 
-        if(instance%timesteps == 0)
+        if(sample%timesteps == 0)
         {
             forget_combinations_weights_derivatives.setZero();
             input_combinations_weights_derivatives.setZero();
@@ -2372,7 +2362,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
         }
         else
         {
-            previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+            previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
             forget_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
             input_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2418,7 +2408,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
         const Tensor<type, 3>& activations_states)
 {
 
-     const Index instances_number = inputs.dimension(0);
+     const Index samples_number = inputs.dimension(0);
      const Index inputs_number = get_inputs_number();
      const Index neurons_number = get_neurons_number();
      const Index parameters_number = inputs_number*neurons_number;
@@ -2434,43 +2424,43 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
      Tensor<type, 2> hidden_states_weights_derivatives(parameters_number, neurons_number);
      Tensor<type, 2> cell_state_weights_derivatives(parameters_number, neurons_number);
 
-     const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-     const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+     const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+     const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-     const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-     const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-     const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+     const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+     const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+     const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
      Index column_index = 0;
      Index input_index = 0;
 
-     for(Index instance = 0; instance < instances_number; instance++)
+     for(Index sample = 0; sample < samples_number; sample++)
      {
-         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
+         const Tensor<type, 1> current_inputs = inputs.chip(sample, 0);
 
-         const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number);
          previous_cell_state_activations.setZero();
 
-         if(instance%timesteps == 0)
+         if(sample%timesteps == 0)
          {
              forget_combinations_weights_derivatives.setZero();
              input_combinations_weights_derivatives.setZero();
@@ -2481,7 +2471,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
          }
          else
          {
-             previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+             previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
              forget_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
              input_combinations_weights_derivatives = multiply_rows(hidden_states_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2527,7 +2517,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number*neurons_number;
 
@@ -2542,48 +2532,48 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
     Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
     Index column_index = 0;
     Index activation_index = 0;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
-        if(instance%timesteps == 0)
+        if(sample%timesteps == 0)
         {
             cell_state_recurrent_weights_derivatives.setZero();
             hidden_states_recurrent_weights_derivatives.setZero();
         }
         else
         {
-            const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(instance-1, 0);
+            const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(sample-1, 0);
 
-            const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+            const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
             forget_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             input_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2630,7 +2620,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number*neurons_number;
 
@@ -2645,48 +2635,48 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
     Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
 
     Index column_index = 0;
     Index activation_index = 0;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-       const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+       const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
-       if(instance%timesteps == 0)
+       if(sample%timesteps == 0)
        {
            cell_state_recurrent_weights_derivatives.setZero();
            hidden_states_recurrent_weights_derivatives.setZero();
        }
        else
        {
-           const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(instance-1, 0);
-           const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+           const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(sample-1, 0);
+           const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
            forget_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
            input_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B);
@@ -2733,7 +2723,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number*neurons_number;
 
@@ -2747,48 +2737,48 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
     Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
 
     Index column_index = 0;
     Index activation_index = 0;
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-       const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+       const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
-       if(instance%timesteps == 0)
+       if(sample%timesteps == 0)
        {
            cell_state_recurrent_weights_derivatives.setZero();
            hidden_states_recurrent_weights_derivatives.setZero();
        }
        else
        {
-           const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(instance-1, 0);
-           const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+           const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(sample-1, 0);
+           const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
            forget_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
            input_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2834,7 +2824,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
         const Tensor<type, 3>& activations_states)
 {
 
-        const Index instances_number = inputs.dimension(0);
+        const Index samples_number = inputs.dimension(0);
         const Index neurons_number = get_neurons_number();
         const Index parameters_number = neurons_number*neurons_number;
 
@@ -2848,47 +2838,47 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
         Tensor<type, 2> hidden_states_recurrent_weights_derivatives(parameters_number, neurons_number);
         Tensor<type, 2> cell_state_recurrent_weights_derivatives(parameters_number, neurons_number);
 
-        const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-        const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+        const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+        const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> hidden_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,5}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-        const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-        const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-        const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+        const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+        const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+        const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
         Index column_index = 0;
         Index activation_index = 0;
 
-        for(Index instance = 0; instance < instances_number; instance++)
+        for(Index sample = 0; sample < samples_number; sample++)
         {
-            const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+            const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-            const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-            const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-            const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-            const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-            const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+            const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+            const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+            const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+            const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+            const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-            const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-            const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-            const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-            const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-            const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+            const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+            const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+            const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+            const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+            const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
-            if(instance%timesteps == 0)
+            if(sample%timesteps == 0)
             {
                 cell_state_recurrent_weights_derivatives.setZero();
                 hidden_states_recurrent_weights_derivatives.setZero();
             }
             else
             {
-                const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(instance-1, 0);
-                const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+                const Tensor<type, 1> previous_hidden_state_activations = hidden_state_activations.chip(sample-1, 0);
+                const Tensor<type, 1> previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
                 forget_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
                 input_combinations_recurrent_weights_derivatives = multiply_rows(hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -2934,7 +2924,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
@@ -2948,37 +2938,37 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
     Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number);
 
-        if(instance%timesteps == 0)
+        if(sample%timesteps == 0)
         {
             forget_combinations_biases_derivatives.setZero();
             input_combinations_biases_derivatives.setZero();
@@ -2989,7 +2979,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
         }
         else
         {
-            previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+            previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
             forget_combinations_biases_derivatives = hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
             input_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -3025,7 +3015,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
         const Tensor<type, 2>& deltas,
         const Tensor<type, 3>& activations_states)
 {
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
@@ -3039,37 +3029,37 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
     Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-   for(Index instance = 0; instance < instances_number; instance++)
+   for(Index sample = 0; sample < samples_number; sample++)
    {
-       const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+       const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number);
 
-       if(instance%timesteps == 0)
+       if(sample%timesteps == 0)
        {
            forget_combinations_biases_derivatives.setZero();
            input_combinations_biases_derivatives.setZero();
@@ -3080,7 +3070,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
        }
        else
        {
-           previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+           previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
            forget_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
            input_combinations_biases_derivatives = hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
@@ -3118,7 +3108,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
         const Tensor<type, 3>& activations_states)
 {
 
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
@@ -3132,38 +3122,38 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
     Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
 
-   for(Index instance = 0; instance < instances_number; instance++)
+   for(Index sample = 0; sample < samples_number; sample++)
    {
-       const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+       const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number);
 
-       if(instance%timesteps == 0)
+       if(sample%timesteps == 0)
        {
            forget_combinations_biases_derivatives.setZero();
            input_combinations_biases_derivatives.setZero();
@@ -3174,7 +3164,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
        }
        else
        {
-           previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+           previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
            forget_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
            input_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);
@@ -3210,7 +3200,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
         const Tensor<type, 2>& deltas,
         const Tensor<type, 3>& activations_states)
 {
-    const Index instances_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
     const Index parameters_number = neurons_number;
 
@@ -3224,37 +3214,37 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
     Tensor<type, 2> hidden_states_biases_derivatives(parameters_number, neurons_number);
     Tensor<type, 2> cell_state_biases_derivatives(parameters_number, neurons_number);
 
-    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));//.get_matrix(0);
-    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));//.get_matrix(0);
+    const Tensor<type, 2> input_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> cell_state_activations = activations_states.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));;
-    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
-    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({instances_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({instances_number, neurons_number}));
+    const Tensor<type, 2> forget_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));;
+    const Tensor<type, 2> input_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> state_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> output_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
+    const Tensor<type, 2> hidden_derivatives = forward_propagation.activations_derivatives_3d.slice(Eigen::array<Eigen::Index, 3>({0,0,4}), Eigen::array<Eigen::Index, 3>({samples_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({samples_number, neurons_number}));
 
-    for(Index instance = 0; instance < instances_number; instance++)
+    for(Index sample = 0; sample < samples_number; sample++)
     {
-        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
-        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
-        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
-        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(sample, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(sample, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(sample, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(sample, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(sample, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(sample, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(sample, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number);
 
-        if(instance%timesteps == 0)
+        if(sample%timesteps == 0)
         {
             forget_combinations_biases_derivatives.setZero();
             input_combinations_biases_derivatives.setZero();
@@ -3265,7 +3255,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
         }
         else
         {
-            previous_cell_state_activations = cell_state_activations.chip(instance-1, 0);
+            previous_cell_state_activations = cell_state_activations.chip(sample-1, 0);
 
             forget_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B), current_forget_derivatives);
             input_combinations_biases_derivatives = multiply_rows(hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B), current_input_derivatives);

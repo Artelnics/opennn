@@ -230,7 +230,7 @@ void CorrelationsTest::test_logistic_error_gradient()
 
     Tensor<type, 1> solution(2);
 
-    solution.setValues({0.09296,0.152088});
+//    solution.setValues({0.09296,0.152088});
 
     const Tensor<type, 1> error_gradient;// = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
 
@@ -246,7 +246,7 @@ void CorrelationsTest::test_logistic_error_gradient_missing_values()
 
     Tensor<type, 1> solution(2);
 
-    solution.setValues({0.09296,0.152088});
+//    solution.setValues({0.09296,0.152088});
 
     const Tensor<type, 1> error_gradient;// = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
 

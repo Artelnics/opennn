@@ -27,21 +27,21 @@ void DataSetTest::test_constructor()
    DataSet ds1;
 
    assert_true(ds1.get_variables_number() == 0, LOG);
-   assert_true(ds1.get_instances_number() == 0, LOG);
+   assert_true(ds1.get_samples_number() == 0, LOG);
 
-   // Instances and variables number constructor
+   // Samples and variables number constructor
 
    DataSet ds2(1, 2);
 
-   assert_true(ds2.get_instances_number() == 1, LOG);
+   assert_true(ds2.get_samples_number() == 1, LOG);
    assert_true(ds2.get_variables_number() == 2, LOG);
 
-   // Inputs, targets and instances numbers constructor
+   // Inputs, targets and samples numbers constructor
 
    DataSet ds3(1, 1, 1);
 
    assert_true(ds3.get_variables_number() == 2, LOG);
-   assert_true(ds3.get_instances_number() == 1, LOG);
+   assert_true(ds3.get_samples_number() == 1, LOG);
 
    // XML constructor
 
@@ -50,14 +50,14 @@ void DataSetTest::test_constructor()
 //   DataSet ds4(*document);
 
 //   assert_true(ds4.get_variables_number() == 2, LOG);
-//   assert_true(ds4.get_instances_number() == 1, LOG);
+//   assert_true(ds4.get_samples_number() == 1, LOG);
 
 // //  delete document;
 
 //   DataSet ds5(*document);
 
 //   assert_true(ds5.get_variables_number() == 2, LOG);
-//   assert_true(ds5.get_instances_number() == 1, LOG);
+//   assert_true(ds5.get_samples_number() == 1, LOG);
 
 //   delete document;
 
@@ -66,7 +66,7 @@ void DataSetTest::test_constructor()
    DataSet ds6(ds1);
 
    assert_true(ds6.get_variables_number() == 0, LOG);
-   assert_true(ds6.get_instances_number() == 0, LOG);
+   assert_true(ds6.get_samples_number() == 0, LOG);
 }
 
 
@@ -87,17 +87,17 @@ void DataSetTest::test_assignment_operator()
    DataSet ds1(1, 1, 1);
    DataSet ds2 = ds1;
 
-   assert_true(ds2.get_instances_number() == 1, LOG);
+   assert_true(ds2.get_samples_number() == 1, LOG);
    assert_true(ds2.get_variables_number() == 2, LOG);
 }
 
-void DataSetTest::test_get_instances_number()
+void DataSetTest::test_get_samples_number()
 {
-   cout << "test_get_instances_number\n";
+   cout << "test_get_samples_number\n";
 
    DataSet data_set;
 
-   assert_true(data_set.get_instances_number() == 0, LOG);
+   assert_true(data_set.get_samples_number() == 0, LOG);
 }
 
 void DataSetTest::test_get_variables_number() 
@@ -242,7 +242,7 @@ void DataSetTest::test_get_inputs()
 
    DataSet data_set(1, 3, 2);
 
-   Index instances_number = data_set.get_instances_number();
+   Index samples_number = data_set.get_samples_number();
    Index inputs_number = data_set.get_input_variables_number();
 
    Tensor<type, 2> inputs = data_set.get_input_data();
@@ -250,7 +250,7 @@ void DataSetTest::test_get_inputs()
    Index rows_number = inputs.dimension(0);
    Index columns_number = inputs.dimension(1);
 
-   assert_true(instances_number == rows_number, LOG);
+   assert_true(samples_number == rows_number, LOG);
    assert_true(inputs_number == columns_number, LOG);
 }
 
@@ -261,7 +261,7 @@ void DataSetTest::test_get_targets()
 
    DataSet data_set(1,3,2);
 
-   Index instances_number = data_set.get_instances_number();
+   Index samples_number = data_set.get_samples_number();
    Index targets_number = data_set.get_target_variables_number();
 
    Tensor<type, 2> targets = data_set.get_target_data();
@@ -269,26 +269,26 @@ void DataSetTest::test_get_targets()
    Index rows_number = targets.dimension(0);
    Index columns_number = targets.dimension(1);
 
-   assert_true(instances_number == rows_number, LOG);
+   assert_true(samples_number == rows_number, LOG);
    assert_true(targets_number == columns_number, LOG);
 }
 
-void DataSetTest::test_get_instance()
+void DataSetTest::test_get_sample()
 {
-   cout << "test_get_instance\n";
+   cout << "test_get_sample\n";
 
    DataSet data_set;
-   Tensor<type, 1> instance;
+   Tensor<type, 1> sample;
 
    // Test
 
    data_set.set(1, 1, 1);
    data_set.initialize_data(1.0);
 
-   instance = data_set.get_instance_data(0);
+   sample = data_set.get_sample_data(0);
 
-   assert_true(instance.size() == 2, LOG);
-   assert_true(instance(0) == 1.0, LOG);
+   assert_true(sample.size() == 2, LOG);
+   assert_true(sample(0) == 1.0, LOG);
 
    // Test several variables
 
@@ -297,10 +297,10 @@ void DataSetTest::test_get_instance()
 
    Tensor<Index, 1> indices_variables(2);
    indices_variables.setValues({1,3});
-   Tensor<type, 1> instance_0 = data_set.get_instance_data(0, indices_variables);
-   Tensor<type, 1> instance_1 = data_set.get_instance_data(1, indices_variables);
+   Tensor<type, 1> sample_0 = data_set.get_sample_data(0, indices_variables);
+   Tensor<type, 1> sample_1 = data_set.get_sample_data(1, indices_variables);
 
-   assert_true(instance_0(0) == instance_1(0) && instance_0(1) == instance_1(1), LOG);
+   assert_true(sample_0(0) == sample_1(0) && sample_0(1) == sample_1(1), LOG);
 }
 
 
@@ -312,11 +312,11 @@ void DataSetTest::test_set()
 
    Tensor<type, 2> data;
 
-   // Instances and inputs and target variables
+   // Samples and inputs and target variables
 
    data_set.set(1, 2, 3);
 
-   assert_true(data_set.get_instances_number() == 1, LOG);
+   assert_true(data_set.get_samples_number() == 1, LOG);
    assert_true(data_set.get_input_variables_number() == 2, LOG);
    assert_true(data_set.get_target_variables_number() == 3, LOG);
 
@@ -326,15 +326,15 @@ void DataSetTest::test_set()
    assert_true(data.dimension(1) == 5, LOG);
 }
 
-void DataSetTest::test_set_instances_number() 
+void DataSetTest::test_set_samples_number() 
 {
-   cout << "test_set_instances_number\n";
+   cout << "test_set_samples_number\n";
 
    DataSet data_set(1,1,1);
 
-   data_set.set_instances_number(2);
+   data_set.set_samples_number(2);
 
-   assert_true(data_set.get_instances_number() == 2, LOG);
+   assert_true(data_set.get_samples_number() == 2, LOG);
 }
 
 
@@ -371,20 +371,20 @@ void DataSetTest::test_set_data() // @todo
    //assert_true(data == new_data, LOG);
 }
 
-void DataSetTest::test_set_instance()
+void DataSetTest::test_set_sample()
 {
-   cout << "test_set_instance\n";
+   cout << "test_set_sample\n";
 
    DataSet data_set(1, 1, 1);
 
-   Tensor<type, 1> new_instance(2);
-   new_instance.setValues({2, 0.0});
+   Tensor<type, 1> new_sample(2);
+   new_sample.setValues({2, 0.0});
 
-   //data_set.set_instance(0, new_instance);
+   //data_set.set_sample(0, new_sample);
 
-   Tensor<type, 1> instance = data_set.get_instance_data(0);
+   Tensor<type, 1> sample = data_set.get_sample_data(0);
 
-   //assert_true(instance == new_instance, LOG);
+   //assert_true(sample == new_sample, LOG);
 }
 
 
@@ -478,12 +478,12 @@ void DataSetTest::test_calculate_data_descriptives_missing_values() // @todo
 }
 
 
-void DataSetTest::test_calculate_training_instances_descriptives()
+void DataSetTest::test_calculate_training_samples_descriptives()
 {
-   cout << "test_calculate_training_instances_descriptives\n";
+   cout << "test_calculate_training_samples_descriptives\n";
 
    DataSet data_set;
-   Tensor<Descriptives, 1> training_instances_descriptives;
+   Tensor<Descriptives, 1> training_samples_descriptives;
 
    // Test
 
@@ -493,16 +493,16 @@ void DataSetTest::test_calculate_training_instances_descriptives()
 
    data_set.initialize_data(0.0);
 
-   data_set.calculate_columns_descriptives_training_instances();
+   data_set.calculate_columns_descriptives_training_samples();
 }
 
 
-void DataSetTest::test_calculate_selection_instances_descriptives()
+void DataSetTest::test_calculate_selection_samples_descriptives()
 {
-   cout << "test_calculate_selection_instances_descriptives\n";
+   cout << "test_calculate_selection_samples_descriptives\n";
 
    DataSet data_set;
-   Tensor<Descriptives, 1> selection_instances_descriptives;
+   Tensor<Descriptives, 1> selection_samples_descriptives;
 
    // Test
 
@@ -512,16 +512,16 @@ void DataSetTest::test_calculate_selection_instances_descriptives()
 
    data_set.initialize_data(0.0);
 
-   selection_instances_descriptives = data_set.calculate_columns_descriptives_selection_instances();
+   selection_samples_descriptives = data_set.calculate_columns_descriptives_selection_samples();
 }
 
 
-void DataSetTest::test_calculate_testing_instances_descriptives()
+void DataSetTest::test_calculate_testing_samples_descriptives()
 {
-   cout << "test_calculate_testing_instances_descriptives\n";
+   cout << "test_calculate_testing_samples_descriptives\n";
 
    DataSet data_set;
-   Tensor<Descriptives, 1> testing_instances_descriptives;
+   Tensor<Descriptives, 1> testing_samples_descriptives;
 
    // Test
 
@@ -532,7 +532,7 @@ void DataSetTest::test_calculate_testing_instances_descriptives()
    
    data_set.initialize_data(0.0);
 
-//   testing_instances_descriptives = data_set.calculate_columns_descriptives_testing_instances();
+//   testing_samples_descriptives = data_set.calculate_columns_descriptives_testing_samples();
 }
 
 
@@ -662,8 +662,8 @@ void DataSetTest::test_filter_data()
 
    data = data_set.get_data();
 
-   assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
-   assert_true(data_set.get_instance_use(1) == DataSet::UnusedInstance, LOG);
+   assert_true(data_set.get_sample_use(0) == DataSet::UnusedSample, LOG);
+   assert_true(data_set.get_sample_use(1) == DataSet::UnusedSample, LOG);
 }
 
 
@@ -1063,18 +1063,18 @@ void DataSetTest::test_unuse_most_populated_target()
 
     DataSet data_set;
 
-    Tensor<Index, 1> unused_instances_indices;
+    Tensor<Index, 1> unused_samples_indices;
 
     // Test
 
     data_set.set(5,2,5);
     data_set.initialize_data(0.0);
 
-//    unused_instances_indices = data_set.unuse_most_populated_target(7);
+//    unused_samples_indices = data_set.unuse_most_populated_target(7);
 
-    //assert_true(unused_instances_indices.size() == 5, LOG);
-    //assert_true(data_set.get_used_instances_number() == 0, LOG);
-    //assert_true(data_set.get_unused_instances_number() == 5, LOG);
+    //assert_true(unused_samples_indices.size() == 5, LOG);
+    //assert_true(data_set.get_used_samples_number() == 0, LOG);
+    //assert_true(data_set.get_unused_samples_number() == 5, LOG);
 
     // Test
 
@@ -1083,11 +1083,11 @@ void DataSetTest::test_unuse_most_populated_target()
     ds2.set(100, 7,5);
     ds2.initialize_data(1.0);
 
-    //unused_instances_indices = ds2.unuse_most_populated_target(99);
+    //unused_samples_indices = ds2.unuse_most_populated_target(99);
 
-    //assert_true(unused_instances_indices.size() == 99, LOG);
-    //assert_true(ds2.get_used_instances_number() == 1, LOG);
-    //assert_true(ds2.get_unused_instances_number() == 99, LOG);
+    //assert_true(unused_samples_indices.size() == 99, LOG);
+    //assert_true(ds2.get_used_samples_number() == 1, LOG);
+    //assert_true(ds2.get_unused_samples_number() == 99, LOG);
 
     // Test
 
@@ -1096,11 +1096,11 @@ void DataSetTest::test_unuse_most_populated_target()
     ds3.set(1, 10,10);
     ds3.set_data_random();
 
-//    unused_instances_indices = ds3.unuse_most_populated_target(50);
+//    unused_samples_indices = ds3.unuse_most_populated_target(50);
 
-    //assert_true(unused_instances_indices.size() == 1, LOG);
-    //assert_true(ds3.get_used_instances_number() == 0, LOG);
-    //assert_true(ds3.get_unused_instances_number() == 1, LOG);
+    //assert_true(unused_samples_indices.size() == 1, LOG);
+    //assert_true(ds3.get_used_samples_number() == 0, LOG);
+    //assert_true(ds3.get_unused_samples_number() == 1, LOG);
 }
 
 
@@ -1112,35 +1112,35 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     DataSet data_set(22, 2, 1);
     data_set.initialize_data(1.0);
-    Tensor<type, 1> instance0(2);
-    instance0.setValues({3, 0.0});
-    Tensor<type, 1> instance1(2);
-    instance1.setValues({3, 0.0});
-    Tensor<type, 1> instance2(3);
-    Tensor<type, 1> instance3(3);
-    Tensor<type, 1> instance4(3);
+    Tensor<type, 1> sample0(2);
+    sample0.setValues({3, 0.0});
+    Tensor<type, 1> sample1(2);
+    sample1.setValues({3, 0.0});
+    Tensor<type, 1> sample2(3);
+    Tensor<type, 1> sample3(3);
+    Tensor<type, 1> sample4(3);
 
-    instance2[0] = 4.0;
-    instance2[1] = 5.0;
-    instance2[2] = 0.0;
+    sample2[0] = 4.0;
+    sample2[1] = 5.0;
+    sample2[2] = 0.0;
 
-    instance3[0] = 3.9;
-    instance3[1] = 5.0;
-    instance3[2] = 0.0;
+    sample3[0] = 3.9;
+    sample3[1] = 5.0;
+    sample3[2] = 0.0;
 
-    instance4[0] = 0.2;
-    instance4[1] = 9.0;
-    instance4[2] = 0.0;
+    sample4[0] = 0.2;
+    sample4[1] = 9.0;
+    sample4[2] = 0.0;
 
-//    data_set.set_instance(0, instance0);
-//    data_set.set_instance(1, instance1);
-//    data_set.set_instance(2, instance2);
-//    data_set.set_instance(3, instance3);
-//    data_set.set_instance(4, instance4);
+//    data_set.set_sample(0, sample0);
+//    data_set.set_sample(1, sample1);
+//    data_set.set_sample(2, sample2);
+//    data_set.set_sample(3, sample3);
+//    data_set.set_sample(4, sample4);
 
     //data_set.balance_binary_targets_distribution();
 
-    //assert_true(data_set.get_unused_instances_number() == 12, LOG);
+    //assert_true(data_set.get_unused_samples_number() == 12, LOG);
     //assert_true(data_set.calculate_target_distribution()[1] == 5, LOG);
     //assert_true(data_set.calculate_target_distribution()[0] == 5, LOG);
 
@@ -1149,81 +1149,81 @@ void DataSetTest::test_balance_binary_targets_distribution()
     {
     DataSet data_set(10, 3, 1);
 
-    Tensor<type, 1> instance0(4);
-    Tensor<type, 1> instance1(4);
-    Tensor<type, 1> instance2(4);
-    Tensor<type, 1> instance3(4);
-    Tensor<type, 1> instance4(4);
-    Tensor<type, 1> instance5(4);
-    Tensor<type, 1> instance6(4);
-    Tensor<type, 1> instance7(4);
-    Tensor<type, 1> instance8(4);
-    Tensor<type, 1> instance9(4);
+    Tensor<type, 1> sample0(4);
+    Tensor<type, 1> sample1(4);
+    Tensor<type, 1> sample2(4);
+    Tensor<type, 1> sample3(4);
+    Tensor<type, 1> sample4(4);
+    Tensor<type, 1> sample5(4);
+    Tensor<type, 1> sample6(4);
+    Tensor<type, 1> sample7(4);
+    Tensor<type, 1> sample8(4);
+    Tensor<type, 1> sample9(4);
 
-    instance0[0] = 0.9;
-    instance0[1] = 5.0;
-    instance0[2] = 0.0;
-    instance0[3] = 0.0;
+    sample0[0] = 0.9;
+    sample0[1] = 5.0;
+    sample0[2] = 0.0;
+    sample0[3] = 0.0;
 
-    instance1[0] = 1.1;
-    instance1[1] = 2.3;
-    instance1[2] = 0.0;
-    instance1[3] = 0.0;
+    sample1[0] = 1.1;
+    sample1[1] = 2.3;
+    sample1[2] = 0.0;
+    sample1[3] = 0.0;
 
-    instance2[0] = 2.3;
-    instance2[1] = 3.0;
-    instance2[2] = 1.0;
-    instance2[3] = 0.0;
+    sample2[0] = 2.3;
+    sample2[1] = 3.0;
+    sample2[2] = 1.0;
+    sample2[3] = 0.0;
 
-    instance3[0] = 5.6;
-    instance3[1] = 3.4;
-    instance3[2] = 1.0;
-    instance3[3] = 0.0;
+    sample3[0] = 5.6;
+    sample3[1] = 3.4;
+    sample3[2] = 1.0;
+    sample3[3] = 0.0;
 
-    instance4[0] = 0.8;
-    instance4[1] = 3.1;
-    instance4[2] = 0.0;
-    instance4[3] = 0.0;
+    sample4[0] = 0.8;
+    sample4[1] = 3.1;
+    sample4[2] = 0.0;
+    sample4[3] = 0.0;
 
-    instance5[0] = 3.4;
-    instance5[1] = 3.9;
-    instance5[2] = 0.0;
-    instance5[3] = 0.0;
+    sample5[0] = 3.4;
+    sample5[1] = 3.9;
+    sample5[2] = 0.0;
+    sample5[3] = 0.0;
 
-    instance6[0] = 5.6;
-    instance6[1] = 8.0;
-    instance6[2] = 1.0;
-    instance6[3] = 0.0;
+    sample6[0] = 5.6;
+    sample6[1] = 8.0;
+    sample6[2] = 1.0;
+    sample6[3] = 0.0;
 
-    instance7[0] = 3.9;
-    instance7[1] = 9.0;
-    instance7[2] = 0.0;
-    instance7[3] = 0.0;
+    sample7[0] = 3.9;
+    sample7[1] = 9.0;
+    sample7[2] = 0.0;
+    sample7[3] = 0.0;
 
-    instance8[0] = 1.9;
-    instance8[1] = 2.3;
-    instance8[2] = 0.0;
-    instance8[3] = 0.0;
+    sample8[0] = 1.9;
+    sample8[1] = 2.3;
+    sample8[2] = 0.0;
+    sample8[3] = 0.0;
 
-    instance9[0] = 7.8;
-    instance9[1] = 2.8;
-    instance9[2] = 0.0;
-    instance9[3] = 0.0;
+    sample9[0] = 7.8;
+    sample9[1] = 2.8;
+    sample9[2] = 0.0;
+    sample9[3] = 0.0;
 
-    //data_set.set_instance(0, instance0);
-    //data_set.set_instance(1, instance1);
-    //data_set.set_instance(2, instance2);
-    //data_set.set_instance(3, instance3);
-    //data_set.set_instance(4, instance4);
-    //data_set.set_instance(5, instance5);
-    //data_set.set_instance(6, instance6);
-    //data_set.set_instance(7, instance7);
-    //data_set.set_instance(8, instance8);
-    //data_set.set_instance(9, instance9);
+    //data_set.set_sample(0, sample0);
+    //data_set.set_sample(1, sample1);
+    //data_set.set_sample(2, sample2);
+    //data_set.set_sample(3, sample3);
+    //data_set.set_sample(4, sample4);
+    //data_set.set_sample(5, sample5);
+    //data_set.set_sample(6, sample6);
+    //data_set.set_sample(7, sample7);
+    //data_set.set_sample(8, sample8);
+    //data_set.set_sample(9, sample9);
 
     //data_set.balance_binary_targets_distribution();
 
-    //assert_true(data_set.get_unused_instances_number() == 10, LOG);
+    //assert_true(data_set.get_unused_samples_number() == 10, LOG);
     //assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
     //assert_true(data_set.calculate_target_distribution()[0] == 0, LOG);
     }
@@ -1233,81 +1233,81 @@ void DataSetTest::test_balance_binary_targets_distribution()
     {
     DataSet data_set(10, 3, 1);
 
-    Tensor<type, 1> instance0(4);
-    Tensor<type, 1> instance1(4);
-    Tensor<type, 1> instance2(4);
-    Tensor<type, 1> instance3(4);
-    Tensor<type, 1> instance4(4);
-    Tensor<type, 1> instance5(4);
-    Tensor<type, 1> instance6(4);
-    Tensor<type, 1> instance7(4);
-    Tensor<type, 1> instance8(4);
-    Tensor<type, 1> instance9(4);
+    Tensor<type, 1> sample0(4);
+    Tensor<type, 1> sample1(4);
+    Tensor<type, 1> sample2(4);
+    Tensor<type, 1> sample3(4);
+    Tensor<type, 1> sample4(4);
+    Tensor<type, 1> sample5(4);
+    Tensor<type, 1> sample6(4);
+    Tensor<type, 1> sample7(4);
+    Tensor<type, 1> sample8(4);
+    Tensor<type, 1> sample9(4);
 
-    instance0[0] = 0.9;
-    instance0[1] = 5.0;
-    instance0[2] = 0.0;
-    instance0[3] = 0.0;
+    sample0[0] = 0.9;
+    sample0[1] = 5.0;
+    sample0[2] = 0.0;
+    sample0[3] = 0.0;
 
-    instance1[0] = 1.1;
-    instance1[1] = 2.3;
-    instance1[2] = 0.0;
-    instance1[3] = 0.0;
+    sample1[0] = 1.1;
+    sample1[1] = 2.3;
+    sample1[2] = 0.0;
+    sample1[3] = 0.0;
 
-    instance2[0] = 2.3;
-    instance2[1] = 3.0;
-    instance2[2] = 1.0;
-    instance2[3] = 0.0;
+    sample2[0] = 2.3;
+    sample2[1] = 3.0;
+    sample2[2] = 1.0;
+    sample2[3] = 0.0;
 
-    instance3[0] = 5.6;
-    instance3[1] = 3.4;
-    instance3[2] = 1.0;
-    instance3[3] = 1.0;
+    sample3[0] = 5.6;
+    sample3[1] = 3.4;
+    sample3[2] = 1.0;
+    sample3[3] = 1.0;
 
-    instance4[0] = 0.8;
-    instance4[1] = 3.1;
-    instance4[2] = 0.0;
-    instance4[3] = 0.0;
+    sample4[0] = 0.8;
+    sample4[1] = 3.1;
+    sample4[2] = 0.0;
+    sample4[3] = 0.0;
 
-    instance5[0] = 3.4;
-    instance5[1] = 3.9;
-    instance5[2] = 0.0;
-    instance5[3] = 0.0;
+    sample5[0] = 3.4;
+    sample5[1] = 3.9;
+    sample5[2] = 0.0;
+    sample5[3] = 0.0;
 
-    instance6[0] = 5.6;
-    instance6[1] = 8.0;
-    instance6[2] = 1.0;
-    instance6[3] = 0.0;
+    sample6[0] = 5.6;
+    sample6[1] = 8.0;
+    sample6[2] = 1.0;
+    sample6[3] = 0.0;
 
-    instance7[0] = 3.9;
-    instance7[1] = 9.0;
-    instance7[2] = 0.0;
-    instance7[3] = 1.0;
+    sample7[0] = 3.9;
+    sample7[1] = 9.0;
+    sample7[2] = 0.0;
+    sample7[3] = 1.0;
 
-    instance8[0] = 1.9;
-    instance8[1] = 2.3;
-    instance8[2] = 0.0;
-    instance8[3] = 0.0;
+    sample8[0] = 1.9;
+    sample8[1] = 2.3;
+    sample8[2] = 0.0;
+    sample8[3] = 0.0;
 
-    instance9[0] = 7.8;
-    instance9[1] = 2.8;
-    instance9[2] = 0.0;
-    instance9[3] = 0.0;
+    sample9[0] = 7.8;
+    sample9[1] = 2.8;
+    sample9[2] = 0.0;
+    sample9[3] = 0.0;
 
-    //data_set.set_instance(0, instance0);
-    //data_set.set_instance(1, instance1);
-    //data_set.set_instance(2, instance2);
-    //data_set.set_instance(3, instance3);
-    //data_set.set_instance(4, instance4);
-    //data_set.set_instance(5, instance5);
-    //data_set.set_instance(6, instance6);
-    //data_set.set_instance(7, instance7);
-    //data_set.set_instance(8, instance8);
-    //data_set.set_instance(9, instance9);
+    //data_set.set_sample(0, sample0);
+    //data_set.set_sample(1, sample1);
+    //data_set.set_sample(2, sample2);
+    //data_set.set_sample(3, sample3);
+    //data_set.set_sample(4, sample4);
+    //data_set.set_sample(5, sample5);
+    //data_set.set_sample(6, sample6);
+    //data_set.set_sample(7, sample7);
+    //data_set.set_sample(8, sample8);
+    //data_set.set_sample(9, sample9);
 
     //data_set.balance_binary_targets_distribution(50.0);
 
-    //assert_true(data_set.get_unused_instances_number() == 3, LOG);
+    //assert_true(data_set.get_unused_samples_number() == 3, LOG);
     //assert_true(data_set.calculate_target_distribution()[1] == 2, LOG);
     //assert_true(data_set.calculate_target_distribution()[0] == 5, LOG);
     }
@@ -1371,7 +1371,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     assert_true(target_distribution[0] == target_distribution[1], LOG);
     assert_true(data_set.get_used_columns_indices().size() == 2, LOG);
-    assert_true(data_set.get_unused_instances_indices().size() == 2, LOG);
+    assert_true(data_set.get_unused_samples_indices().size() == 2, LOG);
     }
 
     //Test
@@ -1433,80 +1433,80 @@ void DataSetTest::test_balance_multiple_targets_distribution()
 
     DataSet data_set(9, 2, 2);
 
-    Tensor<type, 1> instance0(4);
-    Tensor<type, 1> instance1(4);
-    Tensor<type, 1> instance2(4);
-    Tensor<type, 1> instance3(4);
-    Tensor<type, 1> instance4(4);
-    Tensor<type, 1> instance5(4);
-    Tensor<type, 1> instance6(4);
-    Tensor<type, 1> instance7(4);
-    Tensor<type, 1> instance8(4);
-    Tensor<type, 1> instance9(4);
+    Tensor<type, 1> sample0(4);
+    Tensor<type, 1> sample1(4);
+    Tensor<type, 1> sample2(4);
+    Tensor<type, 1> sample3(4);
+    Tensor<type, 1> sample4(4);
+    Tensor<type, 1> sample5(4);
+    Tensor<type, 1> sample6(4);
+    Tensor<type, 1> sample7(4);
+    Tensor<type, 1> sample8(4);
+    Tensor<type, 1> sample9(4);
 
-    instance0[0] = 0.9;
-    instance0[1] = 5.0;
-    instance0[2] = 0.0;
-    instance0[3] = 1.0;
+    sample0[0] = 0.9;
+    sample0[1] = 5.0;
+    sample0[2] = 0.0;
+    sample0[3] = 1.0;
 
-    instance1[0] = 1.1;
-    instance1[1] = 2.3;
-    instance1[2] = 0.0;
-    instance1[3] = 1.0;
+    sample1[0] = 1.1;
+    sample1[1] = 2.3;
+    sample1[2] = 0.0;
+    sample1[3] = 1.0;
 
-    instance2[0] = 2.3;
-    instance2[1] = 3.0;
-    instance2[2] = 0.0;
-    instance2[3] = 1.0;
+    sample2[0] = 2.3;
+    sample2[1] = 3.0;
+    sample2[2] = 0.0;
+    sample2[3] = 1.0;
 
-    instance3[0] = 5.6;
-    instance3[1] = 3.4;
-    instance3[2] = 0.0;
-    instance3[3] = 1.0;
+    sample3[0] = 5.6;
+    sample3[1] = 3.4;
+    sample3[2] = 0.0;
+    sample3[3] = 1.0;
 
-    instance4[0] = 0.8;
-    instance4[1] = 3.1;
-    instance4[2] = 0.0;
-    instance4[3] = 1.0;
+    sample4[0] = 0.8;
+    sample4[1] = 3.1;
+    sample4[2] = 0.0;
+    sample4[3] = 1.0;
 
-    instance5[0] = 3.4;
-    instance5[1] = 3.9;
-    instance5[2] = 0.0;
-    instance5[3] = 1.0;
+    sample5[0] = 3.4;
+    sample5[1] = 3.9;
+    sample5[2] = 0.0;
+    sample5[3] = 1.0;
 
-    instance6[0] = 5.6;
-    instance6[1] = 8.0;
-    instance6[2] = 0.0;
-    instance6[3] = 1.0;
+    sample6[0] = 5.6;
+    sample6[1] = 8.0;
+    sample6[2] = 0.0;
+    sample6[3] = 1.0;
 
-    instance7[0] = 3.9;
-    instance7[1] = 9.0;
-    instance7[2] = 0.0;
-    instance7[3] = 1.0;
+    sample7[0] = 3.9;
+    sample7[1] = 9.0;
+    sample7[2] = 0.0;
+    sample7[3] = 1.0;
 
-    instance8[0] = 1.9;
-    instance8[1] = 2.3;
-    instance8[2] = 0.0;
-    instance8[3] = 1.0;
+    sample8[0] = 1.9;
+    sample8[1] = 2.3;
+    sample8[2] = 0.0;
+    sample8[3] = 1.0;
 
-    instance9[0] = 7.8;
-    instance9[1] = 2.8;
-    instance9[2] = 0.0;
-    instance9[3] = 1.0;
+    sample9[0] = 7.8;
+    sample9[1] = 2.8;
+    sample9[2] = 0.0;
+    sample9[3] = 1.0;
 
-//    data_set.set_instance(0, instance0);
-//    data_set.set_instance(1, instance1);
-//    data_set.set_instance(2, instance2);
-//    data_set.set_instance(3, instance3);
-//    data_set.set_instance(4, instance4);
-//    data_set.set_instance(5, instance5);
-//    data_set.set_instance(6, instance6);
-//    data_set.set_instance(7, instance7);
-//    data_set.set_instance(8, instance8);
+//    data_set.set_sample(0, sample0);
+//    data_set.set_sample(1, sample1);
+//    data_set.set_sample(2, sample2);
+//    data_set.set_sample(3, sample3);
+//    data_set.set_sample(4, sample4);
+//    data_set.set_sample(5, sample5);
+//    data_set.set_sample(6, sample6);
+//    data_set.set_sample(7, sample7);
+//    data_set.set_sample(8, sample8);
 
 //    data_set.balance_multiple_targets_distribution();
 
-//    assert_true(data_set.get_unused_instances_number() == 9, LOG);
+//    assert_true(data_set.get_unused_samples_number() == 9, LOG);
 //    assert_true(data_set.calculate_target_distribution()[0] == 0, LOG);
 //    assert_true(data_set.calculate_target_distribution()[1] == 0, LOG);
 }
@@ -1518,89 +1518,89 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
 
     DataSet data_set;
 
-    Tensor<Index, 1> unused_instances;
+    Tensor<Index, 1> unused_samples;
 
     // Test
 
     data_set.set(10, 3, 1);
 
-    Tensor<type, 1> instance0(4);
-    Tensor<type, 1> instance1(4);
-    Tensor<type, 1> instance2(4);
-    Tensor<type, 1> instance3(4);
-    Tensor<type, 1> instance4(4);
-    Tensor<type, 1> instance5(4);
-    Tensor<type, 1> instance6(4);
-    Tensor<type, 1> instance7(4);
-    Tensor<type, 1> instance8(4);
-    Tensor<type, 1> instance9(4);
+    Tensor<type, 1> sample0(4);
+    Tensor<type, 1> sample1(4);
+    Tensor<type, 1> sample2(4);
+    Tensor<type, 1> sample3(4);
+    Tensor<type, 1> sample4(4);
+    Tensor<type, 1> sample5(4);
+    Tensor<type, 1> sample6(4);
+    Tensor<type, 1> sample7(4);
+    Tensor<type, 1> sample8(4);
+    Tensor<type, 1> sample9(4);
 
-    instance0[0] = 0.9;
-    instance0[1] = 5.0;
-    instance0[2] = 6.0;
-    instance0[3] = 8.0;
+    sample0[0] = 0.9;
+    sample0[1] = 5.0;
+    sample0[2] = 6.0;
+    sample0[3] = 8.0;
 
-    instance1[0] = 1.1;
-    instance1[1] = 2.3;
-    instance1[2] = 7.2;
-    instance1[3] = 0.52;
+    sample1[0] = 1.1;
+    sample1[1] = 2.3;
+    sample1[2] = 7.2;
+    sample1[3] = 0.52;
 
-    instance2[0] = 2.3;
-    instance2[1] = 3.0;
-    instance2[2] = 1.0;
-    instance2[3] = 1.4;
+    sample2[0] = 2.3;
+    sample2[1] = 3.0;
+    sample2[2] = 1.0;
+    sample2[3] = 1.4;
 
-    instance3[0] = 5.6;
-    instance3[1] = 3.4;
-    instance3[2] = 4.8;
-    instance3[3] = 1.9;
+    sample3[0] = 5.6;
+    sample3[1] = 3.4;
+    sample3[2] = 4.8;
+    sample3[3] = 1.9;
 
-    instance4[0] = 0.8;
-    instance4[1] = 3.1;
-    instance4[2] = 3.2;
-    instance4[3] = 2.7;
+    sample4[0] = 0.8;
+    sample4[1] = 3.1;
+    sample4[2] = 3.2;
+    sample4[3] = 2.7;
 
-    instance5[0] = 3.4;
-    instance5[1] = 3.9;
-    instance5[2] = 7.8;
-    instance5[3] = 3.5;
+    sample5[0] = 3.4;
+    sample5[1] = 3.9;
+    sample5[2] = 7.8;
+    sample5[3] = 3.5;
 
-    instance6[0] = 5.6;
-    instance6[1] = 8.0;
-    instance6[2] = 4.2;
-    instance6[3] = 5.6;
+    sample6[0] = 5.6;
+    sample6[1] = 8.0;
+    sample6[2] = 4.2;
+    sample6[3] = 5.6;
 
-    instance7[0] = 3.9;
-    instance7[1] = 9.0;
-    instance7[2] = 0.8;
-    instance7[3] = 3.1;
+    sample7[0] = 3.9;
+    sample7[1] = 9.0;
+    sample7[2] = 0.8;
+    sample7[3] = 3.1;
 
-    instance8[0] = 1.9;
-    instance8[1] = 2.3;
-    instance8[2] = 7.0;
-    instance8[3] = 7.9;
+    sample8[0] = 1.9;
+    sample8[1] = 2.3;
+    sample8[2] = 7.0;
+    sample8[3] = 7.9;
 
-    instance9[0] = 7.8;
-    instance9[1] = 2.8;
-    instance9[2] = 0.1;
-    instance9[3] = 5.9;
+    sample9[0] = 7.8;
+    sample9[1] = 2.8;
+    sample9[2] = 0.1;
+    sample9[3] = 5.9;
 
-    //data_set.set_instance(0, instance0);
-    //data_set.set_instance(1, instance1);
-    //data_set.set_instance(2, instance2);
-    //data_set.set_instance(3, instance3);
-    //data_set.set_instance(4, instance4);
-    //data_set.set_instance(5, instance5);
-    //data_set.set_instance(6, instance6);
-    //data_set.set_instance(7, instance7);
-    //data_set.set_instance(8, instance8);
-    //data_set.set_instance(9, instance9);
+    //data_set.set_sample(0, sample0);
+    //data_set.set_sample(1, sample1);
+    //data_set.set_sample(2, sample2);
+    //data_set.set_sample(3, sample3);
+    //data_set.set_sample(4, sample4);
+    //data_set.set_sample(5, sample5);
+    //data_set.set_sample(6, sample6);
+    //data_set.set_sample(7, sample7);
+    //data_set.set_sample(8, sample8);
+    //data_set.set_sample(9, sample9);
 
-    //unused_instances = data_set.balance_approximation_targets_distribution(10.0);
+    //unused_samples = data_set.balance_approximation_targets_distribution(10.0);
 
-    assert_true(data_set.get_unused_instances_number() == 1, LOG);
-    assert_true(data_set.get_used_instances_number() == 9, LOG);
-    assert_true(unused_instances.size() == 1, LOG);
+    assert_true(data_set.get_unused_samples_number() == 1, LOG);
+    assert_true(data_set.get_used_samples_number() == 9, LOG);
+    assert_true(unused_samples.size() == 1, LOG);
 
     // Test
 
@@ -1608,11 +1608,11 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
     ds2.set(1000, 5, 10);
     ds2.set_data_random();
 
-    //unused_instances = ds2.balance_approximation_targets_distribution(100.0);
+    //unused_samples = ds2.balance_approximation_targets_distribution(100.0);
 
-    //assert_true(ds2.get_used_instances_number() == 0, LOG);
-    //assert_true(ds2.get_unused_instances_number() == 1000, LOG);
-    //assert_true(unused_instances.size() == 1000, LOG);
+    //assert_true(ds2.get_used_samples_number() == 0, LOG);
+    //assert_true(ds2.get_unused_samples_number() == 1000, LOG);
+    //assert_true(unused_samples.size() == 1000, LOG);
 }
 
 
@@ -1623,26 +1623,26 @@ void DataSetTest::test_clean_Tukey_outliers()
     DataSet data_set(100, 5, 1);
     //data_set.set_data_random(1.0, 2.0);
 
-    Tensor<type, 1> instance(6);
+    Tensor<type, 1> sample(6);
 
-    instance[0] = 1.0;
-    instance[1] = 1.9;
-    instance[2] = 10.0;
-    instance[3] = 1.1;
-    instance[4] = 1.8;
+    sample[0] = 1.0;
+    sample[1] = 1.9;
+    sample[2] = 10.0;
+    sample[3] = 1.1;
+    sample[4] = 1.8;
 
-    //data_set.set_instance(9, instance);
+    //data_set.set_sample(9, sample);
 
 //    const Tensor<Tensor<Index, 1>, 1> outliers_indices = data_set.calculate_Tukey_outliers(1.5);
 
-    //const Tensor<Index, 1> outliers_instances = outliers_indices[0].get_indices_greater_than(0);
-    //Index outliers_number = outliers_instances.size();
+    //const Tensor<Index, 1> outliers_samples = outliers_indices[0].get_indices_greater_than(0);
+    //Index outliers_number = outliers_samples.size();
 
-    //data_set.set_instances_unused(outliers_instances);
+    //data_set.set_samples_unused(outliers_samples);
 
-    //assert_true(data_set.get_unused_instances_number() == 1, LOG);
+    //assert_true(data_set.get_unused_samples_number() == 1, LOG);
     //assert_true(outliers_number == 1, LOG);
-    //assert_true(outliers_instances[0] == 9, LOG);
+    //assert_true(outliers_samples[0] == 9, LOG);
 }
 
 
@@ -1712,8 +1712,8 @@ void DataSetTest::test_from_XML()
 //   data_set.set_variable_use(0, DataSet::Target);
 //   data_set.set_variable_use(1, DataSet::UnusedVariable);
 
-//   data_set.set_instance_use(0, DataSet::UnusedInstance);
-//   data_set.set_instance_use(1, DataSet::Testing);
+//   data_set.set_sample_use(0, DataSet::UnusedSample);
+//   data_set.set_sample_use(1, DataSet::Testing);
 
 //   document = data_set.to_XML();
 
@@ -1724,9 +1724,9 @@ void DataSetTest::test_from_XML()
 //   assert_true(data_set.get_variables_number() == 2, LOG);
 //   assert_true(data_set.get_variable_use(0) == DataSet::Target, LOG);
 //   assert_true(data_set.get_variable_use(1) == DataSet::UnusedVariable, LOG);
-//   assert_true(data_set.get_instances_number() == 2, LOG);
-//   assert_true(data_set.get_instance_use(0) == DataSet::UnusedInstance, LOG);
-//   assert_true(data_set.get_instance_use(1) == DataSet::Testing, LOG);
+//   assert_true(data_set.get_samples_number() == 2, LOG);
+//   assert_true(data_set.get_sample_use(0) == DataSet::UnusedSample, LOG);
+//   assert_true(data_set.get_sample_use(1) == DataSet::Testing, LOG);
 }
 
 
@@ -1813,7 +1813,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(abs(data(1,0) - 3) < 1.0e-4, LOG);
 //   assert_true(abs(data(1,1) - 4) < 1.0e-4, LOG);
 
-//   assert_true(data_set.get_instances_number() == 2, LOG);
+//   assert_true(data_set.get_samples_number() == 2, LOG);
 //   assert_true(data_set.get_variables_number() == 2, LOG);
 
 //   // Test
@@ -1933,7 +1933,7 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-//   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_samples_number() == 4, LOG);
 //   assert_true(data_set.get_variables_number() == 7, LOG);
 
 //   // Test
@@ -1956,7 +1956,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data_set.get_variables_number() == 7, LOG);
 //   assert_true(data_set.get_input_variables_number() == 4, LOG);
 //   assert_true(data_set.get_target_variables_number() == 3, LOG);
-//   assert_true(data_set.get_instances_number() == 4, LOG);
+//   assert_true(data_set.get_samples_number() == 4, LOG);
 
 //   data = data_set.get_data();
 
@@ -2006,7 +2006,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data_set.get_variable_name(5) == "Iris-versicolor", LOG);
 //   assert_true(data_set.get_variable_name(6) == "Iris-virginica", LOG);
 
-//   assert_true(data_set.get_instances_number() == 5, LOG);
+//   assert_true(data_set.get_samples_number() == 5, LOG);
 
 //   data = data_set.get_data();
 
@@ -2130,7 +2130,7 @@ void DataSetTest::test_read_adult_csv()
 //    data_set.set_has_columns_names(false);
 //    data_set.read_csv();
 
-//    assert_true(data_set.get_instances_number() == 1000, LOG);
+//    assert_true(data_set.get_samples_number() == 1000, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Categorical, LOG);
 //    assert_true(data_set.get_column_type(2) == DataSet::Numeric, LOG);
@@ -2166,7 +2166,7 @@ void DataSetTest::test_read_car_csv() // @todo
 //    {
 //        DataSet data_set("../../datasets/car.data",',',false);
 
-//        assert_true(data_set.get_instances_number() == 1728, LOG);
+//        assert_true(data_set.get_samples_number() == 1728, LOG);
 //        assert_true(data_set.get_column_type(0) == DataSet::Categorical, LOG);
 //        assert_true(data_set.get_column_type(1) == DataSet::Categorical, LOG);
 //        assert_true(data_set.get_column_type(2) == DataSet::Categorical, LOG);
@@ -2193,7 +2193,7 @@ void DataSetTest::test_read_empty_csv() // @todo
 //    {
 //        DataSet data_set("../../datasets/empty.csv",',',false);
 
-//        assert_true(data_set.get_instances_number() == 1, LOG);
+//        assert_true(data_set.get_samples_number() == 1, LOG);
 //        assert_true(data_set.get_variables_number() == 0, LOG);
 
 //    }
@@ -2212,7 +2212,7 @@ void DataSetTest::test_read_heart_csv() // @todo
 
 //    DataSet data_set("../../datasets/heart.csv",',',true);
 
-//    assert_true(data_set.get_instances_number() == 303, LOG);
+//    assert_true(data_set.get_samples_number() == 303, LOG);
 //    assert_true(data_set.get_variables_number() == 14, LOG);
 //    //assert_true(data_set.dimension(1) == 14, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
@@ -2238,7 +2238,7 @@ void DataSetTest::test_read_iris_csv() // @todo
 
 //    DataSet data_set("../../datasets/iris.data",',',false);
 
-//    assert_true(data_set.get_instances_number() == 150, LOG);
+//    assert_true(data_set.get_samples_number() == 150, LOG);
 //    assert_true(data_set.get_variables_number() == 7, LOG);
 //    //assert_true(data_set.dimension(1) == 5, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
@@ -2256,7 +2256,7 @@ void DataSetTest::test_read_mnsit_csv() // @todo
 
 //    DataSet data_set("../../datasets/mnist.csv",',',false);
 
-//    assert_true(data_set.get_instances_number() == 100, LOG);
+//    assert_true(data_set.get_samples_number() == 100, LOG);
 //    assert_true(data_set.get_variables_number() == 785, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Binary, LOG);
@@ -2274,7 +2274,7 @@ void DataSetTest::test_read_one_variable_csv() // @todo
 
 //    DataSet data_set("../../datasets/one_variable.csv",',',false);
 
-//    assert_true(data_set.get_instances_number() == 7, LOG);
+//    assert_true(data_set.get_samples_number() == 7, LOG);
 //    assert_true(data_set.get_variables_number() == 1, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 }
@@ -2286,7 +2286,7 @@ void DataSetTest::test_read_pollution_csv() // @todo
 
 //    DataSet data_set("../../datasets/pollution.csv",',',true);
 
-//    assert_true(data_set.get_instances_number() == 1000, LOG);
+//    assert_true(data_set.get_samples_number() == 1000, LOG);
 //    assert_true(data_set.get_variables_number() == 13, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::DateTime, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Numeric, LOG);
@@ -2310,7 +2310,7 @@ void DataSetTest::test_read_urinary_inflammations_csv() // @todo
 
 //    DataSet data_set("../../datasets/urinary_inflammations.csv",';',true);
 
-//    assert_true(data_set.get_instances_number() == 120, LOG);
+//    assert_true(data_set.get_samples_number() == 120, LOG);
 //    assert_true(data_set.get_variables_number() == 8, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Binary, LOG);
@@ -2329,7 +2329,7 @@ void DataSetTest::test_read_wine_csv() // @todo
 
 //    DataSet data_set("../../datasets/wine.data",',',false);
 
-//    assert_true(data_set.get_instances_number() == 178, LOG);
+//    assert_true(data_set.get_samples_number() == 178, LOG);
 //    assert_true(data_set.get_variables_number() == 14, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Numeric, LOG);
@@ -2354,7 +2354,7 @@ void DataSetTest::test_read_binary_csv()
 
 //    DataSet data_set("../../datasets/binary.csv",',',false);
 
-//    assert_true(data_set.get_instances_number() == 8, LOG);
+//    assert_true(data_set.get_samples_number() == 8, LOG);
 //    assert_true(data_set.get_variables_number() == 3, LOG);
 //    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
 //    assert_true(data_set.get_column_type(1) == DataSet::Numeric, LOG);
@@ -2420,7 +2420,7 @@ void DataSetTest::test_transform_time_series()
 //   assert_true(data.dimension(0) == 1, LOG);
 //   assert_true(data.dimension(1) == 4, LOG);
 
-//   assert_true(data_set.get_instances_number() == 1, LOG);
+//   assert_true(data_set.get_samples_number() == 1, LOG);
 //   assert_true(data_set.get_variables_number() == 4, LOG);
 
 //   assert_true(data_set.get_input_variables_number() == 2, LOG);
@@ -2446,7 +2446,7 @@ void DataSetTest::test_convert_autoassociation() // @todo
 
    // Test
 
-   data.setValues({2, 2, 3.1416});
+//   data.setValues({2, 2, 3.1416});
 
 //   data_set.set_data(data);
 
@@ -2460,7 +2460,7 @@ void DataSetTest::test_convert_autoassociation() // @todo
 //   assert_true(data.dimension(0) == 2, LOG);
 //   assert_true(data.dimension(1) == 4, LOG);
 
-//   assert_true(data_set.get_instances_number() == 2, LOG);
+//   assert_true(data_set.get_samples_number() == 2, LOG);
 //   assert_true(data_set.get_variables_number() == 4, LOG);
 
 //   assert_true(data_set.get_input_variables_number() == 2, LOG);
@@ -2485,7 +2485,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.set_data_file_name(data_file_name);
 
-//    Instances instances;
+//    Samples samples;
 
 //    Tensor<type, 2> data;
 
@@ -2509,9 +2509,9 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    instances = data_set.get_instances();
+////    samples = data_set.get_samples();
 
-//    assert_true(instances.get_use(1) == Instances::Unused, LOG);
+//    assert_true(samples.get_use(1) == Samples::Unused, LOG);
 
 //    // Test
 
@@ -2531,7 +2531,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    instances = data_set.get_instances();
+////    samples = data_set.get_samples();
 
 //    data = data_set.get_data();
 
@@ -2732,9 +2732,9 @@ void DataSetTest::test_calculate_total_input_correlations() // @todo
 }
 
 
-void DataSetTest::test_unuse_repeated_instances()
+void DataSetTest::test_unuse_repeated_samples()
 {
-    cout << "test_unuse_repeated_instances\n";
+    cout << "test_unuse_repeated_samples\n";
 
 //    Tensor<type, 2> matrix(3, 3);
 //    matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
@@ -2743,7 +2743,7 @@ void DataSetTest::test_unuse_repeated_instances()
 //    Tensor<Index, 1> indices(1);
 //    indices.setValues({2});
 
-//    assert_true(data_set.unuse_repeated_instances() == indices, LOG);
+//    assert_true(data_set.unuse_repeated_samples() == indices, LOG);
 
 //    Tensor<type, 2> matrix_1(4, 3);
 //    matrix_1.setValues({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
@@ -2752,7 +2752,7 @@ void DataSetTest::test_unuse_repeated_instances()
 //    Tensor<Index, 1> indices_1(2);
 //    indices_1.setValues({2, 3});
 
-//    assert_true(ds_1.unuse_repeated_instances() == indices_1, LOG);
+//    assert_true(ds_1.unuse_repeated_samples() == indices_1, LOG);
 
 //    Tensor<type, 2> matrix_2(5, 3);
 //    matrix_2.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
@@ -2761,7 +2761,7 @@ void DataSetTest::test_unuse_repeated_instances()
 //    Tensor<Index, 1> indices_2(2);
 //    indices_2.setValues({2,4});
 
-//    assert_true(ds_2.unuse_repeated_instances() == indices_2, LOG);
+//    assert_true(ds_2.unuse_repeated_samples() == indices_2, LOG);
 
 }
 
@@ -2943,7 +2943,7 @@ void DataSetTest::run_test_case()
 
    // Get methods
 
-   test_get_instances_number();
+   test_get_samples_number();
    test_get_variables_number();
    test_get_variables();
    test_get_display();
@@ -2962,9 +2962,9 @@ void DataSetTest::run_test_case()
    test_get_testing_data();
 
 
-   // Instance methods
+   // Sample methods
 
-   test_get_instance();
+   test_get_sample();
 
 
    // Set methods
@@ -2976,19 +2976,19 @@ void DataSetTest::run_test_case()
    // Data methods
 
    test_set_data();
-   test_set_instances_number();
+   test_set_samples_number();
    test_set_columns_number();
 
 
-   // Instance methods
+   // Sample methods
 
-   test_set_instance();
+   test_set_sample();
 
 
    // Data resizing methods
 
    test_unuse_constant_columns();
-   test_unuse_repeated_instances();
+   test_unuse_repeated_samples();
    test_unuse_non_significant_inputs();
    test_unuse_columns_missing_values();
 
@@ -3002,9 +3002,9 @@ void DataSetTest::run_test_case()
 
    test_calculate_data_descriptives();
    test_calculate_data_descriptives_missing_values();
-   test_calculate_training_instances_descriptives();
-   test_calculate_selection_instances_descriptives();
-   test_calculate_testing_instances_descriptives();
+   test_calculate_training_samples_descriptives();
+   test_calculate_selection_samples_descriptives();
+   test_calculate_testing_samples_descriptives();
    test_calculate_inputs_descriptives();
    test_calculate_training_targets_mean();
    test_calculate_selection_targets_mean();

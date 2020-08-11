@@ -25,8 +25,6 @@
 // OpenNN includes
 
 #include "statistics.h"
-//
-//
 #include "config.h"
 
 using namespace std;
@@ -144,11 +142,6 @@ struct CorrelationResults
     // Karl Pearson
 
     type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
-
-    //Gauss
-
-//    type logistic(const type&, const type&, const type&);
-
 
     // Time series correlation methods
 

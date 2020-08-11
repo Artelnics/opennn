@@ -21,30 +21,6 @@ MinkowskiError::MinkowskiError() : LossIndex()
 }
 
 
-/// Neural network constructor.
-/// It creates a Minkowski error term associated to a neural network but not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-
-MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
-    : LossIndex(new_neural_network_pointer)
-{
-    set_default();
-}
-
-
-/// Data set constructor.
-/// It creates a Minkowski error term not associated to any neural network but to be measured on a data set.
-/// It also initializes all the rest of class members to their default values.
-/// @param new_data_set_pointer Pointer to a data set object.
-
-MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
-    : LossIndex(new_data_set_pointer)
-{
-    set_default();
-}
-
-
 /// Neural network and data set constructor.
 /// It creates a Minkowski error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -55,20 +31,6 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a Minkowski error object neither associated to a neural network nor to a data set.
-/// The object members are loaded by means of a XML document.
-/// @param mean_squared_error_document TinyXML document with the Minkowski error elements.
-
-MinkowskiError::MinkowskiError(const tinyxml2::XMLDocument& mean_squared_error_document)
-    : LossIndex(mean_squared_error_document)
-{
-    set_default();
-
-    from_XML(mean_squared_error_document);
 }
 
 
@@ -145,9 +107,9 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
     minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
                                                      .pow(static_cast<type>(1.0)/minkowski_parameter);
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-    back_propagation.error = minkowski_error(0) /static_cast<type>(training_instances_number);
+    back_propagation.error = minkowski_error(0) /static_cast<type>(training_samples_number);
 }
 
 
@@ -161,7 +123,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      #endif
 
-     const Index training_instances_number = data_set_pointer->get_training_instances_number();
+     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -171,7 +133,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
      Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
 //        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
-//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
+//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_samples_number);
 
      errors.device(*thread_pool_device) = outputs - targets;
 
@@ -181,7 +143,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
              = errors*(errors.abs().pow(minkowski_parameter-2));
 
      back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(static_cast<type>(training_instances_number)*(p_norm_derivative()));
+             back_propagation.output_gradient/(static_cast<type>(training_samples_number)*(p_norm_derivative()));
 }
 
 

@@ -47,15 +47,7 @@ public:
 
    explicit TestingAnalysis();
 
-   explicit TestingAnalysis(NeuralNetwork*);
-
-   explicit TestingAnalysis(DataSet*);
-
    explicit TestingAnalysis(NeuralNetwork*, DataSet*);
-
-   explicit TestingAnalysis(const tinyxml2::XMLDocument&);
-
-   explicit TestingAnalysis(const string&);
 
     // Destructor
 
@@ -76,7 +68,10 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void save(const string&) const;
+       void save(const string&) const
+       {
+        /// @todo
+       }
     };
 
 
@@ -124,19 +119,19 @@ public:
 
     struct BinaryClassifcationRates
     {
-        /// Vector with the indices of the instances which are true positive.
+        /// Vector with the indices of the samples which are true positive.
 
         Tensor<Index, 1> true_positives_indices;
 
-        /// Vector with the indices of the instances which are false positive.
+        /// Vector with the indices of the samples which are false positive.
 
         Tensor<Index, 1> false_positives_indices;
 
-        /// Vector with the indices of the instances which are false negative.
+        /// Vector with the indices of the samples which are false negative.
 
         Tensor<Index, 1> false_negatives_indices;
 
-        /// Vector with the indices of the instances which are true negative.
+        /// Vector with the indices of the samples which are true negative.
 
         Tensor<Index, 1> true_negatives_indices;
     };
@@ -271,10 +266,10 @@ public:
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
 
    // Multiple classification tests
 
@@ -288,25 +283,25 @@ public:
 
    Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
-   Tensor<string, 2> calculate_well_classified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
 
-   Tensor<string, 2> calculate_misclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
 
-   void save_well_classified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_misclassified_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_well_classified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_misclassified_instances_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_well_classified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_well_classified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
+   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
 
-   void save_misclassified_instances_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_misclassified_instances_probability_histogram(const Tensor<string, 2>&, const string&);
+   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
 
    // Forecasting methods
 

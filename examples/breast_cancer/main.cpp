@@ -33,7 +33,7 @@ int main(void)
 
         DataSet data_set("../data/breast_cancer.csv",';',true);
 
-        data_set.split_instances_random();
+        data_set.split_samples_random();
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();

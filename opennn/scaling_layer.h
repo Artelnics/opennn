@@ -46,8 +46,6 @@ public:
 
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
-   ScalingLayer(const ScalingLayer&);
-
    // Destructors
 
    virtual ~ScalingLayer();

@@ -459,7 +459,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    Tensor<type, 1> parameters;
 
-   Index instances = 3;
+   Index samples = 3;
 
    Tensor<type, 2> new_weights;
    Tensor<type, 2> new_recurrent_weights;
@@ -469,7 +469,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    recurrent_layer.set(2,2);
 
-   inputs.resize(instances,2);
+   inputs.resize(samples,2);
    inputs.setConstant(1.0);
 
    recurrent_layer.set_activation_function("SoftPlus");

@@ -48,14 +48,6 @@ ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : La
 }
 
 
-/// Copy constructor.
-
-ScalingLayer::ScalingLayer(const ScalingLayer& new_scaling_layer) : Layer()
-{
-    set(new_scaling_layer);
-}
-
-
 /// Destructor.
 
 ScalingLayer::~ScalingLayer()

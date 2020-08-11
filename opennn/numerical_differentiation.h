@@ -28,8 +28,6 @@ namespace OpenNN
 {
 
 /// This class contains methods for numerical differentiation of functions. 
-
-///
 /// In particular it implements the forward and central differences methods for derivatives, Jacobians, hessians or hessian forms.
 
 class NumericalDifferentiation 
@@ -40,8 +38,6 @@ public:
    // Constructors
 
    explicit NumericalDifferentiation();
-
-   NumericalDifferentiation(const NumericalDifferentiation&);
 
    // Destructor
 

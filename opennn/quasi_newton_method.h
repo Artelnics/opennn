@@ -169,8 +169,6 @@ public:
 
    explicit QuasiNewtonMethod(LossIndex*);
 
-   explicit QuasiNewtonMethod(const tinyxml2::XMLDocument&);
-
    virtual ~QuasiNewtonMethod();
 
    // Get methods
@@ -212,16 +210,6 @@ public:
    void set_display(const bool&);
 
    void set_default();
-
-   // Training parameters
-
-   
-   
-   
-
-   
-   
-   
 
    // Stopping criteria
 

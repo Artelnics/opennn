@@ -42,22 +42,8 @@ public:
    // DEFAULT CONSTRUCTOR
 
    explicit MeanSquaredError();
-
-   // NEURAL NETWORK CONSTRUCTOR
-
-   explicit MeanSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit MeanSquaredError(DataSet*);
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
-
-   explicit MeanSquaredError(const tinyxml2::XMLDocument&);
-
-   // COPY CONSTRUCTOR
-
-   MeanSquaredError(const MeanSquaredError&);
 
    // Destructor
 

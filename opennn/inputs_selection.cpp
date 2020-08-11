@@ -31,22 +31,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
 }
 
 
-/// File constructor.
-
-InputsSelection::InputsSelection(const string&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
-/// XML constructor.
-
-InputsSelection::InputsSelection(const tinyxml2::XMLDocument&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
 /// Destructor.
 
 InputsSelection::~InputsSelection()
@@ -818,13 +802,13 @@ void InputsSelection::check() const
 
 
 
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(selection_instances_number == 0)
+    if(selection_samples_number == 0)
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
-               << "Number of selection instances is zero.\n";
+               << "Number of selection samples is zero.\n";
 
         throw logic_error(buffer.str());
     }

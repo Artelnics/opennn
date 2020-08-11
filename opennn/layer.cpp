@@ -830,13 +830,13 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
 
-    const Index instances_number = x.dimension(0);
+    const Index samples_number = x.dimension(0);
 
     Index maximum_index = 0;
 
     y.setZero();
 
-    for(Index i = 0; i < instances_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         maximum_index = maximal_index(x.chip(i, 1));
 

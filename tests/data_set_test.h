@@ -39,7 +39,7 @@ public:
 
    // Get methods
 
-   void test_get_instances_number();
+   void test_get_samples_number();
    void test_get_variables_number();
    void test_get_variables();
    void test_get_display();
@@ -56,13 +56,13 @@ public:
    void test_get_inputs();
    void test_get_targets();
   
-   // Instance methods
+   // Sample methods
 
-   void test_get_instance();
+   void test_get_sample();
 
    // Set methods
    void test_set();
-   void test_set_instances_number();
+   void test_set_samples_number();
    void test_set_columns_number();
    void test_set_display();
 
@@ -70,27 +70,27 @@ public:
    void test_set_data();
    void test_empty();
 
-   // Instance methods
-   void test_set_instance();
-   void test_set_training_instance();
-   void test_set_selection_instance();
-   void test_set_testing_instance();
-   void test_set_input_instance();
-   void test_set_target_instance();
-   void test_set_training_input_instance();
-   void test_set_training_target_instance();
-   void test_set_selection_input_instance(); 
-   void test_set_selection_target_instance();
-   void test_set_testing_input_instance();
-   void test_set_testing_target_instance();
+   // Sample methods
+   void test_set_sample();
+   void test_set_training_sample();
+   void test_set_selection_sample();
+   void test_set_testing_sample();
+   void test_set_input_sample();
+   void test_set_target_sample();
+   void test_set_training_input_sample();
+   void test_set_training_target_sample();
+   void test_set_selection_input_sample(); 
+   void test_set_selection_target_sample();
+   void test_set_testing_input_sample();
+   void test_set_testing_target_sample();
 
    // Data resizing methods
 
-   void test_add_instance();
+   void test_add_sample();
    void test_append_variable();
    void test_remove_variable();
    void test_unuse_constant_columns();
-   void test_unuse_repeated_instances();
+   void test_unuse_repeated_samples();
    void test_unuse_non_significant_inputs();
    void test_unuse_columns_missing_values();
 
@@ -102,9 +102,9 @@ public:
 
    void test_calculate_data_descriptives();
    void test_calculate_data_descriptives_missing_values();
-   void test_calculate_training_instances_descriptives();
-   void test_calculate_selection_instances_descriptives();
-   void test_calculate_testing_instances_descriptives();
+   void test_calculate_training_samples_descriptives();
+   void test_calculate_selection_samples_descriptives();
+   void test_calculate_testing_samples_descriptives();
    void test_calculate_inputs_descriptives();
    void test_calculate_variables_means();
    void test_calculate_training_targets_mean();

@@ -55,8 +55,6 @@ public:
 
    explicit LearningRateAlgorithm(LossIndex*);
 
-   explicit LearningRateAlgorithm(const tinyxml2::XMLDocument&);
-
    // Destructor
 
    virtual ~LearningRateAlgorithm();

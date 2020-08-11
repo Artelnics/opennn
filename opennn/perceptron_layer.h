@@ -53,8 +53,6 @@ public:
 
    explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
-   PerceptronLayer(const PerceptronLayer&);
-
    // Destructor
    
    virtual ~PerceptronLayer();

@@ -43,10 +43,6 @@ public:
 
     explicit NeuronsSelection(TrainingStrategy*);
 
-    explicit NeuronsSelection(const string&);
-
-    explicit NeuronsSelection(const tinyxml2::XMLDocument&);
-
     // Destructor
 
     virtual ~NeuronsSelection();

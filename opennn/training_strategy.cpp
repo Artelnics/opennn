@@ -57,36 +57,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
 }
 
 
-/// XML constructor.
-/// It creates a training strategy object not associated to any loss index object.
-/// It also loads the members of this object from a XML document.
-/// @param document Document of the TinyXML library.
-
-TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
-{
-    set_optimization_method(QUASI_NEWTON_METHOD);
-
-    set_default();
-
-    from_XML(document);
-}
-
-
-/// File constructor.
-/// It creates a training strategy object associated to a loss index object.
-/// It also loads the members of this object from a XML file.
-/// @param file_name Name of training strategy XML file.
-
-TrainingStrategy::TrainingStrategy(const string& file_name)
-{
-    set_optimization_method(QUASI_NEWTON_METHOD);
-
-    set_default();
-
-    load(file_name);
-}
-
-
 /// Destructor.
 /// This destructor deletes the loss index and optimization algorithm objects.
 
@@ -992,9 +962,9 @@ bool TrainingStrategy::check_forecasting() const
     }
 
 
-//    const Index batch_instances_number = data_set.get_batch_instances_number();
+//    const Index batch_samples_number = data_set.get_batch_samples_number();
 
-//    if(batch_instances_number%timesteps == 0)
+//    if(batch_samples_number%timesteps == 0)
 //    {
 //        return true;
 //    }
