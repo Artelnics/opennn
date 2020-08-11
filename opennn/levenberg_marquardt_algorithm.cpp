@@ -302,6 +302,12 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 }
 
 
+void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
+
+
 /// Sets a new value for the minimum parameters increment norm stopping criterion.
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
 
@@ -1141,6 +1147,17 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1367,6 +1384,25 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         catch(const logic_error& e)
         {
             cerr << e.what() << endl;
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 }

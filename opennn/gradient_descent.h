@@ -176,6 +176,8 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
+   void set_hardware_use(const string&);
+
    // Stopping criteria
 
    void set_maximum_epochs_number(const Index&);
@@ -279,6 +281,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

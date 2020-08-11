@@ -1008,7 +1008,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     cross_entropy_error.write_XML(file_stream);
     weighted_squared_error.write_XML(file_stream);
 
-    sum_squared_error.write_regularization_XML(file_stream);
+    mean_squared_error.write_regularization_XML(file_stream);
 
     file_stream.CloseElement();
 
@@ -1210,7 +1210,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 regularization_document.InsertFirstChild(element_clone);
 
-                sum_squared_error.regularization_from_XML(regularization_document);
+                mean_squared_error.regularization_from_XML(regularization_document);
             }
         }
     }
