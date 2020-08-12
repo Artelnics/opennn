@@ -44,7 +44,7 @@ int main(void)
     try
     {
         cout << "Hello Normal correlation" << endl;
-
+/*
         const int n = omp_get_max_threads();
         NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
         ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
@@ -90,7 +90,7 @@ int main(void)
 
         cout<<"Gauss correlation: "<<gauss.correlation<<endl;
         cout<<"Logistic correlation: "<<logistic.correlation<<endl;
-
+*/
         return 0;
     }
     catch(exception& e)
