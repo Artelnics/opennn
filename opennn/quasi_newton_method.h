@@ -181,6 +181,8 @@ public:
 
    const Index& get_epochs_number() const;
 
+   string get_hardware_use() const;
+
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
