@@ -59,6 +59,12 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 }
 
 
+string ConjugateGradient::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the conjugate gradient training direction method used for training.
 
 const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
@@ -175,6 +181,12 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
     loss_index_pointer = new_loss_index_pointer;
 
     learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+}
+
+
+void ConjugateGradient::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -1493,6 +1505,18 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    // Hardware use
+    {
+        file_stream.OpenElement("HardwareUse");
+
+        buffer.str("");
+        buffer << hardware_use;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
     file_stream.CloseElement();
 }
 
@@ -1834,6 +1858,25 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             }
          }
       }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
 
 }
 

@@ -97,6 +97,12 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
+string QuasiNewtonMethod::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
@@ -427,6 +433,12 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
+}
+
+
+void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -1192,6 +1204,17 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1611,7 +1634,26 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
               cerr << e.what() << endl;
            }
         }
-    }    
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
 }
 
 }
