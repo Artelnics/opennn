@@ -59,6 +59,12 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
+string GradientDescent::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& GradientDescent::get_minimum_parameters_increment_norm() const
@@ -163,10 +169,10 @@ void GradientDescent::set_default()
 
     training_loss_goal = static_cast<type>(1.0e-3);
     gradient_norm_goal = static_cast<type>(1.0e-3);
-    maximum_selection_error_increases = 1000000;
+    maximum_selection_error_increases = 100;
 
     maximum_epochs_number = 1000;
-    maximum_time = 1000.0;
+    maximum_time = 3600;
 
     choose_best_selection = false;
 
@@ -202,6 +208,12 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_training_error_history = new_reserve_all_training_history;
 
     reserve_selection_error_history = new_reserve_all_training_history;
+}
+
+
+void GradientDescent::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -1040,6 +1052,17 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1259,6 +1282,25 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
             }
             catch(const logic_error& e)
             {

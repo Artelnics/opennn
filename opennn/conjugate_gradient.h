@@ -96,6 +96,8 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
+   string get_hardware_use() const;
+
    // Training operators
 
    const TrainingDirectionMethod& get_training_direction_method() const;
@@ -126,20 +128,12 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
+   void set_hardware_use(const string&);
+
    // Training operators
 
    void set_training_direction_method(const TrainingDirectionMethod&);
    void set_training_direction_method(const string&);
-
-   // Training parameters
-
-   
-   
-   
-
-   
-   
-   
 
    // Stopping criteria
 
@@ -256,6 +250,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

@@ -108,6 +108,12 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
+string LevenbergMarquardtAlgorithm::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
@@ -299,6 +305,12 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 #endif
 
     maximum_damping_parameter = new_maximum_damping_parameter;
+}
+
+
+void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -1141,6 +1153,17 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1151,7 +1174,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
 void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardtAlgorithm");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
 
     if(!root_element)
     {
@@ -1367,6 +1390,25 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         catch(const logic_error& e)
         {
             cerr << e.what() << endl;
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 }
