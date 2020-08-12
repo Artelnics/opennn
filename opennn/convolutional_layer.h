@@ -51,8 +51,6 @@ public:
 
     // Destructor
 
-    virtual ~ConvolutionalLayer() {}
-
     // Get methods
 
     bool is_empty() const;
@@ -60,10 +58,13 @@ public:
     const Tensor<type, 1>& get_biases() const;
 
     const Tensor<type, 4>& get_synaptic_weights() const;
+    Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
 
     Tensor<Index, 1> get_outputs_dimensions() const;
+
+    Tensor<Index, 1> get_input_variables_dimensions() const;
 
     Index get_outputs_rows_number() const;
 
@@ -100,6 +101,8 @@ public:
 
     void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
+    void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
+
     void set_activation_function(const ActivationFunction&);
 
     void set_biases(const Tensor<type, 1>&);
@@ -128,8 +131,6 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
     void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Activation
@@ -140,25 +141,25 @@ public:
 
    // Outputs
 
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
-
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
+   void calculate_outputs(const Tensor<type, 2>&, Tensor<type, 2>&);
+//   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
    void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
 
 
    // Delta methods
 
-   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
 
-   Tensor<type, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 4>&) const;
-   Tensor<type, 2> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 2> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 2> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   void calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
+   void calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
+   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
 
    // Gradient methods
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&);
 
 protected:
 
