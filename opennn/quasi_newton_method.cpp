@@ -97,6 +97,12 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
+string QuasiNewtonMethod::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const

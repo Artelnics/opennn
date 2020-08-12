@@ -96,6 +96,8 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
+   string get_hardware_use() const;
+
    // Training operators
 
    const TrainingDirectionMethod& get_training_direction_method() const;

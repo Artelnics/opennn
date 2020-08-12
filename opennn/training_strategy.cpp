@@ -1299,13 +1299,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             // Levenberg Marquardt
 
-            const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardtAlgorithm");
+            const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardt");
 
             if(Levenberg_Marquardt_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardtAlgorithm");
+                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardt");
 
                 for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {

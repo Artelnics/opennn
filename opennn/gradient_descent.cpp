@@ -59,6 +59,12 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
+string GradientDescent::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& GradientDescent::get_minimum_parameters_increment_norm() const

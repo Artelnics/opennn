@@ -108,6 +108,12 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
+string LevenbergMarquardtAlgorithm::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
@@ -1168,7 +1174,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
 void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardtAlgorithm");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
 
     if(!root_element)
     {

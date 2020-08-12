@@ -131,6 +131,8 @@ public:
 
    const bool& get_choose_best_selection() const;
 
+   string get_hardware_use() const;
+
    // Reserve training history
 
    const bool& get_reserve_training_error_history() const;

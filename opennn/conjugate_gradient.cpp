@@ -59,6 +59,12 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 }
 
 
+string ConjugateGradient::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the conjugate gradient training direction method used for training.
 
 const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
