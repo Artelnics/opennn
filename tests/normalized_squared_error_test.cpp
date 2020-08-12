@@ -653,7 +653,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
 //<<<<<<< Updated upstream
-////   cout << "Jacobian: " << second_order_loss.error_Jacobian << endl;
+////   cout << "Jacobian: " << second_order_loss.error_terms_Jacobian << endl;
 
 ////   cout << "Num Jacobian: " << nse.calculate_Jacobian_numerical_differentiation(&nse) << endl;
 
@@ -723,7 +723,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
 //   numerical_Jacobian_terms = nse_2.calculate_Jacobian_numerical_differentiation(&nse_2);
 
-//   assert_true(abs(second_order_loss.error_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(abs(second_order_loss.error_terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
 //   // Test
 

@@ -382,14 +382,14 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
-    Tensor<type, 2> error_Jacobian(samples_number, parameters_number);
-    error_Jacobian.setZero();
+    Tensor<type, 2> error_terms_Jacobian(samples_number, parameters_number);
+    error_terms_Jacobian.setZero();
 
     Index index = 0;
 
     const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
-    memcpy(error_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+    memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
     index += layers_parameters_number[0]*samples_number;
 
@@ -398,12 +398,12 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
         const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
                                                                                  forward_propagation.layers(i-1).activations_2d);
 
-        memcpy(error_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+        memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
         index += layers_parameters_number[i]*samples_number;
     }
 
-    second_order_loss.error_Jacobian = error_Jacobian;
+    second_order_loss.error_terms_Jacobian = error_terms_Jacobian;
 }
 
 /// Calculates the <i>Jacobian</i> matrix of the error terms of the layer.

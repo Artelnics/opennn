@@ -119,7 +119,7 @@ void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,
 
     const type coefficient = (static_cast<type>(2.0));
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_terms, AT_B);
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
 
     second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 
@@ -137,7 +137,7 @@ void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, Los
 
      const type coefficient = (static_cast<type>(2.0));
 
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms_Jacobian, AT_B);
 
      second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }

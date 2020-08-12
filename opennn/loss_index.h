@@ -159,7 +159,7 @@ public:
        {
            loss = 0;           
            gradient = Tensor<type, 1>(parameters_number);
-           error_Jacobian = Tensor<type, 2>(samples_number, parameters_number);
+           error_terms_Jacobian = Tensor<type, 2>(samples_number, parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 
@@ -173,9 +173,11 @@ public:
 
        type error;
        type loss;
+
        Tensor<type, 1> error_terms;
+       Tensor<type, 2> error_terms_Jacobian;
+
        Tensor<type, 1> gradient;
-       Tensor<type, 2> error_Jacobian;
        Tensor<type, 2> hessian;
    };
 
