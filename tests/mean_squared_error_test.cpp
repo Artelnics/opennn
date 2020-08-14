@@ -160,116 +160,117 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
-
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+
 //    Test trivial
-{
-    samples_number = 10;
-    inputs_number = 1;
-    outputs_number = 1;
+//{
+//       samples_number = 10;
+//       inputs_number = 1;
+//       outputs_number = 1;
 
-    data_set.set(samples_number, inputs_number, outputs_number);
-    data_set.initialize_data(0.0);
-    data_set.set_training();
+//       data_set.set(samples_number, inputs_number, outputs_number);
+//       data_set.initialize_data(0.0);
+//       data_set.set_training();
 
-    DataSet::Batch batch(samples_number, &data_set);
+//       DataSet::Batch batch(samples_number, &data_set);
 
-    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
-    const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+//       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+//       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+//       const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-    batch.fill(samples_indices, input_indices, target_indices);
+//       batch.fill(samples_indices, input_indices, target_indices);
 
-    hidden_perceptron_layer->set(inputs_number, outputs_number);
-    neural_network.add_layer(hidden_perceptron_layer);
+//       hidden_perceptron_layer->set(inputs_number, outputs_number);
+//       neural_network.add_layer(hidden_perceptron_layer);
 
-    neural_network.set_parameters_constant(0.0);
+//       neural_network.set_parameters_constant(0.0);
 
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+//       MeanSquaredError mse(&neural_network, &data_set);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-    LossIndex::BackPropagation training_back_propagation(samples_number, &mean_squared_error);
+//       mse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    neural_network.forward_propagate(batch, forward_propagation);
+//       NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
+//       LossIndex::BackPropagation training_back_propagation(samples_number, &mse);
 
-    mean_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
-    error_gradient = training_back_propagation.gradient;
+//       neural_network.forward_propagate(batch, forward_propagation);
 
-    numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation(&mean_squared_error);
+//       mse.back_propagate(batch, forward_propagation, training_back_propagation);
+//       error_gradient = training_back_propagation.gradient;
 
-    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
-    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
-}
+//       numerical_error_gradient = mse.calculate_error_gradient_numerical_differentiation(&mse);
+
+//       assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
+//       assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+//}
 
    // Test perceptron and probabilistic
 {
-   samples_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   hidden_neurons = 2;
+        samples_number = 10;
+        inputs_number = 3;
+        outputs_number = 2;
+        hidden_neurons = 2;
 
-   data_set.set(samples_number, inputs_number, outputs_number);
+        DataSet data_set_2;
 
-   data_set.initialize_data(0.0);
-   data_set.set_training();
+        data_set_2.generate_Rosenbrock_data(100,2);
+        data_set_2.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+        data_set_2.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
-   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+        data_set_2.initialize_data(0.0);
+        data_set_2.set_training();
 
-   batch.fill(samples_indices, input_indices, target_indices);
+        DataSet::Batch batch_1(samples_number, &data_set_2);
 
-   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
-   probabilistic_layer->set(outputs_number, outputs_number);
+        NeuralNetwork neural_network_1;
+        neural_network_1.set();
 
-   neural_network.add_layer(hidden_perceptron_layer);
-   neural_network.add_layer(output_perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
+        Tensor<Index, 1> samples_indices_1 = data_set_2.get_training_samples_indices();
+        const Tensor<Index, 1> input_indices_1 = data_set_2.get_input_variables_indices();
+        const Tensor<Index, 1> target_indices_1 = data_set_2.get_target_variables_indices();
 
-   neural_network.set_parameters_random();
+        batch_1.fill(samples_indices_1, input_indices_1, target_indices_1);
 
-   mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+        output_perceptron_layer->set(hidden_neurons, outputs_number);
+        probabilistic_layer->set(outputs_number, outputs_number);
 
-   NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-   LossIndex::BackPropagation training_back_propagation(samples_number, &mean_squared_error);
+        neural_network_1.add_layer(hidden_perceptron_layer);
+        neural_network_1.add_layer(output_perceptron_layer);
+        neural_network_1.add_layer(probabilistic_layer);
 
-   neural_network.forward_propagate(batch, forward_propagation);
+        MeanSquaredError mse_1(&neural_network_1, &data_set_2);
 
-//   mean_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
-//   error_gradient = training_back_propagation.gradient;
-   //
+        mse_1.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-//   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation(&mean_squared_error);
+        NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network_1);
+        LossIndex::BackPropagation training_back_propagation(samples_number, &mse_1);
 
-//   assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
-//   assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+        neural_network_1.forward_propagate(batch_1, forward_propagation);
 
-//   error_gradient = mean_squared_error.calculate_error_gradient();
+        mse_1.back_propagate(batch_1, forward_propagation, training_back_propagation);
+        error_gradient = training_back_propagation.gradient;
 
-//   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
+        numerical_error_gradient = mse_1.calculate_error_gradient_numerical_differentiation(&mse_1);
 
-//   assert_true((error_gradient - numerical_error_gradient).abs() < 1.0e-3, LOG);
-}
+        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-   neural_network.set();
+        assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+   }
 
    // Test lstm
 
-
 {
-   samples_number = 5;
-   inputs_number = 4;
-   outputs_number = 2;
-   hidden_neurons = 3;
+//   samples_number = 5;
+//   inputs_number = 4;
+//   outputs_number = 2;
+//   hidden_neurons = 3;
 
-   data_set.set(samples_number, inputs_number, outputs_number);
+//   data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+//   data_set.set_data_random();
 
-   data_set.set_training();
+//   data_set.set_training();
 
 //   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
 //   output_perceptron_layer->set(hidden_neurons, outputs_number);
@@ -286,20 +287,20 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
-   neural_network.set();
+//   neural_network.set();
 
    // Test recurrent
 {
-   samples_number = 92;
-   inputs_number = 3;
-   outputs_number = 1;
-   hidden_neurons = 4;
+//   samples_number = 92;
+//   inputs_number = 3;
+//   outputs_number = 1;
+//   hidden_neurons = 4;
 
-   data_set.set(samples_number, inputs_number, outputs_number);
+//   data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+//   data_set.set_data_random();
 
-   data_set.set_training();
+//   data_set.set_training();
 
 //   recurrent_layer->set(inputs_number, hidden_neurons);
 //   recurrent_layer->set_timesteps(1);
@@ -320,18 +321,18 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
    // Test convolutional
 {
-   samples_number = 5;
-   inputs_number = 147;
-   outputs_number = 1;
+//   samples_number = 5;
+//   inputs_number = 147;
+//   outputs_number = 1;
 
-   data_set.set(samples_number, inputs_number, outputs_number);
+//   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
 //   data_set.set_data_random();
 //   data_set.set_training();
 
-   const type parameters_minimum = -100.0;
-   const type parameters_maximum = 100.0;
+//   const type parameters_minimum = -100.0;
+//   const type parameters_maximum = 100.0;
 
 //   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
 //   Tensor<type, 2> filters_1({2,3,2,2}, 0);
@@ -397,32 +398,32 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 {
    cout << "test_calculate_error_terms\n";
 
-//   NeuralNetwork neural_network;
-//   Tensor<Index, 1> hidden_layers_size;
-//   Tensor<type, 1> parameters;
+   NeuralNetwork neural_network;
+   Tensor<Index, 1> hidden_layers_size;
+   Tensor<type, 1> parameters;
 
-//   DataSet data_set;
+   DataSet data_set;
    
-//   MeanSquaredError mean_squared_error(&neural_network, &data_set);
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//   type error;
+   type error;
 
-//   Tensor<type, 1> error_terms;
+   Tensor<type, 1> error_terms;
 
-//   // Test
+   // Test
 
-//   Tensor<Index, 1> architecture(3);
-//   architecture.setValues({1,1});
+   Tensor<Index, 1> architecture(3);
+   architecture.setValues({1,1});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
 
-//   data_set.set(1, 1, 1);
-//   data_set.set_data_random();
+   data_set.set(1, 1, 1);
+   data_set.set_data_random();
 
-   //const Tensor<type, 2> inputs = data_set.get_training_input_data();
-   //const Tensor<type, 2> targets = data_set.get_training_target_data();
-   //const Tensor<type, 2> outputs = nn.calculate_outputs(inputs);
+   const Tensor<type, 2> inputs = data_set.get_training_input_data();
+   const Tensor<type, 2> targets = data_set.get_training_target_data();
+   const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
 //   error = mean_squared_error.calculate_error();
 
