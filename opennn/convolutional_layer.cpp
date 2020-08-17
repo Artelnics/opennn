@@ -175,35 +175,6 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
 }
 
 
-//void ConvolutionalLayer::calculate_outputs_2d(const Tensor<type, 2>& inputs, Tensor<type, 2>& outputs)
-//{
-//    cout << "Method calculate_outputs_2d(const Tensor<type, 2>& inputs, Tensor<type, 2>& outputs)" << endl;
-//    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
-
-//    const Tensor<Index, 1> inputs_dimensions = get_input_variables_dimensions();
-
-//    const Eigen::array<Eigen::Index, 2> shuffle_dims = {1, 0};
-//    const Eigen::array<Eigen::Index, 4> inputs_dimensions_array = {inputs_dimensions(0),
-//                                                                   inputs_dimensions(1),
-//                                                                   inputs_dimensions(2),
-//                                                                   inputs_dimensions(3)};
-
-//    const Eigen::array<Eigen::Index, 4> outputs_dimensions_array = {outputs_dimensions(0),
-//                                                                    outputs_dimensions(1),
-//                                                                    outputs_dimensions(2),
-//                                                                    outputs_dimensions(3)};
-
-//    const Tensor<type, 4> inputs_temp = inputs.shuffle(shuffle_dims).reshape(inputs_dimensions_array);
-//    Tensor<type, 4> outputs_temp = outputs.reshape(outputs_dimensions_array);
-
-//    calculate_outputs(inputs_temp, outputs_temp);
-
-//    const Eigen::array<Eigen::Index, 2> output_dims = {outputs_dimensions(0) * outputs_dimensions(1) * outputs_dimensions(2), outputs_dimensions(3)};
-
-//    outputs = outputs_temp.reshape(output_dims).shuffle(shuffle_dims);
-//}
-
-
 void ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inputs, Tensor<type, 2>& outputs)
 {
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
@@ -225,6 +196,29 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 2>& inputs, Tensor
     Tensor<type, 4> outputs_temp = outputs.reshape(outputs_dimensions_array);
 
     calculate_outputs(inputs_temp, outputs_temp);
+
+    const Eigen::array<Eigen::Index, 2> output_dims = {outputs_dimensions(0) * outputs_dimensions(1) * outputs_dimensions(2), outputs_dimensions(3)};
+
+    outputs = outputs_temp.reshape(output_dims).shuffle(shuffle_dims);
+}
+
+
+void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor<type, 2>& outputs)
+{
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+
+    const Tensor<Index, 1> inputs_dimensions = get_input_variables_dimensions();
+
+    const Eigen::array<Eigen::Index, 2> shuffle_dims = {1, 0};
+
+    const Eigen::array<Eigen::Index, 4> outputs_dimensions_array = {outputs_dimensions(0),
+                                                                    outputs_dimensions(1),
+                                                                    outputs_dimensions(2),
+                                                                    outputs_dimensions(3)};
+
+    Tensor<type, 4> outputs_temp = outputs.reshape(outputs_dimensions_array);
+
+    calculate_outputs(inputs, outputs_temp);
 
     const Eigen::array<Eigen::Index, 2> output_dims = {outputs_dimensions(0) * outputs_dimensions(1) * outputs_dimensions(2), outputs_dimensions(3)};
 
@@ -646,9 +640,9 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& previous_layers_outputs,
-                                                             const Layer::ForwardPropagation& forward_propagation,
-                                                             const Tensor<type, 2>& layer_deltas,
-                                                             Tensor<type, 1>& layer_error_gradient)
+                                                  const Layer::ForwardPropagation& forward_propagation,
+                                                  const Tensor<type, 2>& layer_deltas,
+                                                  Tensor<type, 1>& layer_error_gradient)
 {
 
         Tensor<type, 4> layers_inputs;

@@ -143,6 +143,7 @@ public:
 
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
    void calculate_outputs(const Tensor<type, 2>&, Tensor<type, 2>&);
+   void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
 //   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
    void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;

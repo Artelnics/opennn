@@ -1217,7 +1217,6 @@ void ConvolutionalLayerTest::test_calculate_outputs()
                 outputs(3, 2, 1, 1) == 7.f &&
                 outputs(3, 3, 1, 1) == 7.f, LOG);
 
-
     inputs.resize(5, 5, 3, 2);
     kernels.resize(3, 3, 3, 2);
     biases.resize(2);
@@ -1275,6 +1274,62 @@ void ConvolutionalLayerTest::test_calculate_outputs()
                 outputs_2d(1, 15) - 3.0f <= 1e-6f &&
                 outputs_2d(1, 16) - 3.0f <= 1e-6f &&
                 outputs_2d(1, 17) - 3.0f <= 1e-6f, LOG);
+
+
+    // 4D inputs and 2D outputs
+
+    inputs.resize(4, 4, 3, 2);
+    kernels.resize(3, 3, 3, 1);
+    outputs_2d.resize(2, 4);
+    biases.resize(1);
+
+    inputs.setConstant(1.0f);
+    kernels.setConstant(1.0f/27);
+    biases.setConstant(0.f);
+
+    convolutional_layer.set(inputs, kernels, biases);
+
+    convolutional_layer.calculate_outputs(inputs, outputs_2d);
+
+    assert_true(abs(outputs_2d(0, 0) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 1) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 2) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 3) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 0) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 1) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 2) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 3) - 1.0f) < 1.e-6f, LOG);
+
+    inputs.resize(4, 4, 3, 2);
+    kernels.resize(3, 3, 3, 2);
+    outputs_2d.resize(2, 8);
+    biases.resize(2);
+
+    inputs.setConstant(1.0f);
+    kernels.setConstant(1.0f/27);
+    biases(0) = 0.f;
+    biases(1) = 1.f;
+
+    convolutional_layer.set(inputs, kernels, biases);
+
+    convolutional_layer.calculate_outputs(inputs, outputs_2d);
+
+    assert_true(abs(outputs_2d(0, 0) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 1) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 2) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 3) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 4) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 5) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 6) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(0, 7) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 0) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 1) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 2) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 3) - 1.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 4) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 5) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 6) - 2.0f) < 1.e-6f &&
+                abs(outputs_2d(1, 7) - 2.0f) < 1.e-6f, LOG);
 
 }
 
