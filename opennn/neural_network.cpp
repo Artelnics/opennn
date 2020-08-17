@@ -415,7 +415,13 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ScalingLayer* get_scaling_layer_pointer() const method.\n"
+           << "No scaling layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -433,7 +439,13 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "UnscalingLayer* get_unscaling_layer_pointer() const method.\n"
+           << "No unscaling layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -451,7 +463,13 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "BoundingLayer* get_bounding_layer_pointer() const method.\n"
+           << "No bounding layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -469,7 +487,13 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ProbabilisticLayer* get_probabilistic_layer_pointer() const method.\n"
+           << "No probabilistic layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -487,7 +511,13 @@ PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer(
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "PrincipalComponentsLayer* get_principal_components_layer_pointer() const method.\n"
+           << "No principal components layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -505,7 +535,13 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointe
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const method.\n"
+           << "No long-short term memory layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -523,9 +559,14 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
         }
     }
 
-    return nullptr;
-}
+    ostringstream buffer;
 
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "RecurrentLayer* get_recurrent_layer_pointer() const method.\n"
+           << "No recurrent layer in neural network.\n";
+
+    throw logic_error(buffer.str());
+}
 
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages
