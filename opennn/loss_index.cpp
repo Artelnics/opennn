@@ -529,11 +529,26 @@ void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batc
                                            BackPropagation& back_propagation,
                                            SecondOrderLoss& second_order_loss) const
 {
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
-    back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+
+    // Gives Eigen error in debug
+
+#ifndef __OPENNN_DEBUG__
+
+    back_propagation.output_gradient = (outputs-targets)/second_order_loss.error_terms;
+
+#else
+
+    back_propagation.output_gradient = (outputs-targets);
+
+    for(Index i = 0; i < back_propagation.output_gradient.size(); i++)
+        back_propagation.output_gradient(i) /= second_order_loss.error_terms(i);
+
+#endif
 
 }
 
