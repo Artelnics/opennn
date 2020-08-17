@@ -1026,7 +1026,7 @@ void ConvolutionalLayer::set(const Tensor<type, 4>& new_inputs, const Tensor<typ
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_filters.dimension(3) != new_biases.size())
+    if(new_kernels.dimension(3) != new_biases.size())
     {
         ostringstream buffer;
 
