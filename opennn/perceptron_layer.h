@@ -239,7 +239,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include"../../opennn-mkl/opennn_mkl/perceptron_layer_mkl.h"
+//    #include"../../opennn-mkl/opennn_mkl/perceptron_layer_mkl.h"
 #endif
 };
 

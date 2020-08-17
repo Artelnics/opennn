@@ -445,6 +445,7 @@ void ScalingLayer::set_default()
 
 void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
+
 #ifdef __OPENNN_DEBUG__
 
     const Index new_descriptives_size = new_descriptives.size();
@@ -463,8 +464,6 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
     }
 
 #endif
-
-    // Set all descriptives
 
     descriptives = new_descriptives;
 }
