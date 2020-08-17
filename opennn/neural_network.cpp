@@ -31,7 +31,7 @@ NeuralNetwork::NeuralNetwork()
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {
-    set(model_type, architecture);
+//    set(model_type, architecture);
 }
 
 
@@ -146,10 +146,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         const Layer::Type first_layer_type = layers_pointers[0]->get_type();
 
-        if(first_layer_type != Layer::Scaling)
-        {
-            return false;
-        }
+        if(first_layer_type != Layer::Scaling) return false;
     }
 
     return true;
