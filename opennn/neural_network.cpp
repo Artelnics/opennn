@@ -31,7 +31,7 @@ NeuralNetwork::NeuralNetwork()
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {
-//    set(model_type, architecture);
+    set(model_type, architecture);
 }
 
 
