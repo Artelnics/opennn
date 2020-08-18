@@ -87,7 +87,7 @@ public:
 #endif
 
 #ifdef OPENNN_MKL
-//    #include "../../opennn-mkl/opennn_mkl/cross_entropy_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/cross_entropy_error_mkl.h"
 #endif
 };
 
