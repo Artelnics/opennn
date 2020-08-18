@@ -68,15 +68,13 @@ int main(void)
         neural_network.set_parameters_random();
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-//        scaling_layer_pointer->set_scaling_methods(scaling_inputs_methods);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(scaling_inputs_methods);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+        unscaling_layer_pointer->set_descriptives(target_descriptives);
+        unscaling_layer_pointer->set_unscaling_methods(scaling_target_methods);
 
-        if(unscaling_layer_pointer == nullptr) cout << "NULL!!" << endl;
-//        unscaling_layer_pointer->set_descriptives(target_descriptives);
-//        unscaling_layer_pointer->set_unscaling_methods(scaling_target_methods);
-/*
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -112,7 +110,7 @@ int main(void)
 //        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
 
 //        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
-*/
+
         cout << "End" << endl;
 
         return 0;

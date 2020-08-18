@@ -632,6 +632,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+
         optimization_data.epoch = epoch;
 
         // Neural network
