@@ -374,7 +374,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-//    #include "../../opennn-mkl/opennn_mkl/neural_network_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/neural_network_mkl.h"
 #endif
 };
 
