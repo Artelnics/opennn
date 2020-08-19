@@ -1353,67 +1353,63 @@ void NeuralNetworkTest::test_print()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
+
    //neural_network.print();
 }
 
-void NeuralNetworkTest::test_write_expression() // @todo
+void NeuralNetworkTest::test_write_expression()
 {
    cout << "test_write_expression\n";
 
+   //Test 0
+
    NeuralNetwork neural_network;
-   string expression;
 
    Tensor<Index, 1> architecture;
 
-   // Test
+   //neural_network.print();
 
-//   expression = neural_network.write_expression();
+   // Only network architecture
 
-//   // Test
+   architecture.resize(3);
+   architecture.setValues({2, 4, 3});
 
-//   architecture.resize(3);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   Tensor<string, 1> inputs_names = neural_network.get_inputs_names();
+   Tensor<string, 1> outputs_names = neural_network.get_outputs_names();
 
-//   architecture.setValues({1, 1, 1});
+   inputs_names.setValues({"x1", "x2"});
+    outputs_names.setValues({"y1", "y2", "y3"});
 
+   neural_network.set_inputs_names(inputs_names);
+   neural_network.set_outputs_names(outputs_names);
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(-1.0);
-//   expression = neural_network.write_expression();
+//   cout << neural_network.write_expression(inputs_names, outputs_names);
 
-//   // Test
+   //Test 1
 
-//   architecture.resize(3);
+   NeuralNetwork neural_network_2;
 
-//   architecture.setValues({2, 1, 1});
+   Tensor<Index, 1> architecture_2;
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(-1.0);
-//   expression = neural_network.write_expression();
+   //neural_network.print();
 
-//   // Test
+   // Only network architecture
 
-//   architecture.setValues({1, 2, 1});
+   architecture_2.resize(3);
+   architecture_2.setValues({2, 4, 3});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(-1.0);
-//   expression = neural_network.write_expression();
+   neural_network_2.set(NeuralNetwork::Classification, architecture_2);
+   Tensor<string, 1> inputs_names_2 = neural_network.get_inputs_names();
+   Tensor<string, 1> outputs_names_2 = neural_network.get_outputs_names();
 
-//   // Test
+   inputs_names_2.setValues({"x1", "x2"});
+   outputs_names_2.setValues({"y1", "y2", "y3"});
 
+   neural_network_2.set_inputs_names(inputs_names_2);
+   neural_network_2.set_outputs_names(outputs_names_2);
 
-//   architecture.setValues({1, 1, 2});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(-1.0);
-//   expression = neural_network.write_expression();
-
-//   // Test
-
-//   architecture.setValues({2, 2, 2});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(-1.0);
-//   expression = neural_network.write_expression();
+//   cout << neural_network_2.write_expression(inputs_names_2, outputs_names_2);
 
 }
 

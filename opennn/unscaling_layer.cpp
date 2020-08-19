@@ -155,19 +155,19 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
     {
         if(unscaling_methods(i) == NoUnscaling)
         {
-            buffer << "unscaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
+            buffer << outputs_names(i) << " = " << inputs_names(i) << ";\n";
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            buffer << "unscaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean <<"))/(" << descriptives(i).standard_deviation << ");\n";
+            buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean <<"))/(" << descriptives(i).standard_deviation << ");\n";
         }
         else if(unscaling_methods(i) == MeanStandardDeviation)
         {
-            buffer << "unscaled_" << inputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << ");\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << ");\n";
         }
         else if(unscaling_methods(i) == Logarithmic)
         {
-            buffer << "unscaled_" << inputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << "));\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << "));\n";
         }
         else
         {
