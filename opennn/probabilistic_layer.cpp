@@ -1199,40 +1199,6 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string
 }
 
 
-/// Returns a string with the expression of the probabilistic outputs function,
-/// depending on the probabilistic method to be used.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    switch(activation_function)
-    {
-    case Binary:
-        return write_binary_expression(inputs_names, outputs_names);
-
-    case Logistic:
-        return write_logistic_expression(inputs_names, outputs_names);
-
-    case Competitive:
-        return write_competitive_expression(inputs_names, outputs_names);
-
-    case Softmax:
-        return write_softmax_expression(inputs_names, outputs_names);
-    }// end switch
-
-    // Default
-
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
-           << "Unknown probabilistic method.\n";
-
-    throw logic_error(buffer.str());
-}
-
-
 string ProbabilisticLayer::write_combinations_c() const
 {
     ostringstream buffer;
@@ -1411,6 +1377,100 @@ string ProbabilisticLayer::write_activations_python() const
 }
 
 
+string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t" << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*" << inputs_names(j) << "";
+        }
+
+        buffer << " " << endl;
+    }
+
+    buffer << "\t" << endl;
+
+    return buffer.str();
+}
+
+
+string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_names) const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        switch(activation_function)
+        {
+        case Binary:
+            {
+                buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << outputs_names(i) << "= 0.0. Else " << outputs_names(i) << " = 1.0\n";
+            }
+            break;
+
+        case Logistic:
+            {
+                buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ");\n";
+            }
+            break;
+
+        case Competitive:
+            if(i == 0)
+            {
+                buffer << "\tfor each probabilistic_layer_combinations_i:"<<endl;
+
+                buffer <<"\t\tif probabilistic_layer_combinations_i is equal to max(probabilistic_layer_combinations_i):"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 1"<<endl;
+
+                buffer <<"\t\telse:"<<endl;
+
+                buffer <<"\t\t\tactivations[i] = 0"<<endl;
+            }
+
+            break;
+
+        case Softmax:
+
+            if(i == 0)
+            {
+                buffer << "\tsum_ = ";
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "exp(probabilistic_layer_combinations_"  << to_string(i);
+
+                    if(i != neurons_number-1) buffer << " + ";
+                }
+
+                buffer << ";\n" << endl;
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    buffer << "\t" << outputs_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) <<")/sum_;\n";
+                }
+
+            }
+            break;
+
+
+
+        }
+    }
+
+    return buffer.str();
+}
+
 string ProbabilisticLayer::write_expression_c() const
 {
     const Index inputs_number = get_inputs_number();
@@ -1441,6 +1501,17 @@ string ProbabilisticLayer::write_expression_python() const
     buffer << write_activations_python();
 
     buffer << "\n\treturn activations;\n" << endl;
+
+    return buffer.str();
+}
+
+string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+{
+    ostringstream buffer;
+
+    buffer << write_combinations(inputs_names, outputs_names);
+
+    buffer << write_activations(outputs_names);
 
     return buffer.str();
 }

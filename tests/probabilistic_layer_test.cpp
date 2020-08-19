@@ -863,6 +863,7 @@ void ProbabilisticLayerTest::test_write_expression()
 
    expression = probabilistic_layer.write_expression(inputs_names,outputs_names);
 
+   cout << expression;
    assert_true(expression.empty() == false, LOG);
 }
 

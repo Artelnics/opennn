@@ -337,7 +337,7 @@ public:
 
    // Expression methods
 
-   string write_expression() const;
+   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
    string write_expression_python() const;
    string write_expression_c() const;
 

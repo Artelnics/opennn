@@ -2403,11 +2403,54 @@ string NeuralNetwork::write_expression_c() const
 }
 
 
-/// @todo
-
-string NeuralNetwork::write_expression() const
+string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    return string();
+    const Index layers_number = get_layers_number();
+
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+    Tensor<string, 1> layers_names = get_layers_names();
+
+    Tensor<string, 1> temporal_outputs_names;
+    Tensor<string, 1> temporal_inputs_names;
+    temporal_inputs_names = inputs_names;
+
+    Index layer_neurons_number;
+
+    ostringstream buffer;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(i == layers_number-1)
+        {
+            temporal_outputs_names = outputs_names;
+            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+        }
+        else{
+            layer_neurons_number = layers_pointers[i]->get_neurons_number();
+            temporal_outputs_names.resize(layer_neurons_number);
+
+
+            for(Index j = 0; j < layer_neurons_number; j++)
+            {
+                if(layers_names(i) == "scaling_layer")
+                {
+                    temporal_outputs_names(j) = "scaled_" + inputs_names(j);
+                }
+                else{
+                    temporal_outputs_names(j) =  layers_names(i) + "_output_" + to_string(j);
+                }
+            }
+            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+
+            temporal_inputs_names = temporal_outputs_names;
+        }
+    }
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+
+    return expression;
 }
 
 
