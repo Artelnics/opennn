@@ -1729,6 +1729,26 @@ void DataSetTest::test_from_XML()
 //   assert_true(data_set.get_sample_use(1) == DataSet::Testing, LOG);
 }
 
+void DataSetTest::test_is_constant_numeric()
+{
+    cout << "test_read_csv\n";
+
+    DataSet data_set;
+
+    data_set.set_data_file_name("../../datasets/constant_variables.csv");
+
+    data_set.set_separator(DataSet::Comma);
+
+    data_set.read_csv();
+
+    assert_true(data_set.get_column_type(0) == 0, LOG);
+    assert_true(data_set.get_column_type(1) == 4, LOG);
+    assert_true(data_set.get_column_type(2) == 1, LOG);
+    assert_true(data_set.get_column_type(3) == 4, LOG);
+    assert_true(data_set.get_column_type(4) == 1, LOG);
+    assert_true(data_set.get_column_type(5) == 4, LOG);
+    assert_true(data_set.get_column_type(6) == 0, LOG);
+}
 
 void DataSetTest::test_read_csv() 
 {
@@ -3118,6 +3138,9 @@ void DataSetTest::run_test_case()
    // Principal components mehtod
 
    test_perform_principal_components_analysis();
+
+   // test if constant variables
+   test_is_constant_numeric();
 
    cout << "End of data set test case.\n\n";
 }
