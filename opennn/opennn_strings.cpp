@@ -227,6 +227,38 @@ bool is_numeric_string(const string& str)
 }
 
 
+/// Returns true if given string vector is constant, false otherwise.
+/// @param str vector to be checked.
+///
+bool is_constant_string(const Tensor<string, 1>& str){
+
+    const string str0 = str[0];
+    string str1;
+
+    for (int i = 1; i < str.size(); i++)
+    {
+        str1 = str[i];
+        if (str1.compare(str0) != 0)
+            return false;
+    }
+    return true;
+}
+
+/// Returns true if given numeric vector is constant, false otherwise.
+/// @param str vector to be checked.
+
+bool is_constant_numeric(const Tensor<type, 1>& str){
+
+    const type a0 = str[0];
+
+    for (int i = 1; i < str.size(); i++)
+    {
+        if (str[i] != a0)
+            return false;
+    }
+    return true;
+}
+
 /// Returns true if given string is a date, false otherwise.
 /// @param str String to be checked.
 

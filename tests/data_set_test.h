@@ -216,6 +216,10 @@ public:
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
+   //Check if constant
+
+   void test_is_constant_numeric();
+
    // Unit testing methods
 
    void run_test_case();

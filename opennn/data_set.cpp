@@ -8130,6 +8130,8 @@ void DataSet::print_columns_types() const
         else if(columns(i).type == Binary) cout << "Binary ";
         else if(columns(i).type == Categorical) cout << "Categorical ";
         else if(columns(i).type == DateTime) cout << "DateTime ";
+        else if(columns(i).type == Constant) cout << "Constant ";
+
     }
 
     cout << endl;
@@ -8299,7 +8301,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
-/// @todo
 
 void DataSet::transform_time_series()
 {
@@ -9462,12 +9463,13 @@ void DataSet::read_csv_1()
             columns(column_index).type = DateTime;
             column_index++;
         }
-        else
-        {
+
+        else{
             columns(column_index).type = Categorical;
             column_index++;
         }
     }
+
 }
 
 
@@ -9672,6 +9674,18 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+    // Check Constant
+
+    cout << "Checking constant columns..." << endl;
+
+    for(Index column = 0; column < get_columns_number(); column++)
+    {
+        if(is_constant_numeric(data.chip(column, 1)))
+        {
+            columns(column).type = Constant;
+        }
+    }
 }
 
 
@@ -9981,6 +9995,19 @@ void DataSet::read_csv_3_complete()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+
+    // Check Constant
+
+    cout << "Checking constant columns..." << endl;
+
+    for(Index column = 0; column < get_columns_number(); column++)
+    {
+        if(is_constant_numeric(data.chip(column, 1)))
+        {
+            columns(column).type = Constant;
+        }
+    }
 }
 
 

@@ -13,6 +13,7 @@
 
 #include <math.h>
 #include <regex>
+#include <iostream>
 
 // Eigen includes
 
@@ -33,6 +34,8 @@ namespace OpenNN
 //    inline bool is_digit_string(const char str) {return std::isdigit(str);}
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
+    bool is_constant_numeric(const Tensor<type, 1>&);
+    bool is_constant_string(const Tensor<string, 1>&);
 
     time_t date_to_timestamp(const string& date, const Index& gmt = 0);
 
