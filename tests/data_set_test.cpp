@@ -715,15 +715,25 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    DataSet data_set;
 
    Tensor<Descriptives, 1> inputs_descriptives;
+   Tensor<Descriptives, 1> target_descriptives;
 
    // Test
 
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
+   data_set.set(2, 3, 2);
 
-//   data_set.scale_input_variables_minimum_maximum();
+   Tensor<type, 2> data(3, 3);
+   data.setValues({{1, 2, 3}, {3, 4, 5}, {5, 5, 5}});
+   data_set.set_data(data);
+
+//   data_set.set_min_max_range(-10,10);
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
+   target_descriptives = data_set.calculate_target_variables_descriptives();
+
+   data_set.scale_input_variables_minimum_maximum();
+   data_set.scale_target_variables_minimum_maximum();
+
+//   data_set.unscale_input_variables_minimum_maximum(inputs_descriptives);
 
    assert_true(inputs_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
@@ -758,13 +768,17 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    Tensor<Descriptives, 1> data_descriptives;
 
-   Tensor<type, 2> data;
+   Tensor<type, 2> data(2, 2);
+
    Tensor<type, 2> scaled_data;
 
     // Test
 
    data_set.set(2,2,2);
-   data_set.initialize_data(0.0);
+//   data_set.initialize_data(0.0);
+
+   data.setValues({{1, 2}, {3, 4}});
+   data_set.set_data(data);
 
    data_set.set_display(false);
 

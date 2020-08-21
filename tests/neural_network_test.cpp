@@ -1384,7 +1384,7 @@ void NeuralNetworkTest::test_write_expression()
    neural_network.set_inputs_names(inputs_names);
    neural_network.set_outputs_names(outputs_names);
 
-//   cout << neural_network.write_expression(inputs_names, outputs_names);
+   cout << neural_network.write_expression(inputs_names, outputs_names);
 
    //Test 1
 
@@ -1409,7 +1409,7 @@ void NeuralNetworkTest::test_write_expression()
    neural_network_2.set_inputs_names(inputs_names_2);
    neural_network_2.set_outputs_names(outputs_names_2);
 
-//   cout << neural_network_2.write_expression(inputs_names_2, outputs_names_2);
+   cout << neural_network_2.write_expression(inputs_names_2, outputs_names_2);
 
 }
 

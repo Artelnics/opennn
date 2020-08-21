@@ -746,6 +746,10 @@ public:
    Index count_rows_with_nan() const;
    Index count_nan() const;
 
+   // scaling
+
+   void set_min_max_range(const type min, const type max);
+
    // Eigen methods
 
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
@@ -783,6 +787,11 @@ private:
    /// Number of steps ahead.
 
    Index steps_ahead;
+
+   /// Min Max Range Scaling
+
+   type min_range = -1;
+   type max_range = 1;
 
    /// Data Matrix.
    /// The number of rows is the number of samples.

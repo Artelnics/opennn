@@ -779,7 +779,7 @@ void UnscalingLayerTest::test_write_expression()
    expression = ul.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "unscaled_x = x;\n", LOG);
+   assert_true(expression == "y = x;\n", LOG);
 
    // Test 2
 
@@ -788,8 +788,10 @@ void UnscalingLayerTest::test_write_expression()
 
    expression = ul.write_expression(inputs_names, outputs_names);
 
+   cout << expression;
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "unscaled_x = (x-(0))/(1);\n", LOG);
+
+   assert_true(expression == "y = x*(1+1)/(1+1)-1+1*(1+1)/(1+1);\n", LOG);
 
    // Test 3
 
@@ -799,7 +801,7 @@ void UnscalingLayerTest::test_write_expression()
    expression = ul.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "unscaled_x = -1+0.5*(x+1)*((1)-(-1);\n", LOG);
+   assert_true(expression == "y = -1+0.5*(x+1)*((1)-(-1);\n", LOG);
 
    // Test 4
 
@@ -809,7 +811,7 @@ void UnscalingLayerTest::test_write_expression()
    expression = ul.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "unscaled_x = -1+0.5*(exp(x)+1)*((1)-(-1));\n", LOG);
+   assert_true(expression == "y = -1+0.5*(exp(x)+1)*((1)-(-1));\n", LOG);
 }
 
 
