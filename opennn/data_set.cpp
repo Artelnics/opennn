@@ -6504,21 +6504,32 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 }
 
 
+
 /// Scales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the data matrix.
 /// @param input_statistics vector with the descriptives of the input variable.
 /// @param input_index Index of the input to be scaled.
 
-void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
+void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
+//    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+//    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, input_index) = data(i, input_index)*slope + intercept;
+//    }
+
+    const type slope = (max_range-min_range)/(input_statistics.maximum-input_statistics.minimum);
+
+    const type intercept = -(input_statistics.minimum*(max_range-min_range))/(input_statistics.maximum - input_statistics.minimum) + min_range;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
         data(i, input_index) = data(i, input_index)*slope + intercept;
     }
+
 }
 
 
@@ -6721,23 +6732,31 @@ void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 
 
 #endif
 
+//    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+//    const Index target_variables_number = target_variables_indices.size();
+
+//    Index variable_index;
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        for(Index j = 0; j < target_variables_number; j++)
+//        {
+//            variable_index = target_variables_indices(j);
+
+//            if(!::isnan(data(i,variable_index)))
+//            {
+//                data(i, variable_index) =
+//                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
+//            }
+//        }
+//    }
+
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Index target_variables_number = target_variables_indices.size();
 
-    Index variable_index;
-
-    for(Index i = 0; i < data.dimension(0); i++)
+    for(Index i = 0; i < target_variables_number; i++)
     {
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            variable_index = target_variables_indices(j);
-
-            if(!::isnan(data(i,variable_index)))
-            {
-                data(i, variable_index) =
-                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
-            }
-        }
+        scale_target_minimum_maximum(targets_descriptives[i], target_variables_indices[i]);
     }
 }
 
@@ -6859,18 +6878,28 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const string& scaling_un
 
 void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                static_cast<type>(2)/(target_statistics.maximum-target_statistics.minimum);
+//    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+//                0 :
+//                static_cast<type>(2)/(target_statistics.maximum-target_statistics.minimum);
 
-    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                -(target_statistics.maximum + target_statistics.minimum)/(target_statistics.maximum - target_statistics.minimum);
+//    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+//                0 :
+//                -(target_statistics.maximum + target_statistics.minimum)/(target_statistics.maximum - target_statistics.minimum);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, target_index) = data(i, target_index)*slope + intercept;
+//    }
+
+    const type slope = (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
+
+    const type intercept = -(target_statistics.minimum*(max_range-min_range))/(target_statistics.maximum - target_statistics.minimum) + min_range;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
         data(i, target_index) = data(i, target_index)*slope + intercept;
     }
+
 }
 
 
@@ -6957,9 +6986,18 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
+//    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+//    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, input_index) = data(i, input_index)*slope + intercept;
+//    }
+
+    const type slope = (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
+
+    const type intercept = input_statistics.minimum - min_range*(input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7056,13 +7094,9 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 
 void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (target_statistics.maximum - target_statistics.minimum)/static_cast<type>(2);
+    const type slope = (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                target_statistics.minimum :
-                (target_statistics.minimum + target_statistics.maximum)/static_cast<type>(2);
+    const type intercept = target_statistics.minimum - min_range*(target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7162,6 +7196,14 @@ void DataSet::set_data_random()
     data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
+/// Sets max and min scaling range for minmaxscaling.
+/// @param min and max for scaling range.
+
+void DataSet::set_min_max_range(const type min, const type max)
+{
+    min_range = min;
+    max_range = max;
+}
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 

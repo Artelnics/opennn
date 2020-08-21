@@ -433,11 +433,22 @@ void ScalingLayer::set_default()
 
     set_scaling_methods(MinimumMaximum);
 
+    set_min_max_range(-1, 1);
+
     set_display(true);
 
     layer_type = Scaling;
 }
 
+
+/// Sets max and min scaling range for minmaxscaling.
+/// @param min and max for scaling range.
+
+void ScalingLayer::set_min_max_range(const type min, const type max)
+{
+    min_range = min;
+    max_range = max;
+}
 
 /// Sets all the scaling layer descriptives from a vector descriptives structures.
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
@@ -830,9 +841,9 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MinimumMaximum)
                     {
-                        const type slope = static_cast<type>(2)/(descriptives(j).maximum-descriptives(j).minimum);
+                        const type slope = (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
 
-                        const type intercept = -(descriptives(j).maximum + descriptives(j).minimum)/(descriptives(j).maximum - descriptives(j).minimum);
+                        const type intercept = -(descriptives(j).minimum*(max_range-min_range))/(descriptives(j).maximum - descriptives(j).minimum) + min_range;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
@@ -1054,7 +1065,7 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            buffer << "scaled_" << inputs_names(i) << " = 2*(" << inputs_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+            buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
         }
         else if(scaling_methods(i) == MeanStandardDeviation)
         {
@@ -1076,7 +1087,13 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
         }
     }
 
-    return buffer.str();
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
+
 }
 
 
@@ -1103,9 +1120,9 @@ string ScalingLayer::write_expression_c() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            const type slope = static_cast<type>(2)/(descriptives(i).maximum-descriptives(i).minimum);
+            const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
 
-            const type intercept = -(descriptives(i).maximum + descriptives(i).minimum)/(descriptives(i).maximum - descriptives(i).minimum);
+            const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
@@ -1159,9 +1176,9 @@ string ScalingLayer::write_expression_python() const
         }
         else if(scaling_methods(i) == MinimumMaximum)
         {
-            const type slope = static_cast<type>(2)/(descriptives(i).maximum-descriptives(i).minimum);
+            const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
 
-            const type intercept = -(descriptives(i).maximum + descriptives(i).minimum)/(descriptives(i).maximum - descriptives(i).minimum);
+            const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }

@@ -904,6 +904,7 @@ void ScalingLayerTest::test_calculate_outputs()
    Tensor<type, 2> outputs_1 = scaling_layer.calculate_outputs(inputs);
    assert_true(outputs_1.dimension(0) == 1, LOG);
    assert_true(outputs_1.dimension(1) == 1, LOG);
+
    assert_true(abs(outputs_1(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
 
    // Test 1_1
@@ -1016,7 +1017,7 @@ void ScalingLayerTest::test_write_expression()
    expression = sl.write_expression(inputs_names, outputs_names);
 
    assert_true(expression.empty() == false, LOG);
-   assert_true(expression == "scaled_x = 2*(x-(-1))/(1-(-1))-1;\n", LOG);
+   assert_true(expression == "scaled_x = x*(1+1)/(1-(-1))+1*(1+1)/(1+1)-1;\n", LOG);
 
    // Test 0_3
 
@@ -1161,12 +1162,12 @@ void ScalingLayerTest::run_test_case()
 
 //   // Scaling and unscaling
 
-//   test_calculate_outputs();
+   test_calculate_outputs();
 
 
 //   // Expression methods
 
-//   test_write_expression();
+   test_write_expression();
 
 
    cout << "End of scaling layer test case.\n\n";

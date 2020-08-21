@@ -159,7 +159,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            buffer << outputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean <<"))/(" << descriptives(i).standard_deviation << ");\n";
+            buffer << outputs_names(i) << " = " << inputs_names(i) << "*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")/(" << max_range << "-" << min_range << ")+" << descriptives(i).minimum << "-" << min_range << "*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")/(" << max_range << "-" << min_range << ");\n";
         }
         else if(unscaling_methods(i) == MeanStandardDeviation)
         {
@@ -181,7 +181,12 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
     }
 
-    return buffer.str();
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
 }
 
 /// Returns a vector of strings with the name of the method used for each unscaling neuron.
@@ -371,9 +376,20 @@ void UnscalingLayer::set_default()
 
     set_unscaling_methods(MinimumMaximum);
 
+    set_min_max_range(-1, 1);
+
     set_display(true);
 
     layer_type = Unscaling;
+}
+
+/// Sets max and min scaling range for minmaxscaling.
+/// @param min and max for scaling range.
+
+void UnscalingLayer::set_min_max_range(const type min, const type max)
+{
+    min_range = min;
+    max_range = max;
 }
 
 
@@ -740,11 +756,12 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                         outputs(i,j) = inputs(i,j);
                     }
 
-                    else if(unscaling_methods(j) == MinimumMaximum) // [-1, 1]
+                    else if(unscaling_methods(j) == MinimumMaximum)
                     {
-                        const type slope = (descriptives(j).maximum - descriptives(j).minimum)/static_cast<type>(2);
 
-                        const type intercept = (descriptives(j).minimum + descriptives(j).maximum)/static_cast<type>(2);
+                        const type slope = (descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
+
+                        const type intercept = descriptives(j).minimum - min_range*(descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
@@ -1094,9 +1111,9 @@ string UnscalingLayer::write_expression_c() const
             }
             else
             {
-                const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
+                const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-                const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
+                const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
                 buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
             }
@@ -1155,9 +1172,9 @@ string UnscalingLayer::write_expression_python() const
         }
         else if(unscaling_methods(i) == MinimumMaximum)
         {
-            const type slope = (descriptives(i).maximum - descriptives(i).minimum)/static_cast<type>(2);
+            const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-            const type intercept = (descriptives(i).minimum + descriptives(i).maximum)/static_cast<type>(2);
+            const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
