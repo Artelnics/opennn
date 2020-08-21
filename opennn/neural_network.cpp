@@ -102,6 +102,28 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
+
+    if(layer_pointer->get_type_string() == "Recurrent" || layer_pointer->get_type_string() == "LongShortTermMemory"){
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+
+    }
+    if(layer_pointer->get_type_string() == "Convolutional"){
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
+
+        throw logic_error(buffer.str());
+
+    }
+
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
@@ -200,7 +222,20 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
     return false;
 }
 
+/// Returns true if the neural network object has a convolutional object inside,
+/// and false otherwise.
 
+bool NeuralNetwork::has_convolutional_layer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Convolutional) return true;
+    }
+
+    return false;
+}
 
 /// Returns true if the neural network object has a recurrent layer object inside,
 /// and false otherwise.
@@ -651,6 +686,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 //        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
 //        this->add_layer(long_short_term_memory_layer_pointer);
+
 
         RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 

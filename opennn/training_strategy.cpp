@@ -806,6 +806,14 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
 
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+
         if(!check_forecasting())
         {
 
@@ -818,6 +826,20 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
             throw logic_error(buffer.str());
         }
     }
+
+    if(neural_network_pointer->has_convolutional_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+
+
     OptimizationAlgorithm::Results results;
     // Main
 

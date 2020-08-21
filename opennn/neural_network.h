@@ -187,7 +187,7 @@ public:
    bool has_unscaling_layer() const;
    bool has_bounding_layer() const;
    bool has_probabilistic_layer() const;
-
+   bool has_convolutional_layer() const;
    bool is_empty() const;  
 
    const Tensor<string, 1>& get_inputs_names() const;
