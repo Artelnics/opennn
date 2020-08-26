@@ -206,8 +206,6 @@ void InputsSelection::set_default()
     reserve_selection_error_data = true;
     reserve_minimal_parameters = true;
 
-    display = true;
-
     // Stopping criteria
 
     selection_error_goal = 0;
@@ -752,16 +750,6 @@ void InputsSelection::check() const
     }
 
     // Loss index
-
-
-    if(!training_strategy_pointer->has_loss_index())
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 

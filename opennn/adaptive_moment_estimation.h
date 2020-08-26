@@ -119,8 +119,6 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
-   void set_default();
-
    void set_reserve_all_training_history(const bool&);
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
@@ -184,47 +182,47 @@ private:
 
    /// Learning rate decay over each update.
 
-   type initial_decay;
+   type initial_decay = 0;
 
    /// Exponential decay over gradient estimates.
 
-   type beta_1;
+   type beta_1 = static_cast<type>(0.9);
 
    /// Exponential decay over square gradient estimates.
 
-   type beta_2;
+   type beta_2 = static_cast<type>(0.999);
 
    /// Small number to prevent any division by zero
 
-   type epsilon;
+   type epsilon =static_cast<type>(1.e-7);
 
     // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type training_loss_goal;
+   type training_loss_goal = 0;
 
    /// Maximum epochs number
 
-   Index maximum_epochs_number;
+   Index maximum_epochs_number = 10000;
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   type maximum_time;
+   type maximum_time = 3600;
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-   bool choose_best_selection;
+   bool choose_best_selection = false;
 
    // TRAINING HISTORY
 
    /// True if the error history vector is to be reserved, false otherwise.
 
-   bool reserve_training_error_history;
+   bool reserve_training_error_history = true;
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_error_history;
+   bool reserve_selection_error_history = true;
 
    Index batch_samples_number = 1000;
 

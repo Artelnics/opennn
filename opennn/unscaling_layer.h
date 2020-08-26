@@ -160,7 +160,7 @@ protected:
 
    /// Display warning messages to screen. 
 
-   bool display;
+   bool display = true;
 };
 
 }

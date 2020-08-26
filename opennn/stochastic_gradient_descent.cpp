@@ -142,18 +142,17 @@ void StochasticGradientDescent::set_default()
     // Stopping criteria
 
     training_loss_goal = 0;
-    maximum_time = 1000.0;
+    maximum_time = 3600.0;
     maximum_epochs_number = 1000;
     choose_best_selection = false;
 
     // TRAINING HISTORY
 
     reserve_training_error_history = true;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display = true;
     display_period = 5;
 }
 
@@ -624,7 +623,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 cout << "Training error: " << training_error << "\n"
                      << "Batch size: " << batch_samples_number << "\n"
-                     << loss_index_pointer->write_information()
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl << endl;
@@ -646,7 +644,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training error: " << training_error << "\n"
                  << "Batch size: " << batch_samples_number << "\n"
-                 << loss_index_pointer->write_information()
                  << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl << endl;

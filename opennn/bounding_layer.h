@@ -118,7 +118,7 @@ protected:
 
    /// Method used to bound the values.
 
-   BoundingMethod bounding_method;
+   BoundingMethod bounding_method = Bounding;
 
    /// Lower bounds of output variables
 
@@ -130,7 +130,7 @@ protected:
 
    /// Display messages to screen. 
 
-   bool display;
+   bool display = true;
 };
 
 }

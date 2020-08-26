@@ -185,24 +185,23 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
-    minimum_loss_decrease = static_cast<type>(1.0e-9);
-    training_loss_goal = static_cast<type>(1.0e-3);
-    gradient_norm_goal = static_cast<type>(1.0e-3);
+    minimum_loss_decrease = static_cast<type>(0.0);
+    training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000;
 
     maximum_epochs_number = 1000;
-    maximum_time = 1000.0;
+    maximum_time = 3600.0;
 
     choose_best_selection = false;
 
     // TRAINING HISTORY
 
     reserve_training_error_history = false;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display = true;
     display_period = 5;
 
     // Training parameters
@@ -806,7 +805,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training loss: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
-                     << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -837,7 +835,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training loss: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-                 << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 

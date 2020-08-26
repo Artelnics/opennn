@@ -232,7 +232,7 @@ protected:
 
    /// Display messages to screen. 
 
-   bool display;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"

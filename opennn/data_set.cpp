@@ -4101,8 +4101,6 @@ void DataSet::set()
     data_file_name = "";
 
     data.resize(0,0);
-
-    display = true;
 }
 
 
@@ -4119,8 +4117,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     set(samples_number, variables_number);
 
     data = new_data;
-
-    display = true;
 
     set_default_columns_uses();
 }
@@ -4177,9 +4173,6 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-
-    display = true;
-
 }
 
 
@@ -4223,8 +4216,6 @@ void DataSet::set(const Index& new_samples_number,
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-
-    display = true;
 }
 
 
@@ -4299,8 +4290,6 @@ void DataSet::set_default()
     lags_number = 0;
 
     steps_ahead = 0;
-
-    display = true;
 
     set_default_columns_uses();
 

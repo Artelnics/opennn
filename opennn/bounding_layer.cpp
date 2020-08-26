@@ -443,8 +443,6 @@ void BoundingLayer::set_default()
 {
     layer_name = "bounding_layer";
 
-    display = true;
-
     bounding_method = Bounding;
 
     layer_type = Layer::Bounding;

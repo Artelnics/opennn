@@ -130,36 +130,6 @@ void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_
 }
 
 
-void AdaptiveMomentEstimation::set_default()
-{
-    // TRAINING OPERATORS
-
-    initial_learning_rate = static_cast<type>(0.001);
-    initial_decay = 0;
-    beta_1 = static_cast<type>(0.9);
-    beta_2 = static_cast<type>(0.999);
-
-    epsilon =static_cast<type>(1.e-7);
-
-    // Stopping criteria
-
-    training_loss_goal = 0;
-    maximum_time = 1000.0;
-    maximum_epochs_number = 10000;
-    choose_best_selection = false;
-
-    // TRAINING HISTORY
-
-    reserve_training_error_history = true;
-    reserve_selection_error_history = false;
-
-    // UTILITIES
-
-    display = true;
-    display_period = 5;
-}
-
-
 /// Makes the training history of all variables to reseved or not in memory:
 /// <ul>
 /// <li> Parameters.
@@ -514,7 +484,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training error: " << training_error << "\n"
-                     << loss_index_pointer->write_information()
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -545,7 +514,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                 cout << "Epoch " << epoch+1 << ";\n"
                      << "Training error: " << training_error << "\n"
                      << "Batch size: " << batch_samples_number << "\n"
-                     << loss_index_pointer->write_information()
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
@@ -1037,6 +1005,7 @@ void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* n
     last_square_gradient_exponential_decay.resize(parameters_number);
     last_square_gradient_exponential_decay.setZero();
 }
+
 
 void AdaptiveMomentEstimation::OptimizationData::print() const
 {
