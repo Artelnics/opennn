@@ -4526,7 +4526,8 @@ void DataSet::set_time_index(const Index& new_time_index)
 
 void DataSet::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+//    //if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
 
     thread_pool_device = new_thread_pool_device;
 }

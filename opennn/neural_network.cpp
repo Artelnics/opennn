@@ -878,8 +878,14 @@ void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_dev
 {
     const Index layers_number = get_layers_number();
 
+    cout << "Layers number: " << layers_number << endl;
+
     for(Index i = 0; i < layers_number; i++)
     {
+        cout << "i: " << i << ": ";
+
+        cout << layers_pointers(i)->get_type_string() << endl;
+
         layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
     }
 }

@@ -1056,6 +1056,8 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("HardwareUse");
 
+    cout << "hardware_use: " << hardware_use << endl;
+
     buffer.str("");
     buffer << hardware_use;
 
