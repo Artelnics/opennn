@@ -346,8 +346,6 @@ public:
    string get_error_type() const;
    virtual string get_error_type_text() const;
 
-   string write_information() const;
-
    string write_regularization_method() const;
 
    // Checking methods

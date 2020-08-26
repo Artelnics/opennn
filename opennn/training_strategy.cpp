@@ -79,35 +79,17 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
     switch (loss_method)
     {
-    case SUM_SQUARED_ERROR:
-    {
-        return &sum_squared_error;
-    }
+        case SUM_SQUARED_ERROR: return &sum_squared_error;
 
-    case MEAN_SQUARED_ERROR:
-    {
-        return &mean_squared_error;
-    }
+        case MEAN_SQUARED_ERROR: return &mean_squared_error;
 
-    case NORMALIZED_SQUARED_ERROR:
-    {
-        return &normalized_squared_error;
-    }
+        case NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
 
-    case MINKOWSKI_ERROR:
-    {
-        return &Minkowski_error;
-    }
+        case MINKOWSKI_ERROR: return &Minkowski_error;
 
-    case WEIGHTED_SQUARED_ERROR:
-    {
-        return &weighted_squared_error;
-    }
+        case WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
 
-    case CROSS_ENTROPY_ERROR:
-    {
-        return &cross_entropy_error;
-    }
+        case CROSS_ENTROPY_ERROR: return &cross_entropy_error;
     }
 
     return nullptr;
@@ -120,35 +102,17 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
     switch (optimization_method)
     {
-    case GRADIENT_DESCENT:
-    {
-        return &gradient_descent;
-    }
+        case GRADIENT_DESCENT: return &gradient_descent;
 
-    case CONJUGATE_GRADIENT:
-    {
-        return &conjugate_gradient;
-    }
+        case CONJUGATE_GRADIENT: return &conjugate_gradient;
 
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        return &stochastic_gradient_descent;
-    }
+        case STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
 
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        return &adaptive_moment_estimation;
-    }
+        case ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
 
-    case QUASI_NEWTON_METHOD:
-    {
-        return &quasi_Newton_method;
-    }
+        case QUASI_NEWTON_METHOD: return &quasi_Newton_method;
 
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        return &Levenberg_Marquardt_algorithm;
-    }
+        case LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
     }
 
     return nullptr;
@@ -168,38 +132,6 @@ bool TrainingStrategy::has_data_set() const
     if(data_set_pointer == nullptr) return false;
 
     return true;
-}
-
-
-/// Return true if contain loss index, and false otherwise.
-
-bool TrainingStrategy::has_loss_index() const
-{
-    return true;
-
-//    if(get_loss_index_pointer() == nullptr)
-//    {
-//        return false;
-//    }
-//    else
-//    {
-//        return true;
-//    }
-}
-
-
-bool TrainingStrategy::has_optimization_algorithm() const
-{
-    return true;
-
-//    if(get_optimization_algorithm_pointer() == nullptr)
-//    {
-//        return false;
-//    }
-//    else
-//    {
-//        return true;
-//    }
 }
 
 
@@ -785,7 +717,6 @@ void TrainingStrategy::set_maximum_time(const type & maximum_time)
 
 void TrainingStrategy::set_default()
 {
-    display = true;
 }
 
 

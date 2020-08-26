@@ -863,6 +863,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
 void ModelSelection::print() const
 {
+//    cout << to_string();
 }
 
 

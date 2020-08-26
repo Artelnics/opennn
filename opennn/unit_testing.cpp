@@ -16,8 +16,6 @@ UnitTesting::UnitTesting()
 
     numerical_differentiation_tests = true;
     random_tests_number = 0;
-
-    display = true;
 }
 
 

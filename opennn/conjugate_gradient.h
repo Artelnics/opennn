@@ -200,7 +200,7 @@ private:
 
    /// Applied method for calculating the conjugate gradient direction.
 
-   TrainingDirectionMethod training_direction_method;
+   TrainingDirectionMethod training_direction_method = ConjugateGradient::FR;
 
    /// Learning rate algorithm object for one-dimensional minimization. 
 
@@ -210,19 +210,19 @@ private:
 
    /// Norm of the parameters increment vector at which training stops.
 
-   type minimum_parameters_increment_norm;
+   type minimum_parameters_increment_norm = 0;
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   type minimum_loss_decrease;
+   type minimum_loss_decrease = 0;
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type training_loss_goal;
+   type training_loss_goal = 0;
 
    /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
-   type gradient_norm_goal;
+   type gradient_norm_goal = 0;
 
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.

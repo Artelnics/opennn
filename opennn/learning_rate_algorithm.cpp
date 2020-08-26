@@ -162,9 +162,6 @@ void LearningRateAlgorithm::set_default()
     learning_rate_tolerance = static_cast<type>(1.0e-3);
     loss_tolerance = static_cast<type>(1.0e-3);
 
-    // UTILITIES
-
-    display = true;
 }
 
 
