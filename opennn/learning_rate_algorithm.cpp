@@ -179,7 +179,7 @@ void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_poi
 
 void LearningRateAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
 
     thread_pool_device = new_thread_pool_device;
 }
