@@ -58,6 +58,7 @@ public:
     const Tensor<type, 1>& get_biases() const;
 
     const Tensor<type, 4>& get_synaptic_weights() const;
+
     Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
@@ -125,6 +126,8 @@ public:
 
     void set_parameters_constant(const type&);
 
+    void set_parameters_random();
+
     // Padding
 
     void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&);
@@ -142,11 +145,13 @@ public:
    // Outputs
 
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
-   void calculate_outputs(const Tensor<type, 2>&, Tensor<type, 2>&);
+//   void calculate_outputs(const Tensor<type, 2>&, Tensor<type, 2>&);
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
 //   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
    void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
+
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const;
 
 
    // Delta methods
