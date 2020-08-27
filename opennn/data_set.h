@@ -190,6 +190,8 @@ public:
        DataSet* data_set_pointer = nullptr;
 
        Tensor<type, 2> inputs_2d;
+       Tensor<type, 2> inputs_4d;
+
        Tensor<type, 2> targets_2d;
    };
 
@@ -280,7 +282,6 @@ public:
    Tensor<VariableUse, 1> get_variables_uses() const;
 
    const Tensor<Index, 1>& get_input_variables_dimensions() const;
-   const Tensor<Index, 1>& get_target_variables_dimensions() const;
 
    // Batches get methods
 
@@ -442,7 +443,6 @@ public:
    void set_variables_unused();
 
    void set_input_variables_dimensions(const Tensor<Index, 1>&);
-   void set_target_variables_dimensions(const Tensor<Index, 1>&);
 
    // Data set methods
 
@@ -842,8 +842,6 @@ private:
    bool has_columns_names = false;
 
    Tensor<Index, 1> input_variables_dimensions;
-
-   Tensor<Index, 1> target_variables_dimensions;
 
    Tensor<Column, 1> columns;
 
