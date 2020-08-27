@@ -1697,8 +1697,6 @@ void DataSet::set_default_columns_uses()
         const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(inputs_number);
-
-        target_variables_dimensions.resize(targets_number);
     }
 }
 
@@ -1766,8 +1764,6 @@ void DataSet::set_default_classification_columns_uses()
         const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(inputs_number);
-
-        target_variables_dimensions.resize(targets_number);
     }
 }
 
@@ -2046,14 +2042,6 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 const Tensor<Index, 1>& DataSet::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
-}
-
-
-/// Returns the dimesions of the target variables.
-
-const Tensor<Index, 1>& DataSet::get_target_variables_dimensions() const
-{
-    return target_variables_dimensions;
 }
 
 
@@ -2774,9 +2762,6 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_variables_number());
-
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -2806,9 +2791,6 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_variables_number());
-
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -3143,14 +3125,6 @@ Index DataSet::count_categorical_columns() const
 void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
 {
     input_variables_dimensions = new_inputs_dimensions;
-}
-
-
-/// Sets new target dimensions in the data set.
-
-void DataSet::set_target_variables_dimensions(const Tensor<Index, 1>& new_targets_dimensions)
-{
-    target_variables_dimensions = new_targets_dimensions;
 }
 
 
@@ -4232,7 +4206,6 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     input_variables_dimensions.resize(new_inputs_number);
-    target_variables_dimensions.resize(new_targets_number);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -10423,9 +10396,21 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
     const Index target_variables_number = data_set_pointer->get_target_variables_number();
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-    const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
-    inputs_2d = Tensor<type, 2>(samples_number, input_variables_number);
+    if(input_variables_dimensions.rank() == 1)
+    {
+        inputs_2d = Tensor<type, 2>(samples_number, input_variables_number);
+    }
+    else if(input_variables_dimensions.rank() == 3)
+    {
+        const Index channels_number = input_variables_dimensions(0);
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
+
+        inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
+    }
+
+
     targets_2d = Tensor<type, 2>(samples_number, target_variables_number);
 }
 
