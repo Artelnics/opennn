@@ -183,12 +183,7 @@ public:
    string write_combinations_python() const;
    string write_activations_python() const;
 
-
    // Serialization methods
-
-   
-
-   virtual 
 
    void from_XML(const tinyxml2::XMLDocument&);
 

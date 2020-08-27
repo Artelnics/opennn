@@ -801,8 +801,6 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
         TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_samples_number, neurons_number);
 
         output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
-
-        return;
     }
     else
     {
@@ -851,7 +849,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
         {
             output_gradient_row = output_gradient.chip(i,0);
 
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data() + index,
                                                                         neurons_number, neurons_number);
 
             output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
@@ -861,11 +859,8 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
                 output_delta(i,j) = output_delta_row(j);
             }
 
-
             index += step;
         }
-
-        return;
     }
 }
 

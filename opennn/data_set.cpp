@@ -10407,7 +10407,7 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
+        //inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
     }
 
 
