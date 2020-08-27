@@ -1472,6 +1472,18 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     random_shuffle(indices.data(), indices.data() + indices.size());
 
+    Index count = 0;
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == UnusedSample)
+        {
+            count ++;
+        }
+    }
+
+    cout << "BEFORE: " << count << endl;
+
     Index i = 0;
     Index index;
 
@@ -1525,6 +1537,14 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
         }
 
         i++;
+    }
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == UnusedSample)
+        {
+            cout << "Sample " << i << " is unused" << endl;
+        }
     }
 
 
@@ -9552,8 +9572,6 @@ void DataSet::read_csv_2_simple()
     const Index columns_number = get_columns_number();
     const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
-    cout << "Columns number: " << get_columns_number() << endl;
-
     while(file.good())
     {
         line_number++;
@@ -9591,6 +9609,7 @@ void DataSet::read_csv_2_simple()
     set_default_columns_uses();
 
     samples_uses.resize(samples_count);
+    samples_uses.setConstant(Training);
 
     split_samples_random();
 }
