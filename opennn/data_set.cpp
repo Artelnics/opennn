@@ -209,6 +209,10 @@ void DataSet::Column::set_type(const string& new_column_type)
     {
         type = DateTime;
     }
+    else if(new_column_type == "Constant")
+    {
+        type = Constant;
+    }
     else
     {
         ostringstream buffer;
@@ -457,6 +461,10 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     else if (type == Categorical)
     {
         file_stream.PushText("Categorical");
+    }
+    else if(type == Constant)
+    {
+        file_stream.PushText("Constant");
     }
     else
     {
@@ -1481,8 +1489,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
             count ++;
         }
     }
-
-    cout << "BEFORE: " << count << endl;
 
     Index i = 0;
     Index index;
@@ -9703,11 +9709,12 @@ void DataSet::read_csv_3_simple()
 
     cout << "Checking constant columns..." << endl;
 
-    for(Index column = 0; column < get_columns_number(); column++)
+    for(Index column = 0; column < columns_number; column++)
     {
         if(is_constant_numeric(data.chip(column, 1)))
         {
             columns(column).type = Constant;
+            columns(column).column_use = UnusedVariable;
         }
     }
 }
@@ -10020,7 +10027,6 @@ void DataSet::read_csv_3_complete()
 
     set_binary_simple_columns();
 
-
     // Check Constant
 
     cout << "Checking constant columns..." << endl;
@@ -10030,6 +10036,7 @@ void DataSet::read_csv_3_complete()
         if(is_constant_numeric(data.chip(column, 1)))
         {
             columns(column).type = Constant;
+            columns(column).column_use = UnusedVariable;
         }
     }
 }
