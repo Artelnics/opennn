@@ -400,9 +400,6 @@ public:
    void set_samples_uses(const Tensor<SampleUse, 1>&);
    void set_samples_uses(const Tensor<string, 1>&);
 
-   void set_testing_to_selection_samples();
-   void set_selection_to_testing_samples();
-
    void set_k_fold_cross_validation_samples_uses(const Index&, const Index&);
 
    // Columns set methods
@@ -427,6 +424,8 @@ public:
    void set_columns_number(const Index&);
 
    void set_binary_simple_columns();
+
+   void binarize_input_data(const type&);
 
    // Columns check methods
 
@@ -755,7 +754,7 @@ public:
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
    Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
-   void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
+   void initialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
