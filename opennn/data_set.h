@@ -290,6 +290,7 @@ public:
    // Data get methods
 
    const Tensor<type, 2>& get_data() const;
+   Tensor<type, 2>* get_data_pointer();
 
    const Tensor<type, 2>& get_time_series_data() const;
 
