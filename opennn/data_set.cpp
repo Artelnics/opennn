@@ -1476,7 +1476,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     Tensor<Index, 1> indices;
 
-    intialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
 
     random_shuffle(indices.data(), indices.data() + indices.size());
 
@@ -1484,10 +1484,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     for(Index i = 0; i < samples_uses.size(); i++)
     {
-        if(samples_uses(i) == UnusedSample)
-        {
-            count ++;
-        }
+        if(samples_uses(i) == UnusedSample) count ++;
     }
 
     Index i = 0;
@@ -1636,22 +1633,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
         }
         i++;
     }
-}
-
-
-/// Changes samples for selection by samples for testing.
-
-void DataSet::set_selection_to_testing_samples()
-{
-    std::replace(samples_uses.data(), samples_uses.data() + samples_uses.size(), Selection, Testing);
-}
-
-
-/// Changes samples for testing by samples for selection.
-
-void DataSet::set_testing_to_selection_samples()
-{
-    std::replace(samples_uses.data(), samples_uses.data() + samples_uses.size(), Testing, Selection);
 }
 
 
@@ -3033,6 +3014,28 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 }
 
 
+void DataSet::binarize_input_data(const type& threshold)
+{
+    const Index samples_number = get_samples_number();
+
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < input_variables_number; i++)
+        {
+            const Index input_variable_index = input_variables_indices[j];
+
+            data(i,input_variable_index) < threshold
+                    ? data(i,input_variable_index) = 0
+                    : data(i,input_variable_index) = 1;
+        }
+    }
+}
+
+
 void DataSet::set_binary_simple_columns()
 {
     bool is_binary = true;
@@ -3434,7 +3437,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
     return get_subtensor_data(selection_indices, variables_indices);
 }
@@ -3449,7 +3452,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
@@ -3466,7 +3469,7 @@ Tensor<type, 2> DataSet::get_input_data() const
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;
-    intialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -10287,7 +10290,7 @@ Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const 
 }
 
 
-void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
+void DataSet::initialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
@@ -10498,7 +10501,7 @@ void DataSet::shuffle()
 
     samples_indices.resize(samples_number);
 
-    intialize_sequential_eigen_tensor(samples_indices, 0, 1, samples_number - 1);
+    initialize_sequential_eigen_tensor(samples_indices, 0, 1, samples_number - 1);
 
     random_shuffle(&samples_indices(0), &samples_indices(samples_number - 1));
 
