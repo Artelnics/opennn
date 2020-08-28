@@ -837,6 +837,8 @@ private:
 
    void check_separators(const string&) const;
 
+   void check_special_characters(const string&) const;
+
    /// Header which contains variables name.
 
    bool has_columns_names = false;

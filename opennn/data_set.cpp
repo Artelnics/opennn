@@ -9401,6 +9401,8 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
+        check_special_characters(line);
+
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
         lines_count++;
@@ -9429,8 +9431,6 @@ void DataSet::read_csv_1()
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
-    cout << "First name: " << first_name << endl;
 
     if(contains_substring(first_name, "id"))
     {
@@ -10111,10 +10111,22 @@ void DataSet::check_separators(const string& line) const
         if(line.find(",") != string::npos)
         {
             const string message =
-                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';').";
+                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';'). " + line;
 
             throw logic_error(message);
         }
+    }
+}
+
+
+void DataSet::check_special_characters(const string & line) const
+{
+    if(line.find_first_of("|@#~€¬^*") != std::string::npos)
+    {
+        const string message =
+            "Error: found special characters in line: " + line + ". Please, review the document.";
+
+        throw logic_error(message);
     }
 }
 
