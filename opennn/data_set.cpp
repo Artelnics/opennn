@@ -8191,33 +8191,32 @@ void DataSet::print_data() const
 
 void DataSet::print_data_preview() const
 {
-    if(display)
+    if(!display) return;
+
+    const Index samples_number = get_samples_number();
+
+    if(samples_number > 0)
     {
-        const Index samples_number = get_samples_number();
+        const Tensor<type, 1> first_sample = data.chip(0, 0);
 
-        if(samples_number > 0)
-        {
-            const Tensor<type, 1> first_sample = data.chip(0, 0);
+        cout << "First sample:\n"
+             << first_sample << endl;
+    }
 
-            cout << "First sample:\n"
-                 << first_sample << endl;
-        }
+    if(samples_number > 1)
+    {
+        const Tensor<type, 1> second_sample = data.chip(1, 0);
 
-        if(samples_number > 1)
-        {
-            const Tensor<type, 1> second_sample = data.chip(1, 0);
+        cout << "Second sample:\n"
+             << second_sample << endl;
+    }
 
-            cout << "Second sample:\n"
-                 << second_sample << endl;
-        }
+    if(samples_number > 2)
+    {
+        const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
 
-        if(samples_number > 2)
-        {
-            const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
-
-            cout << "Sample " << samples_number << ":\n"
-                 << last_sample << endl;
-        }
+        cout << "Sample " << samples_number << ":\n"
+             << last_sample << endl;
     }
 }
 
@@ -10373,32 +10372,63 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+
     const Index rows_number = samples.size();
     const Index inputs_number = inputs.size();
-    const Index targets_number = targets.size();
-
     const Index total_rows = data.dimension(0);
 
-    const type* data_pointer = data.data();
-    type* inputs_2d_pointer = inputs_2d.data();
-    type* targets_2d_pointer = targets_2d.data();
+    Index variable = 0;
 
     Index rows_number_j = 0;
     Index total_rows_variable = 0;
 
-    Index variable = 0;
+    const type* data_pointer = data.data();
 
-    for(int j = 0; j < inputs_number; j++)
+    if(input_variables_dimensions.rank() == 1)
     {
-        variable = inputs[j];
-        rows_number_j = rows_number*j;
-        total_rows_variable = total_rows*variable;
+        type* inputs_2d_pointer = inputs_2d.data();
 
-        for(int i = 0; i < rows_number; i++)
+        for(int j = 0; j < inputs_number; j++)
         {
-            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
+            variable = inputs[j];
+            rows_number_j = rows_number*j;
+            total_rows_variable = total_rows*variable;
+
+            for(int i = 0; i < rows_number; i++)
+            {
+                inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
+            }
         }
     }
+    else if(input_variables_dimensions.rank() == 3)
+    {
+        Index channels_number = 0;
+        Index rows_number = 0;
+        Index columns_number = 0;
+
+        Index index = 0;
+
+        for(Index image = 0; image < samples_number; image++)
+        {
+            index = 0;
+
+            for(Index channel = 0; channel < channels_number; channel++)
+            {
+                for(Index row = 0; row < rows_number; row++)
+                {
+                    for(Index column = 0; column < columns_number; column++)
+                    {
+                        inputs_4d(image, channel, row, column) = data(image, index);
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+
+    type* targets_2d_pointer = targets_2d.data();
+    const Index targets_number = targets.size();
 
     for(int j = 0; j < targets_number; j++)
     {
@@ -10435,7 +10465,7 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        //inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
+        inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
     }
 
 

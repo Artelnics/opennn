@@ -190,7 +190,7 @@ public:
        DataSet* data_set_pointer = nullptr;
 
        Tensor<type, 2> inputs_2d;
-       Tensor<type, 2> inputs_4d;
+       Tensor<type, 4> inputs_4d;
 
        Tensor<type, 2> targets_2d;
    };
