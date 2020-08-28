@@ -3201,6 +3201,12 @@ const Tensor<type, 2>& DataSet::get_data() const
 }
 
 
+Tensor<type, 2>* DataSet::get_data_pointer()
+{
+    return &data;
+}
+
+
 /// Returns a reference to the time series data matrix in the data set.
 /// Only for time series problems.
 
