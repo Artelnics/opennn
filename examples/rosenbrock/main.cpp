@@ -21,10 +21,6 @@
 
 #include "../../opennn/opennn.h"
 
-#include <../eigen/unsupported/Eigen/CXX11/Tensor>
-
-#include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
-
 using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
