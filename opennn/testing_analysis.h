@@ -341,7 +341,7 @@ private:
 
    /// Display messages to screen.
    
-   bool display;
+   bool display = true;
 
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };

@@ -183,12 +183,7 @@ public:
    string write_combinations_python() const;
    string write_activations_python() const;
 
-
    // Serialization methods
-
-   
-
-   virtual 
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -213,7 +208,7 @@ protected:
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"

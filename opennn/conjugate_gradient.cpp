@@ -213,6 +213,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
     if(new_training_direction_method_name == "PR")
     {
         training_direction_method = PR;
+
     }
     else if(new_training_direction_method_name == "FR")
     {
@@ -283,9 +284,8 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 /// Reserve:
 /// <ul>
-/// <li> Reserve training direction history: false.
+/// <li> Reserve training error history: false.
 /// <li> Reserve training direction norm history: false.
-/// <li> Reserve learning rate history: false.
 /// </ul>
 ///
 
@@ -293,26 +293,25 @@ void ConjugateGradient::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);;
+    minimum_parameters_increment_norm = 0;
 
-    minimum_loss_decrease = static_cast<type>(1.0e-9);;
-    training_loss_goal = static_cast<type>(1.0e-3);
-    gradient_norm_goal = static_cast<type>(1.0e-3);;
+    minimum_loss_decrease = 0;
+    training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000000;
 
     maximum_epochs_number = 1000;
-    maximum_time = 1000.0;
+    maximum_time = 3600.0;
 
     choose_best_selection = false;
 
     // TRAINING HISTORY
 
     reserve_training_error_history = true;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display = true;
     display_period = 5;
 
     training_direction_method = FR;
@@ -1154,19 +1153,13 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                information = loss_index_pointer->write_information();
-
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training loss: " << training_back_propagation.loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
-//                     << information
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-                if(has_selection)
-                {
-                    cout << "Selection error: " << selection_error << endl;
-                }
+                if(has_selection) cout << "Selection error: " << selection_error << endl;
             }
 
             results.resize_training_error_history(epoch+1);
@@ -1187,22 +1180,18 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             break;
         }
 
-        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
+        if(display)
+        if(epoch == 0
+        ||((epoch+1) % display_period) == 0)
         {
-            information = loss_index_pointer->write_information();
-
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-//                 << information
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << "\n";
 
-            if(has_selection)
-            {
-                cout << "Selection error: " << selection_error << endl;
-            }
+            if(has_selection) cout << "Selection error: " << selection_error << endl;
         }
 
         // Set new parameters
@@ -1904,8 +1893,6 @@ void ConjugateGradient::update_epoch(
                     optimization_data.training_direction);
     }
 
-//    const type gradient_norm = l2_norm(back_propagation.gradient);
-
     optimization_data.training_slope.device(*thread_pool_device)
             = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
@@ -1995,7 +1982,6 @@ void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate
 void ConjugateGradient::GGOptimizationData::print() const
 {
 }
-
 
 }
 

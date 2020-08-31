@@ -103,9 +103,6 @@ public:
    bool has_neural_network() const;
    bool has_data_set() const;
 
-   bool has_loss_index() const;
-   bool has_optimization_algorithm() const;
-
    SumSquaredError* get_sum_squared_error_pointer();
    MeanSquaredError* get_mean_squared_error_pointer();
    NormalizedSquaredError* get_normalized_squared_error_pointer();
@@ -254,7 +251,7 @@ private:
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"

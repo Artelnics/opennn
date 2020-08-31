@@ -207,7 +207,7 @@ protected:
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"

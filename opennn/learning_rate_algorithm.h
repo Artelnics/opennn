@@ -321,7 +321,7 @@ protected:
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
    const type golden_ratio = static_cast<type>(1.618);
 

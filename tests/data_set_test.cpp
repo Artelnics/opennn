@@ -2975,7 +2975,6 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-/*
    // Constructor and destructor methods
 
    test_constructor();
@@ -3167,7 +3166,7 @@ void DataSetTest::run_test_case()
 
    // test if constant variables
    test_is_constant_numeric();
-*/
+
    // test print data preview
    test_print_data_preview();
 

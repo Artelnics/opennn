@@ -228,7 +228,7 @@ protected:
 
     /// Display messages to screen.
 
-    bool display;
+    bool display = true;
 
     /// Goal value for the selection error. It is used as a stopping criterion.
 

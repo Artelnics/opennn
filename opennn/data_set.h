@@ -190,6 +190,8 @@ public:
        DataSet* data_set_pointer = nullptr;
 
        Tensor<type, 2> inputs_2d;
+       Tensor<type, 4> inputs_4d;
+
        Tensor<type, 2> targets_2d;
    };
 
@@ -280,7 +282,6 @@ public:
    Tensor<VariableUse, 1> get_variables_uses() const;
 
    const Tensor<Index, 1>& get_input_variables_dimensions() const;
-   const Tensor<Index, 1>& get_target_variables_dimensions() const;
 
    // Batches get methods
 
@@ -289,6 +290,7 @@ public:
    // Data get methods
 
    const Tensor<type, 2>& get_data() const;
+   Tensor<type, 2>* get_data_pointer();
 
    const Tensor<type, 2>& get_time_series_data() const;
 
@@ -399,9 +401,6 @@ public:
    void set_samples_uses(const Tensor<SampleUse, 1>&);
    void set_samples_uses(const Tensor<string, 1>&);
 
-   void set_testing_to_selection_samples();
-   void set_selection_to_testing_samples();
-
    void set_k_fold_cross_validation_samples_uses(const Index&, const Index&);
 
    // Columns set methods
@@ -427,6 +426,8 @@ public:
 
    void set_binary_simple_columns();
 
+   void binarize_input_data(const type&);
+
    // Columns check methods
 
    Index count_binary_columns() const;
@@ -442,7 +443,6 @@ public:
    void set_variables_unused();
 
    void set_input_variables_dimensions(const Tensor<Index, 1>&);
-   void set_target_variables_dimensions(const Tensor<Index, 1>&);
 
    // Data set methods
 
@@ -755,7 +755,7 @@ public:
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
    Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
-   void intialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
+   void initialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
@@ -837,13 +837,13 @@ private:
 
    void check_separators(const string&) const;
 
+   void check_special_characters(const string&) const;
+
    /// Header which contains variables name.
 
    bool has_columns_names = false;
 
    Tensor<Index, 1> input_variables_dimensions;
-
-   Tensor<Index, 1> target_variables_dimensions;
 
    Tensor<Column, 1> columns;
 

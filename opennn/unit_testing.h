@@ -96,7 +96,7 @@ protected:
 
    /// True if messages from this class are to be displayed, false otherwise.
 
-   bool display;
+   bool display = true;
 };
 
 #endif

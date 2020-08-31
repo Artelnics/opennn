@@ -30,13 +30,9 @@ void TrainingStrategyTest::test_constructor()
 
    TrainingStrategy ts1(&neural_network, &data_set);
 
-   assert_true(ts1.has_loss_index() == true, LOG);
-
    // Test
 
    TrainingStrategy ts2(&neural_network, &data_set);
-
-   assert_true(ts2.has_loss_index() == true, LOG);
 }
 
 
