@@ -151,7 +151,7 @@ public:
 
    void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
 
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const;
+//   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const;
 
 
    // Delta methods
