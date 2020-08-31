@@ -71,6 +71,8 @@ public:
 
   void test_forward_propagate();
 
+  void test_calculate_hidden_delta();
+
   // Unit testing methods
 
   void run_test_case();
