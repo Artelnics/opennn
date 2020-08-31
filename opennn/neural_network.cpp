@@ -878,8 +878,14 @@ void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_dev
 {
     const Index layers_number = get_layers_number();
 
+    cout << "Layers number: " << layers_number << endl;
+
     for(Index i = 0; i < layers_number; i++)
     {
+        cout << "i: " << i << ": ";
+
+        cout << layers_pointers(i)->get_type_string() << endl;
+
         layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
     }
 }
@@ -1450,15 +1456,78 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 #endif
 
+    Tensor<type, 2> outputs;
+
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return inputs;
 
-    Tensor<type, 2> outputs = layers_pointers(0)->calculate_outputs(inputs);
+    outputs = layers_pointers(0)->calculate_outputs(inputs);
 
     for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
+    }
+
+    return outputs;
+}
+
+
+
+
+Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index inputs_dimensions_number = inputs.rank();
+
+    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    Tensor<type, 4> outputs_4d;
+    Tensor<type, 2> outputs, inputs_2d;
+
+    const Index layers_number = get_layers_number();
+
+    if(layers_number == 0) return inputs_2d;
+
+    // First layer output
+    if(layers_pointers(1)->get_type() == Layer::Convolutional)
+    {
+        outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
+    }
+    else
+    {
+        outputs = layers_pointers(0)->calculate_outputs_from4D(inputs);
+    }
+
+    for(Index i = 1; i < layers_number; i++)
+    {
+        if(layers_pointers(i + 1)->get_type() == Layer::Convolutional)
+        {
+            outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
+        }
+        else
+        {
+            if(layers_pointers(i)->get_type() != Layer::Convolutional && layers_pointers(i)->get_type() != Layer::Pooling)
+            {
+                outputs = layers_pointers(i)->calculate_outputs(outputs);
+            }
+            else
+            {
+                outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
+            }
+        }
     }
 
     return outputs;

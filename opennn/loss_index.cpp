@@ -173,7 +173,7 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
 
     thread_pool_device = new_thread_pool_device;
 }
@@ -205,7 +205,6 @@ void LossIndex::set_default()
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     regularization_method = L2;
-    display = true;
 }
 
 
@@ -566,16 +565,6 @@ string LossIndex::get_error_type() const
 string LossIndex::get_error_type_text() const
 {
     return "USER_ERROR_TERM";
-}
-
-
-/// Returns a string with the default information of the error term.
-/// It will be used by the training strategy to monitor the training process.
-/// By default this information is empty.
-
-string LossIndex::write_information() const
-{
-    return string();
 }
 
 

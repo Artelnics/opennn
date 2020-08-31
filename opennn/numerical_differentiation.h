@@ -3700,7 +3700,7 @@ private:
 
    /// Flag for displaying warning messages from this class. 
 
-   bool display;
+   bool display = true;
 
 };
 

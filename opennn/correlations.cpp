@@ -915,7 +915,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = 0;
 
     Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;
@@ -1240,7 +1240,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = 0;
 
     Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;
@@ -1357,7 +1357,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = 0;
 
     Tensor<type, 0> sum_squared_error;
     Tensor<type, 0> gradient_norm;
@@ -1602,7 +1602,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
     const type step_size = static_cast<type>(-0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = static_cast<type>(1.0e-3);
+    const type gradient_norm_goal = 0;
 
     Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;

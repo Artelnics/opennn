@@ -246,7 +246,7 @@ protected:
 
     /// Display messages to screen.
 
-    bool display;
+    bool display = true;
 
     // Stopping criteria
 

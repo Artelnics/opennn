@@ -260,19 +260,19 @@ protected:
 
    /// Number of iterations between the training showing progress.
 
-   Index display_period;
+   Index display_period = 5;
 
    /// Number of iterations between the training saving progress.
 
-   Index save_period;
+   Index save_period = 100;
 
    /// Path where the neural network is saved.
 
-   string neural_network_file_name;
+   string neural_network_file_name = "neural_network.xml";
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
