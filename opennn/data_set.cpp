@@ -8201,24 +8201,45 @@ void DataSet::print_data_preview() const
         {
             const Tensor<type, 1> first_sample = data.chip(0, 0);
 
-            cout << "First sample:\n"
-                 << first_sample << endl;
+            cout << "First sample:  \n";
+
+            for(int i; i< first_sample.dimension(0); i++)
+            {
+
+                cout  << first_sample(i) << "  ";
+            }
+
+            cout << endl;
         }
 
         if(samples_number > 1)
         {
             const Tensor<type, 1> second_sample = data.chip(1, 0);
 
-            cout << "Second sample:\n"
-                 << second_sample << endl;
+            cout << "Second sample:  \n";
+
+            for(int i; i< second_sample.dimension(0); i++)
+            {
+
+                cout  << second_sample(i) << "  ";
+            }
+
+            cout << endl;
         }
 
         if(samples_number > 2)
         {
             const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
 
-            cout << "Sample " << samples_number << ":\n"
-                 << last_sample << endl;
+            cout << "Last sample:  \n";
+
+            for(int i; i< last_sample.dimension(0); i++)
+            {
+
+                cout  << last_sample(i) << "  ";
+            }
+
+            cout << endl;
         }
     }
 }
