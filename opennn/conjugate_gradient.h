@@ -239,7 +239,7 @@ private:
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-   bool choose_best_selection;
+   bool choose_best_selection = false;
 
    // TRAINING HISTORY
 
