@@ -657,7 +657,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
             this->add_layer(perceptron_layer_pointer);
 
-//            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);

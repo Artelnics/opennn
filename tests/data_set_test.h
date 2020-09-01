@@ -187,6 +187,7 @@ public:
    void test_to_XML();
    void test_from_XML();
    void test_print();
+   void test_print_data_preview();
    void test_read_csv();
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
