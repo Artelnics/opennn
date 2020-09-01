@@ -444,7 +444,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
+        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
 
         if(epoch == maximum_epochs_number)
         {
@@ -491,6 +491,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             }
 
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
@@ -499,7 +500,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             results.final_training_error = training_error;
 
-            results.final_selection_error = selection_back_propagation.error;
+            if(has_selection) results.final_selection_error = selection_back_propagation.error;
 
             results.elapsed_time = elapsed_time;
 
@@ -522,7 +523,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         // Update stuff
 
-        old_selection_error = selection_back_propagation.error;
+        if(has_selection) old_selection_error = selection_back_propagation.error;
 
         if(stop_training) break;
     }
