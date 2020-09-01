@@ -78,8 +78,8 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 /// Calculate combinations
 void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
-    const Index number_of_kernels = synaptic_weights.dimension(3);
-    const Index number_of_images = inputs.dimension(3);
+    const Index number_of_kernels = synaptic_weights.dimension(0);
+    const Index number_of_images = inputs.dimension(0);
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
@@ -90,8 +90,8 @@ void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, T
     {
         for(Index j = 0; j < number_of_kernels; j++)
         {
-            kernel = synaptic_weights.chip(j, 3);
-            combinations.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims) + biases(j);
+            kernel = synaptic_weights.chip(j, 0);
+            combinations.chip(i, 0).chip(j, 0) = inputs.chip(i, 0).convolve(kernel, dims) + biases(j);
         }
     }
 }
@@ -260,15 +260,15 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, Forwar
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation &forward_propagation) const
-{
-    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(0),
-                                                     input_variables_dimensions(1),
-                                                     input_variables_dimensions(2),
-                                                     input_variables_dimensions(3)};
+//void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation &forward_propagation) const
+//{
+//    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(0),
+//                                                     input_variables_dimensions(1),
+//                                                     input_variables_dimensions(2),
+//                                                     input_variables_dimensions(3)};
 
-    forward_propagate(Tensor<type, 4>(inputs.reshape(four_dims)), forward_propagation);
-}
+//    forward_propagate(Tensor<type, 4>(inputs.reshape(four_dims)), forward_propagation);
+//}
 
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
@@ -721,8 +721,6 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& previou
                     for(Index k = 0; k < images_number; k++)
                     {
                         delta_element_index = i * output_columns_number + j * output_rows_number  + filter_index * (output_rows_number + output_columns_number);
-//                        cout << "AAAAAAAAAAAAAAAAAAAA"  << delta_element_index << "/" << layer_deltas.dimension(0) << endl;
-//                        cout << "AAAAAAAAAAAAAAAAAAAA"  << k << "/" << layer_deltas.dimension(1) << endl;
                         const type delta_element = layer_deltas(k, delta_element_index);
 //                        const type delta_element = layer_deltas(i, filter_index, j, k);
 
@@ -822,10 +820,10 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(4);
 
-    outputs_dimensions(0) = get_outputs_rows_number();
-    outputs_dimensions(1) = get_outputs_columns_number();
-    outputs_dimensions(2) = get_filters_number();
-    outputs_dimensions(3) = input_variables_dimensions(3); // Number of images
+    outputs_dimensions(0) = input_variables_dimensions(0); // Number of images
+    outputs_dimensions(1) = get_filters_number();
+    outputs_dimensions(2) = get_outputs_rows_number();
+    outputs_dimensions(3) = get_outputs_columns_number();
 
     return outputs_dimensions;
 }
@@ -978,13 +976,13 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     const Index inputs_dimensions_number = new_inputs_dimensions.size();
 
-    if(inputs_dimensions_number != 3)
+    if(inputs_dimensions_number != 4)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "ConvolutionalLayer(const Tensor<Index, 1>&) constructor.\n"
-               << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 3 (channels, rows, columns).\n";
+               << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 4 (number of images, channels, rows, columns).\n";
 
         throw logic_error(buffer.str());
     }
@@ -995,30 +993,28 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     const Index filters_dimensions_number = new_filters_dimensions.size();
 
-    if(filters_dimensions_number != 3)
+    if(filters_dimensions_number != 4)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "void set(const Tensor<Index, 1>&) method.\n"
-               << "Number of filters dimensions (" << filters_dimensions_number << ") must be 3 (filters, rows, columns).\n";
+               << "Number of filters dimensions (" << filters_dimensions_number << ") must be 4 (number of images, filters, rows, columns).\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-//        input_variables_dimensions.set(new_inputs_dimensions);
-
-    const Index filters_rows_number = new_filters_dimensions[0];
-    const Index filters_columns_number = new_filters_dimensions[1];
-    const Index filters_channels_number = new_inputs_dimensions[2];
-    const Index filters_number = new_filters_dimensions[3];
+    const Index filters_number = new_filters_dimensions[0];
+    const Index filters_channels_number = new_inputs_dimensions[1];
+    const Index filters_rows_number = new_filters_dimensions[2];
+    const Index filters_columns_number = new_filters_dimensions[3];
 
     biases.resize(filters_number);
     biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
+    synaptic_weights.resize(filters_number, filters_channels_number, filters_rows_number, filters_columns_number);
     synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     input_variables_dimensions = new_inputs_dimensions;
@@ -1142,7 +1138,7 @@ void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::Convolut
 
 void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 {
-    if(new_stride_row == 0)
+    if(new_stride_row <= 0)
     {
         throw ("EXCEPTION: new_stride_row must be a positive number");
     }
@@ -1156,7 +1152,7 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
-    if(new_stride_column == 0)
+    if(new_stride_column <= 0)
     {
         throw ("EXCEPTION: new_stride_column must be a positive number");
     }
@@ -1212,7 +1208,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[0];
+    return input_variables_dimensions[2];
 }
 
 
@@ -1220,7 +1216,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return input_variables_dimensions[1];
+    return input_variables_dimensions[3];
 }
 
 
@@ -1228,7 +1224,7 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions[2];
+    return input_variables_dimensions[1];
 }
 
 
