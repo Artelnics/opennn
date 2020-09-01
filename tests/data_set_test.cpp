@@ -1680,6 +1680,8 @@ void DataSetTest::test_generate_data_binary_classification()
 }
 
 
+
+
 void DataSetTest::test_generate_data_multiple_classification()
 {
     cout << "test_generate_data_multiple_classification\n";
@@ -2395,6 +2397,16 @@ void DataSetTest::test_read_binary_csv()
 //    assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
 }
 
+void DataSetTest::test_print_data_preview()
+{
+    cout << "test_print_data_preview\n";
+
+    DataSet data_set("../../datasets/iris.data",',',false);
+
+    data_set.print_data_preview();
+
+}
+
 void DataSetTest::test_transform_time_series()
 {
     cout << "test_transform_columns_time_series\n";
@@ -2963,7 +2975,6 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-
    // Constructor and destructor methods
 
    test_constructor();
@@ -3155,6 +3166,9 @@ void DataSetTest::run_test_case()
 
    // test if constant variables
    test_is_constant_numeric();
+
+   // test print data preview
+   test_print_data_preview();
 
    cout << "End of data set test case.\n\n";
 }
