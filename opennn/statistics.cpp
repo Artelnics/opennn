@@ -216,9 +216,9 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
 Histogram::Histogram(const Tensor<type, 1>& data,
                      const Index& number_of_bins)
 {
-    const float data_maximum = maximum(data);
-    const float data_minimum = minimum(data);
-    const float step = (data_maximum - data_minimum) / number_of_bins;
+    const type data_maximum = maximum(data);
+    const type data_minimum = minimum(data);
+    const type step = (data_maximum - data_minimum) / number_of_bins;
 
 
     Tensor<type, 1> new_centers(number_of_bins);
@@ -252,8 +252,8 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 Histogram::Histogram(const Tensor<type, 1>& probability_data)
 {
     const size_t number_of_bins = 10;
-    float data_maximum = maximum(probability_data);
-    const float data_minimum = 0.0;
+    type data_maximum = maximum(probability_data);
+    const type data_minimum = 0.0;
 
     if(data_maximum > 1)
     {
@@ -264,7 +264,7 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
         data_maximum = 1.0;
     }
 
-    const float step = (data_maximum - data_minimum) / number_of_bins;
+    const type step = (data_maximum - data_minimum) / number_of_bins;
 
 
     Tensor<type, 1> new_centers(number_of_bins);
