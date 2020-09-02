@@ -85,7 +85,7 @@ public:
 
     // Serialization methods
 
-    <string, 2> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const;
     
     void from_XML(const tinyxml2::XMLDocument&);
 
