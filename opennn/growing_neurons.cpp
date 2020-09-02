@@ -263,11 +263,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
-<<<<<<< Updated upstream:opennn/incremental_neurons.cpp
-            results->stopping_condition = IncrementalNeurons::MaximumEpochs;
-=======
-            results->stopping_condition = GrowingNeurons::MaximumIterations;
->>>>>>> Stashed changes:opennn/growing_neurons.cpp
+            results->stopping_condition = GrowingNeurons::MaximumEpochs;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
